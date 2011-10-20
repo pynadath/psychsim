@@ -332,7 +332,7 @@ class GenericModel(Supporter,Stereotyper):
         @type element: Element"""
         Stereotyper.parse(self,element)
         try:
-            self.depth = int(element.getAttribute('depth'))
+            self.depth = 0 #int(element.getAttribute('depth'))
         except ValueError:
             # Probably means there's no depth attribute at all
             pass
