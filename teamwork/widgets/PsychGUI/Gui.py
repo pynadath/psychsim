@@ -11,7 +11,6 @@ from xml.dom.minidom import parseString
 import Tkinter
 # Hack to fix Tkinter bug 
 #Tkinter.wantobjects = 0
-from PIL import ImageTk
 import tkMessageBox
 import tkFileDialog
 import Pmw
@@ -866,7 +865,7 @@ class GuiShell(PsychShell,Pmw.MegaWidget):
             import popen2
             aud =  os.path.dirname(__file__) + soundFile
             popen2.popen2('aplay ' + aud)
-        photo = ImageTk.PhotoImage(file=getImage('faces.gif'))
+        photo = Tkinter.PhotoImage(file=getImage('faces.gif'))
         palette = Pmw.Color.getdefaultpalette(self.component('hull'))
         dialog = Pmw.AboutDialog(self.component('hull'),
                                  applicationname='PsychSim',
