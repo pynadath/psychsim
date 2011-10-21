@@ -301,7 +301,10 @@ class GenericEntity(Stereotyper):
         cls = entity.classes[0]
         belief = self.getDefault('entities')[cls]
         key = ModelKey({'entity':cls})
-        dist = models.getMarginal(key)
+        try:
+            dist = models.getMarginal(key)
+        except KeyError:
+            dist = Distribution()
         for value in dist.domain():
             name = belief.float2model(value)
             model = belief.models[name]
