@@ -596,7 +596,7 @@ class GuiShell(PsychShell,Pmw.MegaWidget):
         """Callback from name dialog that actually adds the agent"""
         if button == 'OK':
             if agent is None:
-                agent = GenericModel(self.nameDialog.get())
+                agent = GenericModel(self.nameDialog.get(),self.newParent.depth)
                 todo = True
             else:
                 todo = False

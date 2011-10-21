@@ -53,7 +53,7 @@ class GenericModel(Supporter,Stereotyper):
     @type depth: int
     """
     
-    def __init__(self,name=''):
+    def __init__(self,name='',depth=None):
         """
         @param name: the unique ID for this model
         @type name: string
@@ -61,7 +61,10 @@ class GenericModel(Supporter,Stereotyper):
         Stereotyper.__init__(self,name)
         Supporter.__init__(self,name)
         # Depth of nesting of recursive beliefs
-        self.depth = 2
+        if depth is None:
+            self.depth = 2
+        else:
+            self.depth = depth
         self.parentModels = []
         self.setHierarchy({})
 
