@@ -86,14 +86,14 @@ class GenericModel(Supporter,Stereotyper):
         """
         new = agent.__class__(agent.name)
         new.setHierarchy(self.hierarchy)
-        modelT = new.newModel('True')
+#        modelT = new.newModel('True')
         self.setEntity(new)
-        modelF = new.newModel('Like me')
-        try:
-            self.getModel(new.name)
-        except KeyError:
-            # No existing mental model so create accurate one
-            self.setModelBeliefs(new.name, Distribution({modelT['name']: 1.,modelF['name']: 0.}))
+#        modelF = new.newModel('Like me')
+#        try:
+#            self.getModel(new.name)
+#        except KeyError:
+#            # No existing mental model so create accurate one
+#            self.setModelBeliefs(new.name, Distribution({modelT['name']: 1.,modelF['name']: 0.}))
             
     def merge(self,entity):
         """Merge the contents of another L{GenericModel} into this one
