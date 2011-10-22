@@ -273,7 +273,11 @@ class PsychAgents(MultiagentSimulation):
             node.setAttribute('forced',str(len(choices) == 1))
             subDoc = self.explainAction(actionDict[name])
             if exp:
-                subDoc.documentElement.setAttribute('value',exp.documentElement.getAttribute('value'))
+                if isinstance(exp,dict):
+                    value = str(exp['value'])
+                else:
+                    value = exp.documentElement.getAttribute('value')
+                subDoc.documentElement.setAttribute('value',value)
             node.appendChild(subDoc.documentElement)
             if explain:
                 if exp and not isinstance(exp,dict):
