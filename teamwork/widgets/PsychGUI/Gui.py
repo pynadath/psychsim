@@ -718,7 +718,7 @@ class GuiShell(PsychShell,Pmw.MegaWidget):
                 total = 0.
                 for goal in agent.getGoals():
                     total += abs(original[str(goal)]-goals[goal.toKey()])
-                self.hypothetical(entity=self.scenario[name],real=True)
+                self.hypothetical(entity=self.scenario[name],real=False)
                 delta = int(100.*total)/len(agent.getGoals())
                 msg = 'Fitting was successful, with a %d%% shift in goal weights.' % (delta)
                 self.queue.put({'command':'info','title':'Success',
