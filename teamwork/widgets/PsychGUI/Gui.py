@@ -699,6 +699,7 @@ class GuiShell(PsychShell,Pmw.MegaWidget):
         """Fitting helper method (for running in background)"""
         agent = self.entities[name]
         goalPane = self.entitywins[name].component('Goals')
+        original = dict(agent.goals)
         goals = agent.fit(action,label=step)
         if isinstance(goals,str):
             # Unable to fit
@@ -714,7 +715,14 @@ class GuiShell(PsychShell,Pmw.MegaWidget):
             if step == self.entities.time:
                 # Replace last hypothetical action with the desired one
 ##                 self.queue.put({'command':'pop','widget':self.aarWin})
+                total = 0.
+                for goal in agent.getGoals():
+                    total += abs(original[str(goal)]-goals[goal.toKey()])
                 self.hypothetical(entity=self.scenario[name],real=True)
+                delta = int(100.*total)/len(agent.getGoals())
+                msg = 'Fitting was successful, with a %d%% shift in goal weights.' % (delta)
+                self.queue.put({'command':'info','title':'Success',
+                                'message':msg})
             else:
                 msg = 'Fitting was successful, and the new goal weights will affect any future actions.  However, the previously selected action cannot be undone and will remain in the history.'
                 self.queue.put({'command':'info','title':'Success',
