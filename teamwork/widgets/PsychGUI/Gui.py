@@ -492,7 +492,8 @@ class GuiShell(PsychShell,Pmw.MegaWidget):
                 if self.entitywins.has_key(name):
                     # Delete window
                     self.entitywins[name].win.destroy()
-                    del self.entitywins[name]
+                    if self.entitywins.has_key(name):
+                        del self.entitywins[name]
             # Check whether any parents are now leaf nodes
             for name in parents:
                 if len(self.entities.network[name]) == 0:

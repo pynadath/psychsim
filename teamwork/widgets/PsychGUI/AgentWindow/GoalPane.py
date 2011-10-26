@@ -54,11 +54,15 @@ class GoalFrame(Pmw.ScrolledFrame):
         if self['balloon']:
             self['balloon'].bind(button,'Control normalization of goal weights')
         # Sliders for goal weights
+        if len(entity.goals) == 0:
+            normalize = True
+        else:
+            normalize = abs(sum(entity.goals.values())-1.)<1e-8
         widget = self.createcomponent('scale',(),None,PMFScale,(self.interior(),),
                                       distribution=entity.goals,editable=False,
                                       expand=self.expand,
                                       collapse=self.collapse,
-                                      normalize=abs(sum(entity.goals.values())-1.)<1e-8,
+                                      normalize=normalize,
                                       viewprobs=True,floatdomain=False,
                                       usePIL=self['options'].get('Appearance','PIL') == 'yes',
                                       select=self.select,deleteIfZero=False)
