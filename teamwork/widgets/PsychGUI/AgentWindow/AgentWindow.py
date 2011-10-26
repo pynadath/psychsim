@@ -372,10 +372,15 @@ class AgentWin(Pmw.MegaArchetype):
 
     def destroy(self):
         self.win.destroy(override=True)
-#        for name in self.components():
-#            self.component(name).destroy()
-        for variable in self.component('Actions').variables.values():
-            del variable
+        #        for name in self.components():
+        #            self.component(name).destroy()
+        try:
+            pane = self.component('Actions')
+        except KeyError:
+            pane = None
+        if pane:
+            for variable in pane.variables.values():
+                del variable
         self.component('Observations').perfect
         self.component('General').destroycomponent('image')
         image = self['entity'].attributes['image']
