@@ -339,7 +339,7 @@ class USim_Proxy:
         self.loadLOEs(os.path.join(self.root,'society',society,'LOE_Definitions.xml'))
         self.loadActions(os.path.join(self.root,'society',society,'AllowableActions.xml'))
         self.society = GenericSociety()
-        self.societyName = society 
+        self.societyName = society
         try:
             f = bz2.BZ2File(self.getSocietyFile(),'r')
             data = f.read() 
@@ -847,7 +847,7 @@ class USim_Proxy:
         elementNodes = xmldoc.getElementsByTagName('HEADER')
         msg_type = elementNodes[0].getAttribute("msg_type")
         
-        print ("psychsim received msg type: " + msg_type)
+        print "psychsim received msg type: " + msg_type
         
         if self.profile:
             prof = hotshot.Profile('/tmp/stats')
