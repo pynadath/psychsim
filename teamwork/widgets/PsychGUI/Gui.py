@@ -1798,8 +1798,9 @@ class GuiShell(PsychShell,Pmw.MegaWidget):
             content += 'may suffer \n'
         return content
 
-    def mainloop(self,root):
-        self.splash()
+    def mainloop(self,root,splash=True):
+        if splash:
+            self.splash()
         self.done = False
         self.poll(root)
         while not self.done:

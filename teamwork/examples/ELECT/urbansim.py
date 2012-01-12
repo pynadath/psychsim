@@ -534,6 +534,39 @@ class Replay(Strategy):
                 data += line.strip()
         fileinput.close()
 
+class SamplingStrateg(Strategy):
+    LOEs = ['CivilSecurity','Economics','EssentialServices','Governance','HNSecurityForces','InformationOperations']
+    def __init__(self,scenario,distribution=None):
+        self.indices = {}
+        for index in range(len(LOEs)):
+            self.indices[LOEs[index]] = index
+        if distribution is None:
+            self.distribution = [
+                {'decrease': [0.33,0.02,0.17,0.11,0.10,0.22],
+                 'no change': [0.33,0.01,0.15,0.12,0.07,0.24],
+                 'increase': [0.37,0.01,0.16,0.09,0.09,0.24]},
+                {'decrease': [0.35,0.01,0.18,0.11,0.08,0.23],
+                 'no change': [0.38,0.01,0.14,0.11,0.08,0.23],
+                 'increase': [0.35,0.01,0.17,0.10,0.09,0.24]},
+                {'decrease': [0.36,0.00,0.25,0.13,0.05,0.19],
+                 'no change': [0.38,0.01,0.12,0.10,0.08,0.25],
+                 'increase': [0.32,0.01,0.22,0.10,0.09,0.22]},
+                {'decrease': [0.36,0.01,0.14,0.12,0.08,0.23],
+                 'no change': [0.36,0.01,0.15,0.11,0.08,0.23],
+                 'increase': [0.36,0.01,0.17,0.09,0.09,0.24]},
+                {'decrease': [0.37,0.01,0.15,0.12,0.07,0.24],
+                 'no change': [0.36,0.01,0.16,0.10,0.09,0.23],
+                 'increase': [0.36,0.01,0.17,0.09,0.09,0.24]},
+                {'decrease': [0.36,0.01,0.14,0.11,0.08,0.23],
+                 'no change': [0.36,0.01,0.15,0.11,0.08,0.22],
+                 'increase': [0.36,0.01,0.17,0.09,0.09,0.24]}]
+        else:
+            self.distribution = distribution
+        self.lastState = None
+
+    def execute(self,t,state):
+        
+
 class ClearHoldBuild(Strategy):
     """A strategy consisting of a sequence of Clear-Hold-Build phases in some order
     @cvar categories: mapping from verbs to a list of Clear-Hold-Build categories which the verb fits under (C{None} means that the verb fits under all three)
@@ -845,6 +878,65 @@ def applyStories(stories,scenario,day,player,doc):
                                 except KeyError:
                                     raise NotImplementedError,'Unable to determine story effect: %s' % (str(effect))
     
+def parseLogs(scenario=scenario,directory='.'):
+    first = True
+    files = os.listdir(os.path.join(directory,'logs'))
+    names = {'first': 1, 'second': 2, 'third': 3,
+             'fourth': 4, 'fifth': 5}
+    for name in files:
+        if name[-4:] == '.log':
+            output = open(os.path.join(directory,'processed/%s.csv' % (name[:-4])),'w')
+            print >> output,'  # ,   Time, Type, Content'
+            strategy = Replay(scenario,name,options.horizon,'logs',output,
+                              options.turns)
+            output.close()
+            assert name[:len(strategy.subject)] == strategy.subject,'%s filename does not match subject name %s' % (name,strategy.subject)
+            elements = name[len(strategy.subject):-4].split('.')
+            assert len(elements[0]) == 0
+            assert elements[1][-3:] == 'run',name
+            number = names[elements[1][:-3]]
+            empty = len(elements) == 3
+            changes = sum(map(len,strategy.turns))
+            try:
+                duration = strategy.times[-1] - strategy.times[0]
+                finalScore = strategy.LOEs[-1]
+                LOEs = finalScore.keys()
+                LOEs.sort()
+                scores = ','.join(map(lambda loe: '%d' % (100.*finalScore[loe]),LOEs))
+            except IndexError:
+                duration = 'crash'
+                LOEs = ['LOEs']
+                scores = 'crash'
+            if first:
+#                print 'Subject,Run,Empty,LOE,Aggressive,Changes,Time,%s' % (','.join(LOEs))
+                first = False
+#            print '%s,%s,%s,%s,%s,%d,%s,%s' % (strategy.subject,number,empty,strategy.initialLOE,strategy.aggressive,changes,duration,scores)
+            sys.stdout.flush()
+#     table = {}
+#     for agent in filter(lambda e: e.instanceof('Player'),scenario.members()):
+#         for option in agent.actions.getOptions():
+#             assert len(option) == 1
+#             if scenario[option[0]['object']].getState('Legal Object').expectation() < 0.5:
+#                 sys.stderr.write('%s\n' % (agent.makeActionKey(option)))
+#                 continue
+#             try:
+#                 entry = table[option[0]['type']]
+#             except KeyError:
+#                 entry = {}
+#                 table[option[0]['type']] = entry
+#             try:
+#                 subentry = entry[agent.classes[0]]
+#             except KeyError:
+#                 subentry = {}
+#                 entry[agent.classes[0]] = subentry
+#             subentry[scenario[option[0]['object']].classes[0]] = True
+#     for verb in table.keys():
+#         for actor,objects in table[verb].items():
+#             for obj in objects.keys():
+#                 print '%s,%s,%s' % (actor,verb,obj)
+#     sys.stderr.write('Load %s\n' % (options.scenario))
+#            sys.exit(-1)
+    
 if __name__ == '__main__':
     try:
         from numpy.core.numeric import array
@@ -880,71 +972,22 @@ if __name__ == '__main__':
     parser.add_option('--replay',action='store',type='string',
                       dest='replay',default=None,
                       help='Game log to replay')
+    # Optional argument for parsing logs
+    parser.add_option('--parse',action='store_true',
+                      dest='parse',default=False,
+                      help='Extract from log [default: %default]')
+    (options, args) = parser.parse_args()
     # Optional argument for extracting turns
     parser.add_option('--turns',action='store_true',
                       dest='turns',default=False,
                       help='Extract only committed turns from log [default: %default]')
     (options, args) = parser.parse_args()
-    scenario = loadScenario(options.scenario)
-#     table = {}
-#     for agent in filter(lambda e: e.instanceof('Player'),scenario.members()):
-#         for option in agent.actions.getOptions():
-#             assert len(option) == 1
-#             if scenario[option[0]['object']].getState('Legal Object').expectation() < 0.5:
-#                 sys.stderr.write('%s\n' % (agent.makeActionKey(option)))
-#                 continue
-#             try:
-#                 entry = table[option[0]['type']]
-#             except KeyError:
-#                 entry = {}
-#                 table[option[0]['type']] = entry
-#             try:
-#                 subentry = entry[agent.classes[0]]
-#             except KeyError:
-#                 subentry = {}
-#                 entry[agent.classes[0]] = subentry
-#             subentry[scenario[option[0]['object']].classes[0]] = True
-#     for verb in table.keys():
-#         for actor,objects in table[verb].items():
-#             for obj in objects.keys():
-#                 print '%s,%s,%s' % (actor,verb,obj)
-#     sys.stderr.write('Load %s\n' % (options.scenario))
-#     sys.exit(0)
-    names = {'first': 1, 'second': 2, 'third': 3,
-             'fourth': 4, 'fifth': 5}
-    first = True
-    files = os.listdir('logs')
-    for name in files:
-        if name[-4:] == '.log':
-            output = open('processed/%s.csv' % (name[:-4]),'w')
-            print >> output,'  # ,   Time, Type, Content'
-            strategy = Replay(scenario,name,options.horizon,'logs',output,
-                              options.turns)
-            output.close()
-            assert name[:len(strategy.subject)] == strategy.subject,'%s filename does not match subject name %s' % (name,strategy.subject)
-            elements = name[len(strategy.subject):-4].split('.')
-            assert len(elements[0]) == 0
-            assert elements[1][-3:] == 'run',name
-            number = names[elements[1][:-3]]
-            empty = len(elements) == 3
-            changes = sum(map(len,strategy.turns))
-            try:
-                duration = strategy.times[-1] - strategy.times[0]
-                finalScore = strategy.LOEs[-1]
-                LOEs = finalScore.keys()
-                LOEs.sort()
-                scores = ','.join(map(lambda loe: '%d' % (100.*finalScore[loe]),LOEs))
-            except IndexError:
-                duration = 'crash'
-                LOEs = ['LOEs']
-                scores = 'crash'
-            if first:
-#                print 'Subject,Run,Empty,LOE,Aggressive,Changes,Time,%s' % (','.join(LOEs))
-                first = False
-#            print '%s,%s,%s,%s,%s,%d,%s,%s' % (strategy.subject,number,empty,strategy.initialLOE,strategy.aggressive,changes,duration,scores)
-            sys.stdout.flush()
-#            sys.exit(-1)
-    sys.exit(0)
+    if options.parse:
+        scenario = loadScenario(options.scenario)
+        parseLogs(scenario)
+        sys.exit(0)
+    else:
+        strategy = SamplingStrategy(scenario)
 #    # Create UrbanSim proxy
 #    proxy = USim_Proxy()
 #    proxy.root = os.environ['HOME']

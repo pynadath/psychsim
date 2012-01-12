@@ -4,6 +4,7 @@
 from teamwork.agent.Generic import GenericModel
 from teamwork.agent.Entities import PsychEntity
 from teamwork.multiagent.Multiagent import MultiagentSystem
+from teamwork.multiagent.PsychAgents import PsychAgents
 from xml.dom.minidom import parseString
 
 class GenericSociety(MultiagentSystem):
@@ -332,7 +333,7 @@ class GenericSociety(MultiagentSystem):
         """Returns a list of generic model objects that are leaf nodes"""
         return map(lambda name,s=self:s[name], self.leaves())
 
-    def instantiate(self,className,instanceName,objClass=None):
+    def instantiateEntity(self,className,instanceName,objClass=None):
         """Returns a new instantiated agent model
         @param className: name of the relevant generic model
         @type className: C{str}
@@ -348,6 +349,27 @@ class GenericSociety(MultiagentSystem):
         entity.applyDefaults(className,self)
         entity.society = self
         return entity
+
+    def instantiate(self,entities,scenarioCls=None,instanceCls=None):
+        """
+        Instantiate a set of entities as specified by the given table
+        @param entities: the table of entities (instance name: class name)
+        @param scenarioCls: the class for the scenario instance (default is L{GenericSociety})
+        """
+        if isinstance(entities,str):
+            # For backward compatibility
+            return self.instantiateEntity(entities,scenarioCls,instanceCls)
+        assert isinstance(entities,dict)
+        instances = []
+        for instance,cls in entities.items():
+            instances.append(self.instantiateEntity(cls,instance))
+        if scenarioCls is None:
+            scenarioCls = PsychAgents
+        scenario = scenarioCls(instances)
+        scenario.society = self
+        for entity in scenario.members():
+            entity.entities.society = self
+        return scenario
 
 def loadSociety(filename):
     """
