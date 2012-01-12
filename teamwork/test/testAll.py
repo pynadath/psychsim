@@ -106,7 +106,7 @@ class TestPsychSim(unittest.TestCase):
             result = scenario.microstep()
             states.append(scenario.state.expectation())
             #################
-            # Verify scenario
+            # Verify results
             #################
             decision = result['decision']
             self.assertEqual(len(decision),1)
