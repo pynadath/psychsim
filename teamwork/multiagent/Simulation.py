@@ -107,9 +107,9 @@ class MultiagentSimulation(MultiagentSystem):
                 order.append([key['entity']])
         return order
         
-    def initializeOrder(self):
+    def initializeOrder(self,entities=None):
         """Re-initializes the turn-taking order, in case of any addition/deletion of agents"""
-        self.order = self.generateOrder()
+        self.order = self.generateOrder(entities)
         self._turnDynamics.clear()
 
     def generateOrder(self,entities=None):
