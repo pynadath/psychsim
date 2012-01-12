@@ -1,0 +1,94 @@
+"""
+Test case that also illustrates basic operation of the PsychSim API
+"""
+import unittest
+
+# keys for labeling state features
+from teamwork.math.Keys import StateKey
+# generic class of entity
+from teamwork.agent.Generic import GenericModel
+# hierarchy of generic classes
+from teamwork.multiagent.GenericSociety import GenericSociety
+# instantiated scenario
+from teamwork.multiagent.PsychAgents import PsychAgents
+# possible decisions of entities
+from teamwork.action.PsychActions import Action
+# max/min goals for agents
+from teamwork.reward.goal import maxGoal,minGoal
+
+class TestPsychSim(unittest.TestCase):
+
+    def testSociety(self):
+        """
+        Test the creation of classroom models, instantiation of scenario,
+        and simulation of scenario
+        """
+        #################
+        # Create models
+        #################
+        # Create a hierarchy of generic classes
+        society = GenericSociety()
+        # Create a base class
+        entity = GenericModel('Entity')
+        # Insert class into hierarchy
+        society.addMember(entity)
+        # Create a subclass for students
+        student = GenericModel('Student')
+        # Add parent
+        student.parentModels.append(entity.name)
+        # Insert subclass into hierarchy
+        society.addMember(student)
+        # Add state feature
+        student.setState('welfare',0.3)
+        # Create NOP action
+        doNothing = Action({'actor':'self','type': 'do nothing'})
+        entity.actions.directAdd([doNothing])
+        # Create "pick on" action
+        pickOn = Action({'actor':'self','type': 'pick on',
+                            'object':student.name})
+        student.actions.directAdd([pickOn])
+        # Create a subclass for teacher
+        teacher = GenericModel('Teacher')
+        # Add parent
+        teacher.parentModels.append(entity.name)
+        # Insert subclass into hierarchy
+        society.addMember(teacher)
+        # Create "punish" action
+        punish = Action({'actor':'self','type': 'punish',
+                            'object':student.name})
+        teacher.actions.directAdd([punish])
+        # Create goals for students
+        goal = maxGoal(StateKey({'entity':'self','feature':'welfare'}))
+        student.setGoalWeight(goal,1.,False)
+        # Create goals for teachers
+        goal = maxGoal(StateKey({'entity':'Student','feature':'welfare'}))
+        teacher.setGoalWeight(goal,1.,False)
+
+        #################
+        # Create scenario
+        #################
+        scenario = society.instantiate({'Bill': student.name,
+                                        'Victor': student.name,
+                                        'Otto': student.name,
+                                        'Mrs Thompson': teacher.name})
+        scenario.applyDefaults()
+
+        #################
+        # Run scenario
+        #################
+        result = scenario.microstep()
+        
+        #################
+        # Verify scenario
+        #################
+        self.assertEqual(len(society),3)
+        self.assertEqual(len(scenario),4)
+        decision = result['decision']
+        self.assertEqual(len(decision),1)
+        actor = decision.keys()[0]
+        self.assert_(scenario.has_key(actor))
+        action = decision[actor]
+        self.assert_(action in scenario[actor].actions.getOptions())
+
+if __name__ == '__main__':
+    unittest.main()

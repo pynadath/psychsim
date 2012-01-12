@@ -218,8 +218,9 @@ class StateFrame(Pmw.ScrolledFrame):
             raise ValueError
         return feature[:feature.rfind('-')]
     
-    def expand(self,event=None):
-        feature = self.event2feature(event)
+    def expand(self,event=None,feature=None):
+        if feature is None:
+            feature = self.event2feature(event)
         if self.isExpanded(feature):
             self.component('%s-dynamics' % (feature)).grid_forget()
             if self['options'].get('Appearance','PIL') == 'yes':
