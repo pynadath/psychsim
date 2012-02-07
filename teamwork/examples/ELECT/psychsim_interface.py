@@ -209,6 +209,7 @@ class USim_Proxy:
                 assert node.tagName == 'loe'
                 loe = {'name':str(node.getAttribute('name')),
                        'features':[],
+                       'min':float(node.getAttribute('min')),
                        'count':0}
                 child = node.firstChild
                 while child:
@@ -225,7 +226,8 @@ class USim_Proxy:
                     child = child.nextSibling
                 self.LOEs.append(loe)
             node = node.nextSibling
-        print 'Loaded %d LOE definitions from:' % (len(self.LOEs)),filename
+        if self.debug:
+            print 'Loaded %d LOE definitions from:' % (len(self.LOEs)),filename
 
     def loadActions(self,filename):
         """Read Action definitions from the specified XML file
@@ -235,7 +237,7 @@ class USim_Proxy:
             doc = minidom.parse(filename)
         except IOError:
             self.sendErrorMsg('Unable to load Action definitions: %s' % (filename))
-            print 'Unable to load Action definitions: %s' % (filename)
+            # print 'Unable to load Action definitions: %s' % (filename)
             return
         node = doc.documentElement.firstChild
         while node:
@@ -332,7 +334,7 @@ class USim_Proxy:
             return os.path.join(self.root,'society',self.societyName,
                                 '%s.soc' % (self.societyName))
 
-    def loadSociety(self,society):
+    def loadSociety(self,society,absolute=False):
         """Load generic society
         """
         self.loadLethal(os.path.join(self.root,'society',society,'lethal-actions.xml'))
@@ -340,8 +342,12 @@ class USim_Proxy:
         self.loadActions(os.path.join(self.root,'society',society,'AllowableActions.xml'))
         self.society = GenericSociety()
         self.societyName = society
+        if absolute:
+            filename = society
+        else:
+            filename = self.getSocietyFile()
         try:
-            f = bz2.BZ2File(self.getSocietyFile(),'r')
+            f = bz2.BZ2File(filename,'r')
             data = f.read() 
             f.close()
         except IOError:
@@ -349,8 +355,9 @@ class USim_Proxy:
             return
         doc = minidom.parseString(data)
         self.society.parse(doc.documentElement) 
-        print 'Loaded %d classes from society: %s' % \
-            (len(self.society),self.societyName)
+        if self.debug:
+            print 'Loaded %d classes from society: %s' % \
+                (len(self.society),self.societyName)
 
     def loadScenarioData(self,filename):
         try:
@@ -452,14 +459,17 @@ class USim_Proxy:
         header.setAttributeNode(msg_type_attr)
         return doc
         
-    def loadScenario(self,name,cacheDynamics=True):
+    def loadScenario(self,name,cacheDynamics=True,absolute=False):
         """Loads a PsychSim scenario from the given file location
         @param name: the name of the scenario
         @type name: str
         @param cacheDynamics: if C{True}, cache dynamics of each scenario action (default is C{True})
         @type cacheDynamics: bool
         """
-        filename = self.getScenarioFile(name)
+        if absolute:
+            filename = name
+        else:
+            filename = self.getScenarioFile(name)
         self.scenario = PWLSimulation(observable=True)
         try:
             f = bz2.BZ2File(filename,'r')
@@ -477,6 +487,7 @@ class USim_Proxy:
                 for agent in self.scenario.members():
                     agent.society = self.society
             else:
+                print 'returning'
                 return
         self.scenarioName = name
         if self.scenario.societyFile:
@@ -513,7 +524,8 @@ class USim_Proxy:
             if self.LOEs[index]['count'] == 0:
                 print 'LOE %s has no applicable state features' % \
                       (self.LOEs[index]['name'])
-        printStats(self.scenario)
+        if self.debug:
+            printStats(self.scenario)
                 
     def getGameObjects(self,msg_type,state=None,scenario=None):
         """Generates a message to the Game Controller containing the current state of all of the Game Objects
@@ -846,8 +858,8 @@ class USim_Proxy:
         # Extract the message type
         elementNodes = xmldoc.getElementsByTagName('HEADER')
         msg_type = elementNodes[0].getAttribute("msg_type")
-        
-        print "psychsim received msg type: " + msg_type
+        if self.debug:
+            print "psychsim received msg type: " + msg_type
         
         if self.profile:
             prof = hotshot.Profile('/tmp/stats')
@@ -977,10 +989,8 @@ class USim_Proxy:
                     if not hypothetical:
                         # Extract story effect
                         for event in cycle.getElementsByTagName('STORY_EFFECT'):
-                            print "\nNew Story"
                             lineEffect = {}
                             lineActual = {}
-                            #state = current[None].expectation()
                             actual = 0
                             effect = event.firstChild
                             while effect:
@@ -991,18 +1001,15 @@ class USim_Proxy:
                                     feature = str(effect.getAttribute('FEATURE'))
                                     obj = str(effect.getAttribute('OBJECT'))
                                     delta = float(effect.getAttribute('DELTA'))
-                                    #print("entity: " + str(entity.name) + " ++++++ subject: "+ str(subject) + "   feature >>"+ feature + "<<" )
                                     if obj:
                                         pass
                                     else:
                                         old = entity.getState(feature)
                                         new = min(1.,(max(-1.,old + delta)))
                                         entity.setState(feature,new)
-                                        #print ("\n new: "+ str(new) +"  old: " + str(old) +"  delta: " + str(delta))
-                                        #Calculate each story's LOE effects
+                                        # Calculate each story's LOE effects
                                         state = current[None].expectation()
                                         constantKey = str(subject) + "'s " + str(feature)
-                                        ####################
                                         for name,vector in original.items():
                                             for key,value in vector.items():
                                                 
@@ -1012,10 +1019,7 @@ class USim_Proxy:
                                                 else:                                        
                                                     # State effects
                                                     if str(key) == constantKey:
-                                                        try: 
-                                                            actual = state[key]
-                                                        except KeyError:
-                                                            print ("actual value not found")                                                                
+                                                        actual = state[key]
                                                         difference = actual - value
                                                         # Add line effect actual values
                                                         if self.lineMapping.has_key(key):
@@ -1041,8 +1045,6 @@ class USim_Proxy:
                                                                     lineEffect[line] = lineChange
                                 effect = effect.nextSibling                                
                             for line,value in lineEffect.items():
-                                #print ("line: "+str(line) +"   value: " + str(value))
-                                #if abs(value) > self.epsilon:
                                 LOEeffect = xmldoc.createElement('LOE_EFFECT')
                                 LOEeffect.setAttribute('LOE_ID',self.LOEs[line]['name'])
                                 # Average delta over number of features
@@ -1050,7 +1052,6 @@ class USim_Proxy:
                                 actualValue = lineActual[line] / float(self.LOEs[line]['count'])
                                 LOEeffect.setAttribute('DELTA',str(value))
                                 LOEeffect.setAttribute('ACTUAL',str(actualValue))
-                                print '\tloe name: %s value: %5.3f' % (self.LOEs[line]['name'],value)
                                 event.appendChild(LOEeffect)    
                     # Compute cumulative effect
                     if self.debug:
@@ -1125,7 +1126,8 @@ class USim_Proxy:
                         actualValue = lineActual[line] / float(self.LOEs[line]['count'])
                         effect.setAttribute('DELTA',str(value))
                         effect.setAttribute('ACTUAL',str(actualValue))
-                        print '\tloe name: %s value: %5.3f' % (self.LOEs[line]['name'],value)
+                        if self.debug:
+                            print '\tLOE: %s value: %5.3f' % (self.LOEs[line]['name'],value)
                         cumulative.appendChild(effect)
                     cycle.appendChild(cumulative)
                     if self.debug:
@@ -1147,7 +1149,8 @@ class USim_Proxy:
                                 original[key] = copy.copy(current[key])
                             else:
                                 original[key] = copy.copy(current[None].expectation())
-                    print 'Microstep complete: elapsed time = ',time.time()-start
+                    if self.debug:
+                        print 'Microstep complete: elapsed time = ',time.time()-start
             # Update header
             elementNodes[0].setAttribute('sender',self.sender)
             elementNodes[0].setAttribute('receiver',self.receiver)
@@ -1237,6 +1240,30 @@ class USim_Proxy:
         else:
             node.setAttribute('LETHAL','false')
         return node
+
+    def evaluateLOEs(self,scenario=None):
+        if scenario is None:
+            scenario = self.scenario
+        state = self.scenario.state.expectation()
+        lineActual = {}
+        for key,mapping in self.lineMapping.items():
+            for line in mapping:
+                # Add line effect actual values
+                if line < 0:
+                    lineChange = -state[key]
+                else:
+                    lineChange = state[key]
+                try:
+                    lineActual[line] += lineChange
+                except KeyError:
+                    lineActual[line] = lineChange
+        # Add overall line effects of this action
+        result = {}
+        for line,value in lineActual.items():
+            # Average delta over number of features
+            value /= float(self.LOEs[line]['count'])
+            result[self.LOEs[line]['name']] = int(100.*(value-self.LOEs[line]['min'])/(1.-self.LOEs[line]['min']))
+        return result
 
     def addActions(self,xmldoc,cycle,distribution,result):
         """Extends a cycle by adding the actions and effects from the given microstep result

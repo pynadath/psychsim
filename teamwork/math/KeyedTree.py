@@ -1,6 +1,3 @@
-#import copy
-#from types import *
-
 from ThespianKeys import makeBelongKey
 from matrices import Hyperplane,DecisionTree,epsilon
 from Keys import IdentityKey,RelationshipKey,ConstantKey,ClassKey,StateKey,keyConstant,makeIdentityKey
