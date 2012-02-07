@@ -1,7 +1,6 @@
 from teamwork.agent.Entities import *
 from teamwork.action.PsychActions import *
 from teamwork.multiagent.GenericSociety import *
-from teamwork.agent.DefaultBased import createEntity
 from teamwork.multiagent.sequential import *
 from teamwork.reward.MinMaxGoal import *
 from teamwork.examples.InfoShare.PortClasses import *
@@ -28,7 +27,7 @@ class TestFitting(unittest.TestCase):
                           }
         for cls,names in self.instances.items():
             for name in names:
-                entity = createEntity(cls,name,society,PsychEntity)
+                entity = society.instantiateEntity(cls,name)
                 entities.append(entity)
         self.entities = SequentialAgents(entities)
         self.entities.applyDefaults()

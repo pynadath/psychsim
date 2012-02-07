@@ -1,7 +1,6 @@
 from teamwork.agent.Entities import *
 from teamwork.multiagent.sequential import *
 from teamwork.multiagent.GenericSociety import *
-from teamwork.agent.DefaultBased import createEntity
 from teamwork.messages.PsychMessage import *
 from teamwork.math.Interval import *
 from teamwork.math.rules import applyRules,internalCheck
@@ -26,7 +25,7 @@ class TestRecursiveAgentPort(unittest.TestCase):
                     name = '%s%d' % (cls,index)
                 else:
                     name = cls
-            entities.append(createEntity(cls,name,self.society,PsychEntity))
+            entities.append(self.society.instantiateEntity(cls,name))
         self.entities = SequentialAgents(entities)
         self.entities.applyDefaults()
         self.entities.compileDynamics()

@@ -240,7 +240,7 @@ class PublicGoodAgent(PsychEntity):
         when freezing the initial version of myself"""
         self.initial = self
         
-    def preComStateEstimator(self,beliefs,actions,epoch=-1,debug=Debugger()):
+    def preComStateEstimator(self,beliefs,actions,epoch=-1):
         """Updates beliefs in response to observation
         (Within this model, the agent and its belief state are one and
         the same)"""

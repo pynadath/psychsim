@@ -6,7 +6,6 @@ from teamwork.multiagent.PsychAgents import PsychAgents
 from teamwork.multiagent.GenericSociety import GenericSociety
 from teamwork.multiagent.pwlSimulation import PWLSimulation
 from teamwork.agent.lightweight import PWLAgent
-from teamwork.examples.TigerScenario import *
 from teamwork.policy.pwlTable import PWLTable
 from teamwork.policy.pwlPolicy import PWLPolicy
 

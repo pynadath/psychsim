@@ -1,7 +1,5 @@
-from teamwork.agent.Entities import *
 from teamwork.multiagent.sequential import *
 from teamwork.multiagent.GenericSociety import *
-from teamwork.agent.DefaultBased import createEntity
 from teamwork.math.rules import internalCheck,mergeAttributes
 
 import time
@@ -33,7 +31,7 @@ class TestPWLPolicy(unittest.TestCase):
                     name = '%s%d' % (cls,index)
                 else:
                     name = cls
-            entity = createEntity(cls,name,society,PsychEntity)
+            entity = society.instantiateEntity(cls,name)
             entities.append(entity)
             if entity.name in ['Turkomen','Kurds']:
                 entity.relationships = {'location':['GeographicArea']}
