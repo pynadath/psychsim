@@ -223,7 +223,8 @@ class GenericModel(Supporter,Stereotyper):
     def getInheritor(self,attribute,value,includeSelf=True):
         """
         @param attribute: the agent model slot to look for (e.g., 'state', 'action', 'goal')
-        @type attribute,value: str
+        @type attribute: str
+        @type value: str
         @param value: the slot filler to look for (e.g., state feature)
         @return: the lowest class (either this one or some ancestory) that defines the given value in the given agent attributes
         @rtype: str

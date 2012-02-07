@@ -155,7 +155,8 @@ class PWLDynamics(arbitraryDynamics.BaseDynamics):
         """
         @param old: the current name of the entity
         @param new: the new name of the entity
-        @type old,new: str
+        @type old: str
+        @type new: str
         """
         self.getTree().renameEntity(old,new)
                 

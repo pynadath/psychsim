@@ -259,7 +259,8 @@ class ProbabilityTree(KeyedTree):
         """
         @param old: the current name of the entity
         @param new: the new name of the entity
-        @type old,new: str
+        @type old: str
+        @type new: str
         """
         if self.isProbabilistic():
             for subtree in self.children():
@@ -468,7 +469,8 @@ def createBranchTree(plane,falseTree,trueTree):
     @type plane: L{Hyperplane}
     @param falseTree: the tree that will be followed if the plane tests C{False}
     @param trueTree: the tree that will be followed if the plane tests C{True}
-    @type falseTree,trueTree: L{ProbabilityTree}
+    @type falseTree: L{ProbabilityTree}
+    @type trueTree: L{ProbabilityTree}
     @note: Will not prune tree
     """
     tree = ProbabilityTree()
@@ -516,7 +518,8 @@ def createANDTree(keyWeights,falseTree,trueTree):
     @type keyWeights: (L{Key},boolean)[]
     @param falseTree: the tree to invoke if the conjunction evaluates to C{False}
     @param trueTree: the tree to invoke if the conjunction evaluates to C{True}
-    @type falseTree,trueTree: L{DecisionTree}
+    @type falseTree: L{DecisionTree}
+    @type trueTree: L{DecisionTree}
     @return: the new tree with the conjunction test at the root
     @rtype: L{ProbabilityTree}
     """
@@ -548,7 +551,8 @@ def createORTree(keyWeights,falseTree,trueTree):
     @type keyWeights: (L{Key},boolean)[]
     @param falseTree: the tree to invoke if the conjunction evaluates to C{False}
     @param trueTree: the tree to invoke if the conjunction evaluates to C{True}
-    @type falseTree,trueTree: L{DecisionTree}
+    @type falseTree: L{DecisionTree}
+    @type trueTree: L{DecisionTree}
     @return: the new tree with the conjunction test at the root
     @rtype: L{ProbabilityTree}
     """

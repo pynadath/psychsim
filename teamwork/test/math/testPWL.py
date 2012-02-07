@@ -114,7 +114,8 @@ class TestPWL(unittest.TestCase):
 
     def verifyVector(self,old,new):
         """Tests equality of given vectors
-        @type old,new: L{KeyedVector}
+        @type old: L{KeyedVector}
+        @type new: L{KeyedVector}
         """
         self.assert_(isinstance(old,KeyedVector))
         self.assert_(isinstance(new,KeyedVector))
@@ -126,7 +127,8 @@ class TestPWL(unittest.TestCase):
 
     def verifyMatrix(self,old,new):
         """Tests equality of given matrices
-        @type old,new: L{KeyedMatrix}
+        @type old: L{KeyedMatrix}
+        @type new: L{KeyedMatrix}
         """
         self.assert_(isinstance(old,KeyedMatrix))
         self.assert_(isinstance(new,KeyedMatrix))
@@ -138,7 +140,8 @@ class TestPWL(unittest.TestCase):
             
     def verifyPlane(self,old,new):
         """Tests equality of given planes
-        @type old,new: L{KeyedPlane}
+        @type old: L{KeyedPlane}
+        @type new: L{KeyedPlane}
         """
         self.assert_(isinstance(old,KeyedPlane))
         self.assert_(isinstance(new,KeyedPlane))
@@ -147,7 +150,8 @@ class TestPWL(unittest.TestCase):
             
     def verifyTree(self,old,new): 
         """Tests equality of given trees
-        @type old,new: L{KeyedTree}
+        @type old: L{KeyedTree}
+        @type new: L{KeyedTree}
         """
         self.assert_(isinstance(old,KeyedTree))
         self.assert_(isinstance(new,KeyedTree))

@@ -74,7 +74,6 @@ class GuiShell(PsychShell,Pmw.MegaWidget):
         @param classes: initial generic society
         @param agentClass: object class used to create new agents
         @param multiagentClass: object class used to create new scenarios
-        @param debug: level of detail in debugging messages
         """
         optiondefs = (
             ('options',None,Pmw.INITOPT),

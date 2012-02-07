@@ -329,7 +329,8 @@ class AgentWin(Pmw.MegaArchetype):
         """
         @param old: the current name of the entity
         @param new: the new name of the entity
-        @type old,new: str
+        @type old: str
+        @type new: str
         """
         if self.win and self['entity'].name == new:
             self.win.configure(title=new)

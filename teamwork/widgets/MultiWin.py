@@ -8,9 +8,9 @@ The  mdw_lib author is Thomas Schwarze <swz@rtws18.ee.tu_berlin.de>
 Original package is GPL'ed. However, code and way to implement
 multiple windows and mdw_lib are completely different.
 
-           Author: Erick Gallesio [eg@unice.fr]
-    Creation date:  5_Apr_1996 18:04
- Last file update:  3_Sep_1999 21:34 (eg)
+Author: Erick Gallesio [eg@unice.fr]
+Creation date:  5_Apr_1996 18:04
+Last file update:  3_Sep_1999 21:34 (eg)
 
 # (require "Basics")
 # (select-module STklos+Tk)
@@ -24,8 +24,7 @@ import Pmw
 class MultipleWin (Pmw.MegaWidget):
     """ <Multiple_window> class
      Consider forwarding methods eg
-     Pmw.forwardmethods(MyClass, TargetClass,
-        MyClass.findtarget, ['dangerous1', 'dangerous2'])
+     Pmw.forwardmethods(MyClass, TargetClass,MyClass.findtarget, ['dangerous1', 'dangerous2'])
      In both cases, all TargetClass methods will be forwarded from MyClass
      except for dangerous1, dangerous2, special methods like __str__,
      and pre-existing methods like foo.

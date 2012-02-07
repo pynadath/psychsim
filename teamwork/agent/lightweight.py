@@ -211,7 +211,8 @@ class PWLAgent(Agent):
         'trusts') to evaluate
         @param entity: the entity who is the object of the
         relationship (e.g., the entity being liked or trusted)
-        @type relationship,entity: str
+        @type relationship: str
+        @type entity: str
         @return: the current value of the link
         @rtype: float
         """
@@ -227,7 +228,8 @@ class PWLAgent(Agent):
         'trusts') to evaluate
         @param entity: the entity who is the object of the
         relationship (e.g., the entity being liked or trusted)
-        @type relationship,entity: str
+        @type relationship: str
+        @type entity: str
         @param value: the new value for my trust level
         @type value: float
         """
@@ -335,7 +337,7 @@ class PWLAgent(Agent):
         @type beliefs: L{Distribution}(L{KeyedVector})
         @param actions: the observed actions
         @type actions: L{Action}[]
-        @param obersvation: if in a partially observable domain, this is the observation received (default is C{None})
+        @param observation: if in a partially observable domain, this is the observation received (default is C{None})
         @type observation: str
         @return: the new beliefs (updates the agent's beliefs as a side effect)
         @rtype: L{Distribution}(L{KeyedVector})
@@ -480,7 +482,7 @@ class PWLAgent(Agent):
 
     def __xml__(self,dynamics=False):
         """
-        @param dynamcis: if C{True}, instantiated dynamics are stored as well (default is C{False}
+        @param dynamics: if C{True}, instantiated dynamics are stored as well (default is C{False}
         @type dynamics: bool
         """
         doc = Agent.__xml__(self)

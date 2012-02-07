@@ -72,7 +72,9 @@ class TestKeyedVector(TestPWL):
         
     def verifyAdd(self,row1,row2):
         """Checks a single addition between two vectors
-        @type row1,row2: L{KeyedVector}"""
+        @type row1: L{KeyedVector}
+        @type row2: L{KeyedVector}
+        """
         row3 = row1 + row2
         self.assertEqual(row1.keys(),row3.keys())
         self.assertEqual(row2.keys(),row3.keys())
@@ -106,7 +108,9 @@ class TestKeyedVector(TestPWL):
         
     def verifyMultiply(self,row1,row2):
         """Checks a single product between two vectors
-        @type row1,row2: L{KeyedVector}"""
+        @type row1: L{KeyedVector}
+        @type row2: L{KeyedVector}
+        """
         total = 0.
         for key in row1.keys():
             try:

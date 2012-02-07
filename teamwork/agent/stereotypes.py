@@ -459,7 +459,7 @@ class Stereotyper(GoalBasedAgent):
         @param world: the vector including the model specification
         @type world: L{KeyedVector}
         @param decision: the action under consideration
-        @type deicision: L{Action}[] or str
+        @type decision: L{Action}[] or str
         @return: C{True} iff this agent could possibly make the given decision in the given world
         @rtype: bool
         """

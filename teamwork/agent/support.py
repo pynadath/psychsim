@@ -17,7 +17,7 @@ class Supporter(GoalBasedAgent):
     @ivar linkTypes: list of current dynamic relationship types
     @type linkTypes: str[]
     @ivar linkDynamics: the decision tree defining the effects on the dynamic relationship values, indexed by link type, then by action type
-    @type: strS{->}strS{->}PWLDynamics
+    @type linkDynamics: strS{->}strS{->}PWLDynamics
     """
 
     _supportFeature = 'likes'
@@ -58,7 +58,8 @@ class Supporter(GoalBasedAgent):
         'trusts') to evaluate
         @param entity: the entity who is the object of the
         relationship (e.g., the entity being liked or trusted)
-        @type relationship,entity: str
+        @type relationship: str
+        @type entity: str
         @return: the current value of the link
         @rtype: float
         """
@@ -74,7 +75,8 @@ class Supporter(GoalBasedAgent):
         'trusts') to evaluate
         @param entity: the entity who is the object of the
         relationship (e.g., the entity being liked or trusted)
-        @type relationship,entity: str
+        @type relationship: str
+        @type entity: str
         @param value: the new value for my trust level
         @type value: float
         """
@@ -88,7 +90,8 @@ class Supporter(GoalBasedAgent):
         'trusts') to evaluate
         @param entity: the entity who is the object of the
         relationship (e.g., the entity being liked or trusted)
-        @type relationship,entity: str
+        @type relationship: str
+        @type entity: str
         """
         key = self.getLinkKey(relationship,entity)
         del self.links[key]
@@ -199,8 +202,8 @@ class Supporter(GoalBasedAgent):
         Computes the hypothetical changes to the given beliefs in response to the given actions
         @param beliefs: the beliefs to be updated (traditionally, the result from L{getAllBeliefs})
         @type beliefs: dict
-        @param actions: the actions observed by this agent
-        @type actions: C{dict:strS{->}L{Action}}
+        @param observations: the actions observed by this agent
+        @type observations: C{dict:strS{->}L{Action}}
         @param epoch: the current epoch in which these observations occurred (currently ignored, but potentially important)
         @type epoch: int
         @type debug: L{Debugger}

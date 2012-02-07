@@ -727,7 +727,7 @@ class PsychAgents(MultiagentSimulation):
     def getDynamicsMatrix(self,decider=None,debug=False):
         """Generates matrix representations of probabilistic dynamics, given the space of possible worlds
         @param decider: if given, then it is the name of the agent who can choose any action, while all other agents are following their given policies
-        @type deicder: str
+        @type decider: str
         """
         if len(self.transition) != len(self.generateActions()):
             keys = self.getWorlds().keys()

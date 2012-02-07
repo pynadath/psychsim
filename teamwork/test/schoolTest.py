@@ -27,7 +27,8 @@ class TestPsychSim(unittest.TestCase):
         """Creates a new subclass
         @param parent: the name of the superclass
         @param child: the name of the new subclass
-        @type parent,child: str
+        @type parent: str
+        @type child: str
         """
         node = self.shell.psymwindow.nodes[parent]
         entity = self.shell.psymwindow['entities'][node.child().text()]

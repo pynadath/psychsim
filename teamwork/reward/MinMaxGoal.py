@@ -30,7 +30,9 @@ class MinMaxGoal:
         @param entity:    list of names (for recursive belief access if a state goal, or for relevant actor/object if action goal)
         @type entity: C{str[]}
         @param direction: either 'min' or 'max'
-        @type direction,goalType,key: C{str}
+        @type direction: C{str}
+        @type goalType: C{str}
+        @type key: C{str}
         @param goalType:  either 'state' (value of a state feature), 'act' (number of occurences of action of given type), 'actActor' (number of occurrences of action of given type by given actor), 'actObject' (number of occurences of action of given type to given object)
         @param key: for a 'state' goal, is the state feature to be min/maximized for an 'act', goal, is the act type to be min/maximized"""
         if type(entity) is StringType:

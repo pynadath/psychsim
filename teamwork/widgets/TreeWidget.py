@@ -101,13 +101,10 @@ class Node:
     has several useful attributes:
     parent_node     - immediate parent node
     id              - id assigned at creation
-    expanded_icon   - image displayed when folder is expanded to display
-                      children
-    collapsed_icon  - image displayed when node is not a folder or folder is
-                      collapsed.
+    expanded_icon   - image displayed when folder is expanded to display children
+    collapsed_icon  - image displayed when node is not a folder or folder is collapsed.
     parent_widget   - reference to tree widget that contains node.
-    expandable_flag - is true when node is a folder that may be expanded or
-                      collapsed.
+    expandable_flag - is true when node is a folder that may be expanded or collapsed.
     expanded_flag   - true to indicate node is currently expanded.
     h_line          - canvas line to left of node image.
     v_line          - canvas line below node image that connects children.

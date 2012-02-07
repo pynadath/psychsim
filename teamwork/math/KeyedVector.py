@@ -553,7 +553,8 @@ class DeltaRow(KeyedVector):
         """
         @param sourceKey: the feature to be changed
         @param deltaKey: the feature to use in computing the delta
-        @type sourceKey,deltaKey: L{Key}
+        @type sourceKey: L{Key}
+        @type deltaKey: L{Key}
         @param value: the coefficient for that feature
         @type value: C{float}
         """

@@ -25,8 +25,6 @@ class PWLSimulation(MultiagentSystem):
         @param agents: the fully-specified agents
         @param observable: iff C{True}, agents always maintain correct beliefs about the world
         @type observable: bool
-        @param effects: a table of features that actions affect, indexed by action, with each value being a list of keys
-        @type effects: L{Action}S{->}L{StateKey}[]
         """
         self.societyFile = None
         self.observable = observable
@@ -466,7 +464,7 @@ class PWLSimulation(MultiagentSystem):
 
     def __xml__(self,dynamics=False):
         """
-        @param dynamcis: if C{True}, instantiated dynamics are stored as well (default is C{False}
+        @param dynamics: if C{True}, instantiated dynamics are stored as well (default is C{False}
         @type dynamics: bool
         """
         doc = Document()
