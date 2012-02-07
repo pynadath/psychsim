@@ -5,10 +5,12 @@ import unittest
 
 # keys for labeling state features
 from teamwork.math.Keys import StateKey
+# dynamics vectors
+from teamwork.math.KeyedVector import ClassRow
 # dynamics matrices
 from teamwork.math.KeyedMatrix import IdentityMatrix,DiminishMatrix
 # dynamics hyperplanes
-from teamwork.math.KeyedTree import makeIdentityPlane
+from teamwork.math.KeyedTree import KeyedPlane,makeIdentityPlane
 # generic class of entity
 from teamwork.agent.Generic import GenericModel
 # hierarchy of generic classes
@@ -51,6 +53,9 @@ class TestPsychSim(unittest.TestCase):
         # Insert subclass into hierarchy
         society.addMember(teacher)
 
+        # Add possible static relationship
+        student.relationships['victim'] = [student.name]
+
         # Add state features
         student.setState('welfare',0.3)
 
@@ -59,30 +64,66 @@ class TestPsychSim(unittest.TestCase):
         entity.actions.directAdd([doNothing])
 
         # Create "pick on" action
-        pickOn = Action({'actor':'self','type': 'pick on',
-                            'object':student.name})
+        pickOn = Action({'actor':'self','type': 'pick on','object':student.name})
         student.actions.directAdd([pickOn])
         # Create dynamics of "pick on"
         tree = ProbabilityTree()
         condition = ActionCondition()
         condition.addCondition(pickOn['type'])
+        # Effect of "pick on" on "welfare"
         student.dynamics['welfare'] = {str(condition): {'condition': condition,
                                                         'tree': tree}}
+        # Leave welfare unchanged
         identity = ProbabilityTree(IdentityMatrix('welfare'))
-        key = StateKey({'entity':'self','feature':'welfare'})
+        # Move "welfare" 20% closer to -1
         diminish = ProbabilityTree(DiminishMatrix('welfare',value=-0.2))
+        # if I am object (i.e., person being picked on), then diminish, else identity
         tree.branch(makeIdentityPlane('object'),
                     falseTree=identity,trueTree=diminish)
 
         # Create "punish" action
-        punish = Action({'actor':'self','type': 'punish',
-                            'object':student.name})
+        punish = Action({'actor':'self','type': 'punish','object':student.name})
         teacher.actions.directAdd([punish])
+        # Create dynamics of "punish"
+        tree = ProbabilityTree()
+        condition = ActionCondition()
+        condition.addCondition(punish['type'])
+        # Effect of "punish" on "welfare"
+        student.dynamics['welfare'][str(condition)] = {'condition': condition,
+                                                       'tree': tree}
+        # Leave welfare unchanged
+        identity = ProbabilityTree(IdentityMatrix('welfare'))
+        # Move "welfare" 20% closer to -1
+        diminish = ProbabilityTree(DiminishMatrix('welfare',value=-0.2))
+        # if I am object (i.e., person being punished), then diminish, else identity
+        tree.branch(makeIdentityPlane('object'),
+                    falseTree=identity,trueTree=diminish)
 
-        # Create goals for students
+        # Create "punish class" action
+        punishAll = Action({'actor':'self','type': 'punish class'})
+        teacher.actions.directAdd([punishAll])
+        # Create dynamics of "punish class"
+        tree = ProbabilityTree()
+        condition = ActionCondition()
+        condition.addCondition(punishAll['type'])
+        # Effect of "punish cass" on "welfare"
+        student.dynamics['welfare'][str(condition)] = {'condition': condition,
+                                                       'tree': tree}
+        # Leave welfare unchanged
+        identity = ProbabilityTree(IdentityMatrix('welfare'))
+        # Move "welfare" 20% closer to -1
+        diminish = ProbabilityTree(DiminishMatrix('welfare',value=-0.2))
+        # if I am a student (i.e., class member being punished), then diminish, else identity
+        plane = KeyedPlane(ClassRow(keys=[{'entity':'self','value':student.name}]),0.5)
+        tree.branch(plane,falseTree=identity,trueTree=diminish)
+
+        # Create goal for students to improve their own welfare
         goal = maxGoal(StateKey({'entity':'self','feature':'welfare'}))
         student.setGoalWeight(goal,1.,False)
-        # Create goals for teachers
+        # Create goal for students to decrease welfare of their victims
+        goal = minGoal(StateKey({'entity':'victim','feature':'welfare'}))
+        student.setGoalWeight(goal,1.,False)
+        # Create goals for teachers to improve their students' welfare
         goal = maxGoal(StateKey({'entity':'Student','feature':'welfare'}))
         teacher.setGoalWeight(goal,1.,False)
 
@@ -93,10 +134,12 @@ class TestPsychSim(unittest.TestCase):
                                         'Victor': student.name,
                                         'Otto': student.name,
                                         'Mrs Thompson': teacher.name})
+        scenario['Bill'].relationships['victim'] = ['Victor']
         scenario.applyDefaults()
         # Serialize turn-taking in desired order
         scenario.initializeOrder([[scenario['Bill']],[scenario['Otto']],
                                   [scenario['Mrs Thompson']]])
+        print scenario['Victor'].dynamics['welfare'].keys()
 
         #################
         # Run scenario
@@ -120,6 +163,16 @@ class TestPsychSim(unittest.TestCase):
         #################
         self.assertEqual(len(society),3)
         self.assertEqual(len(scenario),4)
+        # Verify action spaces
+        self.assertEqual(len(scenario['Bill'].actions.getOptions()),3)
+        self.assertEqual(len(scenario['Otto'].actions.getOptions()),3)
+        self.assertEqual(len(scenario['Victor'].actions.getOptions()),3)
+        self.assertEqual(len(scenario['Mrs Thompson'].actions.getOptions()),5)
+        # Verify goals
+        self.assertEqual(len(scenario['Bill'].goals),2)
+        self.assertEqual(len(scenario['Otto'].goals),1)
+        self.assertEqual(len(scenario['Victor'].goals),1)
+        self.assertEqual(len(scenario['Mrs Thompson'].goals),3)
 
 if __name__ == '__main__':
     unittest.main()
