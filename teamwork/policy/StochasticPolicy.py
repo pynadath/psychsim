@@ -14,7 +14,7 @@ class StochasticLookahead(LookaheadPolicy):
     # produce a behavior closer to uniform randomness
     beta = 1.
     
-    def execute(self,state,choices=[],debug=Debugger(),depth=-1):
+    def execute(self,state,choices=[],debug=None,depth=-1):
         """Returns a randomly selected action out of the available
         choices, with each action selected with a probability
         dependent on its relative expected value"""
