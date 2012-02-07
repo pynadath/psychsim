@@ -11,7 +11,7 @@ from teamwork.math.KeyedVector import KeyedVector,ClassRow,IdentityRow,\
 # dynamics matrices
 from teamwork.math.KeyedMatrix import IdentityMatrix,DiminishMatrix
 # dynamics hyperplanes
-from teamwork.math.KeyedTree import KeyedPlane,makeIdentityPlane
+from teamwork.math.KeyedTree import KeyedPlane,makePlane,makeIdentityPlane
 # probability distributions
 from teamwork.math.probability import Distribution
 # dynamics probabilistic trees
@@ -84,20 +84,43 @@ class TestPsychSim(unittest.TestCase):
         #####################
         # Hyperplane examples
         #####################
-        # if my welfare is positive (i.e., > 0)
-        plane = KeyedPlane(ThresholdRow(keys=[{'entity':'self','feature':'welfare'}]),0.0)
-        # if I am object of the action (i.e., person being picked on or punished)
-        # boolean test, so threshold of 0.5 is used by convention
-        plane = KeyedPlane(IdentityRow(keys=[{'entity': 'object','relationship':'equals'}]),0.5)
-        # if the actor is a teacher (boolean test)
-        plane = KeyedPlane(ClassRow(keys=[{'entity':'actor','value':teacher.name}]),0.5)
-        # if the object is my victim (boolean test)
-        plane = KeyedPlane(RelationshipRow(keys=[{'feature':'victim','relatee':'object'}]),0.5)
+        examples = {
+            # if my welfare is positive (i.e., > 0)
+            'threshold': {'class': ThresholdRow,
+                          'keys': [{'entity':'self','feature':'welfare'}],
+                          'threshold': 0.0},
+            # if I am object of the action (i.e., person being picked on)
+            # boolean test, so threshold of 0.5 is used by convention
+            'identity': {'class': IdentityRow,
+                         'keys': [{'entity': 'object','relationship':'equals'}],
+                         'threshold': 0.5},
+            # if the actor is a teacher (boolean test)
+            'class': {'class': ClassRow,
+                      'keys': [{'entity':'actor','value':teacher.name}],
+                      'threshold': 0.5},
+            # if the object is my victim (boolean test)
+            'relation': {'class': RelationshipRow,
+                         'keys': [{'feature':'victim','relatee':'object'}],
+                         'threshold': 0.5},
+            # if my welfare is significantly greater than my victim's
+            'diff': {'class': DifferenceRow,
+                     'keys': [{'entity': 'self','feature':'welfare'},
+                              {'entity':'victim','feature':'welfare'}],
+                     'threshold': 0.3}
+            }
+        # Iterate through examples using "makePlane" helper function
+        for label,args in examples.items():
+            plane = makePlane(args['class'],args['keys'],args['threshold'])
+        # Make a hyperplane without using any subclass helper
         # if my welfare is positive (in raw vector form: 1.0*my welfare > 0.)
         key = StateKey({'entity': 'self','feature': 'welfare'})
         plane = KeyedPlane(KeyedVector({key: 1.}),0.)
+        # Make a probabilistic branch
         # 75% chance of dimish, 25% of no change
         plane = Distribution({diminish: .75, identity: .25})
+        ##########################
+        # /Hyperplane examples
+        ##########################
 
         # if I am object (i.e., person being picked on), using helper function
         plane = makeIdentityPlane('object')
