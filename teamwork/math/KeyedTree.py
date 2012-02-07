@@ -812,6 +812,16 @@ def makeIdentityPlane(key):
 def makeBelongPlane(key):
     return KeyedPlane(KeyedVector({makeBelongKey(key):1.}),0.5)
 
+def makePlane(cls,keys,threshold):
+    """Helper function for making hyperplanes
+    @param cls: Python class of desired hyperplane (L{KeyedVector} or subclass)
+    @param keys: list of key arguments to pass to class construtor
+    @type keys: L{Key}[]
+    @param threshold: hyperplane threshold
+    @type threshold: float
+    """
+    return KeyedPlane(cls(keys=keys),threshold)
+
 if __name__ == '__main__':
     from KeyedVector import EqualRow
     plane1 = KeyedPlane(EqualRow(keys=[{'entity':'object','feature':'x'},
