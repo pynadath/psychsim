@@ -6,11 +6,16 @@ import unittest
 # keys for labeling state features
 from teamwork.math.Keys import StateKey
 # dynamics vectors
-from teamwork.math.KeyedVector import ClassRow
+from teamwork.math.KeyedVector import KeyedVector,ClassRow,IdentityRow,\
+    ThresholdRow,RelationshipRow
 # dynamics matrices
 from teamwork.math.KeyedMatrix import IdentityMatrix,DiminishMatrix
 # dynamics hyperplanes
 from teamwork.math.KeyedTree import KeyedPlane,makeIdentityPlane
+# probability distributions
+from teamwork.math.probability import Distribution
+# dynamics probabilistic trees
+from teamwork.math.ProbabilityTree import ProbabilityTree
 # generic class of entity
 from teamwork.agent.Generic import GenericModel
 # hierarchy of generic classes
@@ -19,8 +24,6 @@ from teamwork.multiagent.GenericSociety import GenericSociety
 from teamwork.multiagent.PsychAgents import PsychAgents
 # possible decisions of entities and left-hand side for rule
 from teamwork.action.PsychActions import Action,ActionCondition
-# PWL trees
-from teamwork.math.ProbabilityTree import ProbabilityTree
 # max/min goals for agents
 from teamwork.reward.goal import maxGoal,minGoal
 
@@ -77,9 +80,29 @@ class TestPsychSim(unittest.TestCase):
         identity = ProbabilityTree(IdentityMatrix('welfare'))
         # Move "welfare" 20% closer to -1
         diminish = ProbabilityTree(DiminishMatrix('welfare',value=-0.2))
-        # if I am object (i.e., person being picked on), then diminish, else identity
-        tree.branch(makeIdentityPlane('object'),
-                    falseTree=identity,trueTree=diminish)
+
+        #####################
+        # Hyperplane examples
+        #####################
+        # if my welfare is positive (i.e., > 0)
+        plane = KeyedPlane(ThresholdRow(keys=[{'entity':'self','feature':'welfare'}]),0.0)
+        # if I am object of the action (i.e., person being picked on or punished)
+        # boolean test, so threshold of 0.5 is used by convention
+        plane = KeyedPlane(IdentityRow(keys=[{'entity': 'object','relationship':'equals'}]),0.5)
+        # if the actor is a teacher (boolean test)
+        plane = KeyedPlane(ClassRow(keys=[{'entity':'actor','value':teacher.name}]),0.5)
+        # if the object is my victim (boolean test)
+        plane = KeyedPlane(RelationshipRow(keys=[{'feature':'victim','relatee':'object'}]),0.5)
+        # if my welfare is positive (in raw vector form: 1.0*my welfare > 0.)
+        key = StateKey({'entity': 'self','feature': 'welfare'})
+        plane = KeyedPlane(KeyedVector({key: 1.}),0.)
+        # 75% chance of dimish, 25% of no change
+        plane = Distribution({diminish: .75, identity: .25})
+
+        # if I am object (i.e., person being picked on), using helper function
+        plane = makeIdentityPlane('object')
+        # If I am object, then diminish, else identity
+        tree.branch(plane,falseTree=identity,trueTree=diminish)
 
         # Create "punish" action
         punish = Action({'actor':'self','type': 'punish','object':student.name})
@@ -106,7 +129,7 @@ class TestPsychSim(unittest.TestCase):
         tree = ProbabilityTree()
         condition = ActionCondition()
         condition.addCondition(punishAll['type'])
-        # Effect of "punish cass" on "welfare"
+        # Effect of "punish class" on "welfare"
         student.dynamics['welfare'][str(condition)] = {'condition': condition,
                                                        'tree': tree}
         # Leave welfare unchanged
@@ -139,7 +162,6 @@ class TestPsychSim(unittest.TestCase):
         # Serialize turn-taking in desired order
         scenario.initializeOrder([[scenario['Bill']],[scenario['Otto']],
                                   [scenario['Mrs Thompson']]])
-        print scenario['Victor'].dynamics['welfare'].keys()
 
         #################
         # Run scenario
