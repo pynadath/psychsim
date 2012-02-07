@@ -1,2 +1,2 @@
 #/bin/sh
-epydoc --html -n PsychSim "${1}"
+epydoc --html --exclude Thespian -n PsychSim "${1}"
