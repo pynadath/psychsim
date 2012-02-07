@@ -1,7 +1,6 @@
 from teamwork.agent.Entities import *
 from teamwork.multiagent.sequential import *
 from teamwork.multiagent.GenericSociety import *
-from teamwork.agent.DefaultBased import createEntity
 from teamwork.examples.InfoShare.PortClasses import *
 from teamwork.math.ProbabilityTree import *
 
@@ -21,7 +20,7 @@ class TestRecursiveAgent(unittest.TestCase):
                     name = '%s%d' % (cls,index)
                 else:
                     name = cls
-            entities.append(createEntity(cls,name,society,PsychEntity))
+            entities.append(society.instantiateEntity(cls,name))
         self.entities = SequentialAgents(entities)
         self.entities.applyDefaults()
         # Set up the spec of the desired test action

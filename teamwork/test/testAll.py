@@ -7,7 +7,7 @@ import unittest
 from teamwork.math.Keys import StateKey
 # dynamics vectors
 from teamwork.math.KeyedVector import KeyedVector,ClassRow,IdentityRow,\
-    ThresholdRow,RelationshipRow
+    ThresholdRow,RelationshipRow,DifferenceRow
 # dynamics matrices
 from teamwork.math.KeyedMatrix import IdentityMatrix,DiminishMatrix
 # dynamics hyperplanes

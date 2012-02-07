@@ -2,7 +2,6 @@ from teamwork.agent.Entities import *
 from teamwork.agent.Generic import *
 from teamwork.multiagent.sequential import *
 from teamwork.multiagent.GenericSociety import *
-from teamwork.agent.DefaultBased import createEntity
 from teamwork.examples.PSYOP.Society import *
 import unittest
 
@@ -21,7 +20,7 @@ class TestXML(unittest.TestCase):
                           }
         for cls,names in self.instances.items():
             for name in names:
-                entity = createEntity(cls,name,self.society,PsychEntity)
+                entity = self.society.instantiateEntity(cls,name)
                 entities.append(entity)
                 if cls in ['Turkomen','Kurds']:
                     entity.relationships = {'location':['NorthernIraq']}
