@@ -94,9 +94,9 @@ class USim_Proxy:
     @cvar abbreviations: mapping from verb full names to abbreviations
     @type abbreviations: strS{->}str
     @ivar root: data directory path
-    @ivar root: str
+    @type root: str
     @ivar scenarioName: the external reference label for the current scenario
-    @ivar scenarioName: str
+    @type scenarioName: str
     @ivar schema: optional XML validation schema (used only in testing)
     """
     epsilon = 0.0001

@@ -1073,7 +1073,8 @@ def comparePlaneSets(set1,set2,side,comparisons=None,
     Compares a conjunction of planes against a second conjunction of planes that has already been tested against.  It prunes the current conjunction based on any redundancy or inconsistency with the test
     @param set1: the plane set to be pruned
     @param set2: the plane set already tested
-    @type set1,set2: L{Hyperplane}[]
+    @type set1: L{Hyperplane}[]
+    @type set2: L{Hyperplane}[]
     @param side: the side of the second set that we're already guaranteed to be on
     @type side: boolean
     @return: The minimal set of planes in the first set that are not redundant given these a priori conditions (if guaranteed to be C{True} or C{False}, then the boolean value is returned)
@@ -1164,7 +1165,8 @@ def comparePlaneSets(set1,set2,side,comparisons=None,
 def generateComparisons(set1,set2):
     """Pre-computes a comparison matrix between two sets of planes
     @param set1,set2: the two sets of planes
-    @type set1,set2: L{Hyperplane}[]
+    @type set1: L{Hyperplane}[]
+    @type set2: L{Hyperplane}[]
     @return: a pairwise matrix of comparisons, indexed by the C{id} of each plane, so that C{result[id(p1)][id(p2)] = p1.compare(p2)}
     @rtype: str{}{}
     """

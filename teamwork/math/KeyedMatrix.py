@@ -95,8 +95,10 @@ class KeyedMatrix(dict):
             
     def set(self,row,col,value):
         """Sets an individual value in this matrix
-        @param row,col: the keys for this value's position
-        @type row,col: L{Key}
+        @param row: the key for this value's row
+        @param col: the key for this value's column
+        @type row: L{Key}
+        @type col: L{Key}
         @param value: the value to insert
         @type value: C{float}
         """

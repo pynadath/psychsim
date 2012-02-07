@@ -461,7 +461,8 @@ def blend(color1,color2,percentage):
     """
     Generates a color a given point between two extremes.  If the percentage is less than 0, then color1 is returned.  If over 1, then color2 is returned.
     @param color1,color2: the two colors representing the opposite ends of the spectrum
-    @type color1,color2: str
+    @type color1: str
+    @type color2: str
     @param percentage: the percentage of the spectrum between the two where this point is (0. represents color1, 1. represents color2)
     @type percentage: float
     @return: string RGB blending two colors (string RGB) by float percent

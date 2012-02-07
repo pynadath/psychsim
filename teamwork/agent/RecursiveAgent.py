@@ -1182,7 +1182,7 @@ def dictionaryDepth(beliefs,name):
     @type beliefs: dict
     @type name: str
     @return: the depth to which the named agent's beliefs are stored in the given belief dictionary
-    @rtype int:
+    @rtype: int
     """
     try:
         beliefs = beliefs[name]

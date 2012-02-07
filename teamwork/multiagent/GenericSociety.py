@@ -97,7 +97,8 @@ class GenericSociety(MultiagentSystem):
         """
         @param old: the current name of the member
         @param new: the new name of the member
-        @type old,new: str
+        @type old: str
+        @type new: str
         """
         try:
             # Maybe it's serial?

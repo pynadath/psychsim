@@ -197,7 +197,8 @@ class PWLPolicy(LookaheadPolicy):
         """
         @param depth: the recursive depth for the desired policy (default is maximum depth solved)
         @param horizon: the horizon for the desired policy (default is maximum horizon solved)
-        @type depth, horizon: int
+        @type depth: int
+        @type horizon: int
         @param create: if C{True}, then create an empty table if there is no existing policy for the specific parameters
         @type create: bool
         @return: a given policy table

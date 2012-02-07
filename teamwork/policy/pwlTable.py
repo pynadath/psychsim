@@ -1729,8 +1729,6 @@ class PWLTable:
         """
         One pass of value iteration over abstract state space.
         @warning: Currently works for only two agents (easy, but messy, to generalize)
-        @param rewards: C{rewards[name][state][action]} = the reward that agent C{name} gets in state C{state} (index form) derived from the performance of C{action}
-        @type rewards: strS{->}(strS{->}float)[]
         @return: the total change to the value function
         @rtype: float
         """
@@ -2226,8 +2224,6 @@ def getArrayRep(a,b,side=True):
 
 def solveTuple(a,b=None):
     """Solves a 2-dimensional vector for one of the variables
-    @param vector: ax + by
-    @type vector: L{KeyedVector}
     @return: -b/(a-b) if a!=b; otherwise, C{True} iff b>0
     @rtype: float or bool
     """
@@ -2241,8 +2237,10 @@ def solveTuple(a,b=None):
     
 def detectConflict(vector1,side1,vector2,side2):
     """Detects whether there is a conflict between two attribute-value pairs, where each attribute is a binary, 2-dimensional vector
-    @type side1,side2: bool
-    @type vector1,vector2: L{KeyedVector}
+    @type side1: bool
+    @type side2: bool
+    @type vector1: L{KeyedVector}
+    @type vector2: L{KeyedVector}
     @return: C{True} if there is a conflict
     """
     if len(vector1) == 2 and len(vector2) == 2:

@@ -511,8 +511,6 @@ class KeyedTree(DecisionTree):
         """Returns a more readable string version of this tree
         @param printLeaves: optional flag indicating whether the leaves should also be converted into a user-friendly string
         @type printLeaves: C{boolean}
-        @param numbers: if C{True}, floats are used to represent the threshold; otherwise, an automatically generated English representation (defaults to C{False})
-        @type numbers: boolean
         @rtype: C{str}
         """
         if self.isLeaf():
@@ -755,7 +753,8 @@ class KeyedTree(DecisionTree):
         """
         @param old: the current name of the entity
         @param new: the new name of the entity
-        @type old,new: str
+        @type old: str
+        @type new: str
         """
         if self.isLeaf():
             # Is there anything to do?  Right now, assume no
