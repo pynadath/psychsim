@@ -1,3 +1,5 @@
+from teamwork.math.Keys import *
+from teamwork.math.KeyedVector import *
 from teamwork.math.KeyedMatrix import *
 from teamwork.math.ProbabilityTree import *
 
