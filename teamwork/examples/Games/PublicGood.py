@@ -109,7 +109,7 @@ class DonateAction(Action):
                 return None
         return 1
         
-class PublicGoodAgents(TurnBasedAgents):
+class PublicGoodAgents(SequentialAgents):
     """Domain-specific class that sets up the game stages"""
 
     fixedNetwork = 1
