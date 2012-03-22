@@ -236,7 +236,7 @@ class GoalBasedAgent(RecursiveAgent):
             rule['values'][self.makeActionKey(myAction)] = value
         return R
 
-    def actionValue(self,actions,horizon=1,state=None,debug=False):
+    def actionValue(self,actions,horizon=1,state=None,debug=False,explain=False):
         """Compute the expected value of performing the given action
         @param actions: the actions whose effect we want to evaluate
         @type actions: L{Action}[]
@@ -251,16 +251,14 @@ class GoalBasedAgent(RecursiveAgent):
         if state is None:
             state = self.getAllBeliefs()
         start = {self.name:actions}
-        value,explanation = self.expectedValue(horizon=horizon,
-                                               start=start,
-                                               state=state,
-                                               goals=[self],
-                                               debug=debug)
+        value,explanation = self.expectedValue(horizon=horizon,start=start,
+                                               state=state,goals=[self],
+                                               debug=debug,explain=explain)
         value = value[self.name]
         return value,explanation
 
     def expectedValue(self,horizon=1,start={},goals=None,state=None,
-                      debug=False):
+                      debug=False,explain=False):
         """
         @param horizon: the horizon for the lookahead when computing the expected value
         @type horizon: C{int}
@@ -280,7 +278,7 @@ class GoalBasedAgent(RecursiveAgent):
             state = self.getAllBeliefs()
         # Lookahead
         sequence = self.multistep(horizon=horizon,start=start,
-                                  state=state,debug=debug)
+                                  state=state,debug=debug,explain=explain)
         value = {}
         expectation = {}
         if self.valueType == 'cumulative':
@@ -308,20 +306,6 @@ class GoalBasedAgent(RecursiveAgent):
                         expectation[entity.name] += breakdown
                     except KeyError:
                         expectation[entity.name] = breakdown
-#         # Compute average reward
-#         scale = float(len(sequence))
-#         for vector in expectation.values():
-#             vector *= 1./scale
-#         for key in value.keys():
-#             value[key] /= scale
-#         elif self.valueType == 'terminal':
-#             # Reward for only end state
-#             for delta in sequence[-1]
-#             for entity in goals:
-#                 reward,breakdown = entity.applyGoals(world=sequence[-1],
-#                                                      actions=sequence[-1]['action'])
-#                 value[entity.name] = reward
-#                 expectation[entity.name] = KeyedVector(breakdown)
         if debug:
             for name,reward in value.items():
                 print 'R[%s] = %s' % (name,str(reward))
@@ -558,25 +542,6 @@ class GoalBasedAgent(RecursiveAgent):
 #                     new *= 1./sum(new.getArray())
 #                     nodes.append({'observations': node['observations']+[omega],
 #                                   'horizon': node['horizon']-1,'belief': new})
-
-    def getNormalization(self,constant=False):
-        """
-        @param constant: if C{True}, include a column for the constant factor (which will be 1)
-        @type constant: bool
-        @return: the vector expressing the constraint that the goal weights sum to 1
-        @rtype: L{KeyedVector}
-        """
-        weights = KeyedVector()
-        for goal in self.getGoals():
-            key = goal.toKey()
-            if goal.isMax(): 
-                weights[key] = 1.
-            else:
-                weights[key] = -1.
-        if constant:
-            weights[keyConstant] = 1.
-        weights.freeze()
-        return weights
     
     def generateConstraints(self,desired,horizon=-1,state=None):
         """Computes a set of constraints on possible goal weights for this agent that, if satisfied, will cause the agent to prefer the desired action in the given state.  Each constraint is dictionary with the following elements:
@@ -897,12 +862,3 @@ class GoalBasedAgent(RecursiveAgent):
                         self.goals[goal] = weight
                     node = node.nextSibling
             child = child.nextSibling
-            
-if __name__ == '__main__':
-    from teamwork.test.agent.testRecursiveAgent import TestRecursiveAgentIraq
-    from unittest import TestResult
-    case = TestRecursiveAgentIraq('testValueAttack')
-    result = TestResult()
-    case(result)
-    for failure in result.errors+result.failures:
-        print failure[1]

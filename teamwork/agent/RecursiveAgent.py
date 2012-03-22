@@ -636,7 +636,7 @@ class RecursiveAgent(Agent):
     
     # Handle the effects of actions on state
 
-    def multistep(self,horizon=1,start={},state=None,window=True,debug=None):
+    def multistep(self,horizon=1,start={},state=None,window=True,debug=None,explain=False):
         """Steps this entity the specified number of steps into the future (where a step is one entity performing its policy-specified action)
         @param state: the world state to evaluate the actions in (defaults to current world state)
         @type state: L{Distribution}(L{KeyedVector})
@@ -675,9 +675,9 @@ class RecursiveAgent(Agent):
                 # Apply these entities' actions
                 if window:
                     result = self.step(actDict=entityDict,state=current,
-                                       horizon=horizon-t,debug=debug)
+                                       horizon=horizon-t,debug=debug,explain=explain)
                 else:
-                    result = self.step(actDict=entityDict,state=current,debug=debug)
+                    result = self.step(actDict=entityDict,state=current,debug=debug,explain=explain)
                 for delta in result:
                     if delta['probability'] > 1e-8:
                         delta['result'] = copy.deepcopy(current)
@@ -697,7 +697,7 @@ class RecursiveAgent(Agent):
             else:
                 pass
         
-    def step(self,actDict,state=None,horizon=None,debug=False):
+    def step(self,actDict,state=None,horizon=None,debug=False,explain=False):
         """Modifies the current entity in response to the
         policy-driven actions selected by the provided dictionary of
         entities.
@@ -715,7 +715,7 @@ class RecursiveAgent(Agent):
         for name,options in actDict.items():
             if debug:
                 print self.name,'predicting',name
-            action,exp = self.predict(name,options,state,horizon,debug)
+            action,exp = self.predict(name,options,state,horizon,debug,explain)
             if action:
                 if debug:
                     print '\t%s expects %s to %s' % \
@@ -738,7 +738,7 @@ class RecursiveAgent(Agent):
         else:
             return []
 
-    def predict(self,actor,options,state=None,horizon=None,debug=False):
+    def predict(self,actor,options,state=None,horizon=None,debug=False,explain=False):
         """Generates an expected action for the specified actor, considering the given options, in the given state of belief
         """
         try:
@@ -751,14 +751,14 @@ class RecursiveAgent(Agent):
             if isinstance(options[0],list):
                 # Set of possible actions to choose from
                 return entity.applyPolicy(state=state[actor],actions=options,
-                                          horizon=horizon,debug=debug)
+                                          horizon=horizon,debug=debug,explain=explain)
             else:
                 # A single action for you to do
                 return options,{'forced':True,'decision':options}
         elif entity:
             # Unconstrained set of possible actions
             beliefs = state[actor]
-            return entity.applyPolicy(state=beliefs,horizon=horizon,debug=debug)
+            return entity.applyPolicy(state=beliefs,horizon=horizon,debug=debug,explain=explain)
         else:
             return None,{}
 

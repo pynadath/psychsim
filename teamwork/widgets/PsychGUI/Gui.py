@@ -549,7 +549,8 @@ class GuiShell(PsychShell,Pmw.MegaWidget):
         
     def renameAgent(self,old,new):
         """Changes the name and references to a given agent
-        @type old,new: str
+        @type old: str
+        @type new: str
         """
         # Update name in generic society
         self.classes.renameEntity(old,new)
