@@ -56,7 +56,7 @@ class JiveTalkingAAR(InnerWindow):
                                       )
 
         sb=Scrollbar(widget.master)
-        sb.pack(side=RIGHT, fill=Y)
+        sb.pack(side='right', fill='y')
         widget.configure(yscrollcommand=sb.set)
         sb.configure(command=widget.yview)
 
@@ -382,9 +382,15 @@ class JiveTalkingAAR(InnerWindow):
                 if model:
                     label += '[%s] ' % (model)
                 label += '%s (prob=%d%%)' % (actionString(option),100*prob)
-                actNode = subNode.addChild(self.component('Tree'),
-                                 label=label,isLeaf=False)
-                self.addEffect(subChild,actNode,delta=False)
+                actNode = subNode.addChild(self.component('Tree'),label=label,isLeaf=False)
+                grandChild = subChild.firstChild
+                while not grandChild is None:
+                    if grandChild.nodeType == grandChild.ELEMENT_NODE and \
+                            grandChild.tagName == 'explanation':
+                        self.addExplanation(name,grandChild,actNode,t+step)
+                        break
+                    grandChild = grandChild.nextSibling
+#                self.addEffect(subChild,actNode,delta=False)
             subChild = subChild.nextSibling
 
     def addGoals(self,label,node,subset,goals):

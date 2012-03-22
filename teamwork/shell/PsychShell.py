@@ -736,12 +736,6 @@ if __name__ == '__main__':
     import getopt
     import sys
 
-    try:
-        import psyco
-        psyco.full()
-    except ImportError:
-        print 'Unable to find psyco module for maximum speed'
-
     script = None
     scenario = None
     society = None

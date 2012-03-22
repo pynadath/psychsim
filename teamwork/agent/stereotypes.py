@@ -196,7 +196,7 @@ class Stereotyper(GoalBasedAgent):
             debug.message(7,'Model change: '+best['model'])
             return best
 
-    def step(self,actDict,state=None,horizon=None,debug=False):
+    def step(self,actDict,state=None,horizon=None,debug=False,explain=False):
         """Projects a single step, considering uncertainty over mental models of any agents who are acting in this step
         """
         result = []
@@ -230,7 +230,7 @@ class Stereotyper(GoalBasedAgent):
                 except KeyError:
                     uncached.append((name,model))
             step = GoalBasedAgent.step(self,actDict=actions,state=state,
-                                       horizon=horizon,debug=debug)
+                                       horizon=horizon,debug=debug,explain=explain)
             if step:
                 branch = step[0]
                 # Cache expected decisions
