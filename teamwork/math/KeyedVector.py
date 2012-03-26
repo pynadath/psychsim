@@ -612,6 +612,9 @@ class DeltaRow(KeyedVector):
                 if len(delta) > 1:
                     raise UserWarning,'Unable to instantiate ambiguous %s: %s' \
                           % (self.__class__.__name__,self.simpleText())
+                elif len(delta) == 0:
+                    raise NameError,'No instantiations for %s: %s' \
+                          % (self.__class__.__name__,self.simpleText())
                 else:
                     delta = delta[0]
             value = self[self.deltaKey]
