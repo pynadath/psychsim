@@ -385,12 +385,13 @@ class JiveTalkingAAR(InnerWindow):
                 actNode = subNode.addChild(self.component('Tree'),label=label,isLeaf=False)
                 grandChild = subChild.firstChild
                 while not grandChild is None:
-                    if grandChild.nodeType == grandChild.ELEMENT_NODE and \
-                            grandChild.tagName == 'explanation':
-                        self.addExplanation(name,grandChild,actNode,t+step)
-                        break
+                    if grandChild.nodeType == grandChild.ELEMENT_NODE:
+                        if grandChild.tagName == 'explanation':
+                            self.addExplanation(name,grandChild,actNode,t+step)
+                        elif grandChild.tagName == 'state':
+                            effect = self.findNode('Effect',actNode)
+                            self.addStateEffect(grandChild,effect)
                     grandChild = grandChild.nextSibling
-#                self.addEffect(subChild,actNode,delta=False)
             subChild = subChild.nextSibling
 
     def addGoals(self,label,node,subset,goals):
@@ -421,31 +422,7 @@ class JiveTalkingAAR(InnerWindow):
         child = element.firstChild
         while child:
             if child.tagName == 'state':
-                # Describe the effect on the state
-                elements = child.getElementsByTagName('distribution')
-                assert len(elements) == 1
-                distribution = Distribution()
-                distribution.parse(elements[0],KeyedVector)
-                if len(distribution) > 1:
-                    for row,prob in distribution.items():
-                        subNode = node.addChild(widget,label='with probability %5.3f' % (prob))
-                        for key,value in row.items():
-                            if value > 0.0:
-                                label = '%s increases by %5.3f' % (str(key),value)
-                                subNode.addChild(widget,label=label,isLeaf=True)
-                            elif value < 0.0:
-                                subNode.addChild(widget,label='%s decreases by %5.3f' % (str(key),-value),isLeaf=True)
-                        if len(subNode['children']) == 0:
-                            subNode.addChild(widget,label='no change',isLeaf=True)
-                else:
-                    row = distribution.expectation()
-                    for key,value in row.items():
-                        if value > 0.0:
-                            node.addChild(widget,label='%s increases by %5.3f' % (str(key),value),isLeaf=True)
-                        elif value < 0.0:
-                            node.addChild(widget,label='%s decreases by %5.3f' % (str(key),-value),isLeaf=True)
-                    if len(node['children']) == 0:
-                        node.addChild(widget,label='no change',isLeaf=True)
+                self.addStateEffect(child,node)
             elif child.tagName == 'hearer':
                 name = str(child.getAttribute('agent'))
                 isLeaf=False
@@ -468,6 +445,35 @@ class JiveTalkingAAR(InnerWindow):
                     subNode.addChild(widget,label=label,isLeaf=True)
                     subChild = subChild.nextSibling
             child = child.nextSibling
+
+    def addStateEffect(self,effect,parent):
+        """Describe the effect on the state
+        """
+        widget = self.component('Tree')
+        elements = effect.getElementsByTagName('distribution')
+        assert len(elements) == 1
+        distribution = Distribution()
+        distribution.parse(elements[0],KeyedVector)
+        if len(distribution) > 1:
+            for row,prob in distribution.items():
+                subNode = parent.addChild(widget,label='with probability %5.3f' % (prob))
+                for key,value in row.items():
+                    if value > 0.0:
+                        label = '%s increases by %5.3f' % (str(key),value)
+                        subNode.addChild(widget,label=label,isLeaf=True)
+                    elif value < 0.0:
+                        subNode.addChild(widget,label='%s decreases by %5.3f' % (str(key),-value),isLeaf=True)
+                if len(subNode['children']) == 0:
+                    subNode.addChild(widget,label='no change',isLeaf=True)
+        else:
+            row = distribution.expectation()
+            for key,value in row.items():
+                if value > 0.0:
+                    parent.addChild(widget,label='%s increases by %5.3f' % (str(key),value),isLeaf=True)
+                elif value < 0.0:
+                    parent.addChild(widget,label='%s decreases by %5.3f' % (str(key),-value),isLeaf=True)
+            if len(parent['children']) == 0:
+                parent.addChild(widget,label='no change',isLeaf=True)
 
     def confirmAction(self,name,event,agent,option,step):
         msg = 'Would you like to confirm this decision as the desired one?  '\
