@@ -4,12 +4,14 @@ Test case that also illustrates basic operation of the PsychSim API
 import unittest
 
 # keys for labeling state features
-from teamwork.math.Keys import StateKey
+from teamwork.math.Keys import StateKey,keyConstant
 # dynamics vectors
 from teamwork.math.KeyedVector import KeyedVector,ClassRow,IdentityRow,\
     ThresholdRow,RelationshipRow,DifferenceRow
 # dynamics matrices
-from teamwork.math.KeyedMatrix import IdentityMatrix,DiminishMatrix
+from teamwork.math.KeyedMatrix import IdentityMatrix,DiminishMatrix,\
+    IncrementMatrix,ScaleMatrix,SetToConstantMatrix,SetToFeatureMatrix,\
+    SetToFeaturePlusMatrix,SetToDiffMatrix
 # dynamics hyperplanes
 from teamwork.math.KeyedTree import KeyedPlane,makePlane,makeIdentityPlane
 # probability distributions
@@ -116,7 +118,7 @@ class TestPsychSim(unittest.TestCase):
         key = StateKey({'entity': 'self','feature': 'welfare'})
         plane = KeyedPlane(KeyedVector({key: 1.}),0.)
         # Make a probabilistic branch
-        # 75% chance of dimish, 25% of no change
+        # 75% chance of diminish, 25% of no change
         plane = Distribution({diminish: .75, identity: .25})
         ##########################
         # /Hyperplane examples
@@ -162,6 +164,46 @@ class TestPsychSim(unittest.TestCase):
         # if I am a student (i.e., class member being punished), then diminish, else identity
         plane = KeyedPlane(ClassRow(keys=[{'entity':'self','value':student.name}]),0.5)
         tree.branch(plane,falseTree=identity,trueTree=diminish)
+
+        ##########################
+        # Matrix examples
+        ##########################
+        # Leave feature unchanged
+        # w' = w
+        matrix = IdentityMatrix('welfare')
+        # Change by constant amount
+        # w' = w - 0.1
+        matrix = IncrementMatrix('welfare',value=-0.1)
+        # Change by percentage of other feature
+        # w' = w - 25% of actor's welfare
+        matrix = ScaleMatrix('welfare',StateKey({'entity': 'actor',
+                                                 'feature': 'welfare'}),-0.25)
+        # Approach 1/-1 by a percentage of distance
+        # w' = w + 20% of (1-w)
+        matrix = DiminishMatrix('welfare',value=0.2)
+        # Set to a fixed value
+        # w' = 1
+        matrix = SetToConstantMatrix('welfare',value=1.)
+        # Set to a percentage of some other feature's value
+        # w' = actor's welfare
+        matrix = SetToFeatureMatrix('welfare',StateKey({'entity':'actor',
+                                                        'feature':'welfare'}),1.)
+        # Set to a percentage of some other feature's value plus fixed delta
+        # w' = actor's welfare - 0.1
+        matrix = SetToFeaturePlusMatrix('welfare',
+                                        [StateKey({'entity':'actor',
+                                                   'feature':'welfare'}),
+                                         keyConstant],value=[1.,-0.1])
+        # Set to a weighted difference of two features' values
+        # w' = actor's welfare - object's welfare
+        matrix = SetToDiffMatrix('welfare',[StateKey({'entity':'actor',
+                                                      'feature':'welfare'}),
+                                            StateKey({'entity':'object',
+                                                      'feature':'welfare'})],
+                                 value=[1.,1.])
+        ##########################
+        # /Matrix examples
+        ##########################
 
         # Create goal for students to improve their own welfare
         goal = maxGoal(StateKey({'entity':'self','feature':'welfare'}))
