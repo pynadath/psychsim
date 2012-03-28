@@ -10,3 +10,4 @@ The test suite also includes a U{use case of the API<http://pynadath.net:81/psyc
 
 The central multiagent simulation class is L{PsychAgents<teamwork.multiagent.PsychAgents.PsychAgents>}.
 """
+__all__ = ['action','agent','dynamics','examples','images','math','multiagent','policy','reward','shell','widgets']

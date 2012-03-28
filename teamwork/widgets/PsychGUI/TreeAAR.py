@@ -1,3 +1,4 @@
+from functools import partial
 import string
 from Tkinter import *
 import tkMessageBox
@@ -185,8 +186,9 @@ class JiveTalkingAAR(InnerWindow):
                             node['label'] = label + ' (forced)'
                             node['isLeaf'] = True
                         else:
-                            node['action'] = lambda n,e,s=self,a=name,o=option,\
-                                          t=index:s.confirmAction(n,e,a,o,t)
+                            node['action'] = partial(self.confirmAction,
+                                                     agent=name,option=option,
+                                                     step=index)
                     elif child.tagName == 'explanation':
                         self.addExplanation(name,child,node,index)
                     elif child.tagName == 'suggestions':
@@ -233,22 +235,6 @@ class JiveTalkingAAR(InnerWindow):
                 option.append(action)
             child = child.nextSibling
         self['fitCommand'](agent,option,step-1)
-        
-    def actionMenu(self,event,args):
-        menu = Menu(self.component('frame'),tearoff=0)
-        label = string.join(map(str,args['decision']),', ')
-        menu.add_command(label='%s is correct' % (label),
-                         command=lambda s=self,a=args['decision'],i=args:\
-                         s['fitCommand'](a,i))
-        if len(args['agent'].actions.getOptions()) > 1:
-            menu.add_separator()
-            for action in args['agent'].actions.getOptions():
-                if action != args['decision']:
-                    menu.add_command(label=string.join(map(str,action),', '),
-                                     command=lambda s=self,a=action,i=args:\
-                                     s['fitCommand'](a,i))
-        menu.bind("<Leave>",self.unpost)
-        menu.post(event.x_root, event.y_root)        
 
     def sendMenu(self,event,args):
         menu = Menu(self.component('frame'),tearoff=0)

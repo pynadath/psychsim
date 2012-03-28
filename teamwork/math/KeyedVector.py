@@ -605,7 +605,6 @@ class DeltaRow(KeyedVector):
                     (self.__class__.__name__,self.simpleText())
             delta = map(lambda l: l[0],delta)
             value = map(lambda k: self[k],self.deltaKey)
-#            value = self[self.deltaKey[0]]
         else:
             delta = self.deltaKey.instantiate(table)
             if isinstance(delta,list):
