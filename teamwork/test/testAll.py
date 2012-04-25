@@ -4,7 +4,7 @@ Test case that also illustrates basic operation of the PsychSim API
 import unittest
 
 # keys for labeling state features
-from teamwork.math.Keys import StateKey,keyConstant
+from teamwork.math.Keys import StateKey,ObservationKey,keyConstant
 # dynamics vectors
 from teamwork.math.KeyedVector import KeyedVector,ClassRow,IdentityRow,\
     ThresholdRow,RelationshipRow,DifferenceRow
@@ -215,6 +215,10 @@ class TestPsychSim(unittest.TestCase):
         goal = maxGoal(StateKey({'entity':'Student','feature':'welfare'}))
         teacher.setGoalWeight(goal,1.,False)
 
+        # Observation if the teacher hears laughter but nothing else
+        key = ObservationKey({'type': 'laughter'})
+        teacher.omega[key] = True
+
         #################
         # Create scenario
         #################
@@ -260,6 +264,11 @@ class TestPsychSim(unittest.TestCase):
         self.assertEqual(len(scenario['Otto'].goals),1)
         self.assertEqual(len(scenario['Victor'].goals),1)
         self.assertEqual(len(scenario['Mrs Thompson'].goals),3)
+        # Verify observations
+        self.assertEqual(len(scenario['Bill'].omega),2)
+        self.assertEqual(len(scenario['Otto'].omega),2)
+        self.assertEqual(len(scenario['Victor'].omega),2)
+        self.assertEqual(len(scenario['Mrs Thompson'].omega),3)
 
 if __name__ == '__main__':
     unittest.main()
