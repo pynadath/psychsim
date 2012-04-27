@@ -1,3 +1,7 @@
+from xml.dom.minidom import Document
+
+from pwl import KeyedVector
+
 class Distribution(dict):
     """
     A probability distribution
@@ -82,3 +86,71 @@ class Distribution(dict):
                 else:
                     total += key*value
             return total
+        
+    def __xml__(self):
+        """
+        @return: An XML Document object representing this distribution
+        """
+        doc = Document()
+        root = doc.createElement('distribution')
+        doc.appendChild(root)
+        for key,value in self._domain.items():
+            prob = dict.__getitem__(self,key)
+            node = doc.createElement('entry')
+            root.appendChild(node)
+            node.setAttribute('probability',str(prob))
+            if key != str(value):
+                node.setAttribute('key',key)
+            if isinstance(value,str):
+                node.setAttribute('key',key)
+            else:
+                node.appendChild(self.element2xml(value))
+        return doc
+
+    def element2xml(self,value):
+        raise NotImplementedError,'Unable to generate XML for distributions over %s' % (value.__class__.__name__)
+
+    def parse(self,element,valueClass=None):
+        """Extracts the distribution from the given XML element
+        @param element: The XML Element object specifying the distribution
+        @type element: Element
+        @param valueClass: The class used to generate the domain values for this distribution
+        @return: This L{Distribution} object"""
+        assert element.tagName == 'distribution'
+        self.clear()
+        node = element.firstChild
+        while node:
+            if node.nodeType == node.ELEMENT_NODE:
+                prob = float(node.getAttribute('probability'))
+                key = str(node.getAttribute('key'))
+                subNode = node.firstChild
+                while subNode and subNode.nodeType != subNode.ELEMENT_NODE:
+                    subNode = subNode.nextSibling
+                value = self.xml2element(key,subNode)
+                if not key:
+                    key = str(value)
+                dict.__setitem__(self,key,prob)
+                self._domain[key] = value
+            node = node.nextSibling
+
+    def xml2element(self,key,node):
+        return key
+
+class VectorDistribution(Distribution):
+
+    def join(self,key,value):
+        if isinstance(value,Distribution):
+            raise NotImplementedError,'Wait for it'
+        else:
+            for row in self.domain():
+                prob = self[row]
+                del self[row]
+                row[key] = value
+                self[row] = prob
+
+    def element2xml(self,value):
+        return value.__xml__().documentElement
+
+    def xml2element(self,key,node):
+        return KeyedVector(node)
+

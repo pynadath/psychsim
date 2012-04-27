@@ -1,12 +1,17 @@
 """
 Class and function definitions for PieceWise Linear (PWL) representations
 """
+from xml.dom.minidom import Document,Node
 
 class KeyedVector(dict):
     epsilon = 1e-8
 
     def __init__(self,arg={}):
-        dict.__init__(self,arg)
+        if isinstance(arg,Node):
+            dict.__init__(self)
+            self.parse(arg)
+        else:
+            dict.__init__(self,arg)
         self._string = None
         
     def __eq__(self,other):
@@ -73,6 +78,34 @@ class KeyedVector(dict):
 
     def __hash__(self):
         return hash(str(self))
+
+    def __xml__(self):
+        doc = Document()
+        root = doc.createElement('vector')
+        for key,value in self.items():
+            node = doc.createElement('entry')
+            if key is None:
+                node.setAttribute('key','')
+            else:
+                node.setAttribute('key',key)
+            node.setAttribute('value',str(value))
+            root.appendChild(node)
+        doc.appendChild(root)
+        return doc
+
+    def parse(self,element):
+        self._string = None
+        node = element.firstChild
+        while node:
+            if node.nodeType == node.ELEMENT_NODE:
+                assert node.tagName == 'entry'
+                key = str(node.getAttribute('key'))
+                value = float(node.getAttribute('value'))
+                if key:
+                    dict.__setitem__(self,key,value)
+                else:
+                    dict.__setitem__(self,None,value)
+            node = node.nextSibling
 
 class KeyedMatrix(dict):
     def __init__(self,arg={}):
