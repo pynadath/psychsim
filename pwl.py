@@ -3,6 +3,8 @@ Class and function definitions for PieceWise Linear (PWL) representations
 """
 from xml.dom.minidom import Document,Node
 
+CONSTANT = ''
+
 class KeyedVector(dict):
     epsilon = 1e-8
 
@@ -84,10 +86,7 @@ class KeyedVector(dict):
         root = doc.createElement('vector')
         for key,value in self.items():
             node = doc.createElement('entry')
-            if key is None:
-                node.setAttribute('key','')
-            else:
-                node.setAttribute('key',key)
+            node.setAttribute('key',key)
             node.setAttribute('value',str(value))
             root.appendChild(node)
         doc.appendChild(root)
@@ -101,10 +100,7 @@ class KeyedVector(dict):
                 assert node.tagName == 'entry'
                 key = str(node.getAttribute('key'))
                 value = float(node.getAttribute('value'))
-                if key:
-                    dict.__setitem__(self,key,value)
-                else:
-                    dict.__setitem__(self,None,value)
+                dict.__setitem__(self,key,value)
             node = node.nextSibling
 
 class KeyedMatrix(dict):

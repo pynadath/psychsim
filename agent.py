@@ -1,5 +1,7 @@
 import copy
+import random
 from xml.dom.minidom import Document,Node
+
 from action import Action,ActionSet
 
 class Agent:
@@ -14,6 +16,10 @@ class Agent:
             self.parse(name)
         else:
             self.name = name
+
+    def decide(self,vector):
+        result = {'action': random.sample(self.actions,1)[0]}
+        return result
 
     def setState(self,feature,value):
         self.world.setState(self.name,feature,value)
