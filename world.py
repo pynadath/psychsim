@@ -3,12 +3,16 @@ import copy
 from xml.dom.minidom import Document,Node,parseString
 
 from probability import VectorDistribution
-from pwl import KeyedVector,KeyedMatrix,CONSTANT
-from action import ActionSet
+from pwl import KeyedVector,KeyedMatrix,KeyedTree,CONSTANT
+from action import ActionSet,Action
 from agent import Agent
 
 class World:
     def __init__(self,xml=None):
+        """
+        @param xml: Initialization argument, either an XML Element, or a filename
+        @type xml: Node or str
+        """
         self.agents = {}
         self.state = VectorDistribution()
         self.features = {}
@@ -51,9 +55,11 @@ class World:
             # Determine the actions taken by the agents in this world
             turn = copy.copy(actions)
             for name in self.next(stateVector):
-                if not actions.has_key(name):
+                if not turn.has_key(name):
                     decision = self.agents[name].decide(stateVector)
                     turn[name] = decision['action']
+                elif isinstance(turn[name],Action):
+                    turn[name] = ActionSet([turn[name]])
             outcomes.append({'original': stateVector,
                              'actions': turn,
                              'probability': prob,
@@ -72,17 +78,43 @@ class World:
     def deltaState(self,actions,vector):
         result = KeyedMatrix()
         for entity,table in self.features.items():
-            for feature,domain in table.items():
-                if self.dynamics.has_key(entity) and self.dynamics[entity].has_key(feature):
-                    key = stateKey(entity,feature)
-                    table = self.dynamics[entity][feature]
-                    vector = KeyedVector()
-                    if domain is float:
-                        vector[key] = 1.
-                    elif domain is int:
-                        vector[key] = 1
-                    result[key] = vector
+            for feature,entry in table.items():
+                dynamics = self.getDynamics(entry['key'],actions)
+                if dynamics:
+                    assert len(dynamics) == 1,'Unable to merge multiple effects'
+                    tree = dynamics[0]
+                    delta = tree[vector][entry['key']]
+                else:
+                    delta = KeyedVector()
+                    if entry['domain'] is float:
+                        delta[entry['key']] = 1.
+                    elif entry['domain'] is int:
+                        delta[entry['key']] = 1
+                result[entry['key']] = delta
         return result
+
+    def setDynamics(self,entity,feature,action,tree):
+        key = stateKey(entity,feature)
+        if not self.dynamics.has_key(key):
+            self.dynamics[key] = {}
+        self.dynamics[key][action] = tree
+
+    def getDynamics(self,key,action):
+        if not self.dynamics.has_key(key):
+            return []
+        if not isinstance(action,Action) and isinstance(action,dict):
+            # Table of actions by multiple agents
+            action = ActionSet(reduce(set.union,action.values(),set()))
+        try:
+            return [self.dynamics[key][action]]
+        except KeyError:
+            dynamics = []
+            for atom in action:
+                try:
+                    dynamics.append(self.dynamics[key][atom])
+                except KeyError:
+                    pass
+            return dynamics
 
     def setOrder(self,order):
         for index in range(len(order)):
@@ -125,7 +157,7 @@ class World:
     def defineState(self,entity,feature,domain=float,lo=-1.,hi=1.):
         if not self.features.has_key(entity):
             self.features[entity] = {}
-        self.features[entity][feature] = {'domain': domain,'lo': lo,'hi': hi}
+        self.features[entity][feature] = {'domain': domain,'lo': lo,'hi': hi,'key': stateKey(entity,feature)}
 
     def setState(self,entity,feature,value):
         """
@@ -163,6 +195,17 @@ class World:
                     subnode.setAttribute('hi',str(entry['hi']))
                 node.appendChild(subnode)
         root.appendChild(node)
+        # Dynamics
+        node = doc.createElement('dynamics')
+        for key,table in self.dynamics.items():
+            subnode = doc.createElement('table')
+            subnode.setAttribute('key',key)
+            for action,tree, in table.items():
+                subnode.appendChild(action.__xml__().documentElement)
+                subnode.appendChild(tree.__xml__().documentElement)
+            node.appendChild(subnode)
+        root.appendChild(node)
+        # Event history
         node = doc.createElement('history')
         for entry in self.history:
             subnode = doc.createElement('entry')
@@ -194,26 +237,42 @@ class World:
                                 feature = str(subnode.firstChild.data).strip()
                                 domain = str(subnode.getAttribute('domain'))
                                 lo = str(subnode.getAttribute('lo'))
-                                if not lo:
-                                    lo = None
+                                if not lo: lo = None
                                 hi = str(subnode.getAttribute('hi'))
-                                if not hi:
-                                    hi = None
+                                if not hi: hi = None
                                 if domain == 'int':
                                     domain = int
-                                    if lo:
-                                        lo = int(lo)
-                                    if hi:
-                                        hi = int(hi)
+                                    if lo: lo = int(lo)
+                                    if hi: hi = int(hi)
                                 elif subnode.getAttribute('domain') == 'float':
                                     domain = float
-                                    if lo:
-                                        lo = float(lo)
-                                    if hi:
-                                        hi = float(hi)
+                                    if lo: lo = float(lo)
+                                    if hi: hi = float(hi)
                                 else:
                                     raise TypeError,'Unknown feature domain type: %s' % (domain)
                                 self.defineState(entity,feature,domain,lo,hi)
+                        subnode = subnode.nextSibling
+                elif node.tagName == 'dynamics':
+                    subnode = node.firstChild
+                    while subnode:
+                        if subnode.nodeType == subnode.ELEMENT_NODE:
+                            assert subnode.tagName == 'table'
+                            key = str(subnode.getAttribute('key'))
+                            self.dynamics[key] = {}
+                            subsubnode = subnode.firstChild
+                            action = None
+                            while subsubnode:
+                                if subsubnode.nodeType == subsubnode.ELEMENT_NODE:
+                                    if subsubnode.tagName == 'action':
+                                        assert action is None
+                                        action = Action(subsubnode)
+                                    elif subsubnode.tagName == 'tree':
+                                        assert not action is None
+                                        self.dynamics[key][action] = KeyedTree(subsubnode)
+                                        action = None
+                                    else:
+                                        raise NameError,'Unknown dynamics element: %s' % (subsubnode.tagName)
+                                subsubnode = subsubnode.nextSibling
                         subnode = subnode.nextSibling
                 elif node.tagName == 'history':
                     subnode = node.firstChild
