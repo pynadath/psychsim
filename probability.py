@@ -41,6 +41,10 @@ class Distribution(dict):
         dict.__delitem__(self,key)
         del self._domain[key]
 
+    def clear(self):
+        dict.clear(self)
+        self._domain.clear()
+
     def replace(self,old,new):
         """Replaces on element in the sample space with another.  Raises an exception if the original element does not exist, and an exception if the new element already exists (i.e., does not do a merge)
         """

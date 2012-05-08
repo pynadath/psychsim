@@ -74,7 +74,7 @@ class KeyedVector(dict):
 
     def __str__(self):
         if self._string is None:
-            self._string = '+'.join(map(lambda item: '%s*%s' % (item[1],item[0]),
+            self._string = '+'.join(map(lambda item: '%s(%s)' % item,
                                          self.items()))
         return self._string
 
@@ -162,13 +162,12 @@ class KeyedMatrix(dict):
         elif isinstance(other,KeyedVector):
             result = KeyedVector()
             for r1,v1 in self.items():
-                result[r1] = KeyedVector()
                 for c1,value1 in v1.items():
-                    for c2,value2 in other.items():
+                    if other.has_key(c1):
                         try:
-                            result[r1] += value1*value2
+                            result[r1] += value1*other[c1]
                         except KeyError:
-                            result[r1] = value1*value2
+                            result[r1] = value1*other[c1]
         else:
             raise TypError,'Unable to multiply %s by %s' % \
                 (self.__class__.__name__,other.__class__.__name__)
