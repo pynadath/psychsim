@@ -67,6 +67,14 @@ class World:
                              })
         if not hypothetical:
             # Apply effects
+            state.clear()
+            for outcome in outcomes:
+                outcome['new'] = outcome['effect']*outcome['original']
+                try:
+                    state[outcome['new']] += outcome['probability']
+                except KeyError:
+                    state[outcome['new']] = outcome['probability']
+                outcome['delta'] = outcome['new'] - outcome['original']
             self.history.append(outcomes)
         return outcomes
 
@@ -214,6 +222,7 @@ class World:
                 for name in self.agents.keys():
                     if outcome['actions'].has_key(name):
                         subsubnode.appendChild(outcome['actions'][name].__xml__().documentElement)
+                subsubnode.appendChild(outcome['delta'].__xml__().documentElement)
                 subnode.appendChild(subsubnode)
             node.appendChild(subnode)
         root.appendChild(node)
@@ -293,6 +302,8 @@ class World:
                                                 for action in option:
                                                     outcome['actions'][action['subject']] = option
                                                     break
+                                            elif element.tagName == 'vector':
+                                                outcome['delta'] = KeyedVector(element)
                                         element = element.nextSibling
                                     entry.append(outcome)
                                 subsubnode = subsubnode.nextSibling

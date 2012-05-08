@@ -293,7 +293,7 @@ class PWLAgent(Agent):
                                    debug=debug,explain=explain)
 ##                                   entities=entities,cache=cache)
     
-    def actionValue(self,actions,horizon=1,state=None,debug=False):
+    def actionValue(self,actions,horizon=1,state=None,debug=False,explain=False):
         """Compute the expected value of performing the given action
         @param actions: the actions whose effect we want to evaluate
         @type actions: L{Action}[]
