@@ -74,7 +74,7 @@ class KeyedVector(dict):
 
     def __str__(self):
         if self._string is None:
-            self._string = ', '.join(map(lambda item: '%s=%s' % item,
+            self._string = '+'.join(map(lambda item: '%s*%s' % (item[1],item[0]),
                                          self.items()))
         return self._string
 
@@ -105,9 +105,13 @@ class KeyedVector(dict):
 
 class KeyedMatrix(dict):
     def __init__(self,arg={}):
-        dict.__init__(self,arg)
-        self._string = None
-
+        if isinstance(arg,Node):
+            dict.__init__(self)
+            self.parse(arg)
+        else:
+            dict.__init__(self,arg)
+            self._string = None
+        
     def __eq__(self,other):
         for key,vector in self.items():
             try:
@@ -189,20 +193,157 @@ class KeyedMatrix(dict):
     def __hash__(self):
         return hash(str(self))
 
+    def __xml__(self):
+        doc = Document()
+        root = doc.createElement('matrix')
+        for key,value in self.items():
+            element = value.__xml__().documentElement
+            element.setAttribute('key',key)
+            root.appendChild(element)
+        doc.appendChild(root)
+        return doc
+
+    def parse(self,element):
+        self._string = None
+        assert element.tagName == 'matrix'
+        node = element.firstChild
+        while node:
+            if node.nodeType == node.ELEMENT_NODE:
+                key = str(node.getAttribute('key'))
+                value = KeyedVector(node)
+                dict.__setitem__(self,key,value)
+            node = node.nextSibling
+
+def scaleMatrix(key,weight):
+    """
+    @return: a dynamics matrix modifying the given keyed value by scaling it by the given weight
+    @rtype: L{KeyedMatrix}
+    """
+    return KeyedMatrix({key: KeyedVector({key: weight})})
+
 class KeyedPlane:
-    def __init__(self,vector,threshold):
-        self.vector = vector
-        self.threshold = threshold
+    epsilon = 1e-8
+
+    def __init__(self,vector,threshold=None):
+        if isinstance(vector,Node):
+            self.parse(vector)
+        else:
+            self.vector = vector
+            self.threshold = threshold
+
+    def evaluate(self,vector):
+        return self.vector*vector+self.epsilon > self.threshold
+
+    def __str__(self):
+        return '%s > %f' % (str(self.vector),self.threshold)
+
+    def __xml__(self):
+        doc = self.vector.__xml__()
+        doc.documentElement.setAttribute('threshold',str(self.threshold))
+        return doc
+
+    def parse(self,element):
+        self.threshold = float(element.getAttribute('threshold'))
+        self.vector = KeyedVector(element)
+
+def thresholdRow(key,threshold):
+    """
+    @return: a plane testing whether the given keyed value exceeds the given threshold
+    @rtype: L{KeyedPlane}
+    """
+    return KeyedPlane(KeyedVector({key: 1.}),threshold)
+def greaterThanRow(key1,key2):
+    """
+    @return: a plane testing whether the first keyed value is greater than the second
+    @rtype: L{KeyedPlane}
+    """
+    return KeyedPlane(KeyedVector({key1: 1.,key2: -1.}),0.)
 
 class KeyedTree:
     def __init__(self,leaf=None):
         self.leaf = True
-        self.children = [leaf]
+        self.children = {}
         self.branch = None
+        if isinstance(leaf,Node):
+            self.parse(leaf)
+        else:
+            self.children[None] = leaf
             
     def isLeaf(self):
         return self.leaf
 
     def makeLeaf(self,leaf):
-        self.children = [leaf]
+        self.children = {None: leaf}
         self.leaf = True
+
+    def makeBranch(self,plane,trueTree,falseTree):
+        self.children = {True: trueTree,False: falseTree}
+        self.branch = plane
+        self.leaf = False
+
+    def __getitem__(self,index):
+        if self.isLeaf():
+            return self.children[None]
+        elif isinstance(self.branch,KeyedPlane):
+            return self.children[self.branch.evaluate(index)][index]
+        else:
+            raise NotImplementedError,'Unable to evaluate branches of type %s' % (self.branch.__class__.__name__)
+
+    def __str__(self):
+        if self.isLeaf():
+            return str(self.children[None])
+        elif self.children.has_key(True):
+            # Deterministic branch
+            return 'if %s\n\t%s\n\t%s' % (str(self.branch),str(self.children[True]).replace('\n','\n\t'),
+                                          str(self.children[False]).replace('\n','\n\t'))
+        else:
+            # Probabilistic branch
+            raise NotImplementedError,'Unable to generate string representation of probabilistic branches'
+
+    def __xml__(self):
+        doc = Document()
+        root = doc.createElement('tree')
+        if not self.isLeaf():
+            root.appendChild(self.branch.__xml__().documentElement)
+        for key,value in self.children.items():
+            node = value.__xml__().documentElement
+            node.setAttribute('key',str(key))
+            root.appendChild(node)
+        doc.appendChild(root)
+        return doc
+
+    def parse(self,element):
+        assert element.tagName == 'tree'
+        node = element.firstChild
+        plane = None
+        children = {}
+        while node:
+            if node.nodeType == node.ELEMENT_NODE:
+                if node.tagName == 'vector':
+                    plane = KeyedPlane(node)
+                elif node.tagName == 'matrix':
+                    key = eval(node.getAttribute('key'))
+                    children[key] = KeyedMatrix(node)
+                elif node.tagName == 'tree':
+                    key = eval(node.getAttribute('key'))
+                    children[key] = KeyedTree(node)
+            node = node.nextSibling
+        if plane:
+            self.makeBranch(plane,children[True],children[False])
+        else:
+            self.makeLeaf(children[None])
+
+def makeTree(table):
+    if isinstance(table,KeyedMatrix):
+        # Leaf
+        return KeyedTree(table)
+    elif table.has_key('plane'):
+        # Deterministic branch
+        tree = KeyedTree()
+        tree.makeBranch(table['plane'],makeTree(table[True]),makeTree(table[False]))
+        return tree
+    else:
+        # Probabilistic branch
+        raise NotImplementedError,'Currently unable to unpack probabilistic branches'
+        
+        
