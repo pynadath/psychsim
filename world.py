@@ -2,9 +2,9 @@ import bz2
 import copy
 from xml.dom.minidom import Document,Node,parseString
 
-from probability import VectorDistribution
-from pwl import KeyedVector,KeyedMatrix,KeyedTree,CONSTANT
 from action import ActionSet,Action
+from pwl import *
+from probability import Distribution
 from agent import Agent
 
 class World:
@@ -45,64 +45,89 @@ class World:
             self.agents[agent.name] = agent
             agent.world = self
 
-    def step(self,actions={},state=None,hypothetical=True):
+    def step(self,actions=None,state=None,real=True):
+        """
+        @param real: if C{True}, then modify the given state; otherwise, this is only hypothetical (default is C{True})
+        @type real: bool
+        """
         if state is None:
             state = self.state
         outcomes = []
         # Iterate through each possible world
         for stateVector in state.domain():
             prob = state[stateVector]
-            # Determine the actions taken by the agents in this world
-            turn = copy.copy(actions)
-            for name in self.next(stateVector):
-                if not turn.has_key(name):
-                    decision = self.agents[name].decide(stateVector)
-                    turn[name] = decision['action']
-                elif isinstance(turn[name],Action):
-                    turn[name] = ActionSet([turn[name]])
-            outcomes.append({'original': stateVector,
-                             'actions': turn,
-                             'probability': prob,
-                             'effect': self.effect(turn,stateVector)
-                             })
-        if not hypothetical:
+            outcome = self.stepFromState(stateVector,actions,real)
+            outcome['probability'] = prob
+            outcomes.append(outcome)
+        if real:
             # Apply effects
             state.clear()
             for outcome in outcomes:
-                outcome['new'] = outcome['effect']*outcome['original']
-                try:
-                    state[outcome['new']] += outcome['probability']
-                except KeyError:
-                    state[outcome['new']] = outcome['probability']
-                outcome['delta'] = outcome['new'] - outcome['original']
+                if isinstance(outcome['new'],Distribution):
+                    dist = map(lambda el: (el,outcome['new'][el]),outcome['new'].domain())
+                else:
+                    dist = (outcome['new'],1.)
+                for new,prob in dist:
+                    try:
+                        state[new] += prob*outcome['probability']
+                    except KeyError:
+                        state[new] = prob*outcome['probability']
             self.history.append(outcomes)
         return outcomes
+
+    def stepFromState(self,vector,actions=None,real=True,horizon=1):
+        # Determine the actions taken by the agents in this world
+        outcome = {'old': vector,
+                   'decisions': {}}
+        if actions is None:
+            outcome['actions'] = {}
+        else:
+            outcome['actions'] = copy.copy(actions)
+        for name in self.next(vector):
+            if not outcome['actions'].has_key(name):
+                decision = self.agents[name].decide(vector,horizon,outcome['actions'])
+                outcome['decisions'][name] = decision
+                outcome['actions'][name] = decision['action']
+            elif isinstance(outcome['actions'][name],Action):
+                outcome['actions'][name] = ActionSet([outcome['actions'][name]])
+        outcome['effect'] = self.effect(outcome['actions'],vector)
+        if real:
+            outcome['new'] = outcome['effect']*outcome['old']
+            outcome['delta'] = outcome['new'] - outcome['old']
+        return outcome
 
     def effect(self,actions,vector):
         result = self.deltaState(actions,vector)
         result.update(self.deltaOrder(actions,vector))
+        if vector.has_key(CONSTANT):
+            result.update(KeyedMatrix({CONSTANT: KeyedVector({CONSTANT: 1.})}))
         return result
 
     def deltaState(self,actions,vector):
-        result = KeyedMatrix()
+        result = MatrixDistribution({KeyedMatrix():1.})
         for entity,table in self.features.items():
             for feature,entry in table.items():
                 dynamics = self.getDynamics(entry['key'],actions)
                 if dynamics:
                     assert len(dynamics) == 1,'Unable to merge multiple effects'
                     tree = dynamics[0]
-                    delta = tree[vector][entry['key']]
+                    matrix = tree[vector]
                 else:
+                    matrix = KeyedMatrix()
                     delta = KeyedVector()
-                    if entry['domain'] is float:
-                        delta[entry['key']] = 1.
-                    elif entry['domain'] is int:
+                    if entry['domain'] is int:
                         delta[entry['key']] = 1
-                result[entry['key']] = delta
+                    else:
+                        delta[entry['key']] = 1.
+                    matrix[entry['key']] = delta
+                result.update(matrix)
         return result
 
     def setDynamics(self,entity,feature,action,tree):
-        key = stateKey(entity,feature)
+        if entity is None:
+            key = feature
+        else:
+            key = stateKey(entity,feature)
         if not self.dynamics.has_key(key):
             self.dynamics[key] = {}
         self.dynamics[key][action] = tree
@@ -112,7 +137,7 @@ class World:
             return []
         if not isinstance(action,Action) and isinstance(action,dict):
             # Table of actions by multiple agents
-            action = ActionSet(reduce(set.union,action.values(),set()))
+            action = ActionSet(reduce(frozenset.union,action.values(),frozenset()))
         try:
             return [self.dynamics[key][action]]
         except KeyError:
@@ -157,7 +182,19 @@ class World:
                 delta[key] = KeyedVector({key: 1.})
         elif len(actions) == 1:
             # Only one agent has acted
-            raise NotImplementedError,'Currently unable to process serial execution.'
+            actor = actions.keys()[0]
+            position = vector[turnKey(actor)]
+            for name in self.agents.keys():
+                key = turnKey(name)
+                if actions.has_key(name):
+                    # Acted, move to end of line
+                    delta[key] = KeyedVector({CONSTANT: float(len(self.agents))-0.5})
+                elif vector[key] > position:
+                    # Not acted, move ahead of actor
+                    delta[key] = KeyedVector({key: 1.,CONSTANT: -1.})
+                else:
+                    # Not acted, but already ahead of actor
+                    delta[key] = KeyedVector({key: 1.})
         else:
             raise NotImplementedError,'Currently unable to process mixed turn orders.'
         return delta
@@ -165,7 +202,17 @@ class World:
     def defineState(self,entity,feature,domain=float,lo=-1.,hi=1.):
         if not self.features.has_key(entity):
             self.features[entity] = {}
-        self.features[entity][feature] = {'domain': domain,'lo': lo,'hi': hi,'key': stateKey(entity,feature)}
+        self.features[entity][feature] = {'domain': domain}
+        if domain is float:
+            self.features[entity][feature].update({'lo': lo,'hi': hi})
+        elif domain is int:
+            self.features[entity][feature].update({'lo': int(lo),'hi': int(hi)})
+        else:
+            self.features[entity][feature].update({'lo': None,'hi': None})
+        if entity is None:
+            self.features[entity][feature]['key'] = feature
+        else:
+            self.features[entity][feature]['key'] = stateKey(entity,feature)
 
     def setState(self,entity,feature,value):
         """
@@ -174,7 +221,34 @@ class World:
         @type feature: str
         @type value: float or L{Distribution}
         """
-        self.state.join("%s's %s" % (entity,feature),value)
+        assert self.features.has_key(entity) and self.features[entity].has_key(feature)
+        if self.features[entity][feature]['domain'] is bool:
+            if value:
+                value = 1.
+            else:
+                value = 0.
+        if entity is None:
+            self.state.join(feature,value)
+        else:
+            self.state.join(stateKey(entity,feature),value)
+
+    def getState(self,entity,feature,state=None):
+        if state is None:
+            state = self.state
+        assert self.features.has_key(entity) and self.features[entity].has_key(feature)
+        if entity is None:
+            result = state.marginal(feature)
+        else:
+            result = state.marginal(stateKey(entity,feature))
+        if self.features[entity][feature]['domain'] is bool:
+            abstract = {True: 0.,False: 0.}
+            for value in result.domain():
+                if value > 0.5:
+                    abstract[True] += result[value]
+                else:
+                    abstract[False] += result[value]
+            result = Distribution(abstract)
+        return result
 
     def __xml__(self):
         doc = Document()
@@ -190,13 +264,9 @@ class World:
             for feature,entry in table.items():
                 subnode = doc.createElement('feature')
                 subnode.appendChild(doc.createTextNode(feature))
-                subnode.setAttribute('entity',entity)
-                if entry['domain'] is int:
-                    subnode.setAttribute('domain','int')
-                elif entry['domain'] is float:
-                    subnode.setAttribute('domain','float')
-                else:
-                    raise TypeError,'Unable to serialize state features with domain of type %s' % (entry['domain'].__name__)
+                if entity:
+                    subnode.setAttribute('entity',entity)
+                subnode.setAttribute('domain',entry['domain'].__name__)
                 if not entry['lo'] is None:
                     subnode.setAttribute('lo',str(entry['lo']))
                 if not entry['hi'] is None:
@@ -223,6 +293,7 @@ class World:
                     if outcome['actions'].has_key(name):
                         subsubnode.appendChild(outcome['actions'][name].__xml__().documentElement)
                 subsubnode.appendChild(outcome['delta'].__xml__().documentElement)
+                subsubnode.appendChild(outcome['old'].__xml__().documentElement)
                 subnode.appendChild(subsubnode)
             node.appendChild(subnode)
         root.appendChild(node)
@@ -240,23 +311,25 @@ class World:
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
                             if subnode.tagName == 'distribution':
-                                self.state.parse(subnode,KeyedVector)
+                                self.state.parse(subnode)
                             elif subnode.tagName == 'feature':
                                 entity = str(subnode.getAttribute('entity'))
+                                if not entity:
+                                    entity = None
                                 feature = str(subnode.firstChild.data).strip()
-                                domain = str(subnode.getAttribute('domain'))
+                                domain = eval(str(subnode.getAttribute('domain')))
                                 lo = str(subnode.getAttribute('lo'))
                                 if not lo: lo = None
                                 hi = str(subnode.getAttribute('hi'))
                                 if not hi: hi = None
-                                if domain == 'int':
-                                    domain = int
+                                if domain is int:
                                     if lo: lo = int(lo)
                                     if hi: hi = int(hi)
-                                elif subnode.getAttribute('domain') == 'float':
-                                    domain = float
+                                elif domain is float:
                                     if lo: lo = float(lo)
                                     if hi: hi = float(hi)
+                                elif domain is bool:
+                                    pass
                                 else:
                                     raise TypeError,'Unknown feature domain type: %s' % (domain)
                                 self.defineState(entity,feature,domain,lo,hi)
@@ -275,6 +348,9 @@ class World:
                                     if subsubnode.tagName == 'action':
                                         assert action is None
                                         action = Action(subsubnode)
+                                    elif subsubnode.tagName == 'option':
+                                        assert action is None
+                                        action = ActionSet(subsubnode.childNodes)
                                     elif subsubnode.tagName == 'tree':
                                         assert not action is None
                                         self.dynamics[key][action] = KeyedTree(subsubnode)
@@ -298,12 +374,14 @@ class World:
                                     while element:
                                         if element.nodeType == element.ELEMENT_NODE:
                                             if element.tagName == 'option':
-                                                option = ActionSet(element)
+                                                option = ActionSet(element.childNodes)
                                                 for action in option:
                                                     outcome['actions'][action['subject']] = option
                                                     break
                                             elif element.tagName == 'vector':
-                                                outcome['delta'] = KeyedVector(element)
+                                                outcome['old'] = KeyedVector(element)
+                                            elif element.tagName == 'distribution':
+                                                outcome['delta'] = VectorDistribution(element)
                                         element = element.nextSibling
                                     entry.append(outcome)
                                 subsubnode = subsubnode.nextSibling

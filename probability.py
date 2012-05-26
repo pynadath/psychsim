@@ -1,6 +1,4 @@
-from xml.dom.minidom import Document
-
-from pwl import KeyedVector
+from xml.dom.minidom import Document,Node
 
 class Distribution(dict):
     """
@@ -19,8 +17,11 @@ class Distribution(dict):
         self._domain = {}
         dict.__init__(self)
         if not args is None:
-            for key,value in args.items():
-                self[key] = value
+            if isinstance(args,Node):
+                self.parse(args)
+            else:
+                for key,value in args.items():
+                    self[key] = value
 
     def __getitem__(self,element):
         key = str(element)
@@ -90,7 +91,33 @@ class Distribution(dict):
                 else:
                     total += key*value
             return total
-        
+
+    def sample(self):
+        """
+        @return: an element from this domain, with a sample probability given by this distribution
+        """
+        import random
+        selection = random.random()
+        for element in self.domain():
+            if selection > self[element]:
+                selection -= self[element]
+            else:
+                return element
+        else:
+            raise ValueError,'Random number exceeded total probability in distribution.'
+
+    def __add__(self,other):
+        if isinstance(other,Distribution):
+            raise NotImplementedError,'Unable to add two distributions.'
+        else:
+            result = {}
+            for element in self.domain():
+                result[element+other] = self[element]
+            return self.__class__(result)
+
+    def __sub__(self,other):
+        return self + (-other)
+
     def __xml__(self):
         """
         @return: An XML Document object representing this distribution
@@ -110,15 +137,14 @@ class Distribution(dict):
             else:
                 node.appendChild(self.element2xml(value))
         return doc
-
+        
     def element2xml(self,value):
         raise NotImplementedError,'Unable to generate XML for distributions over %s' % (value.__class__.__name__)
 
-    def parse(self,element,valueClass=None):
+    def parse(self,element):
         """Extracts the distribution from the given XML element
         @param element: The XML Element object specifying the distribution
         @type element: Element
-        @param valueClass: The class used to generate the domain values for this distribution
         @return: This L{Distribution} object"""
         assert element.tagName == 'distribution'
         self.clear()
@@ -140,21 +166,6 @@ class Distribution(dict):
     def xml2element(self,key,node):
         return key
 
-class VectorDistribution(Distribution):
-
-    def join(self,key,value):
-        if isinstance(value,Distribution):
-            raise NotImplementedError,'Wait for it'
-        else:
-            for row in self.domain():
-                prob = self[row]
-                del self[row]
-                row[key] = value
-                self[row] = prob
-
-    def element2xml(self,value):
-        return value.__xml__().documentElement
-
-    def xml2element(self,key,node):
-        return KeyedVector(node)
-
+    def __str__(self):
+        return '\n'.join(map(lambda el: '%d%%\t%s' % (100.*self[el],str(el).replace('\n','\n\t')),self.domain()))
+            
