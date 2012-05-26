@@ -1,7 +1,9 @@
 """
 Class and function definitions for PieceWise Linear (PWL) representations
 """
+import copy
 from xml.dom.minidom import Document,Node
+from probability import Distribution
 
 CONSTANT = ''
 
@@ -74,7 +76,7 @@ class KeyedVector(dict):
 
     def __str__(self):
         if self._string is None:
-            self._string = '+'.join(map(lambda item: '%s(%s)' % item,
+            self._string = '\n'.join(map(lambda item: '%s: %s' % item,
                                          self.items()))
         return self._string
 
@@ -102,6 +104,42 @@ class KeyedVector(dict):
                 value = float(node.getAttribute('value'))
                 dict.__setitem__(self,key,value)
             node = node.nextSibling
+
+class VectorDistribution(Distribution):
+    """
+    A class representing a L{Distribution} over L{KeyedVector} instances
+    """
+
+    def join(self,key,value):
+        if isinstance(value,Distribution):
+            raise NotImplementedError,'Wait for it'
+        else:
+            for row in self.domain():
+                prob = self[row]
+                del self[row]
+                row[key] = value
+                self[row] = prob
+
+    def element2xml(self,value):
+        return value.__xml__().documentElement
+
+    def xml2element(self,key,node):
+        return KeyedVector(node)
+
+    def marginal(self,key):
+        result = {}
+        for row in self.domain():
+            result[row[key]] = self[row]
+        return Distribution(result)
+
+    def select(self):
+        """
+        Reduce distribution to a single element, sampled according to the given distribution
+        """
+        vector = self.sample()
+        self.clear()
+        self[vector] = 1.
+        return vector
 
 class KeyedMatrix(dict):
     def __init__(self,arg={}):
@@ -219,11 +257,92 @@ def scaleMatrix(key,weight):
     @rtype: L{KeyedMatrix}
     """
     return KeyedMatrix({key: KeyedVector({key: weight})})
+def noChangeMatrix(key):
+    """
+    @return: a dynamics matrix indicating no change to the given keyed value
+    @rtype: L{KeyedMatrix}
+    """
+    return scaleMatrix(key,1.)
+def approachMatrix(key,weight,limit):
+    """
+    @type weight: float
+    @type limit: float
+    @return: a dynamics matrix modifying the given keyed value by approaching the given limit by the given weighted percentage of distance
+    @rtype: L{KeyedMatrix}
+    """
+    return KeyedMatrix({key: KeyedVector({key: 1.-weight,CONSTANT: weight*limit})})
+def incrementMatrix(key,delta):
+    """
+    @type delta: float
+    @return: a dynamics matrix incrementing the given keyed value by the constant delta
+    @rtype: L{KeyedMatrix}
+    """
+    return KeyedMatrix({key: KeyedVector({key: 1.,CONSTANT: delta})})
+def setToConstantMatrix(key,value):
+    """
+    @type value: float
+    @return: a dynamics matrix setting the given keyed value to the constant value
+    @rtype: L{KeyedMatrix}
+    """
+    return KeyedMatrix({key: KeyedVector({CONSTANT: value})})
+def setToFeatureMatrix(key,otherKey,pct=1.,shift=0.):
+    """
+    @type otherKey: str
+    @return: a dynamics matrix setting the given keyed value to a percentage of another keyed value plus a constant shift (default is 100% with shift of 0)
+    @rtype: L{KeyedMatrix}
+    """
+    return KeyedMatrix({key: KeyedVector({otherKey: pct,CONSTANT: shift})})
+def setTrueMatrix(key):
+    return setToConstantMatrix(key,1.)
+def setFalseMatrix(key):
+    return setToConstantMatrix(key,0.)
 
+class MatrixDistribution(Distribution):
+    def update(self,matrix):
+        for old in self.domain():
+            prob = self[old]
+            del self[old]
+            if isinstance(matrix,Distribution):
+                # Merge distributions
+                for submatrix in matrix.domain():
+                    new = copy.copy(old)
+                    new.update(submatrix)
+                    try:
+                        self[new] += prob*matrix[submatrix]
+                    except KeyError:
+                        self[new] = prob*matrix[submatrix]
+            else:
+                old.update(matrix)
+                self[old] = prob
+
+    def __mul__(self,other):
+        if isinstance(other,Distribution):
+            raise NotImplementedError,'Unable to multiply two distributions.'
+        else:
+            result = {}
+            for element in self.domain():
+                try:
+                    result[element*other] += self[element]
+                except KeyError:
+                    result[element*other] = self[element]
+            if isinstance(other,KeyedVector):
+                return VectorDistribution(result)
+            elif isinstance(other,KeyedMatrix):
+                return self.__class__(result)
+            else:
+                raise TypeError,'Unable to process multiplication by %s' % (other.__class__.__name__)
+
+    def element2xml(self,value):
+        return value.__xml__().documentElement
+
+    def xml2element(self,key,node):
+        return KeyedMatrix(node)
+        
 class KeyedPlane:
     epsilon = 1e-8
 
     def __init__(self,vector,threshold=None):
+        self._string = None
         if isinstance(vector,Node):
             self.parse(vector)
         else:
@@ -234,7 +353,10 @@ class KeyedPlane:
         return self.vector*vector+self.epsilon > self.threshold
 
     def __str__(self):
-        return '%s > %f' % (str(self.vector),self.threshold)
+        if self._string is None:
+            self._string = '%s > %f' % (' + '.join(map(lambda (k,v): '%5.3f*%s' % (v,k),self.vector.items())),
+                                        self.threshold)
+        return self._string
 
     def __xml__(self):
         doc = self.vector.__xml__()
@@ -257,9 +379,16 @@ def greaterThanRow(key1,key2):
     @rtype: L{KeyedPlane}
     """
     return KeyedPlane(KeyedVector({key1: 1.,key2: -1.}),0.)
+def trueRow(key):
+    """
+    @return: a plane testing whether a boolean keyed value is True
+    @rtype: L{KeyedPlane}
+    """
+    return thresholdRow(key,0.5)
 
 class KeyedTree:
     def __init__(self,leaf=None):
+        self._string = None
         self.leaf = True
         self.children = {}
         self.branch = None
@@ -280,34 +409,63 @@ class KeyedTree:
         self.branch = plane
         self.leaf = False
 
+    def makeProbabilistic(self,distribution):
+        assert isinstance(distribution,Distribution)
+        self.children = distribution
+        self.branch = None
+        self.leaf = False
+
     def __getitem__(self,index):
         if self.isLeaf():
             return self.children[None]
-        elif isinstance(self.branch,KeyedPlane):
-            return self.children[self.branch.evaluate(index)][index]
+        elif self.branch is None:
+            # Probabilistic branch
+            result = {}
+            for element in self.children.domain():
+                prob = self.children[element]
+                subtree = element[index]
+                if isinstance(subtree,Distribution):
+                    for subelement in subtree.domain():
+                        try:
+                            result[subelement] += prob*subtree[subelement]
+                        except KeyError:
+                            result[subelement] = prob*subtree[subelement]
+                else:
+                    try:
+                        result[subtree] += prob
+                    except KeyError:
+                        result[subtree] = prob
+            return Distribution(result)
         else:
-            raise NotImplementedError,'Unable to evaluate branches of type %s' % (self.branch.__class__.__name__)
+            # Deterministic branch
+            return self.children[self.branch.evaluate(index)][index]
 
     def __str__(self):
-        if self.isLeaf():
-            return str(self.children[None])
-        elif self.children.has_key(True):
-            # Deterministic branch
-            return 'if %s\n\t%s\n\t%s' % (str(self.branch),str(self.children[True]).replace('\n','\n\t'),
-                                          str(self.children[False]).replace('\n','\n\t'))
-        else:
-            # Probabilistic branch
-            raise NotImplementedError,'Unable to generate string representation of probabilistic branches'
+        if self._string is None:
+            if self.isLeaf():
+                self._string = str(self.children[None])
+            elif self.children.has_key(True):
+                # Deterministic branch
+                self._string = 'if %s\nThen\t%s\nElse\t%s' % (str(self.branch),str(self.children[True]).replace('\n','\n\t'),
+                                                      str(self.children[False]).replace('\n','\n\t'))
+            else:
+                # Probabilistic branch
+                self._string = '\n'.join(map(lambda el: '%d%%: %s' % (100.*self.children[el],str(el)),self.children.domain()))
+        return self._string
 
     def __xml__(self):
         doc = Document()
         root = doc.createElement('tree')
         if not self.isLeaf():
-            root.appendChild(self.branch.__xml__().documentElement)
-        for key,value in self.children.items():
-            node = value.__xml__().documentElement
-            node.setAttribute('key',str(key))
-            root.appendChild(node)
+            if self.branch:
+                root.appendChild(self.branch.__xml__().documentElement)
+        if isinstance(self.children,Distribution):
+            root.appendChild(self.children.__xml__().documentElement)
+        else:
+            for key,value in self.children.items():
+                node = value.__xml__().documentElement
+                node.setAttribute('key',str(key))
+                root.appendChild(node)
         doc.appendChild(root)
         return doc
 
@@ -319,30 +477,59 @@ class KeyedTree:
         while node:
             if node.nodeType == node.ELEMENT_NODE:
                 if node.tagName == 'vector':
-                    plane = KeyedPlane(node)
+                    if node.getAttribute('key'):
+                        # Vector leaf
+                        key = eval(node.getAttribute('key'))
+                        children[key] = KeyedVector(node)
+                    else:
+                        # Branch
+                        plane = KeyedPlane(node)
                 elif node.tagName == 'matrix':
                     key = eval(node.getAttribute('key'))
                     children[key] = KeyedMatrix(node)
                 elif node.tagName == 'tree':
                     key = eval(node.getAttribute('key'))
                     children[key] = KeyedTree(node)
+                elif node.tagName == 'distribution':
+                    children = TreeDistribution(node)
             node = node.nextSibling
         if plane:
             self.makeBranch(plane,children[True],children[False])
+        elif isinstance(children,Distribution):
+            self.makeProbabilistic(children)
         else:
             self.makeLeaf(children[None])
+        
+def maximizeFeature(key):
+    return KeyedTree(KeyedVector({key: 1.}))
+        
+def minimizeFeature(key):
+    return KeyedTree(KeyedVector({key: -1.}))
+
+class TreeDistribution(Distribution):
+    """
+    A class representing a L{Distribution} over L{KeyedTree} instances
+    """
+    def element2xml(self,value):
+        return value.__xml__().documentElement
+
+    def xml2element(self,key,node):
+        return KeyedTree(node)
 
 def makeTree(table):
-    if isinstance(table,KeyedMatrix):
-        # Leaf
-        return KeyedTree(table)
-    elif table.has_key('plane'):
+    if table.has_key('if'):
         # Deterministic branch
         tree = KeyedTree()
-        tree.makeBranch(table['plane'],makeTree(table[True]),makeTree(table[False]))
+        tree.makeBranch(table['if'],makeTree(table[True]),makeTree(table[False]))
+        return tree
+    elif table.has_key('distribution'):
+        # Probabilistic branch
+        tree = KeyedTree()
+        branch = {}
+        for subtable,prob in table['distribution']:
+            branch[makeTree(subtable)] = prob
+        tree.makeProbabilistic(TreeDistribution(branch))
         return tree
     else:
-        # Probabilistic branch
-        raise NotImplementedError,'Currently unable to unpack probabilistic branches'
-        
-        
+        # Leaf
+        return KeyedTree(table)

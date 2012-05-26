@@ -3,13 +3,27 @@ import random
 from xml.dom.minidom import Document,Node
 
 from action import Action,ActionSet
+from pwl import *
+from probability import Distribution
 
 class Agent:
+    """
+    @ivar world: the environment that this agent inhabits
+    @type world: L{<psychsim.world.World>World}
+    @ivar actions: the set of possible actions that the agent can choose from
+    @type actions: {L{Action}}
+    @ivar legal: a set of conditions under which certain action choices are allowed (default is that all actions are allowed at all times)
+    @type legal: L{ActionSet}S{->}L{<psychsim.pwl.KeyedPlane>KeyedPlane}
+    @ivar name: agent name
+    @type name: str
+    """
     def __init__(self,name):
         self.world = None
         self.subjective = None
         self.actions = set()
-        self.reward = set()
+        self.legal = {}
+        self.rewards = []
+        self.models = {True: {'weights': [],'V': []}}
         if isinstance(name,Document):
             self.parse(name.documentElement)
         elif isinstance(name,Node):
@@ -17,31 +31,131 @@ class Agent:
         else:
             self.name = name
 
-    def decide(self,vector):
-        result = {'action': random.sample(self.actions,1)[0]}
+    def decide(self,vector,horizon=1,others=None,model=True,tiebreak=None):
+        V = {}
+        best = None
+        for action in self.getActions(vector):
+            V[action] = self.value(vector,action,horizon,others,model)
+            if best is None:
+                best = [action]
+            elif V[action]['V'] == V[best[0]]['V']:
+                best.append(action)
+            elif V[action]['V'] > V[best[0]]['V']:
+                best = [action]
+        result = {'V*': V[best[0]]['V'],'V': V}
+        if len(best) == 1:
+            result['action'] = best[0]
+        elif tiebreak == 'random':
+            result['action'] = random.sample(best,1)[0]
+        elif tiebreak == 'distribution':
+            raise NotImplementedError,'Currently unable to return distribution over actions.'
+        else:
+            best.sort()
+            result['action'] = best[0]
+        return result
+
+    def getActions(self,vector):
+        """
+        @return: the set of possible actions to choose from in the given state vector
+        @rtype: {L{ActionSet}}
+        """
+        result = set()
+        for action in self.actions:
+            try:
+                plane = self.legal[action]
+            except KeyError:
+                # No condition on this action's legality => legal
+                result.add(action)
+                continue
+            if plane.evaluate(vector):
+                result.add(action)
+        return result
+                
+    def value(self,vector,action=None,horizon=1,others=None,model=True):
+        R = self.reward(vector,model)
+        result = {'V': R,
+                  'old': vector,
+                  'horizon': horizon,
+                  'projection': []}
+        if horizon > 0:
+            # Perform action
+            turn = copy.copy(others)
+            turn[self.name] = action
+            outcome = self.world.stepFromState(vector,turn,True,horizon)
+            if isinstance(outcome['new'],Distribution):
+                # Uncertain outcomes
+                for newVector in outcome['new'].domain():
+                    entry = copy.copy(outcome)
+                    entry['probability'] = outcome['new'][newVector]
+                    Vrest = self.value(newVector,None,horizon-1,model)
+                    entry.update(Vrest)
+                    result['V'] += entry['probability']*entry['V']
+                    result['projection'].append(entry)
+            else:
+                # Deterministic outcome
+                Vrest = self.value(outcome['new'],None,horizon-1,model)
+                outcome.update(Vrest)
+                result['V'] += Vrest['V']
+                result['projection'].append(outcome)
+                turn = ActionSet(reduce(frozenset.union,outcome['actions'].values(),frozenset()))
         return result
 
     def setState(self,feature,value):
         self.world.setState(self.name,feature,value)
 
-    def addAction(self,action):
-        new = ActionSet()
+    def addReward(self,tree):
+        """
+        @return: the index of the added reward tree
+        @rtype: int
+        """
+        try:
+            return self.rewards.index(tree)
+        except ValueError:
+            self.rewards.append(tree)
+            for model in self.models.values():
+                model['weights'].append(0.)
+            return len(self.rewards)-1
+
+    def setRewardWeight(self,tree,weight,model=True):
+        index = self.rewards.index(tree)
+        self.models[model]['weights'][index] = weight
+
+    def reward(self,vector,model=True):
+        total = 0.
+        for index in range(len(self.rewards)):
+            tree = self.rewards[index]
+            R = tree[vector]*vector
+            total += self.models[model]['weights'][index]*R
+        return total
+
+    def addAction(self,action,condition=None):
+        """
+        @param condition: optional legality condition
+        @type condition: L{<psychsim.pwl.KeyedPlane>KeyedPlane}
+        @return: the action added
+        @rtype: L{ActionSet}
+        """
+        actions = []
         if isinstance(action,set):
             for atom in action:
                 if isinstance(atom,Action):
-                    new.add(Action(atom))
+                    actions.append(Action(atom))
                 else:
-                    new.add(atom)
+                    actions.append(atom)
         elif isinstance(action,Action):
-            new.add(action)
+            actions.append(action)
         else:
             assert isinstance(action,dict),'Argument to addAction must be at least a dictionary'
-            new.add(Action(action))
-        for atom in new:
+            actions.append(Action(action))
+        for atom in actions:
             if not atom.has_key('subject'):
                 # Make me the subject of these actions
                 atom['subject'] = self.name
+        new = ActionSet(actions)
         self.actions.add(new)
+        if condition:
+            self.legal[new] = condition
+        return new
 
     def observe(self,observation,subjective=None):
         """
@@ -55,7 +169,7 @@ class Agent:
     def __copy__(self):
         new = Agent(self.name)
         new.actions = copy.copy(self.actions)
-        new.reward = copy.copy(self.reward)
+        new.rewards = copy.copy(self.rewards)
 
     def __xml__(self):
         doc = Document()
@@ -67,6 +181,20 @@ class Agent:
         root.appendChild(node)
         for action in self.actions:
             node.appendChild(action.__xml__().documentElement)
+        # Reward components
+        node = doc.createElement('reward')
+        for tree in self.rewards:
+            node.appendChild(tree.__xml__().documentElement)
+        root.appendChild(node)
+        # Models
+        for name,model in self.models.items():
+            node = doc.createElement('model')
+            for weight in model['weights']:
+                subnode = doc.createElement('weight')
+                subnode.appendChild(doc.createTextNode(str(weight)))
+                node.appendChild(subnode)
+            node.setAttribute('name',str(name))
+            root.appendChild(node)
         return doc
 
     def parse(self,element):
@@ -78,6 +206,25 @@ class Agent:
                     subnode = node.firstChild
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
-                            self.actions.add(ActionSet(subnode))
+                            self.actions.add(ActionSet(subnode.childNodes))
                         subnode = subnode.nextSibling
+                elif node.tagName == 'reward':
+                    self.rewards = []
+                    subnode = node.firstChild
+                    while subnode:
+                        if subnode.nodeType == subnode.ELEMENT_NODE:
+                            self.rewards.append(KeyedTree(subnode))
+                        subnode = subnode.nextSibling
+                elif node.tagName == 'model':
+                    name = str(node.getAttribute('name'))
+                    if name == 'True':
+                        name = True
+                    subnode = node.firstChild
+                    model = {'weights': [],'V': []}
+                    while subnode:
+                        if subnode.nodeType == subnode.ELEMENT_NODE:
+                            assert subnode.tagName == 'weight'
+                            model['weights'].append(float(subnode.firstChild.data))
+                        subnode = subnode.nextSibling
+                    self.models[name] = model
             node = node.nextSibling
