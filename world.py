@@ -75,7 +75,7 @@ class World:
             self.history.append(outcomes)
         return outcomes
 
-    def stepFromState(self,vector,actions=None,real=True,horizon=1):
+    def stepFromState(self,vector,actions=None,real=True,horizon=None):
         # Determine the actions taken by the agents in this world
         outcome = {'old': vector,
                    'decisions': {}}

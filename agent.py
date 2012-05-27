@@ -23,7 +23,7 @@ class Agent:
         self.actions = set()
         self.legal = {}
         self.rewards = []
-        self.models = {True: {'weights': [],'V': []}}
+        self.models = {True: {'weights': [],'V': [], 'horizon': 1}}
         if isinstance(name,Document):
             self.parse(name.documentElement)
         elif isinstance(name,Node):
@@ -31,7 +31,9 @@ class Agent:
         else:
             self.name = name
 
-    def decide(self,vector,horizon=1,others=None,model=True,tiebreak=None):
+    def decide(self,vector,horizon=None,others=None,model=True,tiebreak=None):
+        if horizon is None:
+            horizon = self.models[model]['horizon']
         V = {}
         best = None
         for action in self.getActions(vector):
@@ -59,19 +61,26 @@ class Agent:
         @return: the set of possible actions to choose from in the given state vector
         @rtype: {L{ActionSet}}
         """
+        if len(self.legal) == 0:
+            # No restrictions on legal actions, so take a shortcut
+            return self.actions
+        # Otherwise, filter out illegal actions
         result = set()
         for action in self.actions:
             try:
-                plane = self.legal[action]
+                tree = self.legal[action]
             except KeyError:
                 # No condition on this action's legality => legal
                 result.add(action)
                 continue
-            if plane.evaluate(vector):
+            # Must satisfy all conditions
+            if tree[vector]:
                 result.add(action)
         return result
                 
-    def value(self,vector,action=None,horizon=1,others=None,model=True):
+    def value(self,vector,action=None,horizon=None,others=None,model=True):
+        if horizon is None:
+            horizon = self.models[model]['horizon']
         R = self.reward(vector,model)
         result = {'V': R,
                   'old': vector,
@@ -80,20 +89,21 @@ class Agent:
         if horizon > 0:
             # Perform action
             turn = copy.copy(others)
-            turn[self.name] = action
+            if action:
+                turn[self.name] = action
             outcome = self.world.stepFromState(vector,turn,True,horizon)
             if isinstance(outcome['new'],Distribution):
                 # Uncertain outcomes
                 for newVector in outcome['new'].domain():
                     entry = copy.copy(outcome)
                     entry['probability'] = outcome['new'][newVector]
-                    Vrest = self.value(newVector,None,horizon-1,model)
+                    Vrest = self.value(newVector,None,horizon-1,{},model)
                     entry.update(Vrest)
                     result['V'] += entry['probability']*entry['V']
                     result['projection'].append(entry)
             else:
                 # Deterministic outcome
-                Vrest = self.value(outcome['new'],None,horizon-1,model)
+                Vrest = self.value(outcome['new'],None,horizon-1,{},model)
                 outcome.update(Vrest)
                 result['V'] += Vrest['V']
                 result['projection'].append(outcome)
@@ -127,6 +137,9 @@ class Agent:
             R = tree[vector]*vector
             total += self.models[model]['weights'][index]*R
         return total
+
+    def setHorizon(self,horizon,model=True):
+        self.models[model]['horizon'] = horizon
 
     def addAction(self,action,condition=None):
         """
@@ -181,6 +194,12 @@ class Agent:
         root.appendChild(node)
         for action in self.actions:
             node.appendChild(action.__xml__().documentElement)
+        # Conditions for legality of actions
+        for action,tree in self.legal.items():
+            node = doc.createElement('legal')
+            node.appendChild(action.__xml__().documentElement)
+            node.appendChild(tree.__xml__().documentElement)
+            root.appendChild(node)
         # Reward components
         node = doc.createElement('reward')
         for tree in self.rewards:
@@ -194,6 +213,7 @@ class Agent:
                 subnode.appendChild(doc.createTextNode(str(weight)))
                 node.appendChild(subnode)
             node.setAttribute('name',str(name))
+            node.setAttribute('horizon',str(model['horizon']))
             root.appendChild(node)
         return doc
 
@@ -220,11 +240,21 @@ class Agent:
                     if name == 'True':
                         name = True
                     subnode = node.firstChild
-                    model = {'weights': [],'V': []}
+                    model = {'weights': [],'V': [], 'horizon': int(node.getAttribute('horizon'))}
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
                             assert subnode.tagName == 'weight'
                             model['weights'].append(float(subnode.firstChild.data))
                         subnode = subnode.nextSibling
                     self.models[name] = model
+                elif node.tagName == 'legal':
+                    subnode = node.firstChild
+                    while subnode:
+                        if subnode.nodeType == subnode.ELEMENT_NODE:
+                            if subnode.tagName == 'option':
+                                action = ActionSet(subnode.childNodes)
+                            elif subnode.tagName == 'tree':
+                                tree = KeyedTree(subnode)
+                        subnode = subnode.nextSibling
+                    self.legal[action] = tree
             node = node.nextSibling
