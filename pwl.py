@@ -217,7 +217,10 @@ class KeyedMatrix(dict):
         self._string = None
         dict.__setitem__(self,key,value)
 
-
+    def update(self,other):
+        self._string = None
+        dict.update(self,other)
+    
     def __str__(self):
         if self._string is None:
             joiner = lambda item: '%s*%s' % (item[1],item[0])
@@ -463,7 +466,11 @@ class KeyedTree:
             root.appendChild(self.children.__xml__().documentElement)
         else:
             for key,value in self.children.items():
-                node = value.__xml__().documentElement
+                if isinstance(value,bool):
+                    node = doc.createElement('bool')
+                    node.setAttribute('value',str(value))
+                else:
+                    node = value.__xml__().documentElement
                 node.setAttribute('key',str(key))
                 root.appendChild(node)
         doc.appendChild(root)
@@ -492,6 +499,9 @@ class KeyedTree:
                     children[key] = KeyedTree(node)
                 elif node.tagName == 'distribution':
                     children = TreeDistribution(node)
+                elif node.tagName == 'bool':
+                    key = eval(node.getAttribute('key'))
+                    children[key] = eval(node.getAttribute('value'))
             node = node.nextSibling
         if plane:
             self.makeBranch(plane,children[True],children[False])
@@ -517,7 +527,10 @@ class TreeDistribution(Distribution):
         return KeyedTree(node)
 
 def makeTree(table):
-    if table.has_key('if'):
+    if isinstance(table,bool):
+        # Boolean leaf
+        return KeyedTree(table)
+    elif table.has_key('if'):
         # Deterministic branch
         tree = KeyedTree()
         tree.makeBranch(table['if'],makeTree(table[True]),makeTree(table[False]))
