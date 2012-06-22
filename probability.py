@@ -169,3 +169,5 @@ class Distribution(dict):
     def __str__(self):
         return '\n'.join(map(lambda el: '%d%%\t%s' % (100.*self[el],str(el).replace('\n','\n\t')),self.domain()))
             
+    def __copy__(self):
+        return self.__class__(self.__xml__().documentElement)

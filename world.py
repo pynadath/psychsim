@@ -16,6 +16,7 @@ class World:
         self.agents = {}
         self.state = VectorDistribution()
         self.features = {}
+        self.domains = {}
         self.dynamics = {}
         self.history = []
         if isinstance(xml,Node):
@@ -35,18 +36,21 @@ class World:
     def initialize(self):
         self.agents.clear()
         self.features.clear()
+        self.domains.clear()
         self.dynamics.clear()
         del self.history[:]
 
-    def addAgent(self,agent):
-        if self.agents.has_key(agent.name):
-            raise NameError,'Agent %s already exists in this world' % (agent.name)
-        else:
-            self.agents[agent.name] = agent
-            agent.world = self
-
+    """------------------"""
+    """Simulation methods"""
+    """------------------"""
+    
     def step(self,actions=None,state=None,real=True):
         """
+        The simulation method
+        @param actions: optional argument setting a subset of actions to be performed in this turn
+        @type actions: strS{->}L{ActionSet}
+        @param state: optional initial state distribution (default is the current world state distribution)
+        @type state: L{VectorDistribution}
         @param real: if C{True}, then modify the given state; otherwise, this is only hypothetical (default is C{True})
         @type real: bool
         """
@@ -123,6 +127,17 @@ class World:
                 result.update(matrix)
         return result
 
+    """-----------------"""
+    """Authoring methods"""
+    """-----------------"""
+
+    def addAgent(self,agent):
+        if self.agents.has_key(agent.name):
+            raise NameError,'Agent %s already exists in this world' % (agent.name)
+        else:
+            self.agents[agent.name] = agent
+            agent.world = self
+
     def setDynamics(self,entity,feature,action,tree):
         if entity is None:
             key = feature
@@ -130,12 +145,16 @@ class World:
             key = stateKey(entity,feature)
         if not self.dynamics.has_key(key):
             self.dynamics[key] = {}
+        # Translate symbolic names into numeric values
+        tree = tree.desymbolize(self.domains)
         self.dynamics[key][action] = tree
 
     def getDynamics(self,key,action):
         if not self.dynamics.has_key(key):
             return []
-        if not isinstance(action,Action) and isinstance(action,dict):
+        if isinstance(action,Action):
+            action = ActionSet([action])
+        elif not isinstance(action,ActionSet):
             # Table of actions by multiple agents
             action = ActionSet(reduce(frozenset.union,action.values(),frozenset()))
         try:
@@ -144,10 +163,25 @@ class World:
             dynamics = []
             for atom in action:
                 try:
-                    dynamics.append(self.dynamics[key][atom])
+                    dynamics.append(self.dynamics[key][ActionSet([atom])])
                 except KeyError:
-                    pass
+                    if len(atom) > len(atom.special):
+                        # Extra parameters
+                        try:
+                            tree = self.dynamics[key][ActionSet([atom.root()])]
+                        except KeyError:
+                            tree = None
+                        if tree:
+                            table = {}
+                            for key,value in atom.items():
+                                if not key in atom.special:
+                                    table[Keyword(stateKey('action',key))] = value
+                            dynamics.append(tree.instantiate(table))
             return dynamics
+
+    """------------------"""
+    """Turn order methods"""
+    """------------------"""
 
     def setOrder(self,order):
         for index in range(len(order)):
@@ -199,6 +233,10 @@ class World:
             raise NotImplementedError,'Currently unable to process mixed turn orders.'
         return delta
 
+    """-------------"""
+    """State methods"""
+    """-------------"""
+
     def defineState(self,entity,feature,domain=float,lo=-1.,hi=1.):
         if not self.features.has_key(entity):
             self.features[entity] = {}
@@ -207,6 +245,13 @@ class World:
             self.features[entity][feature].update({'lo': lo,'hi': hi})
         elif domain is int:
             self.features[entity][feature].update({'lo': int(lo),'hi': int(hi)})
+        elif domain is list:
+            assert isinstance(lo,list),'Please provide list of elements for state features of the list type'
+            self.features[entity][feature].update({'elements': lo,'lo': None,'hi': None})
+            if entity is None:
+                self.domains[feature] = lo
+            else:
+                self.domains[stateKey(entity,feature)] = lo
         else:
             self.features[entity][feature].update({'lo': None,'hi': None})
         if entity is None:
@@ -227,6 +272,8 @@ class World:
                 value = 1.
             else:
                 value = 0.
+        elif self.features[entity][feature]['domain'] is list:
+            value = self.features[entity][feature]['elements'].index(value)
         if entity is None:
             self.state.join(feature,value)
         else:
@@ -248,7 +295,50 @@ class World:
                 else:
                     abstract[False] += result[value]
             result = Distribution(abstract)
+        elif self.features[entity][feature]['domain'] is list:
+            abstract = {}
+            for value in result.domain():
+                index = int(float(value)+0.1)
+                abstract[self.features[entity][feature]['elements'][index]] = result[value]
+            result = Distribution(abstract)
         return result
+
+    def printState(self,buf=None):
+        for vector in self.state.domain():
+            print >> buf,'%d%%' % (self.state[vector]*100.),
+            for entity,table in self.features.items():
+                if entity is None:
+                    label = 'World'
+                else:
+                    label = entity
+                print >> buf,'\t%12s' % (label),
+                first = True
+                for feature,entry in table.items():
+                    if first:
+                        print >> buf,'\t%12s:\t' % (feature),
+                        first = False
+                    else:
+                        print >> buf,'\t\t\t%12s:\t' % (feature),
+                    if entity is None:
+                        key = feature
+                    else:
+                        key = stateKey(entity,feature)
+                    if entry['domain'] is int:
+                        print >> buf,int(vector[key])
+                    elif entry['domain'] is bool:
+                        if vector[key] > 0.5:
+                            print >> buf,True
+                        else:
+                            print >> buf,False
+                    elif entry['domain'] is list:
+                        index = int(float(vector[key])+.1)
+                        print >> buf,entry['elements'][index]
+                    else:
+                        print >> buf,vector[key]
+        
+    """---------------------"""
+    """Serialization methods"""
+    """---------------------"""
 
     def __xml__(self):
         doc = Document()
@@ -271,6 +361,11 @@ class World:
                     subnode.setAttribute('lo',str(entry['lo']))
                 if not entry['hi'] is None:
                     subnode.setAttribute('hi',str(entry['hi']))
+                if entry['domain'] is list:
+                    for element in entry['elements']:
+                        subsubnode = doc.createElement('element')
+                        subsubnode.appendChild(doc.createTextNode(element))
+                        subnode.appendChild(subsubnode)
                 node.appendChild(subnode)
         root.appendChild(node)
         # Dynamics
@@ -330,6 +425,14 @@ class World:
                                     if hi: hi = float(hi)
                                 elif domain is bool:
                                     pass
+                                elif domain is list:
+                                    lo = []
+                                    subsubnode = subnode.firstChild
+                                    while subsubnode:
+                                        if subsubnode.nodeType == subsubnode.ELEMENT_NODE:
+                                            assert subsubnode.tagName == 'element'
+                                            lo.append(str(subsubnode.firstChild.data).strip())
+                                        subsubnode = subsubnode.nextSibling
                                 else:
                                     raise TypeError,'Unknown feature domain type: %s' % (domain)
                                 self.defineState(entity,feature,domain,lo,hi)
@@ -398,6 +501,10 @@ class World:
         f.close()
 
 def stateKey(name,feature):
+    """
+    @return: a key representation of a given entity's state feature
+    @rtype: str
+    """
     return '%s\'s %s' % (name,feature)
     
 def turnKey(name):
@@ -408,3 +515,12 @@ def isTurnKey(key):
 
 def turn2name(key):
     return key[:-8]
+    
+def modelKey(name):
+    return stateKey(name,'_model')
+
+def isModelKey(key):
+    return key[-9:] == '\'s _model'
+
+def model2name(key):
+    return key[:-9]
