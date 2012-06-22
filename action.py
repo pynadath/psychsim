@@ -24,6 +24,16 @@ class Action(dict):
         self._string = None
         dict.clear(self)
 
+    def root(self):
+        """
+        @return: the base action table, with only special keys "subject", "verb", and "object"
+        @rtype: L{Action}
+        """
+        root = {}
+        for key in self.special:
+            root[key] = self[key]
+        return Action(root)
+
     def __str__(self):
         if self._string is None:
             elements = []
@@ -98,6 +108,9 @@ class ActionSet(frozenset):
         
     def __str__(self):
         return ','.join(map(str,self))
+
+    def __hash__(self):
+        return hash(str(self))
 
     def __xml__(self):
         doc = Document()
