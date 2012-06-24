@@ -7,12 +7,6 @@ from probability import Distribution
 
 CONSTANT = ''
 
-class Keyword(str):
-    """
-    Class for special strings that must be instantiated before application of the containing PWL structure
-    """
-    pass
-
 class KeyedVector(dict):
     """
     Class for a compact, string-indexable vector
@@ -20,8 +14,6 @@ class KeyedVector(dict):
     @type epsilon: float
     @ivar _string: the C{str} representation of this vector
     @type _string: bool
-    @ivar instantiated: C{True} iff one of the keys is a reserved L{Keyword}
-    @type instantiated: bool
     """
     epsilon = 1e-8
 
@@ -32,13 +24,7 @@ class KeyedVector(dict):
         else:
             dict.__init__(self,arg)
         self._string = None
-        for key in self.keys():
-            if isinstance(key,Keyword):
-                self.instantiated = False
-                break
-        else:
-            self.instantiated = True
-        
+
     def __eq__(self,other):
         delta = 0.
         tested = {}
@@ -94,32 +80,12 @@ class KeyedVector(dict):
     def __setitem__(self,key,value):
         self._string = None
         dict.__setitem__(self,key,value)
-        if isinstance(key,Keyword):
-            self.instantiated = False
-
-    def instantiate(self,table):
-        result = self.__class__()
-        for key,value in self.items():
-            if isinstance(key,Keyword):
-                if table.has_key(key):
-                    new = CONSTANT
-                    value *= table[key]
-                else:
-                    # No instantiation? Could be a modeling bug
-                    continue
-            else:
-                new = key
-            try:
-                result[new] += value
-            except KeyError:
-                result[new] = value
-        return result
 
     def desymbolize(self,table):
         result = self.__class__()
         for key,value in self.items():
             try:
-                result[key] = table[key].index(value)
+                result[key] = table[value]
             except KeyError:
                 result[key] = value
         return result
@@ -139,8 +105,6 @@ class KeyedVector(dict):
         for key,value in self.items():
             node = doc.createElement('entry')
             node.setAttribute('key',key)
-            if isinstance(key,Keyword):
-                node.setAttribute('keyword','true')
             node.setAttribute('value',str(value))
             root.appendChild(node)
         doc.appendChild(root)
@@ -153,9 +117,10 @@ class KeyedVector(dict):
             if node.nodeType == node.ELEMENT_NODE:
                 assert node.tagName == 'entry'
                 key = str(node.getAttribute('key'))
-                if str(node.getAttribute('keyword')) == 'true':
-                    key = Keyword(key)
-                value = float(node.getAttribute('value'))
+                try:
+                    value = float(node.getAttribute('value'))
+                except ValueError:
+                    value = str(node.getAttribute('value'))
                 dict.__setitem__(self,key,value)
             node = node.nextSibling
 
@@ -204,12 +169,6 @@ class KeyedMatrix(dict):
         else:
             dict.__init__(self,arg)
             self._string = None
-        for row in self.values():
-            if not row.instantiated:
-                self.instantiated = False
-                break
-        else:
-            self.instantiated = True
         
     def __eq__(self,other):
         for key,vector in self.items():
@@ -272,12 +231,6 @@ class KeyedMatrix(dict):
                 (self.__class__.__name__,other.__class__.__name__)
         return result
 
-    def instantiate(self,table):
-        result = self.__class__()
-        for key,row in self.items():
-            result[key] = row.instantiate(table)
-        return result
-
     def desymbolize(self,table):
         result = self.__class__()
         for key,row in self.items():
@@ -289,14 +242,10 @@ class KeyedMatrix(dict):
             (value.__class__.__name__)
         self._string = None
         dict.__setitem__(self,key,value)
-        if isinstance(key,Keyword) or not value.instantiated:
-            self.instantiated = False
 
     def update(self,other):
         self._string = None
         dict.update(self,other)
-        if not other.instantiated:
-            self.instantiated = False
     
     def __str__(self):
         if self._string is None:
@@ -425,41 +374,55 @@ class KeyedPlane:
     @type vector: L{KeyedVector}
     @ivar threshold: the threshold for the hyperplane
     @type threshold: float
+    @ivar comparison: if 1, value must be above hyperplane; if -1, below; if 0, equal (default is 1)
+    @type comparison: int
     """
 
-    def __init__(self,vector,threshold=None):
+    def __init__(self,vector,threshold=None,comparison=1):
         self._string = None
         if isinstance(vector,Node):
             self.parse(vector)
         else:
             self.vector = vector
             self.threshold = threshold
-            self.instantiated = vector.instantiated
+            self.comparison = comparison
 
     def evaluate(self,vector):
-        return self.vector*vector+self.vector.epsilon > self.threshold
-
-    def instantiate(self,table):
-        return self.__class__(self.vector.instantiate(table),self.threshold)
+        total = self.vector * vector
+        if self.comparison > 0:
+            return total+self.vector.epsilon > self.threshold
+        elif self.comparison < 0:
+            return total-self.vector.epsilon < self.threshold
+        else:
+            return abs(total-self.threshold) < self.vector.epsilon
 
     def desymbolize(self,table):
-        return self.__class__(self.vector.desymbolize(table),self.threshold)
+        try:
+            threshold = table[self.threshold]
+        except KeyError:
+            threshold = self.threshold
+        return self.__class__(self.vector.desymbolize(table),threshold,self.comparison)
 
     def __str__(self):
         if self._string is None:
-            self._string = '%s > %f' % (' + '.join(map(lambda (k,v): '%5.3f*%s' % (v,k),self.vector.items())),
-                                        self.threshold)
+            operator = ['==','>','<'][self.comparison]
+            self._string = '%s %s %f' % (' + '.join(map(lambda (k,v): '%5.3f*%s' % (v,k),self.vector.items())),
+                                        operator,self.threshold)
         return self._string
 
     def __xml__(self):
         doc = self.vector.__xml__()
         doc.documentElement.setAttribute('threshold',str(self.threshold))
+        doc.documentElement.setAttribute('comparison',str(self.comparison))
         return doc
 
     def parse(self,element):
-        self.threshold = float(element.getAttribute('threshold'))
+        try:
+            self.threshold = float(element.getAttribute('threshold'))
+        except ValueError:
+            self.threshold = str(element.getAttribute('threshold'))
+        self.comparison = int(element.getAttribute('comparison'))
         self.vector = KeyedVector(element)
-        self.instantiated = self.vector.instantiated
 
 def thresholdRow(key,threshold):
     """
@@ -479,6 +442,12 @@ def trueRow(key):
     @rtype: L{KeyedPlane}
     """
     return thresholdRow(key,0.5)
+def equalRow(key,value):
+    """
+    @return: a plane testing whether the given keyed value equals the given target value
+    @rtype: L{KeyedPlane}
+    """
+    return KeyedPlane(KeyedVector({key: 1.}),value,0)
 
 class KeyedTree:
     def __init__(self,leaf=None):
@@ -495,28 +464,17 @@ class KeyedTree:
         self.children = {None: leaf}
         self.leaf = True
         self.branch = None
-        if isinstance(leaf,KeyedMatrix) or isinstance(leaf,KeyedVector):
-            self.instantiated = leaf.instantiated
-        else:
-            self.instantiated = True
 
     def makeBranch(self,plane,trueTree,falseTree):
         self.children = {True: trueTree,False: falseTree}
         self.branch = plane
         self.leaf = False
-        self.instantiated = plane.instantiated and trueTree.instantiated and falseTree.instantiated
 
     def makeProbabilistic(self,distribution):
         assert isinstance(distribution,Distribution)
         self.children = distribution
         self.branch = None
         self.leaf = False
-        for child in distribution.domain():
-            if not child.instantiated:
-                self.instantiated = False
-                break
-        else:
-            self.instantiated = True
 
     def __getitem__(self,index):
         if self.isLeaf():
@@ -542,21 +500,6 @@ class KeyedTree:
         else:
             # Deterministic branch
             return self.children[self.branch.evaluate(index)][index]
-
-    def instantiate(self,table):
-        """
-        @return: a new tree with any L{Keyword} entries substituted with corresponding entries in the given table
-        @rtype: L{KeyedTree}
-        """
-        tree = self.__class__()
-        if self.isLeaf():
-            tree.makeLeaf(self.children[None].instantiate(table))
-        elif self.branch:
-            tree.makeBranch(self.branch.instantiate(table),self.children[True].instantiate(table),
-                            self.children[False].instantiate(table))
-        else:
-            raise NotImplementedError,'Currently unable to instantiate probabilistic branches'
-        return tree
 
     def desymbolize(self,table):
         """
