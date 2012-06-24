@@ -307,7 +307,10 @@ class World:
     def printState(self,buf=None):
         for vector in self.state.domain():
             print >> buf,'%d%%' % (self.state[vector]*100.),
-            for entity,table in self.features.items():
+            entities = self.features.keys()
+            entities.sort()
+            for entity in entities:
+                table = self.features[entity]
                 if entity is None:
                     label = 'World'
                 else:
