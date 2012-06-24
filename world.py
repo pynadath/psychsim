@@ -177,7 +177,7 @@ class World:
                             table = {}
                             for key,value in atom.items():
                                 if not key in atom.special:
-                                    table[stateKey('action',key)] = value
+                                    table[actionKey(key)] = value
                             dynamics.append(tree.desymbolize(table))
             return dynamics
 
@@ -516,7 +516,10 @@ def isTurnKey(key):
 
 def turn2name(key):
     return key[:-8]
-    
+
+def actionKey(feature):    
+    return stateKey('__action__',feature)
+
 def modelKey(name):
     return stateKey(name,'_model')
 
