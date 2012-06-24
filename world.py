@@ -139,6 +139,8 @@ class World:
             agent.world = self
 
     def setDynamics(self,entity,feature,action,tree):
+        if isinstance(action,Action):
+            action = ActionSet([action])
         if entity is None:
             key = feature
         else:
