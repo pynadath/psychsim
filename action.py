@@ -105,7 +105,15 @@ class ActionSet(frozenset):
         else:
             iterable = elements
         return frozenset.__new__(cls,iterable)
-        
+
+    def __getitem__(self,key):
+        elements = list(self)
+        result = elements[0][key]
+        for atom in elements[1:]:
+            if atom.has_key(key) and atom[key] != result:
+                raise ValueError,'Conflicting values for key: %s' % (key)
+        return result
+
     def __str__(self):
         return ','.join(map(str,self))
 

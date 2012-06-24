@@ -16,7 +16,7 @@ class World:
         self.agents = {}
         self.state = VectorDistribution()
         self.features = {}
-        self.domains = {}
+        self.symbols = {}
         self.dynamics = {}
         self.history = []
         if isinstance(xml,Node):
@@ -36,7 +36,7 @@ class World:
     def initialize(self):
         self.agents.clear()
         self.features.clear()
-        self.domains.clear()
+        self.symbols.clear()
         self.dynamics.clear()
         del self.history[:]
 
@@ -146,7 +146,7 @@ class World:
         if not self.dynamics.has_key(key):
             self.dynamics[key] = {}
         # Translate symbolic names into numeric values
-        tree = tree.desymbolize(self.domains)
+        tree = tree.desymbolize(self.symbols)
         self.dynamics[key][action] = tree
 
     def getDynamics(self,key,action):
@@ -175,8 +175,8 @@ class World:
                             table = {}
                             for key,value in atom.items():
                                 if not key in atom.special:
-                                    table[Keyword(stateKey('action',key))] = value
-                            dynamics.append(tree.instantiate(table))
+                                    table[stateKey('action',key)] = value
+                            dynamics.append(tree.desymbolize(table))
             return dynamics
 
     """------------------"""
@@ -248,10 +248,9 @@ class World:
         elif domain is list:
             assert isinstance(lo,list),'Please provide list of elements for state features of the list type'
             self.features[entity][feature].update({'elements': lo,'lo': None,'hi': None})
-            if entity is None:
-                self.domains[feature] = lo
-            else:
-                self.domains[stateKey(entity,feature)] = lo
+            for index in range(len(lo)):
+                assert not self.symbols.has_key(lo[index]),'Symbol %s already defined' % (lo[index])
+                self.symbols[lo[index]] = index
         else:
             self.features[entity][feature].update({'lo': None,'hi': None})
         if entity is None:
