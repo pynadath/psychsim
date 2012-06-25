@@ -86,7 +86,6 @@ class Agent:
                 outcome.update(Vrest)
                 result['V'] += Vrest['V']
                 result['projection'].append(outcome)
-                turn = ActionSet(reduce(frozenset.union,outcome['actions'].values(),frozenset()))
         return result
 
     def decide(self,vector,horizon=None,others=None,model=True,tiebreak=None):
