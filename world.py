@@ -158,7 +158,7 @@ class World:
             action = ActionSet([action])
         elif not isinstance(action,ActionSet):
             # Table of actions by multiple agents
-            action = ActionSet(reduce(frozenset.union,action.values(),frozenset()))
+            action = ActionSet(action)
         try:
             return [self.dynamics[key][action]]
         except KeyError:
@@ -509,7 +509,10 @@ def stateKey(name,feature):
     @return: a key representation of a given entity's state feature
     @rtype: str
     """
-    return '%s\'s %s' % (name,feature)
+    if name is None:
+        return feature
+    else:
+        return '%s\'s %s' % (name,feature)
     
 def turnKey(name):
     return stateKey(name,'_turn')

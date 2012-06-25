@@ -95,13 +95,15 @@ class ActionSet(frozenset):
                     return action
         return None
 
-    def __new__(cls,elements):
+    def __new__(cls,elements=[]):
         if isinstance(elements,NodeList):
             iterable = []
             for node in elements:
                 if node.nodeType == node.ELEMENT_NODE:
                     assert node.tagName == 'action'
                     iterable.append(Action(node))
+        elif isinstance(elements,dict):
+            iterable = reduce(ActionSet.union,elements.values(),ActionSet())
         else:
             iterable = elements
         return frozenset.__new__(cls,iterable)
