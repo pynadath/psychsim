@@ -106,6 +106,23 @@ class Distribution(dict):
         else:
             raise ValueError,'Random number exceeded total probability in distribution.'
 
+    def set(self,element):
+        """
+        Reduce distribution to be 100% for the given element
+        @param element: the element that will be the only one with nonzero probability
+        """
+        self.clear()
+        self[element] = 1.
+
+    def select(self):
+        """
+        Reduce distribution to a single element, sampled according to the given distribution
+        @return: the selected element
+        """
+        element = self.sample()
+        self.set(element)
+        return element
+
     def __add__(self,other):
         if isinstance(other,Distribution):
             raise NotImplementedError,'Unable to add two distributions.'

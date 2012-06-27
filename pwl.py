@@ -151,16 +151,6 @@ class VectorDistribution(Distribution):
             result[row[key]] = self[row]
         return Distribution(result)
 
-    def select(self):
-        """
-        Reduce distribution to a single element, sampled according to the given distribution
-        @rtype: L{KeyedVector}
-        """
-        vector = self.sample()
-        self.clear()
-        self[vector] = 1.
-        return vector
-
 class KeyedMatrix(dict):
     def __init__(self,arg={}):
         if isinstance(arg,Node):

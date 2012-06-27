@@ -60,13 +60,15 @@ class Agent:
         """
         if horizon is None:
             horizon = self.models[model]['horizon']
+        # Compute immediate reward
         R = self.reward(vector,model)
         result = {'V': R,
+                  'R': R,
                   'old': vector,
                   'horizon': horizon,
                   'projection': []}
         if horizon > 0:
-            # Perform action
+            # Perform action(s)
             turn = copy.copy(others)
             if action:
                 turn[self.name] = action
