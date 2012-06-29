@@ -16,8 +16,6 @@ class Agent:
     @type actions: {L{Action}}
     @ivar legal: a set of conditions under which certain action choices are allowed (default is that all actions are allowed at all times)
     @type legal: L{ActionSet}S{->}L{<psychsim.pwl.KeyedPlane>KeyedPlane}
-    @ivar R: reward function
-    @type R: L{KeyedTree}[]
     @ivar omega: the set of possible observations this agent may receive
     @type ivar omega: {str}
     @ivar O: the observation function; default is C{True}, which means perfect observations of actions
@@ -27,7 +25,6 @@ class Agent:
         self.world = None
         self.actions = set()
         self.legal = {}
-        self.R = []
         self.omega = set()
         self.O = True
         self.models = {}
@@ -38,8 +35,7 @@ class Agent:
             self.parse(name)
         else:
             self.name = name
-            self.addModel(True,[],None,1,0)
-
+            self.addModel(True,{},True,1,0)
 
     """------------------"""
     """Policy methods"""
@@ -211,41 +207,36 @@ class Agent:
     """------------------"""
 
     def addReward(self,tree):
-        """
-        @return: the index of the added reward tree
-        @rtype: int
-        """
-        try:
-            return self.R.index(tree)
-        except ValueError:
-            self.R.append(tree)
+        raise DeprecationWarning,'Use setReward(tree) instead'
+
+    def setReward(self,tree,weight=0.,model=None):
+        if model is None:
             for model in self.models.values():
-                model['weights'].append(0.)
-            return len(self.R)-1
+                model['R'][tree] = weight
+        else:
+            self.models[model]['R'][tree] = weight
 
     def setRewardWeight(self,tree,weight,model=True):
-        index = self.R.index(tree)
-        self.models[model]['weights'][index] = weight
+        raise DeprecationWarning,'Use setReward(tree,weight,model) instead'
 
     def reward(self,vector,model=True):
         total = 0.
-        for index in range(len(self.R)):
-            tree = self.R[index]
+        for tree,weight in self.models[model]['R'].items():
             R = tree[vector]*vector
-            total += self.models[model]['weights'][index]*R
+            total += R*weight
         return total
 
     """------------------"""
     """Mental model methods"""
     """------------------"""
 
-    def addModel(self,name,weights=True,beliefs=True,horizon=True,level=True):
+    def addModel(self,name,R=True,beliefs=True,horizon=True,level=True):
         """
         Adds a new possible model for this agent (to be used as either true model or else as mental model another agent has of it)
         @param name: the label for this model
         @type name: str
-        @param weights: the reward weights for the agent under this model (default is C{True})
-        @type weights: L{KeyedTree}[]
+        @param R: the reward table for the agent under this model (default is C{True})
+        @type R: L{KeyedTree}S{->}float
         @param beliefs: the beliefs the agent has under this model (default is C{True})
         @type beliefs: L{VectorDistribution}
         @param horizon: the horizon of the value function under this model (default is C{True})
@@ -258,35 +249,47 @@ class Agent:
         if self.models.has_key(name):
             raise NameError,'Model %s already exists for agent %s' % \
                 (name,self.name)
-        model = {'weights': weights,'beliefs': beliefs,
+        model = {'R': R,'beliefs': beliefs,
                  'horizon': horizon,'level': level,
                  'index': len(self.models),'V': []}
         self.models[name] = model
         self.modelList.append(name)
         return model
 
-    def initializeBeliefs(self,beliefs=None,model=None):
+    def model2index(self,model):
         """
-        Sets the belief content of the given models to the given belief distribution
-        @param beliefs: the beliefs to use, or if C{None}, then use current world state distribution (default is C{None})
-        @type beliefs: L{VectorDistribution}
-        @param model: the model whose beliefs to initialize, or if C{None}, then all models
+        Convert a model name to a numeric representation
+        @param model: the model name
         @type model: str
-        @return: the state distribution that the beliefs get set to
-        @rtype: L{VectorDistribution}
+        @rtype: int
         """
-        if beliefs is None:
-            beliefs = copy.copy(self.world.state)
-        if model is None:
-            for model in self.models.values():
-                model['beliefs'] = copy.copy(beliefs)
-        else:
-            self.models[model]['beliefs'] = copy.copy(beliefs)
-        return beliefs
-        
-    """------------------"""
+        return self.models[model]['index']
+
+    def index2model(self,index):
+        """
+        Convert a numeric representation of a model to a name
+        @param index: the numeric representation of the model
+        @type index: int
+        @rtype: str
+        """
+        return self.modelList[index]
+
+    """---------------------"""
     """Belief update methods"""
-    """------------------"""
+    """---------------------"""
+
+    def setBelief(self,key,distribution,model=True):
+        beliefs = self.models[model]['beliefs']
+        if beliefs is True:
+            beliefs = copy.deepcopy(self.world.state)
+            self.models[model]['beliefs'] = beliefs
+        beliefs.join(key,distribution)
+
+    def printBeliefs(self,model=True):
+        beliefs = self.models[model]['beliefs']
+        if beliefs is True:
+            beliefs = self.world.state
+        self.world.printState(beliefs)
 
     def observe(self,observation,real=True,model=True):
         """
@@ -322,11 +325,6 @@ class Agent:
             node.appendChild(action.__xml__().documentElement)
             node.appendChild(tree.__xml__().documentElement)
             root.appendChild(node)
-        # Reward components
-        node = doc.createElement('reward')
-        for tree in self.R:
-            node.appendChild(tree.__xml__().documentElement)
-        root.appendChild(node)
         # Observations
         for omega in self.omega:
             node = doc.createElement('omega')
@@ -335,12 +333,13 @@ class Agent:
         # Models
         for name,model in self.models.items():
             node = doc.createElement('model')
-            if model['weights'] is True:
-                node.setAttribute('weights','True')
+            if model['R'] is True:
+                node.setAttribute('R','True')
             else:
-                for weight in model['weights']:
-                    subnode = doc.createElement('weight')
-                    subnode.appendChild(doc.createTextNode(str(weight)))
+                for tree,weight in model['R'].items():
+                    subnode = doc.createElement('reward')
+                    subnode.setAttribute('weight',str(weight))
+                    subnode.appendChild(tree.__xml__().documentElement)
                     node.appendChild(subnode)
             node.setAttribute('name',str(name))
             node.setAttribute('horizon',str(model['horizon']))
@@ -359,13 +358,6 @@ class Agent:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
                             self.actions.add(ActionSet(subnode.childNodes))
                         subnode = subnode.nextSibling
-                elif node.tagName == 'reward':
-                    self.R = []
-                    subnode = node.firstChild
-                    while subnode:
-                        if subnode.nodeType == subnode.ELEMENT_NODE:
-                            self.R.append(KeyedTree(subnode))
-                        subnode = subnode.nextSibling
                 elif node.tagName == 'omega':
                     self.omega.add(str(node.firstChild.data).strip())
                 elif node.tagName == 'model':
@@ -374,16 +366,19 @@ class Agent:
                     if name == 'True':
                         name = True
                     # Parse model reward weights
-                    weights = str(node.getAttribute('weights'))
+                    weights = str(node.getAttribute('R'))
                     if weights == str(True):
                         weights = True
                     else:
-                        weights = []
+                        weights = {}
                     subnode = node.firstChild
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
-                            assert subnode.tagName == 'weight'
-                            weights.append(float(subnode.firstChild.data))
+                            assert subnode.tagName == 'reward'
+                            subchild = subnode.firstChild
+                            while subchild and subchild.nodeType != subchild.ELEMENT_NODE:
+                                subchild = subchild.nextSibling
+                            weights[KeyedTree(subchild)] = float(subnode.getAttribute('weight'))
                         subnode = subnode.nextSibling
                     beliefs = True
                     # Parse horizon
