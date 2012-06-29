@@ -8,6 +8,22 @@ from probability import Distribution
 from agent import Agent
 
 class World:
+    """
+    @ivar agents: table of agents in this world, indexed by name
+    @type agents: strS{->}L{Agent}
+    @ivar state: the distribution over states of the world
+    @type state: L{VectorDistribution}
+    @ivar features: definitions of state features, over agents and the world itself
+    @type features: dict
+    @ivar symbols: utility storage of symbols used across all enumerated state features
+    @type symbols: strS{->}int
+    @ivar dynamics: table of action effect models
+    @type dynamics: dict
+    @ivar history: accumulated list of outcomes from simulation steps
+    @type history: list
+    """
+    __NORMALIZE__ = False
+
     def __init__(self,xml=None):
         """
         @param xml: Initialization argument, either an XML Element, or a filename
@@ -17,6 +33,7 @@ class World:
         self.state = VectorDistribution()
         self.features = {}
         self.symbols = {}
+        self.ranges = {}
         self.dynamics = {}
         self.history = []
         if isinstance(xml,Node):
@@ -37,6 +54,7 @@ class World:
         self.agents.clear()
         self.features.clear()
         self.symbols.clear()
+        self.ranges.clear()
         self.dynamics.clear()
         del self.history[:]
 
@@ -80,9 +98,12 @@ class World:
         return outcomes
 
     def stepFromState(self,vector,actions=None,real=True,horizon=None):
-        # Determine the actions taken by the agents in this world
+        """
+        Compute the resulting states when starting in a given possible world (as opposed to a distribution over possible worlds)
+        """
         outcome = {'old': vector,
                    'decisions': {}}
+        # Determine the actions taken by the agents in this world
         if actions is None:
             outcome['actions'] = {}
         else:
@@ -94,6 +115,7 @@ class World:
                 outcome['actions'][name] = decision['action']
             elif isinstance(outcome['actions'][name],Action):
                 outcome['actions'][name] = ActionSet([outcome['actions'][name]])
+        # Determine the effects of those actions
         outcome['effect'] = self.effect(outcome['actions'],vector)
         if real:
             outcome['new'] = outcome['effect']*outcome['old']
@@ -149,6 +171,8 @@ class World:
             self.dynamics[key] = {}
         # Translate symbolic names into numeric values
         tree = tree.desymbolize(self.symbols)
+        if self.__NORMALIZE__:
+            tree = tree.scale(self.ranges)
         self.dynamics[key][action] = tree
 
     def getDynamics(self,key,action):
@@ -239,14 +263,16 @@ class World:
     """State methods"""
     """-------------"""
 
-    def defineState(self,entity,feature,domain=float,lo=-1.,hi=1.):
+    def defineState(self,entity,feature,domain=float,lo=0.,hi=1.):
         if not self.features.has_key(entity):
             self.features[entity] = {}
         self.features[entity][feature] = {'domain': domain}
         if domain is float:
             self.features[entity][feature].update({'lo': lo,'hi': hi})
+            self.ranges[stateKey(entity,feature)] = (lo,hi)
         elif domain is int:
             self.features[entity][feature].update({'lo': int(lo),'hi': int(hi)})
+            self.ranges[stateKey(entity,feature)] = (lo,hi)
         elif domain is list:
             assert isinstance(lo,list),'Please provide list of elements for state features of the list type'
             self.features[entity][feature].update({'elements': lo,'lo': None,'hi': None})
@@ -275,6 +301,11 @@ class World:
                 value = 0.
         elif self.features[entity][feature]['domain'] is list:
             value = self.features[entity][feature]['elements'].index(value)
+        else:
+            if self.__NORMALIZE__:
+                lo = self.features[entity][feature]['lo']
+                hi = self.features[entity][feature]['hi']
+                value = float(value-lo)/float(hi-lo)
         if entity is None:
             self.state.join(feature,value)
         else:
@@ -302,7 +333,30 @@ class World:
                 index = int(float(value)+0.1)
                 abstract[self.features[entity][feature]['elements'][index]] = result[value]
             result = Distribution(abstract)
+        elif self.__NORMALIZE__:
+            abstract = {}
+            lo = self.features[entity][feature]['lo']
+            hi = self.features[entity][feature]['hi']
+            for value in result.domain():
+                new = value*(hi-lo) + lo
+                if self.features[entity][feature]['domain'] is int:
+                    new = int(new+0.5)
+                abstract[new] = result[value]
+            result = Distribution(abstract)
         return result
+
+    def setMentalModel(self,modeler,modelee,distribution,model=True):
+        """
+        Sets the distribution over mental models one agent has of another entity
+        """
+        if not isinstance(distribution,dict):
+            distribution = {distribution: 1.}
+        if not isinstance(distribution,Distribution):
+            distribution = Distribution(distribution)
+        for model in distribution.domain():
+            if not isinstance(model,float):
+                distribution.replace(model,self.agents[modelee].model2index(model))
+        self.agents[modeler].setBelief(modelKey(modelee),distribution,model)
         
     """---------------------"""
     """Visualization methods"""
@@ -366,6 +420,14 @@ class World:
             else:
                 label = entity
             first = True
+            if not entity is None:
+                # Print model of this entity
+                key = modelKey(entity)
+                if vector.has_key(key):
+                    print >> buf,'\t%-12s\t%-12s\t%-12s' % \
+                        (label,'__model__',self.agents[entity].index2model(vector[key]))
+                    first = False
+            # Print state features for this entity
             for feature,entry in table.items():
                 if entity is None:
                     key = feature

@@ -96,6 +96,9 @@ class KeyedVector(dict):
                                          self.items()))
         return self._string
 
+    def __repr__(self):
+        return '%s(%r)' % (self.__class__.__name__,dict(self))
+
     def __hash__(self):
         return hash(str(self))
 
@@ -130,12 +133,24 @@ class VectorDistribution(Distribution):
     """
 
     def join(self,key,value):
-        if isinstance(value,Distribution):
-            raise NotImplementedError,'Wait for it'
-        else:
-            for row in self.domain():
-                prob = self[row]
-                del self[row]
+        """
+        Modifies the distribution over vectors to have the given value for the given key
+        @param key: the key to the column to modify
+        @type key: str
+        @param value: either a single value to apply to all vectors, or else a L{Distribution} over possible values
+        """
+        for row in self.domain():
+            prob = self[row]
+            del self[row]
+            if isinstance(value,Distribution):
+                for element in value.domain():
+                    new = row.__class__(row)
+                    new[key] = element
+                    try:
+                        self[new] += prob*value[element]
+                    except KeyError:
+                        self[new] = prob*value[element]
+            else:
                 row[key] = value
                 self[row] = prob
 
@@ -150,6 +165,17 @@ class VectorDistribution(Distribution):
         for row in self.domain():
             result[row[key]] = self[row]
         return Distribution(result)
+
+    def __deepcopy__(self,memo):
+        result = self.__class__()
+        for vector in self.domain():
+            try:
+                new = memo[id(vector)]
+            except KeyError:
+                new = KeyedVector(vector)
+                memo[id(vector)] = new
+            result[new] = self[vector]
+        return result
 
 class KeyedMatrix(dict):
     def __init__(self,arg={}):
@@ -225,6 +251,33 @@ class KeyedMatrix(dict):
         result = self.__class__()
         for key,row in self.items():
             result[key] = row.desymbolize(table)
+        return result
+
+    def scale(self,table):
+        result = self.__class__()
+        for row,vector in self.items():
+            if table.has_key(row):
+                result[row] = KeyedVector()
+                lo,hi = table[row]
+                constant = 0.
+                for col,value in vector.items():
+                    if col == row:
+                        # Same value
+                        result[row][col] = value
+                        constant += value*lo
+                    elif col != CONSTANT:
+                        # Scale weight for another feature
+                        if abs(value) > vector.epsilon:
+                            assert table.has_key(col),'Unable to mix symbolic and numeric values in single vector'
+                            colLo,colHi = table[col]
+                            result[row][col] = value*(colHi-colLo)*(hi-lo)
+                            constant += value*colLo
+                result[row][CONSTANT] = constant - lo
+                if vector.has_key(CONSTANT):
+                    result[row][CONSTANT] += vector[CONSTANT]
+                result[row][CONSTANT] /- (hi-lo)
+            else:
+                result[row] = KeyedVector(vector)
         return result
         
     def __setitem__(self,key,value):
@@ -393,6 +446,26 @@ class KeyedPlane:
             threshold = self.threshold
         return self.__class__(self.vector.desymbolize(table),threshold,self.comparison)
 
+    def scale(self,table):
+        vector = self.vector.__class__(self.vector)
+        threshold = self.threshold
+        symbolic = False
+        span = None
+        assert not vector.has_key(CONSTANT),'Unable to scale hyperplanes with constant factors. Move constant factor into threshold.'
+        for key in vector.keys():
+            if table.has_key(key):
+                assert not symbolic,'Unable to scale hyperplanes with both numeric and symbolic variables'
+                if span is None:
+                    span = table[key]
+                    threshold /= float(span[1]-span[0])
+                else:
+                    assert table[key] == span,'Unable to scale hyperplanes when the variables have different ranges (%s != %s)' % (span,table[key])
+                threshold -= vector[key]*span[0]/(span[1]-span[0])
+            else:
+                assert span is None,'Unable to scale hyperplanes with both numeric and symbolic variables'
+                symbolic = True
+        return self.__class__(vector,threshold)
+            
     def __str__(self):
         if self._string is None:
             operator = ['==','>','<'][self.comparison]
@@ -440,6 +513,15 @@ def equalRow(key,value):
     return KeyedPlane(KeyedVector({key: 1.}),value,0)
 
 class KeyedTree:
+    """
+    Decision tree node using symbolic PWL structures
+    @ivar leaf: C{True} iff this node is a leaf
+    @type leaf: bool
+    @ivar children: table of children of this node
+    @type children: dict
+    @ivar branch: the hyperplane branch at this node (if applicable)
+    @type branch: L{KeyedPlane}
+    """
     def __init__(self,leaf=None):
         self._string = None
         if isinstance(leaf,Node):
@@ -506,6 +588,20 @@ class KeyedTree:
             new = {}
             for child in self.children.domain():
                 new[child.desymbolize(table)] = self.children[child]
+            tree.makeProbabilistic(TreeDistribution(new))
+        return tree
+
+    def scale(self,table):
+        tree = self.__class__()
+        if self.isLeaf():
+            tree.makeLeaf(self.children[None].scale(table))
+        elif self.branch:
+            tree.makeBranch(self.branch.scale(table),self.children[True].scale(table),
+                            self.children[False].scale(table))
+        else:
+            new = {}
+            for child in self.children.domain():
+                new[child.scale(table)] = self.children[child]
             tree.makeProbabilistic(TreeDistribution(new))
         return tree
 
