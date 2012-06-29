@@ -97,7 +97,7 @@ class Agent:
         Generate an action choice for this agent in the given state
         @param vector: the current state in which the agent is making its decision
         @type vector: L{KeyedVector}
-        @param horizon: the value function horizon (default is use horizon specified in model}
+        @param horizon: the value function horizon (default is use horizon specified in model)
         @type horizon: int
         @param others: the optional action choices of other agents in the current time step
         @type others: strS{->}L{ActionSet}
@@ -153,7 +153,7 @@ class Agent:
     def addAction(self,action,condition=None):
         """
         @param condition: optional legality condition
-        @type condition: L{<psychsim.pwl.KeyedPlane>KeyedPlane}
+        @type condition: L{KeyedPlane}
         @return: the action added
         @rtype: L{ActionSet}
         """
@@ -308,7 +308,6 @@ class Agent:
 
     def observe(self,state,actions,model=True):
         """
-        @param observation: the observation received by this agent
         @return: the post-observation beliefs of this agent
         """
         return actions
