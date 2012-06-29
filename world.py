@@ -123,8 +123,29 @@ class World:
         return outcome
 
     def effect(self,actions,vector):
+        # Update world state
         result = self.deltaState(actions,vector)
+        # Update turn order
         result.update(self.deltaOrder(actions,vector))
+        # Update agent beliefs
+        # for name,agent in self.agents.items():
+        #     try:
+        #         label = agent.index2model(vector[modelKey(name)])
+        #         model = agent.models[label]
+        #     except KeyError:
+        #         model = agent.models[True]
+        #     if not model['beliefs'] is True:
+        #         # Agent has imperfect beliefs
+        #         obs = agent.observe(vector,actions,model['name'])
+        #         for belief in model['beliefs'].domain():
+        #             prob = model['beliefs'][belief]
+        #             for other,act in obs.items():
+        #                 key = modelKey(other)
+        #                 if belief.has_key(key):
+        #                     label = self.agents[other].index2model(belief[key])
+        #                     print label,self.agents[other].models[label]['V'][vector]
+        #                     raise UserWarning
+        # Constant factor does not change
         if vector.has_key(CONSTANT):
             result.update(KeyedMatrix({CONSTANT: KeyedVector({CONSTANT: 1.})}))
         return result
@@ -349,13 +370,21 @@ class World:
         """
         Sets the distribution over mental models one agent has of another entity
         """
+        # Make sure distribution is probability distribution over floats
         if not isinstance(distribution,dict):
             distribution = {distribution: 1.}
         if not isinstance(distribution,Distribution):
             distribution = Distribution(distribution)
-        for model in distribution.domain():
-            if not isinstance(model,float):
-                distribution.replace(model,self.agents[modelee].model2index(model))
+        for element in distribution.domain():
+            if not isinstance(element,float):
+                distribution.replace(element,float(self.agents[modelee].model2index(element)))
+        # Make sure recursive levels match up
+        modelerLevel = self.agents[modeler].models[model]['level']
+        for element in distribution.domain():
+            name = self.agents[modelee].index2model(element)
+            assert self.agents[modelee].models[name]['level'] == modelerLevel - 1,\
+                'Agent %s\'s %s model has belief level of %d, so its model %s for agent %s must have belief level of %d' % \
+                (modeler,model,modelerLevel,name,modelee,modelerLevel-1)
         self.agents[modeler].setBelief(modelKey(modelee),distribution,model)
         
     """---------------------"""
