@@ -11,11 +11,11 @@ class Agent:
     @ivar name: agent name
     @type name: str
     @ivar world: the environment that this agent inhabits
-    @type world: L{<psychsim.world.World>World}
+    @type world: L{World<psychsim.world.World>}
     @ivar actions: the set of possible actions that the agent can choose from
     @type actions: {L{Action}}
     @ivar legal: a set of conditions under which certain action choices are allowed (default is that all actions are allowed at all times)
-    @type legal: L{ActionSet}S{->}L{<psychsim.pwl.KeyedPlane>KeyedPlane}
+    @type legal: L{ActionSet}S{->}L{KeyedPlane}
     @ivar omega: the set of possible observations this agent may receive
     @type ivar omega: {str}
     @ivar O: the observation function; default is C{True}, which means perfect observations of actions
@@ -84,6 +84,12 @@ class Agent:
                 outcome.update(Vrest)
                 result['V'] += Vrest['V']
                 result['projection'].append(outcome)
+        if horizon == self.models[model]['horizon']:
+            # Cache result
+            try:
+                self.models[model]['V'][vector][action] = result['V']
+            except KeyError:
+                self.models[model]['V'][vector] = {action: result['V']}
         return result
 
     def decide(self,vector,horizon=None,others=None,model=True,tiebreak=None):
@@ -249,9 +255,9 @@ class Agent:
         if self.models.has_key(name):
             raise NameError,'Model %s already exists for agent %s' % \
                 (name,self.name)
-        model = {'R': R,'beliefs': beliefs,
+        model = {'R': R,'beliefs': beliefs,'name': name,
                  'horizon': horizon,'level': level,
-                 'index': len(self.models),'V': []}
+                 'index': len(self.models),'V': {}}
         self.models[name] = model
         self.modelList.append(name)
         return model
@@ -272,11 +278,20 @@ class Agent:
         @type index: int
         @rtype: str
         """
+        if isinstance(index,float):
+            index = int(index+0.5)
         return self.modelList[index]
 
     """---------------------"""
     """Belief update methods"""
     """---------------------"""
+
+    def setRecursiveLevel(self,level,model=True):
+        if model is None:
+            for model in self.models.values():
+                model['level'] = level
+        else:
+            self.models[model]['level'] = level
 
     def setBelief(self,key,distribution,model=True):
         beliefs = self.models[model]['beliefs']
@@ -291,16 +306,12 @@ class Agent:
             beliefs = self.world.state
         self.world.printState(beliefs)
 
-    def observe(self,observation,real=True,model=True):
+    def observe(self,state,actions,model=True):
         """
         @param observation: the observation received by this agent
         @return: the post-observation beliefs of this agent
         """
-        if not self.models[model]['beliefs'] is True:
-            # Beliefs are not necessarily true state
-            pass
-        if real:
-            pass
+        return actions
 
     """------------------"""
     """Serialization methods"""
@@ -333,17 +344,25 @@ class Agent:
         # Models
         for name,model in self.models.items():
             node = doc.createElement('model')
+            node.setAttribute('name',str(name))
+            node.setAttribute('horizon',str(model['horizon']))
+            node.setAttribute('level',str(model['level']))
+            # Reward function for this model
             if model['R'] is True:
-                node.setAttribute('R','True')
+                node.setAttribute('R',str(model['R']))
             else:
                 for tree,weight in model['R'].items():
                     subnode = doc.createElement('reward')
                     subnode.setAttribute('weight',str(weight))
                     subnode.appendChild(tree.__xml__().documentElement)
                     node.appendChild(subnode)
-            node.setAttribute('name',str(name))
-            node.setAttribute('horizon',str(model['horizon']))
-            node.setAttribute('level',str(model['level']))
+            # Beliefs for this model
+            if model['beliefs'] is True:
+                node.setAttribute('beliefs',str(model['beliefs']))
+            else:
+                subnode = doc.createElement('beliefs')
+                subnode.appendChild(model['beliefs'].__xml__().documentElement)
+                node.appendChild(subnode)
             root.appendChild(node)
         return doc
 
@@ -371,16 +390,27 @@ class Agent:
                         weights = True
                     else:
                         weights = {}
+                    # Parse beliefs
+                    beliefs = str(node.getAttribute('beliefs'))
+                    if beliefs == str(True):
+                        beliefs = True
+                    else:
+                        beliefs = None
+                    # Parse children
                     subnode = node.firstChild
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
-                            assert subnode.tagName == 'reward'
-                            subchild = subnode.firstChild
-                            while subchild and subchild.nodeType != subchild.ELEMENT_NODE:
-                                subchild = subchild.nextSibling
-                            weights[KeyedTree(subchild)] = float(subnode.getAttribute('weight'))
+                            if subnode.tagName == 'reward':
+                                subchild = subnode.firstChild
+                                while subchild and subchild.nodeType != subchild.ELEMENT_NODE:
+                                    subchild = subchild.nextSibling
+                                weights[KeyedTree(subchild)] = float(subnode.getAttribute('weight'))
+                            elif subnode.tagName == 'beliefs':
+                                subchild = subnode.firstChild
+                                while subchild and subchild.nodeType != subchild.ELEMENT_NODE:
+                                    subchild = subchild.nextSibling
+                                beliefs = VectorDistribution(subchild)
                         subnode = subnode.nextSibling
-                    beliefs = True
                     # Parse horizon
                     horizon = str(node.getAttribute('horizon'))
                     try:
