@@ -1,3 +1,4 @@
+import sys
 from ConfigParser import SafeConfigParser
 
 from psychsim.pwl import *
@@ -182,9 +183,9 @@ if __name__ == '__main__':
     world.setDynamics(None,'model',freeOffer25,tree)
 
     # Models of Sylvania
-    sylv.addModel('true',R={goalSTroops: 1e-4,goalSTerritory: 0.2},level=1)
-    sylv.addModel('aggressive',R={goalSTroops: 1e-4,goalSTerritory: 0.2},level=1)
-    world.setMentalModel(free.name,sylv.name,{'true': 0.5,'aggressive': 0.5})
+#    sylv.addModel('true',R={goalSTroops: 1e-4,goalSTerritory: 0.2},level=1)
+#    sylv.addModel('aggressive',R={goalSTroops: 1e-4,goalSTerritory: 0.2},level=1)
+#    world.setMentalModel(free.name,sylv.name,{'aggressive': 1.0})
 
     # Save scenario to compressed XML file
     world.save('default.psy')
@@ -202,14 +203,17 @@ if __name__ == '__main__':
     world = World('default.psy')
     free = world.agents[free.name]
     sylv = world.agents[sylv.name]
-    world.printState()
+#    world.printState()
 
-    # Freedonia attacks in first step
-    world.explain(world.step({free.name: freeBattle}),1)
+    # Uncomment the following line to leave Freedonia free to decide in first step
+    world.explain(world.step(),4)
+    # Uncomment the following line to force Freedonia to attack in first step
+#    world.explain(world.step({free.name: freeBattle}),1)
     world.state.select()
     world.printState()
 
+    sys.exit(0)
     # Sylvania free to decide in second step
-    world.explain(world.step(),1)
+    world.explain(world.step(),4)
     world.state.select()
     free.printBeliefs()

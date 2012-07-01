@@ -110,7 +110,12 @@ class World:
             outcome['actions'] = copy.copy(actions)
         for name in self.next(vector):
             if not outcome['actions'].has_key(name):
-                decision = self.agents[name].decide(vector,horizon,outcome['actions'])
+                agent = self.agents[name]
+                try:
+                    model = agent.index2model(vector[modelKey(name)])
+                except KeyError:
+                    model = True
+                decision = self.agents[name].decide(vector,horizon,outcome['actions'],model)
                 outcome['decisions'][name] = decision
                 outcome['actions'][name] = decision['action']
             elif isinstance(outcome['actions'][name],Action):
@@ -414,62 +419,86 @@ class World:
                     if level > 1: print >> buf,'\tforced'
                 elif level > 1:
                     # Explain decision
-                    decision = outcome['decisions'][name]
-                    actions = decision['V'].keys()
-                    actions.sort(lambda x,y: cmp(str(x),str(y)))
-                    for alt in actions:
-                        V = decision['V'][alt]
-                        if level > 1: print >> buf,'\tV(%s) = %6.3f' % (alt,V['V'])
-                        nodes = V['projection'][:]
-                        while len(nodes) > 0:
-                            node = nodes.pop(0)
-                            tab = ''
-                            for index in range(V['horizon']-node['horizon']):
-                                tab = tab+'\t'
-                            if level > 2: print >> buf,'%s%s (%6.3f)' % (tab,ActionSet(node['actions']),node['R'])
-                            if level > 3: self.printState(node['effect']*node['old']-node['old'],buf,prune=True,prefix=tab)
-                            for index in range(len(node['projection'])):
-                                nodes.insert(index,node['projection'][index])
+                    self.explainDecision(outcome['decisions'][name],buf,level)
+
+    def explainDecision(self,decision,buf=None,level=2,prefix=''):
+        """
+        Subroutine of L{explain} for explaining agent decisions
+        """
+        actions = decision['V'].keys()
+        actions.sort(lambda x,y: cmp(str(x),str(y)))
+        for alt in actions:
+            V = decision['V'][alt]
+            print >> buf,'%s\tV(%s) = %6.3f' % (prefix,alt,V['__EV__'])
+            if level > 2:
+                # Explain lookahead
+                beliefs = filter(lambda k: not isinstance(k,str),V.keys())
+                for state in beliefs:
+#                    print >> buf,'%s\tBeliefs:' % (prefix)
+#                    self.printVector(state,buf,False,prefix+'\t')
+                    nodes = V[state]['projection'][:]
+                    while len(nodes) > 0:
+                        node = nodes.pop(0)
+                        tab = ''
+                        t = V[state]['horizon']-node['horizon']
+                        for index in range(t):
+                            tab = prefix+tab+'\t'
+                        print >> buf,'%s%d. %s (%6.3f)' % (tab,t-1,ActionSet(node['actions']),node['R'])
+                        for other in node['decisions'].keys():
+                            self.explainDecision(node['decisions'][other],buf,level,prefix+'\t\t')
+                        if level > 3: self.printState(node['delta'],buf,prune=True,prefix=tab+prefix)
+                        for index in range(len(node['projection'])):
+                            nodes.insert(index,node['projection'][index])
 
     def printState(self,distribution=None,buf=None,prune=False,prefix=''):
         if distribution is None:
             distribution = self.state
         for vector in distribution.domain():
             print >> buf,'%s%d%%' % (prefix,distribution[vector]*100.),
-            self.printVector(vector,buf,prune=prune)
+            self.printVector(vector,buf,prune,prefix)
 
-    def printVector(self,vector,buf=None,prune=False):
+    def printVector(self,vector,buf=None,prune=False,prefix=''):
         entities = self.features.keys()
         entities.sort()
         change = False
+        first = True
         for entity in entities:
             table = self.features[entity]
             if entity is None:
                 label = 'World'
             else:
                 label = entity
-            first = True
+            newEntity = True
             if not entity is None:
                 # Print model of this entity
                 key = modelKey(entity)
                 if vector.has_key(key):
-                    print >> buf,'\t%-12s\t%-12s\t%-12s' % \
-                        (label,'__model__',self.agents[entity].index2model(vector[key]))
-                    first = False
+                    if first:
+                        print >> buf,'\t%-12s\t%-12s\t%-12s' % \
+                            (label,'__model__',self.agents[entity].index2model(vector[key]))
+                        first = False
+                    else:
+                        print >> buf,'%s\t%-12s\t%-12s\t%-12s' % \
+                            (prefix,label,'__model__',self.agents[entity].index2model(vector[key]))
+                    newEntity = False
             # Print state features for this entity
             for feature,entry in table.items():
                 if entity is None:
                     key = feature
                 else:
                     key = stateKey(entity,feature)
-                if not prune or vector[key] > vector.epsilon:
-                    if first:
-                        print >> buf,'\t%-12s' % (label),
+                if not prune or abs(vector[key]) > vector.epsilon:
+                    if newEntity:
+                        if first:
+                            print >> buf,'\t%-12s' % (label),
+                            first = False
+                        else:
+                            print >> buf,'%s\t%-12s' % (prefix,label),
                         print >> buf,'\t%-12s\t' % (feature+':'),
-                        first = False
+                        newEntity = False
                         change = True
                     else:
-                        print >> buf,'\t\t\t%-12s\t' % (feature+':'),
+                        print >> buf,'%s\t\t\t%-12s\t' % (prefix,feature+':'),
                     if entry['domain'] is int:
                         print >> buf,int(vector[key])
                     elif entry['domain'] is bool:

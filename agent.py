@@ -109,19 +109,30 @@ class Agent:
            - None: make a deterministic choice among the actions (default)
         @type tiebreak: str
         """
+        # What are my subjective beliefs for this decision?
+        belief = self.models[model]['beliefs']
+        if belief is True:
+            belief = Distribution({vector: 1.})
         if horizon is None:
             horizon = self.models[model]['horizon']
+        # Keep track of value function
         V = {}
         best = None
+        # Consider all legal actions (legality determined by *real* world, not my belief)
         for action in self.getActions(vector):
-            V[action] = self.value(vector,action,horizon,others,model)
+            # Compute value across possible worlds
+            V[action] = {'__EV__': 0.}
+            for state in belief.domain():
+                V[action][state] = self.value(state,action,horizon,others,model)
+                V[action]['__EV__'] += belief[state]*V[action][state]['V']
+            # Determine whether this action is the best
             if best is None:
                 best = [action]
-            elif V[action]['V'] == V[best[0]]['V']:
+            elif V[action]['__EV__'] == V[best[0]]['__EV__']:
                 best.append(action)
-            elif V[action]['V'] > V[best[0]]['V']:
+            elif V[action]['__EV__'] > V[best[0]]['__EV__']:
                 best = [action]
-        result = {'V*': V[best[0]]['V'],'V': V}
+        result = {'V*': V[best[0]]['__EV__'],'V': V}
         if len(best) == 1:
             result['action'] = best[0]
         elif tiebreak == 'random':
