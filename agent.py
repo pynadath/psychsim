@@ -40,57 +40,6 @@ class Agent:
     """------------------"""
     """Policy methods"""
     """------------------"""
-                
-    def value(self,vector,action=None,horizon=None,others=None,model=True):
-        """
-        Computes the expected value of a state vector (and optional action choice) to this agent
-        @param vector: the state vector (not distribution) representing the possible world under consideration
-        @type vector: L{KeyedVector}
-        @param action: the action choice for the agent to evalue; if C{None}, then use agent's own action choice (default)
-        @type action: L{ActionSet}
-        @param horizon: the number of time steps to project into the future (default is agent's horizon)
-        @type horizon: int
-        @param others: optional table of actions being performed by other agents in this time step
-        @type others: strS{->}L{ActionSet}
-        @param model: the model of this agent to use (default is C{True})
-        """
-        if horizon is None:
-            horizon = self.models[model]['horizon']
-        # Compute immediate reward
-        R = self.reward(vector,model)
-        result = {'V': R,
-                  'R': R,
-                  'old': vector,
-                  'horizon': horizon,
-                  'projection': []}
-        if horizon > 0:
-            # Perform action(s)
-            turn = copy.copy(others)
-            if action:
-                turn[self.name] = action
-            outcome = self.world.stepFromState(vector,turn,True,horizon)
-            if isinstance(outcome['new'],Distribution):
-                # Uncertain outcomes
-                for newVector in outcome['new'].domain():
-                    entry = copy.copy(outcome)
-                    entry['probability'] = outcome['new'][newVector]
-                    Vrest = self.value(newVector,None,horizon-1,{},model)
-                    entry.update(Vrest)
-                    result['V'] += entry['probability']*entry['V']
-                    result['projection'].append(entry)
-            else:
-                # Deterministic outcome
-                Vrest = self.value(outcome['new'],None,horizon-1,{},model)
-                outcome.update(Vrest)
-                result['V'] += Vrest['V']
-                result['projection'].append(outcome)
-        if horizon == self.models[model]['horizon']:
-            # Cache result
-            try:
-                self.models[model]['V'][vector][action] = result['V']
-            except KeyError:
-                self.models[model]['V'][vector] = {action: result['V']}
-        return result
 
     def decide(self,vector,horizon=None,others=None,model=True,tiebreak=None):
         """
@@ -142,6 +91,58 @@ class Agent:
         else:
             best.sort()
             result['action'] = best[0]
+        return result
+                
+    def value(self,vector,action=None,horizon=None,others=None,model=True):
+        """
+        Computes the expected value of a state vector (and optional action choice) to this agent
+        @param vector: the state vector (not distribution) representing the possible world under consideration
+        @type vector: L{KeyedVector}
+        @param action: prescribed action choice for the agent to evaluate; if C{None}, then use agent's own action choice (default is C{None})
+        @type action: L{ActionSet}
+        @param horizon: the number of time steps to project into the future (default is agent's horizon)
+        @type horizon: int
+        @param others: optional table of actions being performed by other agents in this time step (default is no other actions)
+        @type others: strS{->}L{ActionSet}
+        @param model: the model of this agent to use (default is C{True})
+        """
+        if horizon is None:
+            horizon = self.models[model]['horizon']
+        # Compute immediate reward
+        R = self.reward(vector,model)
+        result = {'V': R,
+                  'R': R,
+                  'state': vector,
+                  'horizon': horizon,
+                  'projection': []}
+        if horizon > 0:
+            # Perform action(s)
+            turn = copy.copy(others)
+            if action:
+                turn[self.name] = action
+            outcome = self.world.stepFromState(vector,turn,horizon)
+            if isinstance(outcome['new'],Distribution):
+                # Uncertain outcomes
+                for newVector in outcome['new'].domain():
+                    entry = copy.copy(outcome)
+                    entry['probability'] = outcome['new'][newVector]
+                    Vrest = self.value(newVector,None,horizon-1,{},model)
+                    entry.update(Vrest)
+                    result['V'] += entry['probability']*entry['V']
+                    result['projection'].append(entry)
+            else:
+                # Deterministic outcome
+                outcome['probability'] = 1.
+                Vrest = self.value(outcome['new'],None,horizon-1,{},model)
+                outcome.update(Vrest)
+                result['V'] += Vrest['V']
+                result['projection'].append(outcome)
+        if horizon == self.models[model]['horizon']:
+            # Cache result
+            try:
+                self.models[model]['V'][vector][action] = result['V']
+            except KeyError:
+                self.models[model]['V'][vector] = {action: result['V']}
         return result
 
     def setHorizon(self,horizon,model=None,level=None):

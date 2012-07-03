@@ -78,7 +78,7 @@ class World:
         # Iterate through each possible world
         for stateVector in state.domain():
             prob = state[stateVector]
-            outcome = self.stepFromState(stateVector,actions,real)
+            outcome = self.stepFromState(stateVector,actions)
             outcome['probability'] = prob
             outcomes.append(outcome)
         if real:
@@ -97,7 +97,7 @@ class World:
             self.history.append(outcomes)
         return outcomes
 
-    def stepFromState(self,vector,actions=None,real=True,horizon=None):
+    def stepFromState(self,vector,actions=None,horizon=None):
         """
         Compute the resulting states when starting in a given possible world (as opposed to a distribution over possible worlds)
         """
@@ -122,9 +122,8 @@ class World:
                 outcome['actions'][name] = ActionSet([outcome['actions'][name]])
         # Determine the effects of those actions
         outcome['effect'] = self.effect(outcome['actions'],vector)
-        if real:
-            outcome['new'] = outcome['effect']*outcome['old']
-            outcome['delta'] = outcome['new'] - outcome['old']
+        outcome['new'] = outcome['effect']*outcome['old']
+        outcome['delta'] = outcome['new'] - outcome['old']
         return outcome
 
     def effect(self,actions,vector):
@@ -187,6 +186,17 @@ class World:
             agent.world = self
 
     def setDynamics(self,entity,feature,action,tree):
+        """
+        Defines the effect of an action on a given state feature
+        @param entity: the entity whose state feature is affected (C{None} if on the world itself)
+        @type entity: str
+        @param feature: the name of the affected state feature
+        @type feature: str
+        @param action: the action affecting the state feature
+        @type action: L{Action} or L{ActionSet}
+        @param tree: the decision tree defining the effect
+        @type tree: L{KeyedTree}
+        """
         if isinstance(action,Action):
             action = ActionSet([action])
         if entity is None:
@@ -290,6 +300,23 @@ class World:
     """-------------"""
 
     def defineState(self,entity,feature,domain=float,lo=0.,hi=1.):
+        """
+        Define a state feature in this world
+        @param entity: the name of the entity this feature pertains to (C{None} if feature is on the world itself)
+        @type entity: str
+        @param feature: the name of this new state feature
+        @type feature: str
+        @param domain: the domain of values for this feature. Acceptable values are:
+           - float: continuous range
+           - int: discrete numeric range
+           - bool: True/False value
+           - list: enumerated set of discrete values
+        @type domain: class
+        @param lo: for float/int features, the lowest possible value. for list features, a list of possible values.
+        @type lo: float/int/list
+        @param hi: for float/int features, the highest possible value
+        @type hi: float/int
+        """
         if not self.features.has_key(entity):
             self.features[entity] = {}
         self.features[entity][feature] = {'domain': domain}
@@ -305,8 +332,10 @@ class World:
             for index in range(len(lo)):
                 assert not self.symbols.has_key(lo[index]),'Symbol %s already defined' % (lo[index])
                 self.symbols[lo[index]] = index
-        else:
+        elif domain is bool:
             self.features[entity][feature].update({'lo': None,'hi': None})
+        else:
+            raise ValueError,'Unknown domain type %s for state feature' % (domain)
         if entity is None:
             self.features[entity][feature]['key'] = feature
         else:
@@ -338,6 +367,16 @@ class World:
             self.state.join(stateKey(entity,feature),value)
 
     def getState(self,entity,feature,state=None):
+        """
+        @param entity: the name of the entity of interest (C{None} if the feature of interest is of the world itself)
+        @type entity: str
+        @param feature: the state feature of interest
+        @type feature: str
+        @param state: the distribution over possible worlds (default is the current world state)
+        @type state: L{VectorDistribution}
+        @return: a distribution over values for the given feature
+        @rtype: L{Distribution}
+        """
         if state is None:
             state = self.state
         assert self.features.has_key(entity) and self.features[entity].has_key(feature)
@@ -407,6 +446,7 @@ class World:
            2. Agent value functions
            3. Agent expectations
            4. Effects of expected actions
+           5. World state (possibly subjective) at each step
         @type level: int
         @param buf: the string buffer to put the explanation into (default is standard out)
         """
@@ -434,8 +474,6 @@ class World:
                 # Explain lookahead
                 beliefs = filter(lambda k: not isinstance(k,str),V.keys())
                 for state in beliefs:
-#                    print >> buf,'%s\tBeliefs:' % (prefix)
-#                    self.printVector(state,buf,False,prefix+'\t')
                     nodes = V[state]['projection'][:]
                     while len(nodes) > 0:
                         node = nodes.pop(0)
@@ -443,25 +481,49 @@ class World:
                         t = V[state]['horizon']-node['horizon']
                         for index in range(t):
                             tab = prefix+tab+'\t'
-                        print >> buf,'%s%d. %s (%6.3f)' % (tab,t-1,ActionSet(node['actions']),node['R'])
+                        if level > 4: 
+                            print >> buf,'%sState:' % (tab)
+                            self.printVector(node['old'],buf,prefix=tab,first=False)
+                        print >> buf,'%s%s (%6.3f)' % (tab,ActionSet(node['actions']),node['R'])
                         for other in node['decisions'].keys():
                             self.explainDecision(node['decisions'][other],buf,level,prefix+'\t\t')
-                        if level > 3: self.printState(node['delta'],buf,prune=True,prefix=tab+prefix)
+                        if level > 3: 
+                            print >> buf,'%sEffect:' % (tab+prefix)
+                            self.printState(node['delta'],buf,prune=True,prefix=tab+prefix)
                         for index in range(len(node['projection'])):
                             nodes.insert(index,node['projection'][index])
 
     def printState(self,distribution=None,buf=None,prune=False,prefix=''):
+        """
+        Utility method for displaying a distribution over possible worlds
+        @type distribution: L{VectorDistribution}
+        @param buf: the string buffer to put the string representation in (default is standard output)
+        @param prune: if C{True}, don't print vector entries with 0 values (default is C{False})
+        @type prune: bool
+        @param prefix: a string prefix (e.g., tabs) to insert at the beginning of each line
+        @type prefix: str
+        """
         if distribution is None:
             distribution = self.state
         for vector in distribution.domain():
             print >> buf,'%s%d%%' % (prefix,distribution[vector]*100.),
             self.printVector(vector,buf,prune,prefix)
 
-    def printVector(self,vector,buf=None,prune=False,prefix=''):
+    def printVector(self,vector,buf=None,prune=False,prefix='',first=True):
+        """
+        Utility method for displaying a single possible world
+        @type vector: L{KeyedVector}
+        @param buf: the string buffer to put the string representation in (default is standard output)
+        @param prune: if C{True}, don't print vector entries with 0 values (default is C{False})
+        @type prune: bool
+        @param prefix: a string prefix (e.g., tabs) to insert at the beginning of each line
+        @type prefix: str
+        @param first: if C{True}, then the first line is the continuation of an existing line (default is C{True})
+        @type first: bool
+        """
         entities = self.features.keys()
         entities.sort()
         change = False
-        first = True
         for entity in entities:
             table = self.features[entity]
             if entity is None:
