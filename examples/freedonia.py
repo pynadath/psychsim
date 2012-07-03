@@ -206,7 +206,7 @@ if __name__ == '__main__':
 #    world.printState()
 
     # Uncomment the following line to leave Freedonia free to decide in first step
-    world.explain(world.step(),4)
+    world.explain(world.step(),10)
     # Uncomment the following line to force Freedonia to attack in first step
 #    world.explain(world.step({free.name: freeBattle}),1)
     world.state.select()
