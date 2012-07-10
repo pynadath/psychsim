@@ -59,9 +59,7 @@ class Agent:
         @type tiebreak: str
         """
         # What are my subjective beliefs for this decision?
-        belief = self.models[model]['beliefs']
-        if belief is True:
-            belief = Distribution({vector: 1.})
+        belief = self.getBelief(model,vector)
         if horizon is None:
             horizon = self.models[model]['horizon']
         # Keep track of value function
@@ -112,6 +110,7 @@ class Agent:
         R = self.reward(vector,model)
         result = {'V': R,
                   'R': R,
+                  'agent': self.name,
                   'state': vector,
                   'horizon': horizon,
                   'projection': []}
@@ -238,10 +237,14 @@ class Agent:
         raise DeprecationWarning,'Use setReward(tree,weight,model) instead'
 
     def reward(self,vector,model=True):
+        R = self.models[model]['R']
+        if R is True:
+            # Use true reward function
+            R = self.models[True]['R']
         total = 0.
-        for tree,weight in self.models[model]['R'].items():
-            R = tree[vector]*vector
-            total += R*weight
+        for tree,weight in R.items():
+            ER = tree[vector]*vector
+            total += ER*weight
         return total
 
     """------------------"""
@@ -308,14 +311,24 @@ class Agent:
     def setBelief(self,key,distribution,model=True):
         beliefs = self.models[model]['beliefs']
         if beliefs is True:
-            beliefs = copy.deepcopy(self.world.state)
+            beliefs = VectorDistribution({KeyedVector({CONSTANT: 1.}): 1.})
             self.models[model]['beliefs'] = beliefs
         beliefs.join(key,distribution)
 
-    def printBeliefs(self,model=True):
+    def getBelief(self,model=True,world=None):
+        if world is None:
+            world = self.world.state
+        if isinstance(world,KeyedVector):
+            world = VectorDistribution({world: 1.})
         beliefs = self.models[model]['beliefs']
         if beliefs is True:
-            beliefs = self.world.state
+            beliefs = world
+        else:
+            beliefs = world.merge(beliefs)
+        return beliefs
+
+    def printBeliefs(self,model=True):
+        beliefs = self.getBelief(model)
         self.world.printState(beliefs)
 
     def observe(self,state,actions,model=True):
@@ -353,7 +366,8 @@ class Agent:
             node.appendChild(doc.createTextNode(omega))
             root.appendChild(node)
         # Models
-        for name,model in self.models.items():
+        for name in self.modelList:
+            model = self.models[name]
             node = doc.createElement('model')
             node.setAttribute('name',str(name))
             node.setAttribute('horizon',str(model['horizon']))

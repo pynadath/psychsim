@@ -154,6 +154,21 @@ class VectorDistribution(Distribution):
                 row[key] = value
                 self[row] = prob
 
+    def merge(self,other):
+        """
+        Merge two distributions (the passed-in distribution takes precedence over this one in case of conflict)
+        @type other: L{VectorDistribution}
+        @return: the merged distribution
+        @rtype: L{VectorDistribution}
+        """
+        result = {}
+        for diff in other.domain():
+            for old in self.domain():
+                new = old.__class__(old)
+                new.update(diff)
+                result[new] = self[old]*other[diff]
+        return self.__class__(result)
+        
     def element2xml(self,value):
         return value.__xml__().documentElement
 

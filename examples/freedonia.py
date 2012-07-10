@@ -25,7 +25,7 @@ if __name__ == '__main__':
     sylv = Agent('Sylvania')
     world.addAgent(sylv)
     world.defineState(sylv.name,'troops',int,lo=200000,hi=400000)
-    sylv.setState('troops',261432)
+    sylv.setState('troops',461432)
     world.defineState(sylv.name,'offered',int,lo=0,hi=100)
     sylv.setState('offered',0)  # Percentage of disputed territory offered *to* me
 
@@ -70,11 +70,11 @@ if __name__ == '__main__':
                                           False: True}) # Legal if treaty is False
     for action in filter(lambda a: a.match({'verb': 'accept offer'}),free.actions | sylv.actions):
         subject = world.agents[action['subject']]
-        subject.legal[freeAccept] = makeTree({'if': trueRow(stateKey(None,'treaty')),
-                                              True: False,  # Illegal if treaty is True
-                                              False: {'if': thresholdRow(stateKey(subject.name,'offered'),1),
-                                                      True: True,     # Legal if treaty is False and an offer has been made
-                                                      False: False}}) # Illegal if no offer has been made
+        subject.legal[action] = makeTree({'if': trueRow(stateKey(None,'treaty')),
+                                          True: False,  # Illegal if treaty is True
+                                          False: {'if': thresholdRow(stateKey(subject.name,'offered'),1),
+                                                  True: True,     # Legal if treaty is False and an offer has been made
+                                                  False: False}}) # Illegal if no offer has been made
 
     # Goals for Freedonia
     goalFTroops = maximizeFeature(stateKey(free.name,'troops'))
@@ -182,10 +182,11 @@ if __name__ == '__main__':
                      False: setToConstantMatrix(stateKey(None,'model'),'Slantchev')})
     world.setDynamics(None,'model',freeOffer25,tree)
 
-    # Models of Sylvania
-#    sylv.addModel('true',R={goalSTroops: 1e-4,goalSTerritory: 0.2},level=1)
-#    sylv.addModel('aggressive',R={goalSTroops: 1e-4,goalSTerritory: 0.2},level=1)
-#    world.setMentalModel(free.name,sylv.name,{'aggressive': 1.0})
+    # Models of Freedonia
+#    free.addModel('dove',R={goalFTroops: 1e-4,goalFTerritory: 0.1},level=1)
+    free.addModel('true',level=1)
+#    free.addModel('hawk',R={goalFTroops: 1e-4,goalFTerritory: 0.3},level=1)
+    world.setMentalModel(sylv.name,free.name,{'true': 1.0})
 
     # Save scenario to compressed XML file
     world.save('default.psy')
@@ -205,15 +206,13 @@ if __name__ == '__main__':
     sylv = world.agents[sylv.name]
 #    world.printState()
 
-    # Uncomment the following line to leave Freedonia free to decide in first step
-    world.explain(world.step(),10)
-    # Uncomment the following line to force Freedonia to attack in first step
-#    world.explain(world.step({free.name: freeBattle}),1)
+    # Force Freedonia to attack in first step
+    world.explain(world.step({free.name: freeBattle}),1)
     world.state.select()
     world.printState()
 
-    sys.exit(0)
     # Sylvania free to decide in second step
-    world.explain(world.step(),4)
+    world.explain(world.step(),5)
     world.state.select()
+    world.printState()
     free.printBeliefs()
