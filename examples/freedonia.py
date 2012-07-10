@@ -183,10 +183,10 @@ if __name__ == '__main__':
     world.setDynamics(None,'model',freeOffer25,tree)
 
     # Models of Freedonia
-#    free.addModel('dove',R={goalFTroops: 1e-4,goalFTerritory: 0.1},level=1)
-    free.addModel('true',level=1)
-#    free.addModel('hawk',R={goalFTroops: 1e-4,goalFTerritory: 0.3},level=1)
-    world.setMentalModel(sylv.name,free.name,{'true': 1.0})
+    free.addModel('dove',R={goalFTroops: 1e-4,goalFTerritory: 0.1},level=1,rationality=0.01)
+    free.addModel('true',level=1,rationality=0.01)
+    free.addModel('hawk',R={goalFTroops: 1e-4,goalFTerritory: 0.3},level=1,rationality=0.01)
+    world.setMentalModel(sylv.name,free.name,{'true': 0.6,'dove': 0.3,'hawk': 0.1})
 
     # Save scenario to compressed XML file
     world.save('default.psy')
@@ -204,15 +204,16 @@ if __name__ == '__main__':
     world = World('default.psy')
     free = world.agents[free.name]
     sylv = world.agents[sylv.name]
-#    world.printState()
+    world.printState()
 
     # Force Freedonia to attack in first step
     world.explain(world.step({free.name: freeBattle}),1)
     world.state.select()
     world.printState()
+    # Display Sylvania's posterior beliefs
+    sylv.printBeliefs()
 
     # Sylvania free to decide in second step
-    world.explain(world.step(),5)
+    world.explain(world.step(),1)
     world.state.select()
     world.printState()
-    free.printBeliefs()

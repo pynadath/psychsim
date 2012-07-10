@@ -12,6 +12,7 @@ class Distribution(dict):
     The possible domain values are any objects
     @warning: If you make the domain values mutable types, try not to change the values while they are inside the distribution.  If you must change a domain value, it is better to first delete the old value, change it, and then re-insert it.
     """
+    epsilon = 1e-8
 
     def __init__(self,args=None):
         self._domain = {}
@@ -65,7 +66,7 @@ class Distribution(dict):
         @note: Not sure if this is really necessary"""
         total = sum(self.values())
         if abs(total-1.) > self.epsilon:
-            for key,value in self.items():
+            for key in self.domain():
                 try:
                     self[key] /= total
                 except ZeroDivisionError:
