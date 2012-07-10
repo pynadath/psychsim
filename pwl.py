@@ -181,6 +181,16 @@ class VectorDistribution(Distribution):
             result[row[key]] = self[row]
         return Distribution(result)
 
+    def hasColumn(self,key):
+        """
+        @return: C{True} iff the given key appears in all of the vectors of this distribution
+        @rtype: bool
+        """
+        for vector in self.domain():
+            if not vector.has_key(key):
+                return False
+        return True
+
     def __deepcopy__(self,memo):
         result = self.__class__()
         for vector in self.domain():

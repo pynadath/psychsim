@@ -1,5 +1,6 @@
 import bz2
 import copy
+import math
 from xml.dom.minidom import Document,Node,parseString
 
 from action import ActionSet,Action
@@ -90,6 +91,7 @@ class World:
                 else:
                     dist = (outcome['new'],1.)
                 for new,prob in dist:
+                    self.updateModels(outcome,new)
                     try:
                         state[new] += prob*outcome['probability']
                     except KeyError:
@@ -136,22 +138,6 @@ class World:
             key = modelKey(name)
             if vector.has_key(key):
                 result.update(KeyedMatrix({key: KeyedVector({key: 1.})}))
-        #     try:
-        #         label = agent.index2model(vector[modelKey(name)])
-        #         model = agent.models[label]
-        #     except KeyError:
-        #         model = agent.models[True]
-        #     if not model['beliefs'] is True:
-        #         # Agent has imperfect beliefs
-        #         obs = agent.observe(vector,actions,model['name'])
-        #         for belief in model['beliefs'].domain():
-        #             prob = model['beliefs'][belief]
-        #             for other,act in obs.items():
-        #                 key = modelKey(other)
-        #                 if belief.has_key(key):
-        #                     label = self.agents[other].index2model(belief[key])
-        #                     print label,self.agents[other].models[label]['V'][vector]
-        #                     raise UserWarning
         # Constant factor does not change
         if vector.has_key(CONSTANT):
             result.update(KeyedMatrix({CONSTANT: KeyedVector({CONSTANT: 1.})}))
@@ -434,7 +420,44 @@ class World:
                 'Agent %s\'s %s model has belief level of %d, so its model %s for agent %s must have belief level of %d' % \
                 (modeler,model,modelerLevel,name,modelee,modelerLevel-1)
         self.agents[modeler].setBelief(modelKey(modelee),distribution,model)
-        
+
+    def updateModels(self,outcome,vector):
+        for name in filter(lambda n: not outcome['actions'].has_key(n),
+                           self.agents.keys()):
+            # Consider agents who did *not* act
+            agent = self.agents[name]
+            key = modelKey(name)
+            try:
+                label = agent.index2model(vector[key])
+            except KeyError:
+                label = True
+            model = agent.models[label]
+            if not model['beliefs'] is True:
+                for actor,actions in outcome['actions'].items():
+                    # Consider each agent who *did* act
+                    actorKey = modelKey(actor)
+                    if model['beliefs'].hasColumn(actorKey):
+                        # Agent has uncertain beliefs about this actor
+                        belief = model['beliefs'].marginal(actorKey)
+                        prob = {}
+                        for index in belief.domain():
+                            # Consider the hypothesis mental models of this actor
+                            hypothesis = self.agents[actor].models[self.agents[actor].index2model(index)]
+                            denominator = 0.
+                            V = {}
+                            for alternative in self.agents[actor].getActions(outcome['old']):
+                                # Evaluate all available actions with respect to the hypothesized mental model
+                                V[alternative] = self.agents[actor].value(outcome['old'],alternative,model=hypothesis['name'])['V']
+                                denominator += math.exp(hypothesis['rationality']*V[alternative])
+                            # Convert into probability distribution of observed action given hypothesized mental model
+                            prob[index] = math.exp(hypothesis['rationality']*V[actions])/denominator
+                            # Bayes' rule
+                            prob[index] *= belief[index]
+                        # Update posterior beliefs over mental models
+                        prob = Distribution(prob)
+                        prob.normalize()
+                        model['beliefs'].join(actorKey,prob)
+
     """---------------------"""
     """Visualization methods"""
     """---------------------"""
@@ -554,7 +577,8 @@ class World:
                     key = feature
                 else:
                     key = stateKey(entity,feature)
-                if not prune or abs(vector[key]) > vector.epsilon:
+                if vector.has_key(key) and \
+                        (not prune or abs(vector[key]) > vector.epsilon):
                     if newEntity:
                         if first:
                             print >> buf,'\t%-12s' % (label),
@@ -578,7 +602,7 @@ class World:
                         print >> buf,entry['elements'][index]
                     else:
                         print >> buf,vector[key]
-        if not change:
+        if prune and not change:
             print >> buf,'\tUnchanged'
         
     """---------------------"""

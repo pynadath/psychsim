@@ -35,7 +35,7 @@ class Agent:
             self.parse(name)
         else:
             self.name = name
-            self.addModel(True,{},True,1,0)
+            self.addModel(True,{},2,2)
 
     """------------------"""
     """Policy methods"""
@@ -116,7 +116,10 @@ class Agent:
                   'projection': []}
         if horizon > 0:
             # Perform action(s)
-            turn = copy.copy(others)
+            if others is None:
+                turn = {}
+            else:
+                turn = copy.copy(others)
             if action:
                 turn[self.name] = action
             outcome = self.world.stepFromState(vector,turn,horizon)
@@ -125,14 +128,14 @@ class Agent:
                 for newVector in outcome['new'].domain():
                     entry = copy.copy(outcome)
                     entry['probability'] = outcome['new'][newVector]
-                    Vrest = self.value(newVector,None,horizon-1,{},model)
+                    Vrest = self.value(newVector,None,horizon-1,None,model)
                     entry.update(Vrest)
                     result['V'] += entry['probability']*entry['V']
                     result['projection'].append(entry)
             else:
                 # Deterministic outcome
                 outcome['probability'] = 1.
-                Vrest = self.value(outcome['new'],None,horizon-1,{},model)
+                Vrest = self.value(outcome['new'],None,horizon-1,None,model)
                 outcome.update(Vrest)
                 result['V'] += Vrest['V']
                 result['projection'].append(outcome)
@@ -251,7 +254,7 @@ class Agent:
     """Mental model methods"""
     """------------------"""
 
-    def addModel(self,name,R=True,beliefs=True,horizon=True,level=True):
+    def addModel(self,name,R=True,horizon=True,level=True,beliefs=True,rationality=.1):
         """
         Adds a new possible model for this agent (to be used as either true model or else as mental model another agent has of it)
         @param name: the label for this model
@@ -264,14 +267,16 @@ class Agent:
         @type horizon: int
         @param level: the recursive depth of this model (default is C{True})
         @type level: int
+        @param rationality: the rationality parameter used in a quantal response function when modeling others (default is 10)
+        @type rationality: float
         @return: the model created
         @rtype: dict
         """
         if self.models.has_key(name):
             raise NameError,'Model %s already exists for agent %s' % \
                 (name,self.name)
-        model = {'R': R,'beliefs': beliefs,'name': name,
-                 'horizon': horizon,'level': level,
+        model = {'R': R,'beliefs': beliefs,'name': name,'horizon': horizon,
+                 'level': level, 'rationality': rationality,
                  'index': len(self.models),'V': {}}
         self.models[name] = model
         self.modelList.append(name)
@@ -372,6 +377,7 @@ class Agent:
             node.setAttribute('name',str(name))
             node.setAttribute('horizon',str(model['horizon']))
             node.setAttribute('level',str(model['level']))
+            node.setAttribute('rationality',str(model['rationality']))
             # Reward function for this model
             if model['R'] is True:
                 node.setAttribute('R',str(model['R']))
@@ -450,8 +456,15 @@ class Agent:
                     except ValueError:
                         assert level == str(True)
                         level = True
+                    # Parse rationality parameter
+                    rationality = str(node.getAttribute('rationality'))
+                    try:
+                        rationality = float(rationality)
+                    except ValueError:
+                        assert rationality == str(True)
+                        rationality = True
                     # Add new model
-                    self.addModel(name,weights,beliefs,horizon,level)
+                    self.addModel(name,weights,horizon,level,beliefs,rationality)
                 elif node.tagName == 'legal':
                     subnode = node.firstChild
                     while subnode:
