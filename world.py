@@ -132,7 +132,10 @@ class World:
         # Update turn order
         result.update(self.deltaOrder(actions,vector))
         # Update agent beliefs
-        # for name,agent in self.agents.items():
+        for name,agent in self.agents.items():
+            key = modelKey(name)
+            if vector.has_key(key):
+                result.update(KeyedMatrix({key: KeyedVector({key: 1.})}))
         #     try:
         #         label = agent.index2model(vector[modelKey(name)])
         #         model = agent.models[label]
@@ -160,7 +163,8 @@ class World:
             for feature,entry in table.items():
                 dynamics = self.getDynamics(entry['key'],actions)
                 if dynamics:
-                    assert len(dynamics) == 1,'Unable to merge multiple effects'
+                    assert len(dynamics) == 1,'Unable to merge multiple effects of %s on %s' % \
+                        (ActionSet(actions),entry['key'])
                     tree = dynamics[0]
                     matrix = tree[vector]
                 else:
@@ -484,7 +488,7 @@ class World:
                         if level > 4: 
                             print >> buf,'%sState:' % (tab)
                             self.printVector(node['old'],buf,prefix=tab,first=False)
-                        print >> buf,'%s%s (%6.3f)' % (tab,ActionSet(node['actions']),node['R'])
+                        print >> buf,'%s%s (V_%s=%6.3f)' % (tab,ActionSet(node['actions']),V[state]['agent'],node['R'])
                         for other in node['decisions'].keys():
                             self.explainDecision(node['decisions'][other],buf,level,prefix+'\t\t')
                         if level > 3: 
@@ -535,14 +539,15 @@ class World:
                 # Print model of this entity
                 key = modelKey(entity)
                 if vector.has_key(key):
-                    if first:
-                        print >> buf,'\t%-12s\t%-12s\t%-12s' % \
-                            (label,'__model__',self.agents[entity].index2model(vector[key]))
-                        first = False
-                    else:
-                        print >> buf,'%s\t%-12s\t%-12s\t%-12s' % \
-                            (prefix,label,'__model__',self.agents[entity].index2model(vector[key]))
-                    newEntity = False
+                    if not prune or abs(vector[key]) > vector.epsilon:
+                        if first:
+                            print >> buf,'\t%-12s\t%-12s\t%-12s' % \
+                                (label,'__model__',self.agents[entity].index2model(vector[key]))
+                            first = False
+                        else:
+                            print >> buf,'%s\t%-12s\t%-12s\t%-12s' % \
+                                (prefix,label,'__model__',self.agents[entity].index2model(vector[key]))
+                        newEntity = False
             # Print state features for this entity
             for feature,entry in table.items():
                 if entity is None:
