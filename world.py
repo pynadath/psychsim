@@ -22,6 +22,8 @@ class World:
     @type dynamics: dict
     @ivar history: accumulated list of outcomes from simulation steps
     @type history: list
+    @ivar termination: list of conditions under which the simulation terminates (default is none)
+    @type termination: L{KeyedTree}[]
     """
     __NORMALIZE__ = False
 
@@ -36,6 +38,7 @@ class World:
         self.symbols = {}
         self.ranges = {}
         self.dynamics = {}
+        self.termination = []
         self.history = []
         if isinstance(xml,Node):
             self.parse(xml)
@@ -58,6 +61,7 @@ class World:
         self.ranges.clear()
         self.dynamics.clear()
         del self.history[:]
+        del self.termination[:]
 
     """------------------"""
     """Simulation methods"""
@@ -163,6 +167,31 @@ class World:
                     matrix[entry['key']] = delta
                 result.update(matrix)
         return result
+
+    def terminated(self,state=None):
+        """
+        Evaluates world states with respect to termination conditions
+        @param state: the state vector (or distribution thereof) to evaluate (default is the current world state)
+        @type state: L{KeyedVector} or L{VectorDistribution}
+        @return: C{True} iff the given state (or all possible worlds if a distribution) satisfies at least one termination condition
+        @rtype: bool
+        """
+        if state is None:
+            state = self.state
+        if isinstance(state,VectorDistribution):
+            # All possible worlds must be terminal states
+            for vector in state.domain():
+                if not self.terminated(vector):
+                    return False
+            else:
+                return True
+        else:
+            assert isinstance(state,KeyedVector)
+            for condition in self.termination:
+                if condition[state]:
+                    return True
+            else:
+                return False
 
     """-----------------"""
     """Authoring methods"""
@@ -289,7 +318,7 @@ class World:
     """State methods"""
     """-------------"""
 
-    def defineState(self,entity,feature,domain=float,lo=0.,hi=1.):
+    def defineState(self,entity,feature,domain=float,lo=0.,hi=1.,description=None):
         """
         Define a state feature in this world
         @param entity: the name of the entity this feature pertains to (C{None} if feature is on the world itself)
@@ -306,10 +335,12 @@ class World:
         @type lo: float/int/list
         @param hi: for float/int features, the highest possible value
         @type hi: float/int
+        @param description: optional text description explaining what this state feature means
+        @type description: str
         """
         if not self.features.has_key(entity):
             self.features[entity] = {}
-        self.features[entity][feature] = {'domain': domain}
+        self.features[entity][feature] = {'domain': domain,'description': description}
         if domain is float:
             self.features[entity][feature].update({'lo': lo,'hi': hi})
             self.ranges[stateKey(entity,feature)] = (lo,hi)
@@ -457,6 +488,9 @@ class World:
                         prob = Distribution(prob)
                         prob.normalize()
                         model['beliefs'].join(actorKey,prob)
+
+    def getDescription(self,entity,feature):
+        return self.features[entity][feature]['description']
 
     """---------------------"""
     """Visualization methods"""
@@ -635,6 +669,10 @@ class World:
                         subsubnode = doc.createElement('element')
                         subsubnode.appendChild(doc.createTextNode(element))
                         subnode.appendChild(subsubnode)
+                if entry['description']:
+                    subsubnode = doc.createElement('description')
+                    subsubnode.appendChild(doc.createTextNode(entry['description']))
+                    subnode.appendChild(subsubnode)
                 node.appendChild(subnode)
         root.appendChild(node)
         # Dynamics
@@ -647,6 +685,11 @@ class World:
                 subnode.appendChild(tree.__xml__().documentElement)
             node.appendChild(subnode)
         root.appendChild(node)
+        # Termination conditions
+        for termination in self.termination:
+            node = doc.createElement('termination')
+            node.appendChild(termination.__xml__().documentElement)
+            root.appendChild(node)
         # Event history
         node = doc.createElement('history')
         for entry in self.history:
@@ -682,6 +725,7 @@ class World:
                                     entity = None
                                 feature = str(subnode.firstChild.data).strip()
                                 domain = eval(str(subnode.getAttribute('domain')))
+                                description = None
                                 lo = str(subnode.getAttribute('lo'))
                                 if not lo: lo = None
                                 hi = str(subnode.getAttribute('hi'))
@@ -696,15 +740,19 @@ class World:
                                     pass
                                 elif domain is list:
                                     lo = []
-                                    subsubnode = subnode.firstChild
-                                    while subsubnode:
-                                        if subsubnode.nodeType == subsubnode.ELEMENT_NODE:
-                                            assert subsubnode.tagName == 'element'
-                                            lo.append(str(subsubnode.firstChild.data).strip())
-                                        subsubnode = subsubnode.nextSibling
                                 else:
                                     raise TypeError,'Unknown feature domain type: %s' % (domain)
-                                self.defineState(entity,feature,domain,lo,hi)
+                                subsubnode = subnode.firstChild
+                                while subsubnode:
+                                    if subsubnode.nodeType == subsubnode.ELEMENT_NODE:
+                                        if subsubnode.tagName == 'element':
+                                            assert domain is list
+                                            lo.append(str(subsubnode.firstChild.data).strip())
+                                        else:
+                                            assert subsubnode.tagName == 'description'
+                                            description = str(subsubnode.firstChild.data).strip()
+                                    subsubnode = subsubnode.nextSibling
+                                self.defineState(entity,feature,domain,lo,hi,description)
                         subnode = subnode.nextSibling
                 elif node.tagName == 'dynamics':
                     subnode = node.firstChild
@@ -731,6 +779,12 @@ class World:
                                         raise NameError,'Unknown dynamics element: %s' % (subsubnode.tagName)
                                 subsubnode = subsubnode.nextSibling
                         subnode = subnode.nextSibling
+                elif node.tagName == 'termination':
+                    subnode = node.firstChild
+                    while subnode and subnode.nodeType != subnode.ELEMENT_NODE:
+                        subnode = subnode.nextSibling
+                    if subnode:
+                        self.termination.append(KeyedTree(subnode))
                 elif node.tagName == 'history':
                     subnode = node.firstChild
                     while subnode:
@@ -762,12 +816,21 @@ class World:
             node = node.nextSibling
         
     def save(self,filename,compressed=True):
+        """
+        @param compressed: if C{True}, then save in compressed XML; otherwise, save in XML (default is C{True})
+        @type compressed: bool
+        @return: the filename used (possibly with a .psy extension added)
+        @rtype: str
+        """
+        if filename[-4:] != '.psy':
+            filename = '%s.psy' % (filename)
         if compressed:
             f = bz2.BZ2File(filename,'w')
         else:
             f = file(filename,'w')
         f.write(self.__xml__().toprettyxml())
         f.close()
+        return filename
 
 def stateKey(name,feature):
     """
