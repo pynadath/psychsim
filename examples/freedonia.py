@@ -1,32 +1,44 @@
 import sys
 from ConfigParser import SafeConfigParser
+from optparse import OptionParser
 
 from psychsim.pwl import *
 from psychsim.action import Action,ActionSet
 from psychsim.world import World,stateKey,actionKey
 from psychsim.agent import Agent
 
-if __name__ == '__main__':
-
+def scenarioCreationUseCase():
+    """
+    An example of how to create a scenario
+    @return: the scenario created
+    @rtype: L{World}
+    """
     # Create scenario
     world = World()
 
-    # User state
+    # Agents
     free = Agent('Freedonia')
     world.addAgent(free)
-    world.defineState(free.name,'troops',int,lo=200000,hi=400000)
+    sylv = Agent('Sylvania')
+    world.addAgent(sylv)
+
+    # User state
+    world.defineState(free.name,'troops',int,lo=200000,hi=400000,
+                      description='Number of troops %s has left' % (free.name))
     free.setState('troops',381940)
-    world.defineState(free.name,'offered',int,lo=0,hi=100)
+    world.defineState(free.name,'offered',int,lo=0,hi=100,
+                      description='Percentage of disputed territory that %s last offered to %s' % (sylv.name,free.name))
     free.setState('offered',0)  # Percentage of disputed territory offered *to* me
-    world.defineState(free.name,'territory',int,lo=0,hi=100)
+    world.defineState(free.name,'territory',int,lo=0,hi=100,
+                      description='Percentage of disputed territory currently owned by %s' % (free.name))
     free.setState('territory',13)  # Percentage of disputed territory
 
     # Agent state
-    sylv = Agent('Sylvania')
-    world.addAgent(sylv)
-    world.defineState(sylv.name,'troops',int,lo=200000,hi=400000)
+    world.defineState(sylv.name,'troops',int,lo=200000,hi=400000,
+                      description='Number of troops %s has left' % (sylv.name))
     sylv.setState('troops',461432)
-    world.defineState(sylv.name,'offered',int,lo=0,hi=100)
+    world.defineState(sylv.name,'offered',int,lo=0,hi=100,
+                      description='Percentage of disputed territory that %s last offered to %s' % (free.name,sylv.name))
     sylv.setState('offered',0)  # Percentage of disputed territory offered *to* me
 
     # World state illustration of Boolean feature
@@ -35,6 +47,10 @@ if __name__ == '__main__':
     # World state illustration of enumerated state feature
     world.defineState(None,'model',list,['Slantchev','Powell','Smith/Stam'])
     world.setState(None,'model','Powell')
+
+    # Conditions for game over
+    world.termination.append(makeTree({'if': trueRow(stateKey(None,'treaty')),
+                                       True: True, False: False}))
 
     # Turn order: Uncomment the following if you want agents to act in parallel
 #    world.setOrder([[free.name,sylv.name]])
@@ -168,7 +184,7 @@ if __name__ == '__main__':
                              False: noChangeMatrix(territory)})
             world.setDynamics(free.name,'territory',action,tree)
         else:
-            # Sylvania accepts sets territory 1-last offer
+            # Sylvania accepts sets territory to 1-last offer
             tree = makeTree({'if': thresholdRow(offer,0.),
                              True: {'if': trueRow(stateKey(None,'treaty')),
                                     True: noChangeMatrix(territory),
@@ -187,33 +203,59 @@ if __name__ == '__main__':
     free.addModel('true',level=1,rationality=0.01)
     free.addModel('hawk',R={goalFTroops: 1e-4,goalFTerritory: 0.3},level=1,rationality=0.01)
     world.setMentalModel(sylv.name,free.name,{'true': 0.6,'dove': 0.3,'hawk': 0.1})
+    return world
 
-    # Save scenario to compressed XML file
-    world.save('default.psy')
+def scenarioSimulationUseCase(world,debug=1):
+    free = world.agents['Freedonia']
+    sylv = world.agents['Sylvania']
+    if options.debug > 0:
+        world.printState()
+
+    # Force Freedonia to attack in first step
+    freeBattle = Action({'subject': free.name,'verb': 'attack','object': sylv.name})
+    world.explain(world.step({free.name: freeBattle}),options.debug)
+    world.state.select()
+    if options.debug > 0:
+        world.printState()
+        # Display Sylvania's posterior beliefs
+        sylv.printBeliefs()
+
+    # Sylvania free to decide in second step
+    world.explain(world.step(),options.debug)
+    world.state.select()
+    if options.debug > 0:
+        world.printState()
+
+if __name__ == '__main__':
+    # Grab command-line arguments
+    parser = OptionParser()
+    # Optional argument that sets the level of explanations when running the simulation
+    parser.add_option('-d','--debug',action='store',
+                      dest='debug',type='int',default=1,
+                      help='level of explanation detail [default: %default]')
+    # Optional argument that sets the filename for the output file
+    parser.add_option('-o','--output',action='store',type='string',
+                      dest='output',default='default',
+                      help='scenario file [default: %default]')
+    (options, args) = parser.parse_args()
+    
+    world = scenarioCreationUseCase()
 
     # Create configuration file
     config = SafeConfigParser()
     config.add_section('Game')
     config.set('Game','rounds','15')
-    config.set('Game','user',free.name)
+    assert world.agents.has_key('Freedonia')
+    config.set('Game','user','Freedonia')
     f = open('default.cfg','w')
     config.write(f)
     f.close()
 
+    # Save scenario to compressed XML file
+    if options.output[-4:] != '.psy':
+        options.output = '%s.psy' % (options.output)
+    world.save(options.output)
+
     # Test saved scenario
-    world = World('default.psy')
-    free = world.agents[free.name]
-    sylv = world.agents[sylv.name]
-    world.printState()
-
-    # Force Freedonia to attack in first step
-    world.explain(world.step({free.name: freeBattle}),1)
-    world.state.select()
-    world.printState()
-    # Display Sylvania's posterior beliefs
-    sylv.printBeliefs()
-
-    # Sylvania free to decide in second step
-    world.explain(world.step(),1)
-    world.state.select()
-    world.printState()
+    world = World(options.output)
+    scenarioSimulationUseCase(world,options.debug)
