@@ -43,10 +43,12 @@ class World:
         if isinstance(xml,Node):
             self.parse(xml)
         elif isinstance(xml,str):
-            if xml[-3:] == 'xml':
+            if xml[-4:] == '.xml':
                 # Uncompressed
                 f = file(xml,'r')
             else:
+                if xml[-4:] != '.psy':
+                    xml = '%s.psy' % (xml)
                 f = bz2.BZ2File(xml,'r')
             doc = parseString(f.read())
             f.close()
@@ -93,7 +95,7 @@ class World:
                 if isinstance(outcome['new'],Distribution):
                     dist = map(lambda el: (el,outcome['new'][el]),outcome['new'].domain())
                 else:
-                    dist = (outcome['new'],1.)
+                    dist = [(outcome['new'],1.)]
                 for new,prob in dist:
                     self.updateModels(outcome,new)
                     try:
@@ -109,6 +111,10 @@ class World:
         """
         outcome = {'old': vector,
                    'decisions': {}}
+        # Check whether we are already in a terminal state
+        if self.terminated(vector):
+            outcome['new'] = outcome['old']
+            return outcome
         # Determine the actions taken by the agents in this world
         if actions is None:
             outcome['actions'] = {}
@@ -265,11 +271,16 @@ class World:
     """------------------"""
 
     def setOrder(self,order):
+        """
+        Initializes the turn order to the given order
+        @param order: the turn order, as a list of names (each agent acts in sequence) or a list of sets of names (agents within a set acts in parallel)
+        @type order: str[] or {str}[]
+        """
         for index in range(len(order)):
-            if isinstance(order[index],list):
+            if isinstance(order[index],set):
                 names = order[index]
             else:
-                names = [order[index]]
+                names = {order[index]}
             for name in names:
                 self.state.join(turnKey(name),float(index)+0.5)
 
@@ -489,6 +500,50 @@ class World:
                         prob.normalize()
                         model['beliefs'].join(actorKey,prob)
 
+    def scaleState(self,vector):
+        """
+        Normalizes the given state vector so that all elements occur in [0,1]
+        @param vector: the vector to normalize
+        @type vector: L{KeyedVector}
+        @return: the normalized vector
+        @rtype: L{KeyedVector}
+        """
+        result = vector.__class__()
+        remaining = dict(vector)
+        # Handle defined state features
+        for entity,table in self.features.items():
+            for feature,entry in table.items():
+                key = stateKey(entity,feature)
+                if entry['domain'] is float or entry['domain'] is int:
+                    # Scale by range of possible values
+                    new = remaining[key]-entry['lo']
+                    new /= entry['hi']-entry['lo']
+                elif entry['domain'] is list:
+                    # Scale by size of set of values
+                    new = remaining[key]/len(entry['elements'])
+                else:
+                    new = remaining[key]
+                result[key] = new
+                del remaining[key]
+        for name in self.agents.keys():
+            # Handle turns
+            key = turnKey(name)
+            if remaining.has_key(key):
+                result[key] = remaining[key] / len(self.agents)
+                del remaining[key]
+            # Handle models
+            key = modelKey(name)
+            if remaining.has_key(key):
+                result[key] = remaining[key] / len(self.agents[name].models)
+                del remaining[key]
+        # Handle constant term
+        if remaining.has_key(CONSTANT):
+            result[CONSTANT] = remaining[CONSTANT]
+            del remaining[CONSTANT]
+        if remaining:
+            raise NameError,'Unprocessed keys: %s' % (remaining.keys())
+        return result
+
     def getDescription(self,entity,feature):
         return self.features[entity][feature]['description']
 
@@ -638,6 +693,8 @@ class World:
                         print >> buf,vector[key]
         if prune and not change:
             print >> buf,'\tUnchanged'
+        if self.terminated(vector):
+            print >> buf,'\t__END__'
         
     """---------------------"""
     """Serialization methods"""
