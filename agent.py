@@ -114,7 +114,7 @@ class Agent:
                   'state': vector,
                   'horizon': horizon,
                   'projection': []}
-        if horizon > 0:
+        if horizon > 0 and not self.world.terminated(vector):
             # Perform action(s)
             if others is None:
                 turn = {}
@@ -246,7 +246,7 @@ class Agent:
             R = self.models[True]['R']
         total = 0.
         for tree,weight in R.items():
-            ER = tree[vector]*vector
+            ER = tree[vector]*self.world.scaleState(vector)
             total += ER*weight
         return total
 
