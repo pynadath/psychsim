@@ -280,7 +280,7 @@ class World:
             if isinstance(order[index],set):
                 names = order[index]
             else:
-                names = {order[index]}
+                names = [order[index]]
             for name in names:
                 self.state.join(turnKey(name),float(index)+0.5)
 
@@ -568,14 +568,21 @@ class World:
         """
         for outcome in outcomes:
             if level > 0: print >> buf,'%d%%' % (outcome['probability']*100.)
+            self.explainAction(outcome,buf,level)
             for name,action in outcome['actions'].items():
-                if level > 0: print >> buf,action
                 if not outcome['decisions'].has_key(name):
                     # No decision made
                     if level > 1: print >> buf,'\tforced'
                 elif level > 1:
                     # Explain decision
                     self.explainDecision(outcome['decisions'][name],buf,level)
+
+    def explainAction(self,outcome,buf=None,level=0):
+        if level > 0:
+            for name,action in outcome['actions'].items():
+                print >> buf,action
+        return set(outcome['actions'].values())
+        
 
     def explainDecision(self,decision,buf=None,level=2,prefix=''):
         """
