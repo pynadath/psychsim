@@ -222,6 +222,8 @@ class World:
         @param tree: the decision tree defining the effect
         @type tree: L{KeyedTree}
         """
+        assert self.features.has_key(entity),'No state features defined for entity "%s"' % (entity)
+        assert self.features[entity].has_key(feature),'No feature "%s" defined for entity "%s"' % (feature,entity)
         if isinstance(action,Action):
             action = ActionSet([action])
         if entity is None:
