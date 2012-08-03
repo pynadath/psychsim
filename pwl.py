@@ -613,7 +613,11 @@ class KeyedTree:
         """
         tree = self.__class__()
         if self.isLeaf():
-            tree.makeLeaf(self.children[None].desymbolize(table))
+            leaf = self.children[None]
+            if isinstance(leaf,KeyedVector) or isinstance(leaf,KeyedMatrix):
+                tree.makeLeaf(leaf.desymbolize(table))
+            else:
+                tree.makeLeaf(leaf)
         elif self.branch:
             tree.makeBranch(self.branch.desymbolize(table),self.children[True].desymbolize(table),
                             self.children[False].desymbolize(table))

@@ -3,7 +3,7 @@ from ConfigParser import SafeConfigParser
 from optparse import OptionParser
 
 from psychsim.pwl import *
-from psychsim.action import Action,ActionSet
+from psychsim.action import *
 from psychsim.world import World,stateKey,actionKey
 from psychsim.agent import Agent
 
@@ -47,20 +47,20 @@ def scenarioCreationUseCase(sCost=1000,fCost=1000,sCollapse=0.1,fCollapse=0.1):
     world.defineState(None,'treaty',bool,
                       description='Have the two sides reached an agreement?')
     world.setState(None,'treaty',False)
-    # Illustration of enumerated state feature
-    world.defineState(None,'model',list,['Slantchev','Powell','Smith/Stam'],
-                      description='The theoretical model underlying the world')
-    world.setState(None,'model','Powell')
+    # Stage of negotiation, illustrating the use of an enumerated state feature
+    world.defineState(None,'phase',list,['offer','respond','rejection','end'],
+                      description='The current stage of the negotiation game')
+    world.setState(None,'phase','offer')
 
     # Game over if there is a treaty
-    world.termination.append(makeTree({'if': trueRow(stateKey(None,'treaty')),
-                                       True: True, False: False}))
+    world.addTermination(makeTree({'if': trueRow(stateKey(None,'treaty')),
+                                   True: True, False: False}))
     # Game over if Freedonia has no territory
-    world.termination.append(makeTree({'if': thresholdRow(stateKey(free.name,'territory'),1),
-                                       True: False, False: True}) )
+    world.addTermination(makeTree({'if': thresholdRow(stateKey(free.name,'territory'),1),
+                                   True: False, False: True}) )
     # Game over if Freedonia has all the territory
-    world.termination.append(makeTree({'if': thresholdRow(stateKey(free.name,'territory'),99),
-                                       True: True, False: False})) 
+    world.addTermination(makeTree({'if': thresholdRow(stateKey(free.name,'territory'),99),
+                                   True: True, False: False})) 
 
     # Turn order: Uncomment the following if you want agents to act in parallel
 #    world.setOrder([{free.name,sylv.name}])
@@ -80,28 +80,26 @@ def scenarioCreationUseCase(sCost=1000,fCost=1000,sCollapse=0.1,fCollapse=0.1):
     sylvAccept = sylv.addAction({'verb': 'accept offer','object': free.name})
     sylvReject = sylv.addAction({'verb': 'reject offer','object': free.name})
 
-    # Restrictions on when actions are legal
-    for action in filter(lambda a: a.match({'verb': 'offer'}),free.actions):
-        free.legal[action] = makeTree({'if': thresholdRow(stateKey(sylv.name,'offered'),1),
-                                       True: False,  # Illegal if Freedonia has already made an offer
-                                       False: True}) # Legal otherwise
-    # Freedonia can continue once it's already made an offer
-    free.legal[freeNOP] = makeTree({'if': thresholdRow(stateKey(sylv.name,'offered'),1),
-                                    True: True,    # Legal if Freedonia made an offer
-                                    False: False}) # Illegal otherwise
-    # Freedonia can attack only if Sylvania has rejected its offer
-    free.legal[freeBattle] = makeTree({'if': thresholdRow(stateKey(free.name,'rejected'),1),
-                                       True: True,    # Freedonia can attack only if offer is rejected
-                                       False: False}) # Illegal otherwise
+    # Restrictions on when actions are legal, based on phase of game
+    for action in filterActions({'verb': 'offer'},free.actions):
+        free.setLegal(action,makeTree({'if': equalRow(stateKey(None,'phase'),'offer'),
+                                       True: True,     # Offers are legal in the offer phase
+                                       False: False})) # Offers are illegal in all other phases
+    free.setLegal(freeNOP,makeTree({'if': equalRow(stateKey(None,'phase'),'rejection'),
+                                    True: True,     # Doing nothing is legal only in rejection phase
+                                    False: False})) # Doing nothing is illegal in all other phases
+    free.setLegal(freeBattle,makeTree({'if': equalRow(stateKey(None,'phase'),'rejection'),
+                                       True: True,     # Attacking is legal for Freedonia only in rejection phase
+                                       False: False})) # Attacking is illegal for Freedonia in all other phases
     # Once offered, Sylvania can take action
     for action in [sylvBattle,sylvAccept,sylvReject]:
-        sylv.legal[action] = makeTree({'if': thresholdRow(stateKey(sylv.name,'offered'),1),
-                                       True: True,    # Sylvania can take action only if offered something
-                                       False: False}) # Illegal otherwise
+        sylv.setLegal(action,makeTree({'if': equalRow(stateKey(None,'phase'),'respond'),
+                                       True: True,     # Sylvania must act in the response phase
+                                       False: False})) # Sylvania cannot act in any other phase
     # NOP is legal in exactly opposite situations to all other actions
-    sylv.legal[sylvNOP] = makeTree({'if': thresholdRow(stateKey(sylv.name,'offered'),1),
-                                    True: False,  # Ilegal if Freedonia made an offer
-                                    False: True}) # Legal if offer has already been responded to
+    sylv.setLegal(sylvNOP,makeTree({'if': equalRow(stateKey(None,'phase'),'end'),
+                                    True: True,     # Sylvania does not do anything in the null phase after Freedonia responds to rejection
+                                    False: False})) # Sylvania must act in its other phases
 
     # Goals for Freedonia
     goalFTroops = maximizeFeature(stateKey(free.name,'troops'))
@@ -128,7 +126,7 @@ def scenarioCreationUseCase(sCost=1000,fCost=1000,sCollapse=0.1,fCollapse=0.1):
     freeTerr = stateKey(free.name,'territory')
     sylvTroops = stateKey(sylv.name,'troops')
     # Effect of fighting
-    for action in filter(lambda a: a.match({'verb': 'attack'}),free.actions | sylv.actions):
+    for action in filterActions({'verb': 'attack'},free.actions | sylv.actions):
         # Effect on troops (cost of battle)
         tree = makeTree(incrementMatrix(freeTroops,-fCost))
         world.setDynamics(free.name,'troops',action,tree)
@@ -160,7 +158,7 @@ def scenarioCreationUseCase(sCost=1000,fCost=1000,sCollapse=0.1,fCollapse=0.1):
     world.setDynamics(free.name,'rejected',atom,tree)
 
     # Dynamics of treaties
-    for action in filter(lambda a: a.match({'verb': 'accept offer'}),free.actions | sylv.actions):
+    for action in filterActions({'verb': 'accept offer'},free.actions | sylv.actions):
         # Accepting an offer means that there is now a treaty
         tree = makeTree({'if': trueRow(stateKey(None,'treaty')),
                          True: noChangeMatrix(stateKey(None,'treaty')),
@@ -192,12 +190,30 @@ def scenarioCreationUseCase(sCost=1000,fCost=1000,sCollapse=0.1,fCollapse=0.1):
     tree = makeTree(setToConstantMatrix(stateKey(sylv.name,'offered'),0))
     world.setDynamics(sylv.name,'offered',freeNOP,tree)
 
-    # Dynamics of world model (for illustration purposes only)
-#    tree = makeTree({'if': equalRow(stateKey(None,'model'),'Slantchev'),
-#                     True: setToConstantMatrix(stateKey(None,'model'),'Powell'),
-#                     False: setToConstantMatrix(stateKey(None,'model'),'Slantchev')})
-#    world.setDynamics(None,'model',freeOffer25,tree)
-
+    # Dynamics of phase
+    # OFFER -> RESPOND
+    atom =  Action({'subject': free.name,'verb': 'offer','object': sylv.name})
+    tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'respond'))
+    world.setDynamics(None,'phase',atom,tree)
+    # RESPOND -> REJECTION
+    atom =  Action({'subject': sylv.name,'verb': 'reject offer','object': free.name})
+    tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'rejection'))
+    world.setDynamics(None,'phase',atom,tree)
+    # RESPOND -> OFFER
+    for verb in ['attack','accept offer']:
+        atom =  Action({'subject': sylv.name,'verb': verb,'object': free.name})
+        tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'offer'))
+        world.setDynamics(None,'phase',atom,tree)
+    # REJECTION -> END
+    for verb in ['attack','continue']:
+        atom =  Action({'subject': free.name,'verb': verb,'object': sylv.name})
+        tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'end'))
+        world.setDynamics(None,'phase',atom,tree)
+    # END -> OFFER
+    atom =  Action({'subject': sylv.name,'verb': 'continue','object': free.name})
+    tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'end'))
+    world.setDynamics(None,'phase',atom,tree)
+    
     # # Models of Freedonia
     # free.addModel('dove',R={goalFTroops: 1e-4,goalFTerritory: 0.1},level=1,rationality=0.01)
     # free.addModel('true',level=1,rationality=0.01)
