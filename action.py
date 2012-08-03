@@ -130,6 +130,13 @@ class ActionSet(frozenset):
             root.appendChild(atom.__xml__().documentElement)
         return doc
 
+def filterActions(pattern,actions):
+    """
+    @type pattern: dict
+    @return: the subset of given actions that match the given pattern
+    """
+    return filter(lambda a: a.match(pattern),actions)
+
 if __name__ == '__main__':
     act1 = Action({'subject': 'I','verb': 'help','object': 'you'})    
     act2 = Action({'subject': 'you','verb': 'help','object': 'I'})

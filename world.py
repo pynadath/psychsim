@@ -174,6 +174,12 @@ class World:
                 result.update(matrix)
         return result
 
+    def addTermination(self,tree):
+        """
+        Adds a possible termination condition to the list
+        """
+        self.termination.append(tree.desymbolize(self.symbols))
+
     def terminated(self,state=None):
         """
         Evaluates world states with respect to termination conditions

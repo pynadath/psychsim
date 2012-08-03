@@ -1,5 +1,6 @@
 import copy
 import random
+import StringIO
 from xml.dom.minidom import Document,Node
 
 from action import Action,ActionSet
@@ -66,7 +67,15 @@ class Agent:
         V = {}
         best = None
         # Consider all legal actions (legality determined by *real* world, not my belief)
-        for action in self.getActions(vector):
+        actions = self.getActions(vector)
+        if len(actions) == 0:
+            # Someone made a boo-boo because there is no legal action for this agent right now
+            buf = StringIO.StringIO()
+            self.world.printVector(vector,buf)
+            msg = buf.getvalue()
+            buf.close()
+            raise RuntimeError,'%s has no legal actions in:\n%s' % (self.name,msg)
+        for action in actions:
             # Compute value across possible worlds
             V[action] = {'__EV__': 0.}
             for state in belief.domain():
@@ -214,6 +223,15 @@ class Agent:
             if tree[vector]:
                 result.add(action)
         return result
+
+    def setLegal(self,action,tree):
+        """
+        Sets the legality decision tree for a given action
+        @param action: the action whose legality we are setting
+        @param tree: the decision tree for the legality of the action
+        @type tree: L{KeyedTree}
+        """
+        self.legal[action] = tree.desymbolize(self.world.symbols)
 
     """------------------"""
     """State methods"""
