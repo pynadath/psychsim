@@ -918,7 +918,7 @@ def turn2name(key):
     return key[:-8]
 
 def actionKey(feature):    
-    return stateKey('__action__',feature)
+    return '__action__%s__' % (feature)
 
 def modelKey(name):
     return stateKey(name,'_model')
