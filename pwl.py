@@ -84,9 +84,13 @@ class KeyedVector(dict):
     def desymbolize(self,table):
         result = self.__class__()
         for key,value in self.items():
-            try:
-                result[key] = table[value]
-            except KeyError:
+            if isinstance(value,str):
+                try:
+                    result[key] = eval(value,table,{})
+                except NameError:
+                    # Undefined reference: assume it'll get sorted out later
+                    result[key] = value
+            else:
                 result[key] = value
         return result
 
@@ -465,9 +469,13 @@ class KeyedPlane:
             return abs(total-self.threshold) < self.vector.epsilon
 
     def desymbolize(self,table):
-        try:
-            threshold = table[self.threshold]
-        except KeyError:
+        if isinstance(self.threshold,str):
+            try:
+                threshold = eval(self.threshold,table,{})
+            except NameError:
+                # Undefined reference: assume it'll get sorted out later
+                threshold = self.threshold
+        else:
             threshold = self.threshold
         return self.__class__(self.vector.desymbolize(table),threshold,self.comparison)
 
