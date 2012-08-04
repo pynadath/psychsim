@@ -48,9 +48,12 @@ def scenarioCreationUseCase(sCost=1000,fCost=1000,sCollapse=0.1,fCollapse=0.1):
                       description='Have the two sides reached an agreement?')
     world.setState(None,'treaty',False)
     # Stage of negotiation, illustrating the use of an enumerated state feature
-    world.defineState(None,'phase',list,['offer','respond','rejection','end'],
+    world.defineState(None,'phase',list,['offer','respond','rejection','end','paused'],
                       description='The current stage of the negotiation game')
-    world.setState(None,'phase','offer')
+    world.setState(None,'phase','paused')
+    # Round of negotiation
+    world.defineState(None,'round',int,description='The current round of the negotiation')
+    world.setState(None,'round',0)
 
     # Game over if there is a treaty
     world.addTermination(makeTree({'if': trueRow(stateKey(None,'treaty')),
@@ -61,6 +64,9 @@ def scenarioCreationUseCase(sCost=1000,fCost=1000,sCollapse=0.1,fCollapse=0.1):
     # Game over if Freedonia has all the territory
     world.addTermination(makeTree({'if': thresholdRow(stateKey(free.name,'territory'),99),
                                    True: True, False: False})) 
+    # Game over if number of rounds exceeds limit
+    world.addTermination(makeTree({'if': thresholdRow(stateKey(None,'rounds'),14),
+                                   True: True, False: False}))
 
     # Turn order: Uncomment the following if you want agents to act in parallel
 #    world.setOrder([{free.name,sylv.name}])
@@ -204,6 +210,8 @@ def scenarioCreationUseCase(sCost=1000,fCost=1000,sCollapse=0.1,fCollapse=0.1):
         atom =  Action({'subject': sylv.name,'verb': verb,'object': free.name})
         tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'offer'))
         world.setDynamics(None,'phase',atom,tree)
+        tree = makeTree(incrementMatrix(stateKey(None,'round'),1))
+        world.setDynamics(None,'round',atom,tree)
     # REJECTION -> END
     for verb in ['attack','continue']:
         atom =  Action({'subject': free.name,'verb': verb,'object': sylv.name})
@@ -213,6 +221,8 @@ def scenarioCreationUseCase(sCost=1000,fCost=1000,sCollapse=0.1,fCollapse=0.1):
     atom =  Action({'subject': sylv.name,'verb': 'continue','object': free.name})
     tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'end'))
     world.setDynamics(None,'phase',atom,tree)
+    tree = makeTree(incrementMatrix(stateKey(None,'round'),1))
+    world.setDynamics(None,'round',atom,tree)
     
     # # Models of Freedonia
     # free.addModel('dove',R={goalFTroops: 1e-4,goalFTerritory: 0.1},level=1,rationality=0.01)
