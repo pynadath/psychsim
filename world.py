@@ -268,9 +268,8 @@ class World:
                             tree = None
                         if tree:
                             table = {}
-                            for key,value in atom.items():
-                                if not key in atom.special:
-                                    table[actionKey(key)] = value
+                            for key in atom.getParameters():
+                                table[actionKey(key)] = atom[key]
                             dynamics.append(tree.desymbolize(table))
             return dynamics
 

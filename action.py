@@ -16,6 +16,13 @@ class Action(dict):
         self._string = None
         
 
+    def getParameters(self):
+        """
+        @return: list of special parameters for this action
+        @rtype: str[]
+        """
+        return filter(lambda k: not k in self.special,self.keys())
+
     def __setitem__(self,key,value):
         self._string = None
         dict.__setitem__(self,key,value)
