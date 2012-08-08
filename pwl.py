@@ -393,6 +393,13 @@ def setToFeatureMatrix(key,otherKey,pct=1.,shift=0.):
     @rtype: L{KeyedMatrix}
     """
     return KeyedMatrix({key: KeyedVector({otherKey: pct,CONSTANT: shift})})
+def addFeatureMatrix(key,otherKey,pct=1.):
+    """
+    @type otherKey: str
+    @return: a dynamics matrix adding a percentage of another feature value to the given feature value (default percentage is 100%)
+    @rtype: L{KeyedMatrix}
+    """
+    return KeyedMatrix({key: KeyedVector({key: 1.,otherKey: pct})})
 def setTrueMatrix(key):
     return setToConstantMatrix(key,1.)
 def setFalseMatrix(key):

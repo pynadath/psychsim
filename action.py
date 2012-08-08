@@ -38,7 +38,8 @@ class Action(dict):
         """
         root = {}
         for key in self.special:
-            root[key] = self[key]
+            if self.has_key(key):
+                root[key] = self[key]
         return Action(root)
 
     def __str__(self):
@@ -98,9 +99,15 @@ class ActionSet(frozenset):
         """
         for action in self:
             for key,value in pattern.items():
-                if action.has_key(key) and action[key] == value:
-                    return action
-        return None
+                if not action.has_key(key) or action[key] != value:
+                    # Mismatch
+                    break
+            else:
+                # Match
+                return action
+        else:
+            # No matching actions
+            return None
 
     def __new__(cls,elements=[]):
         if isinstance(elements,NodeList):
