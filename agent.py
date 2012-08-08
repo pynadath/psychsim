@@ -120,6 +120,7 @@ class Agent:
         """
         if horizon is None:
             horizon = self.models[model]['horizon']
+        discount = self.models[model]['discount']
         # Compute immediate reward
         R = self.reward(vector,model)
         result = {'V': R,
@@ -136,7 +137,7 @@ class Agent:
                 turn = copy.copy(others)
             if action:
                 turn[self.name] = action
-            outcome = self.world.stepFromState(vector,turn,horizon) # ,tiebreak='distribution')
+            outcome = self.world.stepFromState(vector,turn,horizon)
             if isinstance(outcome['new'],Distribution):
                 # Uncertain outcomes
                 for newVector in outcome['new'].domain():
@@ -144,14 +145,14 @@ class Agent:
                     entry['probability'] = outcome['new'][newVector]
                     Vrest = self.value(newVector,None,horizon-1,None,model)
                     entry.update(Vrest)
-                    result['V'] += entry['probability']*Vrest['V']
+                    result['V'] += discount*entry['probability']*entry['V']
                     result['projection'].append(entry)
             else:
                 # Deterministic outcome
                 outcome['probability'] = 1.
                 Vrest = self.value(outcome['new'],None,horizon-1,None,model)
                 outcome.update(Vrest)
-                result['V'] += Vrest['V']
+                result['V'] += discount*Vrest['V']
                 result['projection'].append(outcome)
         if horizon == self.models[model]['horizon']:
             # Cache result
@@ -167,12 +168,23 @@ class Agent:
         @param model: the model to set the horizon for, where C{None} means set it for all (default is C{None})
         @param level: if setting across models, the recursive level of models to do so, where C{None} means all levels (default is C{None})
         """
+        self.setParameter('horizon',horizon,model,level)
+
+    def setParameter(self,name,value,model=None,level=None):
+        """
+        Set a parameter value for the given model(s)
+        @param name: the feature of the model to set
+        @type name: str
+        @param value: the new value for the parameter
+        @param model: the model to set the horizon for, where C{None} means set it for all (default is C{None})
+        @param level: if setting across models, the recursive level of models to do so, where C{None} means all levels (default is C{None})
+        """
         if model is None:
             for model in self.models.values():
                 if level is None or model['level'] == level:
-                    model['horizon'] = horizon
+                    self.setParameter(name,value,model['name'])
         else:
-            self.models[model]['horizon'] = horizon
+            self.models[model][name] = value
 
     """------------------"""
     """Action methods"""
@@ -277,7 +289,7 @@ class Agent:
     """Mental model methods"""
     """------------------"""
 
-    def addModel(self,name,R=True,horizon=True,level=True,beliefs=True,rationality=.1):
+    def addModel(self,name,R=True,horizon=True,level=True,beliefs=True,rationality=.1,discount=1.0):
         """
         Adds a new possible model for this agent (to be used as either true model or else as mental model another agent has of it)
         @param name: the label for this model
@@ -299,7 +311,7 @@ class Agent:
             raise NameError,'Model %s already exists for agent %s' % \
                 (name,self.name)
         model = {'R': R,'beliefs': beliefs,'name': name,'horizon': horizon,
-                 'level': level, 'rationality': rationality,
+                 'level': level, 'rationality': rationality,'discount': discount,
                  'index': len(self.models),'V': {}}
         self.models[name] = model
         self.modelList.append(name)
@@ -401,6 +413,7 @@ class Agent:
             node.setAttribute('horizon',str(model['horizon']))
             node.setAttribute('level',str(model['level']))
             node.setAttribute('rationality',str(model['rationality']))
+            node.setAttribute('discount',str(model['discount']))
             # Reward function for this model
             if model['R'] is True:
                 node.setAttribute('R',str(model['R']))
@@ -472,6 +485,13 @@ class Agent:
                     except ValueError:
                         assert horizon == str(True)
                         horizon = True
+                    # Parse discount
+                    discount = str(node.getAttribute('discount'))
+                    try:
+                        discount = float(discount)
+                    except ValueError:
+                        assert discount == str(True)
+                        discount = True
                     # Parse recursive level
                     level = str(node.getAttribute('level'))
                     try:
@@ -487,7 +507,7 @@ class Agent:
                         assert rationality == str(True)
                         rationality = True
                     # Add new model
-                    self.addModel(name,weights,horizon,level,beliefs,rationality)
+                    self.addModel(name,weights,horizon,level,beliefs,rationality,discount)
                 elif node.tagName == 'legal':
                     subnode = node.firstChild
                     while subnode:

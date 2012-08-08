@@ -1,13 +1,14 @@
 import sys
 from ConfigParser import SafeConfigParser
-from optparse import OptionParser,OptionGroup
+from argparse import ArgumentParser
 
 from psychsim.pwl import *
 from psychsim.action import *
 from psychsim.world import World,stateKey,actionKey
 from psychsim.agent import Agent
 
-def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=0.1,sCollapse=0.1,territory=13,fTroops=381940,sTroops=461432,maxRounds=15):
+def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=0.1,sCollapse=0.1,territory=13,
+                            fTroops=381940,sTroops=461432,maxRounds=15,model='powell'):
     """
     An example of how to create a scenario
     @param sCost: number of troops Sylvania loses in battle
@@ -236,7 +237,7 @@ def scenarioSimulationUseCase(world,offer=10,rounds=1,debug=1):
     free = world.agents['Freedonia']
     sylv = world.agents['Sylvania']
     world.setState(None,'phase','offer')
-    if options.debug > 0:
+    if debug > 0:
         world.printState()
 
     for t in range(rounds*2):
@@ -244,12 +245,12 @@ def scenarioSimulationUseCase(world,offer=10,rounds=1,debug=1):
         if not world.terminated(world.state.domain()[0]):
             if t == 0:
                 # Force Freedonia to make low offer in first step
-                world.explain(world.step({free.name: Action({'subject':free.name,'verb':'offer','object': sylv.name,'amount': offer})}),options.debug)
+                world.explain(world.step({free.name: Action({'subject':free.name,'verb':'offer','object': sylv.name,'amount': offer})}),debug)
             else:
                 # Freedonia is free to choose
-                world.explain(world.step(),options.debug)
+                world.explain(world.step(),debug)
             world.state.select()
-            if options.debug > 0:
+            if debug > 0:
                 world.printState()
                 # Display Sylvania's posterior beliefs
                 # sylv.printBeliefs()
@@ -257,68 +258,71 @@ def scenarioSimulationUseCase(world,offer=10,rounds=1,debug=1):
         assert len(world.state) == 1
         if not world.terminated(world.state.domain()[0]):
             # Sylvania free to decide in second step
-            world.explain(world.step(),options.debug)
+            world.explain(world.step(),debug)
             world.state.select()
-            if options.debug > 0:
+            if debug > 0:
                 world.printState()
 
 if __name__ == '__main__':
     # Grab command-line arguments
-    parser = OptionParser()
+    parser = ArgumentParser()
     # Optional argument that sets the filename for the output file
-    parser.add_option('-o','--output',action='store',type='string',
+    parser.add_argument('-o',action='store',
                       dest='output',default='default',
-                      help='scenario file [default: %default]')
-    group = OptionGroup(parser,'Creation Options','Control the parameters of the created scenario.')
-    parser.add_option_group(group)
+                      help='scenario file [default: %(default)s]')
+    group = parser.add_argument_group('Creation Options','Control the parameters of the created scenario.')
+    # Optional argument that sets the theoretical model
+    group.add_argument('-m',action='store',
+                     dest='model',choices=['powell','slantchev'],default='powell',
+                     help='theoretical model for the game [default: %(default)s]')
     # Optional argument that sets the cost of battle to Freedonia
-    group.add_option('-f','--freedonia-cost',action='store',
-                     dest='fcost',type='int',default=2837,
-                     help='cost of battle to Freedonia [default: %default]')
+    group.add_argument('-f',action='store',
+                     dest='fcost',type=int,default=2837,
+                     help='cost of battle to Freedonia [default: %(default)s]')
     # Optional argument that sets the cost of battle to Sylvania
-    group.add_option('-s','--sylvania-cost',action='store',
-                     dest='scost',type='int',default=1013,
-                     help='cost of battle to Sylvania [default: %default]')
+    group.add_argument('-s',action='store',
+                     dest='scost',type=int,default=1013,
+                     help='cost of battle to Sylvania [default: %(default)s]')
     # Optional argument that sets the initial amount of territory owned by Freedonia
-    group.add_option('-i','--initial',action='store',
-                     dest='initial',type='int',default=13,
-                     help='Freedonia\'s initial territory percentage [default: %default]')
+    group.add_argument('-i',action='store',
+                     dest='initial',type=int,default=13,
+                     help='Freedonia\'s initial territory percentage [default: %(default)s]')
     # Optional argument that sets the maximum number of rounds to play
-    group.add_option('-m','--max-rounds',action='store',
-                     dest='max',type='int',default=15,
-                     help='Maximum number of rounds to play [default: %default]')
+    group.add_argument('-r',action='store',
+                     dest='rounds',type=int,default=15,
+                     help='Maximum number of rounds to play [default: %(default)s]')
     # Optional argument that sets Freedonia's initial troops
-    group.add_option('--freedonia-troops',action='store',
-                     dest='ftroops',type='int',default=381940,
-                     help='number of Freedonia troops [default: %default]')
+    group.add_argument('--freedonia-troops',action='store',
+                     dest='ftroops',type=int,default=381940,
+                     help='number of Freedonia troops [default: %(default)s]')
     # Optional argument that sets Sylvania's initial troops
-    group.add_option('--sylvania-troops',action='store',
-                     dest='stroops',type='int',default=461432,
-                     help='number of Sylvania troops [default: %default]')
-    group = OptionGroup(parser,'Simulation Options','Control the simulation of the created scenario.')
+    group.add_argument('--sylvania-troops',action='store',
+                     dest='stroops',type=int,default=461432,
+                     help='number of Sylvania troops [default: %(default)s]')
+    group = parser.add_argument_group('Simulation Options','Control the simulation of the created scenario.')
     # Optional argument that sets the level of explanations when running the simulation
-    group.add_option('-d','--debug',action='store',
-                     dest='debug',type='int',default=1,
-                     help='level of explanation detail [default: %default]')
+    group.add_argument('-d',action='store',
+                     dest='debug',type=int,default=1,
+                     help='level of explanation detail [default: %(default)s]')
     # Optional argument that sets the initial offer that Freedonia will make
-    group.add_option('-a','--amount',action='store',
-                     dest='amount',type='int',default=10,
-                     help='Freedonia\'s first offer amount [default: %default]')
-    # Optional argument that sets the number of rounds to play
-    group.add_option('-r','--rounds',action='store',
-                     dest='rounds',type='int',default=1,
-                     help='number of rounds to play [default: %default]')
-    parser.add_option_group(group)
-    (options, args) = parser.parse_args()
-    
-    world = scenarioCreationUseCase(options.fcost,options.scost,territory=options.initial,
-                                    fTroops=options.ftroops,sTroops=options.stroops,maxRounds=options.max)
+    group.add_argument('-a',action='store',
+                     dest='amount',type=int,default=10,
+                     help='Freedonia\'s first offer amount [default: %(default)s]')
+    # Optional argument that sets the number of time steps to simulate
+    group.add_argument('-t','--time',action='store',
+                     dest='time',type=int,default=4,
+                     help='number of time steps to simulate [default: %(default)s]')
+    args = vars(parser.parse_args())
+
+    world = scenarioCreationUseCase(args['fcost'],args['scost'],territory=args['initial'],
+                                    fTroops=args['ftroops'],sTroops=args['stroops'],
+                                    maxRounds=args['rounds'],model=args['model'])
 
     # Create configuration file
     config = SafeConfigParser()
     # Specify game options for web interface
     config.add_section('Game')
-    config.set('Game','rounds','%d' % (options.max))
+    config.set('Game','rounds','%d' % (args['rounds']))
     assert world.agents.has_key('Freedonia')
     config.set('Game','user','Freedonia')
     # Specify which state features are visible in web interface
@@ -338,8 +342,8 @@ if __name__ == '__main__':
     f.close()
 
     # Save scenario to compressed XML file
-    world.save(options.output)
+    world.save(args['output'])
 
     # Test saved scenario
-    world = World(options.output)
-    scenarioSimulationUseCase(world,options.amount,options.rounds,options.debug)
+    world = World(args['output'])
+    scenarioSimulationUseCase(world,args['amount'],args['rounds'],args['debug'])
