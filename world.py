@@ -598,14 +598,15 @@ class World:
         """
         for outcome in outcomes:
             if level > 0: print >> buf,'%d%%' % (outcome['probability']*100.)
-            self.explainAction(outcome,buf,level)
-            for name,action in outcome['actions'].items():
-                if not outcome['decisions'].has_key(name):
-                    # No decision made
-                    if level > 1: print >> buf,'\tforced'
-                elif level > 1:
-                    # Explain decision
-                    self.explainDecision(outcome['decisions'][name],buf,level)
+            if outcome.has_key('actions'):
+                self.explainAction(outcome,buf,level)
+                for name,action in outcome['actions'].items():
+                    if not outcome['decisions'].has_key(name):
+                        # No decision made
+                        if level > 1: print >> buf,'\tforced'
+                    elif level > 1:
+                        # Explain decision
+                        self.explainDecision(outcome['decisions'][name],buf,level)
 
     def explainAction(self,outcome,buf=None,level=0):
         if level > 0:
