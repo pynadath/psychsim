@@ -97,7 +97,8 @@ class World:
                 else:
                     dist = [(outcome['new'],1.)]
                 for new,prob in dist:
-                    self.updateModels(outcome,new)
+                    if outcome.has_key('actions'):
+                        self.updateModels(outcome,new)
                     try:
                         state[new] += prob*outcome['probability']
                     except KeyError:
