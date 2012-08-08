@@ -105,7 +105,7 @@ class World:
             self.history.append(outcomes)
         return outcomes
 
-    def stepFromState(self,vector,actions=None,horizon=None):
+    def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None):
         """
         Compute the resulting states when starting in a given possible world (as opposed to a distribution over possible worlds)
         """
@@ -120,6 +120,8 @@ class World:
             outcome['actions'] = {}
         else:
             outcome['actions'] = copy.copy(actions)
+        # Keep track of whether there is uncertainty about the actions to perform
+        stochastic = []
         for name in self.next(vector):
             if not outcome['actions'].has_key(name):
                 agent = self.agents[name]
@@ -127,13 +129,33 @@ class World:
                     model = agent.index2model(vector[modelKey(name)])
                 except KeyError:
                     model = True
-                decision = self.agents[name].decide(vector,horizon,outcome['actions'],model)
+                decision = self.agents[name].decide(vector,horizon,outcome['actions'],model,tiebreak)
                 outcome['decisions'][name] = decision
                 outcome['actions'][name] = decision['action']
             elif isinstance(outcome['actions'][name],Action):
                 outcome['actions'][name] = ActionSet([outcome['actions'][name]])
-        # Determine the effects of those actions
-        outcome['effect'] = self.effect(outcome['actions'],vector)
+            if isinstance(outcome['actions'][name],Distribution):
+                stochastic.append(name)
+        if stochastic:
+            # Merge effects of multiple possible actions into single effect
+            if len(stochastic) > 1:
+                raise NotImplementedError,'Currently unable to handle stochastic expectations over multiple agents: %s' % (stochastic)
+            effects = []
+            for action in outcome['actions'][stochastic[0]].domain():
+                prob = outcome['actions'][stochastic[0]][action]
+                actions = dict(outcome['actions'])
+                actions[stochastic[0]] = action
+                effect = self.effect(actions,outcome['old'])
+                effects.append((effect,prob))
+            outcome['effect'] = MatrixDistribution()
+            for effect,prob in effects:
+                for matrix in effect.domain():
+                    try:
+                        outcome['effect'][matrix] += prob*effect[matrix]
+                    except KeyError:
+                        outcome['effect'][matrix] = prob*effect[matrix]
+        else:
+            outcome['effect'] = self.effect(outcome['actions'],outcome['old'])
         outcome['new'] = outcome['effect']*outcome['old']
         outcome['delta'] = outcome['new'] - outcome['old']
         return outcome
@@ -706,9 +728,9 @@ class World:
                     else:
                         print >> buf,vector[key]
         if prune and not change:
-            print >> buf,'\tUnchanged'
+            print >> buf,'%s\tUnchanged' % (prefix)
         if self.terminated(vector):
-            print >> buf,'\t__END__'
+            print >> buf,'%s\t__END__' % (prefix)
         
     """---------------------"""
     """Serialization methods"""

@@ -94,8 +94,13 @@ class Agent:
         elif tiebreak == 'random':
             result['action'] = random.sample(best,1)[0]
         elif tiebreak == 'distribution':
-            raise NotImplementedError,'Currently unable to return distribution over actions.'
+            result['action'] = {}
+            prob = 1./float(len(best))
+            for action in best:
+                result['action'][action] = prob
+            result['action'] = Distribution(result['action'])
         else:
+            assert tiebreak is None,'Unknown tiebreaking method: %s' % (tiebreak)
             best.sort()
             result['action'] = best[0]
         return result
@@ -131,7 +136,7 @@ class Agent:
                 turn = copy.copy(others)
             if action:
                 turn[self.name] = action
-            outcome = self.world.stepFromState(vector,turn,horizon)
+            outcome = self.world.stepFromState(vector,turn,horizon) # ,tiebreak='distribution')
             if isinstance(outcome['new'],Distribution):
                 # Uncertain outcomes
                 for newVector in outcome['new'].domain():
@@ -139,7 +144,7 @@ class Agent:
                     entry['probability'] = outcome['new'][newVector]
                     Vrest = self.value(newVector,None,horizon-1,None,model)
                     entry.update(Vrest)
-                    result['V'] += entry['probability']*entry['V']
+                    result['V'] += entry['probability']*Vrest['V']
                     result['projection'].append(entry)
             else:
                 # Deterministic outcome
