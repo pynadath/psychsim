@@ -7,8 +7,8 @@ from psychsim.action import *
 from psychsim.world import World,stateKey,actionKey
 from psychsim.agent import Agent
 
-def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=0.1,sCollapse=0.1,territory=13,
-                            fTroops=381940,sTroops=461432,maxRounds=15,model='powell'):
+def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,territory=13,
+                            position=0,fTroops=381940,sTroops=461432,maxRounds=15,model='powell'):
     """
     An example of how to create a scenario
     @param sCost: number of troops Sylvania loses in battle
@@ -16,6 +16,17 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=0.1,sCollapse=0.1,te
     @return: the scenario created
     @rtype: L{World}
     """
+    # Handle defaults for battle probabilities, under each model
+    posLo = -10
+    posHi = 10
+    if fCollapse is None:
+        if model == 'powell':
+            fCollapse = 0.1
+        elif model == 'slantchev':
+            fCollapse = 0.3
+    if sCollapse is None:
+        sCollapse = 0.1
+
     # Create scenario
     world = World()
 
@@ -27,20 +38,22 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=0.1,sCollapse=0.1,te
 
     # User state
     world.defineState(free.name,'troops',int,lo=0,hi=500000,
-                      description='Number of troops %s has left' % (free.name))
+                      description='Number of troops you have left')
     free.setState('troops',fTroops)
     world.defineState(free.name,'territory',int,lo=0,hi=100,
-                      description='Percentage of disputed territory owned by %s' % (free.name))
+                      description='Percentage of disputed territory owned by you')
     free.setState('territory',territory)  # Percentage of disputed territory
     world.defineState(free.name,'cost',int,lo=0,hi=50000,
                       description='Number of troops %s loses in an attack' % (free.name))
     free.setState('cost',fCost)
-    world.defineState(free.name,'position',int,lo=0,hi=100,
-                      description='Military position of %s' % (free.name))
-    free.setState('position',50)
+    world.defineState(free.name,'position',int,lo=posLo,hi=posHi,
+                      description='Your military advantage over %s (10=war won, -10=war lost)' % (sylv.name))
+    free.setState('position',position)
     world.defineState(free.name,'offered',int,lo=0,hi=100,
-                      description='Percentage of disputed territory that %s last offered to %s' % (sylv.name,free.name))
+                      description='Percentage of disputed territory that %s last offered to you' % (sylv.name))
     free.setState('offered',0)
+    if model == 'slantchev':
+        world.addDependency(stateKey(free.name,'territory'),stateKey(free.name,'position'))
 
     # Agent state
     world.defineState(sylv.name,'troops',int,lo=0,hi=500000,
@@ -104,7 +117,7 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=0.1,sCollapse=0.1,te
         sylvNOP = sylv.addAction({'verb': 'continue'})
     elif model == 'slantchev':
         # Slantchev has both sides making offers
-        for amount in range(0,100,11):
+        for amount in range(10,100,10):
             sylv.addAction({'verb': 'offer','object': free.name,'amount': amount})
 
     # Restrictions on when actions are legal, based on phase of game
@@ -160,8 +173,12 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=0.1,sCollapse=0.1,te
     sylv.setReward(goalSTerritory,100.)
 
     # Horizons
-    free.setHorizon(4)
-    sylv.setHorizon(4)
+    if model == 'powell':
+        free.setHorizon(4)
+        sylv.setHorizon(4)
+    elif model == 'slantchev':
+        free.setHorizon(6)
+        sylv.setHorizon(6)
 
     if model == 'slantchev':
         # Discount factors
@@ -199,6 +216,13 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=0.1,sCollapse=0.1,te
             tree = makeTree({'distribution': [(incrementMatrix(pos,1),1.-fCollapse), # Freedonia wins battle
                                               (incrementMatrix(pos,-1),fCollapse)]}) # Freedonia loses battle
             world.setDynamics(free.name,'position',action,tree)
+            # Effect on territory
+            tree = makeTree({'if': thresholdRow(pos,posHi-.5), 
+                             True: setToConstantMatrix(freeTerr,100),          # Freedonia won
+                             False: {'if': thresholdRow(pos,posLo+1),
+                                     True: noChangeMatrix(freeTerr),
+                                     False: setToConstantMatrix(freeTerr,0)}}) # Freedonia lost
+            world.setDynamics(free.name,'territory',action,tree)
 
     # Dynamics of offers
     for index in range(2):
@@ -252,8 +276,9 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=0.1,sCollapse=0.1,te
     for action in filterActions({'verb': 'attack'},free.actions | sylv.actions):
         tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'offer'))
         world.setDynamics(None,'phase',action,tree)
-        tree = makeTree(incrementMatrix(stateKey(None,'round'),1))
-        world.setDynamics(None,'round',action,tree)
+        if model == 'slantchev':
+            tree = makeTree(incrementMatrix(stateKey(None,'round'),1))
+            world.setDynamics(None,'round',action,tree)
     if model == 'powell':
         # REJECTION -> END
         for atom in [freeNOP,freeBattle]:
@@ -273,7 +298,7 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=0.1,sCollapse=0.1,te
     # world.setMentalModel(sylv.name,free.name,{'true': 0.6,'dove': 0.3,'hawk': 0.1})
     return world
 
-def scenarioSimulationUseCase(world,offer=10,rounds=1,debug=1):
+def scenarioSimulationUseCase(world,offer=10,rounds=1,debug=1,model='powell'):
     """
     @param offer: the initial offer for Freedonia to give (default is 10)
     @type offer: int
@@ -288,27 +313,22 @@ def scenarioSimulationUseCase(world,offer=10,rounds=1,debug=1):
     if debug > 0:
         world.printState()
 
-    for t in range(rounds*2):
-        assert len(world.state) == 1
-        if not world.terminated(world.state.domain()[0]):
-            if t == 0:
-                # Force Freedonia to make low offer in first step
-                world.explain(world.step({free.name: Action({'subject':free.name,'verb':'offer','object': sylv.name,'amount': offer})}),debug)
-            else:
-                # Freedonia is free to choose
-                world.explain(world.step(),debug)
-            world.state.select()
-            if debug > 0:
-                world.printState()
-                # Display Sylvania's posterior beliefs
-                # sylv.printBeliefs()
-
-        assert len(world.state) == 1
-        if not world.terminated(world.state.domain()[0]):
-            # Sylvania free to decide in second step
-            world.explain(world.step(),debug)
-            world.state.select()
-            if debug > 0:
+    for t in range(rounds):
+        if model == 'powell':
+            steps = 4
+        elif model == 'slantchev':
+            steps = 3
+        for step in range(steps):
+            assert len(world.state) == 1
+            state = world.state.domain()[0]
+            if not world.terminated(state):
+                if t == 0 and step == 0 and world.getState(None,'phase').expectation() == 'offer':
+                    # Force Freedonia to make low offer in first step
+                    world.explain(world.step({free.name: Action({'subject':free.name,'verb':'offer','object': sylv.name,'amount': offer})}),debug)
+                else:
+                    # Free to choose
+                    world.explain(world.step(),debug)
+                world.state.select()
                 world.printState()
 
 if __name__ == '__main__':
@@ -325,16 +345,20 @@ if __name__ == '__main__':
                      help='theoretical model for the game [default: %(default)s]')
     # Optional argument that sets the cost of battle to Freedonia
     group.add_argument('-f',action='store',
-                     dest='fcost',type=int,default=2837,
+                     dest='fcost',type=int,default=1000,
                      help='cost of battle to Freedonia [default: %(default)s]')
     # Optional argument that sets the cost of battle to Sylvania
     group.add_argument('-s',action='store',
-                     dest='scost',type=int,default=1013,
+                     dest='scost',type=int,default=1000,
                      help='cost of battle to Sylvania [default: %(default)s]')
     # Optional argument that sets the initial amount of territory owned by Freedonia
-    group.add_argument('-i',action='store',
+    group.add_argument('-i','--initial',action='store',
                      dest='initial',type=int,default=13,
                      help='Freedonia\'s initial territory percentage [default: %(default)s]')
+    # Optional argument that sets Freedonia's initial military positional advantage
+    group.add_argument('-p','--position',action='store',
+                     dest='position',type=int,default=0,
+                     help='Freedonia\'s initial positional advantage [default: %(default)s]')
     # Optional argument that sets the maximum number of rounds to play
     group.add_argument('-r',action='store',
                      dest='rounds',type=int,default=15,
@@ -362,7 +386,8 @@ if __name__ == '__main__':
                      help='number of time steps to simulate [default: %(default)s]')
     args = vars(parser.parse_args())
 
-    world = scenarioCreationUseCase(args['fcost'],args['scost'],territory=args['initial'],
+    world = scenarioCreationUseCase(args['fcost'],args['scost'],
+                                    territory=args['initial'],position=args['position'],
                                     fTroops=args['ftroops'],sTroops=args['stroops'],
                                     maxRounds=args['rounds'],model=args['model'])
 
@@ -371,21 +396,35 @@ if __name__ == '__main__':
     # Specify game options for web interface
     config.add_section('Game')
     config.set('Game','rounds','%d' % (args['rounds']))
-    assert world.agents.has_key('Freedonia')
     config.set('Game','user','Freedonia')
+    config.set('Game','agent','Sylvania')
+    if args['model'] == 'powell':
+        # Battle is optional under Powell
+        config.set('Game','battle','optional')
+    elif args['model'] == 'slantchev':
+        # Battle is mandatory under Slantchev
+        config.set('Game','battle','mandatory')
     # Specify which state features are visible in web interface
     config.add_section('Visible')
-    for feature in world.features['Freedonia'].keys():
-        if feature in ['territory','troops']:
-            config.set('Visible',feature,'yes')
-        else:
-            config.set('Visible',feature,'no')
+    features = ['territory','troops']
+    if args['model'] == 'slantchev':
+        features.append('position')
+    for feature in features:
+        config.set('Visible',feature,'yes')
     # Specify descriptions of actions for web interface
     config.add_section('Actions')
-    config.set('Actions','offer','Propose treaty where Sylvania gets amount%% of total disputed territory')
+    config.set('Actions','offer','Propose treaty where Sylvania gets <action:amount>%% of total disputed territory')
     config.set('Actions','attack','Attack Sylvania')
+    config.set('Actions','accept offer','Accept offer of <Freedonia:offered>%% of total disputed territory')
+    config.set('Actions','reject offer','Reject offer of <Freedonia:offered>%% of total disputed territory')
     config.set('Actions','continue','Continue to next day of negotiation without attacking')
-    f = open('default.cfg','w')
+    # Specify what changes are displayed
+    config.add_section('Change')
+    config.set('Change','troops','yes')
+    if args['model'] == 'slantchev':
+        config.set('Change','position','yes')
+
+    f = open('%s.cfg' % (args['output']),'w')
     config.write(f)
     f.close()
 
@@ -394,4 +433,4 @@ if __name__ == '__main__':
 
     # Test saved scenario
     world = World(args['output'])
-    scenarioSimulationUseCase(world,args['amount'],args['rounds'],args['debug'])
+    scenarioSimulationUseCase(world,args['amount'],args['time'],args['debug'],args['model'])
