@@ -20,6 +20,8 @@ class World:
     @type symbols: strS{->}int
     @ivar dynamics: table of action effect models
     @type dynamics: dict
+    @ivar dependency: table of dependencies among state features that impose temporal constraints
+    @type dependency: dict
     @ivar history: accumulated list of outcomes from simulation steps
     @type history: list
     @ivar termination: list of conditions under which the simulation terminates (default is none)
@@ -33,13 +35,18 @@ class World:
         @type xml: Node or str
         """
         self.agents = {}
+
         self.state = VectorDistribution()
         self.features = {}
         self.symbols = {}
         self.ranges = {}
         self.dynamics = {}
+        self.dependency = {}
+        self.evaluationOrder = [set()]
+
         self.termination = []
         self.history = []
+
         if isinstance(xml,Node):
             self.parse(xml)
         elif isinstance(xml,str):
@@ -62,6 +69,9 @@ class World:
         self.symbols.clear()
         self.ranges.clear()
         self.dynamics.clear()
+        self.dependency.clear()
+        del self.evaluationOrder[:]
+        self.evaluationOrder.append(set())
         del self.history[:]
         del self.termination[:]
 
@@ -146,55 +156,75 @@ class World:
                 prob = outcome['actions'][stochastic[0]][action]
                 actions = dict(outcome['actions'])
                 actions[stochastic[0]] = action
-                effect = self.effect(actions,outcome['old'])
-                effects.append((effect,prob))
-            outcome['effect'] = MatrixDistribution()
-            for effect,prob in effects:
-                for matrix in effect.domain():
-                    try:
-                        outcome['effect'][matrix] += prob*effect[matrix]
-                    except KeyError:
-                        outcome['effect'][matrix] = prob*effect[matrix]
+                outcome.update(self.effect(actions,outcome['old'],prob))
         else:
-            outcome['effect'] = self.effect(outcome['actions'],outcome['old'])
-        outcome['new'] = outcome['effect']*outcome['old']
-        outcome['delta'] = outcome['new'] - outcome['old']
+            outcome.update(self.effect(outcome['actions'],outcome['old']))
+        if not outcome.has_key('new'):
+            # Apply effects
+            outcome['new'] = outcome['effect']*outcome['old']
+        if not outcome.has_key('delta'):
+            outcome['delta'] = outcome['new'] - outcome['old']
         return outcome
 
-    def effect(self,actions,vector):
-        # Update world state
-        result = self.deltaState(actions,vector)
+    def effect(self,actions,vector,probability=1.):
+        """
+        @param probability: the likelihood of this particular action set (default is 100%)
+        @type probability: float
+        """
+        result = {'effect': [],
+                  'new': VectorDistribution({vector: probability})}
+        for keys in self.evaluationOrder:
+            new = VectorDistribution()
+            effect = MatrixDistribution()
+            for old in result['new'].domain():
+                # Update world state
+                delta = self.deltaState(actions,old,keys)
+                for matrix in delta.domain():
+                    try:
+                        effect[matrix] += result['new'][old]
+                    except KeyError:
+                        effect[matrix] = result['new'][old]
+                    vector = KeyedVector(old)
+                    vector.update(matrix*old)
+                    prob = result['new'][old]*delta[matrix]
+                    try:
+                        new[vector] += prob
+                    except KeyError:
+                        new[vector] = prob
+            result['new'] = new
+            result['effect'].append(effect)
         # Update turn order
-        result.update(self.deltaOrder(actions,vector))
+        delta = self.deltaOrder(actions,vector)
         # Update agent beliefs
         for name,agent in self.agents.items():
             key = modelKey(name)
             if vector.has_key(key):
-                result.update(KeyedMatrix({key: KeyedVector({key: 1.})}))
-        # Constant factor does not change
-        if vector.has_key(CONSTANT):
-            result.update(KeyedMatrix({CONSTANT: KeyedVector({CONSTANT: 1.})}))
+                delta[key] = KeyedVector({key: 1.})
+        result['effect'].append(delta)
+        new = VectorDistribution()
+        for old in result['new'].domain():
+            vector = KeyedVector(old)
+            vector.update(delta*old)
+            try:
+                new[vector] += result['new'][old]
+            except KeyError:
+                new[vector] = result['new'][old]
+        result['new'] = new
         return result
 
-    def deltaState(self,actions,vector):
-        result = MatrixDistribution({KeyedMatrix():1.})
-        for entity,table in self.features.items():
-            for feature,entry in table.items():
-                dynamics = self.getDynamics(entry['key'],actions)
-                if dynamics:
-                    assert len(dynamics) == 1,'Unable to merge multiple effects of %s on %s' % \
-                        (ActionSet(actions),entry['key'])
-                    tree = dynamics[0]
-                    matrix = tree[vector]
-                else:
-                    matrix = KeyedMatrix()
-                    delta = KeyedVector()
-                    if entry['domain'] is int:
-                        delta[entry['key']] = 1
-                    else:
-                        delta[entry['key']] = 1.
-                    matrix[entry['key']] = delta
-                result.update(matrix)
+    def deltaState(self,actions,vector,keys=None):
+        """
+        Computes the change across a subset of state features
+        """
+        if keys is None:
+            keys = sum(self.evaluationOrder,[])
+        result = MatrixDistribution({KeyedMatrix(): 1.})
+        for key in keys:
+            dynamics = self.getDynamics(key,actions)
+            if dynamics:
+                assert len(dynamics) == 1,'Unable to merge multiple effects of %s on %s' % \
+                    (ActionSet(actions),key)
+                result.update(dynamics[0][vector])
         return result
 
     def addTermination(self,tree):
@@ -296,6 +326,42 @@ class World:
                             dynamics.append(tree.desymbolize(table))
             return dynamics
 
+    def addDependency(self,dependent,independent):
+        """
+        Adds a dependency between the dependent key and the independent key, indicating that the new value for the independent key should be determined first
+        @type dependent: str
+        @type independent: str
+        """
+        try:
+            self.dependency[dependent][independent] = True
+        except KeyError:
+            self.dependency[dependent] = {independent: True}
+        foundDep = False
+        foundInd = False
+        for entry in self.evaluationOrder:
+            if foundDep:
+                if foundInd:
+                    # Independent was earlier, so we can stick dependent variable here and exit
+                    entry.add(dependent)
+                    break
+                elif independent in entry:
+                    # We have now found independent variable
+                    foundInd = True
+            else:
+                if dependent in entry:
+                    # Dependent is in the same time frame
+                    entry.remove(dependent)
+                    foundDep = True
+                if independent in entry:
+                    # Here is the independent variable
+                    foundInd = True
+                    if not foundDep:
+                        # Dependent is somewhere later, so we're ok
+                        break
+        else:
+            # Need to add another entry
+            self.evaluationOrder.append(set([dependent]))
+
     """------------------"""
     """Turn order methods"""
     """------------------"""
@@ -379,15 +445,16 @@ class World:
         @param description: optional text description explaining what this state feature means
         @type description: str
         """
+        key = stateKey(entity,feature)
         if not self.features.has_key(entity):
             self.features[entity] = {}
         self.features[entity][feature] = {'domain': domain,'description': description}
         if domain is float:
             self.features[entity][feature].update({'lo': lo,'hi': hi})
-            self.ranges[stateKey(entity,feature)] = (lo,hi)
+            self.ranges[key] = (lo,hi)
         elif domain is int:
             self.features[entity][feature].update({'lo': int(lo),'hi': int(hi)})
-            self.ranges[stateKey(entity,feature)] = (lo,hi)
+            self.ranges[key] = (lo,hi)
         elif domain is list:
             assert isinstance(lo,list),'Please provide list of elements for state features of the list type'
             self.features[entity][feature].update({'elements': lo,'lo': None,'hi': None})
@@ -401,7 +468,8 @@ class World:
         if entity is None:
             self.features[entity][feature]['key'] = feature
         else:
-            self.features[entity][feature]['key'] = stateKey(entity,feature)
+            self.features[entity][feature]['key'] = key
+        self.evaluationOrder[0].add(key)
 
     def setState(self,entity,feature,value):
         """
@@ -619,6 +687,9 @@ class World:
         """
         Subroutine of L{explain} for explaining agent decisions
         """
+        if not decision.has_key('V'):
+            # No value function
+            return
         actions = decision['V'].keys()
         actions.sort(lambda x,y: cmp(str(x),str(y)))
         for alt in actions:
@@ -780,6 +851,17 @@ class World:
                 subnode.appendChild(tree.__xml__().documentElement)
             node.appendChild(subnode)
         root.appendChild(node)
+        # Inter-state dependency
+        node = doc.createElement('dependency')
+        for key,table in self.dependency.items():
+            subnode = doc.createElement('dependent')
+            subnode.setAttribute('key',key)
+            for ind in table.keys():
+                subsubnode = doc.createElement('independent')
+                subsubnode.appendChild(doc.createTextNode(ind))
+                subnode.appendChild(subsubnode)
+            node.appendChild(subnode)
+        root.appendChild(node)
         # Termination conditions
         for termination in self.termination:
             node = doc.createElement('termination')
@@ -792,7 +874,7 @@ class World:
             for outcome in entry:
                 subsubnode = doc.createElement('outcome')
                 for name in self.agents.keys():
-                    if outcome['actions'].has_key(name):
+                    if outcome.has_key('actions') and outcome['actions'].has_key(name):
                         subsubnode.appendChild(outcome['actions'][name].__xml__().documentElement)
                 subsubnode.appendChild(outcome['delta'].__xml__().documentElement)
                 subsubnode.appendChild(outcome['old'].__xml__().documentElement)
@@ -872,6 +954,19 @@ class World:
                                         action = None
                                     else:
                                         raise NameError,'Unknown dynamics element: %s' % (subsubnode.tagName)
+                                subsubnode = subsubnode.nextSibling
+                        subnode = subnode.nextSibling
+                elif node.tagName == 'dependency':
+                    subnode = node.firstChild
+                    while subnode:
+                        if subnode.nodeType == subnode.ELEMENT_NODE:
+                            assert subnode.tagName == 'dependent'
+                            dep = str(subnode.getAttribute('key'))
+                            subsubnode = subnode.firstChild
+                            while subsubnode:
+                                if subsubnode.nodeType == subnode.ELEMENT_NODE:
+                                    assert subsubnode.tagName == 'independent'
+                                    self.addDependency(dep,str(subsubnode.firstChild.data).strip())
                                 subsubnode = subsubnode.nextSibling
                         subnode = subnode.nextSibling
                 elif node.tagName == 'termination':

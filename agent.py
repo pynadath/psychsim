@@ -63,9 +63,6 @@ class Agent:
         belief = self.getBelief(model,vector)
         if horizon is None:
             horizon = self.models[model]['horizon']
-        # Keep track of value function
-        V = {}
-        best = None
         # Consider all legal actions (legality determined by *real* world, not my belief)
         actions = self.getActions(vector)
         if len(actions) == 0:
@@ -75,6 +72,12 @@ class Agent:
             msg = buf.getvalue()
             buf.close()
             raise RuntimeError,'%s has no legal actions in:\n%s' % (self.name,msg)
+        elif len(actions) == 1:
+            # Only one possible action
+            return {'action': iter(actions).next()}
+        # Keep track of value function
+        V = {}
+        best = None
         for action in actions:
             # Compute value across possible worlds
             V[action] = {'__EV__': 0.}
