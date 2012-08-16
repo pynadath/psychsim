@@ -714,17 +714,15 @@ class World:
                             self.explainDecision(node['decisions'][other],buf,level,prefix+'\t\t')
                         if level > 3: 
                             print >> buf,'%sEffect:' % (tab+prefix)
-                            self.printState(node['delta'],buf,prune=True,prefix=tab+prefix)
+                            self.printDelta(node['old'],node['new'],buf,prefix=tab+prefix)
                         for index in range(len(node['projection'])):
                             nodes.insert(index,node['projection'][index])
 
-    def printState(self,distribution=None,buf=None,prune=False,prefix=''):
+    def printState(self,distribution=None,buf=None,prefix=''):
         """
         Utility method for displaying a distribution over possible worlds
         @type distribution: L{VectorDistribution}
         @param buf: the string buffer to put the string representation in (default is standard output)
-        @param prune: if C{True}, don't print vector entries with 0 values (default is C{False})
-        @type prune: bool
         @param prefix: a string prefix (e.g., tabs) to insert at the beginning of each line
         @type prefix: str
         """
@@ -732,15 +730,13 @@ class World:
             distribution = self.state
         for vector in distribution.domain():
             print >> buf,'%s%d%%' % (prefix,distribution[vector]*100.),
-            self.printVector(vector,buf,prune,prefix)
+            self.printVector(vector,buf,prefix)
 
-    def printVector(self,vector,buf=None,prune=False,prefix='',first=True):
+    def printVector(self,vector,buf=None,prefix='',first=True):
         """
         Utility method for displaying a single possible world
         @type vector: L{KeyedVector}
         @param buf: the string buffer to put the string representation in (default is standard output)
-        @param prune: if C{True}, don't print vector entries with 0 values (default is C{False})
-        @type prune: bool
         @param prefix: a string prefix (e.g., tabs) to insert at the beginning of each line
         @type prefix: str
         @param first: if C{True}, then the first line is the continuation of an existing line (default is C{True})
@@ -760,23 +756,21 @@ class World:
                 # Print model of this entity
                 key = modelKey(entity)
                 if vector.has_key(key):
-                    if not prune or abs(vector[key]) > vector.epsilon:
-                        if first:
-                            print >> buf,'\t%-12s\t%-12s\t%-12s' % \
-                                (label,'__model__',self.agents[entity].index2model(vector[key]))
-                            first = False
-                        else:
-                            print >> buf,'%s\t%-12s\t%-12s\t%-12s' % \
-                                (prefix,label,'__model__',self.agents[entity].index2model(vector[key]))
-                        newEntity = False
+                    if first:
+                        print >> buf,'\t%-12s\t%-12s\t%-12s' % \
+                            (label,'__model__',self.agents[entity].index2model(vector[key]))
+                        first = False
+                    else:
+                        print >> buf,'%s\t%-12s\t%-12s\t%-12s' % \
+                            (prefix,label,'__model__',self.agents[entity].index2model(vector[key]))
+                    newEntity = False
             # Print state features for this entity
             for feature,entry in table.items():
                 if entity is None:
                     key = feature
                 else:
                     key = stateKey(entity,feature)
-                if vector.has_key(key) and \
-                        (not prune or abs(vector[key]) > vector.epsilon):
+                if vector.has_key(key):
                     if newEntity:
                         if first:
                             print >> buf,'\t%-12s' % (label),
@@ -800,10 +794,28 @@ class World:
                         print >> buf,entry['elements'][index]
                     else:
                         print >> buf,vector[key]
-        if prune and not change:
+        if not change:
             print >> buf,'%s\tUnchanged' % (prefix)
-        if self.terminated(vector):
+        if (not vector.has_key('__END__') and self.terminated(vector)) or \
+                (vector.has_key('__END__') and vector['__END__'] > 0.):
             print >> buf,'%s\t__END__' % (prefix)
+
+    def printDelta(self,old,new,buf=None,prefix=''):
+        deltaDist = VectorDistribution()
+        for vector in new.domain():
+            delta = KeyedVector()
+            for name,table in self.features.items():
+                for feature,entry in self.features[name].items():
+                    key = stateKey(name,feature)
+                    if abs(vector[key]-old[key]) > 1e-3:
+                        # Notable change
+                        delta[key] = vector[key]
+            if self.terminated(vector):
+                delta['__END__'] = 1.
+            else:
+                delta['__END__'] = -1.
+            deltaDist[delta] = new[vector]
+        self.printState(deltaDist,buf,prefix=prefix)
         
     """---------------------"""
     """Serialization methods"""
