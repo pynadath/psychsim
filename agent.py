@@ -143,6 +143,9 @@ class Agent:
             outcome = self.world.stepFromState(vector,turn,horizon)
             if isinstance(outcome['new'],Distribution):
                 # Uncertain outcomes
+                if discount < 1e-6:
+                    # Current reward is irrelevant
+                    result['V'] = 0.
                 for newVector in outcome['new'].domain():
                     entry = copy.copy(outcome)
                     entry['probability'] = outcome['new'][newVector]
@@ -150,7 +153,7 @@ class Agent:
                     entry.update(Vrest)
                     if discount < -1e-6:
                         # Only final value matters
-                        result['V'] = entry['probability']*entry['V']
+                        result['V'] += entry['probability']*entry['V']
                     else:
                         # Accumulate value
                         result['V'] += discount*entry['probability']*entry['V']
@@ -160,7 +163,12 @@ class Agent:
                 outcome['probability'] = 1.
                 Vrest = self.value(outcome['new'],None,horizon-1,None,model)
                 outcome.update(Vrest)
-                result['V'] += discount*Vrest['V']
+                if discount < -1e-6:
+                    # Only final value matters
+                    result['V'] = Vrest['V']
+                else:
+                    # Accumulate value
+                    result['V'] += discount*Vrest['V']
                 result['projection'].append(outcome)
         if horizon == self.models[model]['horizon']:
             # Cache result
