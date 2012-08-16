@@ -148,7 +148,12 @@ class Agent:
                     entry['probability'] = outcome['new'][newVector]
                     Vrest = self.value(newVector,None,horizon-1,None,model)
                     entry.update(Vrest)
-                    result['V'] += discount*entry['probability']*entry['V']
+                    if discount < -1e-6:
+                        # Only final value matters
+                        result['V'] = entry['probability']*entry['V']
+                    else:
+                        # Accumulate value
+                        result['V'] += discount*entry['probability']*entry['V']
                     result['projection'].append(entry)
             else:
                 # Deterministic outcome
