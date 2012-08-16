@@ -164,26 +164,25 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
     goalFTroops = maximizeFeature(stateKey(free.name,'troops'))
     free.setReward(goalFTroops,1.)
     goalFTerritory = maximizeFeature(stateKey(free.name,'territory'))
-    free.setReward(goalFTerritory,10.)
+    free.setReward(goalFTerritory,1.)
 
     # Goals for Sylvania
     goalSTroops = maximizeFeature(stateKey(sylv.name,'troops'))
     sylv.setReward(goalSTroops,1.)
     goalSTerritory = minimizeFeature(stateKey(free.name,'territory'))
-    sylv.setReward(goalSTerritory,100.)
+    sylv.setReward(goalSTerritory,1.)
 
     # Horizons
     if model == 'powell':
         free.setHorizon(4)
         sylv.setHorizon(4)
     elif model == 'slantchev':
-        free.setHorizon(3)
-        sylv.setHorizon(3)
+        free.setHorizon(6)
+        sylv.setHorizon(6)
 
-    if model == 'slantchev':
-        # Discount factors
-        free.setParameter('discount',-1)
-        sylv.setParameter('discount',-1)
+    # Discount factors
+    free.setParameter('discount',-1)
+    sylv.setParameter('discount',-1)
 
     # Levels of belief
     free.setRecursiveLevel(2)
@@ -320,7 +319,6 @@ def scenarioSimulationUseCase(world,offer=10,rounds=1,debug=1,model='powell'):
             steps = 3
         for step in range(steps):
             phase = world.getState(None,'phase').expectation()
-            print 'Step %d (%s)' % (t,phase)
             assert len(world.state) == 1
             state = world.state.domain()[0]
             if not world.terminated(state):
@@ -347,11 +345,11 @@ if __name__ == '__main__':
                      help='theoretical model for the game [default: %(default)s]')
     # Optional argument that sets the cost of battle to Freedonia
     group.add_argument('-f',action='store',
-                     dest='fcost',type=int,default=1000,
+                     dest='fcost',type=int,default=3000,
                      help='cost of battle to Freedonia [default: %(default)s]')
     # Optional argument that sets the cost of battle to Sylvania
     group.add_argument('-s',action='store',
-                     dest='scost',type=int,default=1000,
+                     dest='scost',type=int,default=4000,
                      help='cost of battle to Sylvania [default: %(default)s]')
     # Optional argument that sets the initial amount of territory owned by Freedonia
     group.add_argument('-i','--initial',action='store',
@@ -367,11 +365,11 @@ if __name__ == '__main__':
                      help='Maximum number of rounds to play [default: %(default)s]')
     # Optional argument that sets Freedonia's initial troops
     group.add_argument('--freedonia-troops',action='store',
-                     dest='ftroops',type=int,default=50000,
+                     dest='ftroops',type=int,default=40000,
                      help='number of Freedonia troops [default: %(default)s]')
     # Optional argument that sets Sylvania's initial troops
     group.add_argument('--sylvania-troops',action='store',
-                     dest='stroops',type=int,default=40000,
+                     dest='stroops',type=int,default=30000,
                      help='number of Sylvania troops [default: %(default)s]')
     group = parser.add_argument_group('Simulation Options','Control the simulation of the created scenario.')
     # Optional argument that sets the level of explanations when running the simulation
