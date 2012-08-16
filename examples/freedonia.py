@@ -219,7 +219,7 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
             # Effect on territory
             tree = makeTree({'if': thresholdRow(pos,posHi-.5), 
                              True: setToConstantMatrix(freeTerr,100),          # Freedonia won
-                             False: {'if': thresholdRow(pos,posLo+1),
+                             False: {'if': thresholdRow(pos,posLo+.5),
                                      True: noChangeMatrix(freeTerr),
                                      False: setToConstantMatrix(freeTerr,0)}}) # Freedonia lost
             world.setDynamics(free.name,'territory',action,tree)
@@ -319,10 +319,12 @@ def scenarioSimulationUseCase(world,offer=10,rounds=1,debug=1,model='powell'):
         elif model == 'slantchev':
             steps = 3
         for step in range(steps):
+            phase = world.getState(None,'phase').expectation()
+            print 'Step %d (%s)' % (t,phase)
             assert len(world.state) == 1
             state = world.state.domain()[0]
             if not world.terminated(state):
-                if t == 0 and step == 0 and world.getState(None,'phase').expectation() == 'offer':
+                if t == 0 and step == 0 and phase == 'offer':
                     # Force Freedonia to make low offer in first step
                     world.explain(world.step({free.name: Action({'subject':free.name,'verb':'offer','object': sylv.name,'amount': offer})}),debug)
                 else:
@@ -365,11 +367,11 @@ if __name__ == '__main__':
                      help='Maximum number of rounds to play [default: %(default)s]')
     # Optional argument that sets Freedonia's initial troops
     group.add_argument('--freedonia-troops',action='store',
-                     dest='ftroops',type=int,default=381940,
+                     dest='ftroops',type=int,default=50000,
                      help='number of Freedonia troops [default: %(default)s]')
     # Optional argument that sets Sylvania's initial troops
     group.add_argument('--sylvania-troops',action='store',
-                     dest='stroops',type=int,default=461432,
+                     dest='stroops',type=int,default=40000,
                      help='number of Sylvania troops [default: %(default)s]')
     group = parser.add_argument_group('Simulation Options','Control the simulation of the created scenario.')
     # Optional argument that sets the level of explanations when running the simulation
@@ -382,7 +384,7 @@ if __name__ == '__main__':
                      help='Freedonia\'s first offer amount [default: %(default)s]')
     # Optional argument that sets the number of time steps to simulate
     group.add_argument('-t','--time',action='store',
-                     dest='time',type=int,default=4,
+                     dest='time',type=int,default=1,
                      help='number of time steps to simulate [default: %(default)s]')
     args = vars(parser.parse_args())
 
@@ -418,6 +420,9 @@ if __name__ == '__main__':
     config.set('Actions','accept offer','Accept offer of <Freedonia:offered>%% of total disputed territory')
     config.set('Actions','reject offer','Reject offer of <Freedonia:offered>%% of total disputed territory')
     config.set('Actions','continue','Continue to next day of negotiation without attacking')
+    config.set('Actions','Sylvania offer','offer <action:amount>%%')
+    config.set('Actions','Sylvania accept offer','Accept offer of <Sylvania:offered>%% of total disputed territory')
+    config.set('Actions','Sylvania reject offer','Reject offer of <Sylvania:offered>%% of total disputed territory')
     # Specify what changes are displayed
     config.add_section('Change')
     config.set('Change','troops','yes')
