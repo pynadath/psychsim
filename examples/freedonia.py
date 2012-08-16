@@ -177,13 +177,13 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
         free.setHorizon(4)
         sylv.setHorizon(4)
     elif model == 'slantchev':
-        free.setHorizon(6)
-        sylv.setHorizon(6)
+        free.setHorizon(3)
+        sylv.setHorizon(3)
 
     if model == 'slantchev':
         # Discount factors
-        free.setParameter('discount',0.9)
-        sylv.setParameter('discount',0.9)
+        free.setParameter('discount',-1)
+        sylv.setParameter('discount',-1)
 
     # Levels of belief
     free.setRecursiveLevel(2)
