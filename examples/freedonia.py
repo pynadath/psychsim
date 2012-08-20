@@ -17,13 +17,13 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
     @rtype: L{World}
     """
     # Handle defaults for battle probabilities, under each model
-    posLo = -10
+    posLo = 0
     posHi = 10
     if fCollapse is None:
         if model == 'powell':
             fCollapse = 0.1
         elif model == 'slantchev':
-            fCollapse = 0.3
+            fCollapse = 0.7
     if sCollapse is None:
         sCollapse = 0.1
 
@@ -37,7 +37,7 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
     world.addAgent(sylv)
 
     # User state
-    world.defineState(free.name,'troops',int,lo=0,hi=500000,
+    world.defineState(free.name,'troops',int,lo=0,hi=50000,
                       description='Number of troops you have left')
     free.setState('troops',fTroops)
     world.defineState(free.name,'territory',int,lo=0,hi=100,
@@ -47,7 +47,7 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
                       description='Number of troops %s loses in an attack' % (free.name))
     free.setState('cost',fCost)
     world.defineState(free.name,'position',int,lo=posLo,hi=posHi,
-                      description='Your military advantage over %s (10=war won, -10=war lost)' % (sylv.name))
+                      description='Current status of war (%d=%s is winner, %d=you are winner)' % (posLo,sylv.name,posHi))
     free.setState('position',position)
     world.defineState(free.name,'offered',int,lo=0,hi=100,
                       description='Percentage of disputed territory that %s last offered to you' % (sylv.name))
@@ -98,7 +98,7 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
 
     # User actions
     freeBattle = free.addAction({'verb': 'attack','object': sylv.name})
-    for amount in [25,50,75]:
+    for amount in range(20,100,20):
         free.addAction({'verb': 'offer','object': sylv.name,'amount': amount})
     if model == 'powell':
         # Powell has null stages
@@ -174,11 +174,11 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
 
     # Horizons
     if model == 'powell':
-        free.setHorizon(4)
-        sylv.setHorizon(4)
+        free.setParameter('horizon',4)
+        sylv.setParameter('horizon',4)
     elif model == 'slantchev':
-        free.setHorizon(6)
-        sylv.setHorizon(6)
+        free.setParameter('horizon',6)
+        sylv.setParameter('horizon',6)
 
     # Discount factors
     free.setParameter('discount',-1)
@@ -237,9 +237,7 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
     # Dynamics of treaties
     for action in filterActions({'verb': 'accept offer'},free.actions | sylv.actions):
         # Accepting an offer means that there is now a treaty
-        tree = makeTree({'if': trueRow(stateKey(None,'treaty')),
-                         True: noChangeMatrix(stateKey(None,'treaty')),
-                         False: setTrueMatrix(stateKey(None,'treaty'))})
+        tree = makeTree(setTrueMatrix(stateKey(None,'treaty')))
         world.setDynamics(None,'treaty',action,tree)
         # Accepting offer sets territory
         offer = stateKey(action['subject'],'offered')
@@ -289,6 +287,17 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
         world.setDynamics(None,'phase',atom,tree)
         tree = makeTree(incrementMatrix(stateKey(None,'round'),1))
         world.setDynamics(None,'round',atom,tree)
+
+    # Handcrafted policy for Freedonia
+    free.setPolicy(makeTree({'if': equalRow('phase','respond'),
+                             # Accept an offer greater than 50
+                             True: {'if': thresholdRow(stateKey(free.name,'offered'),50),
+                                    True: Action({'subject': free.name,'verb': 'accept offer','object': sylv.name}),
+                                    False: Action({'subject': free.name,'verb': 'reject offer','object': sylv.name})},
+                             # Offer 40%
+                             False: {'if': equalRow('phase','engagement'),
+                                     True: Action({'subject': free.name,'verb': 'attack','object': sylv.name}),
+                                     False: Action({'subject': free.name,'verb': 'offer','object': sylv.name,'amount': 40})}}))
     
     # # Models of Freedonia
     # free.addModel('dove',R={goalFTroops: 1e-4,goalFTerritory: 0.1},level=1,rationality=0.01)
@@ -297,9 +306,9 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
     # world.setMentalModel(sylv.name,free.name,{'true': 0.6,'dove': 0.3,'hawk': 0.1})
     return world
 
-def scenarioSimulationUseCase(world,offer=10,rounds=1,debug=1,model='powell'):
+def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
     """
-    @param offer: the initial offer for Freedonia to give (default is 10)
+    @param offer: the initial offer for Freedonia to give (default is none)
     @type offer: int
     @param rounds: the number of complete rounds, where a round is two turns each, following Powell (default is 1)
     @type rounds: int
@@ -309,6 +318,11 @@ def scenarioSimulationUseCase(world,offer=10,rounds=1,debug=1,model='powell'):
     free = world.agents['Freedonia']
     sylv = world.agents['Sylvania']
     world.setState(None,'phase','offer')
+
+#    ignore = ['Freedonia\'s cost','Sylvania\'s cost','round']
+#    sylv.setParameter('ignore',ignore)
+#    V = sylv.valueIteration(horizon=45,ignore=ignore)
+
     if debug > 0:
         world.printState()
 
@@ -322,7 +336,7 @@ def scenarioSimulationUseCase(world,offer=10,rounds=1,debug=1,model='powell'):
             assert len(world.state) == 1
             state = world.state.domain()[0]
             if not world.terminated(state):
-                if t == 0 and step == 0 and phase == 'offer':
+                if t == 0 and phase == 'offer' and offer > 0:
                     # Force Freedonia to make low offer in first step
                     world.explain(world.step({free.name: Action({'subject':free.name,'verb':'offer','object': sylv.name,'amount': offer})}),debug)
                 else:
@@ -345,11 +359,11 @@ if __name__ == '__main__':
                      help='theoretical model for the game [default: %(default)s]')
     # Optional argument that sets the cost of battle to Freedonia
     group.add_argument('-f',action='store',
-                     dest='fcost',type=int,default=3000,
+                     dest='fcost',type=int,default=2000,
                      help='cost of battle to Freedonia [default: %(default)s]')
     # Optional argument that sets the cost of battle to Sylvania
     group.add_argument('-s',action='store',
-                     dest='scost',type=int,default=4000,
+                     dest='scost',type=int,default=1000,
                      help='cost of battle to Sylvania [default: %(default)s]')
     # Optional argument that sets the initial amount of territory owned by Freedonia
     group.add_argument('-i','--initial',action='store',
@@ -357,7 +371,7 @@ if __name__ == '__main__':
                      help='Freedonia\'s initial territory percentage [default: %(default)s]')
     # Optional argument that sets Freedonia's initial military positional advantage
     group.add_argument('-p','--position',action='store',
-                     dest='position',type=int,default=0,
+                     dest='position',type=int,default=3,
                      help='Freedonia\'s initial positional advantage [default: %(default)s]')
     # Optional argument that sets the maximum number of rounds to play
     group.add_argument('-r',action='store',
@@ -378,8 +392,8 @@ if __name__ == '__main__':
                      help='level of explanation detail [default: %(default)s]')
     # Optional argument that sets the initial offer that Freedonia will make
     group.add_argument('-a',action='store',
-                     dest='amount',type=int,default=10,
-                     help='Freedonia\'s first offer amount [default: %(default)s]')
+                     dest='amount',type=int,default=0,
+                     help='Freedonia\'s first offer amount')
     # Optional argument that sets the number of time steps to simulate
     group.add_argument('-t','--time',action='store',
                      dest='time',type=int,default=1,

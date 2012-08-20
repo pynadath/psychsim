@@ -4,6 +4,7 @@ Class and function definitions for PieceWise Linear (PWL) representations
 import copy
 from xml.dom.minidom import Document,Node
 from probability import Distribution
+from action import Action
 
 CONSTANT = ''
 
@@ -93,6 +94,40 @@ class KeyedVector(dict):
             else:
                 result[key] = value
         return result
+
+    def filter(self,ignore):
+        """
+        @return: a copy of me with the given set of keys dropped out
+        @rtype: L{KeyedVector}
+        """
+        result = self.__class__()
+        for key in filter(lambda k: not k in ignore,self.keys()):
+            result[key] = self[key]
+        return result
+
+    def nearestNeighbor(self,vectors):
+        """
+        @return: the vector in the given set that is closest to me
+        @rtype: L{KeyedVector}
+        """
+        bestVector = None
+        bestValue = None
+        for vector in vectors:
+            d = self.distance(vector)
+            if bestVector is None or d < bestValue:
+                bestValue = d
+                bestVector = vector
+        return bestVector
+
+    def distance(self,vector):
+        """
+        @return: the distance between the given vector and myself
+        @rtype: float
+        """
+        d = 0.
+        for key in self.keys():
+            d += pow(self[key]-vector[key],2)
+        return d
 
     def __str__(self):
         if self._string is None:
@@ -366,7 +401,9 @@ def noChangeMatrix(key):
     return scaleMatrix(key,1.)
 def approachMatrix(key,weight,limit):
     """
+    @param weight: the percentage by which you want the feature to approach the limit
     @type weight: float
+    @param limit: the value you want the feature to approach
     @type limit: float
     @return: a dynamics matrix modifying the given keyed value by approaching the given limit by the given weighted percentage of distance
     @rtype: L{KeyedMatrix}
@@ -374,6 +411,7 @@ def approachMatrix(key,weight,limit):
     return KeyedMatrix({key: KeyedVector({key: 1.-weight,CONSTANT: weight*limit})})
 def incrementMatrix(key,delta):
     """
+    @param delta: the constant value to add to the state feature
     @type delta: float
     @return: a dynamics matrix incrementing the given keyed value by the constant delta
     @rtype: L{KeyedMatrix}
@@ -711,6 +749,9 @@ class KeyedTree:
                 elif node.tagName == 'bool':
                     key = eval(node.getAttribute('key'))
                     children[key] = eval(node.getAttribute('value'))
+                elif node.tagName == 'action': 
+                    key = eval(node.getAttribute('key'))
+                    children[key] = Action(node)
                 elif node.tagName == 'str':
                     key = eval(node.getAttribute('key'))
                     children[key] = str(node.firstChild.data).strip()

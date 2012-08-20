@@ -22,6 +22,7 @@ class Agent:
     @ivar O: the observation function; default is C{True}, which means perfect observations of actions
     @type O: L{KeyedTree}
     """
+
     def __init__(self,name):
         self.world = None
         self.actions = set()
@@ -36,7 +37,8 @@ class Agent:
             self.parse(name)
         else:
             self.name = name
-            self.addModel(True,{},2,2)
+            # Default model settings
+            self.addModel(True,R={},horizon=2,level=2,rationality=0.9,discount=1.)
 
     """------------------"""
     """Policy methods"""
@@ -61,6 +63,14 @@ class Agent:
         """
         # What are my subjective beliefs for this decision?
         belief = self.getBelief(model,vector)
+        # Do I have a policy telling me what to do?
+        if self.models[model]['policy']:
+            assert len(belief) == 1,'Unable to apply PWL policies to uncertain beliefs'
+            action = self.models[model]['policy'][belief.domain()[0]]
+            if action:
+                if isinstance(action,Action):
+                    action = ActionSet([action])
+                return {'action': action}
         if horizon is None:
             horizon = self.models[model]['horizon']
         # Consider all legal actions (legality determined by *real* world, not my belief)
@@ -124,6 +134,17 @@ class Agent:
         if horizon is None:
             horizon = self.models[model]['horizon']
         discount = self.models[model]['discount']
+        if horizon == self.models[model]['horizon']:
+            # Check for pre-computed value function
+            V = self.models[model]['V']
+            if V:
+                substate = vector.filter(self.models[model]['ignore'])
+                if V.has_key(substate):
+                    value = V[substate][self.name][action]
+                else:
+                    substate = self.world.nearestVector(substate,V.keys())
+                    value = V[substate][self.name][action]
+                return {'V': value,'agent': self.name,'horizon': horizon,'projection':[]}
         # Compute immediate reward
         R = self.reward(vector,model)
         result = {'V': R,
@@ -170,13 +191,89 @@ class Agent:
                     # Accumulate value
                     result['V'] += discount*Vrest['V']
                 result['projection'].append(outcome)
-        if horizon == self.models[model]['horizon']:
-            # Cache result
-            try:
-                self.models[model]['V'][vector][action] = result['V']
-            except KeyError:
-                self.models[model]['V'][vector] = {action: result['V']}
+        # if horizon == self.models[model]['horizon']:
+        #     # Cache result
+        #     try:
+        #         self.models[model]['V'][vector][action] = result['V']
+        #     except KeyError:
+        #         self.models[model]['V'][vector] = {action: result['V']}
         return result
+
+    def valueIteration(self,horizon=None,ignore=[],model=True,epsilon=1e-6):
+        """
+        Compute a value function for the given model
+        """
+        if horizon is None:
+            horizon = self.models[model]['horizon']
+        # Find transition matrix
+        transition = self.world.reachable(horizon=horizon,ignore=ignore)
+        # Initialize value function
+        for start in transition.keys():
+            self.models[model]['V'][start] = {}
+            for agent in self.world.agents.values():
+                if self.world.terminated(start):
+                    if agent.name == self.name:
+                        self.models[model]['V'][start][agent.name] = {'*': agent.reward(start,model)}
+                    else:
+                        # For now, assume true beliefs, but change later
+                        self.models[model]['V'][start][agent.name] = {'*': agent.reward(start)}
+                else:
+                    self.models[model]['V'][start][agent.name] = {'*': 0.}
+        # Loop until no change in value function
+        change = 1.
+        while change > epsilon:
+            change = 0.
+            V = {}
+            # Consider all possible start states
+            for start in transition.keys():
+                if not self.world.terminated(start):
+                    # Back-propagate reward from subsequent states
+                    V[start] = {}
+                    for name in self.world.agents.keys():
+                        V[start][name] = {}
+                    actor = None
+                    best = None
+                    for action,distribution in transition[start].items():
+                        # Make sure only one actor is acting at a time
+                        if actor is None:
+                            actor = action['subject']
+                        else:
+                            assert action['subject'] == actor,'Unable to do value iteration with concurrent actors'
+                        # Consider all possible results of this action
+                        for agent in self.world.agents.values():
+                            for end in transition[start][action].domain():
+                                # Determine expected value of future
+                                Vrest = transition[start][action][end]*self.models[model]['V'][end][agent.name]['*']
+                                # Determine discount function (should use belief about other agent, but doesn't yet)
+                                if agent.name == self.name:
+                                    discount = agent.models[model]['discount']
+                                else:
+                                    discount = agent.models[True]['discount']
+                                if discount < -epsilon:
+                                    # Future reward is all that matters
+                                    V[start][agent.name][action] = Vrest
+                                else:
+                                    # Current reward + Discounted future reward
+                                    if agent.name == self.name:
+                                        R = agent.reward(start,model)
+                                    else:
+                                        R = agent.reward(start,model)
+                                    V[start][agent.name][action] = R + discount*Vrest
+                            # Which action is going to be chosen?
+                            if agent.name == actor:
+                                if best is None or V[start][actor][action] > V[start][actor][best]:
+                                    best = action
+                    # Value of state is the value of the chosen action in this state
+                    assert not best is None,'Unable to determine action choice by %s' % (actor)
+                    for name in self.world.agents.keys():
+                        V[start][name]['*'] = V[start][name][best]
+                        # Update total delta of this iteration
+                        change += abs(V[start][name]['*']-self.models[model]['V'][start][name]['*'])
+            self.models[model]['V'].update(V)
+        return self.models[model]['V']
+
+    def setPolicy(self,policy,model=None,level=None):
+        self.setParameter('policy',policy.desymbolize(self.world.symbols),model,level)
 
     def setHorizon(self,horizon,model=None,level=None):
         """
@@ -184,7 +281,7 @@ class Agent:
         @param model: the model to set the horizon for, where C{None} means set it for all (default is C{None})
         @param level: if setting across models, the recursive level of models to do so, where C{None} means all levels (default is C{None})
         """
-        self.setParameter('horizon',horizon,model,level)
+        setParameter('horizon',horizon,model,level)
 
     def setParameter(self,name,value,model=None,level=None):
         """
@@ -277,9 +374,6 @@ class Agent:
     """Reward methods"""
     """------------------"""
 
-    def addReward(self,tree):
-        raise DeprecationWarning,'Use setReward(tree) instead'
-
     def setReward(self,tree,weight=0.,model=None):
         if model is None:
             for model in self.models.values():
@@ -287,10 +381,11 @@ class Agent:
         else:
             self.models[model]['R'][tree] = weight
 
-    def setRewardWeight(self,tree,weight,model=True):
-        raise DeprecationWarning,'Use setReward(tree,weight,model) instead'
-
     def reward(self,vector,model=True):
+        """
+        @return: the reward I derive in the given state (under the given model, default being the C{True} model)
+        @rtype: float
+        """
         R = self.models[model]['R']
         if R is True:
             # Use true reward function
@@ -305,7 +400,7 @@ class Agent:
     """Mental model methods"""
     """------------------"""
 
-    def addModel(self,name,R=True,horizon=True,level=True,beliefs=True,rationality=.1,discount=1.0):
+    def addModel(self,name,**kwargs):
         """
         Adds a new possible model for this agent (to be used as either true model or else as mental model another agent has of it)
         @param name: the label for this model
@@ -326,9 +421,10 @@ class Agent:
         if self.models.has_key(name):
             raise NameError,'Model %s already exists for agent %s' % \
                 (name,self.name)
-        model = {'R': R,'beliefs': beliefs,'name': name,'horizon': horizon,
-                 'level': level, 'rationality': rationality,'discount': discount,
-                 'index': len(self.models),'V': {}}
+        model = {'name': name,'index': len(self.models),'R': True,'beliefs': True,
+                 'horizon': True,'level': True,'rationality': True,'discount': True,
+                 'V': {},'policy': {},'ignore': []}
+        model.update(kwargs)
         self.models[name] = model
         self.modelList.append(name)
         return model
@@ -426,26 +522,45 @@ class Agent:
             model = self.models[name]
             node = doc.createElement('model')
             node.setAttribute('name',str(name))
-            node.setAttribute('horizon',str(model['horizon']))
-            node.setAttribute('level',str(model['level']))
-            node.setAttribute('rationality',str(model['rationality']))
-            node.setAttribute('discount',str(model['discount']))
-            # Reward function for this model
-            if model['R'] is True:
-                node.setAttribute('R',str(model['R']))
-            else:
-                for tree,weight in model['R'].items():
-                    subnode = doc.createElement('reward')
-                    subnode.setAttribute('weight',str(weight))
-                    subnode.appendChild(tree.__xml__().documentElement)
+            for key in filter(lambda k: not k in ['name','index'],model.keys()):
+                if key == 'R':
+                    # Reward function for this model
+                    if model['R'] is True:
+                        subnode = doc.createElement(key)
+                        subnode.appendChild(doc.createTextNode(str(model[key])))
+                        node.appendChild(subnode)
+                    else:
+                        for tree,weight in model['R'].items():
+                            subnode = doc.createElement(key)
+                            subnode.setAttribute('weight',str(weight))
+                            subnode.appendChild(tree.__xml__().documentElement)
+                            node.appendChild(subnode)
+                elif key == 'V':
+                    pass
+                elif key == 'ignore':
+                    for key in model['ignore']:
+                        subnode = doc.createElement(key)
+                        subnode.appendChild(doc.createTextNode(key))
+                        node.appendChild(subnode)
+                elif key == 'policy':
+                    if model['policy']:
+                        subnode = doc.createElement(key)
+                        subnode.appendChild(model['policy'].__xml__().documentElement)
+                        node.appendChild(subnode)
+                elif key == 'beliefs':
+                    # Beliefs for this model
+                    if model['beliefs'] is True:
+                        subnode = doc.createElement(key)
+                        subnode.appendChild(doc.createTextNode(str(model[key])))
+                        node.appendChild(subnode)
+                    else:
+                        subnode = doc.createElement(key)
+                        subnode.appendChild(model['beliefs'].__xml__().documentElement)
+                        node.appendChild(subnode)
+                else:
+                    subnode = doc.createElement(key)
+                    subnode.appendChild(doc.createTextNode(str(model[key])))
                     node.appendChild(subnode)
-            # Beliefs for this model
-            if model['beliefs'] is True:
-                node.setAttribute('beliefs',str(model['beliefs']))
-            else:
-                subnode = doc.createElement('beliefs')
-                subnode.appendChild(model['beliefs'].__xml__().documentElement)
-                node.appendChild(subnode)
             root.appendChild(node)
         return doc
 
@@ -467,63 +582,36 @@ class Agent:
                     name = str(node.getAttribute('name'))
                     if name == 'True':
                         name = True
-                    # Parse model reward weights
-                    weights = str(node.getAttribute('R'))
-                    if weights == str(True):
-                        weights = True
-                    else:
-                        weights = {}
-                    # Parse beliefs
-                    beliefs = str(node.getAttribute('beliefs'))
-                    if beliefs == str(True):
-                        beliefs = True
-                    else:
-                        beliefs = None
                     # Parse children
+                    kwargs = {'R': {},'ignore': []}
                     subnode = node.firstChild
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
-                            if subnode.tagName == 'reward':
-                                subchild = subnode.firstChild
-                                while subchild and subchild.nodeType != subchild.ELEMENT_NODE:
-                                    subchild = subchild.nextSibling
-                                weights[KeyedTree(subchild)] = float(subnode.getAttribute('weight'))
-                            elif subnode.tagName == 'beliefs':
-                                subchild = subnode.firstChild
-                                while subchild and subchild.nodeType != subchild.ELEMENT_NODE:
-                                    subchild = subchild.nextSibling
-                                beliefs = VectorDistribution(subchild)
+                            key = subnode.tagName
+                            subchild = subnode.firstChild
+                            while subchild:
+                                if subchild.nodeType == subchild.ELEMENT_NODE:
+                                    if key == 'R':
+                                        kwargs[key][KeyedTree(subchild)] = float(subnode.getAttribute('weight'))
+                                    elif key == 'beliefs':
+                                        kwargs[key] = VectorDistribution(subchild)
+                                    elif key == 'policy':
+                                        kwargs[key] = KeyedTree(subchild)
+                                    else:
+                                        raise NameError,'Unknown element found when parsing model\'s %s' % (key)
+                                elif subchild.nodeType == subchild.TEXT_NODE:
+                                    text = subchild.data.strip()
+                                    if text:
+                                        if key == 'ignore':
+                                            kwargs[key].append(text)
+                                        elif text == str(True):
+                                            kwargs[key] = True
+                                        else:
+                                            kwargs[key] = float(text)
+                                subchild = subchild.nextSibling
                         subnode = subnode.nextSibling
-                    # Parse horizon
-                    horizon = str(node.getAttribute('horizon'))
-                    try:
-                        horizon = int(horizon)
-                    except ValueError:
-                        assert horizon == str(True)
-                        horizon = True
-                    # Parse discount
-                    discount = str(node.getAttribute('discount'))
-                    try:
-                        discount = float(discount)
-                    except ValueError:
-                        assert discount == str(True)
-                        discount = True
-                    # Parse recursive level
-                    level = str(node.getAttribute('level'))
-                    try:
-                        level = int(level)
-                    except ValueError:
-                        assert level == str(True)
-                        level = True
-                    # Parse rationality parameter
-                    rationality = str(node.getAttribute('rationality'))
-                    try:
-                        rationality = float(rationality)
-                    except ValueError:
-                        assert rationality == str(True)
-                        rationality = True
                     # Add new model
-                    self.addModel(name,weights,horizon,level,beliefs,rationality,discount)
+                    self.addModel(name,**kwargs)
                 elif node.tagName == 'legal':
                     subnode = node.firstChild
                     while subnode:

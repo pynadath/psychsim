@@ -36,15 +36,18 @@ class World:
         """
         self.agents = {}
 
+        # State feature information
         self.state = VectorDistribution()
         self.features = {}
         self.symbols = {}
         self.ranges = {}
+        self.termination = []
+
+        # Action effect information
         self.dynamics = {}
         self.dependency = {}
         self.evaluationOrder = [set()]
 
-        self.termination = []
         self.history = []
 
         if isinstance(xml,Node):
@@ -133,20 +136,22 @@ class World:
             outcome['actions'] = copy.copy(actions)
         # Keep track of whether there is uncertainty about the actions to perform
         stochastic = []
-        for name in self.next(vector):
-            if not outcome['actions'].has_key(name):
-                agent = self.agents[name]
-                try:
-                    model = agent.index2model(vector[modelKey(name)])
-                except KeyError:
-                    model = True
-                decision = self.agents[name].decide(vector,horizon,outcome['actions'],model,tiebreak)
-                outcome['decisions'][name] = decision
-                outcome['actions'][name] = decision['action']
-            elif isinstance(outcome['actions'][name],Action):
-                outcome['actions'][name] = ActionSet([outcome['actions'][name]])
-            if isinstance(outcome['actions'][name],Distribution):
-                stochastic.append(name)
+        if not isinstance(outcome['actions'],ActionSet):
+            # ActionSet indicates that we should perform just these actions. Otherwise, we look at whose turn it is:
+            for name in self.next(vector):
+                if not outcome['actions'].has_key(name):
+                    agent = self.agents[name]
+                    try:
+                        model = agent.index2model(vector[modelKey(name)])
+                    except KeyError:
+                        model = True
+                    decision = self.agents[name].decide(vector,horizon,outcome['actions'],model,tiebreak)
+                    outcome['decisions'][name] = decision
+                    outcome['actions'][name] = decision['action']
+                elif isinstance(outcome['actions'][name],Action):
+                    outcome['actions'][name] = ActionSet([outcome['actions'][name]])
+                if isinstance(outcome['actions'][name],Distribution):
+                    stochastic.append(name)
         if stochastic:
             # Merge effects of multiple possible actions into single effect
             if len(stochastic) > 1:
@@ -396,19 +401,31 @@ class World:
         """
         @return: the new turn sequence resulting from the performance of the given actions
         """
+        for name in self.agents.keys():
+            key = turnKey(name)
+            if vector.has_key(key):
+                dynamics = self.getDynamics(key,actions)
+        # Figure out who has acted
+        if isinstance(actions,dict):
+            actors = actions.keys()
+        elif isinstance(actions,ActionSet):
+            actors = set()
+            for atom in actions:
+                actors.add(atom['subject'])
+        # Create turn order matrix
         delta = KeyedMatrix()
-        if len(actions) == len(self.agents):
+        if len(actors) == len(self.agents):
             # Everybody has acted
             for name in self.agents.keys():
                 key = turnKey(name)
                 delta[key] = KeyedVector({key: 1.})
-        elif len(actions) == 1:
+        elif len(actors) == 1:
             # Only one agent has acted
-            actor = actions.keys()[0]
+            actor = actors.pop()
             position = vector[turnKey(actor)]
             for name in self.agents.keys():
                 key = turnKey(name)
-                if actions.has_key(name):
+                if name == actor:
                     # Acted, move to end of line
                     delta[key] = KeyedVector({CONSTANT: float(len(self.agents))-0.5})
                 elif vector[key] > position:
@@ -421,6 +438,25 @@ class World:
             raise NotImplementedError,'Currently unable to process mixed turn orders.'
         return delta
 
+    def getActions(self,vector,agents=None,actions=None):
+        """
+        @return: the set of all possible action combinations that could happen in the given state
+        @rtype: set(L{ActionSet})
+        """
+        if agents is None:
+            agents = self.next(vector)
+        if actions is None:
+            actions = set([ActionSet()])
+        if len(agents) > 0:
+            newActions = set()
+            name = agents.pop()
+            for subset in actions:
+                for action in self.agents[name].getActions(vector):
+                    newActions.add(subset | action)
+            return self.getActions(vector,agents,newActions)
+        else:
+            return actions
+                    
     """-------------"""
     """State methods"""
     """-------------"""
@@ -612,17 +648,18 @@ class World:
         for entity,table in self.features.items():
             for feature,entry in table.items():
                 key = stateKey(entity,feature)
-                if entry['domain'] is float or entry['domain'] is int:
-                    # Scale by range of possible values
-                    new = remaining[key]-entry['lo']
-                    new /= entry['hi']-entry['lo']
-                elif entry['domain'] is list:
-                    # Scale by size of set of values
-                    new = remaining[key]/len(entry['elements'])
-                else:
-                    new = remaining[key]
-                result[key] = new
-                del remaining[key]
+                if remaining.has_key(key):
+                    if entry['domain'] is float or entry['domain'] is int:
+                        # Scale by range of possible values
+                        new = remaining[key]-entry['lo']
+                        new /= entry['hi']-entry['lo']
+                    elif entry['domain'] is list:
+                        # Scale by size of set of values
+                        new = remaining[key]/len(entry['elements'])
+                    else:
+                        new = remaining[key]
+                    result[key] = new
+                    del remaining[key]
         for name in self.agents.keys():
             # Handle turns
             key = turnKey(name)
@@ -641,6 +678,44 @@ class World:
         if remaining:
             raise NameError,'Unprocessed keys: %s' % (remaining.keys())
         return result
+
+    def reachable(self,vector=None,transition=None,horizon=-1,ignore=[]):
+        """
+        @return: transition matrix among states reachable from the given state (default is current state)
+        @rtype: KeyedVectorS{->}ActionSetS{->}VectorDistribution
+        """
+        envelope = set()
+        transition = {}
+        if vector is None:
+            # Initialize with current state
+            for vector in self.state.domain():
+                envelope.add((vector,horizon))
+        else:
+            # Initialize with given state
+            envelope.add((vector,horizon))
+        while len(envelope) > 0:
+            vector,horizon = envelope.pop()
+            node = vector.filter(ignore)
+            # Process next steps from this state
+            transition[node] = {}
+            if not self.terminated(vector) and horizon != 0:
+                for actions in self.getActions(vector):
+                    future = self.stepFromState(vector,actions)['new']
+                    if isinstance(future,KeyedVector):
+                        future = VectorDistribution({future: 1.})
+                    transition[node][actions] = VectorDistribution()
+                    for newVector in future.domain():
+                        newNode = newVector.filter(ignore)
+                        transition[node][actions][newNode] = future[newVector]
+                        if not transition.has_key(newNode):
+                            envelope.add((newNode,horizon-1))
+        return transition
+            
+    def nearestVector(self,vector,vectors):
+        mapping = {}
+        for candidate in vectors:
+            mapping[self.scaleState(candidate)] = candidate
+        return mapping[self.scaleState(vector).nearestNeighbor(mapping.keys())]
 
     def getDescription(self,entity,feature):
         return self.features[entity][feature]['description']
@@ -888,7 +963,8 @@ class World:
                 for name in self.agents.keys():
                     if outcome.has_key('actions') and outcome['actions'].has_key(name):
                         subsubnode.appendChild(outcome['actions'][name].__xml__().documentElement)
-                subsubnode.appendChild(outcome['delta'].__xml__().documentElement)
+                if outcome.has_key('delta'):
+                    subsubnode.appendChild(outcome['delta'].__xml__().documentElement)
                 subsubnode.appendChild(outcome['old'].__xml__().documentElement)
                 subnode.appendChild(subsubnode)
             node.appendChild(subnode)
