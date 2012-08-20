@@ -294,10 +294,11 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
                              True: {'if': thresholdRow(stateKey(free.name,'offered'),50),
                                     True: Action({'subject': free.name,'verb': 'accept offer','object': sylv.name}),
                                     False: Action({'subject': free.name,'verb': 'reject offer','object': sylv.name})},
-                             # Offer 40%
                              False: {'if': equalRow('phase','engagement'),
+                             # Attack during engagement phase
                                      True: Action({'subject': free.name,'verb': 'attack','object': sylv.name}),
-                                     False: Action({'subject': free.name,'verb': 'offer','object': sylv.name,'amount': 40})}}))
+                             # Agent decides how what to do otherwise
+                                     False: False}}))
     
     # # Models of Freedonia
     # free.addModel('dove',R={goalFTroops: 1e-4,goalFTerritory: 0.1},level=1,rationality=0.01)
