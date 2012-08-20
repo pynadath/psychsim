@@ -281,7 +281,7 @@ class Agent:
         @param model: the model to set the horizon for, where C{None} means set it for all (default is C{None})
         @param level: if setting across models, the recursive level of models to do so, where C{None} means all levels (default is C{None})
         """
-        setParameter('horizon',horizon,model,level)
+        self.setParameter('horizon',horizon,model,level)
 
     def setParameter(self,name,value,model=None,level=None):
         """
