@@ -606,6 +606,8 @@ class Agent:
                                             kwargs[key].append(text)
                                         elif text == str(True):
                                             kwargs[key] = True
+                                        elif key == 'horizon':
+                                            kwargs[key] = int(text)
                                         else:
                                             kwargs[key] = float(text)
                                 subchild = subchild.nextSibling
