@@ -191,12 +191,6 @@ class Agent:
                     # Accumulate value
                     result['V'] += discount*Vrest['V']
                 result['projection'].append(outcome)
-        # if horizon == self.models[model]['horizon']:
-        #     # Cache result
-        #     try:
-        #         self.models[model]['V'][vector][action] = result['V']
-        #     except KeyError:
-        #         self.models[model]['V'][vector] = {action: result['V']}
         return result
 
     def valueIteration(self,horizon=None,ignore=[],model=True,epsilon=1e-6):
@@ -222,6 +216,7 @@ class Agent:
         # Loop until no change in value function
         change = 1.
         while change > epsilon:
+            print change
             change = 0.
             V = {}
             # Consider all possible start states
@@ -259,6 +254,10 @@ class Agent:
                                     else:
                                         R = agent.reward(start,model)
                                     V[start][agent.name][action] = R + discount*Vrest
+                                try:
+                                    change += abs(V[start][agent.name][action]-self.models[model]['V'][start][agent.name][action])
+                                except KeyError:
+                                    change += abs(V[start][agent.name][action])
                             # Which action is going to be chosen?
                             if agent.name == actor:
                                 if best is None or V[start][actor][action] > V[start][actor][best]:
@@ -268,7 +267,6 @@ class Agent:
                     for name in self.world.agents.keys():
                         V[start][name]['*'] = V[start][name][best]
                         # Update total delta of this iteration
-                        change += abs(V[start][name]['*']-self.models[model]['V'][start][name]['*'])
             self.models[model]['V'].update(V)
         return self.models[model]['V']
 
