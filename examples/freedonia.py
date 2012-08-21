@@ -320,18 +320,32 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
     sylv = world.agents['Sylvania']
     world.setState(None,'phase','offer')
 
-#    ignore = ['Freedonia\'s cost','Sylvania\'s cost','round']
-#    sylv.setParameter('ignore',ignore)
-#    V = sylv.valueIteration(horizon=45,ignore=ignore)
+    if model == 'powell':
+        steps = 4
+    elif model == 'slantchev':
+        steps = 3
+
+    ignore = ['Freedonia\'s cost','Sylvania\'s cost','round']
+    sylv.setParameter('ignore',ignore)
+    V = sylv.valueIteration(horizon=45,ignore=ignore)
+    import random
+    for t in range(rounds*steps):
+        state = world.state.domain()[0]
+        if world.terminated(state):
+            break
+        actor = world.next(state)[0]
+        state = state.filter(ignore)
+        if not V.has_key(state):
+            state = world.nearestVector(state,V.keys())
+        choices = filter(lambda a: a != '*' and V[state][actor][a] == V[state][actor]['*'],V[state][actor].keys())
+        world.explain(world.step({actor: random.choice(choices)}))
+        world.state.select()
+    raise UserWarning
 
     if debug > 0:
         world.printState()
 
     for t in range(rounds):
-        if model == 'powell':
-            steps = 4
-        elif model == 'slantchev':
-            steps = 3
         for step in range(steps):
             phase = world.getState(None,'phase').expectation()
             assert len(world.state) == 1
