@@ -140,11 +140,7 @@ class World:
             # ActionSet indicates that we should perform just these actions. Otherwise, we look at whose turn it is:
             for name in self.next(vector):
                 if not outcome['actions'].has_key(name):
-                    agent = self.agents[name]
-                    try:
-                        model = agent.index2model(vector[modelKey(name)])
-                    except KeyError:
-                        model = True
+                    model = self.getMentalModel(name,vector)
                     decision = self.agents[name].decide(vector,horizon,outcome['actions'],model,tiebreak)
                     outcome['decisions'][name] = decision
                     outcome['actions'][name] = decision['action']
@@ -576,6 +572,14 @@ class World:
             result = Distribution(abstract)
         return result
 
+    def getMentalModel(self,modelee,vector):
+        agent = self.agents[modelee]
+        try:
+            model = agent.index2model(vector[modelKey(modelee)])
+        except KeyError:
+            model = True
+        return model
+
     def setMentalModel(self,modeler,modelee,distribution,model=True):
         """
         Sets the distribution over mental models one agent has of another entity
@@ -601,13 +605,8 @@ class World:
         for name in filter(lambda n: not outcome['actions'].has_key(n),
                            self.agents.keys()):
             # Consider agents who did *not* act
-            agent = self.agents[name]
-            key = modelKey(name)
-            try:
-                label = agent.index2model(vector[key])
-            except KeyError:
-                label = True
-            model = agent.models[label]
+            label = self.getMentalModel(name,vector)
+            model = self.agents[name].models[label]
             if not model['beliefs'] is True:
                 for actor,actions in outcome['actions'].items():
                     # Consider each agent who *did* act

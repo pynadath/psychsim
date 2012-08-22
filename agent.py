@@ -1,4 +1,5 @@
 import copy
+import math
 import random
 import StringIO
 from xml.dom.minidom import Document,Node
@@ -214,10 +215,11 @@ class Agent:
                 else:
                     self.models[model]['V'][start][agent.name] = {'*': 0.}
         # Loop until no change in value function
-        change = 1.
-        while change > epsilon:
-            print change
-            change = 0.
+        oldChange = 0.
+        newChange = 1.
+        while abs(newChange-oldChange) > epsilon:
+            oldChange = newChange
+            newChange = 0.
             V = {}
             # Consider all possible start states
             for start in transition.keys():
@@ -227,7 +229,6 @@ class Agent:
                     for name in self.world.agents.keys():
                         V[start][name] = {}
                     actor = None
-                    best = None
                     for action,distribution in transition[start].items():
                         # Make sure only one actor is acting at a time
                         if actor is None:
@@ -255,18 +256,20 @@ class Agent:
                                         R = agent.reward(start,model)
                                     V[start][agent.name][action] = R + discount*Vrest
                                 try:
-                                    change += abs(V[start][agent.name][action]-self.models[model]['V'][start][agent.name][action])
+                                    newChange += abs(V[start][agent.name][action]-self.models[model]['V'][start][agent.name][action])
                                 except KeyError:
-                                    change += abs(V[start][agent.name][action])
-                            # Which action is going to be chosen?
-                            if agent.name == actor:
-                                if best is None or V[start][actor][action] > V[start][actor][best]:
-                                    best = action
+                                    newChange += abs(V[start][agent.name][action])
                     # Value of state is the value of the chosen action in this state
-                    assert not best is None,'Unable to determine action choice by %s' % (actor)
+                    table = dict(V[start][actor])
+                    if table.has_key('*'):
+                        del table['*']
+                    choice = self.predict(start,actor,table)
                     for name in self.world.agents.keys():
-                        V[start][name]['*'] = V[start][name][best]
-                        # Update total delta of this iteration
+                        if name == actor:
+                            V[start][name]['*'] = V[start][name][choice.domain()[0]]
+                        else:
+                            for action in choice.domain():
+                                V[start][name]['*'] = choice[action]*V[start][name][action]
             self.models[model]['V'].update(V)
         return self.models[model]['V']
 
@@ -426,6 +429,29 @@ class Agent:
         self.models[name] = model
         self.modelList.append(name)
         return model
+
+    def predict(self,vector,name,V):
+        choices = Distribution()
+        if name == self.name:
+            # I predict myself to maximize
+            best = None
+            for action,value in V.items():
+                if best is None or value > best:
+                    best = value
+            best = filter(lambda a: V[a] == best,V.keys())
+            for action in best:
+                choices[action] = 1./float(len(best))
+        else:
+            rationality = self.world.agents[name].models[self.world.getMentalModel(name,vector)]['rationality']
+            span = max(V.values()) - min(V.values())
+            if abs(span) > 1e-6:
+                for action,value in V.items():
+                    choices[action] = math.exp(rationality*value)
+            else:
+                for action in V.keys():
+                    choices[action] = 1./float(len(V))
+            choices.normalize()
+        return choices
 
     def model2index(self,model):
         """
