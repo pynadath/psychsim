@@ -86,11 +86,11 @@ class Distribution(dict):
             # normalized
             self.normalize()
             total = None
-            for key,value in self.items():
+            for element in self.domain():
                 if total is None:
-                    total = key*value
+                    total = element*self[element]
                 else:
-                    total += key*value
+                    total += element*self[element]
             return total
 
     def sample(self):
