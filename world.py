@@ -397,6 +397,7 @@ class World:
         """
         @return: the new turn sequence resulting from the performance of the given actions
         """
+        potentials = filter(lambda n: vector.has_key(turnKey(n)),self.agents.keys())
         for name in self.agents.keys():
             key = turnKey(name)
             if vector.has_key(key):
@@ -410,16 +411,16 @@ class World:
                 actors.add(atom['subject'])
         # Create turn order matrix
         delta = KeyedMatrix()
-        if len(actors) == len(filter(lambda k: isTurnKey(k),vector.keys())):
+        if len(actors) == len(potentials):
             # Everybody has acted (NOTE: Need to make this more sensitive to whose turn it is)
-            for name in self.agents.keys():
+            for name in potentials:
                 key = turnKey(name)
                 delta[key] = KeyedVector({key: 1.})
         elif len(actors) == 1:
             # Only one agent has acted
             actor = actors.pop()
             position = vector[turnKey(actor)]
-            for name in self.agents.keys():
+            for name in potentials:
                 key = turnKey(name)
                 if name == actor:
                     # Acted, move to end of line
