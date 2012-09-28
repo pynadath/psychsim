@@ -410,8 +410,8 @@ class World:
                 actors.add(atom['subject'])
         # Create turn order matrix
         delta = KeyedMatrix()
-        if len(actors) == len(self.agents):
-            # Everybody has acted
+        if len(actors) == len(filter(lambda k: isTurnKey(k),vector.keys())):
+            # Everybody has acted (NOTE: Need to make this more sensitive to whose turn it is)
             for name in self.agents.keys():
                 key = turnKey(name)
                 delta[key] = KeyedVector({key: 1.})
@@ -806,7 +806,7 @@ class World:
             print >> buf,'%s%d%%' % (prefix,distribution[vector]*100.),
             self.printVector(vector,buf,prefix)
 
-    def printVector(self,vector,buf=None,prefix='',first=True):
+    def printVector(self,vector,buf=None,prefix='',first=True,csv=False):
         """
         Utility method for displaying a single possible world
         @type vector: L{KeyedVector}
@@ -815,7 +815,14 @@ class World:
         @type prefix: str
         @param first: if C{True}, then the first line is the continuation of an existing line (default is C{True})
         @type first: bool
+        @param csv: if C{True}, then print the vector as comma-separated values (default is C{False})
+        @type csv: bool
         """
+        if csv:
+            if prefix:
+                elements = [prefix]
+            else:
+                elements = []
         entities = self.features.keys()
         entities.sort()
         change = False
@@ -830,7 +837,11 @@ class World:
                 # Print model of this entity
                 key = modelKey(entity)
                 if vector.has_key(key):
-                    if first:
+                    if csv:
+                        elements.append(label)
+                        elements.append('__model__')
+                        elements.append(self.agents[entity].index2model(vector[key]))
+                    elif first:
                         print >> buf,'\t%-12s\t%-12s\t%-12s' % \
                             (label,'__model__',self.agents[entity].index2model(vector[key]))
                         first = False
@@ -845,7 +856,10 @@ class World:
                 else:
                     key = stateKey(entity,feature)
                 if vector.has_key(key):
-                    if newEntity:
+                    if csv:
+                        elements.append(label)
+                        elements.append(feature)
+                    elif newEntity:
                         if first:
                             print >> buf,'\t%-12s' % (label),
                             first = False
@@ -856,23 +870,39 @@ class World:
                         change = True
                     else:
                         print >> buf,'%s\t\t\t%-12s\t' % (prefix,feature+':'),
+                    # Generate string representation of feature value
                     if entry['domain'] is int:
-                        print >> buf,int(vector[key])
+                        value = '%d' % (int(vector[key]))
                     elif entry['domain'] is bool:
                         if vector[key] > 0.5:
-                            print >> buf,True
+                            value = str(True)
                         else:
-                            print >> buf,False
+                            value = str(False)
                     elif entry['domain'] is list:
                         index = int(float(vector[key])+.1)
-                        print >> buf,entry['elements'][index]
+                        value = entry['elements'][index]
                     else:
-                        print >> buf,vector[key]
-        if not change:
+                        value = vector[key]
+                    if csv:
+                        elements.append(value)
+                    else:
+                        print >> buf,value
+        if not csv and not change:
             print >> buf,'%s\tUnchanged' % (prefix)
         if (not vector.has_key('__END__') and self.terminated(vector)) or \
                 (vector.has_key('__END__') and vector['__END__'] > 0.):
-            print >> buf,'%s\t__END__' % (prefix)
+            if csv:
+                elements.append('World')
+                elements.append('__END__')
+                elements.append(str(True))
+            else:
+                print >> buf,'%s\t__END__' % (prefix)
+        elif csv:
+            elements.append('World')
+            elements.append('__END__')
+            elements.append(str(False))
+        if csv:
+            print >> buf,','.join(elements)
 
     def printDelta(self,old,new,buf=None,prefix=''):
         deltaDist = VectorDistribution()

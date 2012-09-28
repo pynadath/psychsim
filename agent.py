@@ -165,21 +165,25 @@ class Agent:
             outcome = self.world.stepFromState(vector,turn,horizon)
             if isinstance(outcome['new'],Distribution):
                 # Uncertain outcomes
-                if discount < 1e-6:
-                    # Current reward is irrelevant
-                    result['V'] = 0.
+                future = Distribution()
                 for newVector in outcome['new'].domain():
                     entry = copy.copy(outcome)
                     entry['probability'] = outcome['new'][newVector]
                     Vrest = self.value(newVector,None,horizon-1,None,model)
                     entry.update(Vrest)
-                    if discount < -1e-6:
-                        # Only final value matters
-                        result['V'] += entry['probability']*entry['V']
-                    else:
-                        # Accumulate value
-                        result['V'] += discount*entry['probability']*entry['V']
+                    try:
+                        future[entry['V']] += entry['probability']
+                    except KeyError:
+                        future[entry['V']] = entry['probability']
                     result['projection'].append(entry)
+                # The following is typically "expectation", but might be "max" or "min", too
+                op = self.models[model]['projector']
+                if discount < -1e-6:
+                    # Only final value matters
+                    result['V'] = apply(op,(future,))
+                else:
+                    # Accumulate value
+                    result['V'] += discount*apply(op,(future,))
             else:
                 # Deterministic outcome
                 outcome['probability'] = 1.
@@ -424,7 +428,7 @@ class Agent:
                 (name,self.name)
         model = {'name': name,'index': len(self.models),'R': True,'beliefs': True,
                  'horizon': True,'level': True,'rationality': True,'discount': True,
-                 'V': {},'policy': {},'ignore': []}
+                 'V': {},'policy': {},'ignore': [],'projector': Distribution.expectation}
         model.update(kwargs)
         self.models[name] = model
         self.modelList.append(name)
@@ -581,6 +585,10 @@ class Agent:
                         subnode = doc.createElement(key)
                         subnode.appendChild(model['beliefs'].__xml__().documentElement)
                         node.appendChild(subnode)
+                elif key == 'projector':
+                    subnode = doc.createElement(key)
+                    subnode.appendChild(doc.createTextNode(model[key].__name__))
+                    node.appendChild(subnode)
                 else:
                     subnode = doc.createElement(key)
                     subnode.appendChild(doc.createTextNode(str(model[key])))
@@ -611,7 +619,7 @@ class Agent:
                     subnode = node.firstChild
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
-                            key = subnode.tagName
+                            key = str(subnode.tagName)
                             subchild = subnode.firstChild
                             while subchild:
                                 if subchild.nodeType == subchild.ELEMENT_NODE:
@@ -632,6 +640,8 @@ class Agent:
                                             kwargs[key] = True
                                         elif key == 'horizon':
                                             kwargs[key] = int(text)
+                                        elif key == 'projector':
+                                            kwargs[key] = eval('Distribution.%s' % (text))
                                         else:
                                             kwargs[key] = float(text)
                                 subchild = subchild.nextSibling

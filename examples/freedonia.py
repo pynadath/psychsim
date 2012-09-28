@@ -7,7 +7,7 @@ from psychsim.action import *
 from psychsim.world import World,stateKey,actionKey
 from psychsim.agent import Agent
 
-def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,territory=13,
+def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,territory=13,
                             position=0,fTroops=381940,sTroops=461432,maxRounds=15,model='powell'):
     """
     An example of how to create a scenario
@@ -33,7 +33,7 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
     # Agents
     free = Agent('Freedonia')
     world.addAgent(free)
-    sylv = Agent('Sylvania')
+    sylv = Agent(enemy)
     world.addAgent(sylv)
 
     # User state
@@ -53,6 +53,7 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
                       description='Percentage of disputed territory that %s last offered to you' % (sylv.name))
     free.setState('offered',0)
     if model == 'slantchev':
+        # Compute new value for territory only *after* computing new value for position
         world.addDependency(stateKey(free.name,'territory'),stateKey(free.name,'position'))
 
     # Agent state
@@ -74,6 +75,10 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
     world.defineState(None,'phase',list,['offer','respond','rejection','end','paused','engagement'],
                       description='The current stage of the negotiation game')
     world.setState(None,'phase','paused')
+    # Game model, static descriptor
+    world.defineState(None,'model',list,['powell','slantchev'],
+                      description='The model underlying the negotiation game')
+    world.setState(None,'model',model)
     # Round of negotiation
     world.defineState(None,'round',int,description='The current round of the negotiation')
     world.setState(None,'round',0)
@@ -92,7 +97,7 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
                                    True: True, False: False}))
 
     # Turn order: Uncomment the following if you want agents to act in parallel
-#    world.setOrder([{free.name,sylv.name}])
+#    world.setOrder([set(world.agents.keys())])
     # Turn order: Uncomment the following if you want agents to act sequentially
     world.setOrder([free.name,sylv.name])
 
@@ -273,7 +278,7 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
     for action in filterActions({'verb': 'attack'},free.actions | sylv.actions):
         tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'offer'))
         world.setDynamics(None,'phase',action,tree)
-        if model == 'slantchev':
+        if action['subject'] == sylv.name or model == 'slantchev':
             tree = makeTree(incrementMatrix(stateKey(None,'round'),1))
             world.setDynamics(None,'round',action,tree)
     if model == 'powell':
@@ -289,16 +294,16 @@ def scenarioCreationUseCase(fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,
         world.setDynamics(None,'round',atom,tree)
 
     # Handcrafted policy for Freedonia
-    free.setPolicy(makeTree({'if': equalRow('phase','respond'),
-                             # Accept an offer greater than 50
-                             True: {'if': thresholdRow(stateKey(free.name,'offered'),50),
-                                    True: Action({'subject': free.name,'verb': 'accept offer','object': sylv.name}),
-                                    False: Action({'subject': free.name,'verb': 'reject offer','object': sylv.name})},
-                             False: {'if': equalRow('phase','engagement'),
-                             # Attack during engagement phase
-                                     True: Action({'subject': free.name,'verb': 'attack','object': sylv.name}),
-                             # Agent decides how what to do otherwise
-                                     False: False}}))
+#    free.setPolicy(makeTree({'if': equalRow('phase','respond'),
+#                             # Accept an offer greater than 50
+#                             True: {'if': thresholdRow(stateKey(free.name,'offered'),50),
+#                                    True: Action({'subject': free.name,'verb': 'accept offer','object': sylv.name}),
+#                                    False: Action({'subject': free.name,'verb': 'reject offer','object': sylv.name})},
+#                             False: {'if': equalRow('phase','engagement'),
+#                             # Attack during engagement phase
+#                                     True: Action({'subject': free.name,'verb': 'attack','object': sylv.name}),
+#                             # Agent decides how what to do otherwise
+#                                     False: False}}))
     
     # # Models of Freedonia
     # free.addModel('dove',R={goalFTroops: 1e-4,goalFTerritory: 0.1},level=1,rationality=0.01)
@@ -316,8 +321,11 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
     @param debug: the debug level to use in explanation (default is 1)
     @type debug: int
     """
-    free = world.agents['Freedonia']
-    sylv = world.agents['Sylvania']
+    for agent in world.agents.values():
+        if agent.name == 'Freedonia':
+            free = agent
+        else:
+            sylv = agent
     world.setState(None,'phase','offer')
 
     if model == 'powell':
@@ -325,7 +333,7 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
     elif model == 'slantchev':
         steps = 3
 
-#    ignore = ['Freedonia\'s cost','Sylvania\'s cost','round']
+#    ignore = ['Freedonia\'s cost','%s\'s cost' % (sylv.name),'round']
 #    sylv.setParameter('ignore',ignore)
 #    V = sylv.valueIteration(horizon=45,ignore=ignore)
 
@@ -340,10 +348,12 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
             if not world.terminated(state):
                 if t == 0 and phase == 'offer' and offer > 0:
                     # Force Freedonia to make low offer in first step
-                    world.explain(world.step({free.name: Action({'subject':free.name,'verb':'offer','object': sylv.name,'amount': offer})}),debug)
+                    outcome = world.step({free.name: Action({'subject':free.name,'verb':'offer','object': sylv.name,'amount': offer})})
+                    world.explain(outcome,debug)
                 else:
                     # Free to choose
-                    world.explain(world.step(),debug)
+                    outcome = world.step()
+                    world.explain(outcome,debug)
                 world.state.select()
                 world.printState()
 
@@ -366,7 +376,7 @@ if __name__ == '__main__':
     # Optional argument that sets the cost of battle to Sylvania
     group.add_argument('-s',action='store',
                      dest='scost',type=int,default=1000,
-                     help='cost of battle to Sylvania [default: %(default)s]')
+                     help='cost of battle to enemy [default: %(default)s]')
     # Optional argument that sets the initial amount of territory owned by Freedonia
     group.add_argument('-i','--initial',action='store',
                      dest='initial',type=int,default=13,
@@ -375,6 +385,14 @@ if __name__ == '__main__':
     group.add_argument('-p','--position',action='store',
                      dest='position',type=int,default=3,
                      help='Freedonia\'s initial positional advantage [default: %(default)s]')
+    # Optional argument that sets the name of the enemy country
+    group.add_argument('-e',action='store',
+                     dest='enemy',default='Sylvania',
+                     help='Name of the enemy country [default: %(default)s]')
+    # Optional argument that sets the name of the disputed region
+    group.add_argument('--region',action='store',
+                     dest='region',default='Trentino',
+                     help='Name of the region under dispute [default: %(default)s]')
     # Optional argument that sets the maximum number of rounds to play
     group.add_argument('-r',action='store',
                      dest='rounds',type=int,default=15,
@@ -384,9 +402,9 @@ if __name__ == '__main__':
                      dest='ftroops',type=int,default=40000,
                      help='number of Freedonia troops [default: %(default)s]')
     # Optional argument that sets Sylvania's initial troops
-    group.add_argument('--sylvania-troops',action='store',
+    group.add_argument('--enemy-troops',action='store',
                      dest='stroops',type=int,default=30000,
-                     help='number of Sylvania troops [default: %(default)s]')
+                     help='number of enemy troops [default: %(default)s]')
     group = parser.add_argument_group('Simulation Options','Control the simulation of the created scenario.')
     # Optional argument that sets the level of explanations when running the simulation
     group.add_argument('-d',action='store',
@@ -402,7 +420,7 @@ if __name__ == '__main__':
                      help='number of time steps to simulate [default: %(default)s]')
     args = vars(parser.parse_args())
 
-    world = scenarioCreationUseCase(args['fcost'],args['scost'],
+    world = scenarioCreationUseCase(args['enemy'],args['fcost'],args['scost'],
                                     territory=args['initial'],position=args['position'],
                                     fTroops=args['ftroops'],sTroops=args['stroops'],
                                     maxRounds=args['rounds'],model=args['model'])
@@ -413,7 +431,8 @@ if __name__ == '__main__':
     config.add_section('Game')
     config.set('Game','rounds','%d' % (args['rounds']))
     config.set('Game','user','Freedonia')
-    config.set('Game','agent','Sylvania')
+    config.set('Game','agent',args['enemy'])
+    config.set('Game','region',args['region'])
     if args['model'] == 'powell':
         # Battle is optional under Powell
         config.set('Game','battle','optional')
@@ -429,20 +448,25 @@ if __name__ == '__main__':
         config.set('Visible',feature,'yes')
     # Specify descriptions of actions for web interface
     config.add_section('Actions')
-    config.set('Actions','offer','Propose treaty where Sylvania gets <action:amount>%% of total disputed territory')
-    config.set('Actions','attack','Attack Sylvania')
+    config.set('Actions','offer','Propose treaty where %s gets <action:amount>%%%% of total disputed territory' % (args['enemy']))
+    config.set('Actions','attack','Attack %s' % (args['enemy']))
     config.set('Actions','accept offer','Accept offer of <Freedonia:offered>%% of total disputed territory')
     config.set('Actions','reject offer','Reject offer of <Freedonia:offered>%% of total disputed territory')
-    config.set('Actions','continue','Continue to next day of negotiation without attacking')
-    config.set('Actions','Sylvania offer','offer <action:amount>%%')
-    config.set('Actions','Sylvania accept offer','Accept offer of <Sylvania:offered>%% of total disputed territory')
-    config.set('Actions','Sylvania reject offer','Reject offer of <Sylvania:offered>%% of total disputed territory')
+    config.set('Actions','continue','Continue to next round of negotiation without attacking')
+    config.set('Actions','%s offer' % (args['enemy']),'offer <action:amount>%%')
+    config.set('Actions','%s accept offer' % (args['enemy']),
+               'Accept offer of <%s:offered>%%%% of total disputed territory' % (args['enemy']))
+    config.set('Actions','%s reject offer' % (args['enemy']),
+               'Reject offer of <%s:offered>%%%% of total disputed territory' % (args['enemy']))
     # Specify what changes are displayed
     config.add_section('Change')
     config.set('Change','troops','yes')
     if args['model'] == 'slantchev':
         config.set('Change','position','yes')
-
+    # Specify links
+    config.add_section('Links')
+    config.set('Links','survey','http://www.curiouslab.com/clsurvey/index.php?sid=39345&lang=en')
+    config.set('Links','scenarios','8839,1308,2266,5538')
     f = open('%s.cfg' % (args['output']),'w')
     config.write(f)
     f.close()
