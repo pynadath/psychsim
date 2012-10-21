@@ -146,6 +146,10 @@ class Agent:
                     substate = self.world.nearestVector(substate,V.keys())
                     value = V[substate][self.name][action]
                 return {'V': value,'agent': self.name,'horizon': horizon,'projection':[]}
+        if horizon is True:
+            horizon = self.models[True]['horizon']
+        if discount is True:
+            discount = self.models[True]['discount']
         # Compute immediate reward
         R = self.reward(vector,model)
         result = {'V': R,
