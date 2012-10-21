@@ -381,11 +381,14 @@ class World:
             for name in names:
                 self.state.join(turnKey(name),float(index)+0.5)
 
-    def next(self,vector):
+    def next(self,vector=None):
         """
         @return: a list of agents (by name) whose turn it is in the current epoch
         @rtype: str[]
         """
+        if vector is None:
+            assert len(self.state) == 1,'Ambiguous state vector'
+            vector = self.state.domain()[0]
         items = filter(lambda i: isTurnKey(i[0]),vector.items())
         if len(items) == 0:
             # No turn information in vector
@@ -793,21 +796,23 @@ class World:
                         for index in range(len(node['projection'])):
                             nodes.insert(index,node['projection'][index])
 
-    def printState(self,distribution=None,buf=None,prefix=''):
+    def printState(self,distribution=None,buf=None,prefix='',beliefs=False):
         """
         Utility method for displaying a distribution over possible worlds
         @type distribution: L{VectorDistribution}
         @param buf: the string buffer to put the string representation in (default is standard output)
         @param prefix: a string prefix (e.g., tabs) to insert at the beginning of each line
         @type prefix: str
+        @param beliefs: if C{True}, print out inaccurate beliefs, too
+        @type beliefs: True
         """
         if distribution is None:
             distribution = self.state
         for vector in distribution.domain():
             print >> buf,'%s%d%%' % (prefix,distribution[vector]*100.),
-            self.printVector(vector,buf,prefix)
+            self.printVector(vector,buf,prefix,beliefs=beliefs)
 
-    def printVector(self,vector,buf=None,prefix='',first=True,csv=False):
+    def printVector(self,vector,buf=None,prefix='',first=True,beliefs=False,csv=False):
         """
         Utility method for displaying a single possible world
         @type vector: L{KeyedVector}
@@ -834,22 +839,6 @@ class World:
             else:
                 label = entity
             newEntity = True
-            if not entity is None:
-                # Print model of this entity
-                key = modelKey(entity)
-                if vector.has_key(key):
-                    if csv:
-                        elements.append(label)
-                        elements.append('__model__')
-                        elements.append(self.agents[entity].index2model(vector[key]))
-                    elif first:
-                        print >> buf,'\t%-12s\t%-12s\t%-12s' % \
-                            (label,'__model__',self.agents[entity].index2model(vector[key]))
-                        first = False
-                    else:
-                        print >> buf,'%s\t%-12s\t%-12s\t%-12s' % \
-                            (prefix,label,'__model__',self.agents[entity].index2model(vector[key]))
-                    newEntity = False
             # Print state features for this entity
             for feature,entry in table.items():
                 if entity is None:
@@ -888,6 +877,29 @@ class World:
                         elements.append(value)
                     else:
                         print >> buf,value
+            if not entity is None:
+                # Print model of this entity
+                key = modelKey(entity)
+                if vector.has_key(key):
+                    if csv:
+                        elements.append(label)
+                        elements.append('__model__')
+                        elements.append(self.agents[entity].index2model(vector[key]))
+                    elif first:
+                        print >> buf,'\t%-12s\t%-12s\t%-12s' % \
+                            (label,'__model__',self.agents[entity].index2model(vector[key]))
+                        change = True
+                        first = False
+                    else:
+                        print >> buf,'%s\t%-12s\t%-12s\t%-12s' % \
+                            (prefix,label,'__model__',self.agents[entity].index2model(vector[key]))
+                    newEntity = False
+                elif beliefs:
+                    model = self.agents[entity].models[True]
+                    if not model['beliefs'] is True:
+                        print >> buf,'\t\t\t----beliefs:----'
+                        self.printDelta(vector,model['beliefs'],buf,'\t\t\t')
+                        print >> buf,'\t\t\t----------------'
         if not csv and not change:
             print >> buf,'%s\tUnchanged' % (prefix)
         if (not vector.has_key('__END__') and self.terminated(vector)) or \
@@ -909,18 +921,35 @@ class World:
         deltaDist = VectorDistribution()
         for vector in new.domain():
             delta = KeyedVector()
+            keys = []
             for name,table in self.features.items():
                 for feature,entry in self.features[name].items():
-                    key = stateKey(name,feature)
-                    if abs(vector[key]-old[key]) > 1e-3:
-                        # Notable change
-                        delta[key] = vector[key]
+                    # Look for change in feature value
+                    keys.append(stateKey(name,feature))
+                # Look for change in mental model of this agent
+                key = modelKey(name)
+                if vector.has_key(key):
+                    keys.append(key)
+                    if not old.has_key(key):
+                        old = KeyedVector(vector)
+                        old[key] = self.agents[name].model2index(True)
+            for key in keys:
+                try:
+                    diff = abs(vector[key]-old[key])
+                except KeyError:
+                    diff = 0.
+                if diff > 1e-3:
+                    # Notable change
+                    delta[key] = vector[key]
             if self.terminated(vector):
                 delta['__END__'] = 1.
             else:
                 delta['__END__'] = -1.
-            deltaDist[delta] = new[vector]
-        self.printState(deltaDist,buf,prefix=prefix)
+            try:
+                deltaDist[delta] += new[vector]
+            except KeyError:
+                deltaDist[delta] = new[vector]
+        self.printState(deltaDist,buf,prefix=prefix,beliefs=False)
         
     """---------------------"""
     """Serialization methods"""
