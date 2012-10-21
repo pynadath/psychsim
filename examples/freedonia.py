@@ -1,3 +1,7 @@
+"""
+Example scenario for wartime negotiation.
+Provides use cases for both modeling and simulating scenarios.
+"""
 import sys
 from ConfigParser import SafeConfigParser
 from argparse import ArgumentParser

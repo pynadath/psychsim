@@ -382,7 +382,10 @@ class Agent:
     def setReward(self,tree,weight=0.,model=None):
         if model is None:
             for model in self.models.values():
-                model['R'][tree] = weight
+                if isinstance(model['R'],dict):
+                    model['R'][tree] = weight
+                else:
+                    assert model['R'] is True
         else:
             self.models[model]['R'][tree] = weight
 
