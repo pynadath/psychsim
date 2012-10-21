@@ -132,13 +132,22 @@ class Agent:
         @type others: strS{->}L{ActionSet}
         @param model: the model of this agent to use (default is C{True})
         """
+        # Determine horizon
         if horizon is None:
             horizon = self.models[model]['horizon']
+        if horizon is True:
+            horizon = self.models[True]['horizon']
+        # Determine discount factor
         discount = self.models[model]['discount']
-        if horizon == self.models[model]['horizon']:
-            # Check for pre-computed value function
-            V = self.models[model]['V']
-            if V:
+        if discount is True:
+            discount = self.models[True]['discount']
+        # Check for pre-computed value function
+        try:
+            V = self.models[model]['V'][horizon]
+        except IndexError:
+            V = {}
+        if V:
+            if self.models[model]['ignore']:
                 substate = vector.filter(self.models[model]['ignore'])
                 if V.has_key(substate):
                     value = V[substate][self.name][action]
@@ -146,10 +155,12 @@ class Agent:
                     substate = self.world.nearestVector(substate,V.keys())
                     value = V[substate][self.name][action]
                 return {'V': value,'agent': self.name,'horizon': horizon,'projection':[]}
-        if horizon is True:
-            horizon = self.models[True]['horizon']
-        if discount is True:
-            discount = self.models[True]['discount']
+            else:
+                try:
+                    value = V[vector][self.name][action]
+                    return {'V': value,'agent': self.name,'horizon': horizon,'projection':[]}
+                except KeyError:
+                    pass
         # Compute immediate reward
         R = self.reward(vector,model)
         result = {'V': R,
@@ -200,6 +211,17 @@ class Agent:
                     # Accumulate value
                     result['V'] += discount*Vrest['V']
                 result['projection'].append(outcome)
+        # Do some caching
+        try:
+            V = self.models[model]['V'][horizon]
+        except IndexError:
+            V = {}
+            self.models[model]['V'].append(V)
+        if not V.has_key(vector):
+            V[vector] = {}
+        if not V[vector].has_key(self.name):
+            V[vector][self.name] = {}
+        V[vector][self.name][action] = result['V']
         return result
 
     def valueIteration(self,horizon=None,ignore=[],model=True,epsilon=1e-6):
@@ -435,7 +457,7 @@ class Agent:
                 (name,self.name)
         model = {'name': name,'index': len(self.models),'R': True,'beliefs': True,
                  'horizon': True,'level': True,'rationality': True,'discount': True,
-                 'V': {},'policy': {},'ignore': [],'projector': Distribution.expectation}
+                 'V': [],'policy': {},'ignore': [],'projector': Distribution.expectation}
         model.update(kwargs)
         self.models[name] = model
         self.modelList.append(name)
