@@ -178,9 +178,11 @@ class VectorDistribution(Distribution):
         @type key: str
         @param value: either a single value to apply to all vectors, or else a L{Distribution} over possible values
         """
-        for row in self.domain():
-            prob = self[row]
-            del self[row]
+        original = dict(self)
+        domain = self.domain()
+        self.clear()
+        for row in domain:
+            prob = original[str(row)]
             if isinstance(value,Distribution):
                 for element in value.domain():
                     new = row.__class__(row)
