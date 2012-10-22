@@ -12,7 +12,7 @@ from psychsim.world import World,stateKey,actionKey
 from psychsim.agent import Agent
 
 def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,territory=13,
-                            position=0,fTroops=381940,sTroops=461432,maxRounds=15,model='powell'):
+                            position=0,fTroops=381940,sTroops=461432,maxRounds=15,model='powell',web=False):
     """
     An example of how to create a scenario
     @param sCost: number of troops Sylvania loses in battle
@@ -205,9 +205,9 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
     for action in filterActions({'verb': 'attack'},free.actions | sylv.actions):
         # Effect on troops (cost of battle)
         tree = makeTree(addFeatureMatrix(freeTroops,stateKey(free.name,'cost'),-1.))
-        world.setDynamics(free.name,'troops',action,tree)
+        world.setDynamics(free.name,'troops',action,tree,enforceMin=not web)
         tree = makeTree(addFeatureMatrix(sylvTroops,stateKey(sylv.name,'cost'),-1.))
-        world.setDynamics(sylv.name,'troops',action,tree)
+        world.setDynamics(sylv.name,'troops',action,tree,enforceMin=not web)
         if model == 'powell':
             # Effect on territory (probability of collapse)
             tree = makeTree({'distribution': [
@@ -241,7 +241,7 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
         tree = makeTree({'if': trueRow(stateKey(None,'treaty')),
                          True: noChangeMatrix(offer),
                          False: setToConstantMatrix(offer,amount)})
-        world.setDynamics(atom['object'],'offered',atom,tree)
+        world.setDynamics(atom['object'],'offered',atom,tree,enforceMax=not web)
 
     # Dynamics of treaties
     for action in filterActions({'verb': 'accept offer'},free.actions | sylv.actions):
@@ -409,6 +409,10 @@ if __name__ == '__main__':
     group.add_argument('--enemy-troops',action='store',
                      dest='stroops',type=int,default=30000,
                      help='number of enemy troops [default: %(default)s]')
+    # Optional argument that determines whether to generate models for Web platform
+    group.add_argument('-w','--web',action='store_true',
+                      dest='web',default=False,
+                      help='generate Web version if set [default: %(default)s]')
     group = parser.add_argument_group('Simulation Options','Control the simulation of the created scenario.')
     # Optional argument that sets the level of explanations when running the simulation
     group.add_argument('-d',action='store',
@@ -422,12 +426,14 @@ if __name__ == '__main__':
     group.add_argument('-t','--time',action='store',
                      dest='time',type=int,default=1,
                      help='number of time steps to simulate [default: %(default)s]')
+    group = parser.add_argument_group('Creation Options','Control the parameters of the created scenario.')
     args = vars(parser.parse_args())
 
     world = scenarioCreationUseCase(args['enemy'],args['fcost'],args['scost'],
                                     territory=args['initial'],position=args['position'],
                                     fTroops=args['ftroops'],sTroops=args['stroops'],
-                                    maxRounds=args['rounds'],model=args['model'])
+                                    maxRounds=args['rounds'],model=args['model'],
+                                    web=args['web'])
 
     # Create configuration file
     config = SafeConfigParser()

@@ -682,6 +682,52 @@ class KeyedTree:
             tree.makeProbabilistic(TreeDistribution(new))
         return tree
 
+    def floor(self,key,lo):
+        """
+        Modify this tree to make sure the new computed value never goes lower than the given floor
+        @warning: may introduce redundant checks
+        """
+        if self.isLeaf():
+            tMatrix = self.children[None]
+            assert len(tMatrix) == 1,'Unable to handle dynamics of more than one feature'
+            assert tMatrix.has_key(key),'Are you sure you should be flooring me on a key I don\'t have?'
+            del self.children[None]
+            fMatrix = setToConstantMatrix(key,lo)
+            branch = KeyedPlane(KeyedVector(tMatrix[key]),lo)
+            self.makeBranch(branch,KeyedTree(tMatrix),KeyedTree(fMatrix))
+        elif self.branch:
+            self.children[True].floor(key,lo)
+            self.children[False].floor(key,lo)
+        else:
+            for child in self.children.domain():
+                prob = self.children[child]
+                del self.children[child]
+                self[child.floor(key,lo)] = prob
+        return self
+
+    def ceil(self,key,hi):
+        """
+        Modify this tree to make sure the new computed value never goes higher than the given ceiling
+        @warning: may introduce redundant checks
+        """
+        if self.isLeaf():
+            fMatrix = self.children[None]
+            assert len(fMatrix) == 1,'Unable to handle dynamics of more than one feature'
+            assert fMatrix.has_key(key),'Are you sure you should be ceiling me on a key I don\'t have?'
+            del self.children[None]
+            tMatrix = setToConstantMatrix(key,hi)
+            branch = KeyedPlane(KeyedVector(fMatrix[key]),hi)
+            self.makeBranch(branch,KeyedTree(tMatrix),KeyedTree(fMatrix))
+        elif self.branch:
+            self.children[True].ceil(key,hi)
+            self.children[False].ceil(key,hi)
+        else:
+            for child in self.children.domain():
+                prob = self.children[child]
+                del self.children[child]
+                self[child.ceil(key,hi)] = prob
+        return self
+
     def scale(self,table):
         tree = self.__class__()
         if self.isLeaf():

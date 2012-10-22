@@ -270,7 +270,7 @@ class World:
             self.agents[agent.name] = agent
             agent.world = self
 
-    def setDynamics(self,entity,feature,action,tree):
+    def setDynamics(self,entity,feature,action,tree,enforceMin=False,enforceMax=False):
         """
         Defines the effect of an action on a given state feature
         @param entity: the entity whose state feature is affected (C{None} if on the world itself)
@@ -296,6 +296,12 @@ class World:
         tree = tree.desymbolize(self.symbols)
         if self.__NORMALIZE__:
             tree = tree.scale(self.ranges)
+        if enforceMin and self.features[entity][feature]['domain'] in [int,float]:
+            # Modify tree to enforce floor
+            tree.floor(key,self.features[entity][feature]['lo'])
+        if enforceMax and self.features[entity][feature]['domain'] in [int,float]:
+            # Modify tree to enforce ceiling
+            tree.ceil(key,self.features[entity][feature]['hi'])
         self.dynamics[key][action] = tree
 
     def getDynamics(self,key,action):
