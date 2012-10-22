@@ -131,8 +131,9 @@ class KeyedVector(dict):
 
     def __str__(self):
         if self._string is None:
-            self._string = '\n'.join(map(lambda item: '%s: %s' % item,
-                                         self.items()))
+            keys = self.keys()
+            keys.sort()
+            self._string = '\n'.join(map(lambda k: '%s: %s' % (k,self[k]),keys))
         return self._string
 
     def __repr__(self):

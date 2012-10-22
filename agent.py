@@ -141,87 +141,63 @@ class Agent:
         discount = self.models[model]['discount']
         if discount is True:
             discount = self.models[True]['discount']
-        # Check for pre-computed value function
-        try:
-            V = self.models[model]['V'][horizon]
-        except IndexError:
-            V = {}
-        if V:
-            if self.models[model]['ignore']:
-                substate = vector.filter(self.models[model]['ignore'])
-                if V.has_key(substate):
-                    value = V[substate][self.name][action]
-                else:
-                    substate = self.world.nearestVector(substate,V.keys())
-                    value = V[substate][self.name][action]
-                return {'V': value,'agent': self.name,'horizon': horizon,'projection':[]}
-            else:
-                try:
-                    value = V[vector][self.name][action]
-                    return {'V': value,'agent': self.name,'horizon': horizon,'projection':[]}
-                except KeyError:
-                    pass
         # Compute immediate reward
         R = self.reward(vector,model)
-        result = {'V': R,
-                  'R': R,
+        result = {'R': R,
                   'agent': self.name,
                   'state': vector,
                   'horizon': horizon,
                   'projection': []}
-        if horizon > 0 and not self.world.terminated(vector):
-            # Perform action(s)
-            if others is None:
-                turn = {}
-            else:
-                turn = copy.copy(others)
-            if action:
-                turn[self.name] = action
-            outcome = self.world.stepFromState(vector,turn,horizon)
-            if isinstance(outcome['new'],Distribution):
-                # Uncertain outcomes
-                future = Distribution()
-                for newVector in outcome['new'].domain():
-                    entry = copy.copy(outcome)
-                    entry['probability'] = outcome['new'][newVector]
-                    Vrest = self.value(newVector,None,horizon-1,None,model)
-                    entry.update(Vrest)
-                    try:
-                        future[entry['V']] += entry['probability']
-                    except KeyError:
-                        future[entry['V']] = entry['probability']
-                    result['projection'].append(entry)
-                # The following is typically "expectation", but might be "max" or "min", too
-                op = self.models[model]['projector']
-                if discount < -1e-6:
-                    # Only final value matters
-                    result['V'] = apply(op,(future,))
+        # Check for pre-computed value function
+        V = self.models[model]['V'].get(self.name,vector,action,horizon,self.models[model]['ignore'])
+        if V is not None:
+            result['V'] = V
+        else:
+            result['V'] = R
+            if horizon > 0 and not self.world.terminated(vector):
+                # Perform action(s)
+                if others is None:
+                    turn = {}
                 else:
-                    # Accumulate value
-                    result['V'] += discount*apply(op,(future,))
-            else:
-                # Deterministic outcome
-                outcome['probability'] = 1.
-                Vrest = self.value(outcome['new'],None,horizon-1,None,model)
-                outcome.update(Vrest)
-                if discount < -1e-6:
-                    # Only final value matters
-                    result['V'] = Vrest['V']
+                    turn = copy.copy(others)
+                if action:
+                    turn[self.name] = action
+                outcome = self.world.stepFromState(vector,turn,horizon)
+                if isinstance(outcome['new'],Distribution):
+                    # Uncertain outcomes
+                    future = Distribution()
+                    for newVector in outcome['new'].domain():
+                        entry = copy.copy(outcome)
+                        entry['probability'] = outcome['new'][newVector]
+                        Vrest = self.value(newVector,None,horizon-1,None,model)
+                        entry.update(Vrest)
+                        try:
+                            future[entry['V']] += entry['probability']
+                        except KeyError:
+                            future[entry['V']] = entry['probability']
+                        result['projection'].append(entry)
+                    # The following is typically "expectation", but might be "max" or "min", too
+                    op = self.models[model]['projector']
+                    if discount < -1e-6:
+                        # Only final value matters
+                        result['V'] = apply(op,(future,))
+                    else:
+                        # Accumulate value
+                        result['V'] += discount*apply(op,(future,))
                 else:
-                    # Accumulate value
-                    result['V'] += discount*Vrest['V']
-                result['projection'].append(outcome)
-        # Do some caching
-        try:
-            V = self.models[model]['V'][horizon]
-        except IndexError:
-            V = {}
-            self.models[model]['V'].append(V)
-        if not V.has_key(vector):
-            V[vector] = {}
-        if not V[vector].has_key(self.name):
-            V[vector][self.name] = {}
-        V[vector][self.name][action] = result['V']
+                    # Deterministic outcome
+                    outcome['probability'] = 1.
+                    Vrest = self.value(outcome['new'],None,horizon-1,None,model)
+                    outcome.update(Vrest)
+                    if discount < -1e-6:
+                        # Only final value matters
+                        result['V'] = Vrest['V']
+                    else:
+                        # Accumulate value
+                        result['V'] += discount*Vrest['V']
+                    result['projection'].append(outcome)
+            # Do some caching
+            self.models[model]['V'].set(self.name,vector,action,horizon,result['V'])
         return result
 
     def valueIteration(self,horizon=None,ignore=[],model=True,epsilon=1e-6):
@@ -457,7 +433,7 @@ class Agent:
                 (name,self.name)
         model = {'name': name,'index': len(self.models),'R': True,'beliefs': True,
                  'horizon': True,'level': True,'rationality': True,'discount': True,
-                 'V': [],'policy': {},'ignore': [],'projector': Distribution.expectation}
+                 'V': ValueFunction(),'policy': {},'ignore': [],'projector': Distribution.expectation}
         model.update(kwargs)
         self.models[name] = model
         self.modelList.append(name)
@@ -593,7 +569,7 @@ class Agent:
                             subnode.appendChild(tree.__xml__().documentElement)
                             node.appendChild(subnode)
                 elif key == 'V':
-                    pass
+                    node.appendChild(model[key].__xml__().documentElement)
                 elif key == 'ignore':
                     for key in model['ignore']:
                         subnode = doc.createElement(key)
@@ -649,31 +625,35 @@ class Agent:
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
                             key = str(subnode.tagName)
-                            subchild = subnode.firstChild
-                            while subchild:
-                                if subchild.nodeType == subchild.ELEMENT_NODE:
-                                    if key == 'R':
-                                        kwargs[key][KeyedTree(subchild)] = float(subnode.getAttribute('weight'))
-                                    elif key == 'beliefs':
-                                        kwargs[key] = VectorDistribution(subchild)
-                                    elif key == 'policy':
-                                        kwargs[key] = KeyedTree(subchild)
-                                    else:
-                                        raise NameError,'Unknown element found when parsing model\'s %s' % (key)
-                                elif subchild.nodeType == subchild.TEXT_NODE:
-                                    text = subchild.data.strip()
-                                    if text:
-                                        if key == 'ignore':
-                                            kwargs[key].append(text)
-                                        elif text == str(True):
-                                            kwargs[key] = True
-                                        elif key == 'horizon':
-                                            kwargs[key] = int(text)
-                                        elif key == 'projector':
-                                            kwargs[key] = eval('Distribution.%s' % (text))
+                            if key == 'V':
+                                kwargs[key] = ValueFunction(subnode)
+                            else:
+                                # Parse component elements
+                                subchild = subnode.firstChild
+                                while subchild:
+                                    if subchild.nodeType == subchild.ELEMENT_NODE:
+                                        if key == 'R':
+                                            kwargs[key][KeyedTree(subchild)] = float(subnode.getAttribute('weight'))
+                                        elif key == 'policy':
+                                            kwargs[key] = KeyedTree(subchild)
+                                        elif key == 'beliefs':
+                                            kwargs[key] = VectorDistribution(subchild)
                                         else:
-                                            kwargs[key] = float(text)
-                                subchild = subchild.nextSibling
+                                            raise NameError,'Unknown element found when parsing model\'s %s' % (key)
+                                    elif subchild.nodeType == subchild.TEXT_NODE:
+                                        text = subchild.data.strip()
+                                        if text:
+                                            if key == 'ignore':
+                                                kwargs[key].append(text)
+                                            elif text == str(True):
+                                                kwargs[key] = True
+                                            elif key == 'horizon':
+                                                kwargs[key] = int(text)
+                                            elif key == 'projector':
+                                                kwargs[key] = eval('Distribution.%s' % (text))
+                                            else:
+                                                kwargs[key] = float(text)
+                                    subchild = subchild.nextSibling
                         subnode = subnode.nextSibling
                     # Add new model
                     self.addModel(name,**kwargs)
@@ -687,4 +667,104 @@ class Agent:
                                 tree = KeyedTree(subnode)
                         subnode = subnode.nextSibling
                     self.legal[action] = tree
+            node = node.nextSibling
+
+class ValueFunction:
+    """
+    Representation of an agent's value function, either from caching or explicit solution
+    """
+    def __init__(self,xml=None):
+        self.table = []
+        if xml:
+            self.parse(xml)
+
+    def get(self,name,state,action,horizon,ignore=None):
+        try:
+            V = self.table[horizon]
+        except IndexError:
+            return None
+        if V:
+            if ignore:
+                substate = state.filter(ignore)
+                if V.has_key(substate):
+                    value = V[substate][name][action]
+                else:
+                    substate = self.world.nearestVector(substate,V.keys())
+                    value = V[substate][name][action]
+                return value
+            else:
+                try:
+                    value = V[state][name][action]
+                    return value
+                except KeyError:
+                    pass
+        return None
+
+    def set(self,name,state,action,horizon,value):
+        while True:
+            try:
+                V = self.table[horizon]
+                break
+            except IndexError:
+                self.table.append({})
+        if not V.has_key(state):
+            V[state] = {}
+        if not V[state].has_key(name):
+            V[state][name] = {}
+        V[state][name][action] = value
+    
+    def __xml__(self):
+        doc = Document()
+        root = doc.createElement('V')
+        doc.appendChild(root)
+        for horizon in range(len(self.table)):
+            subnode = doc.createElement('table')
+            subnode.setAttribute('horizon',str(horizon))
+            for state,V_s in self.table[horizon].items():
+                subnode.appendChild(state.__xml__().documentElement)
+                for name,V_s_a in V_s.items():
+                    for action,V in V_s_a.items():
+                        subsubnode = doc.createElement('value')
+                        subsubnode.setAttribute('agent',name)
+                        if action:
+                            subsubnode.appendChild(action.__xml__().documentElement)
+                        subsubnode.appendChild(doc.createTextNode(str(V)))
+                        subnode.appendChild(subsubnode)
+            root.appendChild(subnode)
+        return doc
+
+    def parse(self,element):
+        assert element.tagName == 'V',element.tagName
+        del self.table[:]
+        node = element.firstChild
+        while node:
+            if node.nodeType == node.ELEMENT_NODE:
+                assert node.tagName == 'table',node.tagName
+                horizon = int(node.getAttribute('horizon'))
+                subnode = node.firstChild
+                while subnode:
+                    if subnode.nodeType == subnode.ELEMENT_NODE:
+                        if subnode.tagName == 'vector':
+                            state = KeyedVector(subnode)
+                        elif subnode.tagName == 'value':
+                            action = None
+                            agent = str(subnode.getAttribute('agent'))
+                            subsubnode = subnode.firstChild
+                            while subsubnode:
+                                if subsubnode.nodeType == subsubnode.ELEMENT_NODE:
+                                    if subsubnode.tagName == 'option':
+                                        actions = []
+                                        bottomNode = subsubnode.firstChild
+                                        while bottomNode:
+                                            if bottomNode.nodeType == bottomNode.ELEMENT_NODE:
+                                                actions.append(Action(bottomNode))
+                                            bottomNode = bottomNode.nextSibling
+                                        action = ActionSet(actions)
+                                elif subsubnode.nodeType == subsubnode.TEXT_NODE:
+                                    text = subsubnode.data.strip()
+                                    if text:
+                                        value = float(text)
+                                subsubnode = subsubnode.nextSibling
+                            self.set(agent,state,action,horizon,value)
+                    subnode = subnode.nextSibling
             node = node.nextSibling
