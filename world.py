@@ -290,6 +290,9 @@ class World:
             key = feature
         else:
             key = stateKey(entity,feature)
+        for atom in action:
+            assert self.agents.has_key(atom['subject']),'Unknown actor %s' % (atom['subject'])
+            assert self.agents[atom['subject']].hasAction(atom),'Unknown action %s' % (atom)
         if not self.dynamics.has_key(key):
             self.dynamics[key] = {}
         # Translate symbolic names into numeric values

@@ -370,6 +370,18 @@ class Agent:
         """
         self.legal[action] = tree.desymbolize(self.world.symbols)
 
+    def hasAction(self,atom):
+        """
+        @type action: L{Action}
+        @return: C{True} iff this agent has the given action (possibly in combination with other actions)
+        @rtype: bool
+        """
+        for action in self.actions:
+            if atom in action:
+                return True
+        else:
+            return False
+
     """------------------"""
     """State methods"""
     """------------------"""

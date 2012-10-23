@@ -308,12 +308,13 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
 #                                     True: Action({'subject': free.name,'verb': 'attack','object': sylv.name}),
 #                             # Agent decides how what to do otherwise
 #                                     False: False}}))
-    
-    # # Models of Freedonia
-    # free.addModel('dove',R={goalFTroops: 1e-4,goalFTerritory: 0.1},level=1,rationality=0.01)
-    # free.addModel('true',level=1,rationality=0.01)
-    # free.addModel('hawk',R={goalFTroops: 1e-4,goalFTerritory: 0.3},level=1,rationality=0.01)
-    # world.setMentalModel(sylv.name,free.name,{'true': 0.6,'dove': 0.3,'hawk': 0.1})
+
+    if not web:
+        # Mental models of Freedonia
+        free.addModel('dove',R={goalFTroops: 0.9,goalFTerritory: 0.1},rationality=1.)
+        free.addModel('true',rationality=1.)
+        free.addModel('hawk',R={goalFTroops: 0.1,goalFTerritory: 0.9},rationality=1.)
+        world.setMentalModel(sylv.name,free.name,{'true': 0.6,'dove': 0.3,'hawk': 0.1})
     return world
 
 def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
