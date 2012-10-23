@@ -236,12 +236,13 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
     for index in range(2):
         atom =  Action({'subject': world.agents.keys()[index],'verb': 'offer',
                         'object': world.agents.keys()[1-index]})
-        offer = stateKey(atom['object'],'offered')
-        amount = actionKey('amount')
-        tree = makeTree({'if': trueRow(stateKey(None,'treaty')),
-                         True: noChangeMatrix(offer),
-                         False: setToConstantMatrix(offer,amount)})
-        world.setDynamics(atom['object'],'offered',atom,tree,enforceMax=not web)
+        if atom['subject'] == free.name or model != 'powell':
+            offer = stateKey(atom['object'],'offered')
+            amount = actionKey('amount')
+            tree = makeTree({'if': trueRow(stateKey(None,'treaty')),
+                             True: noChangeMatrix(offer),
+                             False: setToConstantMatrix(offer,amount)})
+            world.setDynamics(atom['object'],'offered',atom,tree,enforceMax=not web)
 
     # Dynamics of treaties
     for action in filterActions({'verb': 'accept offer'},free.actions | sylv.actions):
@@ -265,8 +266,9 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
     for index in range(2):
         action = Action({'subject': world.agents.keys()[index],'verb': 'offer',
                          'object': world.agents.keys()[1-index]})
-        tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'respond'))
-        world.setDynamics(None,'phase',action,tree)
+        if action['subject'] == free.name or model != 'powell':
+            tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'respond'))
+            world.setDynamics(None,'phase',action,tree)
     # RESPOND -> REJECTION or ENGAGEMENT
     for action in filterActions({'verb': 'reject offer'},free.actions | sylv.actions):
         if model == 'powell':

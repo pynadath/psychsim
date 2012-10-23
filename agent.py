@@ -377,8 +377,9 @@ class Agent:
         @rtype: bool
         """
         for action in self.actions:
-            if atom in action:
-                return True
+            for candidate in action:
+                if atom.root() == candidate.root():
+                    return True
         else:
             return False
 
