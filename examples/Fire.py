@@ -17,7 +17,7 @@ if __name__ == '__main__':
 
     # there are a mix of agent types that have different reward preferences for heading towards door,
     # following someone who is closest or avoiding the fire
-    rewardWeights = {'exiter':{'fire':.4,'door':5,'follow':.1},'follower':{'fire':.2,'door':2,'follow':.6},'avoider':{'fire':.6,'door':3,'follow':.1}}
+    rewardWeights = {'exiter':{'fire':.4,'door':.5,'follow':.1},'follower':{'fire':.2,'door':.2,'follow':.6},'avoider':{'fire':.6,'door':.3,'follow':.1}}
 
 
     # the fire and door are modeled as agents with no actions - they only have a fixed location
@@ -55,7 +55,7 @@ if __name__ == '__main__':
             world.defineState(me.name,'fire_dist',float)
             world.setState(me.name,'fire_dist',5)
             world.defineState(me.name,'closest_dist',float)
-            world.setState(me.name,'closest_dist',5)
+            world.setState(me.name,'closest_dist',4)
             
             # Actions
             me.addAction({'verb': 'do nothing'})
@@ -84,12 +84,12 @@ if __name__ == '__main__':
     # world.setOrder([actors])
     actors.remove('door')
     actors.remove('fire')
-    world.setOrder(actors)
+    world.setOrder([set(actors)])
     print actors
     
     for agt in actors:
         atom = Action({'subject': agt,'verb': 'runAway', 'object':'fire'})
-        tree = makeTree(incrementMatrix(stateKey(atom['subject'],'fire_dist'),-.1))
+        tree = makeTree(incrementMatrix(stateKey(atom['subject'],'fire_dist'),.1))
         world.setDynamics(agt,'fire_dist',atom,tree)
 
         atom = Action({'subject': agt,'verb': 'runTowards', 'object':'door'})
@@ -97,7 +97,7 @@ if __name__ == '__main__':
         world.setDynamics(agt,'door_dist',atom,tree)
 
         atom = Action({'subject': agt,'verb': 'runClosest'})
-        tree = makeTree(incrementMatrix(stateKey(atom['subject'],'closest_dist'),.1))
+        tree = makeTree(incrementMatrix(stateKey(atom['subject'],'closest_dist'),-.1))
         world.setDynamics(agt,'door_dist',atom,tree)
 
     
@@ -115,7 +115,8 @@ if __name__ == '__main__':
     # world.printState()
     
     for t in range(7):
-        world.explain(world.step())
+        print 'next:',world.next(world.state.expectation())
+        world.explain(world.step(),0)
         # world.explain()
         # print world.step()
         world.state.select()
