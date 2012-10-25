@@ -15,8 +15,8 @@
        bgcolor="#a0c0ff" cellspacing="0">
   <tr valign="middle">
   <!-- Home link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+      <th bgcolor="#70b0f0" class="navbar-select"
+          >&nbsp;&nbsp;&nbsp;Home&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -30,7 +30,12 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-      <th class="navbar" width="100%"></th>
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
   </tr>
 </table>
 <table width="100%" cellpadding="0" cellspacing="0">
@@ -136,7 +141,8 @@
           <td><span class="summary-sig"><a name="stepFromState"></a><span class="summary-sig-name">stepFromState</span>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">vector</span>,
         <span class="summary-sig-arg">actions</span>=<span class="summary-sig-default">None</span>,
-        <span class="summary-sig-arg">horizon</span>=<span class="summary-sig-default">None</span>)</span><br />
+        <span class="summary-sig-arg">horizon</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">tiebreak</span>=<span class="summary-sig-default">None</span>)</span><br />
       Compute the resulting states when starting in a given possible world 
       (as opposed to a distribution over possible worlds)</td>
           <td align="right" valign="top">
@@ -154,9 +160,10 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="effect"></a><span class="summary-sig-name">effect</span>(<span class="summary-sig-arg">self</span>,
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#effect" class="summary-sig-name">effect</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">actions</span>,
-        <span class="summary-sig-arg">vector</span>)</span></td>
+        <span class="summary-sig-arg">vector</span>,
+        <span class="summary-sig-arg">probability</span>=<span class="summary-sig-default">1.0</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.effect">source&nbsp;code</a></span>
             
@@ -174,9 +181,29 @@
         <tr>
           <td><span class="summary-sig"><a name="deltaState"></a><span class="summary-sig-name">deltaState</span>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">actions</span>,
-        <span class="summary-sig-arg">vector</span>)</span></td>
+        <span class="summary-sig-arg">vector</span>,
+        <span class="summary-sig-arg">keys</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Computes the change across a subset of state features</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.deltaState">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="addTermination"></a><span class="summary-sig-name">addTermination</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">tree</span>)</span><br />
+      Adds a possible termination condition to the list</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.addTermination">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -229,7 +256,9 @@
         <span class="summary-sig-arg">entity</span>,
         <span class="summary-sig-arg">feature</span>,
         <span class="summary-sig-arg">action</span>,
-        <span class="summary-sig-arg">tree</span>)</span><br />
+        <span class="summary-sig-arg">tree</span>,
+        <span class="summary-sig-arg">enforceMin</span>=<span class="summary-sig-default">False</span>,
+        <span class="summary-sig-arg">enforceMax</span>=<span class="summary-sig-default">False</span>)</span><br />
       Defines the effect of an action on a given state feature</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.setDynamics">source&nbsp;code</a></span>
@@ -264,6 +293,27 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#addDependency" class="summary-sig-name">addDependency</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">dependent</span>,
+        <span class="summary-sig-arg">independent</span>)</span><br />
+      Adds a dependency between the dependent key and the independent key, 
+      indicating that the new value for the independent key should be 
+      determined first</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.addDependency">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
           <td><span class="summary-sig"><a href="psychsim.world.World-class.html#setOrder" class="summary-sig-name">setOrder</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">order</span>)</span><br />
       Initializes the turn order to the given order</td>
@@ -283,7 +333,7 @@
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td><span class="summary-sig"><a href="psychsim.world.World-class.html#next" class="summary-sig-name">next</a>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">vector</span>)</span><br />
+        <span class="summary-sig-arg">vector</span>=<span class="summary-sig-default">None</span>)</span><br />
       Returns:
       a list of agents (by name) whose turn it is in the current epoch</td>
           <td align="right" valign="top">
@@ -309,6 +359,29 @@
       actions</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.deltaOrder">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">set(<a href="psychsim.action.ActionSet-class.html" 
+      class="link">ActionSet</a>)</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#getActions" class="summary-sig-name">getActions</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">vector</span>,
+        <span class="summary-sig-arg">agents</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">actions</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Returns:
+      the set of all possible action combinations that could happen in the 
+      given state</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.getActions">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -386,6 +459,24 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <td><span class="summary-sig"><a name="getMentalModel"></a><span class="summary-sig-name">getMentalModel</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">modelee</span>,
+        <span class="summary-sig-arg">vector</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.getMentalModel">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
           <td><span class="summary-sig"><a name="setMentalModel"></a><span class="summary-sig-name">setMentalModel</span>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">modeler</span>,
         <span class="summary-sig-arg">modelee</span>,
@@ -432,6 +523,47 @@
       Normalizes the given state vector so that all elements occur in [0,1]</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.scaleState">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">KeyedVector&rarr;ActionSet&rarr;VectorDistribution</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#reachable" class="summary-sig-name">reachable</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">vector</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">transition</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">horizon</span>=<span class="summary-sig-default">-1</span>,
+        <span class="summary-sig-arg">ignore</span>=<span class="summary-sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>)</span><br />
+      Returns:
+      transition matrix among states reachable from the given state 
+      (default is current state)</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.reachable">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="nearestVector"></a><span class="summary-sig-name">nearestVector</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">vector</span>,
+        <span class="summary-sig-arg">vectors</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.nearestVector">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -528,8 +660,8 @@
           <td><span class="summary-sig"><a href="psychsim.world.World-class.html#printState" class="summary-sig-name">printState</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">distribution</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">buf</span>=<span class="summary-sig-default">None</span>,
-        <span class="summary-sig-arg">prune</span>=<span class="summary-sig-default">False</span>,
-        <span class="summary-sig-arg">prefix</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>)</span><br />
+        <span class="summary-sig-arg">prefix</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>,
+        <span class="summary-sig-arg">beliefs</span>=<span class="summary-sig-default">False</span>)</span><br />
       Utility method for displaying a distribution over possible worlds</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.printState">source&nbsp;code</a></span>
@@ -549,12 +681,33 @@
           <td><span class="summary-sig"><a href="psychsim.world.World-class.html#printVector" class="summary-sig-name">printVector</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">vector</span>,
         <span class="summary-sig-arg">buf</span>=<span class="summary-sig-default">None</span>,
-        <span class="summary-sig-arg">prune</span>=<span class="summary-sig-default">False</span>,
         <span class="summary-sig-arg">prefix</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>,
-        <span class="summary-sig-arg">first</span>=<span class="summary-sig-default">True</span>)</span><br />
+        <span class="summary-sig-arg">first</span>=<span class="summary-sig-default">True</span>,
+        <span class="summary-sig-arg">beliefs</span>=<span class="summary-sig-default">False</span>,
+        <span class="summary-sig-arg">csv</span>=<span class="summary-sig-default">False</span>)</span><br />
       Utility method for displaying a single possible world</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.printVector">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="printDelta"></a><span class="summary-sig-name">printDelta</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">old</span>,
+        <span class="summary-sig-arg">new</span>,
+        <span class="summary-sig-arg">buf</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">prefix</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.printDelta">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -665,6 +818,15 @@
     </td><td class="summary">
         <a name="agents"></a><span class="summary-name">agents</span><br />
       table of agents in this world, indexed by name
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">dict</span>
+    </td><td class="summary">
+        <a name="dependency"></a><span class="summary-name">dependency</span><br />
+      table of dependencies among state features that impose temporal 
+      constraints
     </td>
   </tr>
 <tr>
@@ -795,6 +957,32 @@
   </dl>
 </td></tr></table>
 </div>
+<a name="effect"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">effect</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">actions</span>,
+        <span class="sig-arg">vector</span>,
+        <span class="sig-arg">probability</span>=<span class="sig-default">1.0</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.effect">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>probability</code></strong> (float) - the likelihood of this particular action set (default is 100%)</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
 <a name="terminated"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
@@ -837,7 +1025,9 @@
         <span class="sig-arg">entity</span>,
         <span class="sig-arg">feature</span>,
         <span class="sig-arg">action</span>,
-        <span class="sig-arg">tree</span>)</span>
+        <span class="sig-arg">tree</span>,
+        <span class="sig-arg">enforceMin</span>=<span class="sig-default">False</span>,
+        <span class="sig-arg">enforceMax</span>=<span class="sig-default">False</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.world-pysrc.html#World.setDynamics">source&nbsp;code</a></span>&nbsp;
@@ -857,6 +1047,34 @@
           class="link">ActionSet</a>) - the action affecting the state feature</li>
         <li><strong class="pname"><code>tree</code></strong> (<a href="psychsim.pwl.KeyedTree-class.html" 
           class="link">KeyedTree</a>) - the decision tree defining the effect</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="addDependency"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">addDependency</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">dependent</span>,
+        <span class="sig-arg">independent</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.addDependency">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Adds a dependency between the dependent key and the independent key, 
+  indicating that the new value for the independent key should be 
+  determined first</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>dependent</code></strong> (str)</li>
+        <li><strong class="pname"><code>independent</code></strong> (str)</li>
     </ul></dd>
   </dl>
 </td></tr></table>
@@ -894,7 +1112,7 @@
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr valign="top"><td>
   <h3 class="epydoc"><span class="sig"><span class="sig-name">next</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">vector</span>)</span>
+        <span class="sig-arg">vector</span>=<span class="sig-default">None</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.world-pysrc.html#World.next">source&nbsp;code</a></span>&nbsp;
@@ -929,6 +1147,32 @@
     <dt>Returns:</dt>
         <dd>the new turn sequence resulting from the performance of the given
           actions</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getActions"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getActions</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">vector</span>,
+        <span class="sig-arg">agents</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">actions</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.getActions">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns: set(<a href="psychsim.action.ActionSet-class.html" 
+      class="link">ActionSet</a>)</dt>
+        <dd>the set of all possible action combinations that could happen in 
+          the given state</dd>
   </dl>
 </td></tr></table>
 </div>
@@ -1076,6 +1320,32 @@
   </dl>
 </td></tr></table>
 </div>
+<a name="reachable"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">reachable</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">vector</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">transition</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">horizon</span>=<span class="sig-default">-1</span>,
+        <span class="sig-arg">ignore</span>=<span class="sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.reachable">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns: KeyedVector&rarr;ActionSet&rarr;VectorDistribution</dt>
+        <dd>transition matrix among states reachable from the given state 
+          (default is current state)</dd>
+  </dl>
+</td></tr></table>
+</div>
 <a name="explain"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
@@ -1137,8 +1407,8 @@
   <h3 class="epydoc"><span class="sig"><span class="sig-name">printState</span>(<span class="sig-arg">self</span>,
         <span class="sig-arg">distribution</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">buf</span>=<span class="sig-default">None</span>,
-        <span class="sig-arg">prune</span>=<span class="sig-default">False</span>,
-        <span class="sig-arg">prefix</span>=<span class="sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>)</span>
+        <span class="sig-arg">prefix</span>=<span class="sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>,
+        <span class="sig-arg">beliefs</span>=<span class="sig-default">False</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.world-pysrc.html#World.printState">source&nbsp;code</a></span>&nbsp;
@@ -1151,10 +1421,9 @@
     <dd><ul class="nomargin-top">
         <li><strong class="pname"><code>buf</code></strong> - the string buffer to put the string representation in (default is
           standard output)</li>
-        <li><strong class="pname"><code>prune</code></strong> (bool) - if <code>True</code>, don't print vector entries with 0 values 
-          (default is <code>False</code>)</li>
         <li><strong class="pname"><code>prefix</code></strong> (str) - a string prefix (e.g., tabs) to insert at the beginning of each 
           line</li>
+        <li><strong class="pname"><code>beliefs</code></strong> (True) - if <code>True</code>, print out inaccurate beliefs, too</li>
         <li><strong class="pname"><code>distribution</code></strong> (<a href="psychsim.pwl.VectorDistribution-class.html" 
           class="link">VectorDistribution</a>)</li>
     </ul></dd>
@@ -1171,9 +1440,10 @@
   <h3 class="epydoc"><span class="sig"><span class="sig-name">printVector</span>(<span class="sig-arg">self</span>,
         <span class="sig-arg">vector</span>,
         <span class="sig-arg">buf</span>=<span class="sig-default">None</span>,
-        <span class="sig-arg">prune</span>=<span class="sig-default">False</span>,
         <span class="sig-arg">prefix</span>=<span class="sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>,
-        <span class="sig-arg">first</span>=<span class="sig-default">True</span>)</span>
+        <span class="sig-arg">first</span>=<span class="sig-default">True</span>,
+        <span class="sig-arg">beliefs</span>=<span class="sig-default">False</span>,
+        <span class="sig-arg">csv</span>=<span class="sig-default">False</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.world-pysrc.html#World.printVector">source&nbsp;code</a></span>&nbsp;
@@ -1186,12 +1456,12 @@
     <dd><ul class="nomargin-top">
         <li><strong class="pname"><code>buf</code></strong> - the string buffer to put the string representation in (default is
           standard output)</li>
-        <li><strong class="pname"><code>prune</code></strong> (bool) - if <code>True</code>, don't print vector entries with 0 values 
-          (default is <code>False</code>)</li>
         <li><strong class="pname"><code>prefix</code></strong> (str) - a string prefix (e.g., tabs) to insert at the beginning of each 
           line</li>
         <li><strong class="pname"><code>first</code></strong> (bool) - if <code>True</code>, then the first line is the continuation of 
           an existing line (default is <code>True</code>)</li>
+        <li><strong class="pname"><code>csv</code></strong> (bool) - if <code>True</code>, then print the vector as comma-separated 
+          values (default is <code>False</code>)</li>
         <li><strong class="pname"><code>vector</code></strong> (<a href="psychsim.pwl.KeyedVector-class.html" 
           class="link">KeyedVector</a>)</li>
     </ul></dd>
@@ -1232,8 +1502,8 @@
        bgcolor="#a0c0ff" cellspacing="0">
   <tr valign="middle">
   <!-- Home link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+      <th bgcolor="#70b0f0" class="navbar-select"
+          >&nbsp;&nbsp;&nbsp;Home&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -1247,13 +1517,18 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-      <th class="navbar" width="100%"></th>
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Thu Aug  2 12:13:47 2012
+    Generated by Epydoc 3.0.1 on Wed Oct 24 21:38:10 2012
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"
