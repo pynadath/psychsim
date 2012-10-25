@@ -215,7 +215,7 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
                                            (noChangeMatrix(freeTerr),         fCollapse)]},  # Both collapse
                          sCollapse),
                         ({'distribution': [(setToConstantMatrix(freeTerr,0),fCollapse),      # Freedonia collapses, Sylvania does not
-                                           (noChangeMatrix(freeTerr),       1.-fCollapse)]}, # Neither collapse
+                                           (noChangeMatrix(freeTerr),       1.-fCollapse)]}, # Neither collapses
                          1.-sCollapse)]})
             world.setDynamics(free.name,'territory',action,tree)
         elif model == 'slantchev':
@@ -314,8 +314,11 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
     if not web:
         # Mental models of Freedonia
         free.addModel('dove',R={goalFTroops: 0.9,goalFTerritory: 0.1},rationality=1.)
-        free.addModel('true',rationality=1.)
         free.addModel('hawk',R={goalFTroops: 0.1,goalFTerritory: 0.9},rationality=1.)
+        # Example of setting model parameters separately
+        free.addModel('true')
+        free.setParameter('R',True,'true')         # Use real agent's reward
+        free.setParameter('rationality',1.,'true') # Override real agent's rationality with this value
         world.setMentalModel(sylv.name,free.name,{'true': 0.6,'dove': 0.3,'hawk': 0.1})
     return world
 

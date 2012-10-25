@@ -16,7 +16,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -30,7 +30,12 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-      <th class="navbar" width="100%"></th>
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
   </tr>
 </table>
 <table width="100%" cellpadding="0" cellspacing="0">
@@ -57,14 +62,38 @@
 </table>
 <!-- ==================== CLASS DESCRIPTION ==================== -->
 <h1 class="epydoc">Class Action</h1><p class="nomargin-top"><span class="codelink"><a href="psychsim.action-pysrc.html#Action">source&nbsp;code</a></span></p>
-<pre class="base-tree">
-object --+    
-         |    
-      dict --+
-             |
-            <strong class="uidshort">Action</strong>
-</pre>
-
+<center>
+<center>  <map id="uml_class_diagram_for_psychsim" name="uml_class_diagram_for_psychsim">
+<area shape="rect" id="node0" href="psychsim.action.Action-class.html#special" title="a list of keys that are reserved for system use" alt="" coords="17,369,193,388"/>
+<area shape="rect" id="node0" href="psychsim.action.Action-class.html#__init__" title="x.__init__(...) initializes x; see help(type(x)) for signature" alt="" coords="17,391,193,409"/>
+<area shape="rect" id="node0" href="psychsim.action.Action-class.html#getParameters" title="Returns: &#160;list of special parameters for this action" alt="" coords="17,409,193,428"/>
+<area shape="rect" id="node0" href="psychsim.action.Action-class.html#__setitem__" title="x[i]=y" alt="" coords="17,428,193,447"/>
+<area shape="rect" id="node0" href="psychsim.action.Action-class.html#clear" title="Remove all items from D." alt="" coords="17,447,193,465"/>
+<area shape="rect" id="node0" href="psychsim.action.Action-class.html#root" title="Returns: &#160;the base action table, with only special keys &quot;subject&quot;, &quot;verb&quot;, and &#160;&quot;object&quot;" alt="" coords="17,465,193,484"/>
+<area shape="rect" id="node0" href="psychsim.action.Action-class.html#__str__" title="str(x)" alt="" coords="17,484,193,503"/>
+<area shape="rect" id="node0" href="psychsim.action.Action-class.html#__hash__" title="hash(x)" alt="" coords="17,503,193,521"/>
+<area shape="rect" id="node0" href="psychsim.action.Action-class.html#__xml__" title="psychsim.action.Action.__xml__" alt="" coords="17,521,193,540"/>
+<area shape="rect" id="node0" href="psychsim.action.Action-class.html#parse" title="psychsim.action.Action.parse" alt="" coords="17,540,193,559"/>
+<area shape="rect" id="node1" href="psychsim.action.Action-class.html" title="psychsim.action.Action" alt="" coords="5,345,205,565"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="cmp(x,y)" alt="" coords="45,39,165,57"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="dict.__contains__" alt="" coords="45,57,165,76"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="del x[y]" alt="" coords="45,76,165,95"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="x==y" alt="" coords="45,95,165,113"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="x&gt;=y" alt="" coords="45,113,165,132"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="x.__getattribute__(&#39;name&#39;) &lt;==&gt; x.name" alt="" coords="45,132,165,151"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="x[y]" alt="" coords="45,151,165,169"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="x&gt;y" alt="" coords="45,169,165,188"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="iter(x)" alt="" coords="45,188,165,207"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="x&lt;=y" alt="" coords="45,207,165,225"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="len(x)" alt="" coords="45,225,165,244"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="x&lt;y" alt="" coords="45,244,165,263"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="x!=y" alt="" coords="45,263,165,281"/>
+<area shape="rect" id="node1" href="javascript:void(0);" title="dict.viewvalues" alt="" coords="45,300,165,319"/>
+<area shape="rect" id="node2" href="javascript:void(0);" title="dict() &#45;&gt; new empty dictionary dict(mapping) &#45;&gt; new dictionary initialized from a mapping object&#39;s (key, value) pairs dict(iterable) &#45;&gt; new dictionary initialized as if via: d = {} for k, v in iterable: d[k] = v dict(**kwargs) &#45;&gt; new dictionary initialized with the name=value pairs in the keyword argument list." alt="" coords="33,6,177,325"/>
+</map>
+  <img src="uml_class_diagram_for_psychsim.gif" alt='' usemap="#uml_class_diagram_for_psychsim" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
 <hr />
 <!-- ==================== INSTANCE METHODS ==================== -->
 <a name="section-InstanceMethods"></a>
@@ -97,6 +126,24 @@ new empty dictionary
       x.__init__(...) initializes x; see help(type(x)) for signature</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.action-pysrc.html#Action.__init__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">str[]</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.action.Action-class.html#getParameters" class="summary-sig-name">getParameters</a>(<span class="summary-sig-arg">self</span>)</span><br />
+      Returns:
+      list of special parameters for this action</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.action-pysrc.html#Action.getParameters">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -372,6 +419,27 @@ new empty dictionary
   </dl>
 </td></tr></table>
 </div>
+<a name="getParameters"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getParameters</span>(<span class="sig-arg">self</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.action-pysrc.html#Action.getParameters">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns: str[]</dt>
+        <dd>list of special parameters for this action</dd>
+  </dl>
+</td></tr></table>
+</div>
 <a name="__setitem__"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
@@ -499,7 +567,7 @@ new empty dictionary
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -513,13 +581,18 @@ new empty dictionary
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-      <th class="navbar" width="100%"></th>
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Thu Aug  2 12:13:47 2012
+    Generated by Epydoc 3.0.1 on Wed Oct 24 21:38:09 2012
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

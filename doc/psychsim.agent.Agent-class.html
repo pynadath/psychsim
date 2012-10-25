@@ -16,7 +16,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -30,7 +30,12 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-      <th class="navbar" width="100%"></th>
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
   </tr>
 </table>
 <table width="100%" cellpadding="0" cellspacing="0">
@@ -142,12 +147,73 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <td><span class="summary-sig"><a name="valueIteration"></a><span class="summary-sig-name">valueIteration</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">horizon</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">ignore</span>=<span class="summary-sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>,
+        <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">True</span>,
+        <span class="summary-sig-arg">epsilon</span>=<span class="summary-sig-default">1e-06</span>)</span><br />
+      Compute a value function for the given model</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.valueIteration">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="setPolicy"></a><span class="summary-sig-name">setPolicy</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">policy</span>,
+        <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">level</span>=<span class="summary-sig-default">None</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.setPolicy">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
           <td><span class="summary-sig"><a href="psychsim.agent.Agent-class.html#setHorizon" class="summary-sig-name">setHorizon</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">horizon</span>,
         <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">level</span>=<span class="summary-sig-default">None</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.setHorizon">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.agent.Agent-class.html#setParameter" class="summary-sig-name">setParameter</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">name</span>,
+        <span class="summary-sig-arg">value</span>,
+        <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">level</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Set a parameter value for the given model(s)</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.setParameter">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -202,11 +268,32 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="setState"></a><span class="summary-sig-name">setState</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">feature</span>,
-        <span class="summary-sig-arg">value</span>)</span></td>
+          <td><span class="summary-sig"><a href="psychsim.agent.Agent-class.html#setLegal" class="summary-sig-name">setLegal</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">action</span>,
+        <span class="summary-sig-arg">tree</span>)</span><br />
+      Sets the legality decision tree for a given action</td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.setState">source&nbsp;code</a></span>
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.setLegal">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">bool</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.agent.Agent-class.html#hasAction" class="summary-sig-name">hasAction</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">atom</span>)</span><br />
+      Returns:
+      <code>True</code> iff this agent has the given action (possibly in 
+      combination with other actions)</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.hasAction">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -220,10 +307,11 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="addReward"></a><span class="summary-sig-name">addReward</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">tree</span>)</span></td>
+          <td><span class="summary-sig"><a name="setState"></a><span class="summary-sig-name">setState</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">feature</span>,
+        <span class="summary-sig-arg">value</span>)</span></td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.addReward">source&nbsp;code</a></span>
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.setState">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -252,32 +340,16 @@
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">&nbsp;</span>
+      <span class="summary-type">float</span>
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="setRewardWeight"></a><span class="summary-sig-name">setRewardWeight</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">tree</span>,
-        <span class="summary-sig-arg">weight</span>,
-        <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">True</span>)</span></td>
-          <td align="right" valign="top">
-            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.setRewardWeight">source&nbsp;code</a></span>
-            
-          </td>
-        </tr>
-      </table>
-      
-    </td>
-  </tr>
-<tr>
-    <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">&nbsp;</span>
-    </td><td class="summary">
-      <table width="100%" cellpadding="0" cellspacing="0" border="0">
-        <tr>
-          <td><span class="summary-sig"><a name="reward"></a><span class="summary-sig-name">reward</span>(<span class="summary-sig-arg">self</span>,
+          <td><span class="summary-sig"><a href="psychsim.agent.Agent-class.html#reward" class="summary-sig-name">reward</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">vector</span>,
-        <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">True</span>)</span></td>
+        <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">True</span>)</span><br />
+      Returns:
+      the reward I derive in the given state (under the given model, 
+      default being the <code>True</code> model)</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.reward">source&nbsp;code</a></span>
             
@@ -295,15 +367,30 @@
         <tr>
           <td><span class="summary-sig"><a href="psychsim.agent.Agent-class.html#addModel" class="summary-sig-name">addModel</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">name</span>,
-        <span class="summary-sig-arg">R</span>=<span class="summary-sig-default">True</span>,
-        <span class="summary-sig-arg">horizon</span>=<span class="summary-sig-default">True</span>,
-        <span class="summary-sig-arg">level</span>=<span class="summary-sig-default">True</span>,
-        <span class="summary-sig-arg">beliefs</span>=<span class="summary-sig-default">True</span>,
-        <span class="summary-sig-arg">rationality</span>=<span class="summary-sig-default">0.1</span>)</span><br />
+        <span class="summary-sig-arg">**kwargs</span>)</span><br />
       Adds a new possible model for this agent (to be used as either true 
-      model or else as mental model another agent has of it)</td>
+      model or else as mental model another agent has of it).</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.addModel">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="predict"></a><span class="summary-sig-name">predict</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">vector</span>,
+        <span class="summary-sig-arg">name</span>,
+        <span class="summary-sig-arg">V</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.predict">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -698,6 +785,39 @@
   </dl>
 </td></tr></table>
 </div>
+<a name="setParameter"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setParameter</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">name</span>,
+        <span class="sig-arg">value</span>,
+        <span class="sig-arg">model</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">level</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.setParameter">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Set a parameter value for the given model(s)</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>name</code></strong> (str) - the feature of the model to set</li>
+        <li><strong class="pname"><code>value</code></strong> - the new value for the parameter</li>
+        <li><strong class="pname"><code>model</code></strong> - the model to set the horizon for, where <code>None</code> means 
+          set it for all (default is <code>None</code>)</li>
+        <li><strong class="pname"><code>level</code></strong> - if setting across models, the recursive level of models to do so,
+          where <code>None</code> means all levels (default is 
+          <code>None</code>)</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
 <a name="addAction"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
@@ -751,6 +871,85 @@
   </dl>
 </td></tr></table>
 </div>
+<a name="setLegal"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setLegal</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">action</span>,
+        <span class="sig-arg">tree</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.setLegal">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Sets the legality decision tree for a given action</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>action</code></strong> - the action whose legality we are setting</li>
+        <li><strong class="pname"><code>tree</code></strong> (<a href="psychsim.pwl.KeyedTree-class.html" 
+          class="link">KeyedTree</a>) - the decision tree for the legality of the action</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="hasAction"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">hasAction</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">atom</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.hasAction">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>atom</code></strong> (<a href="psychsim.action.Action-class.html" 
+          class="link">Action</a>)</li>
+    </ul></dd>
+    <dt>Returns: bool</dt>
+        <dd><code>True</code> iff this agent has the given action (possibly 
+          in combination with other actions)</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="reward"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">reward</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">vector</span>,
+        <span class="sig-arg">model</span>=<span class="sig-default">True</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.reward">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns: float</dt>
+        <dd>the reward I derive in the given state (under the given model, 
+          default being the <code>True</code> model)</dd>
+  </dl>
+</td></tr></table>
+</div>
 <a name="addModel"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
@@ -760,11 +959,7 @@
   <tr valign="top"><td>
   <h3 class="epydoc"><span class="sig"><span class="sig-name">addModel</span>(<span class="sig-arg">self</span>,
         <span class="sig-arg">name</span>,
-        <span class="sig-arg">R</span>=<span class="sig-default">True</span>,
-        <span class="sig-arg">horizon</span>=<span class="sig-default">True</span>,
-        <span class="sig-arg">level</span>=<span class="sig-default">True</span>,
-        <span class="sig-arg">beliefs</span>=<span class="sig-default">True</span>,
-        <span class="sig-arg">rationality</span>=<span class="sig-default">0.1</span>)</span>
+        <span class="sig-arg">**kwargs</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.addModel">source&nbsp;code</a></span>&nbsp;
@@ -772,22 +967,37 @@
   </tr></table>
   
   <p>Adds a new possible model for this agent (to be used as either true 
-  model or else as mental model another agent has of it)</p>
+  model or else as mental model another agent has of it). Possible 
+  arguments are:</p>
+  <ul>
+    <li>
+      R: the reward table for the agent under this model (default is 
+      <code>True</code>), <a href="psychsim.pwl.KeyedTree-class.html" 
+      class="link">KeyedTree</a>&rarr;float
+    </li>
+    <li>
+      beliefs: the beliefs the agent has under this model (default is 
+      <code>True</code>), <a 
+      href="psychsim.pwl.VectorDistribution-class.html" 
+      class="link">VectorDistribution</a>
+    </li>
+    <li>
+      horizon: the horizon of the value function under this model (default 
+      is <code>True</code>),int
+    </li>
+    <li>
+      level: the recursive depth of this model (default is 
+      <code>True</code>),int
+    </li>
+    <li>
+      rationality: the rationality parameter used in a quantal response 
+      function when modeling others (default is 10),float
+    </li>
+  </ul>
   <dl class="fields">
     <dt>Parameters:</dt>
     <dd><ul class="nomargin-top">
         <li><strong class="pname"><code>name</code></strong> (str) - the label for this model</li>
-        <li><strong class="pname"><code>R</code></strong> (<a href="psychsim.pwl.KeyedTree-class.html" 
-          class="link">KeyedTree</a>&rarr;float) - the reward table for the agent under this model (default is 
-          <code>True</code>)</li>
-        <li><strong class="pname"><code>beliefs</code></strong> (<a href="psychsim.pwl.VectorDistribution-class.html" 
-          class="link">VectorDistribution</a>) - the beliefs the agent has under this model (default is 
-          <code>True</code>)</li>
-        <li><strong class="pname"><code>horizon</code></strong> (int) - the horizon of the value function under this model (default is 
-          <code>True</code>)</li>
-        <li><strong class="pname"><code>level</code></strong> (int) - the recursive depth of this model (default is <code>True</code>)</li>
-        <li><strong class="pname"><code>rationality</code></strong> (float) - the rationality parameter used in a quantal response function 
-          when modeling others (default is 10)</li>
     </ul></dd>
     <dt>Returns: dict</dt>
         <dd>the model created</dd>
@@ -875,7 +1085,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -889,13 +1099,18 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-      <th class="navbar" width="100%"></th>
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Thu Aug  2 12:13:47 2012
+    Generated by Epydoc 3.0.1 on Wed Oct 24 21:38:09 2012
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

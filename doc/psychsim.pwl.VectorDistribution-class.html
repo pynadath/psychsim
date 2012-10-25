@@ -16,7 +16,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -30,7 +30,12 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-      <th class="navbar" width="100%"></th>
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
   </tr>
 </table>
 <table width="100%" cellpadding="0" cellspacing="0">
@@ -57,16 +62,51 @@
 </table>
 <!-- ==================== CLASS DESCRIPTION ==================== -->
 <h1 class="epydoc">Class VectorDistribution</h1><p class="nomargin-top"><span class="codelink"><a href="psychsim.pwl-pysrc.html#VectorDistribution">source&nbsp;code</a></span></p>
-<pre class="base-tree">
-          object --+        
-                   |        
-                dict --+    
-                       |    
-<a href="psychsim.probability.Distribution-class.html">probability.Distribution</a> --+
-                           |
-                          <strong class="uidshort">VectorDistribution</strong>
-</pre>
-
+<center>
+<center>  <map id="uml_class_diagram_for_psychsim_8" name="uml_class_diagram_for_psychsim_8">
+<area shape="rect" id="node19" href="psychsim.pwl.VectorDistribution-class.html#join" title="Modifies the distribution over vectors to have the given value for the &#160;given key" alt="" coords="29,729,205,748"/>
+<area shape="rect" id="node19" href="psychsim.pwl.VectorDistribution-class.html#merge" title="Merge two distributions (the passed&#45;in distribution takes precedence over &#160;this one in case of conflict)" alt="" coords="29,748,205,767"/>
+<area shape="rect" id="node19" href="psychsim.pwl.VectorDistribution-class.html#element2xml" title="psychsim.pwl.VectorDistribution.element2xml" alt="" coords="29,767,205,785"/>
+<area shape="rect" id="node19" href="psychsim.pwl.VectorDistribution-class.html#xml2element" title="psychsim.pwl.VectorDistribution.xml2element" alt="" coords="29,785,205,804"/>
+<area shape="rect" id="node19" href="psychsim.pwl.VectorDistribution-class.html#marginal" title="psychsim.pwl.VectorDistribution.marginal" alt="" coords="29,804,205,823"/>
+<area shape="rect" id="node19" href="psychsim.pwl.VectorDistribution-class.html#hasColumn" title="Returns: &#160;True iff the given key appears in all of the vectors of this distribution" alt="" coords="29,823,205,841"/>
+<area shape="rect" id="node19" href="psychsim.pwl.VectorDistribution-class.html#__deepcopy__" title="psychsim.pwl.VectorDistribution.__deepcopy__" alt="" coords="29,841,205,860"/>
+<area shape="rect" id="node1" href="psychsim.pwl.VectorDistribution-class.html" title="A class representing a Distribution over KeyedVector instances" alt="" coords="17,697,217,866"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#epsilon" title="psychsim.probability.Distribution.epsilon" alt="" coords="17,369,217,388"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#__init__" title="x.__init__(...) initializes x; see help(type(x)) for signature" alt="" coords="17,391,217,409"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#__getitem__" title="x[y]" alt="" coords="17,409,217,428"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#__setitem__" title="x[i]=y" alt="" coords="17,428,217,447"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#__delitem__" title="del x[y]" alt="" coords="17,447,217,465"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#clear" title="Remove all items from D." alt="" coords="17,465,217,484"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#replace" title="Replaces on element in the sample space with another." alt="" coords="17,484,217,503"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#domain" title="Returns: &#160;the sample space of this probability distribution" alt="" coords="17,503,217,521"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#normalize" title="Normalizes the distribution so that the sum of values = 1" alt="" coords="17,521,217,540"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#expectation" title="Returns: &#160;the expected value of this distribution" alt="" coords="17,540,217,559"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#sample" title="Returns: &#160;an element from this domain, with a sample probability given by this &#160;distribution" alt="" coords="17,559,217,577"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#set" title="Reduce distribution to be 100% for the given element" alt="" coords="17,577,217,596"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#select" title="Reduce distribution to a single element, sampled according to the given &#160;distribution" alt="" coords="17,596,217,615"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#__add__" title="psychsim.probability.Distribution.__add__" alt="" coords="17,615,217,633"/>
+<area shape="rect" id="node20" href="psychsim.probability.Distribution-class.html#__copy__" title="psychsim.probability.Distribution.__copy__" alt="" coords="17,652,217,671"/>
+<area shape="rect" id="node2" href="psychsim.probability.Distribution-class.html" title="A probability distribution" alt="" coords="5,345,229,677"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="cmp(x,y)" alt="" coords="57,39,177,57"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="dict.__contains__" alt="" coords="57,57,177,76"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="x==y" alt="" coords="57,76,177,95"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="x&gt;=y" alt="" coords="57,95,177,113"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="x.__getattribute__(&#39;name&#39;) &lt;==&gt; x.name" alt="" coords="57,113,177,132"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="x&gt;y" alt="" coords="57,132,177,151"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="iter(x)" alt="" coords="57,151,177,169"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="x&lt;=y" alt="" coords="57,169,177,188"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="len(x)" alt="" coords="57,188,177,207"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="x&lt;y" alt="" coords="57,207,177,225"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="x!=y" alt="" coords="57,225,177,244"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="dict.__new__" alt="" coords="57,244,177,263"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="repr(x)" alt="" coords="57,263,177,281"/>
+<area shape="rect" id="node21" href="javascript:void(0);" title="dict.viewvalues" alt="" coords="57,300,177,319"/>
+<area shape="rect" id="node3" href="javascript:void(0);" title="dict() &#45;&gt; new empty dictionary dict(mapping) &#45;&gt; new dictionary initialized from a mapping object&#39;s (key, value) pairs dict(iterable) &#45;&gt; new dictionary initialized as if via: d = {} for k, v in iterable: d[k] = v dict(**kwargs) &#45;&gt; new dictionary initialized with the name=value pairs in the keyword argument list." alt="" coords="45,6,189,325"/>
+</map>
+  <img src="uml_class_diagram_for_psychsim_8.gif" alt='' usemap="#uml_class_diagram_for_psychsim_8" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
 <hr />
 <p>A class representing a <a 
   href="psychsim.probability.Distribution-class.html" 
@@ -227,6 +267,7 @@
       <code><a href="psychsim.probability.Distribution-class.html#__copy__">__copy__</a></code>,
       <code><a href="psychsim.probability.Distribution-class.html#__delitem__">__delitem__</a></code>,
       <code><a href="psychsim.probability.Distribution-class.html#__getitem__">__getitem__</a></code>,
+      <code><a href="psychsim.probability.Distribution-class.html#__hash__">__hash__</a></code>,
       <code><a href="psychsim.probability.Distribution-class.html#__init__">__init__</a></code>,
       <code><a href="psychsim.probability.Distribution-class.html#__setitem__">__setitem__</a></code>,
       <code><a href="psychsim.probability.Distribution-class.html#__str__">__str__</a></code>,
@@ -307,9 +348,6 @@
     <td colspan="2" class="summary">
     <p class="indent-wrapped-lines"><b>Inherited from <code><a href="psychsim.probability.Distribution-class.html">probability.Distribution</a></code></b>:
       <code><a href="psychsim.probability.Distribution-class.html#epsilon">epsilon</a></code>
-      </p>
-    <p class="indent-wrapped-lines"><b>Inherited from <code>dict</code></b>:
-      <code>__hash__</code>
       </p>
     </td>
   </tr>
@@ -492,7 +530,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -506,13 +544,18 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-      <th class="navbar" width="100%"></th>
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Thu Aug  2 12:13:47 2012
+    Generated by Epydoc 3.0.1 on Wed Oct 24 21:38:10 2012
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

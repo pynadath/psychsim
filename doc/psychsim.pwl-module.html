@@ -16,7 +16,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -30,7 +30,12 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-      <th class="navbar" width="100%"></th>
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
   </tr>
 </table>
 <table width="100%" cellpadding="0" cellspacing="0">
@@ -285,6 +290,28 @@
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type"><a href="psychsim.pwl.KeyedMatrix-class.html" 
+      class="link">KeyedMatrix</a></span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.pwl-module.html#addFeatureMatrix" class="summary-sig-name">addFeatureMatrix</a>(<span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">otherKey</span>,
+        <span class="summary-sig-arg">pct</span>=<span class="summary-sig-default">1.0</span>)</span><br />
+      Returns:
+      a dynamics matrix adding a percentage of another feature value to the
+      given feature value (default percentage is 100%)</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.pwl-pysrc.html#addFeatureMatrix">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -329,6 +356,28 @@
       threshold</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.pwl-pysrc.html#thresholdRow">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type"><a href="psychsim.pwl.KeyedPlane-class.html" 
+      class="link">KeyedPlane</a></span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.pwl-module.html#differenceRow" class="summary-sig-name">differenceRow</a>(<span class="summary-sig-arg">key1</span>,
+        <span class="summary-sig-arg">key2</span>,
+        <span class="summary-sig-arg">threshold</span>)</span><br />
+      Returns:
+      a plane testing whether the difference between the first and second 
+      keyed values exceeds the given threshold</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.pwl-pysrc.html#differenceRow">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -562,8 +611,9 @@
   <dl class="fields">
     <dt>Parameters:</dt>
     <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>limit</code></strong> (float)</li>
-        <li><strong class="pname"><code>weight</code></strong> (float)</li>
+        <li><strong class="pname"><code>weight</code></strong> (float) - the percentage by which you want the feature to approach the 
+          limit</li>
+        <li><strong class="pname"><code>limit</code></strong> (float) - the value you want the feature to approach</li>
     </ul></dd>
     <dt>Returns: <a href="psychsim.pwl.KeyedMatrix-class.html" 
       class="link">KeyedMatrix</a></dt>
@@ -591,7 +641,7 @@
   <dl class="fields">
     <dt>Parameters:</dt>
     <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>delta</code></strong> (float)</li>
+        <li><strong class="pname"><code>delta</code></strong> (float) - the constant value to add to the state feature</li>
     </ul></dd>
     <dt>Returns: <a href="psychsim.pwl.KeyedMatrix-class.html" 
       class="link">KeyedMatrix</a></dt>
@@ -659,6 +709,35 @@
   </dl>
 </td></tr></table>
 </div>
+<a name="addFeatureMatrix"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">addFeatureMatrix</span>(<span class="sig-arg">key</span>,
+        <span class="sig-arg">otherKey</span>,
+        <span class="sig-arg">pct</span>=<span class="sig-default">1.0</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.pwl-pysrc.html#addFeatureMatrix">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>otherKey</code></strong> (str)</li>
+    </ul></dd>
+    <dt>Returns: <a href="psychsim.pwl.KeyedMatrix-class.html" 
+      class="link">KeyedMatrix</a></dt>
+        <dd>a dynamics matrix adding a percentage of another feature value to
+          the given feature value (default percentage is 100%)</dd>
+  </dl>
+</td></tr></table>
+</div>
 <a name="thresholdRow"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
@@ -680,6 +759,31 @@
       class="link">KeyedPlane</a></dt>
         <dd>a plane testing whether the given keyed value exceeds the given 
           threshold</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="differenceRow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">differenceRow</span>(<span class="sig-arg">key1</span>,
+        <span class="sig-arg">key2</span>,
+        <span class="sig-arg">threshold</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.pwl-pysrc.html#differenceRow">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns: <a href="psychsim.pwl.KeyedPlane-class.html" 
+      class="link">KeyedPlane</a></dt>
+        <dd>a plane testing whether the difference between the first and 
+          second keyed values exceeds the given threshold</dd>
   </dl>
 </td></tr></table>
 </div>
@@ -760,7 +864,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -774,13 +878,18 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-      <th class="navbar" width="100%"></th>
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Thu Aug  2 12:13:47 2012
+    Generated by Epydoc 3.0.1 on Wed Oct 24 21:38:09 2012
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

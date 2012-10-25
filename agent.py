@@ -372,7 +372,7 @@ class Agent:
 
     def hasAction(self,atom):
         """
-        @type action: L{Action}
+        @type atom: L{Action}
         @return: C{True} iff this agent has the given action (possibly in combination with other actions)
         @rtype: bool
         """
@@ -425,19 +425,14 @@ class Agent:
 
     def addModel(self,name,**kwargs):
         """
-        Adds a new possible model for this agent (to be used as either true model or else as mental model another agent has of it)
+        Adds a new possible model for this agent (to be used as either true model or else as mental model another agent has of it). Possible arguments are:
+         - R: the reward table for the agent under this model (default is C{True}), L{KeyedTree}S{->}float
+         - beliefs: the beliefs the agent has under this model (default is C{True}), L{VectorDistribution}
+         - horizon: the horizon of the value function under this model (default is C{True}),int
+         - level: the recursive depth of this model (default is C{True}),int
+         - rationality: the rationality parameter used in a quantal response function when modeling others (default is 10),float
         @param name: the label for this model
         @type name: str
-        @param R: the reward table for the agent under this model (default is C{True})
-        @type R: L{KeyedTree}S{->}float
-        @param beliefs: the beliefs the agent has under this model (default is C{True})
-        @type beliefs: L{VectorDistribution}
-        @param horizon: the horizon of the value function under this model (default is C{True})
-        @type horizon: int
-        @param level: the recursive depth of this model (default is C{True})
-        @type level: int
-        @param rationality: the rationality parameter used in a quantal response function when modeling others (default is 10)
-        @type rationality: float
         @return: the model created
         @rtype: dict
         """
