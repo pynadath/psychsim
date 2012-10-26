@@ -521,8 +521,7 @@ class Agent:
         return beliefs
 
     def printBeliefs(self,model=True):
-        beliefs = self.getBelief(model)
-        self.world.printState(beliefs)
+        raise DeprecationWarning,'Use the "beliefs=True" argument to printState instead'
 
     def observe(self,state,actions,model=True):
         """
