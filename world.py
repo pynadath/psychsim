@@ -612,6 +612,7 @@ class World:
             assert self.agents[modelee].models[name]['level'] == modelerLevel - 1,\
                 'Agent %s\'s %s model has belief level of %d, so its model %s for agent %s must have belief level of %d' % \
                 (modeler,model,modelerLevel,name,modelee,modelerLevel-1)
+        distribution.normalize()
         self.agents[modeler].setBelief(modelKey(modelee),distribution,model)
 
     def updateModels(self,outcome,vector):
@@ -907,7 +908,7 @@ class World:
                     model = self.agents[entity].models[True]
                     if not model['beliefs'] is True:
                         print >> buf,'\t\t\t----beliefs:----'
-                        self.printDelta(vector,model['beliefs'],buf,'\t\t\t')
+                        self.printDelta(vector,self.agents[entity].getBelief(model['name'],vector),buf,'\t\t\t')
                         print >> buf,'\t\t\t----------------'
         if not csv and not change:
             print >> buf,'%s\tUnchanged' % (prefix)

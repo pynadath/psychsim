@@ -319,7 +319,7 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
         free.addModel('true')
         free.setParameter('R',True,'true')         # Use real agent's reward
         free.setParameter('rationality',1.,'true') # Override real agent's rationality with this value
-        world.setMentalModel(sylv.name,free.name,{'true': 0.6,'dove': 0.3,'hawk': 0.1})
+        world.setMentalModel(sylv.name,free.name,{'dove': 0.3,'hawk': 0.1})
     return world
 
 def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
@@ -348,7 +348,7 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
 #    V = sylv.valueIteration(horizon=45,ignore=ignore)
 
     if debug > 0:
-        world.printState()
+        world.printState(beliefs=True)
 
     for t in range(rounds):
         for step in range(steps):
@@ -365,7 +365,7 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
                     outcome = world.step()
                     world.explain(outcome,debug)
                 world.state.select()
-                world.printState()
+                world.printState(beliefs=True)
 
 if __name__ == '__main__':
     # Grab command-line arguments
