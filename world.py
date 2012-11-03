@@ -138,7 +138,11 @@ class World:
         stochastic = []
         if not isinstance(outcome['actions'],ActionSet):
             # ActionSet indicates that we should perform just these actions. Otherwise, we look at whose turn it is:
-            for name in self.next(vector):
+            turn = self.next(vector)
+            for name in outcome['actions'].keys():
+                if not (name in turn):
+                    raise NameError,'Agent %s must wait its turn' % (name)
+            for name in turn:
                 if not outcome['actions'].has_key(name):
                     model = self.getMentalModel(name,vector)
                     decision = self.agents[name].decide(vector,horizon,outcome['actions'],model,tiebreak)
@@ -586,6 +590,12 @@ class World:
         return result
 
     def getMentalModel(self,modelee,vector):
+        """
+        @return: the name of the model of the given agent indicated by the given state vector
+        @type modelee: str
+        @type vector: L{KeyedVector}
+        @rtype: str
+        """
         agent = self.agents[modelee]
         try:
             model = agent.index2model(vector[modelKey(modelee)])
@@ -596,6 +606,7 @@ class World:
     def setMentalModel(self,modeler,modelee,distribution,model=True):
         """
         Sets the distribution over mental models one agent has of another entity
+        @note: Normalizes the distribution given
         """
         # Make sure distribution is probability distribution over floats
         if not isinstance(distribution,dict):
@@ -636,7 +647,9 @@ class World:
                             V = {}
                             for alternative in self.agents[actor].getActions(outcome['old']):
                                 # Evaluate all available actions with respect to the hypothesized mental model
-                                V[alternative] = self.agents[actor].value(outcome['old'],alternative,model=hypothesis['name'])['V']
+                                state = KeyedVector(outcome['old'])
+                                state[actorKey] = index
+                                V[alternative] = self.agents[actor].value(state,alternative,model=hypothesis['name'])['V']
                                 denominator += math.exp(hypothesis['rationality']*V[alternative])
                             # Convert into probability distribution of observed action given hypothesized mental model
                             prob[index] = math.exp(hypothesis['rationality']*V[actions])/denominator
@@ -833,6 +846,8 @@ class World:
         @type first: bool
         @param csv: if C{True}, then print the vector as comma-separated values (default is C{False})
         @type csv: bool
+        @param beliefs: if C{True}, then print any agent beliefs that might deviate from this vector as well (default is C{False})
+        @type beliefs: bool
         """
         if csv:
             if prefix:
@@ -928,6 +943,13 @@ class World:
             print >> buf,','.join(elements)
 
     def printDelta(self,old,new,buf=None,prefix=''):
+        """
+        Prints a kind of diff patch for one state vector with respect to another
+        @param old: the "original" state vector
+        @type old: L{KeyedVector}
+        @param new: the state vector we want to see the diff of
+        @type new: L{VectorDistribution}
+        """
         deltaDist = VectorDistribution()
         for vector in new.domain():
             delta = KeyedVector()
