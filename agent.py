@@ -45,7 +45,7 @@ class Agent:
     """Policy methods"""
     """------------------"""
 
-    def decide(self,vector,horizon=None,others=None,model=True,tiebreak=None):
+    def decide(self,vector,horizon=None,others=None,model=None,tiebreak=None):
         """
         Generate an action choice for this agent in the given state
         @param vector: the current state in which the agent is making its decision
@@ -54,7 +54,7 @@ class Agent:
         @type horizon: int
         @param others: the optional action choices of other agents in the current time step
         @type others: strS{->}L{ActionSet}
-        @param model: the mental model to use (default is C{True})
+        @param model: the mental model to use (default is model specified in vector)
         @type model: str
         @param tiebreak: what to do in case multiple actions have the same expected value
            - random: choose one of the actions at random
@@ -62,6 +62,8 @@ class Agent:
            - None: make a deterministic choice among the actions (default)
         @type tiebreak: str
         """
+        if model is None:
+            model = self.world.getMentalModel(self.name,vector)
         # What are my subjective beliefs for this decision?
         belief = self.getBelief(model,vector)
         # Do I have a policy telling me what to do?
@@ -119,7 +121,7 @@ class Agent:
             result['action'] = best[0]
         return result
                 
-    def value(self,vector,action=None,horizon=None,others=None,model=True):
+    def value(self,vector,action=None,horizon=None,others=None,model=None):
         """
         Computes the expected value of a state vector (and optional action choice) to this agent
         @param vector: the state vector (not distribution) representing the possible world under consideration
@@ -132,6 +134,8 @@ class Agent:
         @type others: strS{->}L{ActionSet}
         @param model: the model of this agent to use (default is C{True})
         """
+        if model is None:
+            model = self.world.getMentalModel(self.name,vector)
         # Determine horizon
         if horizon is None:
             horizon = self.models[model]['horizon']
