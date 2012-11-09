@@ -14,7 +14,8 @@ if __name__ == '__main__':
     # Create scenario
     maxRounds=8
     world = World()
-    totals = {'scotch':1,'tequila':1} #  1 and 1
+    totals = {'scotch':1,'tequila':2} 
+    batna_prePref = totals['scotch'] + totals['tequila']
     stacy = Agent('Stacy')
     david = Agent('David')
     agts = [stacy, david]
@@ -35,7 +36,7 @@ if __name__ == '__main__':
         me.setState('tequilaOffered',0)  
 
         world.defineState(me.name,'Batna',int,lo=0,hi=10)
-        me.setState('Batna',1)  
+        me.setState('Batna', batna_prePref)
         world.defineState(me.name,'BatnaOwned',int,lo=0,hi=10)
         me.setState('BatnaOwned',0)  
 
@@ -133,7 +134,7 @@ if __name__ == '__main__':
     tequilaGoalS = maximizeFeature(stateKey(stacy.name,'tequilaOwned'))
     stacy.setReward(tequilaGoalS,1.0)
     BatnaGoalD = maximizeFeature(stateKey(stacy.name,'BatnaOwned'))
-    stacy.setReward(BatnaGoalD,0.5)
+    stacy.setReward(BatnaGoalD,6.0)
    
     # Goals for David
     scotchGoalD = maximizeFeature(stateKey(david.name,'scotchOwned'))
@@ -141,7 +142,7 @@ if __name__ == '__main__':
     tequilaGoalD = maximizeFeature(stateKey(david.name,'tequilaOwned'))
     david.setReward(tequilaGoalD,4.0)
     BatnaGoalD = maximizeFeature(stateKey(david.name,'BatnaOwned'))
-    david.setReward(BatnaGoalD,0.5)
+    david.setReward(BatnaGoalD,0.1)
 
 
 # So the following would be a tree capturing both of Stacy's current goals:
