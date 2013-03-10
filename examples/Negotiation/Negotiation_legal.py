@@ -14,8 +14,8 @@ if __name__ == '__main__':
     # Create scenario
     maxRounds=8
     world = World()
-    totals = {'scotch':1,'tequila':2} 
-    batna_prePref = totals['scotch'] + totals['tequila']
+    totals = {'apple':1,'pear':2} 
+    batna_prePref = totals['apple'] + totals['pear']
     stacy = Agent('Stacy')
     david = Agent('David')
     agts = [stacy, david]
@@ -26,14 +26,14 @@ if __name__ == '__main__':
         other = agts[1-i]
         world.addAgent(me)
         # State
-        world.defineState(me.name,'scotchOwned',int,lo=0,hi=totals['scotch'])
-        me.setState('scotchOwned',0)
-        world.defineState(me.name,'scotchOffered',int,lo=0,hi=totals['scotch'])
-        me.setState('scotchOffered',0)  
-        world.defineState(me.name,'tequilaOwned',int,lo=0,hi=totals['tequila'])
-        me.setState('tequilaOwned',0)
-        world.defineState(me.name,'tequilaOffered',int,lo=0,hi=totals['tequila'])
-        me.setState('tequilaOffered',0)  
+        world.defineState(me.name,'appleOwned',int,lo=0,hi=totals['apple'])
+        me.setState('appleOwned',0)
+        world.defineState(me.name,'appleOffered',int,lo=0,hi=totals['apple'])
+        me.setState('appleOffered',0)  
+        world.defineState(me.name,'pearOwned',int,lo=0,hi=totals['pear'])
+        me.setState('pearOwned',0)
+        world.defineState(me.name,'pearOffered',int,lo=0,hi=totals['pear'])
+        me.setState('pearOffered',0)  
 
         world.defineState(me.name,'Batna',int,lo=0,hi=10)
         me.setState('Batna', batna_prePref)
@@ -44,8 +44,8 @@ if __name__ == '__main__':
         me.setState('agree',False)  
         # Actions
         me.addAction({'verb': 'do nothing'})
-        for amt in range(totals['scotch'] + 1):
-            tmp = me.addAction({'verb': 'offerScotch','object': other.name,'amount': amt})
+        for amt in range(totals['apple'] + 1):
+            tmp = me.addAction({'verb': 'offerApple','object': other.name,'amount': amt})
             me.setLegal(tmp,makeTree({'if': trueRow(stateKey(None, 'agreement')),
                                       False: {'if': trueRow(stateKey(None, 'rejectedNegotiation')),
                                               True: False,
@@ -53,8 +53,8 @@ if __name__ == '__main__':
                                       True: False}))
 
 
-        for amt in range(totals['tequila'] + 1):
-            tmp = me.addAction({'verb': 'offerTequila','object': other.name,'amount': amt})
+        for amt in range(totals['pear'] + 1):
+            tmp = me.addAction({'verb': 'offerPear','object': other.name,'amount': amt})
             me.setLegal(tmp,makeTree({'if': trueRow(stateKey(None, 'agreement')),
                                       False: {'if': trueRow(stateKey(None, 'rejectedNegotiation')),
                                               True: False,
@@ -69,8 +69,8 @@ if __name__ == '__main__':
                                          True: False}))
 
         meAccept = me.addAction({'verb': 'accept offer','object': other.name})
-        me.setLegal(meAccept,makeTree({'if': trueRow(stateKey(None, 'scotchOffer')),
-                                         True: {'if': trueRow(stateKey(None, 'tequilaOffer')),
+        me.setLegal(meAccept,makeTree({'if': trueRow(stateKey(None, 'appleOffer')),
+                                         True: {'if': trueRow(stateKey(None, 'pearOffer')),
                                                 True: {'if': trueRow(stateKey(None, 'agreement')),
                                                        False: {'if': trueRow(stateKey(None, 'rejectedNegotiation')),
                                                                True: False,
@@ -94,16 +94,18 @@ if __name__ == '__main__':
     # World state
     world.defineState(None,'agreement',bool)
     world.setState(None,'agreement',False)
-    world.defineState(None,'scotchOffer',bool)
-    world.setState(None,'scotchOffer',False)
-    world.defineState(None,'tequilaOffer',bool)
-    world.setState(None,'tequilaOffer',False)
+    world.defineState(None,'appleOffer',bool)
+    world.setState(None,'appleOffer',False)
+    world.defineState(None,'pearOffer',bool)
+    world.setState(None,'pearOffer',False)
     world.defineState(None,'round',int,description='The current round of the negotiation')
     world.setState(None,'round',0)
     world.defineState(None,'rejectedNegotiation',bool,
                       description='Have one of the players walked out?')
     world.setState(None, 'rejectedNegotiation', False)
 
+
+# dont terminate so agent sees benefit of early agreement
 #    world.addTermination(makeTree({'if': trueRow(stateKey(None,'agreement')),
 #                                   True: True, 
 #                                   False: False}))
@@ -120,47 +122,47 @@ if __name__ == '__main__':
     #######################
     # A more flexible way to specify the payoffs would be better
     # for example we would want to capture that a person might want 
-    # one scotch but no more and as many tequila as they could get
+    # one apple but no more and as many pear as they could get
     # 
     # Also a more flexbile way to specify the model of the other is needed.
     # We specifically need ways to specify the model of the other
     # that supports abstraction and perhaps easy calculation 
-    # eg "the other will accept any offer that includes at least one scotch"
+    # eg "the other will accept any offer that includes at least one apple"
 
     # Here I just give a simple contrary preferences
     # Goals for Stacy
-    scotchGoalS = maximizeFeature(stateKey(stacy.name,'scotchOwned'))
-    stacy.setReward(scotchGoalS,4.0)
-    tequilaGoalS = maximizeFeature(stateKey(stacy.name,'tequilaOwned'))
-    stacy.setReward(tequilaGoalS,1.0)
-    BatnaGoalD = maximizeFeature(stateKey(stacy.name,'BatnaOwned'))
-    stacy.setReward(BatnaGoalD,6.0)
+    appleGoalS = maximizeFeature(stateKey(stacy.name,'appleOwned'))
+    stacy.setReward(appleGoalS,4.0)
+    pearGoalS = maximizeFeature(stateKey(stacy.name,'pearOwned'))
+    stacy.setReward(pearGoalS,1.0)
+    BatnaGoalS = maximizeFeature(stateKey(stacy.name,'BatnaOwned'))
+    stacy.setReward(BatnaGoalS,6.0)
    
     # Goals for David
-    scotchGoalD = maximizeFeature(stateKey(david.name,'scotchOwned'))
-    david.setReward(scotchGoalD,1.0)
-    tequilaGoalD = maximizeFeature(stateKey(david.name,'tequilaOwned'))
-    david.setReward(tequilaGoalD,4.0)
+    appleGoalD = maximizeFeature(stateKey(david.name,'appleOwned'))
+    david.setReward(appleGoalD,1.0)
+    pearGoalD = maximizeFeature(stateKey(david.name,'pearOwned'))
+    david.setReward(pearGoalD,4.0)
     BatnaGoalD = maximizeFeature(stateKey(david.name,'BatnaOwned'))
     david.setReward(BatnaGoalD,0.1)
 
 
 # So the following would be a tree capturing both of Stacy's current goals:
-#     scotch = stateKey(stacy.name,'scotchOwned')
-#     tequila = stateKey(stacy.name,'tequilaOwned')
-#     goal = makeTree(KeyedVector({scotch: -1.,tequila: 2.}))
+#     apple = stateKey(stacy.name,'appleOwned')
+#     pear = stateKey(stacy.name,'pearOwned')
+#     goal = makeTree(KeyedVector({apple: -1.,pear: 2.}))
 #     stacy.setReward(goal,1.)
 
-# The following would be more complicated, saying that the badness of scotch plateaus at 2
-#     goal = makeTree({'if': thresholdRow(scotch,1.5),
-#                      True: KeyedVector({CONSTANT: -2.,tequila: 2.}),
-#                      False: KeyedVector({scotch: -1.,tequila: 2.})})
+# The following would be more complicated, saying that the badness of apple plateaus at 2
+#     goal = makeTree({'if': thresholdRow(apple,1.5),
+#                      True: KeyedVector({CONSTANT: -2.,pear: 2.}),
+#                      False: KeyedVector({apple: -1.,pear: 2.})})
 #     stacy.setReward(goal,1.)
 
     # Dynamics of offers
     agents = [david.name,stacy.name]
     for i in range(2):
-        for fruit in ['scotch','tequila']:
+        for fruit in ['apple','pear']:
             atom = Action({'subject': agents[i],'verb': 'offer%s' % (fruit.capitalize()),
                            'object': agents[1-i]})
             parties = [atom['subject'], atom['object']]
@@ -196,7 +198,7 @@ if __name__ == '__main__':
 
         # Accepting offer sets ownership
         parties = [atom['subject'], atom['object']]
-        for fruit in ['scotch','tequila']:
+        for fruit in ['apple','pear']:
             # atom = Action({'subject': agents[i],'verb': 'accept offer', 'object': agents[1-i]})
             for j in range(2):
                 offer = stateKey(parties[j],'%sOffered' % (fruit))
@@ -225,13 +227,13 @@ if __name__ == '__main__':
 
     # mental models
     # David's models of Stacy
-    stacy.addModel('tequilaLover',R={scotchGoalS: 1.0,tequilaGoalS: 4.0},level=2,rationality=0.01)
-    stacy.addModel('scotchLover',R={scotchGoalS: 4.0,tequilaGoalS: 1.0},level=2,rationality=0.01)
-    world.setMentalModel(david.name,stacy.name,{'tequilaLover': 0.5,'scotchLover': 0.5})
+    stacy.addModel('pearLover',R={appleGoalS: 1.0,pearGoalS: 4.0,BatnaGoalS:6.0},level=2,rationality=0.01)
+    stacy.addModel('appleLover',R={appleGoalS: 4.0,pearGoalS: 1.0,BatnaGoalS:0.1},level=2,rationality=0.01)
+    world.setMentalModel(david.name,stacy.name,{'pearLover': 0.5,'appleLover': 0.5})
     # Stacy's models of David
-    david.addModel('tequilaLover',R={scotchGoalD: 1.0,tequilaGoalD: 4.0},level=2,rationality=0.01)
-    david.addModel('scotchLover',R={scotchGoalD: 4.0,tequilaGoalD: 1.0},level=2,rationality=0.01)
-    world.setMentalModel(stacy.name,david.name,{'tequilaLover': 0.5,'scotchLover': 0.5})
+    david.addModel('pearLover',R={appleGoalD: 1.0,pearGoalD: 4.0,BatnaGoalD,6.0},level=2,rationality=0.01)
+    david.addModel('appleLover',R={appleGoalD: 4.0,pearGoalD: 1.0,BatnaGoalD,0.1},level=2,rationality=0.01)
+    world.setMentalModel(stacy.name,david.name,{'pearLover': 0.5,'appleLover': 0.5})
 
 
     
