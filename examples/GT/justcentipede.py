@@ -13,10 +13,11 @@ class Centipede:
 
 
 
-    def __init__(self,turnOrder,maxRounds,payoyff):
+    def __init__(self,turnOrder,maxRounds,payoff):
 
         self.maxRounds=maxRounds
         self.payoff = payoff
+        print self.payoff
         self.world = World()
         stacy = Agent('Stacy')
         david = Agent('David')
@@ -28,6 +29,8 @@ class Centipede:
             other = agts[1-i]
             self.world.addAgent(me)
             # State
+            self.world.defineState(me.name,'money',int)
+            me.setState('money',0)  
             mePass = me.addAction({'verb': 'pass','object': other.name})
             meTake = me.addAction({'verb': 'take','object': other.name})
             # Parameters
@@ -39,25 +42,30 @@ class Centipede:
         stacy.setRecursiveLevel(3)
 
         self.world.setOrder(turnOrder)
-
         # World state
         self.world.defineState(None,'round',int,description='The current round')
         self.world.setState(None,'round',0)
+        self.world.defineState(None,'gameOver',bool,description='whether game is over')
+        self.world.setState(None,'gameOver',False)
 
         self.world.addTermination(makeTree({'if': thresholdRow(stateKey(None,'round'),self.maxRounds),
-                                   True: True, False: False}))
+                                            True: True, 
+                                            False: {'if': trueRow(stateKey(None,'gameOver')),
+                                                    True: True,
+                                                    False: False}}))
 
         # Dynamics
         for action in stacy.actions | david.actions:
             tree = makeTree(incrementMatrix(stateKey(None,'round'),1))
             self.world.setDynamics(None,'round',action,tree)
             if (action['verb'] == 'take'):
-                tree = makeTree(setTrueMatrix(stateKey(None,'agreement')))
-                self.world.setDynamics(None,'agreement',action,tree)
-                tree = buildPayoff(self.maxRounds, payoff[action['subject']])
-                self.world.setDynamics(action['subject'],'money',action,tree)
-                tree = buildPayoff(self.maxRounds, payoff[action['object']])
-                self.world.setDynamics(action['object'],'money',action,tree)
+                tree = makeTree(setTrueMatrix(stateKey(None,'gameOver')))
+                self.world.setDynamics(None,'gameOver',action,tree)
+                agts = ['Stacy','David']
+                for i in range(2):
+                    key = stateKey(agts[i],'money')
+                    tree = makeTree(self.buildPayoff(0, key, self.payoff[agts[i]]))
+                    self.world.setDynamics(agts[i],'money',action,tree)
 
 # really need to ask david about these levels - if adding modesl with levels, can
 # the true model point to these but have a different level
@@ -66,13 +74,13 @@ class Centipede:
             agent.addModel('Christian',R={},level=2,rationality=0.01)
             agent.addModel('Capitalist',R={},level=2,rationality=0.01)
 
-    def buildPayoff(round,key):
-        if (round == self.maxRound):
-            return maketree(setToConstant(key,self.payoff[round]))
+    def buildPayoff(self,round,key,payoff):
+        if (round == self.maxRounds - 1):
+            return setToConstantMatrix(key,payoff[round])
         else:
-            return {'if': equalRow(stateKey(None,'round'),round)
-                    True: maketree(setToConstant(key,self.payoff[round])),
-                    False: buildPayoff(round+1,key)}
+            return {'if': equalRow(stateKey(None,'round'),round),
+                    True: setToConstantMatrix(key,payoff[round]),
+                    False: self.buildPayoff(round+1,key,payoff)}
 
 
     def modeltest(self,trueModels,davidBeliefAboutStacy,stacyBeliefAboutDavid,strongerBelief):
@@ -86,9 +94,9 @@ class Centipede:
                 else:
                     name = model
                 if name == 'Capitalist':
-                    me.setReward(maximizeFeature(stateKey(agent.name,'money')),1.0,model)
+                    me.setReward(maximizeFeature(stateKey(me.name,'money')),1.0,model)
                 elif name == 'Christian':
-                    me.setReward(maximizeFeature(stateKey(agent.name,'money')),1.0,model)
+                    me.setReward(maximizeFeature(stateKey(me.name,'money')),1.0,model)
                     me.setReward(maximizeFeature(stateKey(other.name,'money')),1.0,model)
 
         weakBelief = 1.0 - strongerBelief          
@@ -123,13 +131,13 @@ class Centipede:
 
 # TEST Runs Scripting
 
-payoffDict= {'Stacy': [],
-              'David': []}
+payoffDict= {'Stacy': [2,3,4,1],
+              'David': [1,1,3,1]}
 
 trueModels = {'Stacy': 'Capitalist',
               'David': 'Capitalist'}
 turnOrder=['Stacy','David']
 negagts = Centipede(turnOrder, 4, payoffDict)
-negagts.modeltest(trueModels,'Capitalist','Christian', 1.0)
+negagts.modeltest(trueModels,'Capitalist','Capitalist', 1.0)
 negagts.runit("Capitalist and Correct beliefs")
 
