@@ -66,6 +66,15 @@ class Centipede:
                     key = stateKey(agts[i],'money')
                     tree = makeTree(self.buildPayoff(0, key, self.payoff[agts[i]]))
                     self.world.setDynamics(agts[i],'money',action,tree)
+            elif action['verb'] == 'pass':
+                agts = ['Stacy','David']
+                for i in range(2):
+                    key = stateKey(agts[i],'money')
+                    tree = makeTree({'if': equalRow(stateKey(None,'round'),self.maxRounds-1),
+                                     True: setToConstantMatrix(key,self.payoff[agts[i]][self.maxRounds]),
+                                     False: noChangeMatrix(key)})
+                    self.world.setDynamics(agts[i],'money',action,tree)
+                
 
 # really need to ask david about these levels - if adding modesl with levels, can
 # the true model point to these but have a different level
@@ -74,13 +83,13 @@ class Centipede:
             agent.addModel('Christian',R={},level=2,rationality=0.01)
             agent.addModel('Capitalist',R={},level=2,rationality=0.01)
 
-    def buildPayoff(self,round,key,payoff):
-        if (round == self.maxRounds - 1):
-            return setToConstantMatrix(key,payoff[round])
+    def buildPayoff(self,rnd,key,payoff):
+        if (rnd == self.maxRounds - 1):
+            return setToConstantMatrix(key,payoff[rnd])
         else:
-            return {'if': equalRow(stateKey(None,'round'),round),
-                    True: setToConstantMatrix(key,payoff[round]),
-                    False: self.buildPayoff(round+1,key,payoff)}
+            return {'if': equalRow(stateKey(None,'round'),rnd),
+                    True: setToConstantMatrix(key,payoff[rnd]),
+                    False: self.buildPayoff(rnd+1,key,payoff)}
 
 
     def modeltest(self,trueModels,davidBeliefAboutStacy,stacyBeliefAboutDavid,strongerBelief):
@@ -131,13 +140,42 @@ class Centipede:
 
 # TEST Runs Scripting
 
-payoffDict= {'Stacy': [2,3,4,1],
-              'David': [1,1,3,1]}
+for payoffDict in [{'Stacy': [2,0,3,1,3],
+                    'David': [0,2,0,4,3]},
+                   {'Stacy': [2,4,3,1,3],
+                    'David': [0,2,0,4,3]},
+                   {'Stacy': [2,0,3,1,3],
+                    'David': [0,1,2,4,3]},
+                   {'Stacy': [2,0,1,3,3],
+                    'David': [0,2,0,4,3]},
+                   {'Stacy': [2,0,1,2,3],
+                    'David': [0,2,0,3,4]}]:
+    trueModels = {'Stacy': 'Capitalist',
+                  'David': 'Capitalist'}
+    turnOrder=['Stacy','David']
 
-trueModels = {'Stacy': 'Capitalist',
-              'David': 'Capitalist'}
-turnOrder=['Stacy','David']
-negagts = Centipede(turnOrder, 4, payoffDict)
-negagts.modeltest(trueModels,'Capitalist','Capitalist', 1.0)
-negagts.runit("Capitalist and Correct beliefs")
+    # The following tests the dynamics by running through every possible action sequence
+    # for length in range(len(payoffDict['Stacy'])):
+    #     negagts = Centipede(turnOrder, len(payoffDict['Stacy'])-1, payoffDict)
+    #     world = negagts.world
+    #     state = world.state
+    #     while not world.terminated():
+    #         agent = world.agents[negagts.world.next()[0]]
+    #         if world.getState(None,'round').expectation() == length:
+    #             verb = 'take'
+    #         else:
+    #             verb = 'pass'
+    #         for action in agent.getActions(state):
+    #             if action['verb'] == verb:
+    #                 break
+    #         else:
+    #             raise NameError,'Unable to find %s for %s' % (verb,agent.name)
+    #         print action
+    #         world.step({agent.name: action})
+    #     world.printState(state)
+    # break
+        
+    negagts = Centipede(turnOrder, len(payoffDict['Stacy'])-1, payoffDict)
+    negagts.modeltest(trueModels,'Capitalist','Capitalist', 1.0)
+    negagts.runit("Capitalist and Correct beliefs")
 

@@ -313,8 +313,8 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
 
     if not web:
         # Mental models of Freedonia
-        free.addModel('dove',R={goalFTroops: 0.9,goalFTerritory: 0.1},rationality=1.)
-        free.addModel('hawk',R={goalFTroops: 0.1,goalFTerritory: 0.9},rationality=1.)
+        free.addModel('dove',R={goalFTroops: 0.9,goalFTerritory: 0.1},rationality=1.,selection='distribution')
+        free.addModel('hawk',R={goalFTroops: 0.1,goalFTerritory: 0.9},rationality=1.,selection='distribution')
         # Example of setting model parameters separately
         free.addModel('true')
         free.setParameter('R',True,'true')         # Use real agent's reward

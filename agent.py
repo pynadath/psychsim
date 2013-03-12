@@ -39,13 +39,13 @@ class Agent:
         else:
             self.name = name
             # Default model settings
-            self.addModel(True,R={},horizon=2,level=2,rationality=0.9,discount=1.)
+            self.addModel(True,R={},horizon=2,level=2,rationality=0.9,discount=1.,selection='consistent')
 
     """------------------"""
     """Policy methods"""
     """------------------"""
 
-    def decide(self,vector,horizon=None,others=None,model=None,tiebreak=None):
+    def decide(self,vector,horizon=None,others=None,model=None,selection=None):
         """
         Generate an action choice for this agent in the given state
         @param vector: the current state in which the agent is making its decision
@@ -56,14 +56,20 @@ class Agent:
         @type others: strS{->}L{ActionSet}
         @param model: the mental model to use (default is model specified in vector)
         @type model: str
-        @param tiebreak: what to do in case multiple actions have the same expected value
-           - random: choose one of the actions at random
-           - distribution: return a uniform distribution over the actions
-           - None: make a deterministic choice among the actions (default)
-        @type tiebreak: str
+        @param selection: how to translate value function into action selection
+           - random: choose one of the maximum-value actions at random
+           - uniform: return a uniform distribution over the maximum-value actions
+           - distribution: return a distribution (a la quantal response or softmax) using rationality of the given model
+           - consistent: make a deterministic choice among the maximum-value actions (default setting for a model)
+           - C{None}: use the selection method specified by the given model (default)
+        @type selection: str
         """
         if model is None:
             model = self.world.getMentalModel(self.name,vector)
+        if selection is None:
+            selection = self.models[model]['selection']
+        if selection is True:
+            selection = self.models[True]['selection']
         # What are my subjective beliefs for this decision?
         belief = self.getBelief(model,vector)
         # Do I have a policy telling me what to do?
@@ -105,18 +111,25 @@ class Agent:
             elif V[action]['__EV__'] > V[best[0]]['__EV__']:
                 best = [action]
         result = {'V*': V[best[0]]['__EV__'],'V': V}
-        if len(best) == 1:
+        # Make an action selection based on the value function
+        if selection == 'distribution':
+            values = {}
+            for key,entry in V.items():
+                values[key] = entry['__EV__']
+            result['action'] = Distribution(values,self.models[model]['rationality'])
+        elif len(best) == 1:
+            # If there is only one best action, all of the selection mechanisms devolve to the same unique choice
             result['action'] = best[0]
-        elif tiebreak == 'random':
+        elif selection == 'random':
             result['action'] = random.sample(best,1)[0]
-        elif tiebreak == 'distribution':
+        elif selection == 'uniform':
             result['action'] = {}
             prob = 1./float(len(best))
             for action in best:
                 result['action'][action] = prob
             result['action'] = Distribution(result['action'])
         else:
-            assert tiebreak is None,'Unknown tiebreaking method: %s' % (tiebreak)
+            assert selection == 'consistent','Unknown action selection method: %s' % (selection)
             best.sort()
             result['action'] = best[0]
         return result
@@ -204,7 +217,7 @@ class Agent:
             self.models[model]['V'].set(self.name,vector,action,horizon,result['V'])
         return result
 
-    def valueIteration(self,horizon=None,ignore=[],model=True,epsilon=1e-6):
+    def valueIteration(self,horizon=None,ignore=[],model=True,epsilon=1e-6,debug=0,maxIterations=None):
         """
         Compute a value function for the given model
         """
@@ -214,32 +227,42 @@ class Agent:
         transition = self.world.reachable(horizon=horizon,ignore=ignore)
         # Initialize value function
         for start in transition.keys():
-            self.models[model]['V'][start] = {}
             for agent in self.world.agents.values():
                 if self.world.terminated(start):
                     if agent.name == self.name:
-                        self.models[model]['V'][start][agent.name] = {'*': agent.reward(start,model)}
+                        self.models[model]['V'].set(agent.name,start,None,0,agent.reward(start,model))
                     else:
-                        # For now, assume true beliefs, but change later
-                        self.models[model]['V'][start][agent.name] = {'*': agent.reward(start)}
+                        self.models[model]['V'].set(agent.name,start,None,0,agent.reward(start))
                 else:
-                    self.models[model]['V'][start][agent.name] = {'*': 0.}
+                    self.models[model]['V'].set(agent.name,start,None,0,0.)
         # Loop until no change in value function
+        iterations = 0
         oldChange = 0.
         newChange = 1.
-        while abs(newChange-oldChange) > epsilon:
+        while abs(newChange-oldChange) > epsilon and (maxIterations is None or iterations < maxIterations):
+            iterations += 1
+            if debug > 0:
+                print 'Iteration %d' % (iterations)
             oldChange = newChange
             newChange = 0.
-            V = {}
+            V = ValueFunction()
             # Consider all possible start states
             for start in transition.keys():
-                if not self.world.terminated(start):
+                if debug > 1:
+                    print
+                    self.world.printVector(start)
+                if self.world.terminated(start):
+                    for agent in self.world.agents.values():
+                        if agent.name == self.name:
+                            V.set(agent.name,start,None,0,agent.reward(start,model))
+                        else:
+                            V.set(agent.name,start,None,0,agent.reward(start))
+                else:
                     # Back-propagate reward from subsequent states
-                    V[start] = {}
-                    for name in self.world.agents.keys():
-                        V[start][name] = {}
                     actor = None
                     for action,distribution in transition[start].items():
+                        if debug > 2:
+                            print '\t\t%s' % (action)
                         # Make sure only one actor is acting at a time
                         if actor is None:
                             actor = action['subject']
@@ -249,7 +272,7 @@ class Agent:
                         for agent in self.world.agents.values():
                             for end in transition[start][action].domain():
                                 # Determine expected value of future
-                                Vrest = transition[start][action][end]*self.models[model]['V'][end][agent.name]['*']
+                                Vrest = transition[start][action][end]*self.models[model]['V'].get(agent.name,end,None,0)
                                 # Determine discount function (should use belief about other agent, but doesn't yet)
                                 if agent.name == self.name:
                                     discount = agent.models[model]['discount']
@@ -257,30 +280,39 @@ class Agent:
                                     discount = agent.models[True]['discount']
                                 if discount < -epsilon:
                                     # Future reward is all that matters
-                                    V[start][agent.name][action] = Vrest
+                                    V.set(agent.name,start,action,0,Vrest)
                                 else:
                                     # Current reward + Discounted future reward
                                     if agent.name == self.name:
                                         R = agent.reward(start,model)
                                     else:
-                                        R = agent.reward(start,model)
-                                    V[start][agent.name][action] = R + discount*Vrest
-                                try:
-                                    newChange += abs(V[start][agent.name][action]-self.models[model]['V'][start][agent.name][action])
-                                except KeyError:
-                                    newChange += abs(V[start][agent.name][action])
+                                        R = agent.reward(start)
+                                    V.set(agent.name,start,action,0,R+discount*Vrest)
+                                if debug > 2:
+                                    print '\t\t\tV_%s = %5.3f' % (agent.name,V.get(agent.name,start,action,0))
+                                previous = self.models[model]['V'].get(agent.name,start,action,0)
+                                if previous is None:
+                                    newChange += abs(V.get(agent.name,start,action,0))
+                                else:
+                                    newChange += abs(V.get(agent.name,start,action,0)-previous)
                     # Value of state is the value of the chosen action in this state
-                    table = dict(V[start][actor])
-                    if table.has_key('*'):
-                        del table['*']
-                    choice = self.predict(start,actor,table)
+                    choice = self.predict(start,actor,V,0)
                     for name in self.world.agents.keys():
-                        if name == actor:
-                            V[start][name]['*'] = V[start][name][choice.domain()[0]]
-                        else:
-                            for action in choice.domain():
-                                V[start][name]['*'] = choice[action]*V[start][name][action]
-            self.models[model]['V'].update(V)
+                        for action in choice.domain():
+                            V.add(name,start,None,0,choice[action]*V.get(name,start,action,0))
+                for name in self.world.agents.keys():
+                    if debug > 1:
+                        print '\tV_%s = %5.3f' % (name,V.get(name,start,None,0))
+            self.models[model]['V'] = V
+            if debug > 0:
+                print 'Change: %5.3f' % (newChange)
+                state = self.world.state
+                assert len(state) == 1
+                state = state.domain()[0]
+                for action,value in V.actionTable(self.name,state,0).items():
+                    print '\t\tV_%s(%s) = %5.3f' % (self.name,action,value)
+        if debug > 0:
+            print 'Completed after %d iterations' % (iterations)
         return self.models[model]['V']
 
     def setPolicy(self,policy,model=None,level=None):
@@ -445,13 +477,22 @@ class Agent:
                 (name,self.name)
         model = {'name': name,'index': len(self.models),'R': True,'beliefs': True,
                  'horizon': True,'level': True,'rationality': True,'discount': True,
+                 'selection': True,
                  'V': ValueFunction(),'policy': {},'ignore': [],'projector': Distribution.expectation}
         model.update(kwargs)
         self.models[name] = model
         self.modelList.append(name)
         return model
 
-    def predict(self,vector,name,V):
+    def predict(self,vector,name,V,horizon=0):
+        """
+        Generate a distribution over possible actions based on a table of values for those actions
+        @param V: either a L{ValueFunction} instance, or a dictionary of float values indexed by actions
+        @param vector: the current state vector
+        @param name: the name of the agent whose behavior is to be predicted
+        """
+        if isinstance(V,ValueFunction):
+            V = V.actionTable(name,vector,horizon)
         choices = Distribution()
         if name == self.name:
             # I predict myself to maximize
@@ -581,6 +622,8 @@ class Agent:
                             node.appendChild(subnode)
                 elif key == 'V':
                     node.appendChild(model[key].__xml__().documentElement)
+                elif key == 'selection':
+                    node.setAttribute('selection',str(model[key]))
                 elif key == 'ignore':
                     for key in model['ignore']:
                         subnode = doc.createElement(key)
@@ -632,6 +675,11 @@ class Agent:
                         name = True
                     # Parse children
                     kwargs = {'R': {},'ignore': []}
+                    text = str(node.getAttribute('selection'))
+                    if text == str(True):
+                        kwargs['selection'] = True
+                    elif text != str(None):
+                        kwargs['selection'] = text
                     subnode = node.firstChild
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
@@ -723,7 +771,36 @@ class ValueFunction:
         if not V[state].has_key(name):
             V[state][name] = {}
         V[state][name][action] = value
-    
+
+    def add(self,name,state,action,horizon,value):
+        """
+        Adds the given value to the current value function
+        """
+        previous = self.get(name,state,action,horizon)
+        if previous is None:
+            # No previous value, take it to be 0
+            self.set(name,state,action,horizon,value)
+        else:
+            # Add given value to previous value
+            self.set(name,state,action,horizon,previous+value)
+
+    def actionTable(self,name,state,horizon):
+        """
+        @return: a table of values for actions for the given agent in the given state
+        """
+        V = self.table[horizon]
+        table = dict(V[state][name])
+        if table.has_key(None):
+            del table[None]
+        return table
+
+    def printV(self,agent,horizon):
+        V = self.table[horizon]
+        for state in V.keys():
+            print
+            agent.world.printVector(state)
+            print self.get(agent.name,state,None,horizon)
+
     def __xml__(self):
         doc = Document()
         root = doc.createElement('V')

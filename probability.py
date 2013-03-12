@@ -1,3 +1,4 @@
+import math
 from xml.dom.minidom import Document,Node
 
 class Distribution(dict):
@@ -14,15 +15,27 @@ class Distribution(dict):
     """
     epsilon = 1e-8
 
-    def __init__(self,args=None):
+    def __init__(self,args=None,rationality=None):
+        """
+        @param args: the initial elements of the probability distribution
+        @type args: dict
+        @param rationality: if not C{None}, then use as a rationality parameter in a quantal response over the provided values
+        @type rationality: float
+        """
         self._domain = {}
         dict.__init__(self)
         if not args is None:
             if isinstance(args,Node):
                 self.parse(args)
-            else:
+            elif rationality is None:
+                # Probability table provided
                 for key,value in args.items():
                     self[key] = value
+            else:
+                # Do quantal response / softmax on table of values
+                for key,V in args.items():
+                    self[key] = math.exp(rationality*V)
+                self.normalize()
 
     def __getitem__(self,element):
         key = str(element)
