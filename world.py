@@ -1,6 +1,5 @@
 import bz2
 import copy
-import math
 from xml.dom.minidom import Document,Node,parseString
 
 from action import ActionSet,Action
@@ -27,7 +26,6 @@ class World:
     @ivar termination: list of conditions under which the simulation terminates (default is none)
     @type termination: L{KeyedTree}[]
     """
-    __NORMALIZE__ = False
 
     def __init__(self,xml=None):
         """
@@ -42,6 +40,7 @@ class World:
         self.symbols = {}
         self.ranges = {}
         self.termination = []
+        self.relations = {}
 
         # Action effect information
         self.dynamics = {}
@@ -133,6 +132,8 @@ class World:
         if actions is None:
             outcome['actions'] = {}
         else:
+            if isinstance(actions,Action):
+                actions = ActionSet([actions])
             outcome['actions'] = copy.copy(actions)
         # Keep track of whether there is uncertainty about the actions to perform
         stochastic = []
@@ -301,8 +302,6 @@ class World:
             self.dynamics[key] = {}
         # Translate symbolic names into numeric values
         tree = tree.desymbolize(self.symbols)
-        if self.__NORMALIZE__:
-            tree = tree.scale(self.ranges)
         if enforceMin and self.features[entity][feature]['domain'] in [int,float]:
             # Modify tree to enforce floor
             tree.floor(key,self.features[entity][feature]['lo'])
@@ -535,11 +534,6 @@ class World:
                 value = 0.
         elif self.features[entity][feature]['domain'] is list:
             value = self.features[entity][feature]['elements'].index(value)
-        else:
-            if self.__NORMALIZE__:
-                lo = self.features[entity][feature]['lo']
-                hi = self.features[entity][feature]['hi']
-                value = float(value-lo)/float(hi-lo)
         if entity is None:
             self.state.join(feature,value)
         else:
@@ -577,17 +571,37 @@ class World:
                 index = int(float(value)+0.1)
                 abstract[self.features[entity][feature]['elements'][index]] = result[value]
             result = Distribution(abstract)
-        elif self.__NORMALIZE__:
-            abstract = {}
-            lo = self.features[entity][feature]['lo']
-            hi = self.features[entity][feature]['hi']
-            for value in result.domain():
-                new = value*(hi-lo) + lo
-                if self.features[entity][feature]['domain'] is int:
-                    new = int(new+0.5)
-                abstract[new] = result[value]
-            result = Distribution(abstract)
         return result
+
+    def defineRelation(self,subj,obj,name):
+        """
+        Defines a binary relationship between two agents
+        @param subj: one of the agents in the relation (if a directed link, it is the "origin" of the edge)
+        @type subj: str
+        @param obj: one of the agents in the relation (if a directed link, it is the "destination" of the edge)
+        @type obj: str
+        @param name: the name of the relation (e.g., the verb to use between the subject and object)
+        @type name: str
+        """
+        try:
+            relations = self.relations[name]
+        except KeyError:
+            relations = {}
+            self.relations[name] = relations
+        key = binaryKey(subj,obj,name)
+        relations[key] = (subj,obj)
+        return key
+
+    def setRelation(self,subj,obj,name,value):
+        assert self.relations.has_key(name)
+        key = binaryKey(subj,obj,name)
+        self.state.join(key,value)
+
+    def getRelation(self,subj,obj,name,state=None):
+        if state is None:
+            state = self.state
+        key = binaryKey(subj,obj,name)
+        return state.getMarginal(key)
 
     def getMentalModel(self,modelee,vector):
         """
@@ -645,14 +659,17 @@ class World:
                             hypothesis = self.agents[actor].models[self.agents[actor].index2model(index)]
                             denominator = 0.
                             V = {}
+                            state = KeyedVector(outcome['old'])
+                            state[actorKey] = index
                             for alternative in self.agents[actor].getActions(outcome['old']):
                                 # Evaluate all available actions with respect to the hypothesized mental model
-                                state = KeyedVector(outcome['old'])
-                                state[actorKey] = index
                                 V[alternative] = self.agents[actor].value(state,alternative,model=hypothesis['name'])['V']
-                                denominator += math.exp(hypothesis['rationality']*V[alternative])
+                            if not V.has_key(actions):
+                                # Agent performed a non-prescribed action
+                                V[actions] = self.agents[actor].value(state,alternative,model=hypothesis['name'])['V']
                             # Convert into probability distribution of observed action given hypothesized mental model
-                            prob[index] = math.exp(hypothesis['rationality']*V[actions])/denominator
+                            behavior = Distribution(V,hypothesis['rationality'])
+                            prob[index] = behavior[actions]
                             # Bayes' rule
                             prob[index] *= belief[index]
                         # Update posterior beliefs over mental models
@@ -854,11 +871,24 @@ class World:
                 elements = [prefix]
             else:
                 elements = []
-        entities = self.features.keys()
+        entities = self.agents.keys()
         entities.sort()
+        entities.insert(0,None)
         change = False
+        # Sort relations
+        relations = {}
+        for link,table in self.relations.items():
+            for key in table.keys():
+                subj,obj = table[key]
+                try:
+                    relations[subj].append((link,obj,key))
+                except KeyError:
+                    relations[subj] = [(link,obj,key)]
         for entity in entities:
-            table = self.features[entity]
+            try:
+                table = self.features[entity]
+            except KeyError:
+                table = {}
             if entity is None:
                 label = 'World'
             else:
@@ -902,6 +932,15 @@ class World:
                         elements.append(value)
                     else:
                         print >> buf,value
+            # Print relationships
+            if relations.has_key(entity):
+                for link,obj,key in relations[entity]:
+                    if vector.has_key(key):
+                        if newEntity:
+                            print >> buf,'\t%-12s' % (label),
+                            newEntity = False
+                        print >> buf,'\t%s %s:\t%4.2f' % (link,obj,vector[key])
+            # Print models (and beliefs associated with those models)
             if not entity is None:
                 # Print model of this entity
                 key = modelKey(entity)
@@ -1019,6 +1058,17 @@ class World:
                     subnode.appendChild(subsubnode)
                 node.appendChild(subnode)
         root.appendChild(node)
+        # Relationships
+        for link,table in self.relations.items():
+            node = doc.createElement('relation')
+            node.setAttribute('name',link)
+            for key,entry in table.items():
+                subj,obj = entry
+                subnode = doc.createElement('link')
+                subnode.setAttribute('subject',subj)
+                subnode.setAttribute('object',obj)
+                node.appendChild(subnode)
+            root.appendChild(node)
         # Dynamics
         node = doc.createElement('dynamics')
         for key,table in self.dynamics.items():
@@ -1109,6 +1159,12 @@ class World:
                                             description = str(subsubnode.firstChild.data).strip()
                                     subsubnode = subsubnode.nextSibling
                                 self.defineState(entity,feature,domain,lo,hi,description)
+                        subnode = subnode.nextSibling
+                elif node.tagName == 'relations':
+                    subnode = node.firstChild
+                    while subnode:
+                        if subnode.nodeType == subnode.ELEMENT_NODE:
+                            print subnode.toxml()
                         subnode = subnode.nextSibling
                 elif node.tagName == 'dynamics':
                     subnode = node.firstChild
@@ -1231,3 +1287,22 @@ def isModelKey(key):
 
 def model2name(key):
     return key[:-9]
+
+def binaryKey(subj,obj,relation):
+    return '%s %s -> %s' % (subj,relation,obj)
+
+def isBinaryKey(key):
+    return ' -> ' in key
+
+def key2relation(key):
+    sides = key.split(' -> ')
+    first = sides[0].split()
+    return {'subject': ' '.join(first[:-1]),
+            'object': sides[1],
+            'relation': first[-1]}
+
+def likesKey(subj,obj):
+    return binaryKey(subj,obj,'likes')
+
+def isLikesKey(key):
+    return ' likes -> ' in key
