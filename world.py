@@ -162,7 +162,17 @@ class World:
                 prob = outcome['actions'][stochastic[0]][action]
                 actions = dict(outcome['actions'])
                 actions[stochastic[0]] = action
-                outcome.update(self.effect(actions,outcome['old'],prob))
+                effect = self.effect(actions,outcome['old'],prob)
+                if outcome.has_key('new'):
+                    for vector in effect['new'].domain():
+                        try:
+                            outcome['new'][vector] += effect['new'][vector]
+                        except KeyError:
+                            outcome['new'][vector] = effect['new'][vector]
+                    outcome['effect'] += effect['effect']
+                else:
+                    outcome['new'] = effect['new']
+                    outcome['effect'] = effect['effect']
         else:
             outcome.update(self.effect(outcome['actions'],outcome['old']))
         if not outcome.has_key('new'):
