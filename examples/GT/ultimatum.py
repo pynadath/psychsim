@@ -76,8 +76,8 @@ class Ultimatum:
 # really need to ask david about these levels - if adding modesl with levels, can
 # the true model point to these but have a different level
         for agent in self.world.agents.values():
-            agent.addModel('Christian',R={},level=2,rationality=0.01)
-            agent.addModel('Capitalist',R={},level=2,rationality=0.01)
+            agent.addModel('Christian',R={},level=2,rationality=10.,selection='distribution')
+            agent.addModel('Capitalist',R={},level=2,rationality=10.,selection='distribution')
 
 
     def modeltest(self,trueModels,davidBeliefAboutStacy,stacyBeliefAboutDavid,strongerBelief):
@@ -108,7 +108,7 @@ class Ultimatum:
     def runit(self,Msg):
         print Msg
         for t in range(2):
-            self.world.explain(self.world.step(),level=1)
+            self.world.explain(self.world.step(),level=2)
             # print self.world.step()
             self.world.state.select()
             # self.world.printState()
