@@ -5,6 +5,7 @@ Provides use cases for both modeling and simulating scenarios.
 import sys
 from ConfigParser import SafeConfigParser
 from argparse import ArgumentParser
+import StringIO
 
 from psychsim.pwl import *
 from psychsim.action import *
@@ -331,6 +332,11 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
     @param debug: the debug level to use in explanation (default is 1)
     @type debug: int
     """
+    testMode = isinstance(debug,dict)
+    if testMode:
+        buf = StringIO.StringIO()
+        debug[offer] = buf
+        debug = 0
     for agent in world.agents.values():
         if agent.name == 'Freedonia':
             free = agent
@@ -340,7 +346,8 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
 
     if model == 'powell':
         steps = 4
-    elif model == 'slantchev':
+    else:
+        assert model == 'slantchev'
         steps = 3
 
 #    ignore = ['Freedonia\'s cost','%s\'s cost' % (sylv.name),'round']
@@ -364,8 +371,116 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
                     # Free to choose
                     outcome = world.step()
                     world.explain(outcome,debug)
+                    if testMode:
+                        if (t == 0 and step == 1) or (t == 1 and step == 0):
+                            for entry in outcome:
+                                world.explainAction(entry,buf,1)
                 world.state.select()
-                world.printState(beliefs=True)
+                if not testMode:
+                    world.printState(beliefs=True)
+
+def findThreshold(scenario,t,model='powell',position=0):
+    """
+    Finds the threshold at which the agent will accept the offer"""
+    if model == 'slantchev':
+        # Find counteroffer in this state
+        actions = []
+        while len(actions) < 2:
+            world = World(scenario)
+            world.setState(None,'round',t)
+            world.setState('Freedonia','position',position)
+            entry = {}
+            scenarioSimulationUseCase(world,20,2,entry,model)
+            actions = entry[20].getvalue().split('\n')[:-1]
+            entry[20].close()
+        amount = int(actions[1].split('-')[-1])
+        print 'Time: %d, Position %d -> Offer %d%%' % (t,position,amount)
+    # Compute acceptance threshold
+    offers = [50]
+    index = 0
+    entry = {}
+    while True:
+        world = World(scenario)
+        world.setState(None,'round',t)
+        if model == 'slantchev':
+            world.setState('Freedonia','position',position)
+        scenarioSimulationUseCase(world,offers[index],1,entry,model)
+        actions = entry[offers[index]].getvalue().split('\n')[:-1]
+        entry[offers[index]].close()
+        entry[offers[index]] = actions[0].split('-')[1].split()[0]
+        if entry[offers[index]] == 'accept':
+            # Try a lower offer
+            if index > 0:
+                down = offers[index-1]
+                assert entry[down] != 'accept'
+            else:
+                down = 0
+            new = (offers[index]+down) / 2
+            if entry.has_key(new):
+                if entry[new] != 'accept':
+                    new += 1
+                break
+            else:
+                offers.insert(index,new)
+        else:
+            assert entry[offers[index]] in ['reject','attack']
+            # Try a higher offer
+            try:
+                up = offers[index+1]
+                assert entry[up] == 'accept'
+            except IndexError:
+                up = 100
+            new = (offers[index]+up) / 2
+            if entry.has_key(new):
+                break
+            else:
+                offers.insert(index+1,new)
+                index += 1
+    return new
+
+def play(world,debug=1):
+    """
+    Modify Freedonia to play autonomously and simulate
+    """
+    for agent in world.agents.values():
+        if agent.name == 'Freedonia':
+            free = agent
+        else:
+            sylv = agent
+    for amount in range(10,100,20):
+        action = Action({'verb': 'offer','object': sylv.name,'amount': amount})
+        free.addAction(action)
+        action = Action({'verb': 'offer','object': free.name,'amount': amount})
+        sylv.addAction(action)
+    for action in filterActions({'verb': 'offer'},free.actions | sylv.actions):
+        actor = world.agents[action['subject']]
+        if not actor.legal.has_key(action):
+            actor.setLegal(action,makeTree({'if': equalRow(stateKey(None,'phase'),'offer'),
+                                           True: True,     # Offers are legal in the offer phase
+                                           False: False})) # Offers are illegal in all other phases
+    model = world.getState(None,'model').domain()[0]
+    start = world.getState(free.name,'territory').expectation()
+    print model,start
+    scenarioSimulationUseCase(world,offer=0,rounds=15,debug=debug,model=model)
+
+def findPolicies(args):
+    """
+    Wrapper for finding agent offers and acceptance thresholds
+    """
+    results = []
+    search = (30,40,1)
+    for t in range(args['rounds']):
+        entry = {}
+        if args['model'] == 'slantchev':
+            for position in range(1,10):
+                subresult = []
+                results.append(subresult)
+                subresult.append(entry)
+                thresh = findThreshold(args['output'],t,args['model'],position)
+                print 'Time %d, Position %d -> Accept if > %d%%' % (t,position,thresh)
+        else:
+            results.append(entry)
+            print 'Time %d -> Accept if > %d%%' %(t,findThreshold(args['output'],t))
 
 if __name__ == '__main__':
     # Grab command-line arguments

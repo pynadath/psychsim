@@ -841,6 +841,9 @@ def makeTree(table):
     elif isinstance(table,str):
         # String leaf
         return KeyedTree(table)
+    elif isinstance(table,frozenset):
+        # Set leaf (e.g., ActionSet for a policy)
+        return KeyedTree(table)
     elif table.has_key('if'):
         # Deterministic branch
         tree = KeyedTree()

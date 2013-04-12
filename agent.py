@@ -39,7 +39,7 @@ class Agent:
         else:
             self.name = name
             # Default model settings
-            self.addModel(True,R={},horizon=2,level=2,rationality=0.9,discount=1.,selection='consistent')
+            self.addModel(True,R={},horizon=2,level=2,rationality=1.,discount=1.,selection='consistent')
 
     """------------------"""
     """Policy methods"""

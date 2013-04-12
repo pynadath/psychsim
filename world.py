@@ -837,7 +837,7 @@ class World:
                         if level > 4: 
                             print >> buf,'%sState:' % (tab)
                             self.printVector(node['old'],buf,prefix=tab,first=False)
-                        print >> buf,'%s%s (V_%s=%6.3f)' % (tab,ActionSet(node['actions']),V[state]['agent'],node['R'])
+                        print >> buf,'%s%s (V_%s=%6.3f) [P=%d%%]' % (tab,ActionSet(node['actions']),V[state]['agent'],node['R'],node['probability']*100.)
                         for other in node['decisions'].keys():
                             self.explainDecision(node['decisions'][other],buf,level,prefix+'\t\t')
                         if level > 3: 
