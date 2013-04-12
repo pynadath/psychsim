@@ -131,11 +131,12 @@ class Distribution(dict):
     def select(self):
         """
         Reduce distribution to a single element, sampled according to the given distribution
-        @return: the selected element
+        @return: the probability of the selection made
         """
         element = self.sample()
+        prob = self[element]
         self.set(element)
-        return element
+        return prob
 
     def __add__(self,other):
         if isinstance(other,Distribution):
