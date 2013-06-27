@@ -12,12 +12,22 @@ from psychsim.action import *
 from psychsim.world import World,stateKey,actionKey
 from psychsim.agent import Agent
 
-def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=None,sCollapse=None,territory=13,
-                            position=0,fTroops=381940,sTroops=461432,maxRounds=15,model='powell',web=False):
+def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
+                            fCollapse=None,sCollapse=None,maxRounds=15):
     """
     An example of how to create a scenario
-    @param sCost: number of troops Sylvania loses in battle
-    @param fCost: number of troops Sylvania loses in battle
+    @param enemy: the name of the agent-controlled side, i.e., Freedonia's opponent (default: Sylvania)
+    @type enemy: str
+    @param model: which model do we use (default is "powell")
+    @type model: powell or slantchev
+    @param web: if C{True}, then create the web-based experiment scenario (default: C{False})
+    @type web: bool
+    @param fCollapse: the probability that Freedonia collapses (under powell, default: 0.1) or loses battle (under slantchev, default: 0.7)
+    @type fCollapse: float
+    @param sCollapse: the probability that Sylvania collapses, under powell (default: 0.1)
+    @type sCollapse: float
+    @param maxRounds: the maximum number of game rounds (default: 15)
+    @type maxRounds: int
     @return: the scenario created
     @rtype: L{World}
     """
@@ -44,16 +54,16 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
     # User state
     world.defineState(free.name,'troops',int,lo=0,hi=50000,
                       description='Number of troops you have left')
-    free.setState('troops',fTroops)
+    free.setState('troops',40000)
     world.defineState(free.name,'territory',int,lo=0,hi=100,
                       description='Percentage of disputed territory owned by you')
-    free.setState('territory',territory)  # Percentage of disputed territory
+    free.setState('territory',15)
     world.defineState(free.name,'cost',int,lo=0,hi=50000,
                       description='Number of troops %s loses in an attack' % (free.name))
-    free.setState('cost',fCost)
+    free.setState('cost',2000)
     world.defineState(free.name,'position',int,lo=posLo,hi=posHi,
                       description='Current status of war (%d=%s is winner, %d=you are winner)' % (posLo,sylv.name,posHi))
-    free.setState('position',position)
+    free.setState('position',5)
     world.defineState(free.name,'offered',int,lo=0,hi=100,
                       description='Percentage of disputed territory that %s last offered to you' % (sylv.name))
     free.setState('offered',0)
@@ -64,10 +74,9 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
     # Agent state
     world.defineState(sylv.name,'troops',int,lo=0,hi=500000,
                       description='Number of troops %s has left' % (sylv.name))
-    sylv.setState('troops',sTroops)
     world.defineState(sylv.name,'cost',int,lo=0,hi=50000,
                       description='Number of troops %s loses in an attack' % (sylv.name))
-    sylv.setState('cost',sCost)
+    sylv.setState('cost',2000)
     world.defineState(sylv.name,'offered',int,lo=0,hi=100,
                       description='Percentage of disputed territory that %s last offered to %s' % (free.name,sylv.name))
     sylv.setState('offered',0)
@@ -140,8 +149,8 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
         # Powell has a special rejection phase
         for action in [freeNOP,freeBattle]:
             free.setLegal(action,makeTree({'if': equalRow(stateKey(None,'phase'),'rejection'),
-                                        True: True,     # Attacking and doing nothing are legal only in rejection phase
-                                        False: False})) # Attacking and doing nothing are illegal in all other phases
+                                           True: True,     # Attacking and doing nothing are legal only in rejection phase
+                                           False: False})) # Attacking and doing nothing are illegal in all other phases
 
     # Once offered, agent can respond
     if model == 'powell':
@@ -181,6 +190,9 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
     sylv.setReward(goalSTroops,1.)
     goalSTerritory = minimizeFeature(stateKey(free.name,'territory'))
     sylv.setReward(goalSTerritory,1.)
+
+    # Possible goals applicable to both
+    goalAgreement = maximizeFeature(stateKey(None,'treaty'))
 
     # Horizons
     if model == 'powell':
@@ -313,14 +325,20 @@ def scenarioCreationUseCase(enemy='Sylvania',fCost=1000,sCost=1000,fCollapse=Non
 #                                     False: False}}))
 
     if not web:
-        # Mental models of Freedonia
-        free.addModel('dove',R={goalFTroops: 0.9,goalFTerritory: 0.1},rationality=1.,selection='distribution')
-        free.addModel('hawk',R={goalFTroops: 0.1,goalFTerritory: 0.9},rationality=1.,selection='distribution')
+        # Mental models of enemy
+        # Example of creating a model with incorrect reward all at once (a version of Freedonia who cares about reaching agreement as well)
+#        sylv.addModel('false',R={goalSTroops: 10.,goalSTerritory: 1.,goalAgreement: 1.},
+#                      rationality=1.,selection='distribution')
+        # Example of creating a model with incorrect beliefs
+        sylv.addModel('false',rationality=10.,selection='distribution')
+        key = stateKey(free.name,'position')
+        sylv.setBelief(key,setToConstantMatrix(key,9),'false')
         # Example of setting model parameters separately
-        free.addModel('true')
-        free.setParameter('R',True,'true')         # Use real agent's reward
-        free.setParameter('rationality',1.,'true') # Override real agent's rationality with this value
-        world.setMentalModel(sylv.name,free.name,{'dove': 0.3,'hawk': 0.1})
+        sylv.addModel('true')
+        sylv.setParameter('R',True,'true')         # Use real agent's reward
+        sylv.setParameter('rationality',10.,'true') # Override real agent's rationality with this value
+        sylv.setParameter('selection','distribution','true')
+        world.setMentalModel(free.name,sylv.name,{'false': 0.9,'true': 0.1})
     return world
 
 def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
@@ -550,11 +568,16 @@ if __name__ == '__main__':
     group = parser.add_argument_group('Creation Options','Control the parameters of the created scenario.')
     args = vars(parser.parse_args())
 
-    world = scenarioCreationUseCase(args['enemy'],args['fcost'],args['scost'],
-                                    territory=args['initial'],position=args['position'],
-                                    fTroops=args['ftroops'],sTroops=args['stroops'],
-                                    maxRounds=args['rounds'],model=args['model'],
+    world = scenarioCreationUseCase(args['enemy'],maxRounds=args['rounds'],model=args['model'],
                                     web=args['web'])
+
+    # Initialize state values based on command-line arguments
+    world.agents['Freedonia'].setState('troops',args['ftroops'])
+    world.agents['Freedonia'].setState('territory',args['initial'])
+    world.agents['Freedonia'].setState('position',args['position'])
+    world.agents['Freedonia'].setState('cost',args['fcost'])
+    world.agents[args['enemy']].setState('troops',args['stroops'])
+    world.agents[args['enemy']].setState('cost',args['scost'])
 
     # Create configuration file
     config = SafeConfigParser()
@@ -608,3 +631,5 @@ if __name__ == '__main__':
     # Test saved scenario
     world = World(args['output'])
     scenarioSimulationUseCase(world,args['amount'],args['time'],args['debug'],args['model'])
+#    findPolicies(args)
+#    world.printState(world.agents[args['enemy']].getBelief(world.state.domain()[0],'false'))

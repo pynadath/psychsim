@@ -70,6 +70,7 @@ class KeyedVector(dict):
                     total += value*other[key]
             return total
         elif isinstance(other,float):
+            # Scaling
             result = KeyedVector()
             for key,value in result.items():
                 result[key] = value*scalar
