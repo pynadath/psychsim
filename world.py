@@ -200,13 +200,13 @@ class World:
                         effect[matrix] += result['new'][old]
                     except KeyError:
                         effect[matrix] = result['new'][old]
-                    vector = KeyedVector(old)
-                    vector.update(matrix*old)
+                    newVector = KeyedVector(old)
+                    newVector.update(matrix*old)
                     prob = result['new'][old]*delta[matrix]
                     try:
-                        new[vector] += prob
+                        new[newVector] += prob
                     except KeyError:
-                        new[vector] = prob
+                        new[newVector] = prob
             result['new'] = new
             result['effect'].append(effect)
         # Update turn order
@@ -648,21 +648,26 @@ class World:
                 'Agent %s\'s %s model has belief level of %d, so its model %s for agent %s must have belief level of %d' % \
                 (modeler,model,modelerLevel,name,modelee,modelerLevel-1)
         distribution.normalize()
-        self.agents[modeler].setBelief(modelKey(modelee),distribution,model)
+        belief = MatrixDistribution()
+        for element in distribution.domain():
+            belief[setToConstantMatrix(modelKey(modelee),element)] = distribution[element]
+        self.agents[modeler].setBelief(modelKey(modelee),belief,model)
 
     def updateModels(self,outcome,vector):
-        for name in filter(lambda n: not outcome['actions'].has_key(n),
-                           self.agents.keys()):
-            # Consider agents who did *not* act
-            label = self.getMentalModel(name,vector)
-            model = self.agents[name].models[label]
+        for agent in self.agents.values():
+            label = self.getMentalModel(agent.name,vector)
+            model = agent.models[label]
             if not model['beliefs'] is True:
+                omega = agent.observe(vector,outcome['actions'])
+                beliefs = model['beliefs']*vector
+                if not omega is True:
+                    raise NotImplementedError,'Unable to update mental models under partial observability'
                 for actor,actions in outcome['actions'].items():
                     # Consider each agent who *did* act
                     actorKey = modelKey(actor)
-                    if model['beliefs'].hasColumn(actorKey):
+                    if beliefs.hasColumn(actorKey):
                         # Agent has uncertain beliefs about this actor
-                        belief = model['beliefs'].marginal(actorKey)
+                        belief = beliefs.marginal(actorKey)
                         prob = {}
                         for index in belief.domain():
                             # Consider the hypothesis mental models of this actor
@@ -685,7 +690,10 @@ class World:
                         # Update posterior beliefs over mental models
                         prob = Distribution(prob)
                         prob.normalize()
-                        model['beliefs'].join(actorKey,prob)
+                        belief = MatrixDistribution()
+                        for element in prob.domain():
+                            belief[setToConstantMatrix(actorKey,element)] = prob[element]
+                        model['beliefs'].update(belief)
 
     def scaleState(self,vector):
         """
@@ -704,11 +712,11 @@ class World:
                 if remaining.has_key(key):
                     if entry['domain'] is float or entry['domain'] is int:
                         # Scale by range of possible values
-                        new = remaining[key]-entry['lo']
-                        new /= entry['hi']-entry['lo']
+                        new = float(remaining[key]-entry['lo'])
+                        new /= float(entry['hi']-entry['lo'])
                     elif entry['domain'] is list:
                         # Scale by size of set of values
-                        new = remaining[key]/len(entry['elements'])
+                        new = float(remaining[key])/float(len(entry['elements']))
                     else:
                         new = remaining[key]
                     result[key] = new
@@ -972,7 +980,7 @@ class World:
                     model = self.agents[entity].models[True]
                     if not model['beliefs'] is True:
                         print >> buf,'\t\t\t----beliefs:----'
-                        self.printDelta(vector,self.agents[entity].getBelief(model['name'],vector),buf,'\t\t\t')
+                        self.printDelta(vector,self.agents[entity].getBelief(vector,model['name']),buf,'\t\t\t')
                         print >> buf,'\t\t\t----------------'
         if not csv and not change:
             print >> buf,'%s\tUnchanged' % (prefix)

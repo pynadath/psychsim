@@ -71,7 +71,7 @@ class Agent:
         if selection is True:
             selection = self.models[True]['selection']
         # What are my subjective beliefs for this decision?
-        belief = self.getBelief(model,vector)
+        belief = self.getBelief(vector,model)
         # Do I have a policy telling me what to do?
         if self.models[model]['policy']:
             assert len(belief) == 1,'Unable to apply PWL policies to uncertain beliefs'
@@ -451,7 +451,12 @@ class Agent:
             R = self.models[True]['R']
         total = 0.
         for tree,weight in R.items():
-            ER = tree[vector]*self.world.scaleState(vector)
+            if isinstance(tree,str):
+                # Name of an agent I'm trying to make (un)happy
+                model = self.world.getMentalModel(tree,vector)
+                ER = self.world.agents[tree].reward(vector,model)
+            else:
+                ER = tree[vector]*self.world.scaleState(vector)
             total += ER*weight
         return total
 
@@ -463,7 +468,7 @@ class Agent:
         """
         Adds a new possible model for this agent (to be used as either true model or else as mental model another agent has of it). Possible arguments are:
          - R: the reward table for the agent under this model (default is C{True}), L{KeyedTree}S{->}float
-         - beliefs: the beliefs the agent has under this model (default is C{True}), L{VectorDistribution}
+         - beliefs: the beliefs the agent has under this model (default is C{True}), L{MatrixDistribution}
          - horizon: the horizon of the value function under this model (default is C{True}),int
          - level: the recursive depth of this model (default is C{True}),int
          - rationality: the rationality parameter used in a quantal response function when modeling others (default is 10),float
@@ -549,30 +554,63 @@ class Agent:
     def setBelief(self,key,distribution,model=True):
         beliefs = self.models[model]['beliefs']
         if beliefs is True:
-            beliefs = VectorDistribution({KeyedVector({CONSTANT: 1.}): 1.})
+            beliefs = MatrixDistribution({KeyedMatrix(): 1.})
             self.models[model]['beliefs'] = beliefs
-        beliefs.join(key,distribution)
+        beliefs.update(distribution)
 
-    def getBelief(self,model=True,world=None):
-        if world is None:
-            world = self.world.state
-        if isinstance(world,KeyedVector):
-            world = VectorDistribution({world: 1.})
+    def getBelief(self,vector,model=True):
+        """
+        @return: the agent's belief in the given world
+        """
+        world = VectorDistribution({vector: 1.})
         beliefs = self.models[model]['beliefs']
-        if beliefs is True:
-            beliefs = world
-        else:
-            beliefs = world.merge(beliefs)
-        return beliefs
+        if not beliefs is True:
+            world = world.merge(beliefs*vector)
+        return world
 
     def printBeliefs(self,model=True):
         raise DeprecationWarning,'Use the "beliefs=True" argument to printState instead'
 
-    def observe(self,state,actions,model=True):
+    def observe(self,vector,actions,model=True):
         """
-        @return: the post-observation beliefs of this agent
+        @return: the observations received by this agent in the given world when the given actions are performed
         """
-        return actions
+        if self.models[model]['beliefs'] is True or self.O is True:
+            # If beliefs are accurate, or if there's no model of partial observability,
+            # assume that the agent has complete observability
+            return True
+        else:
+            omega = VectorDistribution({KeyedVector({CONSTANT: 1.}): 1.})
+            beliefs = self.models[model]['beliefs']
+            # Look up the observation function for the actions performed
+            joint = reduce(lambda x,y: x|y,actions.values())
+            try:
+                tree = self.O[joint]
+            except KeyError:
+                # Assume observable! Because we assume lazy authors.
+                return True
+            # Apply the observation function
+            observation = tree[vector]
+            if observation is True:
+                # This action produces perfect observations
+                return True
+            else:
+                # Potential distribution over observed symbols
+                for key in observation.domain()[0].keys():
+                    obs = Distribution()
+                    for matrix in observation.domain():
+                        assert matrix.has_key(key)
+                        if beliefs.domain()[0].has_key(key):
+                            # Observation of a state feature
+                            value = matrix[key]*vector
+                            try:
+                                obs[value] += observation[matrix]
+                            except KeyError:
+                                obs[value] = observation[matrix]
+                        else:
+                            raise NameError,'Unknown observation of %s' % (key)
+                    omega.join(key,obs)
+            return omega
 
     """------------------"""
     """Serialization methods"""
@@ -602,6 +640,12 @@ class Agent:
             node = doc.createElement('omega')
             node.appendChild(doc.createTextNode(omega))
             root.appendChild(node)
+        if not self.O is True:
+            for actions,tree in self.O.items():
+                node = doc.createElement('O')
+                node.appendChild(actions.__xml__().documentElement)
+                node.appendChild(tree.__xml__().documentElement)
+                root.appendChild(node)
         # Models
         for name in self.modelList:
             model = self.models[name]
@@ -618,7 +662,12 @@ class Agent:
                         for tree,weight in model['R'].items():
                             subnode = doc.createElement(key)
                             subnode.setAttribute('weight',str(weight))
-                            subnode.appendChild(tree.__xml__().documentElement)
+                            if isinstance(tree,str):
+                                # Goal on another agent
+                                subnode.setAttribute('name',str(tree))
+                            else:
+                                # PWL Goal
+                                subnode.appendChild(tree.__xml__().documentElement)
                             node.appendChild(subnode)
                 elif key == 'V':
                     node.appendChild(model[key].__xml__().documentElement)
@@ -668,6 +717,18 @@ class Agent:
                         subnode = subnode.nextSibling
                 elif node.tagName == 'omega':
                     self.omega.add(str(node.firstChild.data).strip())
+                elif node.tagName == 'O':
+                    if self.O is True:
+                        self.O = {}
+                    subnode = node.firstChild
+                    while subnode:
+                        if subnode.nodeType == subnode.ELEMENT_NODE:
+                            if subnode.tagName == 'option':
+                                action = ActionSet(subnode.childNodes)
+                            elif subnode.tagName == 'tree':
+                                tree = KeyedTree(subnode)
+                        subnode = subnode.nextSibling
+                    self.O[action] = tree
                 elif node.tagName == 'model':
                     # Parse model name
                     name = str(node.getAttribute('name'))
@@ -687,16 +748,21 @@ class Agent:
                             if key == 'V':
                                 kwargs[key] = ValueFunction(subnode)
                             else:
+                                if key == 'R' and str(subnode.getAttribute('name')):
+                                    # Goal on another agent's goals
+                                    agent = str(subnode.getAttribute('name'))
+                                    kwargs[key][agent] = float(subnode.getAttribute('weight'))
                                 # Parse component elements
                                 subchild = subnode.firstChild
                                 while subchild:
                                     if subchild.nodeType == subchild.ELEMENT_NODE:
                                         if key == 'R':
+                                            # PWL goal
                                             kwargs[key][KeyedTree(subchild)] = float(subnode.getAttribute('weight'))
                                         elif key == 'policy':
                                             kwargs[key] = KeyedTree(subchild)
                                         elif key == 'beliefs':
-                                            kwargs[key] = VectorDistribution(subchild)
+                                            kwargs[key] = MatrixDistribution(subchild)
                                         else:
                                             raise NameError,'Unknown element found when parsing model\'s %s' % (key)
                                     elif subchild.nodeType == subchild.TEXT_NODE:
