@@ -36,6 +36,7 @@ class Centipede:
             # Parameters
             me.setHorizon(6)
             me.setParameter('discount',1.)
+            # me.setParameter('discount',0.9)
         
             # Levels of belief
         david.setRecursiveLevel(3)
@@ -82,6 +83,8 @@ class Centipede:
         for agent in self.world.agents.values():
             agent.addModel('Christian',R={},level=2,rationality=10.,selection='distribution')
             agent.addModel('Capitalist',R={},level=2,rationality=10.,selection='distribution')
+            # agent.addModel('Christian',R={},level=2,rationality=0.01)
+            # agent.addModel('Capitalist',R={},level=2,rationality=0.01)
 
     def buildPayoff(self,rnd,key,payoff):
         if (rnd == self.maxRounds - 1):
@@ -120,6 +123,7 @@ class Centipede:
         print Msg
         for t in range(self.maxRounds + 1):
             self.world.explain(self.world.step(),level=2)
+            # self.world.explain(self.world.step(),level=1)
             # print self.world.step()
             self.world.state.select()
             # self.world.printState()
