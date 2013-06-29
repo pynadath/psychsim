@@ -37,6 +37,7 @@ class Ultimatum:
             # Parameters
             me.setHorizon(2)
             me.setParameter('discount',0.9)
+            # me.setParameter('discount',1.0)
         
             # Levels of belief
         david.setRecursiveLevel(3)
@@ -78,6 +79,11 @@ class Ultimatum:
         for agent in self.world.agents.values():
             agent.addModel('Christian',R={},level=2,rationality=25.,selection='distribution')
             agent.addModel('Capitalist',R={},level=2,rationality=25.,selection='distribution')
+            # agent.addModel('Christian',R={},level=2,rationality=10.,selection='distribution')
+            # agent.addModel('Capitalist',R={},level=2,rationality=10.,selection='distribution')
+            # agent.addModel('Christian',R={},level=2,rationality=10.,selection='distribution')
+            # agent.addModel('Capitalist',R={},level=2,rationality=10.,selection='random')
+
 
 
     def modeltest(self,trueModels,davidBeliefAboutStacy,stacyBeliefAboutDavid,strongerBelief):
