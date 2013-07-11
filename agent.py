@@ -39,7 +39,8 @@ class Agent:
         else:
             self.name = name
             # Default model settings
-            self.addModel(True,R={},horizon=2,level=2,rationality=1.,discount=1.,selection='consistent')
+            self.addModel(True,R={},horizon=2,level=2,rationality=1.,discount=1.,selection='consistent',
+                          beliefs=True,parent=None)
 
     """------------------"""
     """Policy methods"""
@@ -67,21 +68,20 @@ class Agent:
         if model is None:
             model = self.world.getMentalModel(self.name,vector)
         if selection is None:
-            selection = self.models[model]['selection']
-        if selection is True:
-            selection = self.models[True]['selection']
+            selection = self.getAttribute('selection',model)
         # What are my subjective beliefs for this decision?
         belief = self.getBelief(vector,model)
         # Do I have a policy telling me what to do?
-        if self.models[model]['policy']:
+        policy = self.getAttribute('policy',model)
+        if policy:
             assert len(belief) == 1,'Unable to apply PWL policies to uncertain beliefs'
-            action = self.models[model]['policy'][belief.domain()[0]]
+            action = policy[belief.domain()[0]]
             if action:
                 if isinstance(action,Action):
                     action = ActionSet([action])
                 return {'action': action}
         if horizon is None:
-            horizon = self.models[model]['horizon']
+            horizon = self.getAttribute('horizon',model)
         # Consider all legal actions (legality determined by *real* world, not my belief)
         actions = self.getActions(vector)
         if len(actions) == 0:
@@ -116,7 +116,7 @@ class Agent:
             values = {}
             for key,entry in V.items():
                 values[key] = entry['__EV__']
-            result['action'] = Distribution(values,self.models[model]['rationality'])
+            result['action'] = Distribution(values,self.getAttribute('rationality',model))
         elif len(best) == 1:
             # If there is only one best action, all of the selection mechanisms devolve to the same unique choice
             result['action'] = best[0]
@@ -151,13 +151,9 @@ class Agent:
             model = self.world.getMentalModel(self.name,vector)
         # Determine horizon
         if horizon is None:
-            horizon = self.models[model]['horizon']
-        if horizon is True:
-            horizon = self.models[True]['horizon']
+            horizon = self.getAttribute('horizon',model)
         # Determine discount factor
-        discount = self.models[model]['discount']
-        if discount is True:
-            discount = self.models[True]['discount']
+        discount = self.getAttribute('discount',model)
         # Compute immediate reward
         R = self.reward(vector,model)
         result = {'R': R,
@@ -166,7 +162,8 @@ class Agent:
                   'horizon': horizon,
                   'projection': []}
         # Check for pre-computed value function
-        V = self.models[model]['V'].get(self.name,vector,action,horizon,self.models[model]['ignore'])
+        V = self.getAttribute('V',model).get(self.name,vector,action,horizon,
+                                             self.getAttribute('ignore',model))
         if V is not None:
             result['V'] = V
         else:
@@ -194,7 +191,7 @@ class Agent:
                             future[entry['V']] = entry['probability']
                         result['projection'].append(entry)
                     # The following is typically "expectation", but might be "max" or "min", too
-                    op = self.models[model]['projector']
+                    op = self.getAttribute('projector',model)
                     if discount < -1e-6:
                         # Only final value matters
                         result['V'] = apply(op,(future,))
@@ -214,27 +211,32 @@ class Agent:
                         result['V'] += discount*Vrest['V']
                     result['projection'].append(outcome)
             # Do some caching
-            self.models[model]['V'].set(self.name,vector,action,horizon,result['V'])
+            self.getAttribute('V',model).set(self.name,vector,action,horizon,result['V'])
         return result
 
-    def valueIteration(self,horizon=None,ignore=[],model=True,epsilon=1e-6,debug=0,maxIterations=None):
+    def valueIteration(self,horizon=None,ignore=None,model=True,epsilon=1e-6,debug=0,maxIterations=None):
         """
         Compute a value function for the given model
         """
         if horizon is None:
-            horizon = self.models[model]['horizon']
+            horizon = self.getAttribute('horizon',model)
+        if ignore is None:
+            ignore = self.getAttribute('ignore',model)
         # Find transition matrix
-        transition = self.world.reachable(horizon=horizon,ignore=ignore)
+        transition = self.world.reachable(horizon=horizon,ignore=ignore,debug=False)
+        if debug:
+            print '|S|=%d' % (len(transition))
         # Initialize value function
+        V = self.getAttribute('V',model)
         for start in transition.keys():
             for agent in self.world.agents.values():
                 if self.world.terminated(start):
                     if agent.name == self.name:
-                        self.models[model]['V'].set(agent.name,start,None,0,agent.reward(start,model))
+                        V.set(agent.name,start,None,0,agent.reward(start,model))
                     else:
-                        self.models[model]['V'].set(agent.name,start,None,0,agent.reward(start))
+                        V.set(agent.name,start,None,0,agent.reward(start))
                 else:
-                    self.models[model]['V'].set(agent.name,start,None,0,0.)
+                    V.set(agent.name,start,None,0,0.)
         # Loop until no change in value function
         iterations = 0
         oldChange = 0.
@@ -245,18 +247,19 @@ class Agent:
                 print 'Iteration %d' % (iterations)
             oldChange = newChange
             newChange = 0.
-            V = ValueFunction()
+            newV = ValueFunction()
             # Consider all possible start states
             for start in transition.keys():
                 if debug > 1:
                     print
                     self.world.printVector(start)
-                if self.world.terminated(start):
+                if len(transition[start]) == 0:
+                    # Terminal state (either through termination or reaching horizon)
                     for agent in self.world.agents.values():
                         if agent.name == self.name:
-                            V.set(agent.name,start,None,0,agent.reward(start,model))
+                            newV.set(agent.name,start,None,0,agent.reward(start,model))
                         else:
-                            V.set(agent.name,start,None,0,agent.reward(start))
+                            newV.set(agent.name,start,None,0,agent.reward(start))
                 else:
                     # Back-propagate reward from subsequent states
                     actor = None
@@ -272,38 +275,41 @@ class Agent:
                         for agent in self.world.agents.values():
                             for end in transition[start][action].domain():
                                 # Determine expected value of future
-                                Vrest = transition[start][action][end]*self.models[model]['V'].get(agent.name,end,None,0)
+                                Vrest = transition[start][action][end]*V.get(agent.name,end,None,0)
                                 # Determine discount function (should use belief about other agent, but doesn't yet)
                                 if agent.name == self.name:
-                                    discount = agent.models[model]['discount']
+                                    discount = agent.getAttribute('discount',model)
                                 else:
-                                    discount = agent.models[True]['discount']
+                                    discount = agent.getAttribute('discount',True)
                                 if discount < -epsilon:
                                     # Future reward is all that matters
-                                    V.set(agent.name,start,action,0,Vrest)
+                                    newV.set(agent.name,start,action,0,Vrest)
                                 else:
                                     # Current reward + Discounted future reward
                                     if agent.name == self.name:
                                         R = agent.reward(start,model)
                                     else:
                                         R = agent.reward(start)
-                                    V.set(agent.name,start,action,0,R+discount*Vrest)
+                                    newV.set(agent.name,start,action,0,R+discount*Vrest)
                                 if debug > 2:
-                                    print '\t\t\tV_%s = %5.3f' % (agent.name,V.get(agent.name,start,action,0))
-                                previous = self.models[model]['V'].get(agent.name,start,action,0)
+                                    print '\t\t\tV_%s = %5.3f' % (agent.name,newV.get(agent.name,start,action,0))
+                                previous = V.get(agent.name,start,action,0)
                                 if previous is None:
-                                    newChange += abs(V.get(agent.name,start,action,0))
+                                    newChange += abs(newV.get(agent.name,start,action,0))
                                 else:
-                                    newChange += abs(V.get(agent.name,start,action,0)-previous)
+                                    newChange += abs(newV.get(agent.name,start,action,0)-previous)
                     # Value of state is the value of the chosen action in this state
-                    choice = self.predict(start,actor,V,0)
+                    choice = self.predict(start,actor,newV,0)
+                    if debug > 2:
+                        print '\tPrediction\n%s' % (choice)
                     for name in self.world.agents.keys():
                         for action in choice.domain():
-                            V.add(name,start,None,0,choice[action]*V.get(name,start,action,0))
+                            newV.add(name,start,None,0,choice[action]*newV.get(name,start,action,0))
                 for name in self.world.agents.keys():
                     if debug > 1:
-                        print '\tV_%s = %5.3f' % (name,V.get(name,start,None,0))
-            self.models[model]['V'] = V
+                        print '\tV_%s = %5.3f' % (name,newV.get(name,start,None,0))
+            V = newV
+            self.setAttribute('V',V,model)
             if debug > 0:
                 print 'Change: %5.3f' % (newChange)
                 state = self.world.state
@@ -313,10 +319,10 @@ class Agent:
                     print '\t\tV_%s(%s) = %5.3f' % (self.name,action,value)
         if debug > 0:
             print 'Completed after %d iterations' % (iterations)
-        return self.models[model]['V']
+        return self.getAttribute('V',model)
 
     def setPolicy(self,policy,model=None,level=None):
-        self.setParameter('policy',policy.desymbolize(self.world.symbols),model,level)
+        self.setAttribute('policy',policy.desymbolize(self.world.symbols),model,level)
 
     def setHorizon(self,horizon,model=None,level=None):
         """
@@ -324,9 +330,12 @@ class Agent:
         @param model: the model to set the horizon for, where C{None} means set it for all (default is C{None})
         @param level: if setting across models, the recursive level of models to do so, where C{None} means all levels (default is C{None})
         """
-        self.setParameter('horizon',horizon,model,level)
+        self.setAttribute('horizon',horizon,model,level)
 
     def setParameter(self,name,value,model=None,level=None):
+        raise DeprecationWarning,'Use setAttribute instead'
+
+    def setAttribute(self,name,value,model=None,level=None):
         """
         Set a parameter value for the given model(s)
         @param name: the feature of the model to set
@@ -338,9 +347,21 @@ class Agent:
         if model is None:
             for model in self.models.values():
                 if level is None or model['level'] == level:
-                    self.setParameter(name,value,model['name'])
+                    self.setAttribute(name,value,model['name'])
         else:
             self.models[model][name] = value
+
+    def getAttribute(self,name,model=True):
+        """
+        @return: the value for the specified parameter of the specified mental model
+        """
+        try:
+            value = self.models[model][name]
+        except KeyError:
+            return self.getAttribute(name,self.models[model]['parent'])
+        if value is True and model is not True:
+            raise DeprecationWarning,'Use "parent: True" setting to inherit by removing "%s" from model "%s" for agent "%s"' % (name,model,self.name)
+        return value
 
     """------------------"""
     """Action methods"""
@@ -430,31 +451,30 @@ class Agent:
     """Reward methods"""
     """------------------"""
 
-    def setReward(self,tree,weight=0.,model=None):
-        if model is None:
-            for model in self.models.values():
-                if isinstance(model['R'],dict):
-                    model['R'][tree] = weight
-                else:
-                    assert model['R'] is True
-        else:
-            self.models[model]['R'][tree] = weight
-
-    def reward(self,vector,model=True):
+    def setReward(self,tree,weight=0.,model=True):
         """
+        Adds/updates a goal weight within the reward function for the specified model.
+        """
+        if not self.models[model].has_key('R'):
+            self.models[model]['R'] = {}
+        self.models[model]['R'][tree] = weight
+
+    def reward(self,vector,model=True,recurse=True):
+        """
+        @param recurse: C{True} iff it is OK to recurse into another agent's reward (default is C{True})
+        @type recurse: bool
         @return: the reward I derive in the given state (under the given model, default being the C{True} model)
         @rtype: float
         """
-        R = self.models[model]['R']
-        if R is True:
-            # Use true reward function
-            R = self.models[True]['R']
+        R = self.getAttribute('R',model)
         total = 0.
         for tree,weight in R.items():
             if isinstance(tree,str):
-                # Name of an agent I'm trying to make (un)happy
-                model = self.world.getMentalModel(tree,vector)
-                ER = self.world.agents[tree].reward(vector,model)
+                if recurse:
+                    # Name of an agent I'm trying to make (un)happy
+                    model = self.world.getMentalModel(tree,vector)
+                    # Compute agent's reward but don't recurse any further
+                    ER = self.world.agents[tree].reward(vector,model,False)
             else:
                 ER = tree[vector]*self.world.scaleState(vector)
             total += ER*weight
@@ -472,6 +492,9 @@ class Agent:
          - horizon: the horizon of the value function under this model (default is C{True}),int
          - level: the recursive depth of this model (default is C{True}),int
          - rationality: the rationality parameter used in a quantal response function when modeling others (default is 10),float
+         - discount: discount factor used in lookahead
+         - selection: selection mechanism used in L{decide}
+         - parent: another model that this model inherits from (default is C{True})
         @param name: the label for this model
         @type name: str
         @return: the model created
@@ -480,9 +503,7 @@ class Agent:
         if self.models.has_key(name):
             raise NameError,'Model %s already exists for agent %s' % \
                 (name,self.name)
-        model = {'name': name,'index': len(self.models),'R': True,'beliefs': True,
-                 'horizon': True,'level': True,'rationality': True,'discount': True,
-                 'selection': True,
+        model = {'name': name,'index': len(self.models),'parent': True,
                  'V': ValueFunction(),'policy': {},'ignore': [],'projector': Distribution.expectation}
         model.update(kwargs)
         self.models[name] = model
@@ -509,15 +530,17 @@ class Agent:
             for action in best:
                 choices[action] = 1./float(len(best))
         else:
-            rationality = self.world.agents[name].models[self.world.getMentalModel(name,vector)]['rationality']
-            span = max(V.values()) - min(V.values())
-            if abs(span) > 1e-6:
-                for action,value in V.items():
-                    choices[action] = math.exp(rationality*value)
-            else:
-                for action in V.keys():
-                    choices[action] = 1./float(len(V))
-            choices.normalize()
+            rationality = self.world.agents[name].getAttribute('rationality',
+                                                               self.world.getMentalModel(name,vector))
+            choices = Distribution(V,rationality)
+            # span = max(V.values()) - min(V.values())
+            # if abs(span) > 1e-6:
+            #     for action,value in V.items():
+            #         choices[action] = math.exp(rationality*value)
+            # else:
+            #     for action in V.keys():
+            #         choices[action] = 1./float(len(V))
+            # choices.normalize()
         return choices
 
     def model2index(self,model):
@@ -552,7 +575,7 @@ class Agent:
             self.models[model]['level'] = level
 
     def setBelief(self,key,distribution,model=True):
-        beliefs = self.models[model]['beliefs']
+        beliefs = self.getAttribute('beliefs',model)
         if beliefs is True:
             beliefs = MatrixDistribution({KeyedMatrix(): 1.})
             self.models[model]['beliefs'] = beliefs
@@ -563,7 +586,7 @@ class Agent:
         @return: the agent's belief in the given world
         """
         world = VectorDistribution({vector: 1.})
-        beliefs = self.models[model]['beliefs']
+        beliefs = self.getAttribute('beliefs',model)
         if not beliefs is True:
             world = world.merge(beliefs*vector)
         return world
@@ -575,13 +598,13 @@ class Agent:
         """
         @return: the observations received by this agent in the given world when the given actions are performed
         """
-        if self.models[model]['beliefs'] is True or self.O is True:
+        if self.getAttribute('beliefs',model) is True or self.O is True:
             # If beliefs are accurate, or if there's no model of partial observability,
             # assume that the agent has complete observability
             return True
         else:
             omega = VectorDistribution({KeyedVector({CONSTANT: 1.}): 1.})
-            beliefs = self.models[model]['beliefs']
+            beliefs = self.getAttribute('beliefs',model)
             # Look up the observation function for the actions performed
             joint = reduce(lambda x,y: x|y,actions.values())
             try:
@@ -651,7 +674,8 @@ class Agent:
             model = self.models[name]
             node = doc.createElement('model')
             node.setAttribute('name',str(name))
-            for key in filter(lambda k: not k in ['name','index'],model.keys()):
+            node.setAttribute('parent',str(model['parent']))
+            for key in filter(lambda k: not k in ['name','index','parent'],model.keys()):
                 if key == 'R':
                     # Reward function for this model
                     if model['R'] is True:
@@ -734,8 +758,14 @@ class Agent:
                     name = str(node.getAttribute('name'))
                     if name == 'True':
                         name = True
+                    # Parse parent
+                    parent = str(node.getAttribute('parent'))
+                    if not parent:
+                        parent = None
+                    elif parent == 'True':
+                        parent = True
                     # Parse children
-                    kwargs = {'R': {},'ignore': []}
+                    kwargs = {'parent': parent}
                     text = str(node.getAttribute('selection'))
                     if text == str(True):
                         kwargs['selection'] = True
@@ -749,6 +779,8 @@ class Agent:
                                 kwargs[key] = ValueFunction(subnode)
                             else:
                                 if key == 'R' and str(subnode.getAttribute('name')):
+                                    if not kwargs.has_key(key):
+                                        kwargs[key] = {}
                                     # Goal on another agent's goals
                                     agent = str(subnode.getAttribute('name'))
                                     kwargs[key][agent] = float(subnode.getAttribute('weight'))
@@ -758,6 +790,8 @@ class Agent:
                                     if subchild.nodeType == subchild.ELEMENT_NODE:
                                         if key == 'R':
                                             # PWL goal
+                                            if not kwargs.has_key(key):
+                                                kwargs[key] = {}
                                             kwargs[key][KeyedTree(subchild)] = float(subnode.getAttribute('weight'))
                                         elif key == 'policy':
                                             kwargs[key] = KeyedTree(subchild)
@@ -769,7 +803,10 @@ class Agent:
                                         text = subchild.data.strip()
                                         if text:
                                             if key == 'ignore':
-                                                kwargs[key].append(text)
+                                                try:
+                                                    kwargs[key].append(text)
+                                                except KeyError:
+                                                    kwargs[key] = [text]
                                             elif text == str(True):
                                                 kwargs[key] = True
                                             elif key == 'horizon':
