@@ -640,13 +640,14 @@ class World:
         for element in distribution.domain():
             if not isinstance(element,float):
                 distribution.replace(element,float(self.agents[modelee].model2index(element)))
-        # Make sure recursive levels match up
-        modelerLevel = self.agents[modeler].models[model]['level']
-        for element in distribution.domain():
-            name = self.agents[modelee].index2model(element)
-            assert self.agents[modelee].models[name]['level'] == modelerLevel - 1,\
-                'Agent %s\'s %s model has belief level of %d, so its model %s for agent %s must have belief level of %d' % \
-                (modeler,model,modelerLevel,name,modelee,modelerLevel-1)
+        # # Make sure recursive levels match up
+        # modelerLevel = self.agents[modeler].getAttribute('level',model)
+        # for element in distribution.domain():
+        #     name = self.agents[modelee].index2model(element)
+        #     level = self.agents[modelee].getAttribute('level',name)
+        #     assert level == modelerLevel - 1,\
+        #         'Agent %s\'s %s model has belief level of %d, so its model %s for agent %s must have belief level of %d' % \
+        #         (modeler,model,modelerLevel,name,modelee,modelerLevel-1)
         distribution.normalize()
         belief = MatrixDistribution()
         for element in distribution.domain():
@@ -740,7 +741,7 @@ class World:
             raise NameError,'Unprocessed keys: %s' % (remaining.keys())
         return result
 
-    def reachable(self,vector=None,transition=None,horizon=-1,ignore=[]):
+    def reachable(self,vector=None,transition=None,horizon=-1,ignore=[],debug=False):
         """
         @return: transition matrix among states reachable from the given state (default is current state)
         @rtype: KeyedVectorS{->}ActionSetS{->}VectorDistribution
@@ -760,12 +761,19 @@ class World:
             # Process next steps from this state
             transition[node] = {}
             if not self.terminated(vector) and horizon != 0:
+                if debug:
+                    print 'Expanding...'
+                    self.printVector(vector)
                 for actions in self.getActions(vector):
+                    if debug: print 'Performing:', actions
                     future = self.stepFromState(vector,actions)['new']
                     if isinstance(future,KeyedVector):
                         future = VectorDistribution({future: 1.})
                     transition[node][actions] = VectorDistribution()
                     for newVector in future.domain():
+                        if debug:
+                            print 'Result (P=%f)' % (future[newVector])
+                            self.printVector(newVector)
                         newNode = newVector.filter(ignore)
                         transition[node][actions][newNode] = future[newVector]
                         if not transition.has_key(newNode):

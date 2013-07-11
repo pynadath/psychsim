@@ -74,6 +74,7 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
     # Agent state
     world.defineState(sylv.name,'troops',int,lo=0,hi=500000,
                       description='Number of troops %s has left' % (sylv.name))
+    sylv.setState('troops',30000)
     world.defineState(sylv.name,'cost',int,lo=0,hi=50000,
                       description='Number of troops %s loses in an attack' % (sylv.name))
     sylv.setState('cost',2000)
@@ -196,15 +197,15 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
 
     # Horizons
     if model == 'powell':
-        free.setParameter('horizon',4)
-        sylv.setParameter('horizon',4)
+        free.setAttribute('horizon',4)
+        sylv.setAttribute('horizon',4)
     elif model == 'slantchev':
-        free.setParameter('horizon',6)
-        sylv.setParameter('horizon',6)
+        free.setAttribute('horizon',6)
+        sylv.setAttribute('horizon',6)
 
     # Discount factors
-    free.setParameter('discount',-1)
-    sylv.setParameter('discount',-1)
+    free.setAttribute('discount',-1)
+    sylv.setAttribute('discount',-1)
 
     # Levels of belief
     free.setRecursiveLevel(2)
@@ -312,6 +313,8 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
         tree = makeTree(incrementMatrix(stateKey(None,'round'),1))
         world.setDynamics(None,'round',atom,tree)
 
+
+    if not web:
     # Handcrafted policy for Freedonia
 #    free.setPolicy(makeTree({'if': equalRow('phase','respond'),
 #                             # Accept an offer greater than 50
@@ -323,22 +326,23 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
 #                                     True: Action({'subject': free.name,'verb': 'attack','object': sylv.name}),
 #                             # Agent decides how what to do otherwise
 #                                     False: False}}))
-
-    if not web:
         # Mental models of enemy
         # Example of creating a model with incorrect reward all at once (a version of Freedonia who cares about reaching agreement as well)
 #        sylv.addModel('false',R={goalSTroops: 10.,goalSTerritory: 1.,goalAgreement: 1.},
-#                      rationality=1.,selection='distribution')
+#                      rationality=1.,selection='distribution',parent=True)
         # Example of creating a model with incorrect beliefs
-        sylv.addModel('false',rationality=10.,selection='distribution')
-        key = stateKey(free.name,'position')
-        sylv.setBelief(key,setToConstantMatrix(key,9),'false')
+#        sylv.addModel('false',rationality=10.,selection='distribution',parent=True)
+#        key = stateKey(free.name,'position')
+#        sylv.setBelief(key,setToConstantMatrix(key,9),'false')
         # Example of setting model parameters separately
-        sylv.addModel('true')
-        sylv.setParameter('R',True,'true')         # Use real agent's reward
-        sylv.setParameter('rationality',10.,'true') # Override real agent's rationality with this value
-        sylv.setParameter('selection','distribution','true')
-        world.setMentalModel(free.name,sylv.name,{'false': 0.9,'true': 0.1})
+#        sylv.addModel('true',parent=True)
+#        sylv.setAttribute('rationality',10.,'true') # Override real agent's rationality with this value
+#        sylv.setAttribute('selection','distribution','true')
+#        world.setMentalModel(free.name,sylv.name,{'false': 0.9,'true': 0.1})
+        # Compiled policy
+        world.setState(None,'phase','offer')
+        sylv.setAttribute('rationality',10.)
+#        free.valueIteration(horizon=3,debug=3)
     return world
 
 def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
@@ -367,10 +371,6 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
     else:
         assert model == 'slantchev'
         steps = 3
-
-#    ignore = ['Freedonia\'s cost','%s\'s cost' % (sylv.name),'round']
-#    sylv.setParameter('ignore',ignore)
-#    V = sylv.valueIteration(horizon=45,ignore=ignore)
 
     if debug > 0:
         world.printState(beliefs=True)
