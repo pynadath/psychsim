@@ -331,17 +331,21 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
 #        sylv.addModel('false',R={goalSTroops: 10.,goalSTerritory: 1.,goalAgreement: 1.},
 #                      rationality=1.,selection='distribution',parent=True)
         # Example of creating a model with incorrect beliefs
-#        sylv.addModel('false',rationality=10.,selection='distribution',parent=True)
-#        key = stateKey(free.name,'position')
-#        sylv.setBelief(key,setToConstantMatrix(key,9),'false')
+        sylv.addModel('false',rationality=10.,selection='distribution',parent=True)
+        key = stateKey(free.name,'position')
+        # Sylvania believes position to be fixed at 9
+        #        sylv.setBelief(key,setToConstantMatrix(key,9),'false')
+        # Sylvania is unsure about position (50% chance of being 7, 50% of being 3)
+        sylv.setBelief(key,MatrixDistribution({setToConstantMatrix(key,7): 0.5,
+                                               setToConstantMatrix(key,3): 0.5}),'false')
         # Example of setting model parameters separately
-#        sylv.addModel('true',parent=True)
-#        sylv.setAttribute('rationality',10.,'true') # Override real agent's rationality with this value
-#        sylv.setAttribute('selection','distribution','true')
-#        world.setMentalModel(free.name,sylv.name,{'false': 0.9,'true': 0.1})
+        sylv.addModel('true',parent=True)
+        sylv.setAttribute('rationality',10.,'true') # Override real agent's rationality with this value
+        sylv.setAttribute('selection','distribution','true')
+        world.setMentalModel(free.name,sylv.name,{'false': 0.9,'true': 0.1})
         # Compiled policy
-        world.setState(None,'phase','offer')
-        sylv.setAttribute('rationality',10.)
+#        world.setState(None,'phase','offer')
+#        sylv.setAttribute('rationality',10.)
 #        free.valueIteration(horizon=3,debug=3)
     return world
 
