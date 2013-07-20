@@ -579,7 +579,17 @@ class Agent:
         if beliefs is True:
             beliefs = MatrixDistribution({KeyedMatrix(): 1.})
             self.models[model]['beliefs'] = beliefs
-        beliefs.update(distribution)
+        if isinstance(distribution,Distribution):
+            newDist = distribution.__class__()
+            for element in distribution.domain():
+                newElement = element.desymbolize(self.world.symbols)
+                try:
+                    newDist[newElement] += distribution[element]
+                except KeyError:
+                    newDist[newElement] = distribution[element]
+        else:
+            newDist = distribution.desymbolize(self.world.symbols)
+        beliefs.update(newDist)
 
     def getBelief(self,vector,model=True):
         """
