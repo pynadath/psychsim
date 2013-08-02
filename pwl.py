@@ -255,15 +255,16 @@ class KeyedMatrix(dict):
             self._string = None
         
     def __eq__(self,other):
-        for key,vector in self.items():
-            try:
-                if vector != other[key]:
-                    return False
-            except KeyError:
-                if vector != {}:
-                    return False
-        else:
-            return True
+        return hash(self) == hash(other)
+        # for key,vector in self.items():
+        #     try:
+        #         if vector != other[key]:
+        #             return False
+        #     except KeyError:
+        #         if vector != {}:
+        #             return False
+        # else:
+        #     return True
 
     def __ne__(self,other):
         return not self == other
@@ -449,8 +450,9 @@ def setFalseMatrix(key):
 
 class MatrixDistribution(Distribution):
     def update(self,matrix):
+        original = dict(self)
         for old in self.domain():
-            prob = self[old]
+            prob = original[old]
             del self[old]
             if isinstance(matrix,Distribution):
                 # Merge distributions
