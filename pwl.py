@@ -451,9 +451,10 @@ def setFalseMatrix(key):
 class MatrixDistribution(Distribution):
     def update(self,matrix):
         original = dict(self)
-        for old in self.domain():
+        domain = self.domain()
+        self.clear()
+        for old in domain:
             prob = original[old]
-            del self[old]
             if isinstance(matrix,Distribution):
                 # Merge distributions
                 for submatrix in matrix.domain():
