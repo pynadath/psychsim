@@ -255,16 +255,16 @@ class KeyedMatrix(dict):
             self._string = None
         
     def __eq__(self,other):
-        return hash(self) == hash(other)
-        # for key,vector in self.items():
-        #     try:
-        #         if vector != other[key]:
-        #             return False
-        #     except KeyError:
-        #         if vector != {}:
-        #             return False
-        # else:
-        #     return True
+        return str(self) == str(other)
+         # for key,vector in self.items():
+         #     try:
+         #         if vector != other[key]:
+         #             return False
+         #     except KeyError:
+         #         if vector != {}:
+         #             return False
+         # else:
+         #     return True
 
     def __ne__(self,other):
         return not self == other
