@@ -150,6 +150,15 @@ class Distribution(dict):
     def __sub__(self,other):
         return self + (-other)
 
+    def __mul__(self,other):
+        if isinstance(other,Distribution):
+            raise NotImplementedError,'Unable to multiply two distributions.'
+        else:
+            result = {}
+            for element in self.domain():
+                result[element*other] = self[element]
+            return self.__class__(result)
+        
     def __xml__(self):
         """
         @return: An XML Document object representing this distribution

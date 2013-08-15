@@ -98,11 +98,15 @@ class KeyedVector(dict):
 
     def filter(self,ignore):
         """
-        @return: a copy of me with the given set of keys dropped out
+        @return: a copy of me applying the given lambda expression to the keys (if a list is provided, then any keys in that list are dropped out)
         @rtype: L{KeyedVector}
         """
+        if isinstance(ignore,list):
+            test = lambda k: not k in ignore
+        else:
+            test = ignore
         result = self.__class__()
-        for key in filter(lambda k: not k in ignore,self.keys()):
+        for key in filter(test,self.keys()):
             result[key] = self[key]
         return result
 
@@ -821,12 +825,6 @@ class KeyedTree:
             self.makeProbabilistic(children)
         else:
             self.makeLeaf(children[None])
-        
-def maximizeFeature(key):
-    return KeyedTree(KeyedVector({key: 1.}))
-        
-def minimizeFeature(key):
-    return KeyedTree(KeyedVector({key: -1.}))
 
 class TreeDistribution(Distribution):
     """

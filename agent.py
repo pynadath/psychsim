@@ -66,7 +66,7 @@ class Agent:
         @type selection: str
         """
         if model is None:
-            model = self.world.getMentalModel(self.name,vector)
+            model = self.world.getModel(self.name,vector)
         if selection is None:
             selection = self.getAttribute('selection',model)
         # What are my subjective beliefs for this decision?
@@ -148,7 +148,7 @@ class Agent:
         @param model: the model of this agent to use (default is C{True})
         """
         if model is None:
-            model = self.world.getMentalModel(self.name,vector)
+            model = self.world.getModel(self.name,vector)
         # Determine horizon
         if horizon is None:
             horizon = self.getAttribute('horizon',model)
@@ -457,6 +457,8 @@ class Agent:
         """
         if not self.models[model].has_key('R'):
             self.models[model]['R'] = {}
+        if not isinstance(tree,str):
+            tree = tree.desymbolize(self.world.symbols)
         self.models[model]['R'][tree] = weight
 
     def reward(self,vector,model=True,recurse=True):
@@ -472,13 +474,25 @@ class Agent:
             if isinstance(tree,str):
                 if recurse:
                     # Name of an agent I'm trying to make (un)happy
-                    model = self.world.getMentalModel(tree,vector)
+                    model = self.world.getModel(tree,vector)
                     # Compute agent's reward but don't recurse any further
                     ER = self.world.agents[tree].reward(vector,model,False)
             else:
                 ER = tree[vector]*self.world.scaleState(vector)
             total += ER*weight
         return total
+
+    def printReward(self,model=True,buf=None,prefix=''):
+        first = True
+        R = self.getAttribute('R',model)
+        trees = R.keys()
+        trees.sort()
+        for tree in trees:
+            if first:
+                print >> buf,'%s\tR\t\t%3.1f %s' % (prefix,R[tree],tree)
+                first = False
+            else:
+                print >> buf,'%s\t\t\t%3.1f %s' % (prefix,R[tree],tree)
 
     """------------------"""
     """Mental model methods"""
@@ -496,7 +510,7 @@ class Agent:
          - selection: selection mechanism used in L{decide}
          - parent: another model that this model inherits from (default is C{True})
         @param name: the label for this model
-        @type name: str
+        @type name: sotr
         @return: the model created
         @rtype: dict
         """
@@ -531,16 +545,8 @@ class Agent:
                 choices[action] = 1./float(len(best))
         else:
             rationality = self.world.agents[name].getAttribute('rationality',
-                                                               self.world.getMentalModel(name,vector))
+                                                               self.world.getModel(name,vector))
             choices = Distribution(V,rationality)
-            # span = max(V.values()) - min(V.values())
-            # if abs(span) > 1e-6:
-            #     for action,value in V.items():
-            #         choices[action] = math.exp(rationality*value)
-            # else:
-            #     for action in V.keys():
-            #         choices[action] = 1./float(len(V))
-            # choices.normalize()
         return choices
 
     def model2index(self,model):
@@ -563,6 +569,47 @@ class Agent:
             index = int(index+0.5)
         return self.modelList[index]
 
+    def belief2model(self,parent,belief):
+        # Find "root" model (i.e., one that has more than just beliefs)
+        if not isinstance(parent,dict):
+            parent = self.models[parent]
+        while not parent.has_key('R') and not parent['parent'] is None:
+            # Find the model from which we inherit reward
+            parent = self.models[parent['parent']]
+        # Check whether this is even a new belief (the following loop does badly otherwise)
+        if parent.has_key('beliefs') and parent['beliefs'] == belief:
+            return parent
+        # Find model sharing same parent that has same beliefs
+        for model in filter(lambda m: m['parent'] == parent['name'],self.models.values()):
+            if model.has_key('beliefs') and not model['beliefs'] is True:
+                if model['beliefs'] == belief:
+                    return model
+        else:
+            # Create a new model
+            index = 1
+            while self.models.has_key('%s%d' % (parent['name'],index)):
+                index += 1
+            return self.addModel('%s%d' % (parent['name'],index),beliefs=belief,parent=parent['name'])
+
+    def printModel(self,model=True,buf=None,index=None,prefix='',first=True):
+        if isinstance(index,int) or isinstance(index,float):
+            model = self.index2model(index)
+        if not isinstance(model,dict):
+            model = self.models[model]
+        if first:
+            label = self.name
+        else:
+            label = ''
+        print >> buf,'%s\t%-12s\t%-12s\t%-12s' % \
+            (prefix,label,'__model__',model['name'])
+        prefix = '\t'+prefix
+        if model.has_key('R') and not model['R'] is True:
+            self.printReward(model['name'],buf,'%s\t\t' % (prefix))
+        if model.has_key('beliefs') and not model['beliefs'] is True:
+            print >> buf,'%s\t\t----beliefs:----' % (prefix)
+            self.world.printState(model['beliefs'],buf,prefix+'\t\t',beliefs=True)
+            print >> buf,'%s\t\t----------------' % (prefix)
+        
     """---------------------"""
     """Belief update methods"""
     """---------------------"""
@@ -575,21 +622,17 @@ class Agent:
             self.models[model]['level'] = level
 
     def setBelief(self,key,distribution,model=True):
-        beliefs = self.getAttribute('beliefs',model)
+        try:
+            beliefs = self.models[model]['beliefs']
+        except KeyError:
+            beliefs = True
         if beliefs is True:
-            beliefs = MatrixDistribution({KeyedMatrix(): 1.})
+            beliefs = VectorDistribution({KeyedVector(): 1.})
             self.models[model]['beliefs'] = beliefs
-        if isinstance(distribution,Distribution):
-            newDist = distribution.__class__()
-            for element in distribution.domain():
-                newElement = element.desymbolize(self.world.symbols)
-                try:
-                    newDist[newElement] += distribution[element]
-                except KeyError:
-                    newDist[newElement] = distribution[element]
-        else:
-            newDist = distribution.desymbolize(self.world.symbols)
-        beliefs.update(newDist)
+        if isinstance(distribution,MatrixDistribution) or isinstance(distribution,KeyedMatrix):
+            raise NotImplementedError,'New implementation of beliefs uses vectors, not matrices. '\
+                'Distorted beliefs have not been re-implemented yet.'
+        self.world.setFeature(key,distribution,beliefs)
 
     def getBelief(self,vector,model=True):
         """
@@ -598,52 +641,136 @@ class Agent:
         world = VectorDistribution({vector: 1.})
         beliefs = self.getAttribute('beliefs',model)
         if not beliefs is True:
-            world = world.merge(beliefs*vector)
+            world = world.merge(beliefs)
         return world
+
+    def stateEstimator(self,oldReal,newReal,omega,model=True):
+        # Extract belief vector (in minimal diff form)
+        try:
+            oldBeliefDiff = self.models[model]['beliefs']
+        except KeyError:
+            # No beliefs on this model, assume they get updated somewhere else
+            return self.model2index(model)
+        # Look for cached estimator value
+        oldBelief = self.getBelief(oldReal,model)
+        if not self.models[model].has_key('SE'):
+            self.models[model]['SE'] = {oldBelief: {newReal: {}}}
+        elif not self.models[model]['SE'].has_key(oldBelief):
+            self.models[model]['SE'][oldBelief] = {newReal: {}}
+        elif not self.models[model]['SE'][oldBelief].has_key(newReal):
+            self.models[model]['SE'][oldBelief][newReal] = {}
+        elif self.models[model]['SE'][oldBelief][newReal].has_key(omega):
+            return self.models[model]['SE'][oldBelief][newReal][omega]
+        # Start computing possible new worlds
+        newBeliefs = VectorDistribution()
+        for oldWorld in oldBeliefDiff.domain():
+            # Compute probability of this observation given this start state
+            probOmega = 1.
+            # What actions do I think have been performed?
+            actions = {}
+            world = self.world.pruneModels(oldReal)
+            world.update(oldWorld)
+            for actor in self.world.next(world):
+                if not omega.has_key(actor):
+                    raise NotImplementedError,'Currently unable to handle unobserved actions'
+                for actions[actor] in self.world.agents[actor].actions:
+                    if hash(actions[actor]) == omega[actor]:
+                        break
+                else:
+                    raise ValueError,'Unable to identify observation %d of %s' % (omega[actor],actor)
+                actorModel = self.world.getModel(actor,oldWorld)
+                if not actorModel is True:
+                    decision = self.world.agents[actor].decide(world,model=actorModel,selection='distribution')
+                    probOmega *= decision['action'][actions[actor]]
+            # What is the effect of those actions?
+            effect = self.world.effect(actions,world)
+            for newWorld in effect['new'].domain():
+                newBelief = KeyedVector()
+                for key in newWorld.keys():
+                    if oldWorld.has_key(key):
+                        newBelief[key] = newWorld[key]
+                    else:
+                        if newWorld[key] != newReal[key]:
+                            # This resulting state has 0 probability given my original belief
+                            break
+                else:
+                    # Compute joint probability of old, new, observation, etc.
+                    newProb = probOmega*effect['new'][newWorld]*self.observe(newWorld,actions,model)[omega]
+                    try:
+                        newBeliefs[newBelief] += oldBeliefDiff[oldWorld]*newProb
+                    except KeyError:
+                        newBeliefs[newBelief] = oldBeliefDiff[oldWorld]*newProb
+        # Find models corresponding to new beliefs
+        newBeliefs.normalize()
+        self.models[model]['SE'][oldBelief][newReal][omega] = self.belief2model(model,newBeliefs)['index']
+        return self.models[model]['SE'][oldBelief][newReal][omega]
 
     def printBeliefs(self,model=True):
         raise DeprecationWarning,'Use the "beliefs=True" argument to printState instead'
 
+    """--------------------"""
+    """Observation  methods"""
+    """--------------------"""
+
+    def defineObservation(self,omega,tree,actions=None,**kwargs):
+        """
+        @param omega: The label of this dimension of observations (e.g., an existing feature key, or a new observation dimension)
+        @type omega: str
+        """
+        if not self.world.variables.has_key(omega):
+            self.world.defineVariable(omega,kwargs)
+        self.omega.add(omega)
+        if self.O is True:
+            self.O = {}
+        if not self.O.has_key(omega):
+            self.O[omega] = {}
+        self.O[omega][actions] = tree
+
     def observe(self,vector,actions,model=True):
         """
-        @return: the observations received by this agent in the given world when the given actions are performed
+        @return: distribution over observations received by this agent in the given world when the given actions are performed
+        @rtype: L{Distribution}
         """
-        if self.getAttribute('beliefs',model) is True or self.O is True:
-            # If beliefs are accurate, or if there's no model of partial observability,
-            # assume that the agent has complete observability
-            return True
+        if self.O is True:
+            O = {}
         else:
-            omega = VectorDistribution({KeyedVector({CONSTANT: 1.}): 1.})
-            beliefs = self.getAttribute('beliefs',model)
-            # Look up the observation function for the actions performed
-            joint = reduce(lambda x,y: x|y,actions.values())
+            O = self.O
+        jointAction = reduce(lambda x,y: x|y,actions.values())
+        # Generate observations along each dimension
+        omega = {}
+        for key,table in O.items():
             try:
-                tree = self.O[joint]
+                # Look up the observation function for the actions performed
+                tree = table[jointAction]
             except KeyError:
-                # Assume observable! Because we assume lazy authors.
-                return True
-            # Apply the observation function
-            observation = tree[vector]
-            if observation is True:
-                # This action produces perfect observations
-                return True
+                # Maybe a tree that applies for all possible actions
+                try:
+                    tree = table[None]
+                except KeyError:
+                    # Awkward, someone defined an observation function that doesn't cover the action space
+                    raise ValueError,'Observation function for %s does not cover action space' % (key)
+            if actions.has_key(key):
+                # Observation of action
+                omega[key] = tree[vector]
             else:
-                # Potential distribution over observed symbols
-                for key in observation.domain()[0].keys():
-                    obs = Distribution()
-                    for matrix in observation.domain():
-                        assert matrix.has_key(key)
-                        if beliefs.domain()[0].has_key(key):
-                            # Observation of a state feature
-                            value = matrix[key]*vector
-                            try:
-                                obs[value] += observation[matrix]
-                            except KeyError:
-                                obs[value] = observation[matrix]
-                        else:
-                            raise NameError,'Unknown observation of %s' % (key)
-                    omega.join(key,obs)
-            return omega
+                # Apply the observation function
+                omega[key] = self.world.decodeVariable(key,tree[vector]*vector)
+        for key,action in actions.items():
+            if omega.has_key(key):
+                if omega[key]:
+                    # Action is observable
+                    omega[key] = hash(action)
+                else:
+                    # Action is unobservable
+                    del omega[key]
+            else:
+                # Assume action is observable by default
+                omega[key] = hash(action)
+        # Generate distribution over joint observations
+        jointOmega = VectorDistribution({KeyedVector(): 1.})
+        for key,distribution in omega.items():
+            jointOmega.join(key,distribution)
+        return jointOmega
 
     """------------------"""
     """Serialization methods"""
@@ -674,11 +801,14 @@ class Agent:
             node.appendChild(doc.createTextNode(omega))
             root.appendChild(node)
         if not self.O is True:
-            for actions,tree in self.O.items():
-                node = doc.createElement('O')
-                node.appendChild(actions.__xml__().documentElement)
-                node.appendChild(tree.__xml__().documentElement)
-                root.appendChild(node)
+            for key,table in self.O.items():
+                for actions,tree in table.items():
+                    node = doc.createElement('O')
+                    node.setAttribute('omega',key)
+                    if actions:
+                        node.appendChild(actions.__xml__().documentElement)
+                    node.appendChild(tree.__xml__().documentElement)
+                    root.appendChild(node)
         # Models
         for name in self.modelList:
             model = self.models[name]
@@ -754,6 +884,10 @@ class Agent:
                 elif node.tagName == 'O':
                     if self.O is True:
                         self.O = {}
+                    omega = str(node.getAttribute('omega'))
+                    if not self.O.has_key(omega):
+                        self.O[omega] = {}
+                    action = None
                     subnode = node.firstChild
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
@@ -762,7 +896,7 @@ class Agent:
                             elif subnode.tagName == 'tree':
                                 tree = KeyedTree(subnode)
                         subnode = subnode.nextSibling
-                    self.O[action] = tree
+                    self.O[omega][action] = tree
                 elif node.tagName == 'model':
                     # Parse model name
                     name = str(node.getAttribute('name'))
@@ -770,7 +904,7 @@ class Agent:
                         name = True
                     # Parse parent
                     parent = str(node.getAttribute('parent'))
-                    if not parent:
+                    if not parent or parent == str(None):
                         parent = None
                     elif parent == 'True':
                         parent = True
@@ -806,7 +940,7 @@ class Agent:
                                         elif key == 'policy':
                                             kwargs[key] = KeyedTree(subchild)
                                         elif key == 'beliefs':
-                                            kwargs[key] = MatrixDistribution(subchild)
+                                            kwargs[key] = VectorDistribution(subchild)
                                         else:
                                             raise NameError,'Unknown element found when parsing model\'s %s' % (key)
                                     elif subchild.nodeType == subchild.TEXT_NODE:

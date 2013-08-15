@@ -8,8 +8,9 @@ from argparse import ArgumentParser
 import StringIO
 
 from psychsim.pwl import *
+from psychsim.reward import *
 from psychsim.action import *
-from psychsim.world import World,stateKey,actionKey
+from psychsim.world import World,stateKey,actionKey,binaryKey,modelKey
 from psychsim.agent import Agent
 
 def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
@@ -98,6 +99,10 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
     world.defineState(None,'round',int,description='The current round of the negotiation')
     world.setState(None,'round',0)
 
+    if not web:
+        # Relationship value
+        key = world.defineRelation(free.name,sylv.name,'trusts')
+        world.setFeature(key,0.)
     # Game over if there is a treaty
     world.addTermination(makeTree({'if': trueRow(stateKey(None,'treaty')),
                                    True: True, False: False}))
@@ -195,6 +200,9 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
     # Possible goals applicable to both
     goalAgreement = maximizeFeature(stateKey(None,'treaty'))
 
+    # Silly goal, provided as an example of an achievement goal
+    goalAchieve = achieveFeatureValue(stateKey(None,'phase'),'respond')
+
     # Horizons
     if model == 'powell':
         free.setAttribute('horizon',4)
@@ -219,9 +227,9 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
     for action in filterActions({'verb': 'attack'},free.actions | sylv.actions):
         # Effect on troops (cost of battle)
         tree = makeTree(addFeatureMatrix(freeTroops,stateKey(free.name,'cost'),-1.))
-        world.setDynamics(free.name,'troops',action,tree,enforceMin=not web)
+        world.setDynamics(freeTroops,action,tree,enforceMin=not web)
         tree = makeTree(addFeatureMatrix(sylvTroops,stateKey(sylv.name,'cost'),-1.))
-        world.setDynamics(sylv.name,'troops',action,tree,enforceMin=not web)
+        world.setDynamics(sylvTroops,action,tree,enforceMin=not web)
         if model == 'powell':
             # Effect on territory (probability of collapse)
             tree = makeTree({'distribution': [
@@ -231,20 +239,20 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
                         ({'distribution': [(setToConstantMatrix(freeTerr,0),fCollapse),      # Freedonia collapses, Sylvania does not
                                            (noChangeMatrix(freeTerr),       1.-fCollapse)]}, # Neither collapses
                          1.-sCollapse)]})
-            world.setDynamics(free.name,'territory',action,tree)
+            world.setDynamics(freeTerr,action,tree)
         elif model == 'slantchev':
             # Effect on position
             pos = stateKey(free.name,'position')
             tree = makeTree({'distribution': [(incrementMatrix(pos,1),1.-fCollapse), # Freedonia wins battle
                                               (incrementMatrix(pos,-1),fCollapse)]}) # Freedonia loses battle
-            world.setDynamics(free.name,'position',action,tree)
+            world.setDynamics(pos,action,tree)
             # Effect on territory
             tree = makeTree({'if': thresholdRow(pos,posHi-.5), 
                              True: setToConstantMatrix(freeTerr,100),          # Freedonia won
                              False: {'if': thresholdRow(pos,posLo+.5),
                                      True: noChangeMatrix(freeTerr),
                                      False: setToConstantMatrix(freeTerr,0)}}) # Freedonia lost
-            world.setDynamics(free.name,'territory',action,tree)
+            world.setDynamics(freeTerr,action,tree)
 
     # Dynamics of offers
     for index in range(2):
@@ -256,65 +264,73 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
             tree = makeTree({'if': trueRow(stateKey(None,'treaty')),
                              True: noChangeMatrix(offer),
                              False: setToConstantMatrix(offer,amount)})
-            world.setDynamics(atom['object'],'offered',atom,tree,enforceMax=not web)
+            world.setDynamics(offer,atom,tree,enforceMax=not web)
 
     # Dynamics of treaties
     for action in filterActions({'verb': 'accept offer'},free.actions | sylv.actions):
         # Accepting an offer means that there is now a treaty
-        tree = makeTree(setTrueMatrix(stateKey(None,'treaty')))
-        world.setDynamics(None,'treaty',action,tree)
+        key = stateKey(None,'treaty')
+        tree = makeTree(setTrueMatrix(key))
+        world.setDynamics(key,action,tree)
         # Accepting offer sets territory
         offer = stateKey(action['subject'],'offered')
         territory = stateKey(free.name,'territory')
         if action['subject'] == free.name:
             # Freedonia accepts sets territory to last offer
             tree = makeTree(setToFeatureMatrix(territory,offer))
-            world.setDynamics(free.name,'territory',action,tree)
+            world.setDynamics(freeTerr,action,tree)
         else:
             # Sylvania accepts sets territory to 1-last offer
             tree = makeTree(setToFeatureMatrix(territory,offer,pct=-1.,shift=100.))
-            world.setDynamics(free.name,'territory',action,tree)
+            world.setDynamics(freeTerr,action,tree)
 
     # Dynamics of phase
+    phase = stateKey(None,'phase')
+    roundKey = stateKey(None,'round')
     # OFFER -> RESPOND
     for index in range(2):
         action = Action({'subject': world.agents.keys()[index],'verb': 'offer',
                          'object': world.agents.keys()[1-index]})
         if action['subject'] == free.name or model != 'powell':
-            tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'respond'))
-            world.setDynamics(None,'phase',action,tree)
+            tree = makeTree(setToConstantMatrix(phase,'respond'))
+            world.setDynamics(phase,action,tree)
     # RESPOND -> REJECTION or ENGAGEMENT
     for action in filterActions({'verb': 'reject offer'},free.actions | sylv.actions):
         if model == 'powell':
-            tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'rejection'))
+            tree = makeTree(setToConstantMatrix(phase,'rejection'))
         elif model == 'slantchev':
-            tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'engagement'))
-        world.setDynamics(None,'phase',action,tree)
+            tree = makeTree(setToConstantMatrix(phase,'engagement'))
+        world.setDynamics(phase,action,tree)
     # accepting -> OFFER
     for action in filterActions({'verb': 'accept offer'},free.actions | sylv.actions):
-        tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'offer'))
-        world.setDynamics(None,'phase',action,tree)
+        tree = makeTree(setToConstantMatrix(phase,'offer'))
+        world.setDynamics(phase,action,tree)
     # attacking -> OFFER
     for action in filterActions({'verb': 'attack'},free.actions | sylv.actions):
-        tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'offer'))
-        world.setDynamics(None,'phase',action,tree)
+        tree = makeTree(setToConstantMatrix(phase,'offer'))
+        world.setDynamics(phase,action,tree)
         if action['subject'] == sylv.name or model == 'slantchev':
-            tree = makeTree(incrementMatrix(stateKey(None,'round'),1))
-            world.setDynamics(None,'round',action,tree)
+            tree = makeTree(incrementMatrix(roundKey,1))
+            world.setDynamics(roundKey,action,tree)
     if model == 'powell':
         # REJECTION -> END
         for atom in [freeNOP,freeBattle]:
-            tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'end'))
-            world.setDynamics(None,'phase',atom,tree)
+            tree = makeTree(setToConstantMatrix(phase,'end'))
+            world.setDynamics(phase,atom,tree)
         # END -> OFFER
         atom =  Action({'subject': sylv.name,'verb': 'continue'})
-        tree = makeTree(setToConstantMatrix(stateKey(None,'phase'),'offer'))
-        world.setDynamics(None,'phase',atom,tree)
-        tree = makeTree(incrementMatrix(stateKey(None,'round'),1))
-        world.setDynamics(None,'round',atom,tree)
+        tree = makeTree(setToConstantMatrix(phase,'offer'))
+        world.setDynamics(phase,atom,tree)
+        tree = makeTree(incrementMatrix(roundKey,1))
+        world.setDynamics(roundKey,atom,tree)
 
 
     if not web:
+        # Relationship dynamics: attacking is bad for trust
+        atom =  Action({'subject': sylv.name,'verb': 'attack','object': free.name})
+        key = binaryKey(free.name,sylv.name,'trusts')
+        tree = makeTree(approachMatrix(key,0.1,-1.))
+        world.setDynamics(key,atom,tree)
     # Handcrafted policy for Freedonia
 #    free.setPolicy(makeTree({'if': equalRow('phase','respond'),
 #                             # Accept an offer greater than 50
@@ -328,21 +344,38 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
 #                                     False: False}}))
         # Mental models of enemy
         # Example of creating a model with incorrect reward all at once (a version of Freedonia who cares about reaching agreement as well)
-#        sylv.addModel('false',R={goalSTroops: 10.,goalSTerritory: 1.,goalAgreement: 1.},
-#                      rationality=1.,selection='distribution',parent=True)
+        # sylv.addModel('false',R={goalSTroops: 10.,goalSTerritory: 1.,goalAgreement: 1.},
+        #              rationality=1.,selection='distribution',parent=True)
         # Example of creating a model with incorrect beliefs
         sylv.addModel('false',rationality=10.,selection='distribution',parent=True)
         key = stateKey(free.name,'position')
-        # Sylvania believes position to be fixed at 9
-        #        sylv.setBelief(key,setToConstantMatrix(key,9),'false')
-        # Sylvania is unsure about position (50% chance of being 7, 50% of being 3)
-        sylv.setBelief(key,MatrixDistribution({setToConstantMatrix(key,7): 0.5,
-                                               setToConstantMatrix(key,3): 0.5}),'false')
+        # Sylvania believes position to be fixed at 3
+        sylv.setBelief(key,3,'false')
+
+        # Freedonia is truly unsure about position (50% chance of being 7, 50% of being 3)
+        world.setModel(self.free.name,True)
+        free.setBelief(key,Distribution({7: 0.5,3: 0.5}),True)
+        # Observations about military position
+        tree = makeTree({'if': thresholdRow(key,1),
+                         True: {'if': thresholdRow(key,9),
+                                True: {'distribution': [(KeyedVector({key: 1}),0.9),
+                                                        (KeyedVector({key: 1,CONSTANT: -1}),0.1)]},
+                                False: {'distribution': [(KeyedVector({key: 1}),0.8),
+                                                         (KeyedVector({key: 1,CONSTANT: -1}),0.1),
+                                                         (KeyedVector({key: 1,CONSTANT: 1}),0.1)]}},
+                         False: {'distribution': [(KeyedVector({key: 1}),0.9),
+                                                  (KeyedVector({key: 1,CONSTANT: 1}),0.1)]}})
+        free.defineObservation(key,tree)
+
         # Example of setting model parameters separately
         sylv.addModel('true',parent=True)
         sylv.setAttribute('rationality',10.,'true') # Override real agent's rationality with this value
         sylv.setAttribute('selection','distribution','true')
         world.setMentalModel(free.name,sylv.name,{'false': 0.9,'true': 0.1})
+        
+        # Goal of fooling Sylvania
+        goalDeception = achieveFeatureValue(modelKey(sylv.name),sylv.model2index('false'))
+
         # Compiled policy
 #        world.setState(None,'phase','offer')
 #        sylv.setAttribute('rationality',10.)
@@ -381,8 +414,8 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
 
     for t in range(rounds):
         for step in range(steps):
-            phase = world.getState(None,'phase').expectation()
             assert len(world.state) == 1
+            phase = world.getState(None,'phase').expectation()
             state = world.state.domain()[0]
             if not world.terminated(state):
                 if t == 0 and phase == 'offer' and offer > 0:
@@ -400,6 +433,11 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
                 world.state.select()
                 if not testMode:
                     world.printState(beliefs=True)
+            assert len(world.state) == 1
+            phase = world.getState(None,'phase').expectation()
+            if phase == 'offer':
+                # Looped around
+                break
 
 def findThreshold(scenario,t,model='powell',position=0):
     """
