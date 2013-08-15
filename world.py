@@ -13,9 +13,9 @@ class World:
     @type agents: strS{->}L{Agent}
     @ivar state: the distribution over states of the world
     @type state: L{VectorDistribution}
-    @ivar features: definitions of state features, over agents and the world itself
-    @type features: dict
-    @ivar symbols: utility storage of symbols used across all enumerated state features
+    @ivar variables: definitions of the domains of possible variables (state features, relationships, observations)
+    @type variables: dict
+    @ivar symbols: utility storage of symbols used across all enumerated state variables
     @type symbols: strS{->}int
     @ivar dynamics: table of action effect models
     @type dynamics: dict
@@ -36,9 +36,9 @@ class World:
 
         # State feature information
         self.state = VectorDistribution()
-        self.features = {}
+        self.variables = {}
+        self.locals = {}
         self.symbols = {}
-        self.ranges = {}
         self.termination = []
         self.relations = {}
 
@@ -67,9 +67,10 @@ class World:
 
     def initialize(self):
         self.agents.clear()
-        self.features.clear()
+        self.variables.clear()
+        self.locals.clear()
+        self.relations.clear()
         self.symbols.clear()
-        self.ranges.clear()
         self.dynamics.clear()
         self.dependency.clear()
         del self.evaluationOrder[:]
@@ -81,7 +82,7 @@ class World:
     """Simulation methods"""
     """------------------"""
     
-    def step(self,actions=None,state=None,real=True):
+    def step(self,actions=None,state=None,real=True,select=True):
         """
         The simulation method
         @param actions: optional argument setting a subset of actions to be performed in this turn
@@ -105,12 +106,14 @@ class World:
             state.clear()
             for outcome in outcomes:
                 if isinstance(outcome['new'],Distribution):
-                    dist = map(lambda el: (el,outcome['new'][el]),outcome['new'].domain())
+                    if select:
+                        new = outcome['new'].sample()
+                        dist = [(new,1.)]
+                    else:
+                        dist = map(lambda el: (el,outcome['new'][el]),outcome['new'].domain())
                 else:
                     dist = [(outcome['new'],1.)]
                 for new,prob in dist:
-                    if outcome.has_key('actions'):
-                        self.updateModels(outcome,new)
                     try:
                         state[new] += prob*outcome['probability']
                     except KeyError:
@@ -118,7 +121,7 @@ class World:
             self.history.append(outcomes)
         return outcomes
 
-    def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None):
+    def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=True):
         """
         Compute the resulting states when starting in a given possible world (as opposed to a distribution over possible worlds)
         """
@@ -138,14 +141,15 @@ class World:
         # Keep track of whether there is uncertainty about the actions to perform
         stochastic = []
         if not isinstance(outcome['actions'],ActionSet):
-            # ActionSet indicates that we should perform just these actions. Otherwise, we look at whose turn it is:
+            # ActionSet indicates that we should perform just these actions. 
+            # Otherwise, we look at whose turn it is:
             turn = self.next(vector)
             for name in outcome['actions'].keys():
                 if not (name in turn):
                     raise NameError,'Agent %s must wait its turn' % (name)
             for name in turn:
                 if not outcome['actions'].has_key(name):
-                    model = self.getMentalModel(name,vector)
+                    model = self.getModel(name,vector)
                     decision = self.agents[name].decide(vector,horizon,outcome['actions'],model,tiebreak)
                     outcome['decisions'][name] = decision
                     outcome['actions'][name] = decision['action']
@@ -161,8 +165,8 @@ class World:
             for action in outcome['actions'][stochastic[0]].domain():
                 prob = outcome['actions'][stochastic[0]][action]
                 actions = dict(outcome['actions'])
-                actions[stochastic[0]] = action
-                effect = self.effect(actions,outcome['old'],prob)
+                actions[stochastic[0]] = action 
+                effect = self.effect(actions,outcome['old'],prob,updateBeliefs=updateBeliefs)
                 if outcome.has_key('new'):
                     for vector in effect['new'].domain():
                         try:
@@ -174,7 +178,7 @@ class World:
                     outcome['new'] = effect['new']
                     outcome['effect'] = effect['effect']
         else:
-            outcome.update(self.effect(outcome['actions'],outcome['old']))
+            outcome.update(self.effect(outcome['actions'],outcome['old'],1.,updateBeliefs))
         if not outcome.has_key('new'):
             # Apply effects
             outcome['new'] = outcome['effect']*outcome['old']
@@ -182,7 +186,7 @@ class World:
             outcome['delta'] = outcome['new'] - outcome['old']
         return outcome
 
-    def effect(self,actions,vector,probability=1.):
+    def effect(self,actions,vector,probability=1.,updateBeliefs=True):
         """
         @param probability: the likelihood of this particular action set (default is 100%)
         @type probability: float
@@ -211,20 +215,48 @@ class World:
             result['effect'].append(effect)
         # Update turn order
         delta = self.deltaOrder(actions,vector)
-        # Update agent beliefs
-        for name,agent in self.agents.items():
-            key = modelKey(name)
-            if vector.has_key(key):
-                delta[key] = KeyedVector({key: 1.})
         result['effect'].append(delta)
         new = VectorDistribution()
         for old in result['new'].domain():
-            vector = KeyedVector(old)
-            vector.update(delta*old)
+            newVector = KeyedVector(old)
+            newVector.update(delta*old)
             try:
-                new[vector] += result['new'][old]
+                new[newVector] += result['new'][old]
             except KeyError:
-                new[vector] = result['new'][old]
+                new[newVector] = result['new'][old]
+        result['new'] = new
+        # Update agent models included in the original world (after finding out possible new worlds)
+        agentsModeled = filter(lambda name: vector.has_key(modelKey(name)),self.agents.keys())
+        delta = MatrixDistribution({KeyedMatrix(): 1.})
+        for newVector in result['new'].domain():
+            # Update the agent model under each possible outcome
+            for name in agentsModeled:
+                key = modelKey(name)
+                agent = self.agents[name]
+                oldModel = self.getModel(name,vector)
+                if agent.models[oldModel].has_key('beliefs') and \
+                        not agent.models[oldModel]['beliefs'] is True:
+                    # Imperfect beliefs
+                    omegaDistribution = agent.observe(newVector,actions)
+                    modelDistribution = MatrixDistribution()
+                    for omega in omegaDistribution.domain():
+                        newModel = agent.stateEstimator(vector,newVector,omega,oldModel)
+                        matrix = KeyedMatrix({key: KeyedVector({CONSTANT: newModel})})
+                        try:
+                            modelDistribution[matrix] += omegaDistribution[omega]
+                        except KeyError:
+                            modelDistribution[matrix] = omegaDistribution[omega]
+                    delta.update(modelDistribution)
+        result['effect'].append(delta)
+        new = VectorDistribution()
+        for old in result['new'].domain():
+            newVector = KeyedVector(old)
+            for matrix in delta.domain():
+                newVector.update(matrix*old)
+                try:
+                    new[newVector] += result['new'][old]*delta[matrix]
+                except KeyError:
+                    new[newVector] = result['new'][old]*delta[matrix]
         result['new'] = new
         return result
 
@@ -285,26 +317,21 @@ class World:
             self.agents[agent.name] = agent
             agent.world = self
 
-    def setDynamics(self,entity,feature,action,tree,enforceMin=False,enforceMax=False):
+    def setDynamics(self,key,action,tree,enforceMin=False,enforceMax=False):
         """
         Defines the effect of an action on a given state feature
-        @param entity: the entity whose state feature is affected (C{None} if on the world itself)
-        @type entity: str
-        @param feature: the name of the affected state feature
-        @type feature: str
+        @param key: the key of the affected state feature
+        @type key: str
         @param action: the action affecting the state feature
         @type action: L{Action} or L{ActionSet}
         @param tree: the decision tree defining the effect
         @type tree: L{KeyedTree}
         """
-        assert self.features.has_key(entity),'No state features defined for entity "%s"' % (entity)
-        assert self.features[entity].has_key(feature),'No feature "%s" defined for entity "%s"' % (feature,entity)
+        if isinstance(action,str):
+            raise TypeError,'Incorrect action type in setDynamics call, perhaps due to change in method definition. Please use a key string as the first argument, rather than the more limiting entity/feature combination.'
         if isinstance(action,Action):
             action = ActionSet([action])
-        if entity is None:
-            key = feature
-        else:
-            key = stateKey(entity,feature)
+        assert self.variables.has_key(key),'No state element "%s"' % (key) 
         for atom in action:
             assert self.agents.has_key(atom['subject']),'Unknown actor %s' % (atom['subject'])
             assert self.agents[atom['subject']].hasAction(atom),'Unknown action %s' % (atom)
@@ -312,12 +339,12 @@ class World:
             self.dynamics[key] = {}
         # Translate symbolic names into numeric values
         tree = tree.desymbolize(self.symbols)
-        if enforceMin and self.features[entity][feature]['domain'] in [int,float]:
+        if enforceMin and self.variables[key]['domain'] in [int,float]:
             # Modify tree to enforce floor
-            tree.floor(key,self.features[entity][feature]['lo'])
-        if enforceMax and self.features[entity][feature]['domain'] in [int,float]:
+            tree.floor(key,self.variables[key]['lo'])
+        if enforceMax and self.variables[key]['domain'] in [int,float]:
             # Modify tree to enforce ceiling
-            tree.ceil(key,self.features[entity][feature]['hi'])
+            tree.ceil(key,self.variables[key]['hi'])
         self.dynamics[key][action] = tree
 
     def getDynamics(self,key,action):
@@ -483,13 +510,11 @@ class World:
     """State methods"""
     """-------------"""
 
-    def defineState(self,entity,feature,domain=float,lo=0.,hi=1.,description=None):
+    def defineVariable(self,key,domain=float,lo=-1.,hi=1.,description=None):
         """
-        Define a state feature in this world
-        @param entity: the name of the entity this feature pertains to (C{None} if feature is on the world itself)
-        @type entity: str
-        @param feature: the name of this new state feature
-        @type feature: str
+        Define the type and domain of a given element of the state vector
+        @param key: string label for the column being defined
+        @type key: str
         @param domain: the domain of values for this feature. Acceptable values are:
            - float: continuous range
            - int: discrete numeric range
@@ -503,58 +528,49 @@ class World:
         @param description: optional text description explaining what this state feature means
         @type description: str
         """
-        key = stateKey(entity,feature)
-        if not self.features.has_key(entity):
-            self.features[entity] = {}
-        self.features[entity][feature] = {'domain': domain,'description': description}
+        self.variables[key] = {'domain': domain,
+                             'description': description}
         if domain is float:
-            self.features[entity][feature].update({'lo': lo,'hi': hi})
-            self.ranges[key] = (lo,hi)
+            self.variables[key].update({'lo': lo,'hi': hi})
         elif domain is int:
-            self.features[entity][feature].update({'lo': int(lo),'hi': int(hi)})
-            self.ranges[key] = (lo,hi)
+            self.variables[key].update({'lo': int(lo),'hi': int(hi)})
         elif domain is list:
-            assert isinstance(lo,list),'Please provide list of elements for state features of the list type'
-            self.features[entity][feature].update({'elements': lo,'lo': None,'hi': None})
+            assert isinstance(lo,list),'Please provide list of elements for features of the list type'
+            self.variables[key].update({'elements': lo,'lo': None,'hi': None})
             for index in range(len(lo)):
                 assert not self.symbols.has_key(lo[index]),'Symbol %s already defined' % (lo[index])
                 self.symbols[lo[index]] = index
         elif domain is bool:
-            self.features[entity][feature].update({'lo': None,'hi': None})
+            self.variables[key].update({'lo': None,'hi': None})
         else:
-            raise ValueError,'Unknown domain type %s for state feature' % (domain)
-        if entity is None:
-            self.features[entity][feature]['key'] = feature
-        else:
-            self.features[entity][feature]['key'] = key
+            raise ValueError,'Unknown domain type %s for %s' % (domain,key)
+        self.variables[key]['key'] = key
         self.evaluationOrder[0].add(key)
 
-    def setState(self,entity,feature,value):
+    def setFeature(self,key,value,state=None):
         """
-        @param entity: the name of the entity whose state feature we're setting (does not have to be an agent)
-        @type entity: str
-        @type feature: str
+        Set the value of an individual element of the state vector
+        @param key: the label of the element to set
+        @type key: str
         @type value: float or L{Distribution}
+        @param state: the state distribution to modify (default is the current world state)
+        @type state: L{VectorDistribution}
         """
-        assert self.features.has_key(entity) and self.features[entity].has_key(feature)
-        if self.features[entity][feature]['domain'] is bool:
-            if value:
-                value = 1.
-            else:
-                value = 0.
-        elif self.features[entity][feature]['domain'] is list:
-            value = self.features[entity][feature]['elements'].index(value)
-        if entity is None:
-            self.state.join(feature,value)
-        else:
-            self.state.join(stateKey(entity,feature),value)
+        assert self.variables.has_key(key),'Unknown element "%s"' % (key)
+        if state is None:
+            state = self.state
+        state.join(key,self.encodeVariable(key,value))
 
-    def getState(self,entity,feature,state=None):
+    def encodeVariable(self,key,value):
         """
-        @param entity: the name of the entity of interest (C{None} if the feature of interest is of the world itself)
-        @type entity: str
-        @param feature: the state feature of interest
-        @type feature: str
+        Translate a domain element into a float
+        """
+        return value2float(value,self.variables[key])
+
+    def getFeature(self,key,state=None):
+        """
+        @param key: the label of the state element of interest
+        @type key: str
         @param state: the distribution over possible worlds (default is the current world state)
         @type state: L{VectorDistribution}
         @return: a distribution over values for the given feature
@@ -562,28 +578,50 @@ class World:
         """
         if state is None:
             state = self.state
-        assert self.features.has_key(entity) and self.features[entity].has_key(feature)
-        if entity is None:
-            result = state.marginal(feature)
-        else:
-            result = state.marginal(stateKey(entity,feature))
-        if self.features[entity][feature]['domain'] is bool:
-            abstract = {True: 0.,False: 0.}
-            for value in result.domain():
-                if value > 0.5:
-                    abstract[True] += result[value]
-                else:
-                    abstract[False] += result[value]
-            result = Distribution(abstract)
-        elif self.features[entity][feature]['domain'] is list:
-            abstract = {}
-            for value in result.domain():
-                index = int(float(value)+0.1)
-                abstract[self.features[entity][feature]['elements'][index]] = result[value]
-            result = Distribution(abstract)
-        return result
+        assert self.variables.has_key(key),'Unknown element "%s"' % (key)
+        return self.decodeVariable(key,state.marginal(key))
 
-    def defineRelation(self,subj,obj,name):
+    def decodeVariable(self,key,distribution):
+        """
+        Translates a distribution over float values for a variable into the specific domain elements
+        """
+        return probfloat2value(distribution,self.variables[key])
+
+    def defineState(self,entity,feature,domain=float,lo=0.,hi=1.,description=None):
+        """
+        Defines a state feature associated with a single agent, or with the global world state.
+        @param entity: if C{None}, the given feature is on the global world state; otherwise, it is local to the named agent
+        @type entity: str
+        """
+        key = stateKey(entity,feature)
+        try:
+            self.locals[entity][feature] = key
+        except KeyError:
+            self.locals[entity] = {feature: key}
+        if not domain is None:
+            # Haven't defined this feature yet
+            self.defineVariable(key,domain,lo,hi,description)
+
+    def setState(self,entity,feature,value,state=None):
+        """
+        For backward compatibility
+        @param entity: the name of the entity whose state feature we're setting (does not have to be an agent)
+        @type entity: str
+        @type feature: str
+        """
+        self.setFeature(stateKey(entity,feature),value,state)
+
+    def getState(self,entity,feature,state=None):
+        """
+        For backward compatibility
+        @param entity: the name of the entity of interest (C{None} if the feature of interest is of the world itself)
+        @type entity: str
+        @param feature: the state feature of interest
+        @type feature: str
+        """
+        return self.getFeature(stateKey(entity,feature))
+
+    def defineRelation(self,subj,obj,name,domain=float,lo=0.,hi=1.,description=None):
         """
         Defines a binary relationship between two agents
         @param subj: one of the agents in the relation (if a directed link, it is the "origin" of the edge)
@@ -593,27 +631,17 @@ class World:
         @param name: the name of the relation (e.g., the verb to use between the subject and object)
         @type name: str
         """
-        try:
-            relations = self.relations[name]
-        except KeyError:
-            relations = {}
-            self.relations[name] = relations
         key = binaryKey(subj,obj,name)
-        relations[key] = (subj,obj)
+        try:
+            self.relations[name][key] = {'subject': subj,'object': obj}
+        except KeyError:
+            self.relations[name] = {key: {'subject': subj,'object': obj}}
+        if not domain is None:
+            # Haven't defined this feature yet
+            self.defineVariable(key,domain,lo,hi,description)
         return key
 
-    def setRelation(self,subj,obj,name,value):
-        assert self.relations.has_key(name)
-        key = binaryKey(subj,obj,name)
-        self.state.join(key,value)
-
-    def getRelation(self,subj,obj,name,state=None):
-        if state is None:
-            state = self.state
-        key = binaryKey(subj,obj,name)
-        return state.getMarginal(key)
-
-    def getMentalModel(self,modelee,vector):
+    def getModel(self,modelee,vector):
         """
         @return: the name of the model of the given agent indicated by the given state vector
         @type modelee: str
@@ -627,11 +655,10 @@ class World:
             model = True
         return model
 
-    def setMentalModel(self,modeler,modelee,distribution,model=True):
-        """
-        Sets the distribution over mental models one agent has of another entity
-        @note: Normalizes the distribution given
-        """
+    def getMentalModel(self,modelee,vector):
+        raise DeprecationWarning,'Substitute getModel instead (sorry for pedanticism, but a "model" may be real, not "mental")'
+
+    def setModel(self,modelee,distribution,state=None,model=True):
         # Make sure distribution is probability distribution over floats
         if not isinstance(distribution,dict):
             distribution = {distribution: 1.}
@@ -640,27 +667,38 @@ class World:
         for element in distribution.domain():
             if not isinstance(element,float):
                 distribution.replace(element,float(self.agents[modelee].model2index(element)))
-        # # Make sure recursive levels match up
-        # modelerLevel = self.agents[modeler].getAttribute('level',model)
-        # for element in distribution.domain():
-        #     name = self.agents[modelee].index2model(element)
-        #     level = self.agents[modelee].getAttribute('level',name)
-        #     assert level == modelerLevel - 1,\
-        #         'Agent %s\'s %s model has belief level of %d, so its model %s for agent %s must have belief level of %d' % \
-        #         (modeler,model,modelerLevel,name,modelee,modelerLevel-1)
         distribution.normalize()
-        belief = MatrixDistribution()
-        for element in distribution.domain():
-            belief[setToConstantMatrix(modelKey(modelee),element)] = distribution[element]
-        self.agents[modeler].setBelief(modelKey(modelee),belief,model)
+        key = modelKey(modelee)
+        if not self.variables.has_key(key):
+            self.defineVariable(key)
+        if isinstance(state,str):
+            # This is the name of the modeling agent (*cough* hack *cough*)
+            self.agents[state].setBelief(key,distribution,model)
+        else:
+            # Otherwise, assume we're changing the model in the current state
+            self.setFeature(key,distribution,state)
+        
+    def setMentalModel(self,modeler,modelee,distribution,model=True):
+        """
+        Sets the distribution over mental models one agent has of another entity
+        @note: Normalizes the distribution given
+        """
+        self.setModel(modelee,distribution,modeler,model)
+
+    def pruneModels(self,vector):
+        """
+        Do you want a version of a possible world *without* all the fuss of agent models?
+        Then *this* is the method for you!
+        """
+        return KeyedVector({key: vector[key] for key in vector.keys() if not isModelKey(key)})
 
     def updateModels(self,outcome,vector):
         for agent in self.agents.values():
-            label = self.getMentalModel(agent.name,vector)
+            label = self.getModel(agent.name,vector)
             model = agent.models[label]
             if not model['beliefs'] is True:
                 omega = agent.observe(vector,outcome['actions'])
-                beliefs = model['beliefs']*vector
+                beliefs = model['beliefs']
                 if not omega is True:
                     raise NotImplementedError,'Unable to update mental models under partial observability'
                 for actor,actions in outcome['actions'].items():
@@ -707,21 +745,11 @@ class World:
         result = vector.__class__()
         remaining = dict(vector)
         # Handle defined state features
-        for entity,table in self.features.items():
-            for feature,entry in table.items():
-                key = stateKey(entity,feature)
-                if remaining.has_key(key):
-                    if entry['domain'] is float or entry['domain'] is int:
-                        # Scale by range of possible values
-                        new = float(remaining[key]-entry['lo'])
-                        new /= float(entry['hi']-entry['lo'])
-                    elif entry['domain'] is list:
-                        # Scale by size of set of values
-                        new = float(remaining[key])/float(len(entry['elements']))
-                    else:
-                        new = remaining[key]
-                    result[key] = new
-                    del remaining[key]
+        for key,entry in self.variables.items():
+            if remaining.has_key(key):
+                new = scaleValue(remaining[key],entry)
+                result[key] = new
+                del remaining[key]
         for name in self.agents.keys():
             # Handle turns
             key = turnKey(name)
@@ -786,8 +814,10 @@ class World:
             mapping[self.scaleState(candidate)] = candidate
         return mapping[self.scaleState(vector).nearestNeighbor(mapping.keys())]
 
-    def getDescription(self,entity,feature):
-        return self.features[entity][feature]['description']
+    def getDescription(self,key,feature=None):
+        if not feature is None:
+            raise DeprecationWarning,'Use key when calling getDescription, not entity/feature combination.'
+        return self.variables[key]['description']
 
     """---------------------"""
     """Visualization methods"""
@@ -905,14 +935,15 @@ class World:
         relations = {}
         for link,table in self.relations.items():
             for key in table.keys():
-                subj,obj = table[key]
+                subj = table[key]['subject']
+                obj = table[key]['object']
                 try:
                     relations[subj].append((link,obj,key))
                 except KeyError:
                     relations[subj] = [(link,obj,key)]
         for entity in entities:
             try:
-                table = self.features[entity]
+                table = self.locals[entity]
             except KeyError:
                 table = {}
             if entity is None:
@@ -921,11 +952,7 @@ class World:
                 label = entity
             newEntity = True
             # Print state features for this entity
-            for feature,entry in table.items():
-                if entity is None:
-                    key = feature
-                else:
-                    key = stateKey(entity,feature)
+            for feature,key in table.items():
                 if vector.has_key(key):
                     if csv:
                         elements.append(label)
@@ -942,18 +969,7 @@ class World:
                     else:
                         print >> buf,'%s\t\t\t%-12s\t' % (prefix,feature+':'),
                     # Generate string representation of feature value
-                    if entry['domain'] is int:
-                        value = '%d' % (int(vector[key]))
-                    elif entry['domain'] is bool:
-                        if vector[key] > 0.5:
-                            value = str(True)
-                        else:
-                            value = str(False)
-                    elif entry['domain'] is list:
-                        index = int(float(vector[key])+.1)
-                        value = entry['elements'][index]
-                    else:
-                        value = vector[key]
+                    value = float2value(vector[key],self.variables[key])
                     if csv:
                         elements.append(value)
                     else:
@@ -965,7 +981,7 @@ class World:
                         if newEntity:
                             print >> buf,'\t%-12s' % (label),
                             newEntity = False
-                        print >> buf,'\t%s %s:\t%4.2f' % (link,obj,vector[key])
+                        print >> buf,'\t\t%s\t%s:\t%s' % (link,obj,float2value(vector[key],self.variables[key]))
             # Print models (and beliefs associated with those models)
             if not entity is None:
                 # Print model of this entity
@@ -976,20 +992,18 @@ class World:
                         elements.append('__model__')
                         elements.append(self.agents[entity].index2model(vector[key]))
                     elif first:
-                        print >> buf,'\t%-12s\t%-12s\t%-12s' % \
-                            (label,'__model__',self.agents[entity].index2model(vector[key]))
+                        self.agents[entity].printModel(index=vector[key])
                         change = True
                         first = False
                     else:
-                        print >> buf,'%s\t%-12s\t%-12s\t%-12s' % \
-                            (prefix,label,'__model__',self.agents[entity].index2model(vector[key]))
+                        self.agents[entity].printModel(index=vector[key],prefix=prefix,first=False)
                     newEntity = False
-                elif beliefs:
-                    model = self.agents[entity].models[True]
-                    if not model['beliefs'] is True:
-                        print >> buf,'\t\t\t----beliefs:----'
-                        self.printDelta(vector,self.agents[entity].getBelief(vector,model['name']),buf,'\t\t\t')
-                        print >> buf,'\t\t\t----------------'
+                # elif beliefs:
+                #     model = self.agents[entity].models[True]
+                #     if not model['beliefs'] is True:
+                #         print >> buf,'\t\t\t----beliefs:----'
+                #         self.printState(model['beliefs'],buf,'\t\t\t',False)
+                #         print >> buf,'\t\t\t----------------'
         if not csv and not change:
             print >> buf,'%s\tUnchanged' % (prefix)
         if (not vector.has_key('__END__') and self.terminated(vector)) or \
@@ -1019,10 +1033,10 @@ class World:
         for vector in new.domain():
             delta = KeyedVector()
             keys = []
-            for name,table in self.features.items():
-                for feature,entry in self.features[name].items():
-                    # Look for change in feature value
-                    keys.append(stateKey(name,feature))
+            for key,entry in self.variables.items():
+                # Look for change in feature value
+                keys.append(key)
+            for name in self.agents.keys():
                 # Look for change in mental model of this agent
                 key = modelKey(name)
                 if vector.has_key(key):
@@ -1059,29 +1073,34 @@ class World:
         # Agents
         for agent in self.agents.values():
             root.appendChild(agent.__xml__().documentElement)
-        # State distribution
+        # State vector definitions
         node = doc.createElement('state')
         node.appendChild(self.state.__xml__().documentElement)
-        for entity,table in self.features.items():
+        for key,entry in self.variables.items():
+            subnode = doc.createElement('feature')
+            subnode.setAttribute('name',key)
+            subnode.setAttribute('domain',entry['domain'].__name__)
+            if not entry['lo'] is None:
+                subnode.setAttribute('lo',str(entry['lo']))
+            if not entry['hi'] is None:
+                subnode.setAttribute('hi',str(entry['hi']))
+            if entry['domain'] is list:
+                for element in entry['elements']:
+                    subsubnode = doc.createElement('element')
+                    subsubnode.appendChild(doc.createTextNode(element))
+                    subnode.appendChild(subsubnode)
+            if entry['description']:
+                subsubnode = doc.createElement('description')
+                subsubnode.appendChild(doc.createTextNode(entry['description']))
+                subnode.appendChild(subsubnode)
+            node.appendChild(subnode)
+        # Local/global state
+        for entity,table in self.locals.items():
             for feature,entry in table.items():
-                subnode = doc.createElement('feature')
+                subnode = doc.createElement('local')
                 subnode.appendChild(doc.createTextNode(feature))
                 if entity:
                     subnode.setAttribute('entity',entity)
-                subnode.setAttribute('domain',entry['domain'].__name__)
-                if not entry['lo'] is None:
-                    subnode.setAttribute('lo',str(entry['lo']))
-                if not entry['hi'] is None:
-                    subnode.setAttribute('hi',str(entry['hi']))
-                if entry['domain'] is list:
-                    for element in entry['elements']:
-                        subsubnode = doc.createElement('element')
-                        subsubnode.appendChild(doc.createTextNode(element))
-                        subnode.appendChild(subsubnode)
-                if entry['description']:
-                    subsubnode = doc.createElement('description')
-                    subsubnode.appendChild(doc.createTextNode(entry['description']))
-                    subnode.appendChild(subsubnode)
                 node.appendChild(subnode)
         root.appendChild(node)
         # Relationships
@@ -1089,10 +1108,9 @@ class World:
             node = doc.createElement('relation')
             node.setAttribute('name',link)
             for key,entry in table.items():
-                subj,obj = entry
                 subnode = doc.createElement('link')
-                subnode.setAttribute('subject',subj)
-                subnode.setAttribute('object',obj)
+                subnode.setAttribute('subject',entry['subject'])
+                subnode.setAttribute('object',entry['object'])
                 node.appendChild(subnode)
             root.appendChild(node)
         # Dynamics
@@ -1152,45 +1170,25 @@ class World:
                             if subnode.tagName == 'distribution':
                                 self.state.parse(subnode)
                             elif subnode.tagName == 'feature':
+                                key = str(subnode.getAttribute('name'))
+                                domain,lo,hi,description = parseDomain(subnode)
+                                self.defineVariable(key,domain,lo,hi,description)
+                            elif subnode.tagName == 'local':
                                 entity = str(subnode.getAttribute('entity'))
                                 if not entity:
                                     entity = None
                                 feature = str(subnode.firstChild.data).strip()
-                                domain = eval(str(subnode.getAttribute('domain')))
-                                description = None
-                                lo = str(subnode.getAttribute('lo'))
-                                if not lo: lo = None
-                                hi = str(subnode.getAttribute('hi'))
-                                if not hi: hi = None
-                                if domain is int:
-                                    if lo: lo = int(lo)
-                                    if hi: hi = int(hi)
-                                elif domain is float:
-                                    if lo: lo = float(lo)
-                                    if hi: hi = float(hi)
-                                elif domain is bool:
-                                    pass
-                                elif domain is list:
-                                    lo = []
-                                else:
-                                    raise TypeError,'Unknown feature domain type: %s' % (domain)
-                                subsubnode = subnode.firstChild
-                                while subsubnode:
-                                    if subsubnode.nodeType == subsubnode.ELEMENT_NODE:
-                                        if subsubnode.tagName == 'element':
-                                            assert domain is list
-                                            lo.append(str(subsubnode.firstChild.data).strip())
-                                        else:
-                                            assert subsubnode.tagName == 'description'
-                                            description = str(subsubnode.firstChild.data).strip()
-                                    subsubnode = subsubnode.nextSibling
-                                self.defineState(entity,feature,domain,lo,hi,description)
+                                self.defineState(entity,feature,None)
                         subnode = subnode.nextSibling
-                elif node.tagName == 'relations':
+                elif node.tagName == 'relation':
+                    name = str(node.getAttribute('name'))
                     subnode = node.firstChild
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
-                            print subnode.toxml()
+                            assert subnode.tagName == 'link'
+                            subj = str(subnode.getAttribute('subject'))
+                            obj = str(subnode.getAttribute('object'))
+                            self.defineRelation(subj,obj,name,None)
                         subnode = subnode.nextSibling
                 elif node.tagName == 'dynamics':
                     subnode = node.firstChild
@@ -1332,3 +1330,90 @@ def likesKey(subj,obj):
 
 def isLikesKey(key):
     return ' likes -> ' in key
+
+def parseDomain(subnode):
+    domain = eval(str(subnode.getAttribute('domain')))
+    description = None
+    lo = str(subnode.getAttribute('lo'))
+    if not lo: lo = None
+    hi = str(subnode.getAttribute('hi'))
+    if not hi: hi = None
+    if domain is int:
+        if lo: lo = int(lo)
+        if hi: hi = int(hi)
+    elif domain is float:
+        if lo: lo = float(lo)
+        if hi: hi = float(hi)
+    elif domain is bool:
+        pass
+    elif domain is list:
+        lo = []
+    else:
+        raise TypeError,'Unknown feature domain type: %s' % (domain)
+    subsubnode = subnode.firstChild
+    while subsubnode:
+        if subsubnode.nodeType == subsubnode.ELEMENT_NODE:
+            if subsubnode.tagName == 'element':
+                assert domain is list
+                lo.append(str(subsubnode.firstChild.data).strip())
+            else:
+                assert subsubnode.tagName == 'description'
+                description = str(subsubnode.firstChild.data).strip()
+        subsubnode = subsubnode.nextSibling
+    return domain,lo,hi,description
+
+def probfloat2value(distribution,entry):
+    if entry['domain'] is bool:
+        abstract = {True: 0.,False: 0.}
+        for value in distribution.domain():
+            abstract[float2value(value,entry)] += distribution[value]
+        return Distribution(abstract)
+    elif entry['domain'] is list:
+        abstract = {}
+        for value in distribution.domain():
+            abstract[float2value(value,entry)] = distribution[value]
+        return Distribution(abstract)
+    else:
+        return distribution
+
+def float2value(flt,entry):
+    if entry['domain'] is bool:
+        if flt > 0.5:
+            return True
+        else:
+            return False
+    elif entry['domain'] is list:
+        index = int(float(flt)+0.1)
+        return entry['elements'][index]
+    elif entry['domain'] is int:
+        return int(flt)
+    else:
+        return flt
+
+def value2float(value,entry):
+    """
+    @return: the float value (appropriate for storing in a L{KeyedVector}) corresponding to the given (possibly symbolic, bool, etc.) value
+    """
+    if entry['domain'] is bool:
+        if value:
+            return 1.
+        else:
+            return 0.
+    elif entry['domain'] is list:
+        return entry['elements'].index(value)
+    else:
+        return value
+
+def scaleValue(value,entry):
+    """
+    @return: a new float value that has been normalized according to the feature's domain
+    """
+    if entry['domain'] is float or entry['domain'] is int:
+        # Scale by range of possible values
+        return float(value-entry['lo']) / float(entry['hi']-entry['lo'])
+    elif entry['domain'] is list:
+        # Scale by size of set of values
+        return float(value)/float(len(entry['elements']))
+    else:
+        return value
+
