@@ -695,7 +695,8 @@ class Agent:
                             break
                 else:
                     # Compute joint probability of old, new, observation, etc.
-                    newProb = probOmega*effect['new'][newWorld]*self.observe(newWorld,actions,model)[omega]
+                    omegaDist = self.observe(newWorld,actions,model)
+                    newProb = probOmega*effect['new'][newWorld]*omegaDist[omega]
                     try:
                         newBeliefs[newBelief] += oldBeliefDiff[oldWorld]*newProb
                     except KeyError:
@@ -754,7 +755,7 @@ class Agent:
                 omega[key] = tree[vector]
             else:
                 # Apply the observation function
-                omega[key] = self.world.decodeVariable(key,tree[vector]*vector)
+                omega[key] = self.world.float2value(key,tree[vector]*vector)
         for key,action in actions.items():
             if omega.has_key(key):
                 if omega[key]:

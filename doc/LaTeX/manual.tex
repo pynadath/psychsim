@@ -1,0 +1,138 @@
+\documentclass{book}
+\usepackage{times}
+\usepackage[paperwidth=6.5in, paperheight=9in]{geometry}
+\title{PsychSim Manual}
+\author{David V. Pynadath}
+\begin{document}
+\maketitle
+\chapter{Modeling a Scenario}
+
+\section{Hello World}
+The {\em world}, as you might expect, is the entire universe of the simulation. It contains all of the global aspects of the simulation state, including the agents themselves.
+
+\begin{verbatim}
+from psychsim.world import World
+
+world = World()
+\end{verbatim}
+
+An {\em agent} is an autonomous decision-making entity in the world. The only requirement for an agent is that it have a name.
+
+\begin{verbatim}
+from psychsim.agent import Agent
+
+free = Agent('Freedonia')
+world.addAgent(free)
+\end{verbatim}
+
+\section{State}
+The {\em state} of a simulation captures the dynamic process by which it evolves. As in a {\em factored MDP}, we divide an overall state vector, $\vec S$, into a set of orthogonal features, $S_0\times S_1\times\cdots\times S_n$. Each feature captures a distinct aspect of the simulation state. Rather than refer to each such feature by its index, PsychSim instead allows you to refer to each feature by a more meaningful {\em key}, as in Python's dictionary keys. Keys are treated internally as unstructured strings, but you may find it useful to make use of the the following types of structured keys.
+
+\subsection{Unary Keys}
+It can be useful to describe a state feature as being local to an individual agent. Doing so does {\em not} limit the dependency or influence of the state feature in any way. However, it can be useful to define state features as local to an agent to make the system output more readable. For example, the following defines a state feature ``troops'' for the previously defined agent ``Freedonia''.
+
+\begin{verbatim}
+world.defineState(free.name,'troops')
+\end{verbatim}
+
+For state features which are not local to any agent, a null agent name (i.e., {\tt None}) indicates that the state feature will pertain to the world as a whole. Again, from the system's perspective, this makes no difference, but it can be useful to distinguish global and local state in presentation.
+
+\begin{verbatim}
+world.defineState(None,'treaty)
+\end{verbatim}
+
+\subsection{Binary Keys}
+There can also be state that pertains to the {\em relationship} between two agents. 
+
+\begin{verbatim}
+world.defineRelation(free.name,sylv.name,'trusts')
+\end{verbatim}
+
+The order in which the agents appear in this definition {\em does} matter, as reversing the order will generate a reference to a different element of the state vector.
+
+\subsection{Domains}
+By default, a state feature is assumed to be real-valued, in $[-1,1]$. However, both the ``defineState'' and ``defineRelation'' methods take optional arguments to modify the valid ranges of the feature. The range of possible values does not affect the execution of the simulation, as simulation normalizes the values back to the $[-1,1]$ range during decision-making.
+
+\begin{verbatim}
+world.defineState(free.name,'troops',lo=0,hi=50000)
+\end{verbatim}
+
+It is also possible to specify that a state feature take on only integral values with the optional ``domain'' argument.
+
+\begin{verbatim}
+world.defineState(free.name,'troops',int,lo=0,hi=50000)
+\end{verbatim}
+
+One can also define a boolean state feature using the same argument, in which case the optional ``lo'' and ``hi'' arguments are obviously moot.
+
+\begin{verbatim}
+world.defineState(None,'treaty,bool)
+\end{verbatim}
+
+It is also possible to define an enumerated list of possible state features.
+
+\begin{verbatim}
+phases = ['offer','respond','rejection','end','paused',
+          'engagement']
+world.defineState(None,'phase',list,phases)
+\end{verbatim}
+
+The domains also work within ``defineRelation'' calls as well. In other words, relationships can take on the same sets of values as unary state features.
+\section{Actions}
+
+\subsection{Legality}
+
+\begin{verbatim}
+tree = makeTree({'if': equalRow(stateKey(None,'phase'),'offer'),
+                 True: True,    
+                 False: False})
+free.setLegal(action,tree)
+\end{verbatim}
+
+\subsection{Dynamics}
+
+\subsection{Termination}
+
+{\em Termination} conditions specify when scenario execution should reach an absorbing end state (e.g., when a final goal is reached, when time has expired). A termination condition is a PWL function (Section \ref{sec:pwl}) with boolean leaves.
+
+\begin{verbatim}
+world.addTermination(makeTree({'if': trueRow(stateKey(None,'treaty')),
+                               True: True, False: False}))
+\end{verbatim}
+
+This condition specifies that the simulation ends if a ``treaty'' is reached. Multiple conditions can be specified, with termination occurring if any condition is true.
+
+
+\section{Reward}
+
+\begin{verbatim}
+    goalFTroops = maximizeFeature(stateKey(free.name,'troops'))
+    free.setReward(goalFTroops,1.)
+    goalFTerritory = maximizeFeature(stateKey(free.name,'territory'))
+    free.setReward(goalFTerritory,1.)
+\end{verbatim}
+
+\section{Models}
+
+A {\em model} in the PsychSim context is a potential configuration of an agent that may apply in certain worlds or decision-making contexts. All agents have a ``True'' model that represents their real configuration, which forms the basis of all of their decisions during execution. 
+
+
+It also possible to specify alternate models that represent perturbations of this true model, either to represent the dynamics of the agent's configuration or to represent the perceptions other agents have of it.
+
+\begin{verbatim}
+free.addModel('friend')
+\end{verbatim}
+
+\section{Observations}
+
+\section{PWL functions}\label{sec:pwl}
+
+\chapter{Executing a Scenario}
+
+\begin{verbatim}
+world.step()
+\end{verbatim}
+
+And done.
+
+\end{document}

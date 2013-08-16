@@ -353,7 +353,7 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
         sylv.setBelief(key,3,'false')
 
         # Freedonia is truly unsure about position (50% chance of being 7, 50% of being 3)
-        world.setModel(self.free.name,True)
+        world.setModel(free.name,True)
         free.setBelief(key,Distribution({7: 0.5,3: 0.5}),True)
         # Observations about military position
         tree = makeTree({'if': thresholdRow(key,1),
