@@ -39,6 +39,7 @@ class World:
         self.variables = {}
         self.locals = {}
         self.symbols = {}
+        self.symbolList = []
         self.termination = []
         self.relations = {}
 
@@ -71,6 +72,7 @@ class World:
         self.locals.clear()
         self.relations.clear()
         self.symbols.clear()
+        del self.symbolList[:]
         self.dynamics.clear()
         self.dependency.clear()
         del self.evaluationOrder[:]
@@ -534,12 +536,14 @@ class World:
             self.variables[key].update({'lo': lo,'hi': hi})
         elif domain is int:
             self.variables[key].update({'lo': int(lo),'hi': int(hi)})
-        elif domain is list:
-            assert isinstance(lo,list),'Please provide list of elements for features of the list type'
+        elif domain is list or domain is set:
+            assert isinstance(lo,list) or isinstance(lo,set),\
+                'Please provide set/list of elements for features of the set/list type'
             self.variables[key].update({'elements': lo,'lo': None,'hi': None})
-            for index in range(len(lo)):
-                assert not self.symbols.has_key(lo[index]),'Symbol %s already defined' % (lo[index])
-                self.symbols[lo[index]] = index
+            for element in lo:
+                if not self.symbols.has_key(element):
+                    self.symbols[element] = len(self.symbols)
+                    self.symbolList.append(element)
         elif domain is bool:
             self.variables[key].update({'lo': None,'hi': None})
         else:
@@ -559,13 +563,58 @@ class World:
         assert self.variables.has_key(key),'Unknown element "%s"' % (key)
         if state is None:
             state = self.state
-        state.join(key,self.encodeVariable(key,value))
+        state.join(key,self.value2float(key,value))
 
     def encodeVariable(self,key,value):
+        raise DeprecationWarning,'Use value2float method instead'
+
+    def float2value(self,key,flt):
+        if isinstance(flt,Distribution):
+            # Decode each element
+            value = flt.__class__()
+            for element in flt.domain():
+                newElement = self.float2value(key,element)
+                try:
+                    value[newElement] += flt[element]
+                except KeyError:
+                    value[newElement] = flt[element]
+            return value
+        elif self.variables[key]['domain'] is bool:
+            if flt > 0.5:
+                return True
+            else:
+                return False
+        elif self.variables[key]['domain'] is list:
+            index = int(float(flt)+0.1)
+            return self.symbolList[index]
+        elif self.variables[key]['domain'] is int:
+            return int(flt)
+        else:
+            return flt
+
+    def value2float(self,key,value):
         """
-        Translate a domain element into a float
+        @return: the float value (appropriate for storing in a L{KeyedVector}) corresponding to the given (possibly symbolic, bool, etc.) value
         """
-        return value2float(value,self.variables[key])
+        if isinstance(value,Distribution):
+            # Encode each element
+            newValue = value.__class__()
+            for element in value.domain():
+                newElement = self.value2float(key,element)
+                try:
+                    newValue[newElement] += value[element]
+                except KeyError:
+                    newValue[newElement] = value[element]
+            return newValue
+        elif self.variables[key]['domain'] is bool:
+            if value:
+                return 1.
+            else:
+                return 0.
+        elif self.variables[key]['domain'] is list:
+            return self.symbols[value]
+        else:
+            return value
 
     def getFeature(self,key,state=None):
         """
@@ -579,13 +628,10 @@ class World:
         if state is None:
             state = self.state
         assert self.variables.has_key(key),'Unknown element "%s"' % (key)
-        return self.decodeVariable(key,state.marginal(key))
+        return self.float2value(key,state.marginal(key))
 
     def decodeVariable(self,key,distribution):
-        """
-        Translates a distribution over float values for a variable into the specific domain elements
-        """
-        return probfloat2value(distribution,self.variables[key])
+        raise DeprecationWarning,'Use float2value method instead'
 
     def defineState(self,entity,feature,domain=float,lo=0.,hi=1.,description=None):
         """
@@ -969,7 +1015,7 @@ class World:
                     else:
                         print >> buf,'%s\t\t\t%-12s\t' % (prefix,feature+':'),
                     # Generate string representation of feature value
-                    value = float2value(vector[key],self.variables[key])
+                    value = self.float2value(key,vector[key])
                     if csv:
                         elements.append(value)
                     else:
@@ -981,7 +1027,7 @@ class World:
                         if newEntity:
                             print >> buf,'\t%-12s' % (label),
                             newEntity = False
-                        print >> buf,'\t\t%s\t%s:\t%s' % (link,obj,float2value(vector[key],self.variables[key]))
+                        print >> buf,'\t\t%s\t%s:\t%s' % (link,obj,self.float2value(key,vector[key]))
             # Print models (and beliefs associated with those models)
             if not entity is None:
                 # Print model of this entity
@@ -1361,48 +1407,6 @@ def parseDomain(subnode):
                 description = str(subsubnode.firstChild.data).strip()
         subsubnode = subsubnode.nextSibling
     return domain,lo,hi,description
-
-def probfloat2value(distribution,entry):
-    if entry['domain'] is bool:
-        abstract = {True: 0.,False: 0.}
-        for value in distribution.domain():
-            abstract[float2value(value,entry)] += distribution[value]
-        return Distribution(abstract)
-    elif entry['domain'] is list:
-        abstract = {}
-        for value in distribution.domain():
-            abstract[float2value(value,entry)] = distribution[value]
-        return Distribution(abstract)
-    else:
-        return distribution
-
-def float2value(flt,entry):
-    if entry['domain'] is bool:
-        if flt > 0.5:
-            return True
-        else:
-            return False
-    elif entry['domain'] is list:
-        index = int(float(flt)+0.1)
-        return entry['elements'][index]
-    elif entry['domain'] is int:
-        return int(flt)
-    else:
-        return flt
-
-def value2float(value,entry):
-    """
-    @return: the float value (appropriate for storing in a L{KeyedVector}) corresponding to the given (possibly symbolic, bool, etc.) value
-    """
-    if entry['domain'] is bool:
-        if value:
-            return 1.
-        else:
-            return 0.
-    elif entry['domain'] is list:
-        return entry['elements'].index(value)
-    else:
-        return value
 
 def scaleValue(value,entry):
     """
