@@ -1,5 +1,6 @@
 import unittest
 
+from psychsim.action import *
 from psychsim.world import *
 from psychsim.agent import Agent
 from psychsim.pwl import *
@@ -49,6 +50,8 @@ class TestAgents(unittest.TestCase):
         self.jerry = self.world.agents[self.jerry.name]
 
     def testEnumeratedState(self):
+        self.addActions()
+        self.world.defineVariable(self.tom.name,ActionSet)
         self.world.defineState(self.tom.name,'status',list,['dead','injured','healthy'])
         self.world.setState(self.tom.name,'status','healthy')
         goal = achieveFeatureValue(stateKey(self.tom.name,'status'),'healthy')
@@ -62,6 +65,9 @@ class TestAgents(unittest.TestCase):
         self.assertAlmostEqual(tVal,1.,8)
         jVal = self.jerry.reward(vector)
         self.assertAlmostEqual(jVal,0.,8)
+        for action in self.tom.actions:
+            encoding = self.world.value2float(self.tom.name,action)
+            self.assertEqual(action,self.world.float2value(self.tom.name,encoding))
 
     def testBeliefModels(self):
         self.addStates()
