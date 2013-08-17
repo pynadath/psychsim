@@ -522,6 +522,7 @@ class World:
            - int: discrete numeric range
            - bool: True/False value
            - list: enumerated set of discrete values
+           - ActionSet: enumerated set of actions, of the named agent (as key)
         @type domain: class
         @param lo: for float/int features, the lowest possible value. for list features, a list of possible values.
         @type lo: float/int/list
@@ -530,8 +531,10 @@ class World:
         @param description: optional text description explaining what this state feature means
         @type description: str
         """
+        if self.variables.has_key(key):
+            raise NameError,'Variable %s already defined' % (key)
         self.variables[key] = {'domain': domain,
-                             'description': description}
+                               'description': description}
         if domain is float:
             self.variables[key].update({'lo': lo,'hi': hi})
         elif domain is int:
@@ -546,6 +549,13 @@ class World:
                     self.symbolList.append(element)
         elif domain is bool:
             self.variables[key].update({'lo': None,'hi': None})
+        elif domain is ActionSet:
+            # The actions of an agent
+            assert self.agents.has_key(key)
+            for action in self.agents[key].actions:
+                self.symbols[action] = len(self.symbols)
+                self.symbolList.append(action)
+                assert self.symbolList[self.symbols[action]] == action
         else:
             raise ValueError,'Unknown domain type %s for %s' % (domain,key)
         self.variables[key]['key'] = key
@@ -584,7 +594,8 @@ class World:
                 return True
             else:
                 return False
-        elif self.variables[key]['domain'] is list:
+        elif self.variables[key]['domain'] is list or self.variables[key]['domain'] is set or \
+                self.variables[key]['domain'] is ActionSet:
             index = int(float(flt)+0.1)
             return self.symbolList[index]
         elif self.variables[key]['domain'] is int:
@@ -611,7 +622,8 @@ class World:
                 return 1.
             else:
                 return 0.
-        elif self.variables[key]['domain'] is list:
+        elif self.variables[key]['domain'] is list or self.variables[key]['domain'] is set or \
+                self.variables[key]['domain'] is ActionSet:
             return self.symbols[value]
         else:
             return value
