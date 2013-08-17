@@ -673,15 +673,15 @@ class Agent:
             for actor in self.world.next(world):
                 if not omega.has_key(actor):
                     raise NotImplementedError,'Currently unable to handle unobserved actions'
-                for actions[actor] in self.world.agents[actor].actions:
-                    if hash(actions[actor]) == omega[actor]:
-                        break
-                else:
-                    raise ValueError,'Unable to identify observation %d of %s' % (omega[actor],actor)
+                actions[actor] = self.world.float2value(actor,omega[actor])
                 actorModel = self.world.getModel(actor,oldWorld)
                 if not actorModel is True:
                     decision = self.world.agents[actor].decide(world,model=actorModel,selection='distribution')
-                    probOmega *= decision['action'][actions[actor]]
+                    if isinstance(decision['action'],Distribution):
+                        probOmega *= decision['action'][actions[actor]]
+                    else:
+                        assert decision['action'] == actions[actor],'Predicted %s, but observed %s' % \
+                            (actions[actor],decision['action'])
             # What is the effect of those actions?
             effect = self.world.effect(actions,world)
             for newWorld in effect['new'].domain():
@@ -696,11 +696,13 @@ class Agent:
                 else:
                     # Compute joint probability of old, new, observation, etc.
                     omegaDist = self.observe(newWorld,actions,model)
-                    newProb = probOmega*effect['new'][newWorld]*omegaDist[omega]
-                    try:
-                        newBeliefs[newBelief] += oldBeliefDiff[oldWorld]*newProb
-                    except KeyError:
-                        newBeliefs[newBelief] = oldBeliefDiff[oldWorld]*newProb
+                    if omega in omegaDist.domain():
+                        # Otherwise, this observation is impossible in this state
+                        newProb = probOmega*effect['new'][newWorld]*omegaDist[omega]
+                        try:
+                            newBeliefs[newBelief] += oldBeliefDiff[oldWorld]*newProb
+                        except KeyError:
+                            newBeliefs[newBelief] = oldBeliefDiff[oldWorld]*newProb
         # Find models corresponding to new beliefs
         newBeliefs.normalize()
         self.models[model]['SE'][oldBelief][newReal][omega] = self.belief2model(model,newBeliefs)['index']
@@ -757,16 +759,21 @@ class Agent:
                 # Apply the observation function
                 omega[key] = self.world.float2value(key,tree[vector]*vector)
         for key,action in actions.items():
+            if not self.world.variables.has_key(key):
+                self.world.defineVariable(key,ActionSet)
             if omega.has_key(key):
-                if omega[key]:
+                if omega[key] is True:
                     # Action is observable
-                    omega[key] = hash(action)
-                else:
+                    omega[key] = self.world.value2float(key,action)
+                elif omega[key] is None or omega[key] is False:
                     # Action is unobservable
                     del omega[key]
+                else:
+                    # A different action is observed
+                    omega[key] = self.world.value2float(key,omega[key])
             else:
                 # Assume action is observable by default
-                omega[key] = hash(action)
+                omega[key] = self.world.value2float(key,action)
         # Generate distribution over joint observations
         jointOmega = VectorDistribution({KeyedVector(): 1.})
         for key,distribution in omega.items():
