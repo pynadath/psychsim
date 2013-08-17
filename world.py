@@ -551,8 +551,11 @@ class World:
             self.variables[key].update({'lo': None,'hi': None})
         elif domain is ActionSet:
             # The actions of an agent
-            assert self.agents.has_key(key)
-            for action in self.agents[key].actions:
+            if isinstance(lo,float):
+                assert self.agents.has_key(key)
+                lo = self.agents[key].actions
+            self.variables[key].update({'elements': lo,'lo': None,'hi': None})
+            for action in lo:
                 self.symbols[action] = len(self.symbols)
                 self.symbolList.append(action)
                 assert self.symbolList[self.symbols[action]] == action
@@ -1142,10 +1145,15 @@ class World:
                 subnode.setAttribute('lo',str(entry['lo']))
             if not entry['hi'] is None:
                 subnode.setAttribute('hi',str(entry['hi']))
-            if entry['domain'] is list:
+            if entry['domain'] is list or entry['domain'] is set:
                 for element in entry['elements']:
                     subsubnode = doc.createElement('element')
                     subsubnode.appendChild(doc.createTextNode(element))
+                    subnode.appendChild(subsubnode)
+            elif entry['domain'] is ActionSet:
+                for element in entry['elements']:
+                    subsubnode = doc.createElement('element')
+                    subsubnode.appendChild(element.__xml__().documentElement)
                     subnode.appendChild(subsubnode)
             if entry['description']:
                 subsubnode = doc.createElement('description')
@@ -1406,14 +1414,19 @@ def parseDomain(subnode):
         pass
     elif domain is list:
         lo = []
+    elif domain is ActionSet:
+        lo = []
     else:
         raise TypeError,'Unknown feature domain type: %s' % (domain)
     subsubnode = subnode.firstChild
     while subsubnode:
         if subsubnode.nodeType == subsubnode.ELEMENT_NODE:
             if subsubnode.tagName == 'element':
-                assert domain is list
-                lo.append(str(subsubnode.firstChild.data).strip())
+                if domain is list or domain is set:
+                    lo.append(str(subsubnode.firstChild.data).strip())
+                else:
+                    assert domain is ActionSet
+                    lo.append(ActionSet(subsubnode.getElementsByTagName('action')))
             else:
                 assert subsubnode.tagName == 'description'
                 description = str(subsubnode.firstChild.data).strip()
