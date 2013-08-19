@@ -30,6 +30,8 @@ class TestAgents(unittest.TestCase):
         """Create actions"""
         self.chase = self.tom.addAction({'verb': 'chase','object': self.jerry.name})
         self.hit = self.tom.addAction({'verb': 'hit','object': self.jerry.name})
+        self.run = self.jerry.addAction({'verb': 'run away'})
+        self.trick = self.jerry.addAction({'verb': 'trick','object': self.tom.name})
 
     def addDynamics(self):
         """Create dynamics"""
@@ -235,6 +237,43 @@ class TestAgents(unittest.TestCase):
         vHit = self.tom.value(vector,self.hit)['V']
         vChase = self.tom.value(vector,self.chase)['V']
         self.assertAlmostEqual(vHit,vChase+.1,8)
+
+    def testTurnDynamics(self):
+        self.addStates()
+        self.addActions()
+        self.world.setOrder([self.tom.name,self.jerry.name])
+        self.assertEqual(self.world.maxTurn,1)
+        self.saveload()
+        vector = self.world.state.domain()[0]
+        jTurn = turnKey(self.jerry.name)
+        tTurn = turnKey(self.tom.name)
+        self.assertEqual(self.world.next(),[self.tom.name])
+        self.assertEqual(vector[tTurn],0)
+        self.assertEqual(vector[jTurn],1)
+        self.world.step()
+        vector = self.world.state.domain()[0]
+        self.assertEqual(self.world.next(),[self.jerry.name])
+        self.assertEqual(vector[tTurn],1)
+        self.assertEqual(vector[jTurn],0)
+        self.world.step()
+        vector = self.world.state.domain()[0]
+        self.assertEqual(self.world.next(),[self.tom.name])
+        self.assertEqual(vector[tTurn],0)
+        self.assertEqual(vector[jTurn],1)
+        # Try some custom dynamics
+        self.world.setDynamics(tTurn,self.hit,makeTree(noChangeMatrix(tTurn)))
+        self.world.setDynamics(jTurn,self.hit,makeTree(noChangeMatrix(tTurn)))
+        self.world.step()
+        vector = self.world.state.domain()[0]
+        self.assertEqual(self.world.next(),[self.tom.name])
+        self.assertEqual(vector[tTurn],0)
+        self.assertEqual(vector[jTurn],1)
+        self.world.step({self.tom.name: self.chase})
+        vector = self.world.state.domain()[0]
+        self.assertEqual(self.world.next(),[self.jerry.name])
+        self.assertEqual(vector[tTurn],1)
+        self.assertEqual(vector[jTurn],0)
+
 
 if __name__ == '__main__':
     unittest.main()

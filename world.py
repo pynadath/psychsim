@@ -43,6 +43,8 @@ class World:
         self.termination = []
         self.relations = {}
 
+        self.maxTurn = None
+
         # Action effect information
         self.dynamics = {}
         self.dependency = {}
@@ -148,7 +150,7 @@ class World:
             turn = self.next(vector)
             for name in outcome['actions'].keys():
                 if not (name in turn):
-                    raise NameError,'Agent %s must wait its turn' % (name)
+                    raise NameError,'Agent %s must wait for its turn' % (name)
             for name in turn:
                 if not outcome['actions'].has_key(name):
                     model = self.getModel(name,vector)
@@ -430,7 +432,8 @@ class World:
             else:
                 names = [order[index]]
             for name in names:
-                self.state.join(turnKey(name),float(index)+0.5)
+                self.state.join(turnKey(name),index)
+        self.maxTurn = len(order) - 1
 
     def next(self,vector=None):
         """
@@ -449,44 +452,46 @@ class World:
 
     def deltaOrder(self,actions,vector):
         """
+        @warning: assumes that no one is acting out of turn
         @return: the new turn sequence resulting from the performance of the given actions
         """
-        potentials = filter(lambda n: vector.has_key(turnKey(n)),self.agents.keys())
-        for name in self.agents.keys():
-            key = turnKey(name)
-            if vector.has_key(key):
-                dynamics = self.getDynamics(key,actions)
+        potentials = [name for name in self.agents.keys() if vector.has_key(turnKey(name))]
+        if self.maxTurn is None:
+            self.maxTurn = max([vector[turnKey(name)] for name in potentials])
         # Figure out who has acted
-        if isinstance(actions,dict):
-            actors = actions.keys()
-        elif isinstance(actions,ActionSet):
-            actors = set()
+        if isinstance(actions,ActionSet):
+            table = {}
             for atom in actions:
-                actors.add(atom['subject'])
-        # Create turn order matrix
-        delta = KeyedMatrix()
-        if len(actors) == len(potentials):
-            # Everybody has acted (NOTE: Need to make this more sensitive to whose turn it is)
-            for name in potentials:
-                key = turnKey(name)
-                delta[key] = KeyedVector({key: 1.})
-        elif len(actors) == 1:
-            # Only one agent has acted
-            actor = actors.pop()
-            position = vector[turnKey(actor)]
-            for name in potentials:
-                key = turnKey(name)
-                if name == actor:
-                    # Acted, move to end of line
-                    delta[key] = KeyedVector({CONSTANT: float(len(self.agents))-0.5})
-                elif vector[key] > position:
-                    # Not acted, move ahead of actor
-                    delta[key] = KeyedVector({key: 1.,CONSTANT: -1.})
-                else:
-                    # Not acted, but already ahead of actor
-                    delta[key] = KeyedVector({key: 1.})
+                try:
+                    table[atom['subject']].add(atom)
+                except KeyError:
+                    table[atom['subject']] = ActionSet(atom)
         else:
-            raise NotImplementedError,'Currently unable to process mixed turn orders.'
+            assert isinstance(actions,dict)
+            table = actions
+            actions = ActionSet()
+            for atom in table.values():
+                actions = actions | atom
+        # Find dynamics for each turn
+        delta = KeyedMatrix()
+        for name in potentials:
+            key = turnKey(name)
+            dynamics = self.getDynamics(key,actions)
+            if len(dynamics) == 0:
+                # Create default dynamics
+                if not self.variables.has_key(key):
+                    self.defineVariable(key,int,hi=self.maxTurn,evaluate=False)
+                if table.has_key(name):
+                    tree = makeTree({'if': thresholdRow(key,0.5),
+                                     True: incrementMatrix(key,-1),
+                                     False: setToConstantMatrix(key,self.maxTurn)})
+                else:
+                    tree = makeTree(incrementMatrix(key,-1))
+                self.setDynamics(key,actions,tree)
+                dynamics = [tree]
+            matrix = dynamics[0][vector]
+            assert isinstance(matrix,KeyedMatrix),'Dynamics must be deterministic'
+            delta.update(matrix)
         return delta
 
     def getActions(self,vector,agents=None,actions=None):
@@ -512,7 +517,7 @@ class World:
     """State methods"""
     """-------------"""
 
-    def defineVariable(self,key,domain=float,lo=-1.,hi=1.,description=None):
+    def defineVariable(self,key,domain=float,lo=-1.,hi=1.,description=None,evaluate=True):
         """
         Define the type and domain of a given element of the state vector
         @param key: string label for the column being defined
@@ -562,7 +567,8 @@ class World:
         else:
             raise ValueError,'Unknown domain type %s for %s' % (domain,key)
         self.variables[key]['key'] = key
-        self.evaluationOrder[0].add(key)
+        if evaluate:
+            self.evaluationOrder[0].add(key)
 
     def setFeature(self,key,value,state=None):
         """
