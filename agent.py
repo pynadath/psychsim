@@ -358,7 +358,10 @@ class Agent:
         try:
             value = self.models[model][name]
         except KeyError:
-            return self.getAttribute(name,self.models[model]['parent'])
+            if self.models[model]['parent'] is None:
+                return None
+            else:
+                return self.getAttribute(name,self.models[model]['parent'])
         if value is True and model is not True:
             raise DeprecationWarning,'Use "parent: True" setting to inherit by removing "%s" from model "%s" for agent "%s"' % (name,model,self.name)
         return value
@@ -468,8 +471,11 @@ class Agent:
         @return: the reward I derive in the given state (under the given model, default being the C{True} model)
         @rtype: float
         """
-        R = self.getAttribute('R',model)
         total = 0.
+        R = self.getAttribute('R',model)
+        if R is None:
+            # No reward components
+            return total
         for tree,weight in R.items():
             if isinstance(tree,str):
                 if recurse:
