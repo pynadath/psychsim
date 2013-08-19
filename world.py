@@ -321,6 +321,14 @@ class World:
             self.agents[agent.name] = agent
             agent.world = self
 
+    def setTurnDynamics(self,name,action,tree):
+        if self.maxTurn is None:
+            raise ValueError,'Call setOrder before setting turn dynamics'
+        key = turnKey(name)
+        if not self.variables.has_key(key):
+            self.defineVariable(key,int,hi=self.maxTurn,evaluate=False)
+        self.setDynamics(key,action,tree)
+
     def setDynamics(self,key,action,tree,enforceMin=False,enforceMax=False):
         """
         Defines the effect of an action on a given state feature
@@ -479,15 +487,13 @@ class World:
             dynamics = self.getDynamics(key,actions)
             if len(dynamics) == 0:
                 # Create default dynamics
-                if not self.variables.has_key(key):
-                    self.defineVariable(key,int,hi=self.maxTurn,evaluate=False)
                 if table.has_key(name):
                     tree = makeTree({'if': thresholdRow(key,0.5),
                                      True: incrementMatrix(key,-1),
                                      False: setToConstantMatrix(key,self.maxTurn)})
                 else:
                     tree = makeTree(incrementMatrix(key,-1))
-                self.setDynamics(key,actions,tree)
+                self.setTurnDynamics(name,actions,tree)
                 dynamics = [tree]
             matrix = dynamics[0][vector]
             assert isinstance(matrix,KeyedMatrix),'Dynamics must be deterministic'

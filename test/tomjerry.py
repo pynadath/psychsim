@@ -261,8 +261,8 @@ class TestAgents(unittest.TestCase):
         self.assertEqual(vector[tTurn],0)
         self.assertEqual(vector[jTurn],1)
         # Try some custom dynamics
-        self.world.setDynamics(tTurn,self.hit,makeTree(noChangeMatrix(tTurn)))
-        self.world.setDynamics(jTurn,self.hit,makeTree(noChangeMatrix(tTurn)))
+        self.world.setTurnDynamics(self.tom.name,self.hit,makeTree(noChangeMatrix(tTurn)))
+        self.world.setTurnDynamics(self.jerry.name,self.hit,makeTree(noChangeMatrix(tTurn)))
         self.world.step()
         vector = self.world.state.domain()[0]
         self.assertEqual(self.world.next(),[self.tom.name])
