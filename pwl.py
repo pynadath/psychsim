@@ -83,6 +83,10 @@ class KeyedVector(dict):
         self._string = None
         dict.__setitem__(self,key,value)
 
+    def __delitem__(self,key):
+        self._string = None
+        dict.__delitem__(self,key)
+
     def desymbolize(self,table):
         result = self.__class__()
         for key,value in self.items():

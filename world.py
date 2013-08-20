@@ -322,6 +322,15 @@ class World:
             agent.world = self
 
     def setTurnDynamics(self,name,action,tree):
+        """
+        Convenience method for setting custom dynamics for the turn order
+        @param name: the name of the agent whose turn dynamics are being set
+        @type name: str
+        @param action: the action affecting the turn order
+        @type action: L{Action} or L{ActionSet}
+        @param tree: the decision tree defining the effect on this agent's turn order
+        @type tree: L{KeyedTree}
+        """
         if self.maxTurn is None:
             raise ValueError,'Call setOrder before setting turn dynamics'
         key = turnKey(name)

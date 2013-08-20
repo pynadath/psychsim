@@ -39,9 +39,9 @@ class TestAgents(unittest.TestCase):
         self.world.setDynamics(stateKey(self.jerry.name,'health'),self.hit,tree,enforceMin=True)
 
     def addModels(self,rationality=1.):
-        self.tom.addModel('friend',rationality=rationality)
+        self.tom.addModel('friend',rationality=rationality,parent=True)
         self.tom.setReward(maximizeFeature(stateKey(self.jerry.name,'health')),1.,'friend')
-        self.tom.addModel('foe',rationality=rationality)
+        self.tom.addModel('foe',rationality=rationality,parent=True)
         self.tom.setReward(minimizeFeature(stateKey(self.jerry.name,'health')),1.,'foe')
 
     def saveload(self):
@@ -132,6 +132,19 @@ class TestAgents(unittest.TestCase):
                     else:
                         self.assertAlmostEqual(belief[key],10,8)
 
+    def testUnobservedAction(self):
+        self.addStates()
+        self.addActions()
+        self.addModels()
+        self.world.setOrder([self.tom.name])
+        self.world.setModel(self.jerry.name,True)
+        self.world.setMentalModel(self.jerry.name,self.tom.name,{'friend': 0.5,'foe': 0.5})
+        tree = makeTree({'distribution': [(True,0.5),(False,0.5)]})
+        self.jerry.defineObservation(self.tom.name,tree,self.hit,domain=ActionSet)
+        tree = makeTree({'distribution': [(True,0.25),(False,0.75)]})
+        self.jerry.defineObservation(self.tom.name,tree,self.chase,domain=ActionSet)
+        self.saveload()
+        self.world.step()
 
     def testRewardModels(self):
         self.addStates()

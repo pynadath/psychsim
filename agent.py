@@ -40,7 +40,7 @@ class Agent:
             self.name = name
             # Default model settings
             self.addModel(True,R={},horizon=2,level=2,rationality=1.,discount=1.,selection='consistent',
-                          beliefs=True,parent=None)
+                          beliefs=True,parent=None,projector=Distribution.expectation)
 
     """------------------"""
     """Policy methods"""
@@ -524,7 +524,7 @@ class Agent:
             raise NameError,'Model %s already exists for agent %s' % \
                 (name,self.name)
         model = {'name': name,'index': len(self.models),'parent': True,
-                 'V': ValueFunction(),'policy': {},'ignore': [],'projector': Distribution.expectation}
+                 'V': ValueFunction(),'policy': {},'ignore': []}
         model.update(kwargs)
         self.models[name] = model
         self.modelList.append(name)
@@ -727,7 +727,7 @@ class Agent:
         @type omega: str
         """
         if not self.world.variables.has_key(omega):
-            self.world.defineVariable(omega,kwargs)
+            self.world.defineVariable(omega,**kwargs)
         self.omega.add(omega)
         if self.O is True:
             self.O = {}
@@ -764,19 +764,31 @@ class Agent:
             else:
                 # Apply the observation function
                 omega[key] = self.world.float2value(key,tree[vector]*vector)
+        # Keep track of potentially unobserved actions
+        nulls = set()
+        # Translate actions into vectors
         for key,action in actions.items():
             if not self.world.variables.has_key(key):
                 self.world.defineVariable(key,ActionSet)
             if omega.has_key(key):
-                if omega[key] is True:
-                    # Action is observable
-                    omega[key] = self.world.value2float(key,action)
-                elif omega[key] is None or omega[key] is False:
+                if omega[key] is None or omega[key] is False:
                     # Action is unobservable
                     del omega[key]
                 else:
-                    # A different action is observed
-                    omega[key] = self.world.value2float(key,omega[key])
+                    if not isinstance(omega[key],Distribution):
+                        omega[key] = Distribution({omega[key]: 1.})
+                    for element in omega[key].domain():
+                        if element is True:
+                            # Action is observable
+                            omega[key].replace(element,self.world.value2float(key,action))
+                        elif element is False:
+                            nulls.add(key)
+                            omega[key].replace(element,None)
+                        elif element is None:
+                            # Action is potentially unobservable
+                            nulls.add(key)
+                        else:
+                            omega[key].replace(element,self.world.value2float(key,element))
             else:
                 # Assume action is observable by default
                 omega[key] = self.world.value2float(key,action)
@@ -784,6 +796,15 @@ class Agent:
         jointOmega = VectorDistribution({KeyedVector(): 1.})
         for key,distribution in omega.items():
             jointOmega.join(key,distribution)
+        # Prune unobserved actions
+        if len(nulls) > 0:
+            for observation in jointOmega.domain():
+                prob = jointOmega[observation]
+                del jointOmega[observation]
+                for key in nulls:
+                    if observation[key] is None:
+                        del observation[key]
+                jointOmega[observation] = prob
         return jointOmega
 
     """------------------"""
@@ -927,7 +948,7 @@ class Agent:
                     text = str(node.getAttribute('selection'))
                     if text == str(True):
                         kwargs['selection'] = True
-                    elif text != str(None):
+                    elif text:
                         kwargs['selection'] = text
                     subnode = node.firstChild
                     while subnode:
