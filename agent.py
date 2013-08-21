@@ -678,7 +678,8 @@ class Agent:
             world.update(oldWorld)
             for actor in self.world.next(world):
                 if not omega.has_key(actor):
-                    raise NotImplementedError,'Currently unable to handle unobserved actions'
+                    # Unobserved action. At some point, should have option of reasoning about this.
+                    continue
                 actions[actor] = self.world.float2value(actor,omega[actor])
                 actorModel = self.world.getModel(actor,oldWorld)
                 if not actorModel is True:
@@ -689,7 +690,11 @@ class Agent:
                         assert decision['action'] == actions[actor],'Predicted %s, but observed %s' % \
                             (actions[actor],decision['action'])
             # What is the effect of those actions?
-            effect = self.world.effect(actions,world)
+            if actions:
+                effect = self.world.effect(actions,world)
+            else:
+                # If no observed actions, assume world is unchanged (head-in-the-sand strategy)
+                effect = {'new': VectorDistribution({world: 1.})}
             for newWorld in effect['new'].domain():
                 newBelief = KeyedVector()
                 for key in newWorld.keys():
@@ -701,7 +706,10 @@ class Agent:
                             break
                 else:
                     # Compute joint probability of old, new, observation, etc.
-                    omegaDist = self.observe(newWorld,actions,model)
+                    if actions:
+                        omegaDist = self.observe(newWorld,actions,model)
+                    else:
+                        omegaDist = VectorDistribution({KeyedVector(): 1.})
                     if omega in omegaDist.domain():
                         # Otherwise, this observation is impossible in this state
                         newProb = probOmega*effect['new'][newWorld]*omegaDist[omega]
@@ -711,8 +719,10 @@ class Agent:
                             newBeliefs[newBelief] = oldBeliefDiff[oldWorld]*newProb
         # Find models corresponding to new beliefs
         newBeliefs.normalize()
-        self.models[model]['SE'][oldBelief][newReal][omega] = self.belief2model(model,newBeliefs)['index']
-        return self.models[model]['SE'][oldBelief][newReal][omega]
+        assert len(newBeliefs) > 0,'Failed to find any beliefs consistent with observation "%s"' % (omega)
+        index = self.belief2model(model,newBeliefs)['index']
+        self.models[model]['SE'][oldBelief][newReal][omega] = index
+        return index
 
     def printBeliefs(self,model=True):
         raise DeprecationWarning,'Use the "beliefs=True" argument to printState instead'

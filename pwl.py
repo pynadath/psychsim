@@ -559,6 +559,14 @@ class KeyedPlane:
                 symbolic = True
         return self.__class__(vector,threshold)
             
+    def __eq__(self,other):
+        if self.vector == other.vector and \
+                self.threshold == other.threshold and \
+                self.comparison == other.comparison:
+            return True
+        else:
+            return False
+
     def __str__(self):
         if self._string is None:
             operator = ['==','>','<'][self.comparison]
@@ -753,6 +761,26 @@ class KeyedTree:
                 new[child.scale(table)] = self.children[child]
             tree.makeProbabilistic(TreeDistribution(new))
         return tree
+
+    def __eq__(self,other):
+        if self.isLeaf():
+            if other.isLeaf():
+                return self.children[None] == other.children[None]
+            else:
+                return False
+        elif isinstance(self.children,Distribution):
+            if isinstance(other.children,Distribution):
+                return self.children == other.children
+            else:
+                return false
+        else:
+            if self.branch == other.branch:
+                return self.children == other.children
+            else:
+                return False
+
+    def __hash__(self):
+        return hash(str(self))
 
     def __str__(self):
         if self._string is None:
