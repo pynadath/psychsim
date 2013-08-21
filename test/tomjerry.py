@@ -135,16 +135,20 @@ class TestAgents(unittest.TestCase):
     def testUnobservedAction(self):
         self.addStates()
         self.addActions()
+        self.addDynamics()
         self.addModels()
         self.world.setOrder([self.tom.name])
         self.world.setModel(self.jerry.name,True)
+        self.jerry.setBelief(stateKey(self.jerry.name,'health'),50)
         self.world.setMentalModel(self.jerry.name,self.tom.name,{'friend': 0.5,'foe': 0.5})
         tree = makeTree({'distribution': [(True,0.5),(False,0.5)]})
         self.jerry.defineObservation(self.tom.name,tree,self.hit,domain=ActionSet)
         tree = makeTree({'distribution': [(True,0.25),(False,0.75)]})
         self.jerry.defineObservation(self.tom.name,tree,self.chase,domain=ActionSet)
+        vector = self.world.state.domain()[0]
         self.saveload()
-        self.world.step()
+        self.world.step({self.tom.name: self.hit})
+        vector = self.world.state.domain()[0]
 
     def testRewardModels(self):
         self.addStates()
@@ -250,6 +254,22 @@ class TestAgents(unittest.TestCase):
         vHit = self.tom.value(vector,self.hit)['V']
         vChase = self.tom.value(vector,self.chase)['V']
         self.assertAlmostEqual(vHit,vChase+.1,8)
+
+    def testReward(self):
+        self.addStates()
+        key = stateKey(self.jerry.name,'health')
+        goal = makeTree({'if': thresholdRow(key,5),
+                         True: KeyedVector({key: -2}),
+                         False: KeyedVector({key: -1})})
+        self.jerry.setReward(goal,1.)
+        R = self.jerry.models[True]['R']
+        self.assertEqual(len(R),1)
+        self.assertEqual(R.keys()[0],goal)
+        self.assertAlmostEqual(R[goal],1.,8)
+        self.jerry.setReward(goal,2.)
+        self.assertEqual(len(R),1)
+        self.assertEqual(R.keys()[0],goal)
+        self.assertAlmostEqual(R[goal],2.,8)
 
     def testTurnDynamics(self):
         self.addStates()
