@@ -362,8 +362,6 @@ class Agent:
                 return None
             else:
                 return self.getAttribute(name,self.models[model]['parent'])
-        if value is True and model is not True:
-            raise DeprecationWarning,'Use "parent: True" setting to inherit by removing "%s" from model "%s" for agent "%s"' % (name,model,self.name)
         return value
 
     """------------------"""
@@ -597,24 +595,19 @@ class Agent:
                 index += 1
             return self.addModel('%s%d' % (parent['name'],index),beliefs=belief,parent=parent['name'])
 
-    def printModel(self,model=True,buf=None,index=None,prefix='',first=True):
+    def printModel(self,model=True,buf=None,index=None,prefix=''):
         if isinstance(index,int) or isinstance(index,float):
             model = self.index2model(index)
         if not isinstance(model,dict):
             model = self.models[model]
-        if first:
-            label = self.name
-        else:
-            label = ''
-        print >> buf,'%s\t%-12s\t%-12s\t%-12s' % \
-            (prefix,label,'__model__',model['name'])
-        prefix = '\t'+prefix
+        print >> buf,'%s\t%-12s\t%-12s' % \
+            (prefix,'__model__',model['name'])
         if model.has_key('R') and not model['R'] is True:
             self.printReward(model['name'],buf,'%s\t\t' % (prefix))
         if model.has_key('beliefs') and not model['beliefs'] is True:
-            print >> buf,'%s\t\t----beliefs:----' % (prefix)
-            self.world.printState(model['beliefs'],buf,prefix+'\t\t',beliefs=True)
-            print >> buf,'%s\t\t----------------' % (prefix)
+            print >> buf,'%s\t\t\t----beliefs:----' % (prefix)
+            self.world.printState(model['beliefs'],buf,prefix+'\t\t\t',beliefs=True)
+            print >> buf,'%s\t\t\t----------------' % (prefix)
         
     """---------------------"""
     """Belief update methods"""
@@ -719,7 +712,20 @@ class Agent:
                             newBeliefs[newBelief] = oldBeliefDiff[oldWorld]*newProb
         # Find models corresponding to new beliefs
         newBeliefs.normalize()
-        assert len(newBeliefs) > 0,'Failed to find any beliefs consistent with observation "%s"' % (omega)
+        if len(newBeliefs) == 0:
+            print '<ERROR>'
+            print 'Failed to find any beliefs for %s consistent with observation:' % (self.name)
+            self.world.printVector(omega)
+            print 'Working from initial belief:'
+            self.world.printState(oldBelief)
+            turns = set()
+            for oldWorld in oldBeliefDiff.domain():
+                world = self.world.pruneModels(oldReal)
+                world.update(oldWorld)
+                turns = turns | set(self.world.next(world))
+            print 'With possible turns by:',' and '.join(turns)
+            print '</ERROR>'
+            raise ValueError,'See message above.'
         index = self.belief2model(model,newBeliefs)['index']
         self.models[model]['SE'][oldBelief][newReal][omega] = index
         return index
@@ -766,13 +772,17 @@ class Agent:
                 try:
                     tree = table[None]
                 except KeyError:
-                    # Awkward, someone defined an observation function that doesn't cover the action space
-                    raise ValueError,'Observation function for %s does not cover action space' % (key)
+                    if self.world.agents.has_key(key) and not actions.has_key(key):
+                        # Observation of an agent's actions, but that agent hasn't acted
+                        continue
+                    else:
+                        # Awkward, someone defined an observation function that doesn't cover the action space
+                        raise ValueError,'Observation function for %s does not cover action space' % (key)
             if actions.has_key(key):
                 # Observation of action
                 omega[key] = tree[vector]
             else:
-                # Apply the observation function
+                # Apply the observation function to any non-action observations
                 omega[key] = self.world.float2value(key,tree[vector]*vector)
         # Keep track of potentially unobserved actions
         nulls = set()
@@ -906,6 +916,13 @@ class Agent:
                     subnode = doc.createElement(key)
                     subnode.appendChild(doc.createTextNode(model[key].__name__))
                     node.appendChild(subnode)
+                elif key == 'static':
+                    subnode = doc.createElement(key)
+                    subnode.setAttribute('value',str(model[key]))
+                    node.appendChild(subnode)
+                elif key == 'SE':
+                    # We don't serialize state estimator caching right now
+                    pass
                 else:
                     subnode = doc.createElement(key)
                     subnode.appendChild(doc.createTextNode(str(model[key])))
@@ -966,6 +983,8 @@ class Agent:
                             key = str(subnode.tagName)
                             if key == 'V':
                                 kwargs[key] = ValueFunction(subnode)
+                            elif key == 'static':
+                                kwargs[key] = (str(subnode.getAttribute('value')) == str(True))
                             else:
                                 if key == 'R' and str(subnode.getAttribute('name')):
                                     if not kwargs.has_key(key):
@@ -1003,7 +1022,10 @@ class Agent:
                                             elif key == 'projector':
                                                 kwargs[key] = eval('Distribution.%s' % (text))
                                             else:
-                                                kwargs[key] = float(text)
+                                                try:
+                                                    kwargs[key] = float(text)
+                                                except ValueError:
+                                                    raise ValueError,'Unable to parse attribute %s of model %s'  % (key,name)
                                     subchild = subchild.nextSibling
                         subnode = subnode.nextSibling
                     # Add new model

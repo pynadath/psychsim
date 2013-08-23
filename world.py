@@ -123,6 +123,7 @@ class World:
                     except KeyError:
                         state[new] = prob*outcome['probability']
             self.history.append(outcomes)
+#            self.modelGC()
         return outcomes
 
     def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=True):
@@ -240,16 +241,20 @@ class World:
                 oldModel = self.getModel(name,vector)
                 if agent.models[oldModel].has_key('beliefs') and \
                         not agent.models[oldModel]['beliefs'] is True:
-                    # Imperfect beliefs
-                    omegaDistribution = agent.observe(newVector,actions)
-                    modelDistribution = MatrixDistribution()
-                    for omega in omegaDistribution.domain():
-                        newModel = agent.stateEstimator(vector,newVector,omega,oldModel)
-                        matrix = KeyedMatrix({key: KeyedVector({CONSTANT: newModel})})
-                        try:
-                            modelDistribution[matrix] += omegaDistribution[omega]
-                        except KeyError:
-                            modelDistribution[matrix] = omegaDistribution[omega]
+                    if agent.getAttribute('static',oldModel):
+                        # Imperfect beliefs, but do not update
+                        modelDistribution = KeyedMatrix({key: KeyedVector({key: 1})})
+                    else:
+                        # Imperfect beliefs need to be updated
+                        omegaDistribution = agent.observe(newVector,actions)
+                        modelDistribution = MatrixDistribution()
+                        for omega in omegaDistribution.domain():
+                            newModel = agent.stateEstimator(vector,newVector,omega,oldModel)
+                            matrix = KeyedMatrix({key: KeyedVector({CONSTANT: newModel})})
+                            try:
+                                modelDistribution[matrix] += omegaDistribution[omega]
+                            except KeyError:
+                                modelDistribution[matrix] = omegaDistribution[omega]
                     delta.update(modelDistribution)
         result['effect'].append(delta)
         new = VectorDistribution()
@@ -723,6 +728,10 @@ class World:
             self.defineVariable(key,domain,lo,hi,description)
         return key
 
+    """------------------"""
+    """Mental model methods"""
+    """------------------"""
+
     def getModel(self,modelee,vector):
         """
         @return: the name of the model of the given agent indicated by the given state vector
@@ -773,6 +782,40 @@ class World:
         Then *this* is the method for you!
         """
         return KeyedVector({key: vector[key] for key in vector.keys() if not isModelKey(key)})
+
+    def modelGC(self):
+        """
+        Garbage collect orphaned models. Try to identify C{True} model as well.
+        """
+        # Keep track of which models are active for each agent and who their parent models are
+        parents = {}
+        children = {}
+        for name in self.agents.keys():
+            parents[name] = {}
+            children[name] = set()
+        # Start with the worlds in the current state
+        remaining = self.state.domain()
+        while len(remaining) > 0:
+            vector = remaining.pop()
+            # Look for models of each agent
+            for name,agent in self.agents.items():
+                key = modelKey(name)
+                if vector.has_key(key):
+                    # This world specifies an active model
+                    model = agent.index2model(vector[key])
+                    children[name].add(model)
+                    try:
+                        parents[name][agent.models[model]['parent']].append(model)
+                    except KeyError:
+                        parents[name][agent.models[model]['parent']] = [model]
+                    if agent.models[model].has_key('beliefs'):
+                        # Recurse into the worlds within this agent's subjective view
+                        remaining += agent.models[model]['beliefs'].domain()
+        # Remove inactive models
+        for name,active in children.items():
+            agent = self.agents[name]
+            for model in active:
+                print name,model,agent.models[model]['parent']
 
     def updateModels(self,outcome,vector):
         for agent in self.agents.values():
@@ -974,7 +1017,7 @@ class World:
                         for index in range(len(node['projection'])):
                             nodes.insert(index,node['projection'][index])
 
-    def printState(self,distribution=None,buf=None,prefix='',beliefs=False):
+    def printState(self,distribution=None,buf=None,prefix='',beliefs=True):
         """
         Utility method for displaying a distribution over possible worlds
         @type distribution: L{VectorDistribution}
@@ -982,7 +1025,7 @@ class World:
         @param prefix: a string prefix (e.g., tabs) to insert at the beginning of each line
         @type prefix: str
         @param beliefs: if C{True}, print out inaccurate beliefs, too
-        @type beliefs: True
+        @type beliefs: bool
         """
         if distribution is None:
             distribution = self.state
@@ -1031,6 +1074,9 @@ class World:
             if entity is None:
                 label = 'World'
             else:
+                if vector.has_key(entity):
+                    # Action performed in this vector
+                    table['__action__'] = entity
                 label = entity
             newEntity = True
             # Print state features for this entity
@@ -1073,33 +1119,35 @@ class World:
                         elements.append(label)
                         elements.append('__model__')
                         elements.append(self.agents[entity].index2model(vector[key]))
-                    elif first:
-                        self.agents[entity].printModel(index=vector[key])
+                    elif newEntity:
+                        if first:
+                            print >> buf,'\t%-12s' % (label),
+                            first = False
+                        else:
+                            print >> buf,'%s\t%-12s' % (prefix,label),
+                        self.agents[entity].printModel(index=vector[key],prefix=prefix)
                         change = True
-                        first = False
+                        newEntity = False
                     else:
-                        self.agents[entity].printModel(index=vector[key],prefix=prefix,first=False)
+                        print >> buf,'\t%12s' % (''),
+                        self.agents[entity].printModel(index=vector[key],prefix=prefix)
                     newEntity = False
-                # elif beliefs:
-                #     model = self.agents[entity].models[True]
-                #     if not model['beliefs'] is True:
-                #         print >> buf,'\t\t\t----beliefs:----'
-                #         self.printState(model['beliefs'],buf,'\t\t\t',False)
-                #         print >> buf,'\t\t\t----------------'
         if not csv and not change:
             print >> buf,'%s\tUnchanged' % (prefix)
-        if (not vector.has_key('__END__') and self.terminated(vector)) or \
-                (vector.has_key('__END__') and vector['__END__'] > 0.):
-            if csv:
+        if len([key for key in vector.keys() if not isTurnKey(key) and not isModelKey(key) and not self.agents.has_key(key)]) == len([key for key in self.variables.keys() if not isTurnKey(key) and not isModelKey(key) and not self.agents.has_key(key)]):
+            # Check for termination only if we have all state features
+            if (not vector.has_key('__END__') and self.terminated(vector)) or \
+                    (vector.has_key('__END__') and vector['__END__'] > 0.):
+                if csv:
+                    elements.append('World')
+                    elements.append('__END__')
+                    elements.append(str(True))
+                else:
+                    print >> buf,'%s\t__END__' % (prefix)
+            elif csv:
                 elements.append('World')
                 elements.append('__END__')
-                elements.append(str(True))
-            else:
-                print >> buf,'%s\t__END__' % (prefix)
-        elif csv:
-            elements.append('World')
-            elements.append('__END__')
-            elements.append(str(False))
+                elements.append(str(False))
         if csv:
             print >> buf,','.join(elements)
 
@@ -1419,23 +1467,27 @@ def isLikesKey(key):
     return ' likes -> ' in key
 
 def parseDomain(subnode):
-    domain = eval(str(subnode.getAttribute('domain')))
+    domain = str(subnode.getAttribute('domain'))
     description = None
     lo = str(subnode.getAttribute('lo'))
     if not lo: lo = None
     hi = str(subnode.getAttribute('hi'))
     if not hi: hi = None
-    if domain is int:
+    if domain == 'int':
+        domain = int
         if lo: lo = int(lo)
         if hi: hi = int(hi)
-    elif domain is float:
+    elif domain == 'float':
+        domain = float
         if lo: lo = float(lo)
         if hi: hi = float(hi)
-    elif domain is bool:
-        pass
-    elif domain is list:
+    elif domain == 'bool':
+        domain = bool
+    elif domain == 'list':
+        domain = list
         lo = []
-    elif domain is ActionSet:
+    elif domain == 'ActionSet':
+        domain = ActionSet
         lo = []
     else:
         raise TypeError,'Unknown feature domain type: %s' % (domain)
