@@ -141,7 +141,7 @@ class TestAgents(unittest.TestCase):
         self.world.setModel(self.jerry.name,True)
         self.jerry.setBelief(stateKey(self.jerry.name,'health'),50)
         self.world.setMentalModel(self.jerry.name,self.tom.name,{'friend': 0.5,'foe': 0.5})
-        tree = makeTree({'distribution': [(True,0.5),(False,0.5)]})
+        tree = makeTree(True)
         self.jerry.defineObservation(self.tom.name,tree,self.hit,domain=ActionSet)
         tree = makeTree({'distribution': [(True,0.25),(False,0.75)]})
         self.jerry.defineObservation(self.tom.name,tree,self.chase,domain=ActionSet)
@@ -307,6 +307,36 @@ class TestAgents(unittest.TestCase):
         self.assertEqual(vector[tTurn],1)
         self.assertEqual(vector[jTurn],0)
 
+    def testStatic(self):
+        self.addStates()
+        self.addActions()
+        self.addDynamics()
+        self.addModels()
+        self.world.setModel(self.jerry.name,True)
+        self.world.setMentalModel(self.jerry.name,self.tom.name,{'friend': 0.5,'foe': 0.5})
+        self.world.setOrder([self.tom.name])
+        vector = self.world.state.domain()[0]
+        model = self.world.getModel(self.jerry.name,vector)
+        belief0 = self.jerry.models[model]['beliefs']
+        self.world.step()
+        vector = self.world.state.domain()[0]
+        model = self.world.getModel(self.jerry.name,vector)
+        belief1 = self.jerry.models[model]['beliefs']
+        key = modelKey(self.tom.name)
+        for vector in belief0.domain():
+            if self.tom.index2model(vector[key]) == 'friend':
+                self.assertGreater(belief0[vector],belief1[vector])
+            else:
+                self.assertGreater(belief1[vector],belief0[vector])
+        # Now with the static beliefs
+        self.jerry.setAttribute('static',True,model)
+        self.saveload()
+        self.world.step()
+        vector = self.world.state.domain()[0]
+        model = self.world.getModel(self.jerry.name,vector)
+        belief2 = self.jerry.models[model]['beliefs']
+        for vector in belief1.domain():
+            self.assertAlmostEqual(belief1[vector],belief2[vector],8)
 
 if __name__ == '__main__':
     unittest.main()
