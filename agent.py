@@ -31,7 +31,7 @@ class Agent:
         self.omega = set()
         self.O = True
         self.models = {}
-        self.modelList = []
+        self.modelList = {}
         if isinstance(name,Document):
             self.parse(name.documentElement)
         elif isinstance(name,Node):
@@ -177,7 +177,10 @@ class Agent:
                 if action:
                     turn[self.name] = action
                 outcome = self.world.stepFromState(vector,turn,horizon)
-                if isinstance(outcome['new'],Distribution):
+                if not outcome.has_key('new'):
+                    # No consistent outcome
+                    pass
+                elif isinstance(outcome['new'],Distribution):
                     # Uncertain outcomes
                     future = Distribution()
                     for newVector in outcome['new'].domain():
@@ -518,6 +521,8 @@ class Agent:
         @return: the model created
         @rtype: dict
         """
+        if name is None:
+            raise NameError,'"None" is an illegal model name'
         if self.models.has_key(name):
             raise NameError,'Model %s already exists for agent %s' % \
                 (name,self.name)
@@ -525,8 +530,16 @@ class Agent:
                  'V': ValueFunction(),'policy': {},'ignore': []}
         model.update(kwargs)
         self.models[name] = model
-        self.modelList.append(name)
+        self.modelList[model['index']] = name
         return model
+
+    def deleteModel(self,name):
+        """
+        Deletes the named model from the space
+        @warning: does not check whether there are remaining references to this model
+        """
+        del self.modelList[self.models[name]['index']]
+        del self.models[name]
 
     def predict(self,vector,name,V,horizon=0):
         """
@@ -666,69 +679,91 @@ class Agent:
             # Compute probability of this observation given this start state
             probOmega = 1.
             # What actions do I think have been performed?
-            actions = {}
+            joint = ActionSet()
+            actionDistribution = Distribution({joint: 1.})
+            actionMapping = {joint: {}}
             world = self.world.pruneModels(oldReal)
             world.update(oldWorld)
+            # Consider each agent (whose turn it is)
             for actor in self.world.next(world):
-                if not omega.has_key(actor):
-                    # Unobserved action. At some point, should have option of reasoning about this.
-                    continue
-                actions[actor] = self.world.float2value(actor,omega[actor])
                 actorModel = self.world.getModel(actor,oldWorld)
-                if not actorModel is True:
-                    decision = self.world.agents[actor].decide(world,model=actorModel,selection='distribution')
-                    if isinstance(decision['action'],Distribution):
-                        probOmega *= decision['action'][actions[actor]]
+                # Iterate through each joint action generated for other agents
+                for joint in actionDistribution.domain():
+                    actions = actionMapping[joint]
+                    del actionMapping[joint]
+                    probActions = actionDistribution[joint]
+                    del actionDistribution[joint]
+                    if omega.has_key(actor):
+                        # We have observed what this agent did
+                        actions[actor] = self.world.float2value(actor,omega[actor])
+                        joint = joint | actions[actor]
+                        actionMapping[joint] = actions
+                        if not actorModel is True:
+                            # If we don't have access to True model, then we may not have 100%
+                            # confidence that agent would have performed the observed action
+                            decision = self.world.agents[actor].decide(world,model=actorModel,
+                                                                       selection='distribution')
+                            if isinstance(decision['action'],Distribution):
+                                probActions *= decision['action'][actions[actor]]
+                            elif decision['action'] != actions[actor]:
+                                probActions = 0.
+                        actionDistribution[joint] = probActions
                     else:
-                        assert decision['action'] == actions[actor],'Predicted %s, but observed %s' % \
-                            (actions[actor],decision['action'])
+                        # Unobserved action. To ignore action completely, uncomment the following:
+#                        continue
+                        # Predict what this agent *might* have snuck past our keen observations
+                        decision = self.world.agents[actor].decide(world,model=actorModel,
+                                                                   selection='distribution')
+                        if not isinstance(decision['action'],Distribution):
+                            decision['action'] = Distribution({decision['action']: 1.})
+                        # Merge each possible action into overall joint action
+                        for action in decision['action'].domain():
+                            newJoint = joint | action
+                            newActions = {actor: action}
+                            newActions.update(actions)
+                            actionMapping[newJoint] = newActions
+                            actionDistribution[newJoint] = probActions*decision['action'][action]
             # What is the effect of those actions?
-            if actions:
-                effect = self.world.effect(actions,world)
-            else:
-                # If no observed actions, assume world is unchanged (head-in-the-sand strategy)
-                effect = {'new': VectorDistribution({world: 1.})}
-            for newWorld in effect['new'].domain():
-                newBelief = KeyedVector()
-                for key in newWorld.keys():
-                    if oldWorld.has_key(key):
-                        newBelief[key] = newWorld[key]
-                    else:
-                        if newWorld[key] != newReal[key]:
-                            # This resulting state has 0 probability given my original belief
-                            break
+            for joint in actionDistribution.domain():
+                actions = actionMapping[joint]
+                if actions:
+                    effect = self.world.effect(actions,world)
                 else:
-                    # Compute joint probability of old, new, observation, etc.
-                    if actions:
-                        omegaDist = self.observe(newWorld,actions,model)
+                    # If no observed actions, assume world is unchanged (head-in-the-sand strategy)
+                    effect = {'new': VectorDistribution({world: 1.})}
+                if not effect.has_key('new'):
+                    continue
+                # Iterate through resulting worlds
+                for newWorld in effect['new'].domain():
+                    newBelief = KeyedVector()
+                    for key in newWorld.keys():
+                        if oldWorld.has_key(key):
+                            newBelief[key] = newWorld[key]
+                        else:
+                            if newWorld[key] != newReal[key]:
+                                # This resulting state has 0 probability given my original belief
+                                break
                     else:
-                        omegaDist = VectorDistribution({KeyedVector(): 1.})
-                    if omega in omegaDist.domain():
-                        # Otherwise, this observation is impossible in this state
-                        newProb = probOmega*effect['new'][newWorld]*omegaDist[omega]
-                        try:
-                            newBeliefs[newBelief] += oldBeliefDiff[oldWorld]*newProb
-                        except KeyError:
-                            newBeliefs[newBelief] = oldBeliefDiff[oldWorld]*newProb
+                        # Compute joint probability of old, new, observation, etc.
+                        if actions:
+                            omegaDist = self.observe(newWorld,actions,model)
+                        else:
+                            omegaDist = VectorDistribution({KeyedVector(): 1.})
+                        if omega in omegaDist.domain():
+                            # Otherwise, this observation is impossible in this state
+                            newProb = actionDistribution[joint]*effect['new'][newWorld]*omegaDist[omega]
+                            try:
+                                newBeliefs[newBelief] += oldBeliefDiff[oldWorld]*newProb
+                            except KeyError:
+                                newBeliefs[newBelief] = oldBeliefDiff[oldWorld]*newProb
         # Find models corresponding to new beliefs
-        newBeliefs.normalize()
         if len(newBeliefs) == 0:
-            print '<ERROR>'
-            print 'Failed to find any beliefs for %s consistent with observation:' % (self.name)
-            self.world.printVector(omega)
-            print 'Working from initial belief:'
-            self.world.printState(oldBelief)
-            turns = set()
-            for oldWorld in oldBeliefDiff.domain():
-                world = self.world.pruneModels(oldReal)
-                world.update(oldWorld)
-                turns = turns | set(self.world.next(world))
-            print 'With possible turns by:',' and '.join(turns)
-            print '</ERROR>'
-            raise ValueError,'See message above.'
-        index = self.belief2model(model,newBeliefs)['index']
-        self.models[model]['SE'][oldBelief][newReal][omega] = index
-        return index
+            return None
+        else:
+            newBeliefs.normalize()
+            index = self.belief2model(model,newBeliefs)['index']
+            self.models[model]['SE'][oldBelief][newReal][omega] = index
+            return index
 
     def printBeliefs(self,model=True):
         raise DeprecationWarning,'Use the "beliefs=True" argument to printState instead'
@@ -865,11 +900,11 @@ class Agent:
                     node.appendChild(tree.__xml__().documentElement)
                     root.appendChild(node)
         # Models
-        for name in self.modelList:
-            model = self.models[name]
+        for name,model in self.models.items():
             node = doc.createElement('model')
             node.setAttribute('name',str(name))
             node.setAttribute('parent',str(model['parent']))
+            node.setAttribute('index',str(model['index']))
             for key in filter(lambda k: not k in ['name','index','parent'],model.keys()):
                 if key == 'R':
                     # Reward function for this model
@@ -970,8 +1005,13 @@ class Agent:
                         parent = None
                     elif parent == 'True':
                         parent = True
-                    # Parse children
                     kwargs = {'parent': parent}
+                    # Parse index
+                    try:
+                        kwargs['index'] = int(node.getAttribute('index'))
+                    except ValueError:
+                        pass
+                    # Parse children
                     text = str(node.getAttribute('selection'))
                     if text == str(True):
                         kwargs['selection'] = True

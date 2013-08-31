@@ -1,5 +1,6 @@
 import bz2
 import copy
+import StringIO
 from xml.dom.minidom import Document,Node,parseString
 
 from action import ActionSet,Action
@@ -100,7 +101,8 @@ class World:
             state = self.state
         outcomes = []
         # Iterate through each possible world
-        for stateVector in state.domain():
+        oldStates = state.domain()
+        for stateVector in oldStates:
             prob = state[stateVector]
             outcome = self.stepFromState(stateVector,actions)
             outcome['probability'] = prob
@@ -109,7 +111,10 @@ class World:
             # Apply effects
             state.clear()
             for outcome in outcomes:
-                if isinstance(outcome['new'],Distribution):
+                if not outcome.has_key('new'):
+                    # No effect. Just keep moving
+                    continue
+                elif isinstance(outcome['new'],Distribution):
                     if select:
                         new = outcome['new'].sample()
                         dist = [(new,1.)]
@@ -122,6 +127,18 @@ class World:
                         state[new] += prob*outcome['probability']
                     except KeyError:
                         state[new] = prob*outcome['probability']
+            if len(state) == 0:
+                # This is the safest place to detect an inconsistency
+                buf = StringIO.StringIO()
+                print >> buf,'Unable to find consistent transition when actions:'
+                print >> buf,' and '.join([str(ActionSet(outcome['actions'])) for outcome in outcomes])
+                print >> buf,'are performed in states:'
+                for stateVector in oldStates:
+                    self.printVector(stateVector,buf)
+                msg = buf.getvalue()
+                print msg
+                buf.close()
+                raise RuntimeError,msg
             self.history.append(outcomes)
 #            self.modelGC()
         return outcomes
@@ -172,7 +189,10 @@ class World:
                 actions = dict(outcome['actions'])
                 actions[stochastic[0]] = action 
                 effect = self.effect(actions,outcome['old'],prob,updateBeliefs=updateBeliefs)
-                if outcome.has_key('new'):
+                if len(effect) == 0:
+                    # No consistent transition for this action (don't blame me, I'm just the messenger)
+                    continue
+                elif outcome.has_key('new'):
                     for vector in effect['new'].domain():
                         try:
                             outcome['new'][vector] += effect['new'][vector]
@@ -184,11 +204,15 @@ class World:
                     outcome['effect'] = effect['effect']
         else:
             outcome.update(self.effect(outcome['actions'],outcome['old'],1.,updateBeliefs))
-        if not outcome.has_key('new'):
-            # Apply effects
-            outcome['new'] = outcome['effect']*outcome['old']
-        if not outcome.has_key('delta'):
-            outcome['delta'] = outcome['new'] - outcome['old']
+        if outcome.has_key('effect'):
+            if not outcome.has_key('new'):
+                # Apply effects
+                outcome['new'] = outcome['effect']*outcome['old']
+            if not outcome.has_key('delta'):
+                outcome['delta'] = outcome['new'] - outcome['old']
+        else:
+            # No consistent effect
+            pass
         return outcome
 
     def effect(self,actions,vector,probability=1.,updateBeliefs=True):
@@ -239,34 +263,48 @@ class World:
                 key = modelKey(name)
                 agent = self.agents[name]
                 oldModel = self.getModel(name,vector)
-                if agent.models[oldModel].has_key('beliefs') and \
-                        not agent.models[oldModel]['beliefs'] is True:
-                    if agent.getAttribute('static',oldModel):
-                        # Imperfect beliefs, but do not update
-                        modelDistribution = KeyedMatrix({key: KeyedVector({key: 1})})
-                    else:
-                        # Imperfect beliefs need to be updated
-                        omegaDistribution = agent.observe(newVector,actions)
-                        modelDistribution = MatrixDistribution()
-                        for omega in omegaDistribution.domain():
-                            newModel = agent.stateEstimator(vector,newVector,omega,oldModel)
+                if not agent.models[oldModel].has_key('beliefs') or \
+                        agent.models[oldModel]['beliefs'] is True or \
+                        agent.getAttribute('static',oldModel):
+                    # No need to update the model
+                    modelDistribution = KeyedMatrix({key: KeyedVector({key: 1})})
+                else:
+                    # Imperfect beliefs need to be updated
+                    omegaDistribution = agent.observe(newVector,actions)
+                    modelDistribution = MatrixDistribution()
+                    for omega in omegaDistribution.domain():
+                        newModel = agent.stateEstimator(vector,newVector,omega,oldModel)
+                        if newModel is None:
+                            pass
+                        else:
                             matrix = KeyedMatrix({key: KeyedVector({CONSTANT: newModel})})
                             try:
                                 modelDistribution[matrix] += omegaDistribution[omega]
                             except KeyError:
                                 modelDistribution[matrix] = omegaDistribution[omega]
+                if len(modelDistribution) > 0:
                     delta.update(modelDistribution)
-        result['effect'].append(delta)
-        new = VectorDistribution()
-        for old in result['new'].domain():
-            newVector = KeyedVector(old)
-            for matrix in delta.domain():
-                newVector.update(matrix*old)
-                try:
-                    new[newVector] += result['new'][old]*delta[matrix]
-                except KeyError:
-                    new[newVector] = result['new'][old]*delta[matrix]
-        result['new'] = new
+        for matrix in delta.domain():
+            errors = [name for name in agentsModeled if not matrix.has_key(modelKey(name))]
+            if errors:
+                # Some agents have no consistent belief update
+                del delta[matrix]
+        if delta:
+            delta.normalize()
+            result['effect'].append(delta)
+            new = VectorDistribution()
+            for old in result['new'].domain():
+                newVector = KeyedVector(old)
+                for matrix in delta.domain():
+                    newVector.update(matrix*old)
+                    try:
+                        new[newVector] += result['new'][old]*delta[matrix]
+                    except KeyError:
+                        new[newVector] = result['new'][old]*delta[matrix]
+            result['new'] = new
+        else:
+            # No possible transition at all!
+            result.clear()
         return result
 
     def deltaState(self,actions,vector,keys=None):
@@ -814,8 +852,12 @@ class World:
         # Remove inactive models
         for name,active in children.items():
             agent = self.agents[name]
-            for model in active:
-                print name,model,agent.models[model]['parent']
+            for model in agent.models.keys():
+                if not model in active and not parents[name].has_key(model):
+                    # Inactive model with no dependencies
+                    print 'deleting:',model,'from',name
+                    agent.deleteModel(model)
+            print 'leaving:',agent.models.keys()
 
     def updateModels(self,outcome,vector):
         for agent in self.agents.values():

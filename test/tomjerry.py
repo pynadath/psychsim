@@ -195,7 +195,6 @@ class TestAgents(unittest.TestCase):
                 prob1010 = belief1010[belief]
                 break
         self.assertGreater(prob1010,prob10)
-        
 
     def testDynamics(self):
         self.world.setOrder([self.tom.name])
