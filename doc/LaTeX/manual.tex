@@ -1,7 +1,8 @@
 \documentclass{book}
 \usepackage{times}
 \usepackage[paperwidth=6.5in, paperheight=9in]{geometry}
-\title{PsychSim Manual}
+\usepackage{amsmath}
+\title{The Young Modeler's Handbook}
 \author{David V. Pynadath}
 \begin{document}
 \maketitle
@@ -123,6 +124,8 @@ It also possible to specify alternate models that represent perturbations of thi
 free.addModel('friend')
 \end{verbatim}
 
+\subsection{Model Attribute: {\tt static}}
+
 \section{Observations}
 
 \section{PWL functions}\label{sec:pwl}
@@ -132,6 +135,24 @@ free.addModel('friend')
 \begin{verbatim}
 world.step()
 \end{verbatim}
+
+\section{Algorithms}
+
+\subsection{Decision Making}
+
+\subsection{Belief Update}
+
+World has $\Pr(M_0)$
+
+World generates an observation $\omega$
+
+But $M_0$ cannot generate $\omega$
+
+\begin{align}
+\Pr(M_1=m)&=\Pr(M_1=m|M_0,\omega)\\
+&=\frac{\Pr(M_1=m,\omega|M_0)}{\Pr(\omega|M_0)}\\
+&\propto 
+\end{align}
 
 And done.
 

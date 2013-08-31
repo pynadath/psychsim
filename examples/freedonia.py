@@ -431,8 +431,10 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
                             for entry in outcome:
                                 world.explainAction(entry,buf,1)
                 world.state.select()
-                if not testMode:
+                if not testMode and debug > 0:
                     world.printState(beliefs=True)
+                for agent in world.agents.values():
+                    print agent.name,len(agent.models)
             assert len(world.state) == 1
             phase = world.getState(None,'phase').expectation()
             if phase == 'offer':
