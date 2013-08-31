@@ -92,7 +92,7 @@ class KeyedVector(dict):
         for key,value in self.items():
             if isinstance(value,str):
                 try:
-                    result[key] = eval(value,{},table)
+                    result[key] = eval(value,globals(),table)
                 except NameError:
                     # Undefined reference: assume it'll get sorted out later
                     result[key] = value
@@ -531,7 +531,7 @@ class KeyedPlane:
     def desymbolize(self,table):
         if isinstance(self.threshold,str):
             try:
-                threshold = eval(self.threshold,{},table)
+                threshold = eval(self.threshold,globals(),table)
             except NameError:
                 # Undefined reference: assume it'll get sorted out later
                 threshold = self.threshold
