@@ -83,21 +83,10 @@ class Agent:
         if horizon is None:
             horizon = self.getAttribute('horizon',model)
         # Consider all legal actions (legality determined by my belief, circumscribed by real world)
-        legal = self.getActions(vector)
-        actions = {}
-        noActions = True
-        singleton = None
+        actions = self.getActions(vector)
         for state in belief.domain():
-            actions[state] = self.getActions(state) & legal
-            if noActions and actions[state]:
-                noActions = False
-            if len(actions[state]) == 1:
-                if singleton is None:
-                    singleton = iter(actions[state]).next()
-                elif not singleton is False:
-                    if iter(actions[state]).next() != singleton:
-                        singleton = False
-        if noActions:
+            actions = actions & self.getActions(state) 
+        if len(actions) == 0:
             # Someone made a boo-boo because there is no legal action for this agent right now
             buf = StringIO.StringIO()
             print >> buf,'%s has no legal actions in:' % (self.name)
@@ -107,19 +96,18 @@ class Agent:
             msg = buf.getvalue()
             buf.close()
             raise RuntimeError,msg
-        elif singleton:
+        elif len(actions) == 1:
             # Only one possible action
-            return {'action': singleton}
+            return {'action': iter(actions).next()}
         # Keep track of value function
         V = {}
         best = None
-        for action in legal:
+        for action in actions:
             # Compute value across possible worlds
             V[action] = {'__EV__': 0.}
             for state in belief.domain():
-                if action in actions[state]:
-                    V[action][state] = self.value(state,action,horizon,others,model)
-                    V[action]['__EV__'] += belief[state]*V[action][state]['V']
+                V[action][state] = self.value(state,action,horizon,others,model)
+                V[action]['__EV__'] += belief[state]*V[action][state]['V']
             if len(V[action]) > 1:
                 # Determine whether this action is the best
                 if best is None:
