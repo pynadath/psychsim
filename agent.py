@@ -82,34 +82,52 @@ class Agent:
                 return {'action': action}
         if horizon is None:
             horizon = self.getAttribute('horizon',model)
-        # Consider all legal actions (legality determined by *real* world, not my belief)
-        actions = self.getActions(vector)
-        if len(actions) == 0:
+        # Consider all legal actions (legality determined by my belief, circumscribed by real world)
+        legal = self.getActions(vector)
+        actions = {}
+        noActions = True
+        singleton = None
+        for state in belief.domain():
+            actions[state] = self.getActions(state) & legal
+            if noActions and actions[state]:
+                noActions = False
+            if len(actions[state]) == 1:
+                if singleton is None:
+                    singleton = iter(actions[state]).next()
+                elif not singleton is False:
+                    if iter(actions[state]).next() != singleton:
+                        singleton = False
+        if noActions:
             # Someone made a boo-boo because there is no legal action for this agent right now
             buf = StringIO.StringIO()
+            print >> buf,'%s has no legal actions in:' % (self.name)
             self.world.printVector(vector,buf)
+            print >> buf,'\nwhen believing:'
+            self.world.printState(belief,buf)
             msg = buf.getvalue()
             buf.close()
-            raise RuntimeError,'%s has no legal actions in:\n%s' % (self.name,msg)
-        elif len(actions) == 1:
+            raise RuntimeError,msg
+        elif singleton:
             # Only one possible action
-            return {'action': iter(actions).next()}
+            return {'action': singleton}
         # Keep track of value function
         V = {}
         best = None
-        for action in actions:
+        for action in legal:
             # Compute value across possible worlds
             V[action] = {'__EV__': 0.}
             for state in belief.domain():
-                V[action][state] = self.value(state,action,horizon,others,model)
-                V[action]['__EV__'] += belief[state]*V[action][state]['V']
-            # Determine whether this action is the best
-            if best is None:
-                best = [action]
-            elif V[action]['__EV__'] == V[best[0]]['__EV__']:
-                best.append(action)
-            elif V[action]['__EV__'] > V[best[0]]['__EV__']:
-                best = [action]
+                if action in actions[state]:
+                    V[action][state] = self.value(state,action,horizon,others,model)
+                    V[action]['__EV__'] += belief[state]*V[action][state]['V']
+            if len(V[action]) > 1:
+                # Determine whether this action is the best
+                if best is None:
+                    best = [action]
+                elif V[action]['__EV__'] == V[best[0]]['__EV__']:
+                    best.append(action)
+                elif V[action]['__EV__'] > V[best[0]]['__EV__']:
+                    best = [action]
         result = {'V*': V[best[0]]['__EV__'],'V': V}
         # Make an action selection based on the value function
         if selection == 'distribution':
@@ -118,7 +136,8 @@ class Agent:
                 values[key] = entry['__EV__']
             result['action'] = Distribution(values,self.getAttribute('rationality',model))
         elif len(best) == 1:
-            # If there is only one best action, all of the selection mechanisms devolve to the same unique choice
+            # If there is only one best action, all of the selection mechanisms devolve 
+            # to the same unique choice
             result['action'] = best[0]
         elif selection == 'random':
             result['action'] = random.sample(best,1)[0]
@@ -496,10 +515,12 @@ class Agent:
         trees.sort()
         for tree in trees:
             if first:
-                print >> buf,'%s\tR\t\t%3.1f %s' % (prefix,R[tree],tree)
+                print >> buf,'%s\tR\t\t%3.1f %s' % (prefix,R[tree],str(tree).replace('\n','\n%s\t\t\t' % \
+                                                                                         (prefix)))
                 first = False
             else:
-                print >> buf,'%s\t\t\t%3.1f %s' % (prefix,R[tree],tree)
+                print >> buf,'%s\t\t\t%3.1f %s' % (prefix,R[tree],str(tree).replace('\n','\n%s\t\t\t' % \
+                                                                                        (prefix)))
 
     """------------------"""
     """Mental model methods"""
