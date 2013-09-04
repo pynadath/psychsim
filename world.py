@@ -136,7 +136,6 @@ class World:
                 for stateVector in oldStates:
                     self.printVector(stateVector,buf)
                 msg = buf.getvalue()
-                print msg
                 buf.close()
                 raise RuntimeError,msg
             self.history.append(outcomes)
