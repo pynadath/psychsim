@@ -472,7 +472,7 @@ class Agent:
             tree = tree.desymbolize(self.world.symbols)
         self.models[model]['R'][tree] = weight
 
-    def reward(self,vector,model=True,recurse=True):
+    def reward(self,vector=None,model=True,recurse=True):
         """
         @param recurse: C{True} iff it is OK to recurse into another agent's reward (default is C{True})
         @type recurse: bool
@@ -480,7 +480,9 @@ class Agent:
         @rtype: float
         """
         total = 0.
-        if isinstance(vector,VectorDistribution):
+        if vector is None:
+            total = self.reward(self.world.state)
+        elif isinstance(vector,VectorDistribution):
             for element in vector.domain():
                 total += vector[element]*self.reward(element,model,recurse)
         else:
