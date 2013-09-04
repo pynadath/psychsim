@@ -178,7 +178,8 @@ class TestAgents(unittest.TestCase):
         self.world.setMentalModel(self.jerry.name,self.tom.name,{'friend': 0.5,'foe': 0.5})
         self.world.step(actions)
         vector = self.world.state.domain()[0]
-        belief10 = self.jerry.getAttribute('beliefs',self.world.getModel(self.jerry.name,vector))
+        model = self.world.getModel(self.jerry.name,vector)
+        belief10 = self.jerry.getAttribute('beliefs',model)
         key = modelKey(self.tom.name)
         for belief in belief10.domain():
             if self.tom.index2model(belief[key]) == 'foe':
@@ -188,7 +189,8 @@ class TestAgents(unittest.TestCase):
         # If we keep the same models, but get another observation, we should update even more
         self.world.step(actions)
         vector = self.world.state.domain()[0]
-        belief1010 = self.jerry.getAttribute('beliefs',self.world.getModel(self.jerry.name,vector))
+        model = self.world.getModel(self.jerry.name,vector)
+        belief1010 = self.jerry.getAttribute('beliefs',model)
         key = modelKey(self.tom.name)
         for belief in belief1010.domain():
             if self.tom.index2model(belief[key]) == 'foe':

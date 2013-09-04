@@ -140,7 +140,7 @@ class World:
                 buf.close()
                 raise RuntimeError,msg
             self.history.append(outcomes)
-#            self.modelGC()
+            self.modelGC()
         return outcomes
 
     def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=True):
@@ -833,31 +833,40 @@ class World:
             children[name] = set()
         # Start with the worlds in the current state
         remaining = self.state.domain()
+        realWorld = True
         while len(remaining) > 0:
-            vector = remaining.pop()
-            # Look for models of each agent
-            for name,agent in self.agents.items():
-                key = modelKey(name)
-                if vector.has_key(key):
-                    # This world specifies an active model
-                    model = agent.index2model(vector[key])
-                    children[name].add(model)
-                    try:
-                        parents[name][agent.models[model]['parent']].append(model)
-                    except KeyError:
-                        parents[name][agent.models[model]['parent']] = [model]
-                    if agent.models[model].has_key('beliefs'):
-                        # Recurse into the worlds within this agent's subjective view
-                        remaining += agent.models[model]['beliefs'].domain()
+            newRemaining = []
+            for vector in remaining:
+                # Look for models of each agent
+                for name,agent in self.agents.items():
+                    key = modelKey(name)
+                    if vector.has_key(key):
+                        # This world specifies an active model
+                        model = agent.index2model(vector[key])
+                    elif realWorld:
+                        # No explicit specification, so assume True
+                        model = True
+                    else:
+                        model = None
+                    if model:
+                        children[name].add(model)
+                        try:
+                            parents[name][agent.models[model]['parent']].append(model)
+                        except KeyError:
+                            parents[name][agent.models[model]['parent']] = [model]
+                        if agent.models[model].has_key('beliefs') and \
+                                not agent.models[model]['beliefs'] is True:
+                            # Recurse into the worlds within this agent's subjective view
+                            newRemaining += agent.models[model]['beliefs'].domain()
+            realWorld = False
+            remaining = newRemaining
         # Remove inactive models
         for name,active in children.items():
             agent = self.agents[name]
             for model in agent.models.keys():
                 if not model in active and not parents[name].has_key(model):
                     # Inactive model with no dependencies
-                    print 'deleting:',model,'from',name
                     agent.deleteModel(model)
-            print 'leaving:',agent.models.keys()
 
     def updateModels(self,outcome,vector):
         for agent in self.agents.values():
