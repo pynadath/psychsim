@@ -480,20 +480,24 @@ class Agent:
         @rtype: float
         """
         total = 0.
-        R = self.getAttribute('R',model)
-        if R is None:
-            # No reward components
-            return total
-        for tree,weight in R.items():
-            if isinstance(tree,str):
-                if recurse:
-                    # Name of an agent I'm trying to make (un)happy
-                    model = self.world.getModel(tree,vector)
-                    # Compute agent's reward but don't recurse any further
-                    ER = self.world.agents[tree].reward(vector,model,False)
-            else:
-                ER = tree[vector]*self.world.scaleState(vector)
-            total += ER*weight
+        if isinstance(vector,VectorDistribution):
+            for element in vector.domain():
+                total += vector[element]*self.reward(element,model,recurse)
+        else:
+            R = self.getAttribute('R',model)
+            if R is None:
+                # No reward components
+                return total
+            for tree,weight in R.items():
+                if isinstance(tree,str):
+                    if recurse:
+                        # Name of an agent I'm trying to make (un)happy
+                        model = self.world.getModel(tree,vector)
+                        # Compute agent's reward but don't recurse any further
+                        ER = self.world.agents[tree].reward(vector,model,False)
+                else:
+                    ER = tree[vector]*self.world.scaleState(vector)
+                total += ER*weight
         return total
 
     def printReward(self,model=True,buf=None,prefix=''):
