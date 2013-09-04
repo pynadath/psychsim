@@ -535,9 +535,11 @@ class Agent:
         if self.models.has_key(name):
             raise NameError,'Model %s already exists for agent %s' % \
                 (name,self.name)
-        model = {'name': name,'index': len(self.models),'parent': True,
+        model = {'name': name,'index': 0,'parent': True,
                  'V': ValueFunction(),'policy': {},'ignore': []}
         model.update(kwargs)
+        while self.modelList.has_key(model['index']):
+            model['index'] += 1
         self.models[name] = model
         self.modelList[model['index']] = name
         return model

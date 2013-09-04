@@ -6,16 +6,77 @@
 \author{David V. Pynadath}
 \begin{document}
 \maketitle
-\chapter{Modeling a Scenario}
+\begin{quotation}
+I never satisfy myself until I can make a mechanical model of a thing. If I can make a mechanical model I can understand it.
 
-\section{Hello World}
-The {\em world}, as you might expect, is the entire universe of the simulation. It contains all of the global aspects of the simulation state, including the agents themselves.
+\hfill Lord Kelvin
+\end{quotation}
+
+\chapter{Modeling a World}
+\begin{quotation}
+\noindent O brave new world,\\
+That has such people in't.
+
+\hfill The Tempest, Act 5, Scene 1
+\end{quotation}
+\clearpage
+
+This is a world.
+
+\vfill 
 
 \begin{verbatim}
 from psychsim.world import World
 
 world = World()
 \end{verbatim}
+\clearpage
+
+It has people.
+
+\vfill
+
+\begin{verbatim}
+from psychsim.agent import Agent
+
+jane = Agent('Jane')
+world.addAgent(jane)
+\end{verbatim}
+\clearpage
+
+And groups of people.
+
+\vfill
+\begin{verbatim}
+free = Agent('Freedonia')
+world.addAgent(free)
+\end{verbatim}
+\clearpage
+
+And killer robots.
+
+\vfill
+
+\begin{verbatim}
+world.addAgent(Agent('Klaatu'))
+\end{verbatim}
+\clearpage
+These are \texit{agents}.
+
+\vfill
+\begin{verbatim}
+for agent in world.agents.items():
+   print agent.name
+\end{verbatim}
+\clearpage
+
+A world can also have buildings.
+
+And locations.
+
+
+\section{Hello World}
+The {\em world}, as you might expect, is the entire universe of the simulation. It contains all of the global aspects of the simulation state, including the agents themselves.
 
 An {\em agent} is an autonomous decision-making entity in the world. The only requirement for an agent is that it have a name.
 
