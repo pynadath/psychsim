@@ -139,7 +139,7 @@ class World:
                 buf.close()
                 raise RuntimeError,msg
             self.history.append(outcomes)
-            self.modelGC()
+            self.modelGC(False)
         return outcomes
 
     def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=True):
@@ -820,10 +820,18 @@ class World:
         """
         return KeyedVector({key: vector[key] for key in vector.keys() if not isModelKey(key)})
 
-    def modelGC(self):
+    def modelGC(self,check=False):
         """
         Garbage collect orphaned models. Try to identify C{True} model as well.
         """
+        if check:
+            # Record initial indices for verification purposes
+            indices = {}
+            for name,agent in self.agents.items():
+                indices[name] = {}
+                for label,model in agent.models.items():
+                    indices[name][label] = agent.model2index(label)
+                    assert agent.index2model(indices[name][label]) == label
         # Keep track of which models are active for each agent and who their parent models are
         parents = {}
         children = {}
@@ -853,10 +861,18 @@ class World:
                             parents[name][agent.models[model]['parent']].append(model)
                         except KeyError:
                             parents[name][agent.models[model]['parent']] = [model]
-                        if agent.models[model].has_key('beliefs') and \
-                                not agent.models[model]['beliefs'] is True:
-                            # Recurse into the worlds within this agent's subjective view
-                            newRemaining += agent.models[model]['beliefs'].domain()
+                        if agent.models[model].has_key('beliefs'):
+                            while not isinstance(agent.models[model]['beliefs'],VectorDistribution):
+                                # Beliefs are symbolic link to another model
+                                model = agent.models[model]['beliefs']
+                                if model in children[name]:
+                                    # Already processed this model
+                                    break
+                                else:
+                                    children[name].add(model)
+                            else:
+                                # Recurse into the worlds within this agent's subjective view
+                                newRemaining += agent.models[model]['beliefs'].domain()
             realWorld = False
             remaining = newRemaining
         # Remove inactive models
@@ -866,6 +882,12 @@ class World:
                 if not model in active and not parents[name].has_key(model):
                     # Inactive model with no dependencies
                     agent.deleteModel(model)
+        if check:
+            # Verify final indices
+            for name,agent in self.agents.items():
+                for label,model in agent.models.items():
+                    assert indices[name][label] == agent.model2index(label)
+                    assert agent.index2model(indices[name][label]) == label
 
     def updateModels(self,outcome,vector):
         for agent in self.agents.values():
