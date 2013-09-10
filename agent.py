@@ -801,7 +801,7 @@ class Agent:
             self.O = {}
         if not self.O.has_key(omega):
             self.O[omega] = {}
-        self.O[omega][actions] = tree
+        self.O[omega][actions] = tree.desymbolize(self.world.symbols)
 
     def observe(self,vector,actions,model=True):
         """
