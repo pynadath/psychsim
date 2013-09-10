@@ -822,7 +822,7 @@ class World:
 
     def modelGC(self,check=False):
         """
-        Garbage collect orphaned models. Try to identify C{True} model as well.
+        Garbage collect orphaned models.
         """
         if check:
             # Record initial indices for verification purposes
