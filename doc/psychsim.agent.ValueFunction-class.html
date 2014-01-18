@@ -3,7 +3,7 @@
           "DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
-  <title>psychsim.pwl.KeyedPlane</title>
+  <title>psychsim.agent.ValueFunction</title>
   <link rel="stylesheet" href="epydoc.css" type="text/css" />
   <script type="text/javascript" src="epydoc.js"></script>
 </head>
@@ -38,8 +38,8 @@
     <td width="100%">
       <span class="breadcrumbs">
         <a href="psychsim-module.html">Package&nbsp;psychsim</a> ::
-        <a href="psychsim.pwl-module.html">Module&nbsp;pwl</a> ::
-        Class&nbsp;KeyedPlane
+        <a href="psychsim.agent-module.html">Module&nbsp;agent</a> ::
+        Class&nbsp;ValueFunction
       </span>
     </td>
     <td>
@@ -49,15 +49,16 @@
     onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
         <tr><td align="right"><span class="options"
             >[<a href="frames.html" target="_top">frames</a
-            >]&nbsp;|&nbsp;<a href="psychsim.pwl.KeyedPlane-class.html"
+            >]&nbsp;|&nbsp;<a href="psychsim.agent.ValueFunction-class.html"
             target="_top">no&nbsp;frames</a>]</span></td></tr>
       </table>
     </td>
   </tr>
 </table>
 <!-- ==================== CLASS DESCRIPTION ==================== -->
-<h1 class="epydoc">Class KeyedPlane</h1><p class="nomargin-top"><span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane">source&nbsp;code</a></span></p>
-<p>String indexable hyperplane class</p>
+<h1 class="epydoc">Class ValueFunction</h1><p class="nomargin-top"><span class="codelink"><a href="psychsim.agent-pysrc.html#ValueFunction">source&nbsp;code</a></span></p>
+<p>Representation of an agent's value function, either from caching or 
+  explicit solution</p>
 
 <!-- ==================== INSTANCE METHODS ==================== -->
 <a name="section-InstanceMethods"></a>
@@ -83,11 +84,9 @@
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td><span class="summary-sig"><a name="__init__"></a><span class="summary-sig-name">__init__</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">vector</span>,
-        <span class="summary-sig-arg">threshold</span>=<span class="summary-sig-default">None</span>,
-        <span class="summary-sig-arg">comparison</span>=<span class="summary-sig-default">1</span>)</span></td>
+        <span class="summary-sig-arg">xml</span>=<span class="summary-sig-default">None</span>)</span></td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.__init__">source&nbsp;code</a></span>
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#ValueFunction.__init__">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -101,10 +100,14 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="evaluate"></a><span class="summary-sig-name">evaluate</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">vector</span>)</span></td>
+          <td><span class="summary-sig"><a name="get"></a><span class="summary-sig-name">get</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">name</span>,
+        <span class="summary-sig-arg">state</span>,
+        <span class="summary-sig-arg">action</span>,
+        <span class="summary-sig-arg">horizon</span>,
+        <span class="summary-sig-arg">ignore</span>=<span class="summary-sig-default">None</span>)</span></td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.evaluate">source&nbsp;code</a></span>
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#ValueFunction.get">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -118,10 +121,14 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="desymbolize"></a><span class="summary-sig-name">desymbolize</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">table</span>)</span></td>
+          <td><span class="summary-sig"><a name="set"></a><span class="summary-sig-name">set</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">name</span>,
+        <span class="summary-sig-arg">state</span>,
+        <span class="summary-sig-arg">action</span>,
+        <span class="summary-sig-arg">horizon</span>,
+        <span class="summary-sig-arg">value</span>)</span></td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.desymbolize">source&nbsp;code</a></span>
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#ValueFunction.set">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -135,10 +142,15 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="scale"></a><span class="summary-sig-name">scale</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">table</span>)</span></td>
+          <td><span class="summary-sig"><a name="add"></a><span class="summary-sig-name">add</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">name</span>,
+        <span class="summary-sig-arg">state</span>,
+        <span class="summary-sig-arg">action</span>,
+        <span class="summary-sig-arg">horizon</span>,
+        <span class="summary-sig-arg">value</span>)</span><br />
+      Adds the given value to the current value function</td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.scale">source&nbsp;code</a></span>
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#ValueFunction.add">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -152,10 +164,14 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="__eq__"></a><span class="summary-sig-name">__eq__</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">other</span>)</span></td>
+          <td><span class="summary-sig"><a href="psychsim.agent.ValueFunction-class.html#actionTable" class="summary-sig-name">actionTable</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">name</span>,
+        <span class="summary-sig-arg">state</span>,
+        <span class="summary-sig-arg">horizon</span>)</span><br />
+      Returns:
+      a table of values for actions for the given agent in the given state</td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.__eq__">source&nbsp;code</a></span>
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#ValueFunction.actionTable">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -169,9 +185,11 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="__str__"></a><span class="summary-sig-name">__str__</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td><span class="summary-sig"><a name="printV"></a><span class="summary-sig-name">printV</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">agent</span>,
+        <span class="summary-sig-arg">horizon</span>)</span></td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.__str__">source&nbsp;code</a></span>
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#ValueFunction.printV">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -187,7 +205,7 @@
         <tr>
           <td><span class="summary-sig"><a name="__xml__"></a><span class="summary-sig-name">__xml__</span>(<span class="summary-sig-arg">self</span>)</span></td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.__xml__">source&nbsp;code</a></span>
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#ValueFunction.__xml__">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -204,7 +222,7 @@
           <td><span class="summary-sig"><a name="parse"></a><span class="summary-sig-name">parse</span>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">element</span>)</span></td>
           <td align="right" valign="top">
-            <span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.parse">source&nbsp;code</a></span>
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#ValueFunction.parse">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -213,50 +231,50 @@
     </td>
   </tr>
 </table>
-<!-- ==================== INSTANCE VARIABLES ==================== -->
-<a name="section-InstanceVariables"></a>
-<table class="summary" border="1" cellpadding="3"
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
        cellspacing="0" width="100%" bgcolor="white">
 <tr bgcolor="#70b0f0" class="table-header">
   <td colspan="2" class="table-header">
     <table border="0" cellpadding="0" cellspacing="0" width="100%">
       <tr valign="top">
-        <td align="left"><span class="table-header">Instance Variables</span></td>
+        <td align="left"><span class="table-header">Method Details</span></td>
         <td align="right" valign="top"
-         ><span class="options">[<a href="#section-InstanceVariables"
+         ><span class="options">[<a href="#section-MethodDetails"
          class="privatelink" onclick="toggle_private();"
          >hide private</a>]</span></td>
       </tr>
     </table>
   </td>
 </tr>
-<tr>
-    <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">int</span>
-    </td><td class="summary">
-        <a name="comparison"></a><span class="summary-name">comparison</span><br />
-      if 1, value must be above hyperplane; if -1, below; if 0, equal 
-      (default is 1)
-    </td>
-  </tr>
-<tr>
-    <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">float</span>
-    </td><td class="summary">
-        <a name="threshold"></a><span class="summary-name">threshold</span><br />
-      the threshold for the hyperplane
-    </td>
-  </tr>
-<tr>
-    <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type"><a href="psychsim.pwl.KeyedVector-class.html" 
-      class="link">KeyedVector</a></span>
-    </td><td class="summary">
-        <a name="vector"></a><span class="summary-name">vector</span><br />
-      the weights for the hyperplane
-    </td>
-  </tr>
 </table>
+<a name="actionTable"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">actionTable</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">name</span>,
+        <span class="sig-arg">state</span>,
+        <span class="sig-arg">horizon</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.agent-pysrc.html#ValueFunction.actionTable">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns:</dt>
+        <dd>a table of values for actions for the given agent in the given 
+          state</dd>
+  </dl>
+</td></tr></table>
+</div>
+<br />
 <!-- ==================== NAVIGATION BAR ==================== -->
 <table class="navbar" border="0" width="100%" cellpadding="0"
        bgcolor="#a0c0ff" cellspacing="0">
