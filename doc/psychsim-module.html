@@ -15,8 +15,8 @@
        bgcolor="#a0c0ff" cellspacing="0">
   <tr valign="middle">
   <!-- Home link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+      <th bgcolor="#70b0f0" class="navbar-select"
+          >&nbsp;&nbsp;&nbsp;Home&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -30,12 +30,7 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-  <!-- Project homepage -->
-      <th class="navbar" align="right" width="100%">
-        <table border="0" cellpadding="0" cellspacing="0">
-          <tr><th class="navbar" align="center"
-            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
-          </tr></table></th>
+      <th class="navbar" width="100%"></th>
   </tr>
 </table>
 <table width="100%" cellpadding="0" cellspacing="0">
@@ -84,7 +79,330 @@
     <li> <strong class="uidlink"><a href="psychsim.probability-module.html">psychsim.probability</a></strong>    </li>
     <li> <strong class="uidlink"><a href="psychsim.pwl-module.html">psychsim.pwl</a></strong>: <em class="summary">Class and function definitions for PieceWise Linear (PWL) 
         representations</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.reward-module.html">psychsim.reward</a></strong>    </li>
     <li> <strong class="uidlink"><a href="psychsim.shell-module.html">psychsim.shell</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork-module.html">psychsim.teamwork</a></strong>: <em class="summary">The top-level package for all of the PsychSim code, plus all of the
+        individual multiagent and math modules</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.action-module.html">psychsim.teamwork.action</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.action.DecisionSpace-module.html">psychsim.teamwork.action.DecisionSpace</a></strong>: <em class="summary">Class for using AND-(X)OR trees to define the space of possible 
+        actions that an agent has available</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.action.PsychActions-module.html">psychsim.teamwork.action.PsychActions</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent-module.html">psychsim.teamwork.agent</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.Agent-module.html">psychsim.teamwork.agent.Agent</a></strong>: <em class="summary">Generic class for defining an agent and its capabilities</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.AgentClasses-module.html">psychsim.teamwork.agent.AgentClasses</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.DefaultBased-module.html">psychsim.teamwork.agent.DefaultBased</a></strong>: <em class="summary">Class for applying the defaults in a <a 
+        href="psychsim.teamwork.agent.Generic.GenericModel-class.html" 
+        class="link">GenericModel</a> instance to an instantiated <a 
+        href="psychsim.teamwork.agent.stereotypes.Stereotyper-class.html" 
+        class="link">Stereotyper</a></em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.Entities-module.html">psychsim.teamwork.agent.Entities</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.Generic-module.html">psychsim.teamwork.agent.Generic</a></strong>: <em class="summary">Class for defining the default parameters of an individual agent</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.GoalBased-module.html">psychsim.teamwork.agent.GoalBased</a></strong>: <em class="summary">Defines the layer for handling reward functions</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.MemoryAgent-module.html">psychsim.teamwork.agent.MemoryAgent</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.RecursiveAgent-module.html">psychsim.teamwork.agent.RecursiveAgent</a></strong>: <em class="summary">Defines the agent layer that handles beliefs about other agents</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.audit-module.html">psychsim.teamwork.agent.audit</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.consistency-module.html">psychsim.teamwork.agent.consistency</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.lightweight-module.html">psychsim.teamwork.agent.lightweight</a></strong>: <em class="summary">A minimal agent implementation that uses only the PWL 
+        representations of an agent's beliefs, policy, etc.</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.stereotypes-module.html">psychsim.teamwork.agent.stereotypes</a></strong>: <em class="summary">Mental models for stereotyping agents</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.agent.support-module.html">psychsim.teamwork.agent.support</a></strong>: <em class="summary">Defines dynamics binary relationships between agents</em>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.communication-module.html">psychsim.teamwork.communication</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.communication.KQML-module.html">psychsim.teamwork.communication.KQML</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.communication.SocketListener-module.html">psychsim.teamwork.communication.SocketListener</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.communication.generic-module.html">psychsim.teamwork.communication.generic</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.doc-module.html">psychsim.teamwork.doc</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.doc.gendoc-module.html">psychsim.teamwork.doc.gendoc</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.dynamics-module.html">psychsim.teamwork.dynamics</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.dynamics.arbitraryDynamics-module.html">psychsim.teamwork.dynamics.arbitraryDynamics</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.dynamics.pwlDynamics-module.html">psychsim.teamwork.dynamics.pwlDynamics</a></strong>: <em class="summary">Dynamics objects for the PWL implementation</em>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples-module.html">psychsim.teamwork.examples</a></strong>: <em class="summary">Various domains that have been modeled using this agent framework</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Games-module.html">psychsim.teamwork.examples.Games</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Games.PublicGood-module.html">psychsim.teamwork.examples.Games.PublicGood</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Games.run-module.html">psychsim.teamwork.examples.Games.run</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.SolveIt_Final-module.html">psychsim.teamwork.examples.SolveIt_Final</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.SolveIt_Final.SolveItGUI-module.html">psychsim.teamwork.examples.SolveIt_Final.SolveItGUI</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian-module.html">psychsim.teamwork.examples.Thespian</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.ChatClasses-module.html">psychsim.teamwork.examples.Thespian.ChatClasses</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.ChatDynamics-module.html">psychsim.teamwork.examples.Thespian.ChatDynamics</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.NormAgentClasses-module.html">psychsim.teamwork.examples.Thespian.NormAgentClasses</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.NormAgentDynamics-module.html">psychsim.teamwork.examples.Thespian.NormAgentDynamics</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.RatClasses-module.html">psychsim.teamwork.examples.Thespian.RatClasses</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.RedRidingHoodClasses-module.html">psychsim.teamwork.examples.Thespian.RedRidingHoodClasses</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.RedRidingHoodClasses_director-module.html">psychsim.teamwork.examples.Thespian.RedRidingHoodClasses_director</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.RedRidingHoodClasses_test-module.html">psychsim.teamwork.examples.Thespian.RedRidingHoodClasses_test</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.RedRidingHoodDynamics-module.html">psychsim.teamwork.examples.Thespian.RedRidingHoodDynamics</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.RedRidingHoodDynamics_director-module.html">psychsim.teamwork.examples.Thespian.RedRidingHoodDynamics_director</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.ThespianActions-module.html">psychsim.teamwork.examples.Thespian.ThespianActions</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.ThespianAgent-module.html">psychsim.teamwork.examples.Thespian.ThespianAgent</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.ThespianAgents-module.html">psychsim.teamwork.examples.Thespian.ThespianAgents</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.ThespianGeneric-module.html">psychsim.teamwork.examples.Thespian.ThespianGeneric</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.ThespianGenericSociety-module.html">psychsim.teamwork.examples.Thespian.ThespianGenericSociety</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.ThespianMessage-module.html">psychsim.teamwork.examples.Thespian.ThespianMessage</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.ThespianShell-module.html">psychsim.teamwork.examples.Thespian.ThespianShell</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.ThespianUtils-module.html">psychsim.teamwork.examples.Thespian.ThespianUtils</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.UAIClasses-module.html">psychsim.teamwork.examples.Thespian.UAIClasses</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.UAIDynamics-module.html">psychsim.teamwork.examples.Thespian.UAIDynamics</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.appraisalDimentions-module.html">psychsim.teamwork.examples.Thespian.appraisalDimentions</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.flash-module.html">psychsim.teamwork.examples.Thespian.flash</a></strong>: <em class="summary">__version__ = &quot;$Revision: 1.24 $&quot; __date__ = &quot;$Date:
+        2004/08/11 01:58:03 $&quot;</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.gifimage-module.html">psychsim.teamwork.examples.Thespian.gifimage</a></strong>: <em class="summary">__version__ = &quot;$Revision: 1.24 $&quot; __date__ = &quot;$Date:
+        2004/08/11 01:58:03 $&quot;</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.minimalGui-module.html">psychsim.teamwork.examples.Thespian.minimalGui</a></strong>: <em class="summary">__version__ = &quot;$Revision: 1.10 $&quot; __date__ = &quot;$Date:
+        2004/04/24 22:13:31 $&quot;</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.ratDynamics-module.html">psychsim.teamwork.examples.Thespian.ratDynamics</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.report-module.html">psychsim.teamwork.examples.Thespian.report</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.test-module.html">psychsim.teamwork.examples.Thespian.test</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.testCVXOPT-module.html">psychsim.teamwork.examples.Thespian.testCVXOPT</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.testScript-module.html">psychsim.teamwork.examples.Thespian.testScript</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.examples.Thespian.watermaze-module.html">psychsim.teamwork.examples.Thespian.watermaze</a></strong>: <em class="summary">__version__ = &quot;$Revision: 1.10 $&quot; __date__ = &quot;$Date:
+        2004/04/24 22:13:31 $&quot;</em>    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.images-module.html">psychsim.teamwork.images</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math-module.html">psychsim.teamwork.math</a></strong>: <em class="summary">Modules for piecewise linear representations, probability 
+        distributions, and other useful math stuff.</em>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.Interval-module.html">psychsim.teamwork.math.Interval</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.KeyedMatrix-module.html">psychsim.teamwork.math.KeyedMatrix</a></strong>: <em class="summary">Classes for matrices with symbolic indices (i.e., <a 
+        href="psychsim.teamwork.math.Keys.Key-class.html" 
+        class="link">Key</a> objects)</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.KeyedTree-module.html">psychsim.teamwork.math.KeyedTree</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.KeyedVector-module.html">psychsim.teamwork.math.KeyedVector</a></strong>: <em class="summary">Classes for vectors with symbolic indices (i.e., <a 
+        href="psychsim.teamwork.math.Keys.Key-class.html" 
+        class="link">Key</a> objects)</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.Keys-module.html">psychsim.teamwork.math.Keys</a></strong>: <em class="summary">A class of unique identifiers for symbolic identification of rows 
+        and columns in the PWL representations of state, dynamics, reward, 
+        etc.</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.ProbabilityTree-module.html">psychsim.teamwork.math.ProbabilityTree</a></strong>: <em class="summary">Defines the layer of probabilistic branches over <a 
+        href="psychsim.teamwork.math.KeyedTree.KeyedTree-class.html" 
+        class="link">KeyedTree</a></em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.ThespianKeys-module.html">psychsim.teamwork.math.ThespianKeys</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.boltzmann-module.html">psychsim.teamwork.math.boltzmann</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.dtree-module.html">psychsim.teamwork.math.dtree</a></strong>: <em class="summary">This module holds functions that are responsible for creating a new
+        decision tree and for using the tree for data classificiation.</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.fitting-module.html">psychsim.teamwork.math.fitting</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.id3-module.html">psychsim.teamwork.math.id3</a></strong>: <em class="summary">This module contains the functions for calculating the information 
+        gain of a dataset as defined by the ID3 (Information Theoretic) 
+        heuristic.</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.matrices-module.html">psychsim.teamwork.math.matrices</a></strong>: <em class="summary">Base classes for piecewise linearity</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.probability-module.html">psychsim.teamwork.math.probability</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.math.rules-module.html">psychsim.teamwork.math.rules</a></strong>: <em class="summary">Code for manipulating a rule-based representation of PWL functions</em>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.messages-module.html">psychsim.teamwork.messages</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.messages.PsychMessage-module.html">psychsim.teamwork.messages.PsychMessage</a></strong>: <em class="summary">Class definition of messages</em>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.multiagent-module.html">psychsim.teamwork.multiagent</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.multiagent.COMMTDP-module.html">psychsim.teamwork.multiagent.COMMTDP</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.multiagent.GenericSociety-module.html">psychsim.teamwork.multiagent.GenericSociety</a></strong>: <em class="summary">Collection of inter-related <a 
+        href="psychsim.teamwork.agent.Generic.GenericModel-class.html" 
+        class="link">teamwork.agent.Generic.GenericModel</a> instances</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.multiagent.Historical-module.html">psychsim.teamwork.multiagent.Historical</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.multiagent.Multiagent-module.html">psychsim.teamwork.multiagent.Multiagent</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.multiagent.PsychAgents-module.html">psychsim.teamwork.multiagent.PsychAgents</a></strong>: <em class="summary">PsychSim scenario class</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.multiagent.Simulation-module.html">psychsim.teamwork.multiagent.Simulation</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.multiagent.Team-module.html">psychsim.teamwork.multiagent.Team</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.multiagent.pwlSimulation-module.html">psychsim.teamwork.multiagent.pwlSimulation</a></strong>: <em class="summary">Lightweight multiagent simulation</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.multiagent.sequential-module.html">psychsim.teamwork.multiagent.sequential</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.policy-module.html">psychsim.teamwork.policy</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.policy.JIPolicy-module.html">psychsim.teamwork.policy.JIPolicy</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.policy.LookaheadPolicy-module.html">psychsim.teamwork.policy.LookaheadPolicy</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.policy.LookupAheadPolicy-module.html">psychsim.teamwork.policy.LookupAheadPolicy</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.policy.LookupPolicy-module.html">psychsim.teamwork.policy.LookupPolicy</a></strong>: <em class="summary">Reactive policies as condition&rarr;action rules</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.policy.ObservationPolicy-module.html">psychsim.teamwork.policy.ObservationPolicy</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.policy.StochasticPolicy-module.html">psychsim.teamwork.policy.StochasticPolicy</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.policy.generic-module.html">psychsim.teamwork.policy.generic</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.policy.policyTable-module.html">psychsim.teamwork.policy.policyTable</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.policy.pwlPolicy-module.html">psychsim.teamwork.policy.pwlPolicy</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.policy.pwlTable-module.html">psychsim.teamwork.policy.pwlTable</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.reward-module.html">psychsim.teamwork.reward</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.reward.MinMaxGoal-module.html">psychsim.teamwork.reward.MinMaxGoal</a></strong>: <em class="summary">Linear reward subfunctions</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.reward.goal-module.html">psychsim.teamwork.reward.goal</a></strong>: <em class="summary">Goals as piecewise linear reward functions</em>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.shell-module.html">psychsim.teamwork.shell</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.shell.PsychShell-module.html">psychsim.teamwork.shell.PsychShell</a></strong>: <em class="summary">The base engine with handlers for typical interactions with 
+        PsychSim agents</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.shell.TerminalShell-module.html">psychsim.teamwork.shell.TerminalShell</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.state-module.html">psychsim.teamwork.state</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.state.States-module.html">psychsim.teamwork.state.States</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test-module.html">psychsim.teamwork.test</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.action-module.html">psychsim.teamwork.test.action</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.action.testAction-module.html">psychsim.teamwork.test.action.testAction</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.action.testDecisionSpace-module.html">psychsim.teamwork.test.action.testDecisionSpace</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.agent-module.html">psychsim.teamwork.test.agent</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.agent.testLightweight-module.html">psychsim.teamwork.test.agent.testLightweight</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.agent.testRecursiveAgent-module.html">psychsim.teamwork.test.agent.testRecursiveAgent</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.agent.testSupport-module.html">psychsim.teamwork.test.agent.testSupport</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.math-module.html">psychsim.teamwork.test.math</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.math.testFitting-module.html">psychsim.teamwork.test.math.testFitting</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.math.testID3-module.html">psychsim.teamwork.test.math.testID3</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.math.testKeyedMatrix-module.html">psychsim.teamwork.test.math.testKeyedMatrix</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.math.testKeyedPlane-module.html">psychsim.teamwork.test.math.testKeyedPlane</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.math.testKeyedTree-module.html">psychsim.teamwork.test.math.testKeyedTree</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.math.testKeys-module.html">psychsim.teamwork.test.math.testKeys</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.math.testPWL-module.html">psychsim.teamwork.test.math.testPWL</a></strong>: <em class="summary">Utility functions and base testing class for verifying PWL code</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.math.testProbability-module.html">psychsim.teamwork.test.math.testProbability</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.multiagent-module.html">psychsim.teamwork.test.multiagent</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.multiagent.testPsychAgents-module.html">psychsim.teamwork.test.multiagent.testPsychAgents</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.policy-module.html">psychsim.teamwork.test.policy</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.policy.testPWLPolicy-module.html">psychsim.teamwork.test.policy.testPWLPolicy</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.policy.testPWLTable-module.html">psychsim.teamwork.test.policy.testPWLTable</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.policy.testPolicyTable-module.html">psychsim.teamwork.test.policy.testPolicyTable</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.policy.testTiger-module.html">psychsim.teamwork.test.policy.testTiger</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.schoolTest-module.html">psychsim.teamwork.test.schoolTest</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.testAll-module.html">psychsim.teamwork.test.testAll</a></strong>: <em class="summary">Test case that also illustrates basic operation of the PsychSim API</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.widgets-module.html">psychsim.teamwork.test.widgets</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.test.widgets.testMultiscale-module.html">psychsim.teamwork.test.widgets.testMultiscale</a></strong>    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.utils-module.html">psychsim.teamwork.utils</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.utils.Debugger-module.html">psychsim.teamwork.utils.Debugger</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.utils.FriendlyFloat-module.html">psychsim.teamwork.utils.FriendlyFloat</a></strong>: <em class="summary">Conversion of float values to hide the scary scary numbers</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.utils.PsychUtils-module.html">psychsim.teamwork.utils.PsychUtils</a></strong>: <em class="summary">Various utility methods for use by other PsychSim classes</em>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets-module.html">psychsim.teamwork.widgets</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.ActionDialog-module.html">psychsim.teamwork.widgets.ActionDialog</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.DynamicsEditor-module.html">psychsim.teamwork.widgets.DynamicsEditor</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.Grapher-module.html">psychsim.teamwork.widgets.Grapher</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.MatrixEditor-module.html">psychsim.teamwork.widgets.MatrixEditor</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.MultiWin-module.html">psychsim.teamwork.widgets.MultiWin</a></strong>: <em class="summary">&lt;Multiple_window&gt; and &lt;Inner_Window&gt; classes Idea of 
+        multiples windows comes from a Tcl package called mdw_lib.tk (a 
+        classlib for [m]ulti_[d]ocument_[w]indow applications).</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.MyBrowser-module.html">psychsim.teamwork.widgets.MyBrowser</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.ProgressBar-module.html">psychsim.teamwork.widgets.ProgressBar</a></strong>: <em class="summary">A  basic widget for showing the progress being made in a task.</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI-module.html">psychsim.teamwork.widgets.PsychGUI</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AARWindow-module.html">psychsim.teamwork.widgets.PsychGUI.AARWindow</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.ActionEditor-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.ActionEditor</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.ActionPane-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.ActionPane</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.AgentWindow-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.AgentWindow</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.BeliefPane-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.BeliefPane</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.DynamicsDialog-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.DynamicsDialog</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.GoalPane-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.GoalPane</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.MentalModelPane-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.MentalModelPane</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.MessagePane-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.MessagePane</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.ObservationPane-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.ObservationPane</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.PolicyPane-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.PolicyPane</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.PropertyPane-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.PropertyPane</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.RelationshipPane-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.RelationshipPane</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.AgentWindow.StatePane-module.html">psychsim.teamwork.widgets.PsychGUI.AgentWindow.StatePane</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.CampaignAnalysis-module.html">psychsim.teamwork.widgets.PsychGUI.CampaignAnalysis</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.Graph-module.html">psychsim.teamwork.widgets.PsychGUI.Graph</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.Gui-module.html">psychsim.teamwork.widgets.PsychGUI.Gui</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.MAID-module.html">psychsim.teamwork.widgets.PsychGUI.MAID</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.NetworkView-module.html">psychsim.teamwork.widgets.PsychGUI.NetworkView</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.RadioBox-module.html">psychsim.teamwork.widgets.PsychGUI.RadioBox</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.ScenarioWizard-module.html">psychsim.teamwork.widgets.PsychGUI.ScenarioWizard</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.ThemeSelector-module.html">psychsim.teamwork.widgets.PsychGUI.ThemeSelector</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.TreeAAR-module.html">psychsim.teamwork.widgets.PsychGUI.TreeAAR</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.TurnDialog-module.html">psychsim.teamwork.widgets.PsychGUI.TurnDialog</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.WorldView-module.html">psychsim.teamwork.widgets.PsychGUI.WorldView</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.objectives-module.html">psychsim.teamwork.widgets.PsychGUI.objectives</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.PsychGUI.prolog-module.html">psychsim.teamwork.widgets.PsychGUI.prolog</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.Tree-module.html">psychsim.teamwork.widgets.Tree</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.TreeBuilder-module.html">psychsim.teamwork.widgets.TreeBuilder</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.TreeEditor-module.html">psychsim.teamwork.widgets.TreeEditor</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.TreeWidget-module.html">psychsim.teamwork.widgets.TreeWidget</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.WizardShell-module.html">psychsim.teamwork.widgets.WizardShell</a></strong>: <em class="summary">WizardShell provides a GUI wizard framework.</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.attribute-module.html">psychsim.teamwork.widgets.attribute</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.balloon-module.html">psychsim.teamwork.widgets.balloon</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.bigwidgets-module.html">psychsim.teamwork.widgets.bigwidgets</a></strong>: <em class="summary">Tools for graphically displaying and interacting with the objects 
+        and processing classes defined by the Toolkit.</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.cookbook-module.html">psychsim.teamwork.widgets.cookbook</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.fsa-module.html">psychsim.teamwork.widgets.fsa</a></strong>: <em class="summary">Graphically display a finite state automaton.</em>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.htmlViewer-module.html">psychsim.teamwork.widgets.htmlViewer</a></strong>
+    <ul>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.htmlViewer.mfxtools-module.html">psychsim.teamwork.widgets.htmlViewer.mfxtools</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.htmlViewer.mfxutil-module.html">psychsim.teamwork.widgets.htmlViewer.mfxutil</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.htmlViewer.tkconst-module.html">psychsim.teamwork.widgets.htmlViewer.tkconst</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.htmlViewer.tkfont-module.html">psychsim.teamwork.widgets.htmlViewer.tkfont</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.htmlViewer.tkhtml-module.html">psychsim.teamwork.widgets.htmlViewer.tkhtml</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.htmlViewer.tkinit-module.html">psychsim.teamwork.widgets.htmlViewer.tkinit</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.htmlViewer.tkutil-module.html">psychsim.teamwork.widgets.htmlViewer.tkutil</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.htmlViewer.tkwidget-module.html">psychsim.teamwork.widgets.htmlViewer.tkwidget</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.htmlViewer.util-module.html">psychsim.teamwork.widgets.htmlViewer.util</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.htmlViewer.version-module.html">psychsim.teamwork.widgets.htmlViewer.version</a></strong>    </li>
+    </ul>
+    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.images-module.html">psychsim.teamwork.widgets.images</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.multiscale-module.html">psychsim.teamwork.widgets.multiscale</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.player-module.html">psychsim.teamwork.widgets.player</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.pmfScale-module.html">psychsim.teamwork.widgets.pmfScale</a></strong>    </li>
+    <li> <strong class="uidlink"><a href="psychsim.teamwork.widgets.scale-module.html">psychsim.teamwork.widgets.scale</a></strong>    </li>
+    </ul>
+    </li>
+    </ul>
+    </li>
     <li> <strong class="uidlink"><a href="psychsim.world-module.html">psychsim.world</a></strong>    </li>
   </ul></td></tr>
 </table>
@@ -121,8 +439,8 @@
        bgcolor="#a0c0ff" cellspacing="0">
   <tr valign="middle">
   <!-- Home link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+      <th bgcolor="#70b0f0" class="navbar-select"
+          >&nbsp;&nbsp;&nbsp;Home&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -136,18 +454,13 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-  <!-- Project homepage -->
-      <th class="navbar" align="right" width="100%">
-        <table border="0" cellpadding="0" cellspacing="0">
-          <tr><th class="navbar" align="center"
-            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
-          </tr></table></th>
+      <th class="navbar" width="100%"></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Wed Oct 24 21:38:09 2012
+    Generated by Epydoc 3.0.1 on Sat Jan 18 15:35:50 2014
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

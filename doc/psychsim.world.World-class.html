@@ -15,8 +15,8 @@
        bgcolor="#a0c0ff" cellspacing="0">
   <tr valign="middle">
   <!-- Home link -->
-      <th bgcolor="#70b0f0" class="navbar-select"
-          >&nbsp;&nbsp;&nbsp;Home&nbsp;&nbsp;&nbsp;</th>
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -30,12 +30,7 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-  <!-- Project homepage -->
-      <th class="navbar" align="right" width="100%">
-        <table border="0" cellpadding="0" cellspacing="0">
-          <tr><th class="navbar" align="center"
-            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
-          </tr></table></th>
+      <th class="navbar" width="100%"></th>
   </tr>
 </table>
 <table width="100%" cellpadding="0" cellspacing="0">
@@ -121,7 +116,8 @@
           <td><span class="summary-sig"><a href="psychsim.world.World-class.html#step" class="summary-sig-name">step</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">actions</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>,
-        <span class="summary-sig-arg">real</span>=<span class="summary-sig-default">True</span>)</span><br />
+        <span class="summary-sig-arg">real</span>=<span class="summary-sig-default">True</span>,
+        <span class="summary-sig-arg">select</span>=<span class="summary-sig-default">True</span>)</span><br />
       The simulation method</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.step">source&nbsp;code</a></span>
@@ -142,7 +138,8 @@
         <span class="summary-sig-arg">vector</span>,
         <span class="summary-sig-arg">actions</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">horizon</span>=<span class="summary-sig-default">None</span>,
-        <span class="summary-sig-arg">tiebreak</span>=<span class="summary-sig-default">None</span>)</span><br />
+        <span class="summary-sig-arg">tiebreak</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">updateBeliefs</span>=<span class="summary-sig-default">True</span>)</span><br />
       Compute the resulting states when starting in a given possible world 
       (as opposed to a distribution over possible worlds)</td>
           <td align="right" valign="top">
@@ -163,7 +160,8 @@
           <td><span class="summary-sig"><a href="psychsim.world.World-class.html#effect" class="summary-sig-name">effect</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">actions</span>,
         <span class="summary-sig-arg">vector</span>,
-        <span class="summary-sig-arg">probability</span>=<span class="summary-sig-default">1.0</span>)</span></td>
+        <span class="summary-sig-arg">probability</span>=<span class="summary-sig-default">1.0</span>,
+        <span class="summary-sig-arg">updateBeliefs</span>=<span class="summary-sig-default">True</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.effect">source&nbsp;code</a></span>
             
@@ -252,9 +250,28 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#setTurnDynamics" class="summary-sig-name">setTurnDynamics</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">name</span>,
+        <span class="summary-sig-arg">action</span>,
+        <span class="summary-sig-arg">tree</span>)</span><br />
+      Convenience method for setting custom dynamics for the turn order</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.setTurnDynamics">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
           <td><span class="summary-sig"><a href="psychsim.world.World-class.html#setDynamics" class="summary-sig-name">setDynamics</a>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">entity</span>,
-        <span class="summary-sig-arg">feature</span>,
+        <span class="summary-sig-arg">key</span>,
         <span class="summary-sig-arg">action</span>,
         <span class="summary-sig-arg">tree</span>,
         <span class="summary-sig-arg">enforceMin</span>=<span class="summary-sig-default">False</span>,
@@ -395,6 +412,147 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#defineVariable" class="summary-sig-name">defineVariable</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">domain</span>=<span class="summary-sig-default">&lt;type 'float'&gt;</span>,
+        <span class="summary-sig-arg">lo</span>=<span class="summary-sig-default">-1.0</span>,
+        <span class="summary-sig-arg">hi</span>=<span class="summary-sig-default">1.0</span>,
+        <span class="summary-sig-arg">description</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">evaluate</span>=<span class="summary-sig-default">True</span>)</span><br />
+      Define the type and domain of a given element of the state vector</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.defineVariable">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#setFeature" class="summary-sig-name">setFeature</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">value</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Set the value of an individual element of the state vector</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.setFeature">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="encodeVariable"></a><span class="summary-sig-name">encodeVariable</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">value</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.encodeVariable">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="float2value"></a><span class="summary-sig-name">float2value</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">flt</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.float2value">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#value2float" class="summary-sig-name">value2float</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">value</span>)</span><br />
+      Returns:
+      the float value (appropriate for storing in a <a 
+      href="psychsim.pwl.KeyedVector-class.html" 
+      class="link">KeyedVector</a>) corresponding to the given (possibly 
+      symbolic, bool, etc.) value</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.value2float">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type"><a href="psychsim.probability.Distribution-class.html" 
+      class="link">Distribution</a></span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#getFeature" class="summary-sig-name">getFeature</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Returns:
+      a distribution over values for the given feature</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.getFeature">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="decodeVariable"></a><span class="summary-sig-name">decodeVariable</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">distribution</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.decodeVariable">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
           <td><span class="summary-sig"><a href="psychsim.world.World-class.html#defineState" class="summary-sig-name">defineState</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">entity</span>,
         <span class="summary-sig-arg">feature</span>,
@@ -402,7 +560,8 @@
         <span class="summary-sig-arg">lo</span>=<span class="summary-sig-default">0.0</span>,
         <span class="summary-sig-arg">hi</span>=<span class="summary-sig-default">1.0</span>,
         <span class="summary-sig-arg">description</span>=<span class="summary-sig-default">None</span>)</span><br />
-      Define a state feature in this world</td>
+      Defines a state feature associated with a single agent, or with the 
+      global world state.</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.defineState">source&nbsp;code</a></span>
             
@@ -421,7 +580,9 @@
           <td><span class="summary-sig"><a href="psychsim.world.World-class.html#setState" class="summary-sig-name">setState</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">entity</span>,
         <span class="summary-sig-arg">feature</span>,
-        <span class="summary-sig-arg">value</span>)</span></td>
+        <span class="summary-sig-arg">value</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>)</span><br />
+      For backward compatibility</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.setState">source&nbsp;code</a></span>
             
@@ -433,8 +594,7 @@
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type"><a href="psychsim.probability.Distribution-class.html" 
-      class="link">Distribution</a></span>
+      <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
@@ -442,10 +602,54 @@
         <span class="summary-sig-arg">entity</span>,
         <span class="summary-sig-arg">feature</span>,
         <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>)</span><br />
-      Returns:
-      a distribution over values for the given feature</td>
+      For backward compatibility</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.getState">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#defineRelation" class="summary-sig-name">defineRelation</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">subj</span>,
+        <span class="summary-sig-arg">obj</span>,
+        <span class="summary-sig-arg">name</span>,
+        <span class="summary-sig-arg">domain</span>=<span class="summary-sig-default">&lt;type 'float'&gt;</span>,
+        <span class="summary-sig-arg">lo</span>=<span class="summary-sig-default">0.0</span>,
+        <span class="summary-sig-arg">hi</span>=<span class="summary-sig-default">1.0</span>,
+        <span class="summary-sig-arg">description</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Defines a binary relationship between two agents</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.defineRelation">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">str</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#getModel" class="summary-sig-name">getModel</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">modelee</span>,
+        <span class="summary-sig-arg">vector</span>)</span><br />
+      Returns:
+      the name of the model of the given agent indicated by the given state
+      vector</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.getModel">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -477,7 +681,27 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="setMentalModel"></a><span class="summary-sig-name">setMentalModel</span>(<span class="summary-sig-arg">self</span>,
+          <td><span class="summary-sig"><a name="setModel"></a><span class="summary-sig-name">setModel</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">modelee</span>,
+        <span class="summary-sig-arg">distribution</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">True</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.setModel">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#setMentalModel" class="summary-sig-name">setMentalModel</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">modeler</span>,
         <span class="summary-sig-arg">modelee</span>,
         <span class="summary-sig-arg">distribution</span>,
@@ -486,6 +710,43 @@
       entity</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.setMentalModel">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="pruneModels"></a><span class="summary-sig-name">pruneModels</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">vector</span>)</span><br />
+      Do you want a version of a possible world *without* all the fuss of 
+      agent models? Then *this* is the method for you!</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.pruneModels">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="modelGC"></a><span class="summary-sig-name">modelGC</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">check</span>=<span class="summary-sig-default">False</span>)</span><br />
+      Garbage collect orphaned models.</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.modelGC">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -540,7 +801,8 @@
         <span class="summary-sig-arg">vector</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">transition</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">horizon</span>=<span class="summary-sig-default">-1</span>,
-        <span class="summary-sig-arg">ignore</span>=<span class="summary-sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>)</span><br />
+        <span class="summary-sig-arg">ignore</span>=<span class="summary-sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>,
+        <span class="summary-sig-arg">debug</span>=<span class="summary-sig-default">False</span>)</span><br />
       Returns:
       transition matrix among states reachable from the given state 
       (default is current state)</td>
@@ -578,8 +840,8 @@
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td><span class="summary-sig"><a name="getDescription"></a><span class="summary-sig-name">getDescription</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">entity</span>,
-        <span class="summary-sig-arg">feature</span>)</span></td>
+        <span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">feature</span>=<span class="summary-sig-default">None</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.getDescription">source&nbsp;code</a></span>
             
@@ -661,7 +923,7 @@
         <span class="summary-sig-arg">distribution</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">buf</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">prefix</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>,
-        <span class="summary-sig-arg">beliefs</span>=<span class="summary-sig-default">False</span>)</span><br />
+        <span class="summary-sig-arg">beliefs</span>=<span class="summary-sig-default">True</span>)</span><br />
       Utility method for displaying a distribution over possible worlds</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.printState">source&nbsp;code</a></span>
@@ -701,11 +963,13 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a name="printDelta"></a><span class="summary-sig-name">printDelta</span>(<span class="summary-sig-arg">self</span>,
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#printDelta" class="summary-sig-name">printDelta</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">old</span>,
         <span class="summary-sig-arg">new</span>,
         <span class="summary-sig-arg">buf</span>=<span class="summary-sig-default">None</span>,
-        <span class="summary-sig-arg">prefix</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>)</span></td>
+        <span class="summary-sig-arg">prefix</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>)</span><br />
+      Prints a kind of diff patch for one state vector with respect to 
+      another</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.printDelta">source&nbsp;code</a></span>
             
@@ -769,31 +1033,6 @@
     </td>
   </tr>
 </table>
-<!-- ==================== CLASS VARIABLES ==================== -->
-<a name="section-ClassVariables"></a>
-<table class="summary" border="1" cellpadding="3"
-       cellspacing="0" width="100%" bgcolor="white">
-<tr bgcolor="#70b0f0" class="table-header">
-  <td colspan="2" class="table-header">
-    <table border="0" cellpadding="0" cellspacing="0" width="100%">
-      <tr valign="top">
-        <td align="left"><span class="table-header">Class Variables</span></td>
-        <td align="right" valign="top"
-         ><span class="options">[<a href="#section-ClassVariables"
-         class="privatelink" onclick="toggle_private();"
-         >hide private</a>]</span></td>
-      </tr>
-    </table>
-  </td>
-</tr>
-<tr>
-    <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">&nbsp;</span>
-    </td><td class="summary">
-        <a name="__NORMALIZE__"></a><span class="summary-name">__NORMALIZE__</span> = <code title="False">False</code>
-    </td>
-  </tr>
-</table>
 <!-- ==================== INSTANCE VARIABLES ==================== -->
 <a name="section-InstanceVariables"></a>
 <table class="summary" border="1" cellpadding="3"
@@ -839,14 +1078,6 @@
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type">dict</span>
-    </td><td class="summary">
-        <a name="features"></a><span class="summary-name">features</span><br />
-      definitions of state features, over agents and the world itself
-    </td>
-  </tr>
-<tr>
-    <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">list</span>
     </td><td class="summary">
         <a name="history"></a><span class="summary-name">history</span><br />
@@ -867,7 +1098,7 @@
       <span class="summary-type">str&rarr;int</span>
     </td><td class="summary">
         <a name="symbols"></a><span class="summary-name">symbols</span><br />
-      utility storage of symbols used across all enumerated state features
+      utility storage of symbols used across all enumerated state variables
     </td>
   </tr>
 <tr>
@@ -878,6 +1109,15 @@
         <a name="termination"></a><span class="summary-name">termination</span><br />
       list of conditions under which the simulation terminates (default is 
       none)
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">dict</span>
+    </td><td class="summary">
+        <a name="variables"></a><span class="summary-name">variables</span><br />
+      definitions of the domains of possible variables (state features, 
+      relationships, observations)
     </td>
   </tr>
 </table>
@@ -934,7 +1174,8 @@
   <h3 class="epydoc"><span class="sig"><span class="sig-name">step</span>(<span class="sig-arg">self</span>,
         <span class="sig-arg">actions</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">state</span>=<span class="sig-default">None</span>,
-        <span class="sig-arg">real</span>=<span class="sig-default">True</span>)</span>
+        <span class="sig-arg">real</span>=<span class="sig-default">True</span>,
+        <span class="sig-arg">select</span>=<span class="sig-default">True</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.world-pysrc.html#World.step">source&nbsp;code</a></span>&nbsp;
@@ -967,7 +1208,8 @@
   <h3 class="epydoc"><span class="sig"><span class="sig-name">effect</span>(<span class="sig-arg">self</span>,
         <span class="sig-arg">actions</span>,
         <span class="sig-arg">vector</span>,
-        <span class="sig-arg">probability</span>=<span class="sig-default">1.0</span>)</span>
+        <span class="sig-arg">probability</span>=<span class="sig-default">1.0</span>,
+        <span class="sig-arg">updateBeliefs</span>=<span class="sig-default">True</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.world-pysrc.html#World.effect">source&nbsp;code</a></span>&nbsp;
@@ -1014,6 +1256,38 @@
   </dl>
 </td></tr></table>
 </div>
+<a name="setTurnDynamics"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setTurnDynamics</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">name</span>,
+        <span class="sig-arg">action</span>,
+        <span class="sig-arg">tree</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.setTurnDynamics">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Convenience method for setting custom dynamics for the turn order</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>name</code></strong> (str) - the name of the agent whose turn dynamics are being set</li>
+        <li><strong class="pname"><code>action</code></strong> (<a href="psychsim.action.Action-class.html" 
+          class="link">Action</a> or <a 
+          href="psychsim.action.ActionSet-class.html" 
+          class="link">ActionSet</a>) - the action affecting the turn order</li>
+        <li><strong class="pname"><code>tree</code></strong> (<a href="psychsim.pwl.KeyedTree-class.html" 
+          class="link">KeyedTree</a>) - the decision tree defining the effect on this agent's turn order</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
 <a name="setDynamics"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
@@ -1022,8 +1296,7 @@
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr valign="top"><td>
   <h3 class="epydoc"><span class="sig"><span class="sig-name">setDynamics</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">entity</span>,
-        <span class="sig-arg">feature</span>,
+        <span class="sig-arg">key</span>,
         <span class="sig-arg">action</span>,
         <span class="sig-arg">tree</span>,
         <span class="sig-arg">enforceMin</span>=<span class="sig-default">False</span>,
@@ -1038,9 +1311,7 @@
   <dl class="fields">
     <dt>Parameters:</dt>
     <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>entity</code></strong> (str) - the entity whose state feature is affected (<code>None</code> if 
-          on the world itself)</li>
-        <li><strong class="pname"><code>feature</code></strong> (str) - the name of the affected state feature</li>
+        <li><strong class="pname"><code>key</code></strong> (str) - the key of the affected state feature</li>
         <li><strong class="pname"><code>action</code></strong> (<a href="psychsim.action.Action-class.html" 
           class="link">Action</a> or <a 
           href="psychsim.action.ActionSet-class.html" 
@@ -1148,7 +1419,10 @@
         <dd>the new turn sequence resulting from the performance of the given
           actions</dd>
   </dl>
-</td></tr></table>
+<div class="fields">      <p><strong>Warning:</strong>
+        assumes that no one is acting out of turn
+      </p>
+</div></td></tr></table>
 </div>
 <a name="getActions"></a>
 <div>
@@ -1176,6 +1450,147 @@
   </dl>
 </td></tr></table>
 </div>
+<a name="defineVariable"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">defineVariable</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">key</span>,
+        <span class="sig-arg">domain</span>=<span class="sig-default">&lt;type 'float'&gt;</span>,
+        <span class="sig-arg">lo</span>=<span class="sig-default">-1.0</span>,
+        <span class="sig-arg">hi</span>=<span class="sig-default">1.0</span>,
+        <span class="sig-arg">description</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">evaluate</span>=<span class="sig-default">True</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.defineVariable">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Define the type and domain of a given element of the state vector</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>key</code></strong> (str) - string label for the column being defined</li>
+        <li><strong class="pname"><code>domain</code></strong> (class) - the domain of values for this feature. Acceptable values are:
+          <ul>
+            <li>
+              float: continuous range
+            </li>
+            <li>
+              int: discrete numeric range
+            </li>
+            <li>
+              bool: True/False value
+            </li>
+            <li>
+              list: enumerated set of discrete values
+            </li>
+            <li>
+              ActionSet: enumerated set of actions, of the named agent (as 
+              key)
+            </li>
+          </ul></li>
+        <li><strong class="pname"><code>lo</code></strong> (float/int/list) - for float/int features, the lowest possible value. for list 
+          features, a list of possible values.</li>
+        <li><strong class="pname"><code>hi</code></strong> (float/int) - for float/int features, the highest possible value</li>
+        <li><strong class="pname"><code>description</code></strong> (str) - optional text description explaining what this state feature 
+          means</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="setFeature"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setFeature</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">key</span>,
+        <span class="sig-arg">value</span>,
+        <span class="sig-arg">state</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.setFeature">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Set the value of an individual element of the state vector</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>key</code></strong> (str) - the label of the element to set</li>
+        <li><strong class="pname"><code>state</code></strong> (<a href="psychsim.pwl.VectorDistribution-class.html" 
+          class="link">VectorDistribution</a>) - the state distribution to modify (default is the current world 
+          state)</li>
+        <li><strong class="pname"><code>value</code></strong> (float or <a href="psychsim.probability.Distribution-class.html" 
+          class="link">Distribution</a>)</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="value2float"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">value2float</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">key</span>,
+        <span class="sig-arg">value</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.value2float">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns:</dt>
+        <dd>the float value (appropriate for storing in a <a 
+          href="psychsim.pwl.KeyedVector-class.html" 
+          class="link">KeyedVector</a>) corresponding to the given 
+          (possibly symbolic, bool, etc.) value</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getFeature"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getFeature</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">key</span>,
+        <span class="sig-arg">state</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.getFeature">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>key</code></strong> (str) - the label of the state element of interest</li>
+        <li><strong class="pname"><code>state</code></strong> (<a href="psychsim.pwl.VectorDistribution-class.html" 
+          class="link">VectorDistribution</a>) - the distribution over possible worlds (default is the current 
+          world state)</li>
+    </ul></dd>
+    <dt>Returns: <a href="psychsim.probability.Distribution-class.html" 
+      class="link">Distribution</a></dt>
+        <dd>a distribution over values for the given feature</dd>
+  </dl>
+</td></tr></table>
+</div>
 <a name="defineState"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
@@ -1196,33 +1611,13 @@
     </td>
   </tr></table>
   
-  <p>Define a state feature in this world</p>
+  <p>Defines a state feature associated with a single agent, or with the 
+  global world state.</p>
   <dl class="fields">
     <dt>Parameters:</dt>
     <dd><ul class="nomargin-top">
-        <li><strong class="pname"><code>entity</code></strong> (str) - the name of the entity this feature pertains to 
-          (<code>None</code> if feature is on the world itself)</li>
-        <li><strong class="pname"><code>feature</code></strong> (str) - the name of this new state feature</li>
-        <li><strong class="pname"><code>domain</code></strong> (class) - the domain of values for this feature. Acceptable values are:
-          <ul>
-            <li>
-              float: continuous range
-            </li>
-            <li>
-              int: discrete numeric range
-            </li>
-            <li>
-              bool: True/False value
-            </li>
-            <li>
-              list: enumerated set of discrete values
-            </li>
-          </ul></li>
-        <li><strong class="pname"><code>lo</code></strong> (float/int/list) - for float/int features, the lowest possible value. for list 
-          features, a list of possible values.</li>
-        <li><strong class="pname"><code>hi</code></strong> (float/int) - for float/int features, the highest possible value</li>
-        <li><strong class="pname"><code>description</code></strong> (str) - optional text description explaining what this state feature 
-          means</li>
+        <li><strong class="pname"><code>entity</code></strong> (str) - if <code>None</code>, the given feature is on the global world 
+          state; otherwise, it is local to the named agent</li>
     </ul></dd>
   </dl>
 </td></tr></table>
@@ -1237,22 +1632,21 @@
   <h3 class="epydoc"><span class="sig"><span class="sig-name">setState</span>(<span class="sig-arg">self</span>,
         <span class="sig-arg">entity</span>,
         <span class="sig-arg">feature</span>,
-        <span class="sig-arg">value</span>)</span>
+        <span class="sig-arg">value</span>,
+        <span class="sig-arg">state</span>=<span class="sig-default">None</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.world-pysrc.html#World.setState">source&nbsp;code</a></span>&nbsp;
     </td>
   </tr></table>
   
-  
+  <p>For backward compatibility</p>
   <dl class="fields">
     <dt>Parameters:</dt>
     <dd><ul class="nomargin-top">
         <li><strong class="pname"><code>entity</code></strong> (str) - the name of the entity whose state feature we're setting (does 
           not have to be an agent)</li>
         <li><strong class="pname"><code>feature</code></strong> (str)</li>
-        <li><strong class="pname"><code>value</code></strong> (float or <a href="psychsim.probability.Distribution-class.html" 
-          class="link">Distribution</a>)</li>
     </ul></dd>
   </dl>
 </td></tr></table>
@@ -1274,22 +1668,108 @@
     </td>
   </tr></table>
   
-  
+  <p>For backward compatibility</p>
   <dl class="fields">
     <dt>Parameters:</dt>
     <dd><ul class="nomargin-top">
         <li><strong class="pname"><code>entity</code></strong> (str) - the name of the entity of interest (<code>None</code> if the 
           feature of interest is of the world itself)</li>
         <li><strong class="pname"><code>feature</code></strong> (str) - the state feature of interest</li>
-        <li><strong class="pname"><code>state</code></strong> (<a href="psychsim.pwl.VectorDistribution-class.html" 
-          class="link">VectorDistribution</a>) - the distribution over possible worlds (default is the current 
-          world state)</li>
     </ul></dd>
-    <dt>Returns: <a href="psychsim.probability.Distribution-class.html" 
-      class="link">Distribution</a></dt>
-        <dd>a distribution over values for the given feature</dd>
   </dl>
 </td></tr></table>
+</div>
+<a name="defineRelation"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">defineRelation</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">subj</span>,
+        <span class="sig-arg">obj</span>,
+        <span class="sig-arg">name</span>,
+        <span class="sig-arg">domain</span>=<span class="sig-default">&lt;type 'float'&gt;</span>,
+        <span class="sig-arg">lo</span>=<span class="sig-default">0.0</span>,
+        <span class="sig-arg">hi</span>=<span class="sig-default">1.0</span>,
+        <span class="sig-arg">description</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.defineRelation">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Defines a binary relationship between two agents</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>subj</code></strong> (str) - one of the agents in the relation (if a directed link, it is the 
+          &quot;origin&quot; of the edge)</li>
+        <li><strong class="pname"><code>obj</code></strong> (str) - one of the agents in the relation (if a directed link, it is the 
+          &quot;destination&quot; of the edge)</li>
+        <li><strong class="pname"><code>name</code></strong> (str) - the name of the relation (e.g., the verb to use between the 
+          subject and object)</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getModel"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getModel</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">modelee</span>,
+        <span class="sig-arg">vector</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.getModel">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>modelee</code></strong> (str)</li>
+        <li><strong class="pname"><code>vector</code></strong> (<a href="psychsim.pwl.KeyedVector-class.html" 
+          class="link">KeyedVector</a>)</li>
+    </ul></dd>
+    <dt>Returns: str</dt>
+        <dd>the name of the model of the given agent indicated by the given 
+          state vector</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="setMentalModel"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">setMentalModel</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">modeler</span>,
+        <span class="sig-arg">modelee</span>,
+        <span class="sig-arg">distribution</span>,
+        <span class="sig-arg">model</span>=<span class="sig-default">True</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.setMentalModel">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Sets the distribution over mental models one agent has of another 
+  entity</p>
+  <dl class="fields">
+  </dl>
+<div class="fields">      <p><strong>Note:</strong>
+        Normalizes the distribution given
+      </p>
+</div></td></tr></table>
 </div>
 <a name="scaleState"></a>
 <div>
@@ -1331,7 +1811,8 @@
         <span class="sig-arg">vector</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">transition</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">horizon</span>=<span class="sig-default">-1</span>,
-        <span class="sig-arg">ignore</span>=<span class="sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>)</span>
+        <span class="sig-arg">ignore</span>=<span class="sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>,
+        <span class="sig-arg">debug</span>=<span class="sig-default">False</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.world-pysrc.html#World.reachable">source&nbsp;code</a></span>&nbsp;
@@ -1408,7 +1889,7 @@
         <span class="sig-arg">distribution</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">buf</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">prefix</span>=<span class="sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>,
-        <span class="sig-arg">beliefs</span>=<span class="sig-default">False</span>)</span>
+        <span class="sig-arg">beliefs</span>=<span class="sig-default">True</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.world-pysrc.html#World.printState">source&nbsp;code</a></span>&nbsp;
@@ -1423,7 +1904,7 @@
           standard output)</li>
         <li><strong class="pname"><code>prefix</code></strong> (str) - a string prefix (e.g., tabs) to insert at the beginning of each 
           line</li>
-        <li><strong class="pname"><code>beliefs</code></strong> (True) - if <code>True</code>, print out inaccurate beliefs, too</li>
+        <li><strong class="pname"><code>beliefs</code></strong> (bool) - if <code>True</code>, print out inaccurate beliefs, too</li>
         <li><strong class="pname"><code>distribution</code></strong> (<a href="psychsim.pwl.VectorDistribution-class.html" 
           class="link">VectorDistribution</a>)</li>
     </ul></dd>
@@ -1462,8 +1943,41 @@
           an existing line (default is <code>True</code>)</li>
         <li><strong class="pname"><code>csv</code></strong> (bool) - if <code>True</code>, then print the vector as comma-separated 
           values (default is <code>False</code>)</li>
+        <li><strong class="pname"><code>beliefs</code></strong> (bool) - if <code>True</code>, then print any agent beliefs that might 
+          deviate from this vector as well (default is <code>False</code>)</li>
         <li><strong class="pname"><code>vector</code></strong> (<a href="psychsim.pwl.KeyedVector-class.html" 
           class="link">KeyedVector</a>)</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="printDelta"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">printDelta</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">old</span>,
+        <span class="sig-arg">new</span>,
+        <span class="sig-arg">buf</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">prefix</span>=<span class="sig-default"><code class="variable-quote">'</code><code class="variable-string"></code><code class="variable-quote">'</code></span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.printDelta">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Prints a kind of diff patch for one state vector with respect to 
+  another</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>old</code></strong> (<a href="psychsim.pwl.KeyedVector-class.html" 
+          class="link">KeyedVector</a>) - the &quot;original&quot; state vector</li>
+        <li><strong class="pname"><code>new</code></strong> (<a href="psychsim.pwl.VectorDistribution-class.html" 
+          class="link">VectorDistribution</a>) - the state vector we want to see the diff of</li>
     </ul></dd>
   </dl>
 </td></tr></table>
@@ -1502,8 +2016,8 @@
        bgcolor="#a0c0ff" cellspacing="0">
   <tr valign="middle">
   <!-- Home link -->
-      <th bgcolor="#70b0f0" class="navbar-select"
-          >&nbsp;&nbsp;&nbsp;Home&nbsp;&nbsp;&nbsp;</th>
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -1517,18 +2031,13 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-  <!-- Project homepage -->
-      <th class="navbar" align="right" width="100%">
-        <table border="0" cellpadding="0" cellspacing="0">
-          <tr><th class="navbar" align="center"
-            ><a class="navbar" target="_top" href="http://pynadath.net:81/projects/psychsim">PsychSim</a></th>
-          </tr></table></th>
+      <th class="navbar" width="100%"></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Wed Oct 24 21:38:10 2012
+    Generated by Epydoc 3.0.1 on Sat Jan 18 15:35:53 2014
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"
