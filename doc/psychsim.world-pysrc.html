@@ -30,7 +30,12 @@
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-      <th class="navbar" width="100%"></th>
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            >PsychSim</th>
+          </tr></table></th>
   </tr>
 </table>
 <table width="100%" cellpadding="0" cellspacing="0">
@@ -142,7 +147,9 @@ psychsim.pwl.KeyedTree.parse
 psychsim.pwl.KeyedVector.parse
 psychsim.world.World.parse" class="py-name" href="#" onclick="return doclink('link-11', 'parse', 'link-10');">parse</a></tt><tt class="py-op">(</tt><tt class="py-name">doc</tt><tt class="py-op">.</tt><tt class="py-name">documentElement</tt><tt class="py-op">)</tt> </tt>
 <a name="L69"></a><tt class="py-lineno">  69</tt>  <tt class="py-line">        <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
-<a name="L70"></a><tt class="py-lineno">  70</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">state</tt><tt class="py-op">[</tt><tt id="link-12" class="py-name" targets="Class psychsim.pwl.KeyedVector=psychsim.pwl.KeyedVector-class.html"><a title="psychsim.pwl.KeyedVector" class="py-name" href="#" onclick="return doclink('link-12', 'KeyedVector', 'link-12');">KeyedVector</a></tt><tt class="py-op">(</tt><tt class="py-op">{</tt><tt id="link-13" class="py-name" targets="Variable psychsim.agent.CONSTANT=psychsim.agent-module.html#CONSTANT,Variable psychsim.pwl.CONSTANT=psychsim.pwl-module.html#CONSTANT,Variable psychsim.reward.CONSTANT=psychsim.reward-module.html#CONSTANT,Variable psychsim.world.CONSTANT=psychsim.world-module.html#CONSTANT"><a title="psychsim.agent.CONSTANT
+<a name="L70"></a><tt class="py-lineno">  70</tt>  <tt class="py-line">            <tt class="py-name">self</tt><tt class="py-op">.</tt><tt class="py-name">state</tt><tt class="py-op">[</tt><tt id="link-12" class="py-name" targets="Class psychsim.pwl.KeyedVector=psychsim.pwl.KeyedVector-class.html"><a title="psychsim.pwl.KeyedVector" class="py-name" href="#" onclick="return doclink('link-12', 'KeyedVector', 'link-12');">KeyedVector</a></tt><tt class="py-op">(</tt><tt class="py-op">{</tt><tt id="link-13" class="py-name" targets="Variable psychsim.agent.CONSTANT=psychsim.agent-module.html#CONSTANT,Variable psychsim.examples.Fire.CONSTANT=psychsim.examples.Fire-module.html#CONSTANT,Variable psychsim.examples.freedonia.CONSTANT=psychsim.examples.freedonia-module.html#CONSTANT,Variable psychsim.pwl.CONSTANT=psychsim.pwl-module.html#CONSTANT,Variable psychsim.reward.CONSTANT=psychsim.reward-module.html#CONSTANT,Variable psychsim.world.CONSTANT=psychsim.world-module.html#CONSTANT"><a title="psychsim.agent.CONSTANT
+psychsim.examples.Fire.CONSTANT
+psychsim.examples.freedonia.CONSTANT
 psychsim.pwl.CONSTANT
 psychsim.reward.CONSTANT
 psychsim.world.CONSTANT" class="py-name" href="#" onclick="return doclink('link-13', 'CONSTANT', 'link-13');">CONSTANT</a></tt><tt class="py-op">:</tt> <tt class="py-number">1.</tt><tt class="py-op">}</tt><tt class="py-op">)</tt><tt class="py-op">]</tt> <tt class="py-op">=</tt> <tt class="py-number">1.</tt> </tt>
@@ -367,6 +374,8 @@ psychsim.pwl.MatrixDistribution.update" class="py-name" href="#" onclick="return
 <a name="L277"></a><tt class="py-lineno"> 277</tt>  <tt class="py-line">                            <tt class="py-keyword">pass</tt> </tt>
 <a name="L278"></a><tt class="py-lineno"> 278</tt>  <tt class="py-line">                        <tt class="py-keyword">else</tt><tt class="py-op">:</tt> </tt>
 <a name="L279"></a><tt class="py-lineno"> 279</tt>  <tt class="py-line">                            <tt class="py-name">matrix</tt> <tt class="py-op">=</tt> <tt id="link-97" class="py-name"><a title="psychsim.pwl.KeyedMatrix" class="py-name" href="#" onclick="return doclink('link-97', 'KeyedMatrix', 'link-80');">KeyedMatrix</a></tt><tt class="py-op">(</tt><tt class="py-op">{</tt><tt class="py-name">key</tt><tt class="py-op">:</tt> <tt id="link-98" class="py-name"><a title="psychsim.pwl.KeyedVector" class="py-name" href="#" onclick="return doclink('link-98', 'KeyedVector', 'link-12');">KeyedVector</a></tt><tt class="py-op">(</tt><tt class="py-op">{</tt><tt id="link-99" class="py-name"><a title="psychsim.agent.CONSTANT
+psychsim.examples.Fire.CONSTANT
+psychsim.examples.freedonia.CONSTANT
 psychsim.pwl.CONSTANT
 psychsim.reward.CONSTANT
 psychsim.world.CONSTANT" class="py-name" href="#" onclick="return doclink('link-99', 'CONSTANT', 'link-13');">CONSTANT</a></tt><tt class="py-op">:</tt> <tt class="py-name">newModel</tt><tt class="py-op">}</tt><tt class="py-op">)</tt><tt class="py-op">}</tt><tt class="py-op">)</tt> </tt>
@@ -1085,17 +1094,25 @@ psychsim.pwl.MatrixDistribution.update" class="py-name" href="#" onclick="return
 <a name="L960"></a><tt class="py-lineno"> 960</tt>  <tt class="py-line">                <tt class="py-keyword">del</tt> <tt class="py-name">remaining</tt><tt class="py-op">[</tt><tt class="py-name">key</tt><tt class="py-op">]</tt> </tt>
 <a name="L961"></a><tt class="py-lineno"> 961</tt>  <tt class="py-line">        <tt class="py-comment"># Handle constant term</tt> </tt>
 <a name="L962"></a><tt class="py-lineno"> 962</tt>  <tt class="py-line">        <tt class="py-keyword">if</tt> <tt class="py-name">remaining</tt><tt class="py-op">.</tt><tt class="py-name">has_key</tt><tt class="py-op">(</tt><tt id="link-338" class="py-name"><a title="psychsim.agent.CONSTANT
+psychsim.examples.Fire.CONSTANT
+psychsim.examples.freedonia.CONSTANT
 psychsim.pwl.CONSTANT
 psychsim.reward.CONSTANT
 psychsim.world.CONSTANT" class="py-name" href="#" onclick="return doclink('link-338', 'CONSTANT', 'link-13');">CONSTANT</a></tt><tt class="py-op">)</tt><tt class="py-op">:</tt> </tt>
 <a name="L963"></a><tt class="py-lineno"> 963</tt>  <tt class="py-line">            <tt class="py-name">result</tt><tt class="py-op">[</tt><tt id="link-339" class="py-name"><a title="psychsim.agent.CONSTANT
+psychsim.examples.Fire.CONSTANT
+psychsim.examples.freedonia.CONSTANT
 psychsim.pwl.CONSTANT
 psychsim.reward.CONSTANT
 psychsim.world.CONSTANT" class="py-name" href="#" onclick="return doclink('link-339', 'CONSTANT', 'link-13');">CONSTANT</a></tt><tt class="py-op">]</tt> <tt class="py-op">=</tt> <tt class="py-name">remaining</tt><tt class="py-op">[</tt><tt id="link-340" class="py-name"><a title="psychsim.agent.CONSTANT
+psychsim.examples.Fire.CONSTANT
+psychsim.examples.freedonia.CONSTANT
 psychsim.pwl.CONSTANT
 psychsim.reward.CONSTANT
 psychsim.world.CONSTANT" class="py-name" href="#" onclick="return doclink('link-340', 'CONSTANT', 'link-13');">CONSTANT</a></tt><tt class="py-op">]</tt> </tt>
 <a name="L964"></a><tt class="py-lineno"> 964</tt>  <tt class="py-line">            <tt class="py-keyword">del</tt> <tt class="py-name">remaining</tt><tt class="py-op">[</tt><tt id="link-341" class="py-name"><a title="psychsim.agent.CONSTANT
+psychsim.examples.Fire.CONSTANT
+psychsim.examples.freedonia.CONSTANT
 psychsim.pwl.CONSTANT
 psychsim.reward.CONSTANT
 psychsim.world.CONSTANT" class="py-name" href="#" onclick="return doclink('link-341', 'CONSTANT', 'link-13');">CONSTANT</a></tt><tt class="py-op">]</tt> </tt>
@@ -1857,13 +1874,18 @@ expandto(location.href);
       <th>&nbsp;&nbsp;&nbsp;<a
         href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
 
-      <th class="navbar" width="100%"></th>
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            >PsychSim</th>
+          </tr></table></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Sat Jan 18 15:44:00 2014
+    Generated by Epydoc 3.0.1 on Sat Jan 18 16:19:00 2014
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"
