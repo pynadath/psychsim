@@ -375,12 +375,121 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
         
         # Goal of fooling Sylvania
         goalDeception = achieveFeatureValue(modelKey(sylv.name),sylv.model2index('false'))
-
-        # Compiled policy
-#        world.setState(None,'phase','offer')
-#        sylv.setAttribute('rationality',10.)
-#        free.valueIteration(horizon=3,debug=3)
     return world
+
+def compileWorld(world):
+    # First, let's set the start state
+    world.setState(None,'phase','offer')
+    # Um, not sure about this one
+    world.agents[args['enemy']].setAttribute('rationality',10.)
+    # Then, do value iteration to pre-compute Freedonia's policy
+    world.agents['Freedonia'].valueIteration(horizon=-1,debug=3)
+
+def fitWorld(world):
+    """
+    Piecewise linear compilation of Freedonia's policy
+    """
+    for agent in world.agents.values():
+        if agent.name == 'Freedonia':
+            free = agent
+        else:
+            sylv = agent
+    world.setState(None,'phase','offer')
+    state = world.state.domain()[0]
+    freeModel = world.getModel(free.name,state)
+    beliefs = free.getBelief(state,freeModel)
+    # Compute transition trees
+    T = {}
+    for agent in world.agents.values():
+        for action in agent.actions:
+            T[action] = None
+            for keys in world.evaluationOrder:
+                result = None
+                for key in keys:
+                    dynamics = world.getDynamics(key,action)
+                    if dynamics:
+                        # Use existing tree
+                        assert len(dynamics) == 1
+                        dynamics = dynamics[0]
+                    else:
+                        # Create identity tree
+                        dynamics = KeyedTree(noChangeMatrix(key))
+                    if result is None:
+                        result = dynamics
+                    else:
+                        result += dynamics
+                result += KeyedTree(noChangeMatrix(CONSTANT))
+                if T[action] is None:
+                    T[action] = result
+                else:
+                    T[action] = result*T[action]
+    # Compute policy trees for the other agent
+    models = {}
+    for agent in world.agents.values():
+        models[agent.name] = set()
+    for agent in world.agents.values():
+        for vector in beliefs.domain():
+            model = world.getModel(agent.name,vector)
+            ancestor = agent.findAttribute('R',model)
+            models[agent.name].add(ancestor)
+        if len(models[agent.name]) == 0:
+            # No beliefs about models found, assume True model
+            models[agent.name].add(True)
+    for agent in world.agents.values():
+        for model in models[agent.name]:
+            R = sum(agent.getAttribute('R',model),KeyedTree(KeyedVector()))
+            agent.models[model]['policy'] = []
+            policy = agent.models[model]['policy']
+            for horizon in range(1,agent.getAttribute('horizon',model)+1):
+                # Dynamic programming of policies
+                if len(policy) < horizon:
+                    # Policy tree for this horizon is missing
+                    legal = {}
+                    actions = []
+                    # Process legality conditions
+                    for action in agent.actions:
+                        try:
+                            legal[action] = agent.legal[action]
+                        except KeyError:
+                            legal[action] = KeyedTree(True)
+                    # Compute value functions for each action
+                    if horizon > 1:
+                        raise NotImplementedError,'Backup step is missing'
+                    V = {}
+                    for action in agent.actions:
+                        V[action] = R*T[action]
+                        V[action] = legal[action].replace(True,V[action])
+                        V[action] = V[action].expectation()
+                        V[action] = V[action].map(lambda leaf: {'vector': leaf,'action': action} if isinstance(leaf,KeyedVector) else leaf)
+                    # Build up a policy
+                    policy.append(None)
+                    for action in agent.actions:
+                        if policy[horizon-1] is None:
+                            policy[horizon-1] = V[action]
+                        else:
+                            policy[horizon-1] = policy[horizon-1].max(V[action])
+                    Vstar = policy[horizon-1].map(lambda leaf: leaf['vector'] if isinstance(leaf,dict) else leaf)
+                    policy[horizon-1] = policy[horizon-1].map(lambda leaf: leaf['action'] 
+                                                              if isinstance(leaf,dict) else leaf)
+    #                print 'Unpruned:'
+                    policy[horizon-1].minimizePlanes()
+    #                print policy[horizon-1]
+                    pruned = policy[horizon-1].prune()
+    #                print 'Pruned:'
+                    print pruned
+                    # # Verify pruning
+                    # world.setFeature('phase','respond',beliefs)
+                    # world.setState('Freedonia','territory',72,beliefs)
+                    # for offer in range(50,100,3):
+                    #     world.setState(agent.name,'offered',offer,beliefs)
+                    #     vector = beliefs.domain()[0]
+                    #     print offer
+                    #     print policy[horizon-1][vector],pruned[vector]
+                    #     assert policy[horizon-1][vector] == pruned[vector]
+                    print free.models[freeModel]['beliefs']
+                break
+    sys.exit(0)
+                                 
 
 def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
     """
@@ -596,6 +705,17 @@ if __name__ == '__main__':
     group.add_argument('-w','--web',action='store_true',
                       dest='web',default=False,
                       help='generate Web version if set [default: %(default)s]')
+
+    group = parser.add_argument_group('Algorithm Options','Control the algorithms to apply to the agents.')
+    # Optional argument that determines whether to use value iteration to create Freedonia's policy
+    group.add_argument('-c','--compiled',action='store_true',
+                      dest='compiled',default=False,
+                      help='use value iteration for Freedonia [default: %(default)s]')
+    # Optional argument that determines whether to use PWL compilation of Freedonia's policy
+    group.add_argument('--fitting',action='store_true',
+                      dest='fitting',default=False,
+                      help='use PWL compilation and fitting for Freedonia [default: %(default)s]')
+
     group = parser.add_argument_group('Simulation Options','Control the simulation of the created scenario.')
     # Optional argument that sets the level of explanations when running the simulation
     group.add_argument('-d',action='store',
@@ -622,6 +742,11 @@ if __name__ == '__main__':
     world.agents['Freedonia'].setState('cost',args['fcost'])
     world.agents[args['enemy']].setState('troops',args['stroops'])
     world.agents[args['enemy']].setState('cost',args['scost'])
+
+    if args['compiled']:
+        compileWorld(world)
+    if args['fitting']:
+        fitWorld(world)
 
     # Create configuration file
     config = SafeConfigParser()

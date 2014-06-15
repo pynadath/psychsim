@@ -116,6 +116,8 @@ class ActionSet(frozenset):
                 if node.nodeType == node.ELEMENT_NODE:
                     assert node.tagName == 'action','Element has tag %s instead of action' % (node.tagName)
                     iterable.append(Action(node))
+        elif isinstance(elements,Action):
+            iterable = [elements]
         elif isinstance(elements,dict):
             iterable = reduce(ActionSet.union,elements.values(),ActionSet())
         else:
