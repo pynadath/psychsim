@@ -233,47 +233,46 @@ class Agent:
         if ignore is None:
             ignore = self.getAttribute('ignore',model)
         # Find transition matrix
-        transition = self.world.reachable(horizon=horizon,ignore=ignore,debug=False)
+        transition = self.world.reachable(horizon=horizon,ignore=ignore,debug=(debug > 1))
         if debug:
             print '|S|=%d' % (len(transition))
         # Initialize value function
         V = self.getAttribute('V',model)
+        newChanged = set()
         for start in transition.keys():
             for agent in self.world.agents.values():
                 if self.world.terminated(start):
                     if agent.name == self.name:
-                        V.set(agent.name,start,None,0,agent.reward(start,model))
+                        value = agent.reward(start,model)
                     else:
-                        V.set(agent.name,start,None,0,agent.reward(start))
+                        value = agent.reward(start)
+                    V.set(agent.name,start,None,0,value)
+                    if abs(value) > epsilon:
+                        newChanged.add(start)
                 else:
                     V.set(agent.name,start,None,0,0.)
         # Loop until no change in value function
         iterations = 0
-        oldChange = 0.
-        newChange = 1.
-        while abs(newChange-oldChange) > epsilon and (maxIterations is None or iterations < maxIterations):
+        while len(newChanged) > 0 and (maxIterations is None or iterations < maxIterations):
             iterations += 1
             if debug > 0:
                 print 'Iteration %d' % (iterations)
-            oldChange = newChange
-            newChange = 0.
+            oldChanged = newChanged.copy()
+            newChanged.clear()
+            recomputed = set()
             newV = ValueFunction()
-            # Consider all possible start states
-            for start in transition.keys():
+            # Consider all possible nodes whose value has changed on the previous iteration
+            for node in oldChanged:
                 if debug > 1:
                     print
-                    self.world.printVector(start)
-                if len(transition[start]) == 0:
-                    # Terminal state (either through termination or reaching horizon)
-                    for agent in self.world.agents.values():
-                        if agent.name == self.name:
-                            newV.set(agent.name,start,None,0,agent.reward(start,model))
-                        else:
-                            newV.set(agent.name,start,None,0,agent.reward(start))
-                else:
-                    # Back-propagate reward from subsequent states
+                    self.world.printVector(node)
+                for start in transition[node]['__predecessors__'] - recomputed:
+                    recomputed.add(start)
+                    # This is a state whose value might have changed
                     actor = None
                     for action,distribution in transition[start].items():
+                        if action == '__predecessors__':
+                            continue
                         if debug > 2:
                             print '\t\t%s' % (action)
                         # Make sure only one actor is acting at a time
@@ -283,50 +282,45 @@ class Agent:
                             assert action['subject'] == actor,'Unable to do value iteration with concurrent actors'
                         # Consider all possible results of this action
                         for agent in self.world.agents.values():
-                            for end in transition[start][action].domain():
+                            # Accumulate expected rewards from possible transitions
+                            ER = 0.
+                            for end in distribution.domain():
                                 # Determine expected value of future
-                                Vrest = transition[start][action][end]*V.get(agent.name,end,None,0)
-                                # Determine discount function (should use belief about other agent, but doesn't yet)
+                                Vrest = distribution[end]*V.get(agent.name,end,None,0)
+                                # Determine discount function 
+                                # (should use belief about other agent, but doesn't yet)
                                 if agent.name == self.name:
                                     discount = agent.getAttribute('discount',model)
                                 else:
                                     discount = agent.getAttribute('discount',True)
                                 if discount < -epsilon:
                                     # Future reward is all that matters
-                                    newV.set(agent.name,start,action,0,Vrest)
+                                    ER += distribution[end]*Vrest
                                 else:
                                     # Current reward + Discounted future reward
                                     if agent.name == self.name:
                                         R = agent.reward(start,model)
                                     else:
                                         R = agent.reward(start)
-                                    newV.set(agent.name,start,action,0,R+discount*Vrest)
-                                if debug > 2:
-                                    print '\t\t\tV_%s = %5.3f' % (agent.name,newV.get(agent.name,start,action,0))
-                                previous = V.get(agent.name,start,action,0)
-                                if previous is None:
-                                    newChange += abs(newV.get(agent.name,start,action,0))
-                                else:
-                                    newChange += abs(newV.get(agent.name,start,action,0)-previous)
+                                    ER += distribution[end]*(R+discount*Vrest)
+                            newV.set(agent.name,start,action,0,ER)
+                            if debug > 2:
+                                print '\t\t\tV_%s = %5.3f' % (agent.name,ER)
                     # Value of state is the value of the chosen action in this state
                     choice = self.predict(start,actor,newV,0)
                     if debug > 2:
                         print '\tPrediction\n%s' % (choice)
+                    delta = 0.
                     for name in self.world.agents.keys():
                         for action in choice.domain():
                             newV.add(name,start,None,0,choice[action]*newV.get(name,start,action,0))
-                for name in self.world.agents.keys():
-                    if debug > 1:
-                        print '\tV_%s = %5.3f' % (name,newV.get(name,start,None,0))
+                        delta += abs(newV.get(name,start,None,0)-V.get(name,start,None,0))
+                        if debug > 1:
+                            print '\tV_%s = %5.3f' % (name,newV.get(name,start,None,0))
+                    if delta > epsilon:
+                        newChanged.add(start)
             V = newV
             self.setAttribute('V',V,model)
-            if debug > 0:
-                print 'Change: %5.3f' % (newChange)
-                state = self.world.state
-                assert len(state) == 1
-                state = state.domain()[0]
-                for action,value in V.actionTable(self.name,state,0).items():
-                    print '\t\tV_%s(%s) = %5.3f' % (self.name,action,value)
         if debug > 0:
             print 'Completed after %d iterations' % (iterations)
         return self.getAttribute('V',model)
@@ -361,18 +355,26 @@ class Agent:
         else:
             self.models[model][name] = value
 
+    def findAttribute(self,name,model=True):
+        """
+        @return: the name of the nearest ancestor model (include the given model itself) that specifies a value for the named feature
+        """
+        if self.models[model].has_key(name):
+            return model
+        elif self.models[model]['parent'] is None:
+            return None
+        else:
+            return self.findAttribute(name,self.models[model]['parent'])
+
     def getAttribute(self,name,model=True):
         """
         @return: the value for the specified parameter of the specified mental model
         """
-        try:
-            value = self.models[model][name]
-        except KeyError:
-            if self.models[model]['parent'] is None:
-                return None
-            else:
-                return self.getAttribute(name,self.models[model]['parent'])
-        return value
+        ancestor = self.findAttribute(name,model)
+        if ancestor is None:
+            return None
+        else:
+            return self.models[ancestor][name]
 
     """------------------"""
     """Action methods"""
@@ -481,7 +483,7 @@ class Agent:
         """
         total = 0.
         if vector is None:
-            total = self.reward(self.world.state)
+            total = self.reward(self.world.state,model,recurse)
         elif isinstance(vector,VectorDistribution):
             for element in vector.domain():
                 total += vector[element]*self.reward(element,model,recurse)
@@ -592,7 +594,7 @@ class Agent:
         """
         return self.models[model]['index']
 
-    def index2model(self,index):
+    def index2model(self,index,throwException=False):
         """
         Convert a numeric representation of a model to a name
         @param index: the numeric representation of the model
@@ -601,7 +603,14 @@ class Agent:
         """
         if isinstance(index,float):
             index = int(index+0.5)
-        return self.modelList[index]
+        try:
+            return self.modelList[index]
+        except KeyError:
+            # Unknown model index (hopefully, because of explaining post-GC)
+            if throwException:
+                raise IndexError,'Unknown model index %s of %s' % (index,self.name)
+            else:
+                return None
 
     def belief2model(self,parent,belief):
         # Find "root" model (i.e., one that has more than just beliefs)
@@ -628,6 +637,10 @@ class Agent:
     def printModel(self,model=True,buf=None,index=None,prefix=''):
         if isinstance(index,int) or isinstance(index,float):
             model = self.index2model(index)
+        if model is None:
+            print >> buf,'%s\t%-12s\t%-12s' % \
+                (prefix,'__model__','__unknown(%s)__' % (index))
+            return
         if not isinstance(model,dict):
             model = self.models[model]
         print >> buf,'%s\t%-12s\t%-12s' % \
@@ -812,7 +825,13 @@ class Agent:
             O = {}
         else:
             O = self.O
-        jointAction = reduce(lambda x,y: x|y,actions.values())
+        if isinstance(actions,ActionSet):
+            actor = actions['subject']
+            jointAction = actions
+            actions = {actor: jointAction}
+        else:
+            # Table of actions across multiple agents
+            jointAction = reduce(lambda x,y: x|y,actions.values())
         # Generate observations along each dimension
         omega = {}
         for key,table in O.items():

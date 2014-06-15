@@ -357,11 +357,23 @@ class World:
     """-----------------"""
 
     def addAgent(self,agent):
-        if self.agents.has_key(agent.name):
+        if self.has_agent(agent):
             raise NameError,'Agent %s already exists in this world' % (agent.name)
         else:
             self.agents[agent.name] = agent
             agent.world = self
+
+    def has_agent(self,agent):
+        """
+        @param agent: The agent (or agent name) to look for
+        @type name: L{Agent} or str
+        @return: C{True} iff this C{World} already has an agent with the same name
+        @rtype: bool
+        """
+        if isinstance(agent,str):
+            return self.agents.has_key(agent)
+        else:
+            return self.agents.has_key(agent.name)
 
     def setTurnDynamics(self,name,action,tree):
         """
@@ -966,29 +978,35 @@ class World:
             raise NameError,'Unprocessed keys: %s' % (remaining.keys())
         return result
 
-    def reachable(self,vector=None,transition=None,horizon=-1,ignore=[],debug=False):
+    def reachable(self,state=None,transition=None,horizon=-1,ignore=[],debug=False):
         """
+        @note: The C{__predecessors__} entry for each reachable vector is a set of possible preceding states (i.e., those whose value must be updated if the value of this vector changes
         @return: transition matrix among states reachable from the given state (default is current state)
         @rtype: KeyedVectorS{->}ActionSetS{->}VectorDistribution
         """
         envelope = set()
         transition = {}
-        if vector is None:
+        if state is None:
             # Initialize with current state
-            for vector in self.state.domain():
+            state = self.state
+        if isinstance(state,VectorDistribution):
+            for vector in state.domain():
                 envelope.add((vector,horizon))
         else:
             # Initialize with given state
-            envelope.add((vector,horizon))
+            envelope.add((state,horizon))
         while len(envelope) > 0:
             vector,horizon = envelope.pop()
+            assert len(vector) == len(state.domain()[0])
+            if debug:
+                print 'Expanding...'
+                self.printVector(vector)
             node = vector.filter(ignore)
+            # If no entry yet, then this is a start node
+            if not transition.has_key(node):
+                transition[node] = {'__predecessors__': set()}
             # Process next steps from this state
-            transition[node] = {}
             if not self.terminated(vector) and horizon != 0:
-                if debug:
-                    print 'Expanding...'
-                    self.printVector(vector)
                 for actions in self.getActions(vector):
                     if debug: print 'Performing:', actions
                     future = self.stepFromState(vector,actions)['new']
@@ -1001,8 +1019,11 @@ class World:
                             self.printVector(newVector)
                         newNode = newVector.filter(ignore)
                         transition[node][actions][newNode] = future[newVector]
-                        if not transition.has_key(newNode):
+                        if transition.has_key(newNode):
+                            transition[newNode]['__predecessors__'].add(node)
+                        else:
                             envelope.add((newNode,horizon-1))
+                            transition[newNode] = {'__predecessors__': set([node])}
         return transition
             
     def nearestVector(self,vector,vectors):

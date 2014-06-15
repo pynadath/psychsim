@@ -72,8 +72,19 @@ class KeyedVector(dict):
         elif isinstance(other,float):
             # Scaling
             result = KeyedVector()
-            for key,value in result.items():
-                result[key] = value*scalar
+            for key,value in self.items():
+                result[key] = value*other
+            return result
+        elif isinstance(other,KeyedMatrix):
+            # Transform vector
+            result = KeyedVector()
+            for key in self.keys():
+                if other.has_key(key):
+                    for col in other[key].keys():
+                        try:
+                            result[col] += self[key]*other[key][col]
+                        except KeyError:
+                            result[col] = self[key]*other[key][col]
             return result
         else:
             raise TypeError,'Unable to multiply %s by %s' % \
@@ -304,8 +315,8 @@ class KeyedMatrix(dict):
             for r1,v1 in self.items():
                 result[r1] = KeyedVector()
                 for c1,value1 in v1.items():
-                    for r2,v2 in other.items():
-                        for c2,value2 in v2.items():
+                    if other.has_key(c1):
+                        for c2,value2 in other[c1].items():
                             try:
                                 result[r1][c2] += value1*value2
                             except KeyError:
@@ -558,14 +569,76 @@ class KeyedPlane:
                 assert span is None,'Unable to scale hyperplanes with both numeric and symbolic variables'
                 symbolic = True
         return self.__class__(vector,threshold)
-            
+
     def __eq__(self,other):
-        if self.vector == other.vector and \
+        if not isinstance(other,KeyedVector):
+            return False
+        elif self.vector == other.vector and \
                 self.threshold == other.threshold and \
                 self.comparison == other.comparison:
             return True
         else:
             return False
+
+    def compare(self,other,value):
+        """
+        Identifies any potential conflicts between two hyperplanes
+        @return: C{None} if no conflict was detected, C{True} if the tests are redundant, C{False} if the tests are conflicting
+        @warning: correct, but not complete
+        """
+        if self.vector == other.vector:
+            if self.comparison == 0:
+                if other.comparison == 0:
+                    # Both are equality tests
+                    if abs(self.threshold - other.threshold) < self.vector.epsilon:
+                        # Values are the same, so test results must be the same
+                        return value
+                    elif value:
+                        # Values are different, but we are equal to the other value
+                        return False
+                    else:
+                        # Values are different, but not equal to other, so no information
+                        return None
+                elif cmp(self.threshold,other.threshold) == other.comparison:
+                    # Our value satisfies other's inequality
+                    if value:
+                        # So no information in this case
+                        return None
+                    else:
+                        # But we know we are invalid in this one
+                        return False
+                else:
+                    # Our value does not satisfy other's inequality
+                    if value:
+                        # We know we are invalid
+                        return False
+                    else:
+                        # And no information
+                        return None
+            elif other.comparison == 0:
+                # Other specifies equality, we are inequality
+                if value:
+                    # Determine whether equality condition satisfies our inequality
+                    return cmp(other.threshold,self.threshold) == self.comparison
+                else:
+                    # No information about inequality
+                    return None
+            else:
+                # Both inequalities, we should do something here
+                return None
+        return None
+
+    def minimize(self):
+        """
+        @return: an equivalent plane with no constant element in the weights
+        """
+        weights = self.vector.__class__(self.vector)
+        if self.vector.has_key(CONSTANT):
+            threshold = self.threshold - self.vector[CONSTANT]
+            del weights[CONSTANT]
+        else:
+            threshold = self.threshold
+        return self.__class__(weights,threshold,self.comparison)
 
     def __str__(self):
         if self._string is None:
@@ -619,6 +692,12 @@ def equalRow(key,value):
     """
     return KeyedPlane(KeyedVector({key: 1.}),value,0)
 
+class KeyedBranch:
+    """
+    Disjuction/conjunction of individual planes
+    """
+    pass
+
 class KeyedTree:
     """
     Decision tree node using symbolic PWL structures
@@ -655,6 +734,35 @@ class KeyedTree:
         self.branch = None
         self.leaf = False
 
+    def isProbabilistic(self):
+        """
+        @return: C{True} if there is a probabilistic branch at this node
+        @rtype: bool
+        """
+        return self.branch is None and not self.isLeaf()
+
+    def collapseProbabilistic(self):
+        """
+        Utility method that combines any consecutive probabilistic branches at this node into a single distribution
+        """
+        if self.isProbabilistic():
+            collapse = False
+            distribution = Distribution(self.children)
+            for child in self.children.domain():
+                if child.isProbabilistic():
+                    # Probabilistic branch to merge
+                    collapse = True
+                    child.collapseProbabilistic()
+                    del distribution[child]
+                    for grandchild in child.children.domain():
+                        try:
+                            distribution[grandchild] += self.children[child]*child.children[grandchild]
+                        except KeyError:
+                            distribution[grandchild] = self.children[child]*child.children[grandchild]
+            if collapse:
+                assert sum(distribution.values()) == 1.
+                self.makeProbabilistic(distribution)
+            
     def __getitem__(self,index):
         if self.isLeaf():
             return self.children[None]
@@ -778,7 +886,238 @@ class KeyedTree:
                 return self.children == other.children
             else:
                 return False
+            
+    def __add__(self,other):
+        if isinstance(other,KeyedTree):
+            return self.compose(other,lambda x,y: x+y)
+        else:
+            return self+KeyedTree(other)
+            
+    def __mul__(self,other):
+        if isinstance(other,KeyedTree):
+            return self.compose(other,lambda x,y: x*y,lambda x,y: x*y)
+        else:
+            return self*KeyedTree(other)
 
+    def max(self,other):
+        return self.compose(other,self.__max)
+
+    def __max(self,leaf1,leaf2):
+        """
+        Helper method for computing max
+        @return: a tree returing the maximum of the two vectors
+        @rtype: L{KeyedTree}
+        """
+        result = self.__class__()
+        if leaf1 is False:
+            result.graft(leaf2)
+        elif leaf2 is False:
+            result.graft(leaf1)
+        else:
+            if isinstance(leaf1,dict):
+                weights = leaf1['vector'] - leaf2['vector']
+            else:
+                # Assume vectors
+                weights = leaf1 - leaf2
+            result.makeBranch(KeyedPlane(weights,0.),KeyedTree(leaf1),KeyedTree(leaf2))
+        return result
+
+    def compose(self,other,leafOp=None,planeOp=None):
+        """
+        Compose two trees into a single tree
+        @param other: the other tree to be composed with
+        @type other: L{KeyedTree}
+        @param leafOp: the binary operator to apply to leaves of each tree to generate a new leaf
+        @param planeOp: the binary operator to apply to the plane
+        @rtype: L{KeyedTree}
+        """
+        result = KeyedTree()
+        if other.isLeaf():
+            if self.isLeaf():
+                result.graft(leafOp(self.children[None],other.children[None]))
+            elif self.branch is None:
+                # Probabilistic branch
+                distribution = self.children.__class__()
+                for old in self.children.domain():
+                    new = old.compose(other,leafOp,planeOp)
+                    if isinstance(new,Distribution):
+                        for tree in new.domain():
+                            try:
+                                distribution[tree] += self.children[old]*new[tree]
+                            except KeyError:
+                                distribution[tree] = self.children[old]*new[tree]
+                    else:
+                        try:
+                            distribution[new] += self.children[old]
+                        except KeyError:
+                            distribution[new] = self.children[old]
+                if len(distribution) > 1:
+                    result.makeProbabilistic(distribution)
+                    result.collapseProbabilistic()
+                else:
+                    result.graft(new)
+            else:
+                # Deterministic branch
+                trueTree = self.children[True].compose(other,leafOp,planeOp)
+                falseTree = self.children[False].compose(other,leafOp,planeOp)
+                if trueTree == falseTree:
+                    result.graft(trueTree)
+                else:
+                    if planeOp is None or not isinstance(other.children[None],KeyedMatrix):
+                        plane = self.branch
+                    else:
+                        plane = KeyedPlane(planeOp(self.branch.vector,other.children[None]),
+                                           self.branch.threshold,self.branch.comparison)
+                    result.makeBranch(plane,trueTree,falseTree)
+        elif other.branch is None:
+            # Probabilistic branch
+            distribution = other.children.__class__()
+            for old in other.children.domain():
+                new = self.compose(old,leafOp,planeOp)
+                if isinstance(new,Distribution):
+                    for tree in new.domain():
+                        try:
+                            distribution[tree] += other.children[old]*new[tree]
+                        except KeyError:
+                            distribution[tree] = other.children[old]*new[tree]
+                else:
+                    try:
+                        distribution[new] += other.children[old]
+                    except KeyError:
+                        distribution[new] = other.children[old]
+            if len(distribution) > 1:
+                result.makeProbabilistic(distribution)
+                result.collapseProbabilistic()
+            else:
+                result.graft(new)
+        else:
+            # Deterministic branch
+            trueTree = self.compose(other.children[True],leafOp,planeOp)
+            falseTree = self.compose(other.children[False],leafOp,planeOp)
+            if trueTree == falseTree:
+                result.graft(trueTree)
+            else:
+                result.makeBranch(other.branch,trueTree,falseTree)
+        return result
+            
+    def replace(self,old,new):
+        """
+        @return: a new tree with the given substitution applied to all leaf nodes
+        """
+        return self.map(lambda leaf: new if leaf == old else leaf)
+
+    def expectation(self):
+        """
+        @return: a new tree representing an expectation over any probabilistic branches
+        """
+        return self.map(distOp=lambda branch: branch.expectation())
+
+    def map(self,leafOp=None,planeOp=None,distOp= None):
+        """
+        Generates a new tree applying a function to all planes and leaves
+        @param leafOp: functional transformation of leaf nodes
+        @type leafOp: lambda XS{->}X
+        @param planeOp: functional transformation of hyperplanes
+        @type planeOp: lambda XS{->}X
+        @param distOp: functional transformation of probabilistic branches
+        @type distOp: lambda L{TreeDistribution}S{->}X
+        @rtype: L{KeyedTree}
+        """
+        result = self.__class__()
+        if self.isLeaf():
+            if leafOp:
+                leaf = leafOp(self.children[None])
+            else:
+                leaf = self.children[None]
+            result.graft(leaf)
+        elif self.isProbabilistic():
+            if distOp:
+                result.graft(distOp(self.children))
+            else:
+                distribution = self.children.__class__()
+                for old in self.children.domain():
+                    new = old.map(leafOp,planeOp,distOp)
+                    try:
+                        distribution[new] += self.children[old]
+                    except KeyError:
+                        distribution[new] = self.children[old]
+                result.makeProbabilistic(distribution)
+        else:
+            # Deterministic branch
+            if planeOp:
+                branch = planeOp(self.branch)
+            else:
+                branch = self.branch
+            result.makeBranch(branch,self.children[True].map(leafOp,planeOp,distOp),
+                              self.children[False].map(leafOp,planeOp,distOp))
+        return result
+
+    def graft(self,root):
+        """
+        Grafts a tree at the current node
+        @warning: clobbers anything currently at (or rooted at) this node
+        """
+        if isinstance(root,TreeDistribution):
+            self.makeProbabilistic(root)
+        elif isinstance(root,KeyedTree):
+            if root.isLeaf():
+                self.makeLeaf(root.children[None])
+            elif root.isProbabilistic():
+                self.makeProbabilistic(root.children)
+            else:
+                self.makeBranch(root.branch,root.children[True],root.children[False])
+        else:
+            # Leaf node (not a very smart use of graft, but who are we to judge)
+            self.makeLeaf(root)
+
+    def prune(self,path=[]):
+        """
+        Removes redundant branches
+        @warning: correct, but not necessarily complete
+        """
+        result = self.__class__()
+        if self.isLeaf():
+            # Leaves are unchanged
+            result.makeLeaf(self.children[None])
+        elif self.isProbabilistic():
+            # Distributions are passed through
+            distribution = self.children.__class__() 
+            for tree in self.children.domain():
+                prob = self.children[tree]
+                tree.prune(path)
+                try:
+                    distribution[tree] += prob
+                except KeyError:
+                    distribution[tree] = prob
+            if len(distribution) == 1:
+                result.graft(tree)
+            else:
+                result.makeProbabilistic(distribution)
+        else:
+            # Deterministic branch
+            for branch,value in path:
+                conflict = self.branch.compare(branch,value)
+                if not conflict is None:
+                    result.graft(self.children[conflict].prune(path))
+                    break
+            else:
+                # No matches
+                result.makeBranch(self.branch,self.children[True].prune(path+[(self.branch,True)]),
+                                  self.children[False].prune(path+[(self.branch,False)]))
+        return result
+
+    def minimizePlanes(self):
+        """
+        Modifies tree in place so that there are no constant factors in branch weights
+        """
+        if self.isProbabilistic():
+            for child in self.children.domain():
+                child.minimizePlanes()
+        elif not self.isLeaf():
+            self.branch = self.branch.minimize()
+            self.children[True].minimizePlanes()
+            self.children[False].minimizePlanes()
+            
     def __hash__(self):
         return hash(str(self))
 
