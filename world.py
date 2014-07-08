@@ -229,9 +229,9 @@ class World:
                 delta = self.deltaState(actions,old,keys)
                 for matrix in delta.domain():
                     try:
-                        effect[matrix] += result['new'][old]
+                        effect[matrix] += result['new'][old]*delta[matrix]
                     except KeyError:
-                        effect[matrix] = result['new'][old]
+                        effect[matrix] = result['new'][old]*delta[matrix]
                     newVector = KeyedVector(old)
                     newVector.update(matrix*old)
                     prob = result['new'][old]*delta[matrix]
@@ -315,10 +315,27 @@ class World:
         result = MatrixDistribution({KeyedMatrix(): 1.})
         for key in keys:
             dynamics = self.getDynamics(key,actions)
+            dynamics = [tree[vector] for tree in dynamics]
+            dynamics = [delta for delta in dynamics if not delta is None]
             if dynamics:
-                assert len(dynamics) == 1,'Unable to merge multiple effects of %s on %s' % \
-                    (ActionSet(actions),key)
-                result.update(dynamics[0][vector])
+                if len(dynamics) > 1:
+                    if self.variables[key]['combinator'] == '*':
+                        # Multiply deltas in sequence
+                        current = None
+                        for matrix in dynamics:
+                            matrix = KeyedMatrix(matrix)
+                            if current is None:
+                                current = matrix
+                            else:
+                                for other in matrix[key].keys():
+                                    if not current.has_key(other):
+                                        current[other] = KeyedVector({other: 1.})
+                                current = matrix*current
+                        result.update(current)
+                    else:
+                        raise ValueError,'No valid combinator specified for multiple effects on %s' % (key)
+                else:
+                    result.update(dynamics[0])
         return result
 
     def addTermination(self,tree):
@@ -426,10 +443,10 @@ class World:
         if not self.dynamics.has_key(key):
             return []
         if isinstance(action,Action):
-            action = ActionSet([action])
+            return self.getDynamics(key,ActionSet([action]))
         elif not isinstance(action,ActionSet):
             # Table of actions by multiple agents
-            action = ActionSet(action)
+            return self.getDynamics(key,ActionSet(action))
         try:
             return [self.dynamics[key][action]]
         except KeyError:
@@ -446,8 +463,8 @@ class World:
                             tree = None
                         if tree:
                             table = {}
-                            for key in atom.getParameters():
-                                table[actionKey(key)] = atom[key]
+                            for field in atom.getParameters():
+                                table[actionKey(field)] = atom[field]
                             dynamics.append(tree.desymbolize(table))
             return dynamics
 
@@ -474,8 +491,9 @@ class World:
                     foundInd = True
             else:
                 if dependent in entry:
-                    # Dependent is in the same time frame
-                    entry.remove(dependent)
+                    if not foundInd:
+                    # Dependent is in the same or earlier time frame
+                        entry.remove(dependent)
                     foundDep = True
                 if independent in entry:
                     # Here is the independent variable
@@ -558,6 +576,7 @@ class World:
                     tree = makeTree(incrementMatrix(key,-1))
                 self.setTurnDynamics(name,actions,tree)
                 dynamics = [tree]
+            # Combine any turn dynamics into single matrix
             matrix = dynamics[0][vector]
             assert isinstance(matrix,KeyedMatrix),'Dynamics must be deterministic'
             delta.update(matrix)
@@ -586,7 +605,7 @@ class World:
     """State methods"""
     """-------------"""
 
-    def defineVariable(self,key,domain=float,lo=-1.,hi=1.,description=None,evaluate=True):
+    def defineVariable(self,key,domain=float,lo=-1.,hi=1.,description=None,combinator=None,evaluate=True):
         """
         Define the type and domain of a given element of the state vector
         @param key: string label for the column being defined
@@ -604,11 +623,13 @@ class World:
         @type hi: float/int
         @param description: optional text description explaining what this state feature means
         @type description: str
+        @param combinator: how should multiple dynamics for this variable be combined
         """
         if self.variables.has_key(key):
             raise NameError,'Variable %s already defined' % (key)
         self.variables[key] = {'domain': domain,
-                               'description': description}
+                               'description': description,
+                               'combinator': combinator}
         if domain is float:
             self.variables[key].update({'lo': lo,'hi': hi})
         elif domain is int:
@@ -723,7 +744,7 @@ class World:
     def decodeVariable(self,key,distribution):
         raise DeprecationWarning,'Use float2value method instead'
 
-    def defineState(self,entity,feature,domain=float,lo=0.,hi=1.,description=None):
+    def defineState(self,entity,feature,domain=float,lo=0.,hi=1.,description=None,combinator=None):
         """
         Defines a state feature associated with a single agent, or with the global world state.
         @param entity: if C{None}, the given feature is on the global world state; otherwise, it is local to the named agent
@@ -736,7 +757,7 @@ class World:
             self.locals[entity] = {feature: key}
         if not domain is None:
             # Haven't defined this feature yet
-            self.defineVariable(key,domain,lo,hi,description)
+            self.defineVariable(key,domain,lo,hi,description,combinator)
 
     def setState(self,entity,feature,value,state=None):
         """
@@ -755,7 +776,7 @@ class World:
         @param feature: the state feature of interest
         @type feature: str
         """
-        return self.getFeature(stateKey(entity,feature))
+        return self.getFeature(stateKey(entity,feature),state)
 
     def defineRelation(self,subj,obj,name,domain=float,lo=0.,hi=1.,description=None):
         """
@@ -1321,6 +1342,8 @@ class World:
                 subsubnode = doc.createElement('description')
                 subsubnode.appendChild(doc.createTextNode(entry['description']))
                 subnode.appendChild(subsubnode)
+            if entry['combinator']:
+                subnode.setAttribute('combinator',str(entry['combinator']))
             node.appendChild(subnode)
         # Local/global state
         for entity,table in self.locals.items():
@@ -1346,9 +1369,10 @@ class World:
         for key,table in self.dynamics.items():
             subnode = doc.createElement('table')
             subnode.setAttribute('key',key)
-            for action,tree, in table.items():
-                subnode.appendChild(action.__xml__().documentElement)
-                subnode.appendChild(tree.__xml__().documentElement)
+            if isinstance(table,dict):
+                for action,tree, in table.items():
+                    subnode.appendChild(action.__xml__().documentElement)
+                    subnode.appendChild(tree.__xml__().documentElement)
             node.appendChild(subnode)
         root.appendChild(node)
         # Inter-state dependency
@@ -1384,13 +1408,17 @@ class World:
         root.appendChild(node)
         return doc
 
-    def parse(self,element):
+    def parse(self,element,agentClass=Agent):
         self.initialize()
         node = element.firstChild
         while node:
             if node.nodeType == node.ELEMENT_NODE:
                 if node.tagName == 'agent':
-                    self.addAgent(Agent(node))
+                    if agentClass.isXML(node):
+                        self.addAgent(agentClass(node))
+                    else:
+                        assert Agent.isXML(node)
+                        self.addAgent(Agent(node))
                 elif node.tagName == 'state':
                     subnode = node.firstChild
                     while subnode:
@@ -1399,8 +1427,8 @@ class World:
                                 self.state.parse(subnode)
                             elif subnode.tagName == 'feature':
                                 key = str(subnode.getAttribute('name'))
-                                domain,lo,hi,description = parseDomain(subnode)
-                                self.defineVariable(key,domain,lo,hi,description)
+                                domain,lo,hi,description,combinator = parseDomain(subnode)
+                                self.defineVariable(key,domain,lo,hi,description,combinator)
                             elif subnode.tagName == 'local':
                                 entity = str(subnode.getAttribute('entity'))
                                 if not entity:
@@ -1442,6 +1470,9 @@ class World:
                                     else:
                                         raise NameError,'Unknown dynamics element: %s' % (subsubnode.tagName)
                                 subsubnode = subsubnode.nextSibling
+                            if len(self.dynamics[key]) == 0:
+                                # Empty table
+                                self.dynamics[key] = True
                         subnode = subnode.nextSibling
                 elif node.tagName == 'dependency':
                     subnode = node.firstChild
@@ -1579,11 +1610,17 @@ def parseDomain(subnode):
     elif domain == 'list':
         domain = list
         lo = []
+    elif domain == 'set':
+        domain = set
+        lo = []
     elif domain == 'ActionSet':
         domain = ActionSet
         lo = []
     else:
         raise TypeError,'Unknown feature domain type: %s' % (domain)
+    combinator = str(subnode.getAttribute('combinator'))
+    if len(combinator) == 0:
+        combinator = None
     subsubnode = subnode.firstChild
     while subsubnode:
         if subsubnode.nodeType == subsubnode.ELEMENT_NODE:
@@ -1597,7 +1634,7 @@ def parseDomain(subnode):
                 assert subsubnode.tagName == 'description'
                 description = str(subsubnode.firstChild.data).strip()
         subsubnode = subsubnode.nextSibling
-    return domain,lo,hi,description
+    return domain,lo,hi,description,combinator
 
 def scaleValue(value,entry):
     """

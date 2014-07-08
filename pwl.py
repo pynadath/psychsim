@@ -240,7 +240,10 @@ class VectorDistribution(Distribution):
     def marginal(self,key):
         result = {}
         for row in self.domain():
-            result[row[key]] = self[row]
+            try:
+                result[row[key]] += self[row]
+            except KeyError:
+                result[row[key]] = self[row]
         return Distribution(result)
 
     def hasColumn(self,key):
@@ -330,8 +333,16 @@ class KeyedMatrix(dict):
                             result[r1] += value1*other[c1]
                         except KeyError:
                             result[r1] = value1*other[c1]
+        elif isinstance(other,VectorDistribution):
+            result = VectorDistribution()
+            for vector in other.domain():
+                product = self*vector
+                try:
+                    result[product] += other[vector]
+                except KeyError:
+                    result[product] = other[vector]
         else:
-            raise TypError,'Unable to multiply %s by %s' % \
+            raise TypeError,'Unable to multiply %s by %s' % \
                 (self.__class__.__name__,other.__class__.__name__)
         return result
 
@@ -643,8 +654,8 @@ class KeyedPlane:
     def __str__(self):
         if self._string is None:
             operator = ['==','>','<'][self.comparison]
-            self._string = '%s %s %f' % (' + '.join(map(lambda (k,v): '%5.3f*%s' % (v,k),self.vector.items())),
-                                        operator,self.threshold)
+            self._string = '%s %s %s' % (' + '.join(map(lambda (k,v): '%5.3f*%s' % (v,k),self.vector.items())),
+                                             operator,self.threshold)
         return self._string
 
     def __xml__(self):
@@ -691,6 +702,12 @@ def equalRow(key,value):
     @rtype: L{KeyedPlane}
     """
     return KeyedPlane(KeyedVector({key: 1.}),value,0)
+def equalFeatureRow(key1,key2):
+    """
+    @return: a plane testing whether the values of the two given features are equal
+    @rtype: L{KeyedPlane}
+    """
+    return KeyedPlane(KeyedVector({key1: 1.,key2: -1.}),0,0)
 
 class KeyedBranch:
     """
@@ -1150,6 +1167,8 @@ class KeyedTree:
                 elif isinstance(value,str):
                     node = doc.createElement('str')
                     node.appendChild(doc.createTextNode(value))
+                elif value is None:
+                    node = doc.createElement('none')
                 else:
                     node = value.__xml__().documentElement
                 node.setAttribute('key',str(key))
@@ -1189,6 +1208,9 @@ class KeyedTree:
                 elif node.tagName == 'str':
                     key = eval(node.getAttribute('key'))
                     children[key] = str(node.firstChild.data).strip()
+                elif node.tagName == 'none':
+                    key = eval(node.getAttribute('key'))
+                    children[key] = None
             node = node.nextSibling
         if plane:
             self.makeBranch(plane,children[True],children[False])
@@ -1210,6 +1232,9 @@ class TreeDistribution(Distribution):
 def makeTree(table):
     if isinstance(table,bool):
         # Boolean leaf
+        return KeyedTree(table)
+    elif table is None:
+        # Null leaf
         return KeyedTree(table)
     elif isinstance(table,str):
         # String leaf
