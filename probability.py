@@ -152,7 +152,8 @@ class Distribution(dict):
 
     def __mul__(self,other):
         if isinstance(other,Distribution):
-            raise NotImplementedError,'Unable to multiply two distributions.'
+            raise NotImplementedError,'Unable to multiply %s by %s.' \
+                % (self.__class__.__name__,other.__class__.__name__)
         else:
             result = {}
             for element in self.domain():

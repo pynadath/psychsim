@@ -409,17 +409,21 @@ class Agent:
             self.legal[new] = condition
         return new
 
-    def getActions(self,vector):
+    def getActions(self,vector,actions=None):
         """
+        @param vector: the world in which to test legality
+        @param actions: the set of actions to test legality of (default is all available actions)
         @return: the set of possible actions to choose from in the given state vector
         @rtype: {L{ActionSet}}
         """
+        if actions is None:
+            actions = self.actions
         if len(self.legal) == 0:
             # No restrictions on legal actions, so take a shortcut
-            return self.actions
+            return actions
         # Otherwise, filter out illegal actions
         result = set()
-        for action in self.actions:
+        for action in actions:
             try:
                 tree = self.legal[action]
             except KeyError:
@@ -1117,6 +1121,10 @@ class Agent:
                         subnode = subnode.nextSibling
                     self.legal[action] = tree
             node = node.nextSibling
+
+    @staticmethod
+    def isXML(element):
+        return element.tagName == 'agent'
 
 class ValueFunction:
     """
