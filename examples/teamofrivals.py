@@ -18,6 +18,10 @@ class ResourceWorld(World):
             self.winnerState = winnerState
 
     def getResources(self,state=None):
+        """
+        @return: a table of amount of resources owned by each player
+        @rtype: strS{->}int
+        """
         if state is None:
             state = self.state
         resources = {}
@@ -27,18 +31,28 @@ class ResourceWorld(World):
         return resources
 
     def getOwnership(self,state=None):
+        """
+        @return: a table of territories owned by each agent
+        @rtype: strS{->}set(str)
+        """
         if state is None:
             state = self.state
         ownership = {}
+        # Hacky way to figure out what can be owned
         for agent in self.agents.values():
             if isinstance(agent,ResourceAgent):
-                ownership[agent.name] = set()
-                for obj in agent.objects:
-                    owner = self.getState(obj,'owner')
-                    assert len(owner) == 1
-                    owner = owner.domain()[0]
-                    if owner == agent.name:
-                        ownership[agent.name].add(obj)
+                objects = agent.objects
+                break
+        for obj in objects:
+            # Who owns it?
+            owner = self.getState(obj,'owner')
+            assert len(owner) == 1
+            owner = owner.domain()[0]
+            # Add to table
+            try:
+                ownership[owner].add(obj)
+            except KeyError:
+                ownership[owner] = {obj}
         return ownership
 
     def predictResult(self,actions):
@@ -507,12 +521,14 @@ if __name__ == '__main__':
             resources = world.getResources()
             regions = world.getOwnership()
             for player in range(4):
-                print 'Player %d: %d' % (player+1,resources['Player%d' % (player+1)])
-                print '\t%s' % (','.join(regions['Player%d' % (player+1)]))
+                print 'Player %d: %d resources' % (player+1,resources['Player%d' % (player+1)])
+                print '\tTerritories owned: %s' % (','.join(regions['Player%d' % (player+1)]))
                 total = 0
                 for region in regions['Player%d' % (player+1)]:
                     total += state[stateKey(region,'value')]
                 assert total == resources['Player%d' % (player+1)],'Mismatch in %d\'s resources' % (player+1)
+            if regions.has_key('Enemy'):
+                print 'Enemy: %s' % (', '.join(['%s (%d)' % (o,state[stateKey(o,'occupants')]) for o in regions['Enemy']]))
             print
             # Check whether game is over
             if world.terminated() or (args['single'] and rnd == 2):
@@ -584,7 +600,9 @@ if __name__ == '__main__':
                     actions[name] = ActionSet(choices)
                 else:
                     actions[name] = agent.sampleAction(state,2)
-                print actions[name]
+        if phase == 'allocate':
+            for player in range(4):
+                print 'Player %d invades: %s' % (player+1,', '.join(['%s (%d)' % (a['object'],a['amount']) for a in actions['Player%d' % (player+1)]]))
         # Look at possible outcomes
         if args['predict'] and phase == 'allocate':
             prediction = world.predictResult(actions)
@@ -600,3 +618,20 @@ if __name__ == '__main__':
         outcomes = world.step(actions,select=False)
         if len(world.state) > 1:
             world.state.select()
+            if not args['predict']:
+                # Haven't figured out the objects yet
+                objects = set()
+                for name,action in actions.items():
+                    for atom in action:
+                        objects.add(atom['object'])
+                objects = list(objects)
+                objects.sort()
+            print
+            print 'Results'
+            for obj in objects:
+                key = stateKey(obj,'owner')
+                owner = world.float2value(key,world.state.domain()[0][key])
+                if owner == 'Enemy':
+                    print '%s: Lost' % (obj)
+                else:
+                    print '%s: Won by %s' % (obj,owner)
