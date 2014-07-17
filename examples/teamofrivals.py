@@ -2,6 +2,7 @@
 Scenario for cooperative conquest game
 
 usage: teamofrivals.py [-h] [-p] [-n NUMBER] [-1] [-m] [-q]
+                       [--additive | --restorative | --minimal]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -11,6 +12,10 @@ optional arguments:
   -1, --single          stop execution after one round [default: False]
   -m, --manual          enter actions manually [default: False]
   -q, --quiet           suppress all output [default: False]
+  --additive            Resources from all territories, unused ones kept
+                        [default]
+  --restorative         Resources from all territories, unused ones lost
+  --minimal             Resources from initial territories, unused ones lost
 
 Output:
 --------
@@ -475,18 +480,26 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
             # Determine how many resources lost
             action = Action({'subject': player.name,'verb': 'allocate','object': region.name})
             world.addDependency(resources,owner)
-            tree = makeTree(incrementMatrix(resources,'-%s' % (actionKey('amount'))))
+            if generation == 'additive':
+                # Lose only those resources allocated
+                tree = makeTree(incrementMatrix(resources,'-%s' % (actionKey('amount'))))
+            else:
+                # Lose all resources
+                tree = makeTree(setToConstantMatrix(resources,0))
             world.setDynamics(resources,action,tree)
             # Regain resources from owned territories
             action = Action({'subject': region.name,'verb': 'generate'})
-            if generation == 'additive':
+            if generation == 'additive' or generation == 'restorative':
                 tree = makeTree({'if': equalRow(owner,player.name),
                                  True: addFeatureMatrix(resources,stateKey(region.name,'value')),
                                  False: None})
-            elif generation == 'restorative':
-                tree = makeTree({'if': equalRow(owner,player.name),
-                                 True: setToFeatureMatrix(resources,stateKey(region.name,'value')),
-                                 False: None})
+            elif generation == 'minimal':
+                if region is world.agents[starts[int(player.name[-1])-1]]:
+                    tree = makeTree({'if': equalRow(owner,player.name),
+                                     True: setToFeatureMatrix(resources,stateKey(region.name,'value')),
+                                     False: None})
+                else:
+                    tree = makeTree(noChangeMatrix(resources))
             elif generation is None:
                 tree = makeTree(noChangeMatrix(resources))
             world.setDynamics(resources,action,tree)
@@ -551,7 +564,20 @@ if __name__ == '__main__':
     parser.add_argument('-q','--quiet',action='store_true',
                         dest='quiet',
                         help='suppress all output [default: %(default)s]')
+
+    # Optional arguments that select the resource generation model
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--additive',action='store_const',const='additive',dest='generation',
+                       help='Resources from all territories, unused ones kept [default]')
+    group.add_argument('--restorative',action='store_const',const='restorative',dest='generation',
+                       help='Resources from all territories, unused ones lost')
+    group.add_argument('--minimal',action='store_const',const='minimal',dest='generation',
+                       help='Resources from initial territories, unused ones lost')
+
     args = vars(parser.parse_args())
+    if args['generation'] is None:
+        # Default generation?
+        args['generation'] = 'restorative'
 
     ######
     # Set up map
@@ -581,7 +607,7 @@ if __name__ == '__main__':
     ######
     # Create PsychSim models
     ######
-    world = createWorld(4,asia,['Ural','Middle East','Kamchatka','Siam'])
+    world = createWorld(4,asia,['Ural','Middle East','Kamchatka','Siam'],args['generation'])
     world.save('asia.psy')
 
     # Set up end-of-game stat storage
@@ -620,7 +646,6 @@ if __name__ == '__main__':
                         total = 0
                         for region in regions['Player%d' % (player+1)]:
                             total += world.getValue(stateKey(region,'value'))
-                        assert total == resources['Player%d' % (player+1)],'Mismatch in %d\'s resources' % (player+1)
                     if regions.has_key('Enemy'):
                         print 'Enemy: %s' % (', '.join(['%s (%d)' % (o,world.getValue(stateKey(o,'occupants'))) for o in regions['Enemy']]))
                     print
