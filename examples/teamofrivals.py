@@ -1,5 +1,35 @@
 """
 Scenario for cooperative conquest game
+
+usage: teamofrivals.py [-h] [-p] [-n NUMBER] [-1] [-m] [-q]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p, --predict         print out predictions before stepping [default: False]
+  -n NUMBER, --number NUMBER
+                        Number of games to play [default: 1]
+  -1, --single          stop execution after one round [default: False]
+  -m, --manual          enter actions manually [default: False]
+  -q, --quiet           suppress all output [default: False]
+
+Output:
+--------
+Round number
+--------
+Player: how many resources this player currently owns
+        which territories this player currently owns
+Enemy: which territories are still currently owned by the enemy (number of defenders in each territory in parens)
+
+Player actions: which territories the player has chosen to invade (number of armies allocated in parens)
+
+Optional Predictions:
+        Territory being invaded (how many resources are gained by the owner)
+                The player(s) who would be the owner if the invasion is successful
+                The probability that the invasion will be successful
+
+Results
+Territory being invaded: the result of the invasion
+
 """
 from argparse import ArgumentParser
 import random
@@ -11,11 +41,25 @@ from psychsim.agent import Agent
 
 class ResourceWorld(World):
     def __init__(self,xml=None,allocateVerb=None,allocationState=None,winnerState=None):
+        self.allocators = set()
+        self.objects = set()
         World.__init__(self,xml)
         if xml is None:
             self.allocateVerb = allocateVerb
             self.allocationState = allocationState
             self.winnerState = winnerState
+
+    def addAgent(self,agent):
+        World.addAgent(self,agent)
+        if isinstance(agent,ResourceAgent):
+            self.allocators.add(agent)
+            for obj in agent.objects:
+                if self.agents.has_key(obj):
+                    self.objects.add(self.agents[obj])
+        else:
+            for other in self.allocators:
+                if agent.name in other.objects:
+                    self.objects.add(agent)
 
     def getResources(self,state=None):
         """
@@ -214,6 +258,9 @@ class ResourceAgent(Agent):
         Generates a random (legal) action for this agent in the given world
         """
         targets = []
+        if isinstance(vector,VectorDistribution):
+            assert len(vector) == 1,'Unable to sample actions in an uncertain world'
+            vector = vector.domain()[0]
         resources = vector[stateKey(self.name,self.resourceName)]
         for obj in self.legalObjects(vector):
             targets.append(obj)
@@ -239,6 +286,9 @@ class ResourceAgent(Agent):
         return ActionSet(actions)
 
     def legalObjects(self,vector):
+        if isinstance(vector,VectorDistribution):
+            assert len(vector.domain()) == 1,'Unable to determine legal objects in an uncertain world'
+            vector = vector.domain()[0]
         return [obj for obj in self.objects if self.objectLegality[obj][vector]]
 
     def __xml__(self):
@@ -311,7 +361,7 @@ def powerSet(limit):
         old = new
     return old
 
-def createWorld(numPlayers,regionTable,starts,maxResources=32):
+def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources=32):
     """
     @param numPlayers: number of players in the game
     @type numPlayers: int
@@ -429,9 +479,16 @@ def createWorld(numPlayers,regionTable,starts,maxResources=32):
             world.setDynamics(resources,action,tree)
             # Regain resources from owned territories
             action = Action({'subject': region.name,'verb': 'generate'})
-            tree = makeTree({'if': equalRow(owner,player.name),
-                             True: addFeatureMatrix(resources,stateKey(region.name,'value')),
-                             False: None})
+            if generation == 'additive':
+                tree = makeTree({'if': equalRow(owner,player.name),
+                                 True: addFeatureMatrix(resources,stateKey(region.name,'value')),
+                                 False: None})
+            elif generation == 'restorative':
+                tree = makeTree({'if': equalRow(owner,player.name),
+                                 True: setToFeatureMatrix(resources,stateKey(region.name,'value')),
+                                 False: None})
+            elif generation is None:
+                tree = makeTree(noChangeMatrix(resources))
             world.setDynamics(resources,action,tree)
 
     # The game has two phases: generating resources and allocating resources
@@ -469,20 +526,36 @@ def createWorld(numPlayers,regionTable,starts,maxResources=32):
     return world
 
 if __name__ == '__main__':
+    ######
+    # Parse command-line arguments
+    ######
+
     parser = ArgumentParser()
-    # Optional argument that sets the filename for a command script
-    parser.add_argument('-m','--manual',action='store_true',
-                      dest='manual',
-                      help='enter actions manually [default: %(default)s]')
     # Optional argument that prints out predictions as well
     parser.add_argument('-p','--predict',action='store_true',
                       dest='predict',
                       help='print out predictions before stepping [default: %(default)s]')
+    # Optional argument that sets the initial number of games to play 
+    parser.add_argument('-n','--number',action='store',
+                        dest='number',type=int,default=1,
+                        help='Number of games to play [default: %(default)s]')
     # Optional argument that stops execution after 1 round
     parser.add_argument('-1','--single',action='store_true',
                       dest='single',
                       help='stop execution after one round [default: %(default)s]')
+    # Optional argument that sets the filename for a command script
+    parser.add_argument('-m','--manual',action='store_true',
+                        dest='manual',
+                        help='enter actions manually [default: %(default)s]')
+    # Optional argument that suppresses all output
+    parser.add_argument('-q','--quiet',action='store_true',
+                        dest='quiet',
+                        help='suppress all output [default: %(default)s]')
     args = vars(parser.parse_args())
+
+    ######
+    # Set up map
+    ######
 
     # Set of borders in Asia in Risk (only one direction included)
     asia = {'Afghanistan': {'neighbors': {'Ural','China','India','Middle East'},
@@ -505,133 +578,194 @@ if __name__ == '__main__':
     # Fills out the transitive closure so that all neighbor links are bi-directional
     closeRegions(asia)
 
+    ######
+    # Create PsychSim models
+    ######
     world = createWorld(4,asia,['Ural','Middle East','Kamchatka','Siam'])
+    world.save('asia.psy')
 
-    world.save('/tmp/asia.psy')
-    world = ResourceWorld('/tmp/asia.psy')
-    while True:
-        state = world.state.domain()[0]
-        phase = world.float2value('phase',state['phase'])
-        if phase == 'allocate':
-            # Print current game state
-            rnd = state[stateKey(None,'round')]
-            print '--------'
-            print 'Round %2d' % (rnd)
-            print '--------'
-            resources = world.getResources()
-            regions = world.getOwnership()
-            for player in range(4):
-                print 'Player %d: %d resources' % (player+1,resources['Player%d' % (player+1)])
-                print '\tTerritories owned: %s' % (','.join(regions['Player%d' % (player+1)]))
-                total = 0
-                for region in regions['Player%d' % (player+1)]:
-                    total += state[stateKey(region,'value')]
-                assert total == resources['Player%d' % (player+1)],'Mismatch in %d\'s resources' % (player+1)
-            if regions.has_key('Enemy'):
-                print 'Enemy: %s' % (', '.join(['%s (%d)' % (o,state[stateKey(o,'occupants')]) for o in regions['Enemy']]))
-            print
-            # Check whether game is over
-            if world.terminated() or (args['single'] and rnd == 2):
-                break
-        # Who's doing what
-        actions = {}
-        turns = world.next(state)
-        turns.sort()
-        for name in turns:
-            if phase  == 'generate':
-                # Time for re-generation of resources
-                assert not isinstance(world.agents[name],ResourceAgent)
-                actions[name] = Action({'subject': name,'verb': 'generate'})
-            else:
-                assert phase == 'allocate'
-                # Time for players to allocate resources
-                agent = world.agents[name]
-                if args['manual']:
-                    # Manual selection of actions
-                    objects = agent.legalObjects(state)
-                    objects.sort()
-                    resources = state[stateKey(agent.name,agent.resourceName)]
-                    choices = set()
-                    while True:
-                        # Pick a target
-                        print
-                        for i in range(len(objects)):
-                            print '%2d) %s\t(value: %2d, defenders: %2d)' % \
-                                (i+1,objects[i],state[stateKey(objects[i],'value')],
-                                 state[stateKey(objects[i],'occupants')])
-                        print ' 0) End %s\'s turn' % (name)
-                        print '-1) End game'
-                        print
-                        print 'Choose target for %s: ' % (name),
-                        try:
-                            index = int(sys.stdin.readline().strip())
-                        except:
-                            continue
-                        if index == 0:
-                            # Chosen done
-                            break
-                        elif index == -1:
-                            sys.exit()
-                        if index > len(objects) or index < 0:
-                            # Illegal value
-                            continue
-                        # Pick an amount
-                        print '\nChoose resources for %s to allocate to %s (1-%d): ' \
-                            % (agent.name,objects[index-1],resources),
-                        try:
-                            amount = int(sys.stdin.readline().strip())
-                        except:
-                            continue
-                        if amount < 1 or amount > resources:
-                            # Illegal value
-                            continue
-                        print
-                        action = Action({'subject': agent.name,
-                                         'verb': agent.verbName,
-                                         'object': objects[index-1],
-                                         'amount': amount})
-                        # Update available targets and resources
-                        del objects[index-1]
-                        resources -= amount
-                        choices.add(action)
-                        if resources == 0:
-                            # Nothing  left to allocate
-                            break
-                    actions[name] = ActionSet(choices)
+    # Set up end-of-game stat storage
+    stats = {'rounds': Distribution()}                       # How many rounds did it take to win?
+    for player in world.allocators:
+        stats[player.name] = {'resources': Distribution(),   # How many resources does the player end with?
+                              'territory': Distribution()}   # How many regions does the player end with?
+        for region in world.objects:
+            stats[player.name][region.name] = Distribution() # Does the player end with this region?
+    totalProb = 0.
+
+    for iteration in range(args['number']):
+        world = ResourceWorld('asia.psy')
+
+        ######
+        # Game loop
+        ######
+
+        # The probability of this current run
+        probability = 1.
+
+        while True:
+            phase = world.getValue('phase')
+            if phase == 'allocate':
+                if not args['quiet']:
+                    # Print current game state
+                    rnd = world.getValue('round')
+                    print '--------'
+                    print 'Round %2d' % (rnd)
+                    print '--------'
+                    resources = world.getResources()
+                    regions = world.getOwnership()
+                    for player in range(4):
+                        print 'Player %d: %d resources' % (player+1,resources['Player%d' % (player+1)])
+                        print '\tTerritories owned: %s' % (','.join(regions['Player%d' % (player+1)]))
+                        total = 0
+                        for region in regions['Player%d' % (player+1)]:
+                            total += world.getValue(stateKey(region,'value'))
+                        assert total == resources['Player%d' % (player+1)],'Mismatch in %d\'s resources' % (player+1)
+                    if regions.has_key('Enemy'):
+                        print 'Enemy: %s' % (', '.join(['%s (%d)' % (o,world.getValue(stateKey(o,'occupants'))) for o in regions['Enemy']]))
+                    print
+                # Check whether game is over
+                if world.terminated() or (args['single'] and rnd == 2):
+                    break
+            # Who's doing what
+            actions = {}
+            turns = world.next()
+            if args['manual']:
+                turns.sort()
+            for name in turns:
+                if phase  == 'generate':
+                    # Time for re-generation of resources
+                    assert not isinstance(world.agents[name],ResourceAgent)
+                    actions[name] = Action({'subject': name,'verb': 'generate'})
                 else:
-                    actions[name] = agent.sampleAction(state,2)
-        if phase == 'allocate':
-            for player in range(4):
-                print 'Player %d invades: %s' % (player+1,', '.join(['%s (%d)' % (a['object'],a['amount']) for a in actions['Player%d' % (player+1)]]))
-        # Look at possible outcomes
-        if args['predict'] and phase == 'allocate':
-            prediction = world.predictResult(actions)
-            objects = prediction.keys()
-            objects.sort()
-            print
-            print 'Predictions:'
-            for obj in objects:
-                print '\t%s (worth %d)' % (obj,state[stateKey(obj,'value')])
-                print '\t\tLeader:',','.join(prediction[obj]['leader'].domain())
-                print '\t\tWin: %d%%' % (100-int(100*prediction[obj]['winner']['Enemy']))
-        # Perform actions
-        outcomes = world.step(actions,select=False)
-        if len(world.state) > 1:
-            world.state.select()
-            if not args['predict']:
-                # Haven't figured out the objects yet
-                objects = set()
-                for name,action in actions.items():
-                    for atom in action:
-                        objects.add(atom['object'])
-                objects = list(objects)
+                    assert phase == 'allocate'
+                    # Time for players to allocate resources
+                    agent = world.agents[name]
+                    if args['manual']:
+                        # Manual selection of actions
+                        objects = agent.legalObjects(world.state)
+                        objects.sort()
+                        resources = world.getValue(stateKey(agent.name,agent.resourceName))
+                        choices = set()
+                        while True:
+                            # Pick a target
+                            print
+                            for i in range(len(objects)):
+                                print '%2d) %s\t(value: %2d, defenders: %2d)' % \
+                                    (i+1,objects[i],world.getValue(stateKey(objects[i],'value')),
+                                     world.getValue(stateKey(objects[i],'occupants')))
+                            print ' 0) End %s\'s turn' % (name)
+                            print '-1) End game'
+                            print
+                            print 'Choose target for %s: ' % (name),
+                            try:
+                                index = int(sys.stdin.readline().strip())
+                            except:
+                                continue
+                            if index == 0:
+                                # Chosen done
+                                break
+                            elif index == -1:
+                                sys.exit()
+                            if index > len(objects) or index < 0:
+                                # Illegal value
+                                continue
+                            # Pick an amount
+                            print '\nChoose resources for %s to allocate to %s (1-%d): ' \
+                                % (agent.name,objects[index-1],resources),
+                            try:
+                                amount = int(sys.stdin.readline().strip())
+                            except:
+                                continue
+                            if amount < 1 or amount > resources:
+                                # Illegal value
+                                continue
+                            print
+                            action = Action({'subject': agent.name,
+                                             'verb': agent.verbName,
+                                             'object': objects[index-1],
+                                             'amount': amount})
+                            # Update available targets and resources
+                            del objects[index-1]
+                            resources -= amount
+                            choices.add(action)
+                            if resources == 0:
+                                # Nothing  left to allocate
+                                break
+                        actions[name] = ActionSet(choices)
+                    else:
+                        actions[name] = agent.sampleAction(world.state,2)
+            if phase == 'allocate' and not args['quiet']:
+                for player in range(4):
+                    print 'Player %d invades: %s' % (player+1,', '.join(['%s (%d)' % (a['object'],a['amount']) for a in actions['Player%d' % (player+1)]]))
+            # Look at possible outcomes
+            if args['predict'] and phase == 'allocate' and not args['quiet']:
+                prediction = world.predictResult(actions)
+                objects = prediction.keys()
                 objects.sort()
-            print
-            print 'Results'
-            for obj in objects:
-                key = stateKey(obj,'owner')
-                owner = world.float2value(key,world.state.domain()[0][key])
-                if owner == 'Enemy':
-                    print '%s: Lost' % (obj)
-                else:
-                    print '%s: Won by %s' % (obj,owner)
+                print
+                print 'Predictions:'
+                for obj in objects:
+                    print '\t%s (worth %d)' % (obj,world.getValue(stateKey(obj,'value')))
+                    print '\t\tLeader:',','.join(prediction[obj]['leader'].domain())
+                    print '\t\tWin: %d%%' % (100-int(100*prediction[obj]['winner']['Enemy']))
+            # Perform actions
+            outcomes = world.step(actions,select=False)
+            if len(world.state) > 1:
+                sample = world.state.select()
+                probability *= sample
+                if not args['quiet']:
+                    if not args['predict']:
+                        # Haven't figured out the objects yet
+                        objects = set()
+                        for name,action in actions.items():
+                            for atom in action:
+                                objects.add(atom['object'])
+                        objects = list(objects)
+                        objects.sort()
+                    print
+                    print 'Results (prob %d%%):' % (int(100*sample))
+                    for obj in objects:
+                        owner = world.getValue(stateKey(obj,'owner'))
+                        if owner == 'Enemy':
+                            print '%s: Lost' % (obj)
+                        else:
+                            print '%s: Won by %s' % (obj,owner)
+        # Accumulate end-of-game stats
+        resources = world.getResources()
+        regions = world.getOwnership()
+        stats['rounds'].addProb(world.getValue('round'),probability)
+        for player in world.allocators:
+            stats[player.name]['resources'].addProb(resources[player.name],probability)
+            stats[player.name]['territory'].addProb(len(regions[player.name]),probability)
+            for region in world.objects:
+                owned = world.getValue(stateKey(region.name,'owner')) == player.name
+                stats[player.name][region.name].addProb(owned,probability)
+        totalProb += probability
+                                
+    if args['number'] > 1:
+        # Normalize end-of-game stats
+        stats['rounds'].normalize()
+        for player in world.allocators:
+            stats[player.name]['resources'].normalize()
+            stats[player.name]['territory'].normalize()
+            for region in world.objects:
+                stats[player.name][region.name].normalize()
+        # Print end-of-game stats
+        print 'Games:',args['number']
+        print 'Game lasted:'
+        rounds = stats['rounds'].domain()
+        rounds.sort()
+        for r in range(rounds[0],rounds[-1]+1):
+            print '\t%2d rounds: %2d%%' % (r,int(100.*stats['rounds'].getProb(r)))
+        print
+        world.allocators = sorted(world.allocators,key=lambda a: a.name)
+        print 'Player\t\t%s' % ('\t'.join([player.name[-1] for player in world.allocators]))
+        print 'E[resources]\t%s' % ('\t'.join(['%3d' % (stats[player.name]['resources'].expectation()) \
+                                                   for player in world.allocators]))
+        print 'E[regions]\t%s' % ('\t'.join(['%3d' % (stats[player.name]['territory'].expectation()) \
+                                                 for player in world.allocators]))
+        for region in sorted(world.objects,key=lambda a: a.name):
+            print '%12s\t%s' % (region.name,
+                              '\t'.join(['%3d%%' % (int(100.*stats[player.name][region.name].getProb(True))) \
+                                             for player in world.allocators]))

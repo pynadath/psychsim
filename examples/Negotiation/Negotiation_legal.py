@@ -231,8 +231,8 @@ if __name__ == '__main__':
     stacy.addModel('appleLover',R={appleGoalS: 4.0,pearGoalS: 1.0,BatnaGoalS:0.1},level=2,rationality=0.01)
     world.setMentalModel(david.name,stacy.name,{'pearLover': 0.5,'appleLover': 0.5})
     # Stacy's models of David
-    david.addModel('pearLover',R={appleGoalD: 1.0,pearGoalD: 4.0,BatnaGoalD,6.0},level=2,rationality=0.01)
-    david.addModel('appleLover',R={appleGoalD: 4.0,pearGoalD: 1.0,BatnaGoalD,0.1},level=2,rationality=0.01)
+    david.addModel('pearLover',R={appleGoalD: 1.0,pearGoalD: 4.0,BatnaGoalD: 6.0},level=2,rationality=0.01)
+    david.addModel('appleLover',R={appleGoalD: 4.0,pearGoalD: 1.0,BatnaGoalD: 0.1},level=2,rationality=0.01)
     world.setMentalModel(stacy.name,david.name,{'pearLover': 0.5,'appleLover': 0.5})
 
 
