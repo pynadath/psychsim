@@ -741,6 +741,24 @@ class World:
         assert self.variables.has_key(key),'Unknown element "%s"' % (key)
         return self.float2value(key,state.marginal(key))
 
+    def getValue(self,key,state=None):
+        """
+        Helper method that returns a single value from a vector or a singleton distribution
+        @param key: the label of the state element of interest
+        @type key: str
+        @param state: the distribution over possible worlds (default is the current world state)
+        @type state: L{VectorDistribution} or L{KeyedVector}
+        @return: a single value for the given feature
+        """
+        if state is None:
+            state = self.state
+        assert self.variables.has_key(key),'Unknown element "%s"' % (key)
+        if isinstance(state,KeyedVector):
+            return self.float2value(key,state[key])
+        else:
+            assert len(state.domain()) == 1,'getValue operates on only singleton distributions'
+            return self.float2value(key,state.domain()[0][key])
+
     def decodeVariable(self,key,distribution):
         raise DeprecationWarning,'Use float2value method instead'
 

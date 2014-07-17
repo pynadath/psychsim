@@ -51,6 +51,24 @@ class Distribution(dict):
         self._domain[key] = element
         dict.__setitem__(self,key,value)
 
+    def addProb(self,element,value):
+        """
+        Utility method that increases the probability of the given element by the given value
+        """
+        try:
+            self[element] += value
+        except KeyError:
+            self[element] = value
+
+    def getProb(self,element):
+        """
+        Utility method that is almost identical to __getitem__, except that it returns 0 for missing elements, instead of throwing a C{KeyError}
+        """
+        try:
+            return self[element]
+        except KeyError:
+            return 0.
+
     def __delitem__(self,element):
         key = str(element)
         dict.__delitem__(self,key)
