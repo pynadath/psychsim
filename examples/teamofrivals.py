@@ -607,7 +607,8 @@ if __name__ == '__main__':
     ######
     # Create PsychSim models
     ######
-    world = createWorld(4,asia,['Ural','Middle East','Kamchatka','Siam'],args['generation'])
+    starts = ['Ural','Middle East','Kamchatka','Siam']
+    world = createWorld(4,asia,starts,args['generation'])
     world.save('asia.psy')
 
     # Set up end-of-game stat storage
@@ -791,6 +792,5 @@ if __name__ == '__main__':
         print 'E[regions]\t%s' % ('\t'.join(['%3d' % (stats[player.name]['territory'].expectation()) \
                                                  for player in world.allocators]))
         for region in sorted(world.objects,key=lambda a: a.name):
-            print '%12s\t%s' % (region.name,
-                              '\t'.join(['%3d%%' % (int(100.*stats[player.name][region.name].getProb(True))) \
-                                             for player in world.allocators]))
+            if not region.name in starts:
+                print '%12s\t%s' % (region.name,'\t'.join(['%3d%%' % (int(100.*stats[player.name][region.name].getProb(True))) for player in world.allocators]))
