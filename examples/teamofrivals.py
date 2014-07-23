@@ -1,8 +1,12 @@
 """
 Scenario for cooperative conquest game
 
-usage: teamofrivals.py [-h] [-p] [-n NUMBER] [-1] [-m] [-q]
+usage: teamofrivals.py [-h] [-p] [-n NUMBER] [-1] [-o OUTPUT] [-q] [-m | -a]
                        [--additive | --restorative | --minimal]
+                       map
+
+positional arguments:
+  map                   XML file containing world map
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -10,12 +14,36 @@ optional arguments:
   -n NUMBER, --number NUMBER
                         Number of games to play [default: 1]
   -1, --single          stop execution after one round [default: False]
-  -m, --manual          enter actions manually [default: False]
+  -o OUTPUT, --output OUTPUT
+                        name of scenario file [default: <map root>.psy]
   -q, --quiet           suppress all output [default: False]
+
+Decision Mode:
+  -m, --manual          enter actions manually
+  -a, --auto            agents choose actions autonomously [default]
+
+Resource Generation:
   --additive            Resources from all territories, unused ones kept
-                        [default]
   --restorative         Resources from all territories, unused ones lost
+                        [default]
   --minimal             Resources from initial territories, unused ones lost
+
+Input:
+--------
+Map file
+--------
+XML file containing regions, specifying their individual parameters and neighbors. If omitted, the "value" attribute defaults to 5, as does the "occupants" attribute". The "owner" attribute indicates which player, 1-N, owns the territory at the start of the game. The default is 0, which indicates that the enemy side owns the territory.
+
+<map>
+  <region name="Alaska" value="5" occupants="2" owner="0">
+    <neighbor name="Northwest Territory"/>
+    <neighbor name="Alberta"/>"
+    <neighbor name="Kamchatka"/>"
+  </region>
+  <region>
+   .
+   .
+   .
 
 Output:
 --------
@@ -37,8 +65,10 @@ Territory being invaded: the result of the invasion
 
 """
 from argparse import ArgumentParser
+import os.path
 import random
 import sys
+import lxml.etree as ET
 
 from psychsim.pwl import *
 from psychsim.world import *
@@ -537,52 +567,53 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
     key = stateKey(None,'round')
     world.setDynamics(key,action,makeTree(incrementMatrix(key,1)))
     return world
+    
+def mapSave(regions,filename):
+    """
+    Saves a region map to an XML file
+    """
+    root = ET.Element('map')
+    for name,table in regions.items():
+        node = ET.SubElement(root,'region')
+        node.set('name',name)
+        if table.has_key('value'): node.set('value',str(table['value']))
+        if table.has_key('occupants'): node.set('occupants',str(table['occupants']))
+        node.set('owner',str(table['owner']))
+        for neighbor in table['neighbors']:
+            subnode = ET.SubElement(node,'neighbor')
+            subnode.set('name',neighbor)
+    tree = ET.ElementTree(root)
+    tree.write(filename,pretty_print=True)
+    return tree
 
-if __name__ == '__main__':
-    ######
-    # Parse command-line arguments
-    ######
+def mapLoad(filename,close=False):
+    """
+    Parses an XML file representing a region map
+    @param close: if C{True}, then fill in missing links and regions (default is False)
+    @type close: bool
+    """
+    tree = ET.parse(filename)
+    regions = {}
+    starts = []
+    for node in tree.getroot().getchildren():
+        assert node.tag == 'region'
+        name = str(node.get('name'))
+        assert not regions.has_key(name),'Duplicate region name: %s' % (name)
+        regions[name] = {'value': int(node.get('value','5')),
+                         'owner': int(node.get('owner','0')),
+                         'occupants': int(node.get('occupants','5')),
+                         'neighbors': set()}
+        for subnode in node.getchildren():
+            assert subnode.tag == 'neighbor'
+            regions[name]['neighbors'].add(str(subnode.get('name')))
+        if regions[name]['owner'] > 0:
+            starts.append((regions[name]['owner'],name))
+    starts = [entry[1] for entry in sorted(starts)]
+    if close:
+        closeRegions(regions)
+    return regions,starts
 
-    parser = ArgumentParser()
-    # Optional argument that prints out predictions as well
-    parser.add_argument('-p','--predict',action='store_true',
-                      dest='predict',
-                      help='print out predictions before stepping [default: %(default)s]')
-    # Optional argument that sets the initial number of games to play 
-    parser.add_argument('-n','--number',action='store',
-                        dest='number',type=int,default=1,
-                        help='Number of games to play [default: %(default)s]')
-    # Optional argument that stops execution after 1 round
-    parser.add_argument('-1','--single',action='store_true',
-                      dest='single',
-                      help='stop execution after one round [default: %(default)s]')
-    # Optional argument that sets the filename for a command script
-    parser.add_argument('-m','--manual',action='store_true',
-                        dest='manual',
-                        help='enter actions manually [default: %(default)s]')
-    # Optional argument that suppresses all output
-    parser.add_argument('-q','--quiet',action='store_true',
-                        dest='quiet',
-                        help='suppress all output [default: %(default)s]')
-
-    # Optional arguments that select the resource generation model
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument('--additive',action='store_const',const='additive',dest='generation',
-                       help='Resources from all territories, unused ones kept [default]')
-    group.add_argument('--restorative',action='store_const',const='restorative',dest='generation',
-                       help='Resources from all territories, unused ones lost')
-    group.add_argument('--minimal',action='store_const',const='minimal',dest='generation',
-                       help='Resources from initial territories, unused ones lost')
-
-    args = vars(parser.parse_args())
-    if args['generation'] is None:
-        # Default generation?
-        args['generation'] = 'restorative'
-
-    ######
-    # Set up map
-    ######
-
+def createAsia():
     # Set of borders in Asia in Risk (only one direction included)
     asia = {'Afghanistan': {'neighbors': {'Ural','China','India','Middle East'},
                             'value': 4,'occupants': 6},
@@ -603,13 +634,75 @@ if __name__ == '__main__':
             }
     # Fills out the transitive closure so that all neighbor links are bi-directional
     closeRegions(asia)
+    starts = ['Ural','Middle East','Kamchatka','Siam']
+    for region,table in asia.items():
+        try:
+            table['owner'] = starts.index(region)+1
+        except ValueError:
+            table['owner'] = 0
+    mapSave(asia,'asia.xml')
+    return asia
+
+if __name__ == '__main__':
+    ######
+    # Parse command-line arguments
+    ######
+
+    parser = ArgumentParser()
+    # Positional argument that loads a map file
+    parser.add_argument('map',help='XML file containing world map')
+
+    # Optional argument that prints out predictions as well
+    parser.add_argument('-p','--predict',action='store_true',
+                      help='print out predictions before stepping [default: %(default)s]')
+    # Optional argument that sets the initial number of games to play 
+    parser.add_argument('-n','--number',action='store',
+                        type=int,default=1,
+                        help='Number of games to play [default: %(default)s]')
+    # Optional argument that stops execution after 1 round
+    parser.add_argument('-1','--single',action='store_true',
+                      help='stop execution after one round [default: %(default)s]')
+    # Optional argument that specifies the name of the scenario file
+    parser.add_argument('-o','--output',help='name of scenario file [default: <map root>.psy]')
+
+    # Optional argument that suppresses all output
+    parser.add_argument('-q','--quiet',action='store_true',
+                        help='suppress all output [default: %(default)s]')
+
+    # Optional arguments that determine the agent selection mode
+    label = parser.add_argument_group('Decision Mode')
+    group = label.add_mutually_exclusive_group()
+    group.add_argument('-m','--manual',action='store_true',
+                        help='enter actions manually')
+    group.add_argument('-a','--auto',action='store_false',
+                        dest='manual',
+                        help='agents choose actions autonomously [default]')
+
+    # Optional arguments that select the resource generation model
+    label = parser.add_argument_group('Resource Generation')
+    group = label.add_mutually_exclusive_group()
+    group.add_argument('--additive',action='store_const',const='additive',dest='generation',
+                       help='Resources from all territories, unused ones kept')
+    group.add_argument('--restorative',action='store_const',const='restorative',dest='generation',
+                       help='Resources from all territories, unused ones lost [default]')
+    group.add_argument('--minimal',action='store_const',const='minimal',dest='generation',
+                       help='Resources from initial territories, unused ones lost')
+    
+    parser.set_defaults(generation='restorative',manual=False)
+    args = vars(parser.parse_args())
+
+    ######
+    # Set up map
+    ######
+    regions,starts = mapLoad(args['map'])
+    if args['output'] is None:
+        args['output'] = '%s.psy' % (os.path.splitext(args['map'])[0])
 
     ######
     # Create PsychSim models
     ######
-    starts = ['Ural','Middle East','Kamchatka','Siam']
-    world = createWorld(4,asia,starts,args['generation'])
-    world.save('asia.psy')
+    world = createWorld(len(starts),regions,starts,args['generation'])
+    world.save(args['output'])
 
     # Set up end-of-game stat storage
     stats = {'rounds': Distribution()}                       # How many rounds did it take to win?
@@ -621,7 +714,7 @@ if __name__ == '__main__':
     totalProb = 0.
 
     for iteration in range(args['number']):
-        world = ResourceWorld('asia.psy')
+        world = ResourceWorld(args['output'])
 
         ######
         # Game loop

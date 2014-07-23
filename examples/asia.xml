@@ -1,0 +1,70 @@
+<map>
+  <region name="Afghanistan" value="4" occupants="6" owner="0">
+    <neighbor name="China"/>
+    <neighbor name="Ural"/>
+    <neighbor name="India"/>
+    <neighbor name="Middle East"/>
+  </region>
+  <region name="Yakutsk" value="4" owner="0">
+    <neighbor name="Irkutsk"/>
+    <neighbor name="Kamchatka"/>
+    <neighbor name="Siberia"/>
+  </region>
+  <region name="Mongolia" value="4" owner="0">
+    <neighbor name="Japan"/>
+    <neighbor name="Irkutsk"/>
+    <neighbor name="China"/>
+    <neighbor name="Kamchatka"/>
+    <neighbor name="Siberia"/>
+  </region>
+  <region name="Middle East" value="4" owner="2">
+    <neighbor name="Afghanistan"/>
+    <neighbor name="India"/>
+  </region>
+  <region name="Siam" value="4" owner="4">
+    <neighbor name="India"/>
+    <neighbor name="China"/>
+  </region>
+  <region name="Irkutsk" value="4" owner="0">
+    <neighbor name="Yakutsk"/>
+    <neighbor name="Kamchatka"/>
+    <neighbor name="Mongolia"/>
+    <neighbor name="Siberia"/>
+  </region>
+  <region name="India" value="6" occupants="12" owner="0">
+    <neighbor name="Afghanistan"/>
+    <neighbor name="Siam"/>
+    <neighbor name="China"/>
+    <neighbor name="Middle East"/>
+  </region>
+  <region name="China" value="8" occupants="16" owner="0">
+    <neighbor name="Afghanistan"/>
+    <neighbor name="India"/>
+    <neighbor name="Mongolia"/>
+    <neighbor name="Siam"/>
+    <neighbor name="Ural"/>
+    <neighbor name="Siberia"/>
+  </region>
+  <region name="Kamchatka" value="4" owner="3">
+    <neighbor name="Japan"/>
+    <neighbor name="Irkutsk"/>
+    <neighbor name="Yakutsk"/>
+    <neighbor name="Mongolia"/>
+  </region>
+  <region name="Japan" value="4" occupants="10" owner="0">
+    <neighbor name="Kamchatka"/>
+    <neighbor name="Mongolia"/>
+  </region>
+  <region name="Ural" value="4" owner="1">
+    <neighbor name="Afghanistan"/>
+    <neighbor name="China"/>
+    <neighbor name="Siberia"/>
+  </region>
+  <region name="Siberia" value="4" owner="0">
+    <neighbor name="Ural"/>
+    <neighbor name="Yakutsk"/>
+    <neighbor name="China"/>
+    <neighbor name="Irkutsk"/>
+    <neighbor name="Mongolia"/>
+  </region>
+</map>
