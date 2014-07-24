@@ -75,6 +75,11 @@ from psychsim.world import *
 from psychsim.agent import Agent
 
 class ResourceWorld(World):
+    """
+    @cvar nullAgent: string label that means none of the ResourceAgent members of this world
+    """
+    nullAgent = '__none__'
+
     def __init__(self,xml=None,allocateVerb=None,allocationState=None,winnerState=None):
         self.allocators = set()
         self.objects = set()
@@ -184,7 +189,7 @@ class ResourceWorld(World):
                     # Find ratio of invaders to defenders (hack warning!)
                     if state is None:
                         assert len(self.state) == 1,'Unable to hack dynamics in uncertain states'
-                        state = world.state.domain()[0]
+                        state = self.state.domain()[0]
                     denominator = total + state[stateKey(obj,'occupants')]
                     winning = float(total)/float(denominator)
                     return [makeTree({'distribution': 
@@ -214,7 +219,16 @@ class ResourceWorld(World):
                                               for winner in winners]})
                         return[tree.desymbolize(self.symbols)]
                 else:
-                    return []
+                    # Here we go hacking again
+                    if state is None:
+                        assert len(self.state) == 1,'Unable to hack dynamics in uncertain states'
+                        state = self.state.domain()[0]
+                    if self.getValue('phase',state) == 'allocate':
+                        # No one allocating to this object, so no possible winner
+                        tree = makeTree(setToConstantMatrix(key,self.nullAgent))
+                        return [tree.desymbolize(self.symbols)]
+                    else:
+                        return []
         return World.getDynamics(self,key,action)
 
     def __xml__(self):
@@ -287,9 +301,10 @@ class ResourceAgent(Agent):
                 actions = actions.union({partial.union({action}) for partial in remaining})
             return actions
 
-    def sampleAction(self,vector,numTargets=0):
+    def sampleAction(self,vector,numTargets=0,minResources=0):
         """
         @param numTargets: maximum number of targets for allocation. 0 means no limit (default is 0)
+        @param minResources: minimum number of resources to leave unallocated (default is 0)
         Generates a random (legal) action for this agent in the given world
         """
         targets = []
@@ -297,6 +312,11 @@ class ResourceAgent(Agent):
             assert len(vector) == 1,'Unable to sample actions in an uncertain world'
             vector = vector.domain()[0]
         resources = vector[stateKey(self.name,self.resourceName)]
+        if resources > minResources:
+            resources -= minResources
+        else:
+            # Less than minimal number, let's not divide them up
+            numTargets = 1
         for obj in self.legalObjects(vector):
             targets.append(obj)
         if 0 < numTargets < len(targets):
@@ -451,9 +471,13 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
                           description='Name of owner of %s' % (region))
         region.setState('owner',enemy.name)
 
-        world.defineState(region.name,'invader',set,set(owners),
+        world.defineState(region.name,'invader',set,set(owners)-{enemy.name}|{world.nullAgent},
                           description='Name of invader who will own %s if successful' % (region))
-        region.setState('invader',enemy.name)
+        try:
+            index = starts.index(region.name)
+            region.setState('invader','Player%d' % (index+1))
+        except ValueError:
+            region.setState('invader',world.nullAgent)
         world.dynamics[stateKey(region.name,'invader')] = True
 
     # Set players' initial territories
@@ -509,8 +533,8 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
             #                   False: None}}) # I'm not invading
             # Determine how many resources lost
             action = Action({'subject': player.name,'verb': 'allocate','object': region.name})
-            world.addDependency(resources,owner)
-            if generation == 'additive':
+            world.addDependency(resources,invader)
+            if generation == 'additive' or generation == 'none':
                 # Lose only those resources allocated
                 tree = makeTree(incrementMatrix(resources,'-%s' % (actionKey('amount'))))
             else:
@@ -530,8 +554,13 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
                                      False: None})
                 else:
                     tree = makeTree(noChangeMatrix(resources))
-            elif generation is None:
-                tree = makeTree(noChangeMatrix(resources))
+            elif generation is 'none':
+                tree = makeTree({'if': equalRow(owner,player.name),
+                                 True: {'if': equalFeatureRow(owner,invader),
+                                        True: addFeatureMatrix(resources,stateKey(region.name,'value')),
+                                        False: None},
+                                 False: None})
+#                tree = makeTree(noChangeMatrix(resources))
             world.setDynamics(resources,action,tree)
 
     # The game has two phases: generating resources and allocating resources
@@ -544,10 +573,11 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
     tree = makeTree(setToConstantMatrix(key,'allocate'))
     world.setDynamics(key,action,tree)
     # If we allocate, then the phase becomes generate
+    tree = makeTree(setToConstantMatrix(key,'generate'))
     for region in regions:
-        action = Action({'subject': players[0].name,'verb': 'allocate','object': region.name})
-        tree = makeTree(setToConstantMatrix(key,'generate'))
-        world.setDynamics(key,action,tree)
+        for player in players:
+            action = Action({'subject': player.name,'verb': 'allocate','object': region.name})
+            world.setDynamics(key,action,tree)
 
     # Game ends when territory is all won
     tree = {'if': equalRow(key,'allocate'),
@@ -557,6 +587,15 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
         tree = {'if': equalRow(stateKey(region.name,'owner'),enemy.name),
                 True: False,
                 False: tree}
+    world.addTermination(makeTree(tree))
+    # Or if nobody has any resources
+    vector = KeyedVector()
+    for player in players:
+        vector[stateKey(player.name,'resources')] = 1.
+    tree = {'if': equalRow(stateKey(None,'phase'),'allocate'),
+            True: {'if': KeyedPlane(vector,0.5),
+                   True: False, False: True},
+            False: False}
     world.addTermination(makeTree(tree))
 
     # Keep track of which round it is
@@ -687,6 +726,8 @@ if __name__ == '__main__':
                        help='Resources from all territories, unused ones lost [default]')
     group.add_argument('--minimal',action='store_const',const='minimal',dest='generation',
                        help='Resources from initial territories, unused ones lost')
+    group.add_argument('--none',action='store_const',const='none',dest='generation',
+                       help='Resources from winning only, unused ones kept')
     
     parser.set_defaults(generation='restorative',manual=False)
     args = vars(parser.parse_args())
@@ -695,6 +736,8 @@ if __name__ == '__main__':
     # Set up map
     ######
     regions,starts = mapLoad(args['map'])
+#    closeRegions(regions)
+#    mapSave(regions,args['map'])
     if args['output'] is None:
         args['output'] = '%s.psy' % (os.path.splitext(args['map'])[0])
 
@@ -705,7 +748,8 @@ if __name__ == '__main__':
     world.save(args['output'])
 
     # Set up end-of-game stat storage
-    stats = {'rounds': Distribution()}                       # How many rounds did it take to win?
+    stats = {'rounds': Distribution(),                       # How many rounds did it take to win?
+             'win': Distribution({True: 0.,False: 0.})}      # How often did the team win?
     for player in world.allocators:
         stats[player.name] = {'resources': Distribution(),   # How many resources does the player end with?
                               'territory': Distribution()}   # How many regions does the player end with?
@@ -812,6 +856,8 @@ if __name__ == '__main__':
                                 # Nothing  left to allocate
                                 break
                         actions[name] = ActionSet(choices)
+                    elif args['generation'] == 'none':
+                        actions[name] = agent.sampleAction(world.state,2,2)
                     else:
                         actions[name] = agent.sampleAction(world.state,2)
             if phase == 'allocate' and not args['quiet']:
@@ -853,7 +899,13 @@ if __name__ == '__main__':
         # Accumulate end-of-game stats
         resources = world.getResources()
         regions = world.getOwnership()
-        stats['rounds'].addProb(world.getValue('round'),probability)
+        if regions.has_key('Enemy'):
+            # Team lost
+            stats['win'][False] += probability
+        else:
+            # Team won
+            stats['win'][True] += probability
+            stats['rounds'].addProb(world.getValue('round'),probability)
         for player in world.allocators:
             stats[player.name]['resources'].addProb(resources[player.name],probability)
             stats[player.name]['territory'].addProb(len(regions[player.name]),probability)
@@ -864,6 +916,7 @@ if __name__ == '__main__':
                                 
     if args['number'] > 1:
         # Normalize end-of-game stats
+        stats['win'].normalize()
         stats['rounds'].normalize()
         for player in world.allocators:
             stats[player.name]['resources'].normalize()
@@ -872,11 +925,13 @@ if __name__ == '__main__':
                 stats[player.name][region.name].normalize()
         # Print end-of-game stats
         print 'Games:',args['number']
-        print 'Game lasted:'
-        rounds = stats['rounds'].domain()
-        rounds.sort()
-        for r in range(rounds[0],rounds[-1]+1):
-            print '\t%2d rounds: %2d%%' % (r,int(100.*stats['rounds'].getProb(r)))
+        print 'Win: %3d%%' % (int(100.*stats['win'][True]))
+        if stats['rounds']:
+            print 'Rounds until win:'
+            rounds = stats['rounds'].domain()
+            rounds.sort()
+            for r in range(rounds[0],rounds[-1]+1):
+                print '\t%2d rounds: %2d%%' % (r,int(100.*stats['rounds'].getProb(r)))
         print
         world.allocators = sorted(world.allocators,key=lambda a: a.name)
         print 'Player\t\t%s' % ('\t'.join([player.name[-1] for player in world.allocators]))
@@ -886,4 +941,4 @@ if __name__ == '__main__':
                                                  for player in world.allocators]))
         for region in sorted(world.objects,key=lambda a: a.name):
             if not region.name in starts:
-                print '%12s\t%s' % (region.name,'\t'.join(['%3d%%' % (int(100.*stats[player.name][region.name].getProb(True))) for player in world.allocators]))
+                print '%-12s\t%s' % (region.name,'\t'.join(['%3d%%' % (int(100.*stats[player.name][region.name].getProb(True))) for player in world.allocators]))
