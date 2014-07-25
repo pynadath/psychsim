@@ -1,8 +1,9 @@
 """
 Scenario for cooperative conquest game
 
-usage: teamofrivals.py [-h] [-p] [-n NUMBER] [-1] [-o OUTPUT] [-q] [-m | -a]
-                       [--additive | --restorative | --minimal]
+usage: teamofrivals.py [-h] [-p] [-n NUMBER] [-1] [-f FILE] [-u] [-q]
+                       [-m | -a]
+                       [--additive | --restorative | --minimal | --none]
                        map
 
 positional arguments:
@@ -14,8 +15,8 @@ optional arguments:
   -n NUMBER, --number NUMBER
                         Number of games to play [default: 1]
   -1, --single          stop execution after one round [default: False]
-  -o OUTPUT, --output OUTPUT
-                        name of scenario file [default: <map root>.psy]
+  -f FILE, --file FILE  name of scenario file [default: <map root>.psy]
+  -u, --update          update scenario file [default: False]
   -q, --quiet           suppress all output [default: False]
 
 Decision Mode:
@@ -27,6 +28,7 @@ Resource Generation:
   --restorative         Resources from all territories, unused ones lost
                         [default]
   --minimal             Resources from initial territories, unused ones lost
+  --none                Resources from winning only, unused ones kept
 
 Input:
 --------
@@ -79,6 +81,7 @@ class ResourceWorld(World):
     @cvar nullAgent: string label that means none of the ResourceAgent members of this world
     """
     nullAgent = '__none__'
+    memory = False
 
     def __init__(self,xml=None,allocateVerb=None,allocationState=None,winnerState=None):
         self.allocators = set()
@@ -140,6 +143,14 @@ class ResourceWorld(World):
         return ownership
 
     def predictResult(self,actions):
+        """
+        @param actions: the (sub)set of actions to predict the results of
+        @type actions: L{ActionSet}
+        @return: a dictionary of predictions in dictionary form for each object included in the action:
+           - leader: prediction of which allocator would own the object, if successful
+           - winner: prediction of who owns the object, including possibility of being unsuccessful
+        @rtype: str{S->}str{S->}L{Distribution}(str)
+        """
         # Collect targets
         objects = {}
         for name,action in actions.items():
@@ -702,7 +713,10 @@ if __name__ == '__main__':
     parser.add_argument('-1','--single',action='store_true',
                       help='stop execution after one round [default: %(default)s]')
     # Optional argument that specifies the name of the scenario file
-    parser.add_argument('-o','--output',help='name of scenario file [default: <map root>.psy]')
+    parser.add_argument('-f','--file',help='name of scenario file [default: <map root>.psy]')
+    # Optional argument that indicates game execution should lead to update of scenario file
+    parser.add_argument('-u','--update',action='store_true',default=False,
+                        help='update scenario file [default: %(default)s]')
 
     # Optional argument that suppresses all output
     parser.add_argument('-q','--quiet',action='store_true',
@@ -731,21 +745,27 @@ if __name__ == '__main__':
     
     parser.set_defaults(generation='restorative',manual=False)
     args = vars(parser.parse_args())
+    if args['update']:
+        assert args['number'] == 1,'Unable to update scenario file based on multiple games'
+    if args['single']:
+        assert args['number'] == 1,'Unable to perform single rounds based on multiple games'
 
     ######
-    # Set up map
+    # Set up map and world
     ######
     regions,starts = mapLoad(args['map'])
 #    closeRegions(regions)
 #    mapSave(regions,args['map'])
-    if args['output'] is None:
-        args['output'] = '%s.psy' % (os.path.splitext(args['map'])[0])
+    if args['file'] is None:
+        args['file'] = '%s.psy' % (os.path.splitext(args['map'])[0])
 
-    ######
-    # Create PsychSim models
-    ######
-    world = createWorld(len(starts),regions,starts,args['generation'])
-    world.save(args['output'])
+    if os.path.isfile(args['file']):
+        world = ResourceWorld(args['file'])
+        if world.terminated():
+            raise RuntimeError,'Game already over in scenario file %s' % (args['file'])
+    else:
+        world = createWorld(len(starts),regions,starts,args['generation'])
+        world.save(args['file'])
 
     # Set up end-of-game stat storage
     stats = {'rounds': Distribution(),                       # How many rounds did it take to win?
@@ -756,9 +776,14 @@ if __name__ == '__main__':
         for region in world.objects:
             stats[player.name][region.name] = Distribution() # Does the player end with this region?
     totalProb = 0.
+    prediction = {}
 
     for iteration in range(args['number']):
-        world = ResourceWorld(args['output'])
+        world = ResourceWorld(args['file'])
+        if world.getValue('phase') == 'allocate':
+            start = world.getValue('round') - 1
+        else:
+            start = world.getValue('round')
 
         ######
         # Game loop
@@ -769,10 +794,10 @@ if __name__ == '__main__':
 
         while True:
             phase = world.getValue('phase')
+            rnd = world.getValue('round')
             if phase == 'allocate':
                 if not args['quiet']:
                     # Print current game state
-                    rnd = world.getValue('round')
                     print '--------'
                     print 'Round %2d' % (rnd)
                     print '--------'
@@ -780,15 +805,15 @@ if __name__ == '__main__':
                     regions = world.getOwnership()
                     for player in range(4):
                         print 'Player %d: %d resources' % (player+1,resources['Player%d' % (player+1)])
-                        print '\tTerritories owned: %s' % (','.join(regions['Player%d' % (player+1)]))
+                        print '\tTerritories owned: %s' % (', '.join(sorted(regions['Player%d' % (player+1)])))
                         total = 0
                         for region in regions['Player%d' % (player+1)]:
                             total += world.getValue(stateKey(region,'value'))
                     if regions.has_key('Enemy'):
-                        print 'Enemy: %s' % (', '.join(['%s (%d)' % (o,world.getValue(stateKey(o,'occupants'))) for o in regions['Enemy']]))
+                        print 'Enemy: %s' % (', '.join(['%s (%d)' % (o,world.getValue(stateKey(o,'occupants'))) for o in sorted(regions['Enemy'])]))
                     print
                 # Check whether game is over
-                if world.terminated() or (args['single'] and rnd == 2):
+                if world.terminated():
                     break
             # Who's doing what
             actions = {}
@@ -863,7 +888,7 @@ if __name__ == '__main__':
             if phase == 'allocate' and not args['quiet']:
                 for player in range(4):
                     print 'Player %d invades: %s' % (player+1,', '.join(['%s (%d)' % (a['object'],a['amount']) for a in actions['Player%d' % (player+1)]]))
-            # Look at possible outcomes
+            # Predict at possible outcomes
             if args['predict'] and phase == 'allocate' and not args['quiet']:
                 prediction = world.predictResult(actions)
                 objects = prediction.keys()
@@ -896,6 +921,10 @@ if __name__ == '__main__':
                             print '%s: Lost' % (obj)
                         else:
                             print '%s: Won by %s' % (obj,owner)
+            if phase == 'generate':
+                if args['single'] and rnd == start+1:
+                    # Finished one round
+                    break
         # Accumulate end-of-game stats
         resources = world.getResources()
         regions = world.getOwnership()
@@ -942,3 +971,7 @@ if __name__ == '__main__':
         for region in sorted(world.objects,key=lambda a: a.name):
             if not region.name in starts:
                 print '%-12s\t%s' % (region.name,'\t'.join(['%3d%%' % (int(100.*stats[player.name][region.name].getProb(True))) for player in world.allocators]))
+                
+
+    if args['update']:
+        world.save(args['file'])
