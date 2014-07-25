@@ -27,6 +27,7 @@ class World:
     @ivar termination: list of conditions under which the simulation terminates (default is none)
     @type termination: L{KeyedTree}[]
     """
+    memory = True
 
     def __init__(self,xml=None):
         """
@@ -138,7 +139,8 @@ class World:
                 msg = buf.getvalue()
                 buf.close()
                 raise RuntimeError,msg
-            self.history.append(outcomes)
+            if self.memory:
+                self.history.append(outcomes)
             self.modelGC(False)
         return outcomes
 
@@ -1548,8 +1550,11 @@ class World:
         @return: the filename used (possibly with a .psy extension added)
         @rtype: str
         """
-        if filename[-4:] != '.psy':
-            filename = '%s.psy' % (filename)
+        if compressed:
+            if filename[-4:] != '.psy':
+                filename = '%s.psy' % (filename)
+        elif filename[-4:] != '.xml':
+            filename = '%s.xml' % (filename)
         if compressed:
             f = bz2.BZ2File(filename,'w')
         else:
