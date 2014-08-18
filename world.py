@@ -446,7 +446,7 @@ class World:
             return []
         if isinstance(action,Action):
             return self.getDynamics(key,ActionSet([action]))
-        elif not isinstance(action,ActionSet):
+        elif not isinstance(action,ActionSet) and not isinstance(action,list):
             # Table of actions by multiple agents
             return self.getDynamics(key,ActionSet(action))
         try:

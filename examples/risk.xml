@@ -1,5 +1,5 @@
 <map>
-  <region name="Brazil" value="5" occupants="5" owner="0">
+  <region name="Brazil" value="8" occupants="10" owner="0">
     <neighbor name="Argentina"/>
     <neighbor name="Venezuela"/>
     <neighbor name="N Africa"/>
@@ -16,7 +16,7 @@
     <neighbor name="E Africa"/>
     <neighbor name="S Africa"/>
   </region>
-  <region name="Ontario" value="5" occupants="5" owner="0">
+  <region name="Ontario" value="6" occupants="6" owner="0">
     <neighbor name="Greenland"/>
     <neighbor name="E USA"/>
     <neighbor name="Quebec"/>
@@ -24,13 +24,13 @@
     <neighbor name="Alberta"/>
     <neighbor name="NW Territory"/>
   </region>
-  <region name="E USA" value="5" occupants="5" owner="0">
+  <region name="E USA" value="12" occupants="12" owner="0">
     <neighbor name="C America"/>
     <neighbor name="Ontario"/>
     <neighbor name="Quebec"/>
     <neighbor name="W USA"/>
   </region>
-  <region name="S Europe" value="5" occupants="5" owner="0">
+  <region name="S Europe" value="10" occupants="9" owner="0">
     <neighbor name="Ukraine"/>
     <neighbor name="N Europe"/>
     <neighbor name="Egypt"/>
@@ -45,13 +45,13 @@
     <neighbor name="Kamchatka"/>
     <neighbor name="Siberia"/>
   </region>
-  <region name="UK" value="5" occupants="5" owner="0">
+  <region name="UK" value="8" occupants="7" owner="0">
     <neighbor name="Iceland"/>
     <neighbor name="W Europe"/>
     <neighbor name="Scandinavia"/>
     <neighbor name="N Europe"/>
   </region>
-  <region name="Middle East" value="5" occupants="5" owner="0">
+  <region name="Middle East" value="10" occupants="6" owner="0">
     <neighbor name="Ukraine"/>
     <neighbor name="Afghanistan"/>
     <neighbor name="E Africa"/>
@@ -74,7 +74,7 @@
     <neighbor name="Brazil"/>
     <neighbor name="Peru"/>
   </region>
-  <region name="Venezuela" value="5" occupants="5" owner="0">
+  <region name="Venezuela" value="7" occupants="5" owner="0">
     <neighbor name="C America"/>
     <neighbor name="Brazil"/>
     <neighbor name="Peru"/>
@@ -84,7 +84,7 @@
     <neighbor name="Indonesia"/>
     <neighbor name="China"/>
   </region>
-  <region name="N Europe" value="5" occupants="5" owner="0">
+  <region name="N Europe" value="10" occupants="9" owner="0">
     <neighbor name="Ukraine"/>
     <neighbor name="Scandinavia"/>
     <neighbor name="S Europe"/>
@@ -103,7 +103,7 @@
     <neighbor name="Mongolia"/>
     <neighbor name="Siberia"/>
   </region>
-  <region name="China" value="8" occupants="16" owner="0">
+  <region name="China" value="12" occupants="20" owner="0">
     <neighbor name="Afghanistan"/>
     <neighbor name="India"/>
     <neighbor name="Mongolia"/>
@@ -111,18 +111,18 @@
     <neighbor name="Ural"/>
     <neighbor name="Siberia"/>
   </region>
-  <region name="W USA" value="5" occupants="5" owner="0">
+  <region name="W USA" value="10" occupants="10" owner="0">
     <neighbor name="C America"/>
     <neighbor name="Alberta"/>
     <neighbor name="Ontario"/>
     <neighbor name="E USA"/>
   </region>
-  <region name="Ural" value="5" occupants="5" owner="0">
+  <region name="Ural" value="8" occupants="8" owner="0">
     <neighbor name="Afghanistan"/>
     <neighbor name="China"/>
     <neighbor name="Siberia"/>
   </region>
-  <region name="N Africa" value="5" occupants="5" owner="0">
+  <region name="N Africa" value="7" occupants="5" owner="0">
     <neighbor name="Brazil"/>
     <neighbor name="E Africa"/>
     <neighbor name="Egypt"/>
@@ -137,12 +137,12 @@
     <neighbor name="Alaska"/>
     <neighbor name="Mongolia"/>
   </region>
-  <region name="Quebec" value="5" occupants="5" owner="0">
+  <region name="Quebec" value="6" occupants="6" owner="0">
     <neighbor name="E USA"/>
     <neighbor name="Ontario"/>
     <neighbor name="Greenland"/>
   </region>
-  <region name="Ukraine" value="5" occupants="5" owner="0">
+  <region name="Ukraine" value="7" occupants="7" owner="0">
     <neighbor name="Afghanistan"/>
     <neighbor name="N Europe"/>
     <neighbor name="Scandinavia"/>
@@ -154,18 +154,18 @@
     <neighbor name="Kamchatka"/>
     <neighbor name="Siberia"/>
   </region>
-  <region name="Scandinavia" value="5" occupants="5" owner="0">
+  <region name="Scandinavia" value="5" occupants="5" owner="1">
     <neighbor name="Ukraine"/>
     <neighbor name="Iceland"/>
     <neighbor name="UK"/>
     <neighbor name="N Europe"/>
   </region>
-  <region name="Indonesia" value="5" occupants="5" owner="0">
+  <region name="Indonesia" value="5" occupants="8" owner="0">
     <neighbor name="Siam"/>
     <neighbor name="W Australia"/>
     <neighbor name="New Guinea"/>
   </region>
-  <region name="Alaska" value="5" occupants="5" owner="1">
+  <region name="Alaska" value="8" occupants="5" owner="0">
     <neighbor name="Alberta"/>
     <neighbor name="NW Territory"/>
     <neighbor name="Kamchatka"/>
@@ -199,12 +199,12 @@
     <neighbor name="Congo"/>
     <neighbor name="E Africa"/>
   </region>
-  <region name="C America" value="5" occupants="5" owner="0">
+  <region name="C America" value="5" occupants="6" owner="0">
     <neighbor name="E USA"/>
     <neighbor name="Venezuela"/>
     <neighbor name="W USA"/>
   </region>
-  <region name="India" value="6" occupants="12" owner="0">
+  <region name="India" value="8" occupants="16" owner="0">
     <neighbor name="Afghanistan"/>
     <neighbor name="Siam"/>
     <neighbor name="China"/>
@@ -235,17 +235,17 @@
     <neighbor name="Irkutsk"/>
     <neighbor name="Mongolia"/>
   </region>
-  <region name="Japan" value="5" occupants="10" owner="0">
+  <region name="Japan" value="7" occupants="10" owner="0">
     <neighbor name="Kamchatka"/>
     <neighbor name="Mongolia"/>
   </region>
-  <region name="W Europe" value="5" occupants="5" owner="0">
+  <region name="W Europe" value="10" occupants="12" owner="0">
     <neighbor name="N Europe"/>
     <neighbor name="UK"/>
     <neighbor name="S Europe"/>
     <neighbor name="N Africa"/>
   </region>
-  <region name="E Australia" value="5" occupants="5" owner="4">
+  <region name="E Australia" value="5" occupants="8" owner="4">
     <neighbor name="W Australia"/>
     <neighbor name="New Guinea"/>
   </region>

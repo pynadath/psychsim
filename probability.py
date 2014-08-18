@@ -124,8 +124,9 @@ class Distribution(dict):
                     total += element*self[element]
             return total
 
-    def sample(self):
+    def sample(self,quantify=False):
         """
+        @param quantify: if C{True}, also returns the amount of mass by which the sampling crosssed the threshold of the generated sample's range
         @return: an element from this domain, with a sample probability given by this distribution
         """
         import random
@@ -134,7 +135,10 @@ class Distribution(dict):
             if selection > self[element]:
                 selection -= self[element]
             else:
-                return element
+                if quantify:
+                    return element,selection
+                else:
+                    return element
         else:
             raise ValueError,'Random number exceeded total probability in distribution.'
 
