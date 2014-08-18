@@ -286,7 +286,11 @@ class Agent:
                             ER = 0.
                             for end in distribution.domain():
                                 # Determine expected value of future
-                                Vrest = distribution[end]*V.get(agent.name,end,None,0)
+                                future = V.get(agent.name,end,None,0)
+                                if future is None:
+                                    Vrest = 0.
+                                else:
+                                    Vrest = distribution[end]*future
                                 # Determine discount function 
                                 # (should use belief about other agent, but doesn't yet)
                                 if agent.name == self.name:
@@ -314,7 +318,11 @@ class Agent:
                     for name in self.world.agents.keys():
                         for action in choice.domain():
                             newV.add(name,start,None,0,choice[action]*newV.get(name,start,action,0))
-                        delta += abs(newV.get(name,start,None,0)-V.get(name,start,None,0))
+                        old = V.get(name,start,None,0)
+                        if old is None:
+                            delta += abs(newV.get(name,start,None,0))
+                        else:
+                            delta += abs(newV.get(name,start,None,0) - old)
                         if debug > 1:
                             print '\tV_%s = %5.3f' % (name,newV.get(name,start,None,0))
                     if delta > epsilon:

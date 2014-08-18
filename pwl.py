@@ -246,6 +246,36 @@ class VectorDistribution(Distribution):
                 result[row[key]] = self[row]
         return Distribution(result)
 
+    def select(self,incremental=False):
+        """
+        @param incremental: if C{True}, then select each key value in series (rather than picking out a joint vector all at once, default is C{False})
+        """
+        if incremental:
+            # Sample each key and keep track how likely each individual choice was
+            sample = KeyedVector()
+            keys = self.domain()[0].keys()
+            index = 0
+            while len(self) > 1:
+                key = keys[index]
+                dist = self.marginal(key)
+                if len(dist) > 1:
+                    # Have to make a choice here
+                    element,sample[key] = dist.sample(True)
+                    # Figure out where the "spinner" ended up across entire pie chart
+                    for other in dist.domain():
+                        if other == element:
+                            break
+                        else:
+                            sample[key] += dist[other]
+                    for vector in self.domain():
+                        if vector[key] != element:
+                            del self[vector]
+                    self.normalize()
+                index += 1
+            return sample
+        else:
+            Distribution.select(self)
+            
     def hasColumn(self,key):
         """
         @return: C{True} iff the given key appears in all of the vectors of this distribution
