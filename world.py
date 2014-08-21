@@ -163,7 +163,7 @@ class World:
             outcome['actions'] = copy.copy(actions)
         # Keep track of whether there is uncertainty about the actions to perform
         stochastic = []
-        if not isinstance(outcome['actions'],ActionSet):
+        if not isinstance(outcome['actions'],ActionSet) and not isinstance(outcome['actions'],list):
             # ActionSet indicates that we should perform just these actions. 
             # Otherwise, we look at whose turn it is:
             turn = self.next(vector)
@@ -449,9 +449,14 @@ class World:
         elif not isinstance(action,ActionSet) and not isinstance(action,list):
             # Table of actions by multiple agents
             return self.getDynamics(key,ActionSet(action))
+        error = None
         try:
             return [self.dynamics[key][action]]
         except KeyError:
+            error = 'key'
+        except TypeError:
+            error = 'type'
+        if error:
             dynamics = []
             for atom in action:
                 try:
@@ -557,12 +562,20 @@ class World:
                     table[atom['subject']].add(atom)
                 except KeyError:
                     table[atom['subject']] = ActionSet(atom)
-        else:
-            assert isinstance(actions,dict)
+        elif isinstance(actions,dict):
             table = actions
             actions = ActionSet()
             for atom in table.values():
                 actions = actions | atom
+        else:
+            assert isinstance(actions,list)
+            actionList = actions
+            table = {}
+            actions = set()
+            for atom in actionList:
+                table[atom['subject']] = True
+                actions.add(atom)
+            actions = ActionSet(actions)
         # Find dynamics for each turn
         delta = KeyedMatrix()
         for name in potentials:

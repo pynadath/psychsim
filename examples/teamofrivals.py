@@ -171,7 +171,7 @@ class ResourceWorld(World):
         if isTurnKey(key):
             # Caching doesn't work too well with partial prediction
             return []
-        elif isinstance(action,ActionSet):
+        elif isinstance(action,ActionSet) or isinstance(action,list):
             if key[-len(self.allocationState):] == self.allocationState:
                 # Figure out the resulting allocation
                 total = 0
@@ -240,7 +240,8 @@ class ResourceWorld(World):
                         return [tree.desymbolize(self.symbols)]
                     else:
                         return []
-        return World.getDynamics(self,key,action)
+        dynamics = World.getDynamics(self,key,action)
+        return dynamics
 
     def __xml__(self):
         doc = World.__xml__(self)
@@ -541,7 +542,7 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
             # Determine how many resources lost
             action = Action({'subject': player.name,'verb': 'allocate','object': region.name})
             world.addDependency(resources,invader)
-            if generation == 'additive' or generation == 'none':
+            if generation == 'additive': # or generation == 'none':
                 # Lose only those resources allocated
                 tree = makeTree(incrementMatrix(resources,'-%s' % (actionKey('amount'))))
             else:
@@ -568,13 +569,18 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
                                             False: None},
                                      False: None})
             elif generation is 'none':
-                tree = makeTree({'if': equalRow(owner,player.name),
-                                 True: {'if': equalFeatureRow(owner,invader),
-                                        True: addFeatureMatrix(resources,value),
-                                        False: None},
-                                 False: None})
+                if region is world.agents[starts[int(player.name[-1])-1]]:
+                    # Get resources from home base if below threshold
+                    tree = makeTree({'if': greaterThanRow(resources,value),
+                                     True: None,
+                                     False: setToFeatureMatrix(resources,value)})
+                else:
+                    tree = makeTree({'if': equalRow(owner,player.name),
+                                     True: {'if': equalFeatureRow(owner,invader),
+                                            True: addFeatureMatrix(resources,value),
+                                            False: None},
+                                     False: None})
             world.setDynamics(resources,action,tree)
-
     # The game has two phases: generating resources and allocating resources
     world.defineState(None,'phase',list,['generate','allocate'],combinator='*',
                       description='The current phase of the game')
@@ -738,13 +744,13 @@ if __name__ == '__main__':
     group.add_argument('--additive',action='store_const',const='additive',dest='generation',
                        help='Resources from all territories, unused ones kept')
     group.add_argument('--restorative',action='store_const',const='restorative',dest='generation',
-                       help='Resources from all territories, unused ones lost [default]')
+                       help='Resources from all territories, unused ones lost')
     group.add_argument('--minimal',action='store_const',const='minimal',dest='generation',
                        help='Resources from initial territories, unused ones lost')
     group.add_argument('--none',action='store_const',const='none',dest='generation',
-                       help='Resources from winning only, unused ones kept')
+                       help='Resources from winning only, unused ones kept [default]')
     
-    parser.set_defaults(generation='restorative',manual=False)
+    parser.set_defaults(generation='none',manual=False)
     args = vars(parser.parse_args())
     if args['update']:
         assert args['number'] == 1,'Unable to update scenario file based on multiple games'
@@ -761,6 +767,7 @@ if __name__ == '__main__':
         args['file'] = '%s.psy' % (os.path.splitext(args['map'])[0])
 
     if os.path.isfile(args['file']):
+        # Existing scenario file
         world = ResourceWorld(args['file'])
         if world.terminated():
             raise RuntimeError,'Game already over in scenario file %s' % (args['file'])
@@ -818,7 +825,10 @@ if __name__ == '__main__':
                 if world.terminated():
                     break
             # Who's doing what
-            actions = {}
+            if phase == 'generate':
+                actions = []
+            else:
+                actions = {}
             turns = world.next()
             if args['manual']:
                 turns.sort()
@@ -826,7 +836,10 @@ if __name__ == '__main__':
                 if phase  == 'generate':
                     # Time for re-generation of resources
                     assert not isinstance(world.agents[name],ResourceAgent)
-                    actions[name] = Action({'subject': name,'verb': 'generate'})
+                    if name in starts:
+                        actions.append(Action({'subject': name,'verb': 'generate'}))
+                    else:
+                        actions.insert(0,Action({'subject': name,'verb': 'generate'}))
                 else:
                     assert phase == 'allocate'
                     # Time for players to allocate resources
@@ -883,8 +896,6 @@ if __name__ == '__main__':
                                 # Nothing  left to allocate
                                 break
                         actions[name] = ActionSet(choices)
-                    elif args['generation'] == 'none':
-                        actions[name] = agent.sampleAction(world.state,2,2,actions)
                     else:
                         actions[name] = agent.sampleAction(world.state,2)
             if phase == 'allocate' and not args['quiet']:
