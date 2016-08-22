@@ -15,8 +15,8 @@
        bgcolor="#a0c0ff" cellspacing="0">
   <tr valign="middle">
   <!-- Home link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+      <th bgcolor="#70b0f0" class="navbar-select"
+          >&nbsp;&nbsp;&nbsp;Home&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -34,7 +34,7 @@
       <th class="navbar" align="right" width="100%">
         <table border="0" cellpadding="0" cellspacing="0">
           <tr><th class="navbar" align="center"
-            >PsychSim</th>
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
           </tr></table></th>
   </tr>
 </table>
@@ -62,6 +62,39 @@
 </table>
 <!-- ==================== CLASS DESCRIPTION ==================== -->
 <h1 class="epydoc">Class World</h1><p class="nomargin-top"><span class="codelink"><a href="psychsim.world-pysrc.html#World">source&nbsp;code</a></span></p>
+<center>
+<center>  <map id="uml_class_diagram_for_psychsim_18" name="uml_class_diagram_for_psychsim_18">
+<area shape="rect" id="node1_24" href="psychsim.world.World-class.html#memory" title="psychsim.world.World.memory" alt="" coords="17,29,649,49"/>
+<area shape="rect" id="node1_25" href="psychsim.world.World-class.html#agents" title="table of agents in this world, indexed by name" alt="" coords="17,49,649,69"/>
+<area shape="rect" id="node1_26" href="psychsim.world.World-class.html#color" title="color of nodes associated with the global state when displayed in the UI" alt="" coords="17,69,649,89"/>
+<area shape="rect" id="node1_27" href="psychsim.world.World-class.html#dependency" title="table of dependencies among state features that impose temporal constraints" alt="" coords="17,89,649,109"/>
+<area shape="rect" id="node1_28" href="psychsim.world.World-class.html#dynamics" title="table of action effect models" alt="" coords="17,109,649,129"/>
+<area shape="rect" id="node1_29" href="psychsim.world.World-class.html#history" title="accumulated list of outcomes from simulation steps" alt="" coords="17,129,649,149"/>
+<area shape="rect" id="node1_30" href="psychsim.world.World-class.html#state" title="the distribution over states of the world" alt="" coords="17,149,649,169"/>
+<area shape="rect" id="node1_31" href="psychsim.world.World-class.html#symbols" title="utility storage of symbols used across all enumerated state variables" alt="" coords="17,169,649,189"/>
+<area shape="rect" id="node1_32" href="psychsim.world.World-class.html#termination" title="list of conditions under which the simulation terminates (default is none)" alt="" coords="17,189,649,209"/>
+<area shape="rect" id="node1_33" href="psychsim.world.World-class.html#variables" title="definitions of the domains of possible variables (state features, &#160;relationships, observations)" alt="" coords="17,209,649,229"/>
+<area shape="rect" id="node1_34" href="psychsim.world.World-class.html#__init__" title="psychsim.world.World.__init__" alt="" coords="17,232,649,252"/>
+<area shape="rect" id="node1_35" href="psychsim.world.World-class.html#initialize" title="psychsim.world.World.initialize" alt="" coords="17,252,649,272"/>
+<area shape="rect" id="node1_36" href="psychsim.world.World-class.html#step" title="The simulation method" alt="" coords="17,272,649,292"/>
+<area shape="rect" id="node1_37" href="psychsim.world.World-class.html#stepFromState" title="Compute the resulting states when starting in a given possible world (as &#160;opposed to a distribution over possible worlds)" alt="" coords="17,292,649,312"/>
+<area shape="rect" id="node1_38" href="psychsim.world.World-class.html#effect" title="psychsim.world.World.effect" alt="" coords="17,312,649,332"/>
+<area shape="rect" id="node1_39" href="psychsim.world.World-class.html#multiDeltaVector" title="psychsim.world.World.multiDeltaVector" alt="" coords="17,332,649,352"/>
+<area shape="rect" id="node1_40" href="psychsim.world.World-class.html#singleDeltaVector" title="psychsim.world.World.singleDeltaVector" alt="" coords="17,352,649,372"/>
+<area shape="rect" id="node1_41" href="psychsim.world.World-class.html#deltaState" title="Computes the change across a subset of state features" alt="" coords="17,372,649,392"/>
+<area shape="rect" id="node1_42" href="psychsim.world.World-class.html#addTermination" title="Adds a possible termination condition to the list" alt="" coords="17,392,649,412"/>
+<area shape="rect" id="node1_43" href="psychsim.world.World-class.html#terminated" title="Evaluates world states with respect to termination conditions" alt="" coords="17,412,649,432"/>
+<area shape="rect" id="node1_44" href="psychsim.world.World-class.html#addAgent" title="psychsim.world.World.addAgent" alt="" coords="17,432,649,452"/>
+<area shape="rect" id="node1_45" href="psychsim.world.World-class.html#has_agent" title="Returns: &#160;True iff this World already has an agent with the same name" alt="" coords="17,452,649,472"/>
+<area shape="rect" id="node1_46" href="psychsim.world.World-class.html#setTurnDynamics" title="Convenience method for setting custom dynamics for the turn order" alt="" coords="17,472,649,492"/>
+<area shape="rect" id="node1_47" href="psychsim.world.World-class.html#save" title="Returns: &#160;the filename used (possibly with a .psy extension added)" alt="" coords="17,512,649,532"/>
+<area shape="rect" id="node1" href="psychsim.world.World-class.html" title="psychsim.world.World" alt="" coords="5,5,661,539"/>
+<area shape="rect" id="node2" href="psychsim.examples.teamofrivals.ResourceWorld-class.html" title="psychsim.examples.teamofrivals.ResourceWorld" alt="" coords="203,557,463,596"/>
+</map>
+  <img src="uml_class_diagram_for_psychsim_18.gif" alt='' usemap="#uml_class_diagram_for_psychsim_18" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
+<hr />
 <!-- ==================== INSTANCE METHODS ==================== -->
 <a name="section-InstanceMethods"></a>
 <table class="summary" border="1" cellpadding="3"
@@ -122,7 +155,8 @@
         <span class="summary-sig-arg">actions</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">real</span>=<span class="summary-sig-default">True</span>,
-        <span class="summary-sig-arg">select</span>=<span class="summary-sig-default">True</span>)</span><br />
+        <span class="summary-sig-arg">select</span>=<span class="summary-sig-default">True</span>,
+        <span class="summary-sig-arg">keys</span>=<span class="summary-sig-default">None</span>)</span><br />
       The simulation method</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.step">source&nbsp;code</a></span>
@@ -144,7 +178,8 @@
         <span class="summary-sig-arg">actions</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">horizon</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">tiebreak</span>=<span class="summary-sig-default">None</span>,
-        <span class="summary-sig-arg">updateBeliefs</span>=<span class="summary-sig-default">True</span>)</span><br />
+        <span class="summary-sig-arg">updateBeliefs</span>=<span class="summary-sig-default">True</span>,
+        <span class="summary-sig-arg">keys</span>=<span class="summary-sig-default">None</span>)</span><br />
       Compute the resulting states when starting in a given possible world 
       (as opposed to a distribution over possible worlds)</td>
           <td align="right" valign="top">
@@ -166,7 +201,8 @@
         <span class="summary-sig-arg">actions</span>,
         <span class="summary-sig-arg">vector</span>,
         <span class="summary-sig-arg">probability</span>=<span class="summary-sig-default">1.0</span>,
-        <span class="summary-sig-arg">updateBeliefs</span>=<span class="summary-sig-default">True</span>)</span></td>
+        <span class="summary-sig-arg">updateBeliefs</span>=<span class="summary-sig-default">True</span>,
+        <span class="summary-sig-arg">keys</span>=<span class="summary-sig-default">None</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.effect">source&nbsp;code</a></span>
             
@@ -182,9 +218,49 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <td><span class="summary-sig"><a name="multiDeltaVector"></a><span class="summary-sig-name">multiDeltaVector</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">actions</span>,
+        <span class="summary-sig-arg">old</span>,
+        <span class="summary-sig-arg">keys</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.multiDeltaVector">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#singleDeltaVector" class="summary-sig-name">singleDeltaVector</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">actions</span>,
+        <span class="summary-sig-arg">old</span>,
+        <span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">dynamics</span>=<span class="summary-sig-default">None</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.singleDeltaVector">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
           <td><span class="summary-sig"><a name="deltaState"></a><span class="summary-sig-name">deltaState</span>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">actions</span>,
-        <span class="summary-sig-arg">vector</span>,
+        <span class="summary-sig-arg">old</span>,
+        <span class="summary-sig-arg">effects</span>,
         <span class="summary-sig-arg">keys</span>=<span class="summary-sig-default">None</span>)</span><br />
       Computes the change across a subset of state features</td>
           <td align="right" valign="top">
@@ -251,6 +327,26 @@
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">bool</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#has_agent" class="summary-sig-name">has_agent</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">agent</span>)</span><br />
+      Returns:
+      <code>True</code> iff this <code>World</code> already has an agent 
+      with the same name</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.has_agent">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">&nbsp;</span>
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
@@ -299,7 +395,8 @@
         <tr>
           <td><span class="summary-sig"><a name="getDynamics"></a><span class="summary-sig-name">getDynamics</span>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">key</span>,
-        <span class="summary-sig-arg">action</span>)</span></td>
+        <span class="summary-sig-arg">action</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.getDynamics">source&nbsp;code</a></span>
             
@@ -423,6 +520,7 @@
         <span class="summary-sig-arg">lo</span>=<span class="summary-sig-default">-1.0</span>,
         <span class="summary-sig-arg">hi</span>=<span class="summary-sig-default">1.0</span>,
         <span class="summary-sig-arg">description</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">combinator</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">evaluate</span>=<span class="summary-sig-default">True</span>)</span><br />
       Define the type and domain of a given element of the state vector</td>
           <td align="right" valign="top">
@@ -540,6 +638,26 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <td><span class="summary-sig"><a href="psychsim.world.World-class.html#getValue" class="summary-sig-name">getValue</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Helper method that returns a single value from a vector or a 
+      singleton distribution</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.getValue">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
           <td><span class="summary-sig"><a name="decodeVariable"></a><span class="summary-sig-name">decodeVariable</span>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">key</span>,
         <span class="summary-sig-arg">distribution</span>)</span></td>
@@ -564,7 +682,8 @@
         <span class="summary-sig-arg">domain</span>=<span class="summary-sig-default">&lt;type 'float'&gt;</span>,
         <span class="summary-sig-arg">lo</span>=<span class="summary-sig-default">0.0</span>,
         <span class="summary-sig-arg">hi</span>=<span class="summary-sig-default">1.0</span>,
-        <span class="summary-sig-arg">description</span>=<span class="summary-sig-default">None</span>)</span><br />
+        <span class="summary-sig-arg">description</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">combinator</span>=<span class="summary-sig-default">None</span>)</span><br />
       Defines a state feature associated with a single agent, or with the 
       global world state.</td>
           <td align="right" valign="top">
@@ -803,7 +922,7 @@
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td><span class="summary-sig"><a href="psychsim.world.World-class.html#reachable" class="summary-sig-name">reachable</a>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">vector</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">transition</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">horizon</span>=<span class="summary-sig-default">-1</span>,
         <span class="summary-sig-arg">ignore</span>=<span class="summary-sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>,
@@ -849,6 +968,22 @@
         <span class="summary-sig-arg">feature</span>=<span class="summary-sig-default">None</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.getDescription">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getGraph"></a><span class="summary-sig-name">getGraph</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.world-pysrc.html#World.getGraph">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -1007,7 +1142,8 @@
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td><span class="summary-sig"><a name="parse"></a><span class="summary-sig-name">parse</span>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">element</span>)</span></td>
+        <span class="summary-sig-arg">element</span>,
+        <span class="summary-sig-arg">agentClass</span>=<span class="summary-sig-default">&lt;class psychsim.agent.Agent at 0x7fa3fae38a78&gt;</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.world-pysrc.html#World.parse">source&nbsp;code</a></span>
             
@@ -1035,6 +1171,31 @@
         </tr>
       </table>
       
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS VARIABLES ==================== -->
+<a name="section-ClassVariables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Class Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-ClassVariables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="memory"></a><span class="summary-name">memory</span> = <code title="True">True</code>
     </td>
   </tr>
 </table>
@@ -1066,6 +1227,15 @@
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="color"></a><span class="summary-name">color</span><br />
+      color of nodes associated with the global state when displayed in the
+      UI
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type">dict</span>
     </td><td class="summary">
         <a name="dependency"></a><span class="summary-name">dependency</span><br />
@@ -1091,7 +1261,7 @@
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
-      <span class="summary-type"><a href="psychsim.pwl.VectorDistribution-class.html" 
+      <span class="summary-type">str&rarr;<a href="psychsim.pwl.VectorDistribution-class.html" 
       class="link">VectorDistribution</a></span>
     </td><td class="summary">
         <a name="state"></a><span class="summary-name">state</span><br />
@@ -1180,7 +1350,8 @@
         <span class="sig-arg">actions</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">state</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">real</span>=<span class="sig-default">True</span>,
-        <span class="sig-arg">select</span>=<span class="sig-default">True</span>)</span>
+        <span class="sig-arg">select</span>=<span class="sig-default">True</span>,
+        <span class="sig-arg">keys</span>=<span class="sig-default">None</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.world-pysrc.html#World.step">source&nbsp;code</a></span>&nbsp;
@@ -1214,7 +1385,8 @@
         <span class="sig-arg">actions</span>,
         <span class="sig-arg">vector</span>,
         <span class="sig-arg">probability</span>=<span class="sig-default">1.0</span>,
-        <span class="sig-arg">updateBeliefs</span>=<span class="sig-default">True</span>)</span>
+        <span class="sig-arg">updateBeliefs</span>=<span class="sig-default">True</span>,
+        <span class="sig-arg">keys</span>=<span class="sig-default">None</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.world-pysrc.html#World.effect">source&nbsp;code</a></span>&nbsp;
@@ -1226,6 +1398,34 @@
     <dt>Parameters:</dt>
     <dd><ul class="nomargin-top">
         <li><strong class="pname"><code>probability</code></strong> (float) - the likelihood of this particular action set (default is 100%)</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="singleDeltaVector"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">singleDeltaVector</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">actions</span>,
+        <span class="sig-arg">old</span>,
+        <span class="sig-arg">key</span>,
+        <span class="sig-arg">dynamics</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.singleDeltaVector">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>old</code></strong> (<a href="psychsim.pwl.KeyedVector-class.html" 
+          class="link">KeyedVector</a>)</li>
     </ul></dd>
   </dl>
 </td></tr></table>
@@ -1258,6 +1458,34 @@
     <dt>Returns: bool</dt>
         <dd><code>True</code> iff the given state (or all possible worlds if 
           a distribution) satisfies at least one termination condition</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="has_agent"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">has_agent</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">agent</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.has_agent">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>agent</code></strong> (<a href="psychsim.agent.Agent-class.html" class="link">Agent</a> 
+          or str) - The agent (or agent name) to look for</li>
+    </ul></dd>
+    <dt>Returns: bool</dt>
+        <dd><code>True</code> iff this <code>World</code> already has an 
+          agent with the same name</dd>
   </dl>
 </td></tr></table>
 </div>
@@ -1468,6 +1696,7 @@
         <span class="sig-arg">lo</span>=<span class="sig-default">-1.0</span>,
         <span class="sig-arg">hi</span>=<span class="sig-default">1.0</span>,
         <span class="sig-arg">description</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">combinator</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">evaluate</span>=<span class="sig-default">True</span>)</span>
   </h3>
   </td><td align="right" valign="top"
@@ -1504,6 +1733,7 @@
         <li><strong class="pname"><code>hi</code></strong> (float/int) - for float/int features, the highest possible value</li>
         <li><strong class="pname"><code>description</code></strong> (str) - optional text description explaining what this state feature 
           means</li>
+        <li><strong class="pname"><code>combinator</code></strong> - how should multiple dynamics for this variable be combined</li>
     </ul></dd>
   </dl>
 </td></tr></table>
@@ -1596,6 +1826,39 @@
   </dl>
 </td></tr></table>
 </div>
+<a name="getValue"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getValue</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">key</span>,
+        <span class="sig-arg">state</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.world-pysrc.html#World.getValue">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Helper method that returns a single value from a vector or a singleton
+  distribution</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>key</code></strong> (str) - the label of the state element of interest</li>
+        <li><strong class="pname"><code>state</code></strong> (<a href="psychsim.pwl.VectorDistribution-class.html" 
+          class="link">VectorDistribution</a> or <a 
+          href="psychsim.pwl.KeyedVector-class.html" 
+          class="link">KeyedVector</a>) - the distribution over possible worlds (default is the current 
+          world state)</li>
+    </ul></dd>
+    <dt>Returns:</dt>
+        <dd>a single value for the given feature</dd>
+  </dl>
+</td></tr></table>
+</div>
 <a name="defineState"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
@@ -1609,7 +1872,8 @@
         <span class="sig-arg">domain</span>=<span class="sig-default">&lt;type 'float'&gt;</span>,
         <span class="sig-arg">lo</span>=<span class="sig-default">0.0</span>,
         <span class="sig-arg">hi</span>=<span class="sig-default">1.0</span>,
-        <span class="sig-arg">description</span>=<span class="sig-default">None</span>)</span>
+        <span class="sig-arg">description</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">combinator</span>=<span class="sig-default">None</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.world-pysrc.html#World.defineState">source&nbsp;code</a></span>&nbsp;
@@ -1813,7 +2077,7 @@
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr valign="top"><td>
   <h3 class="epydoc"><span class="sig"><span class="sig-name">reachable</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">vector</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">state</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">transition</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">horizon</span>=<span class="sig-default">-1</span>,
         <span class="sig-arg">ignore</span>=<span class="sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>,
@@ -1830,7 +2094,12 @@
         <dd>transition matrix among states reachable from the given state 
           (default is current state)</dd>
   </dl>
-</td></tr></table>
+<div class="fields">      <p><strong>Note:</strong>
+        The <code>__predecessors__</code> entry for each reachable vector 
+        is a set of possible preceding states (i.e., those whose value must
+        be updated if the value of this vector changes
+      </p>
+</div></td></tr></table>
 </div>
 <a name="explain"></a>
 <div>
@@ -2021,8 +2290,8 @@
        bgcolor="#a0c0ff" cellspacing="0">
   <tr valign="middle">
   <!-- Home link -->
-      <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+      <th bgcolor="#70b0f0" class="navbar-select"
+          >&nbsp;&nbsp;&nbsp;Home&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -2040,14 +2309,14 @@
       <th class="navbar" align="right" width="100%">
         <table border="0" cellpadding="0" cellspacing="0">
           <tr><th class="navbar" align="center"
-            >PsychSim</th>
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
           </tr></table></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Sat Jan 18 16:18:59 2014
+    Generated by Epydoc 3.0.1 on Fri Dec 19 02:49:50 2014
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

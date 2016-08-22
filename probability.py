@@ -28,9 +28,14 @@ class Distribution(dict):
             if isinstance(args,Node):
                 self.parse(args)
             elif rationality is None:
-                # Probability table provided
-                for key,value in args.items():
-                    self[key] = value
+                if isinstance(args,Distribution):
+                    # Some other distribution given
+                    for key in args.domain():
+                        self[key] = args[key]
+                else:
+                    # Probability dictionary provided
+                    for key,value in args.items():
+                        self[key] = value
             else:
                 # Do quantal response / softmax on table of values
                 for key,V in args.items():
@@ -160,27 +165,43 @@ class Distribution(dict):
         self.set(element)
         return prob
 
+    def max(self):
+        """
+        @return: the most probable element in this distribution (breaking ties by returning the highest-valued element)
+        """
+        return max([(self[element],element) for element in self.domain()])[1]
+
     def __add__(self,other):
         if isinstance(other,Distribution):
-            raise NotImplementedError,'Unable to add two distributions.'
+            result = self.__class__()
+            for me in self.domain():
+                for you in other.domain():
+                    result.addProb(me+you,self[me]*other[you])
+            return result
         else:
-            result = {}
+            result = self.__class__()
             for element in self.domain():
-                result[element+other] = self[element]
-            return self.__class__(result)
+                result.addProb(element+other,self[element])
+            return result
 
     def __sub__(self,other):
         return self + (-other)
+
+    def __neg__(self):
+        result = self.__class__()
+        for element in self.domain():
+            result.addProb(-element,self[element])
+        return result
 
     def __mul__(self,other):
         if isinstance(other,Distribution):
             raise NotImplementedError,'Unable to multiply %s by %s.' \
                 % (self.__class__.__name__,other.__class__.__name__)
         else:
-            result = {}
+            result = self.__class__()
             for element in self.domain():
-                result[element*other] = self[element]
-            return self.__class__(result)
+                result.addProb(element*other,self[element])
+            return result
         
     def __xml__(self):
         """
@@ -229,6 +250,11 @@ class Distribution(dict):
 
     def xml2element(self,key,node):
         return key
+
+    def sortedString(self):
+        elements = self.domain()
+        elements.sort(lambda x,y: cmp(str(x),str(y)))
+        return '\n'.join(['%4.1f%%\t%s' % (100.*self[el],str(el)) for el in elements])
 
     def __str__(self):
         return '\n'.join(map(lambda el: '%d%%\t%s' % (100.*self[el],str(el).replace('\n','\n\t')),self.domain()))

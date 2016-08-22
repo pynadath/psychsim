@@ -1,0 +1,615 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>psychsim.ui.worldview.WorldView</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="psychsim-module.html">Package&nbsp;psychsim</a> ::
+        <a href="psychsim.ui-module.html">Package&nbsp;ui</a> ::
+        <a href="psychsim.ui.worldview-module.html">Module&nbsp;worldview</a> ::
+        Class&nbsp;WorldView
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="psychsim.ui.worldview.WorldView-class.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS DESCRIPTION ==================== -->
+<h1 class="epydoc">Class WorldView</h1><p class="nomargin-top"><span class="codelink"><a href="psychsim.ui.worldview-pysrc.html#WorldView">source&nbsp;code</a></span></p>
+<center>
+<center>  <map id="uml_class_diagram_for_psychsim_17" name="uml_class_diagram_for_psychsim_17">
+<area shape="rect" id="node1_48" href="psychsim.ui.worldview.WorldView-class.html#rowHeight" title="psychsim.ui.worldview.WorldView.rowHeight" alt="" coords="20,1073,192,1093"/>
+<area shape="rect" id="node1_49" href="psychsim.ui.worldview.WorldView-class.html#colWidth" title="psychsim.ui.worldview.WorldView.colWidth" alt="" coords="20,1093,192,1113"/>
+<area shape="rect" id="node1_50" href="psychsim.ui.worldview.WorldView-class.html#arrowAngle" title="psychsim.ui.worldview.WorldView.arrowAngle" alt="" coords="20,1113,192,1133"/>
+<area shape="rect" id="node1_51" href="psychsim.ui.worldview.WorldView-class.html#arrowLength" title="psychsim.ui.worldview.WorldView.arrowLength" alt="" coords="20,1133,192,1153"/>
+<area shape="rect" id="node1_52" href="psychsim.ui.worldview.WorldView-class.html#__init__" title="x.__init__(...) initializes x; see help(type(x)) for signature" alt="" coords="20,1156,192,1176"/>
+<area shape="rect" id="node1_53" href="psychsim.ui.worldview.WorldView-class.html#displayWorld" title="psychsim.ui.worldview.WorldView.displayWorld" alt="" coords="20,1176,192,1196"/>
+<area shape="rect" id="node1_54" href="psychsim.ui.worldview.WorldView-class.html#drawEdge" title="psychsim.ui.worldview.WorldView.drawEdge" alt="" coords="20,1196,192,1216"/>
+<area shape="rect" id="node1_55" href="psychsim.ui.worldview.WorldView-class.html#highlightEdges" title="Highlight any edges originating or ending at the named node" alt="" coords="20,1216,192,1236"/>
+<area shape="rect" id="node1_56" href="psychsim.ui.worldview.WorldView-class.html#updateEdges" title="psychsim.ui.worldview.WorldView.updateEdges" alt="" coords="20,1236,192,1256"/>
+<area shape="rect" id="node1" href="psychsim.ui.worldview.WorldView-class.html" title="psychsim.ui.worldview.WorldView" alt="" coords="7,1049,203,1263"/>
+<area shape="rect" id="node2_57" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.AllLayers" alt="" coords="17,542,196,562"/>
+<area shape="rect" id="node2_58" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.BackgroundLayer" alt="" coords="17,562,196,582"/>
+<area shape="rect" id="node2_59" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.BspTreeIndex" alt="" coords="17,582,196,602"/>
+<area shape="rect" id="node2_60" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.ForegroundLayer" alt="" coords="17,602,196,622"/>
+<area shape="rect" id="node2_61" href="PyQt4.QtGui.QGraphicsScene.ItemIndexMethod-class.html" title="PyQt4.QtGui.QGraphicsScene.ItemIndexMethod" alt="" coords="17,622,196,642"/>
+<area shape="rect" id="node2_62" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.ItemLayer" alt="" coords="17,642,196,662"/>
+<area shape="rect" id="node2_63" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.NoIndex" alt="" coords="17,662,196,682"/>
+<area shape="rect" id="node2_64" href="PyQt4.QtGui.QGraphicsScene.SceneLayer-class.html" title="PyQt4.QtGui.QGraphicsScene.SceneLayer" alt="" coords="17,682,196,702"/>
+<area shape="rect" id="node2_65" href="PyQt4.QtGui.QGraphicsScene.SceneLayers-class.html" title="QGraphicsScene.SceneLayers(QGraphicsScene.SceneLayers) &#160;QGraphicsScene.SceneLayers(int) QGraphicsScene.SceneLayers()" alt="" coords="17,702,196,722"/>
+<area shape="rect" id="node2_66" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.activePanel" alt="" coords="17,725,196,745"/>
+<area shape="rect" id="node2_67" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.activeWindow" alt="" coords="17,745,196,765"/>
+<area shape="rect" id="node2_68" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.addEllipse" alt="" coords="17,765,196,785"/>
+<area shape="rect" id="node2_69" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.addItem" alt="" coords="17,785,196,805"/>
+<area shape="rect" id="node2_70" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.addLine" alt="" coords="17,805,196,825"/>
+<area shape="rect" id="node2_71" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.addPath" alt="" coords="17,825,196,845"/>
+<area shape="rect" id="node2_72" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.addPixmap" alt="" coords="17,845,196,865"/>
+<area shape="rect" id="node2_73" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.addPolygon" alt="" coords="17,865,196,885"/>
+<area shape="rect" id="node2_74" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.addRect" alt="" coords="17,885,196,905"/>
+<area shape="rect" id="node2_75" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.addSimpleText" alt="" coords="17,905,196,925"/>
+<area shape="rect" id="node2_76" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.addText" alt="" coords="17,925,196,945"/>
+<area shape="rect" id="node2_77" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.addWidget" alt="" coords="17,945,196,965"/>
+<area shape="rect" id="node2_78" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.advance" alt="" coords="17,965,196,985"/>
+<area shape="rect" id="node2_79" href="javascript:void(0);" title="PyQt4.QtGui.QGraphicsScene.width" alt="" coords="17,1005,196,1025"/>
+<area shape="rect" id="node2" href="javascript:void(0);" title="QGraphicsScene(QObject parent=None) QGraphicsScene(QRectF, QObject parent=None) QGraphicsScene(float, float, float, float, QObject parent=None)" alt="" coords="5,517,208,1031"/>
+<area shape="rect" id="node3_80" href="javascript:void(0);" title="PyQt4.QtCore.QObject.staticMetaObject" alt="" coords="39,170,175,190"/>
+<area shape="rect" id="node3_81" href="javascript:void(0);" title="PyQt4.QtCore.QObject.__getattr__" alt="" coords="39,193,175,213"/>
+<area shape="rect" id="node3_82" href="javascript:void(0);" title="PyQt4.QtCore.QObject.blockSignals" alt="" coords="39,213,175,233"/>
+<area shape="rect" id="node3_83" href="javascript:void(0);" title="PyQt4.QtCore.QObject.childEvent" alt="" coords="39,233,175,253"/>
+<area shape="rect" id="node3_84" href="javascript:void(0);" title="PyQt4.QtCore.QObject.children" alt="" coords="39,253,175,273"/>
+<area shape="rect" id="node3_85" href="javascript:void(0);" title="PyQt4.QtCore.QObject.connect" alt="" coords="39,273,175,293"/>
+<area shape="rect" id="node3_86" href="javascript:void(0);" title="PyQt4.QtCore.QObject.connectNotify" alt="" coords="39,293,175,313"/>
+<area shape="rect" id="node3_87" href="javascript:void(0);" title="PyQt4.QtCore.QObject.customEvent" alt="" coords="39,313,175,333"/>
+<area shape="rect" id="node3_88" href="javascript:void(0);" title="PyQt4.QtCore.QObject.deleteLater" alt="" coords="39,333,175,353"/>
+<area shape="rect" id="node3_89" href="javascript:void(0);" title="QObject.destroyed[QObject] [signal] QObject.destroyed [signal]" alt="" coords="39,353,175,373"/>
+<area shape="rect" id="node3_90" href="javascript:void(0);" title="PyQt4.QtCore.QObject.disconnect" alt="" coords="39,373,175,393"/>
+<area shape="rect" id="node3_91" href="javascript:void(0);" title="PyQt4.QtCore.QObject.disconnectNotify" alt="" coords="39,393,175,413"/>
+<area shape="rect" id="node3_92" href="javascript:void(0);" title="PyQt4.QtCore.QObject.dumpObjectInfo" alt="" coords="39,413,175,433"/>
+<area shape="rect" id="node3_93" href="javascript:void(0);" title="PyQt4.QtCore.QObject.dumpObjectTree" alt="" coords="39,433,175,453"/>
+<area shape="rect" id="node3_94" href="javascript:void(0);" title="PyQt4.QtCore.QObject.trUtf8" alt="" coords="39,473,175,493"/>
+<area shape="rect" id="node3" href="javascript:void(0);" title="QObject(QObject parent=None)" alt="" coords="27,145,187,499"/>
+<area shape="rect" id="node4_95" href="javascript:void(0);" title="sip.simplewrapper.__new__" alt="" coords="48,37,164,57"/>
+<area shape="rect" id="node4" href="javascript:void(0);" title="sip.simplewrapper" alt="" coords="35,5,175,64"/>
+<area shape="rect" id="node5" href="javascript:void(0);" title="sip.wrapper" alt="" coords="59,83,151,127"/>
+</map>
+  <img src="uml_class_diagram_for_psychsim_17.gif" alt='' usemap="#uml_class_diagram_for_psychsim_17" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
+<hr />
+<!-- ==================== NESTED CLASSES ==================== -->
+<a name="section-NestedClasses"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Nested Classes</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-NestedClasses"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code>PyQt4.QtGui.QGraphicsScene</code></b>:
+      <code><a href="PyQt4.QtGui.QGraphicsScene.ItemIndexMethod-class.html">ItemIndexMethod</a></code>,
+      <code><a href="PyQt4.QtGui.QGraphicsScene.SceneLayer-class.html">SceneLayer</a></code>,
+      <code><a href="PyQt4.QtGui.QGraphicsScene.SceneLayers-class.html">SceneLayers</a></code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== INSTANCE METHODS ==================== -->
+<a name="section-InstanceMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Instance Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-InstanceMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.ui.worldview.WorldView-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">parent</span>=<span class="summary-sig-default">None</span>)</span><br />
+      x.__init__(...) initializes x; see help(type(x)) for signature</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.ui.worldview-pysrc.html#WorldView.__init__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="displayWorld"></a><span class="summary-sig-name">displayWorld</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">world</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.ui.worldview-pysrc.html#WorldView.displayWorld">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="drawEdge"></a><span class="summary-sig-name">drawEdge</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">parent</span>,
+        <span class="summary-sig-arg">child</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.ui.worldview-pysrc.html#WorldView.drawEdge">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.ui.worldview.WorldView-class.html#highlightEdges" class="summary-sig-name">highlightEdges</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">center</span>)</span><br />
+      Highlight any edges originating or ending at the named node</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.ui.worldview-pysrc.html#WorldView.highlightEdges">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="updateEdges"></a><span class="summary-sig-name">updateEdges</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">rect</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.ui.worldview-pysrc.html#WorldView.updateEdges">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code>PyQt4.QtGui.QGraphicsScene</code></b>:
+      <code>activePanel</code>,
+      <code>activeWindow</code>,
+      <code>addEllipse</code>,
+      <code>addItem</code>,
+      <code>addLine</code>,
+      <code>addPath</code>,
+      <code>addPixmap</code>,
+      <code>addPolygon</code>,
+      <code>addRect</code>,
+      <code>addSimpleText</code>,
+      <code>addText</code>,
+      <code>addWidget</code>,
+      <code>advance</code>,
+      <code>backgroundBrush</code>,
+      <code>bspTreeDepth</code>,
+      <code>changed</code>,
+      <code>clear</code>,
+      <code>clearFocus</code>,
+      <code>clearSelection</code>,
+      <code>collidingItems</code>,
+      <code>contextMenuEvent</code>,
+      <code>createItemGroup</code>,
+      <code>destroyItemGroup</code>,
+      <code>dragEnterEvent</code>,
+      <code>dragLeaveEvent</code>,
+      <code>dragMoveEvent</code>,
+      <code>drawBackground</code>,
+      <code>drawForeground</code>,
+      <code>drawItems</code>,
+      <code>dropEvent</code>,
+      <code>event</code>,
+      <code>eventFilter</code>,
+      <code>focusInEvent</code>,
+      <code>focusItem</code>,
+      <code>focusNextPrevChild</code>,
+      <code>focusOutEvent</code>,
+      <code>font</code>,
+      <code>foregroundBrush</code>,
+      <code>hasFocus</code>,
+      <code>height</code>,
+      <code>helpEvent</code>,
+      <code>inputMethodEvent</code>,
+      <code>inputMethodQuery</code>,
+      <code>invalidate</code>,
+      <code>isActive</code>,
+      <code>isSortCacheEnabled</code>,
+      <code>itemAt</code>,
+      <code>itemIndexMethod</code>,
+      <code>items</code>,
+      <code>itemsBoundingRect</code>,
+      <code>keyPressEvent</code>,
+      <code>keyReleaseEvent</code>,
+      <code>mouseDoubleClickEvent</code>,
+      <code>mouseGrabberItem</code>,
+      <code>mouseMoveEvent</code>,
+      <code>mousePressEvent</code>,
+      <code>mouseReleaseEvent</code>,
+      <code>palette</code>,
+      <code>removeItem</code>,
+      <code>render</code>,
+      <code>sceneRect</code>,
+      <code>sceneRectChanged</code>,
+      <code>selectedItems</code>,
+      <code>selectionArea</code>,
+      <code>selectionChanged</code>,
+      <code>sendEvent</code>,
+      <code>setActivePanel</code>,
+      <code>setActiveWindow</code>,
+      <code>setBackgroundBrush</code>,
+      <code>setBspTreeDepth</code>,
+      <code>setFocus</code>,
+      <code>setFocusItem</code>,
+      <code>setFont</code>,
+      <code>setForegroundBrush</code>,
+      <code>setItemIndexMethod</code>,
+      <code>setPalette</code>,
+      <code>setSceneRect</code>,
+      <code>setSelectionArea</code>,
+      <code>setSortCacheEnabled</code>,
+      <code>setStickyFocus</code>,
+      <code>setStyle</code>,
+      <code>stickyFocus</code>,
+      <code>style</code>,
+      <code>update</code>,
+      <code>views</code>,
+      <code>wheelEvent</code>,
+      <code>width</code>
+      </p>
+    <p class="indent-wrapped-lines"><b>Inherited from <code>PyQt4.QtCore.QObject</code></b>:
+      <code>__getattr__</code>,
+      <code>blockSignals</code>,
+      <code>childEvent</code>,
+      <code>children</code>,
+      <code>connect</code>,
+      <code>connectNotify</code>,
+      <code>customEvent</code>,
+      <code>deleteLater</code>,
+      <code>destroyed</code>,
+      <code>disconnect</code>,
+      <code>disconnectNotify</code>,
+      <code>dumpObjectInfo</code>,
+      <code>dumpObjectTree</code>,
+      <code>dynamicPropertyNames</code>,
+      <code>emit</code>,
+      <code>findChild</code>,
+      <code>findChildren</code>,
+      <code>inherits</code>,
+      <code>installEventFilter</code>,
+      <code>isWidgetType</code>,
+      <code>killTimer</code>,
+      <code>metaObject</code>,
+      <code>moveToThread</code>,
+      <code>objectName</code>,
+      <code>parent</code>,
+      <code>property</code>,
+      <code>pyqtConfigure</code>,
+      <code>receivers</code>,
+      <code>removeEventFilter</code>,
+      <code>sender</code>,
+      <code>senderSignalIndex</code>,
+      <code>setObjectName</code>,
+      <code>setParent</code>,
+      <code>setProperty</code>,
+      <code>signalsBlocked</code>,
+      <code>startTimer</code>,
+      <code>thread</code>,
+      <code>timerEvent</code>,
+      <code>tr</code>,
+      <code>trUtf8</code>
+      </p>
+    <p class="indent-wrapped-lines"><b>Inherited from <code>sip.simplewrapper</code></b>:
+      <code>__new__</code>
+      </p>
+    <p class="indent-wrapped-lines"><b>Inherited from <code>object</code></b>:
+      <code>__delattr__</code>,
+      <code>__format__</code>,
+      <code>__getattribute__</code>,
+      <code>__hash__</code>,
+      <code>__reduce__</code>,
+      <code>__reduce_ex__</code>,
+      <code>__repr__</code>,
+      <code>__setattr__</code>,
+      <code>__sizeof__</code>,
+      <code>__str__</code>,
+      <code>__subclasshook__</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS VARIABLES ==================== -->
+<a name="section-ClassVariables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Class Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-ClassVariables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="rowHeight"></a><span class="summary-name">rowHeight</span> = <code title="100">100</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="colWidth"></a><span class="summary-name">colWidth</span> = <code title="150">150</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="arrowAngle"></a><span class="summary-name">arrowAngle</span> = <code title="0.261799387799">0.261799387799</code>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="arrowLength"></a><span class="summary-name">arrowLength</span> = <code title="15.0">15.0</code>
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code>PyQt4.QtGui.QGraphicsScene</code></b>:
+      <code>AllLayers</code>,
+      <code>BackgroundLayer</code>,
+      <code>BspTreeIndex</code>,
+      <code>ForegroundLayer</code>,
+      <code>ItemLayer</code>,
+      <code>NoIndex</code>
+      </p>
+    <p class="indent-wrapped-lines"><b>Inherited from <code>PyQt4.QtCore.QObject</code></b>:
+      <code>staticMetaObject</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== PROPERTIES ==================== -->
+<a name="section-Properties"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Properties</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Properties"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code>object</code></b>:
+      <code>__class__</code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Method Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-MethodDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="__init__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">parent</span>=<span class="sig-default">None</span>)</span>
+    <br /><em class="fname">(Constructor)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.ui.worldview-pysrc.html#WorldView.__init__">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>x.__init__(...) initializes x; see help(type(x)) for signature</p>
+  <dl class="fields">
+    <dt>Overrides:
+        object.__init__
+        <dd><em class="note">(inherited documentation)</em></dd>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="highlightEdges"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">highlightEdges</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">center</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.ui.worldview-pysrc.html#WorldView.highlightEdges">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Highlight any edges originating or ending at the named node</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>center</code></strong> (str)</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Fri Dec 19 02:49:50 2014
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

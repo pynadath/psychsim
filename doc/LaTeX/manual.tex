@@ -100,7 +100,7 @@ free.setState('cost',Distribution({1000: 0.5, 2000: 0.5}))
 
 The {\tt Distribution} constructor takes a dictionary whose keys constitute the distribution's sample space, and whose values constitte the probability mass of each element of that space. In the above example, the distribution over Freedonia's cost is 50-50 between 1000 and 2000. When you call the ``setState'' method with a probabilistic value, PsychSim {\em joins} the new distribution with the current state vector. After the previous two ``setState'' calls, there will be two possible worlds, each with 50\% probability: one where Freedonia has 40000 troops and cost 1000, and a second where Freedonia has 40000 troops and cost 2000. Just as the second call doubles the number of possible worlds, a subsequent call to ``setState'' with a probabilistic value will similarly increase the number of possible worlds by a factor equal to the size of the distribution passed in. In other words, calling ``setState'' will generate worlds for all possible combinations of the individual values for the state features.
 
-If you would like more fine-grained control over the possible worlds, simply manipulate the distribution directly.
+If you would like more fine-grained control over the possible worlds, simply manipulate the distribution directly. Note that the world state is potentially a dictionary of distributions over worlds, although until further development occurs, the only entry in that table is indexed by {\tt None}:
 
 \begin{verbatim}
 possworld1 = KeyedVector({stateKey(free.name,'troops'): 40000, 
@@ -111,10 +111,10 @@ possworld3 = KeyedVector()
 possworld3[stateKey(free.name,'troops')] = 25000
 possworld3[stateKey(free.name,'cost')] = 2000
 
-world.state.clear()
-world.state[possworld1] = 0.1
-world.state[possworld2] = 0.4
-world.state[possworld3] = 0.5
+world.state[None].clear()
+world.state[None][possworld1] = 0.1
+world.state[None][possworld2] = 0.4
+world.state[None][possworld3] = 0.5
 \end{verbatim}
 
 When querying for a given state feature, the returned value is {\em always} in {\tt Distribution} form.
@@ -205,7 +205,7 @@ world.defineVariable(stateKey(free.name,'troops'),
 \end{verbatim}
 
 \section{Actions}\label{sec:actions}
-The most common reason for creating an agent is because there is an entity that can take {\em actions} that change the state of the world. If an entity has a deterministic effect on the world, you can define a single action for it. However, agents typically have multiple actions, and it is the decision among them that is the focus of the simulation.
+The most common reason for creating an agent is because there is an entity that can take {\em actions} that change the state of the world. If an entity has a deterministic effect on the world, you can define a single action for it. However, agents typically have multiple actions to choose from, and it is the decision among them that is the focus of the simulation.
 
 \subsection{Atomic Actions}
 
@@ -215,14 +215,20 @@ The {\tt verb} of an individual action is a required field when defining the act
 freeReject = free.addAction({'verb': 'reject'})
 \end{verbatim}
 
-The action created will also have a {\tt subject} field, representing the agent who is performing this action. The {\tt subject} field is automatically filled in with the name of the agent. A third optional field, {\tt object}, can represent the target of the specific action.
+The action created will also have a {\tt subject} field, representing the agent who is performing this action. The {\tt subject} field is automatically filled in with the name of the agent (``Freedonia'' in the above example). A third optional field, {\tt object}, can represent the target of the specific action.
 
 \begin{verbatim}
 freeBattle = free.addAction({'verb': 'attack','object': sylv.name})
 \end{verbatim}
 
-You are free to define any other fields as well to contain other parameterizations of the actions.
+An action's field values can be accessed in the same way as entries in a dictionary:
 
+\begin{verbatim}
+if action['verb'] == 'reject' and action['object'] == sylv.name:
+   # Sylvania will feel rejected
+\end{verbatim}
+
+You are free to define any other fields as well to contain other parameterizations of the actions. 
 \begin{verbatim}
 free.addAction({'verb': 'offer','object': sylv.name,'amount': 50})
 \end{verbatim}
@@ -251,7 +257,7 @@ freeRejectAndAttack = freeReject | freeBattle
 As we will see in Section \ref{sec:legality}, not all of the agent's choices may be legal under all circumstances. Rather than inspecting the {\tt actions} attribute itself, we typically examine the context-specific set of action choices instead.
 
 \begin{verbatim}
-for vector in world.state.domain():
+for vector in world.state[None].domain():
    print free.getActions(vector)
 \end{verbatim}
 
@@ -286,6 +292,8 @@ This condition specifies that the simulation ends if a ``treaty'' is reached. Mu
 
 \section{Reward}
 
+An agent's {\em reward} function represents its (dis)incentives for choosing certain actions. In other agent frameworks, this same component might be referred to as the agent's {\em utility} or {\em goals}. It is often convenient to separate different aspects of the agent's reward function.
+
 \begin{verbatim}
     goalFTroops = maximizeFeature(stateKey(free.name,'troops'))
     free.setReward(goalFTroops,1.)
@@ -311,6 +319,8 @@ free.addModel('friend')
 \section{PWL functions}\label{sec:pwl}
 
 \section{Executing a Scenario}
+
+The basic simulation method is the {\tt step}, which generates a single decision epoch's worth of action choices, state changes, and belief updates. Calling the method with no arguments will allow all of the agents to choose their actions autonomously based on their beliefs in the current world.
 
 \begin{verbatim}
 world.step()

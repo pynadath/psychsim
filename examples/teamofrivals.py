@@ -1,91 +1,102 @@
 """
-Scenario for cooperative conquest game
+Scenario for cooperative conquest game::
 
-usage: teamofrivals.py [-h] [-p] [-n NUMBER] [-1] [-f FILE] [-u] [-q]
-                       [-m | -a]
-                       [--additive | --restorative | --minimal | --none]
-                       map
+   usage: teamofrivals.py [-h] [-p] [-n NUMBER] [-1] [-f FILE] [-u] [-q]
+                          [-m | -a]
+                          [--additive | --restorative | --minimal | --none]
+                          map
 
-positional arguments:
-  map                   XML file containing world map
+   positional arguments:
+     map                   XML file containing world map
 
-optional arguments:
-  -h, --help            show this help message and exit
-  -p, --predict         print out predictions before stepping [default: False]
-  -n NUMBER, --number NUMBER
-                        Number of games to play [default: 1]
-  -1, --single          stop execution after one round [default: False]
-  -f FILE, --file FILE  name of scenario file [default: <map root>.psy]
-  -u, --update          update scenario file [default: False]
-  -q, --quiet           suppress all output [default: False]
+   optional arguments:
+     -h, --help            show this help message and exit
+     -p, --predict         print out predictions before stepping [default: False]
+     -n NUMBER, --number NUMBER
+                           Number of games to play [default: 1]
+     -1, --single          stop execution after one round [default: False]
+     -f FILE, --file FILE  name of scenario file [default: <map root>.psy]
+     -u, --update          update scenario file [default: False]
+     -q, --quiet           suppress all output [default: False]
 
-Decision Mode:
-  -m, --manual          enter actions manually
-  -a, --auto            agents choose actions autonomously [default]
+   Decision Mode:
+     -m, --manual          enter actions manually
+     -a, --auto            agents choose actions autonomously [default]
 
-Resource Generation:
-  --additive            Resources from all territories, unused ones kept
-  --restorative         Resources from all territories, unused ones lost
+   Resource Generation:
+     --additive            Resources from all territories, unused ones kept
+     --restorative         Resources from all territories, unused ones lost
                         [default]
-  --minimal             Resources from initial territories, unused ones lost
-  --none                Resources from winning only, unused ones kept
+     --minimal             Resources from initial territories, unused ones lost
+     --none                Resources from winning only, unused ones kept
 
 Input:
---------
+======
 Map file
 --------
-XML file containing regions, specifying their individual parameters and neighbors. If omitted, the "value" attribute defaults to 5, as does the "occupants" attribute". The "owner" attribute indicates which player, 1-N, owns the territory at the start of the game. The default is 0, which indicates that the enemy side owns the territory.
+XML file containing regions, specifying their individual parameters and neighbors. If omitted, the "value" attribute defaults to 5, as does the "occupants" attribute". The "owner" attribute indicates which player, 1-N, owns the territory at the start of the game. The default is 0, which indicates that the enemy side owns the territory::
 
-<map>
-  <region name="Alaska" value="5" occupants="2" owner="0">
-    <neighbor name="Northwest Territory"/>
-    <neighbor name="Alberta"/>"
-    <neighbor name="Kamchatka"/>"
-  </region>
-  <region>
+   <map>
+     <region name="Alaska" value="5" occupants="2" owner="0">
+       <neighbor name="Northwest Territory"/>
+       <neighbor name="Alberta"/>"
+       <neighbor name="Kamchatka"/>"
+     </region>
+     <region>
    .
    .
    .
 
 Output:
---------
+=======
 Round number
---------
-Player: how many resources this player currently owns
-        which territories this player currently owns
-Enemy: which territories are still currently owned by the enemy (number of defenders in each territory in parens)
+------------
+   Player: how many resources this player currently owns
+   which territories this player currently owns
 
-Player actions: which territories the player has chosen to invade (number of armies allocated in parens)
+   Enemy: which territories are still currently owned by the enemy (number of defenders in each territory in parens)
 
-Optional Predictions:
-        Territory being invaded (how many resources are gained by the owner)
-                The player(s) who would be the owner if the invasion is successful
-                The probability that the invasion will be successful
+   Player actions: which territories the player has chosen to invade (number of armies allocated in parens)
+
+   Optional Predictions:
+   Territory being invaded (how many resources are gained by the owner)
+   The player(s) who would be the owner if the invasion is successful
+   The probability that the invasion will be successful
 
 Results (overall probability of outcome)
 Territory being invaded: the result of the invasion (spinner result of individual invasion, *not* probability of individual outcome)
 
 """
 from argparse import ArgumentParser
+import logging
 import os.path
 import random
 import sys
 import lxml.etree as ET
+import time
 
 from psychsim.pwl import *
 from psychsim.world import *
 from psychsim.agent import Agent
+from psychsim.reward import *
 
 class ResourceWorld(World):
     """
     @cvar nullAgent: string label that means none of the ResourceAgent members of this world
+    @ivar carryOver: if C{True}, then unallocated resources carry over to next round (default is C{False})
+    @type carryOver: bool
+    @ivar floor: minimum number of resources that a player can have (default is no minimum)
+    @type floor: int
     """
     nullAgent = '__none__'
     memory = False
 
-    def __init__(self,xml=None,allocateVerb=None,allocationState=None,winnerState=None):
+    def __init__(self,xml=None,allocateVerb=None,allocationState=None,winnerState=None,floor=None):
         self.allocators = set()
-        self.objects = set()
+        self.objects = []
+        self.carryOver = True
+        self.resourceName = None
+        self.agentOrder = []
         World.__init__(self,xml)
         if xml is None:
             self.allocateVerb = allocateVerb
@@ -95,14 +106,16 @@ class ResourceWorld(World):
     def addAgent(self,agent):
         World.addAgent(self,agent)
         if isinstance(agent,ResourceAgent):
+            if self.resourceName is None:
+                self.resourceName = agent.resourceName
             self.allocators.add(agent)
             for obj in agent.objects:
-                if self.agents.has_key(obj):
-                    self.objects.add(self.agents[obj])
+                if self.agents.has_key(obj) and not self.agents[obj] in self.objects:
+                    self.objects.append(self.agents[obj])
         else:
             for other in self.allocators:
-                if agent.name in other.objects:
-                    self.objects.add(agent)
+                if agent.name in other.objects and not agent in self.objects:
+                    self.objects.append(agent)
 
     def getResources(self,state=None):
         """
@@ -110,7 +123,7 @@ class ResourceWorld(World):
         @rtype: strS{->}int
         """
         if state is None:
-            state = self.state
+            state = self.state[None]
         resources = {}
         for agent in self.agents.values():
             if isinstance(agent,ResourceAgent):
@@ -123,7 +136,7 @@ class ResourceWorld(World):
         @rtype: strS{->}set(str)
         """
         if state is None:
-            state = self.state
+            state = self.state[None]
         ownership = {}
         # Hacky way to figure out what can be owned
         for agent in self.agents.values():
@@ -132,7 +145,7 @@ class ResourceWorld(World):
                 break
         for obj in objects:
             # Who owns it?
-            owner = self.getState(obj,'owner')
+            owner = self.getState(obj,'owner',state)
             assert len(owner) == 1
             owner = owner.domain()[0]
             # Add to table
@@ -142,6 +155,38 @@ class ResourceWorld(World):
                 ownership[owner] = {obj}
         return ownership
 
+    def getTotalValue(self,feature,state=None):
+        """
+        @param feature: the name of the state feature containing the value to be totaled
+        @type feature: str
+        @return: a table of total value of territories owned by each agent
+        @rtype: strS{->}int
+        """
+        if state is None:
+            state = self.state[None]
+        result = {}
+        # Hacky way to figure out what can be owned
+        for agent in self.agents.values():
+            if isinstance(agent,ResourceAgent):
+                objects = agent.objects
+                break
+        for agent in self.agents.values():
+            if isinstance(agent,ResourceAgent):
+                # This is a player, make sure it has an entry
+                if not result.has_key(agent.name):
+                    result[agent.name] = 0
+            elif agent.name in objects:
+                # This is something owned, add its value to the owner's entry
+                owner = self.getState(agent.name,'owner',state)
+                value = self.getState(agent.name,feature,state)
+                assert len(owner) == 1
+                owner = owner.domain()[0]
+                try:
+                    result[owner] += value.expectation()
+                except KeyError:
+                    result[owner] = value.expectation()
+        return result
+            
     def predictResult(self,actions):
         """
         @param actions: the (sub)set of actions to predict the results of
@@ -161,11 +206,24 @@ class ResourceWorld(World):
                     objects[atom['object']] = set([atom])
         for obj in objects.keys():
             objects[obj] = {'actions': ActionSet(objects[obj])}
-            outcomes = self.step(objects[obj]['actions'],real=False)
+            keys = {stateKey(obj,'invader'),stateKey(obj,'owner')}
+            outcomes = self.step(objects[obj]['actions'],real=False,keys=keys)
             assert len(outcomes) == 1
             objects[obj]['leader'] = self.getState(obj,self.winnerState,outcomes[0]['new'])
             objects[obj]['winner'] = self.getState(obj,'owner',outcomes[0]['new'])
         return objects
+
+    def deltaOrder(self,actions,vector):
+        return None
+
+    def next(self,vector=None):
+        if vector is None:
+            assert len(self.state[None]) == 1,'Ambiguous state vector'
+            vector = self.state[None].domain()[0]
+        if self.getValue('phase',vector) == 'generate':
+            return [o.name for o in self.objects]
+        else:
+            return [name for name in self.agents.keys() if isinstance(self.agents[name],ResourceAgent)]
 
     def getDynamics(self,key,action,state=None):
         if isTurnKey(key):
@@ -184,6 +242,29 @@ class ResourceWorld(World):
                     return [makeTree(setToConstantMatrix(key,total))]
                 else:
                     return []
+            elif key[-len(self.resourceName):] == self.resourceName:
+                # Figure out player resources
+                if self.getValue('phase',state) == 'generate':
+                    player = key[:-(len(self.resourceName)+3)]
+                    total = 5 # Minimum value
+                    for obj in self.objects:
+                        if self.getValue(stateKey(obj,'owner'),state) == player and \
+                                self.getValue(stateKey(obj,'invader'),state) == player:
+                            # I just won this territory
+                            total += self.getValue(stateKey(obj,'value'),state)
+                    tree = makeTree(incrementMatrix(key,total))
+                    return [tree.desymbolize(self.symbols)]
+                else:
+                    trees = []
+                    for atom in action:
+                        if atom['verb'] == self.allocateVerb and \
+                                key[:len(atom['subject'])] == atom['subject']:
+                            # The relevant player is allocating resources
+                            if self.carryOver:
+                                trees.append(makeTree(incrementMatrix(key,-atom['amount'])))
+                            else:
+                                trees.append(makeTree(setToConstantMatrix(key,0)))
+                    return trees
             elif key[-5:] == 'owner':
                 # Figure out the probability of winning
                 total = 0
@@ -199,8 +280,8 @@ class ResourceWorld(World):
                 else:
                     # Find ratio of invaders to defenders (hack warning!)
                     if state is None:
-                        assert len(self.state) == 1,'Unable to hack dynamics in uncertain states'
-                        state = self.state.domain()[0]
+                        state = self.state[None].domain()[0]
+                    assert len(self.state[None]) == 1,'Unable to hack dynamics in uncertain states'
                     denominator = total + state[stateKey(obj,'occupants')]
                     winning = float(total)/float(denominator)
                     return [makeTree({'distribution': 
@@ -232,15 +313,51 @@ class ResourceWorld(World):
                 else:
                     # Here we go hacking again
                     if state is None:
-                        assert len(self.state) == 1,'Unable to hack dynamics in uncertain states'
-                        state = self.state.domain()[0]
+                        assert len(self.state[None]) == 1,'Unable to hack dynamics in uncertain states'
+                        state = self.state[None].domain()[0]
                     if self.getValue('phase',state) == 'allocate':
                         # No one allocating to this object, so no possible winner
                         tree = makeTree(setToConstantMatrix(key,self.nullAgent))
                         return [tree.desymbolize(self.symbols)]
                     else:
                         return []
-        dynamics = World.getDynamics(self,key,action)
+            elif key == stateKey(None,'phase'):
+                for atom in action:
+                    if atom['verb'] == self.allocateVerb:
+                        # If we allocate, then the phase becomes generate
+                        tree = makeTree(setToConstantMatrix(key,'generate'))
+                        return [tree.desymbolize(self.symbols)]
+                    elif atom['verb'] == 'generate':
+                        # If we generate, then the phase becomes allocate
+                        tree = makeTree(setToConstantMatrix(key,'allocate'))
+                        return [tree.desymbolize(self.symbols)]
+                else:
+                    # No actions? Must be that no one allocated
+                    tree = makeTree(setToConstantMatrix(key,'generate'))
+                    return [tree.desymbolize(self.symbols)]
+            elif key[-9:] == 'territory':
+                if state is None:
+                    assert len(self.state[None]) == 1,'Unable to hack dynamics in uncertain states'
+                    state = self.state[None].domain()[0]
+                if self.getValue('phase',state) == 'generate':#CVM changed world to self
+                    player = key[:-12]
+                    count = len([atom for atom in action \
+                                     if self.getValue(stateKey(atom['subject'],'owner'),state) == player])
+                    return [makeTree(setToConstantMatrix(key,count))]
+                else:
+                    return []
+            elif key[-5:] == 'value' and isinstance(self.agents[key[:-8]],ResourceAgent):
+                if state is None:
+                    assert len(self.state[None]) == 1,'Unable to hack dynamics in uncertain states'
+                    state = self.state[None].domain()[0]
+                if self.getValue('phase',state) == 'generate':#CVM changed world to self
+                    player = key[:-8]
+                    count = sum([self.getValue(stateKey(atom['subject'],'value')) for atom in action \
+                                     if self.getValue(stateKey(atom['subject'],'owner'),state) == player])
+                    return [makeTree(setToConstantMatrix(key,count))]
+                else:
+                    return []
+        dynamics = World.getDynamics(self,key,action,state)
         return dynamics
 
     def __xml__(self):
@@ -248,6 +365,10 @@ class ResourceWorld(World):
         doc.documentElement.setAttribute('verb',self.allocateVerb)
         doc.documentElement.setAttribute('allocation',self.allocationState)
         doc.documentElement.setAttribute('winner',self.winnerState)
+        for obj in self.objects:
+            node = doc.createElement('object')
+            node.setAttribute('name',obj.name)
+            doc.documentElement.appendChild(node)
         return doc
 
     def parse(self,element):
@@ -255,6 +376,13 @@ class ResourceWorld(World):
         self.allocateVerb = str(element.getAttribute('verb'))
         self.allocationState = str(element.getAttribute('allocation'))
         self.winnerState = str(element.getAttribute('winner'))
+        node = element.firstChild
+        self.objects = []
+        while node:
+            if node.nodeType == node.ELEMENT_NODE:
+                if node.tagName == 'object':
+                    self.objects.append(self.agents[str(node.getAttribute('name'))])
+            node = node.nextSibling
 
 class ResourceAgent(Agent):
     """
@@ -273,7 +401,7 @@ class ResourceAgent(Agent):
 
     def getActions(self,vector):
         targets = []
-        resources = vector[stateKey(self.name,self.resourceName)]
+        resources = self.world.getValue(stateKey(self.name,self.resourceName),vector)
         for obj in self.legalObjects(vector):
             targets.append(obj)
         actions = self.getCombos(targets,resources)
@@ -369,6 +497,16 @@ class ResourceAgent(Agent):
             vector = vector.domain()[0]
         return [obj for obj in self.objects if self.objectLegality[obj][vector]]
 
+    def singletonActions(self,vector):
+        """
+        Generates all possible single-country invasions I can do in the given world
+        """
+        resources = self.world.getValue(stateKey(self.name,self.resourceName),vector)
+        return [ActionSet([Action({'subject': self.name,
+                                   'verb': self.verbName,
+                                   'object': target,
+                                   'amount': resources})]) for target in self.legalObjects(vector)]
+
     def __xml__(self):
         doc = Agent.__xml__(self)
         doc.documentElement.setAttribute('resource',self.resourceName)
@@ -425,20 +563,6 @@ def closeRegions(regions):
             regions[dest]['neighbors'].add(orig)
     return regions
 
-def powerSet(limit):
-    """
-    @return: a list of all possible combinations of numbers in the range of 1 to the given limit
-    @rtype: set
-    """
-    old = [[]]
-    for i in range(limit):
-        new = []
-        for partial in old:
-            new.append(partial+[i+1])
-            new.append(partial)
-        old = new
-    return old
-
 def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources=32):
     """
     @param numPlayers: number of players in the game
@@ -483,6 +607,26 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
                           combinator='*')
         players[player].setState('resources',0)
 
+        world.defineState(players[player].name,'territory',int,lo=0,hi=len(regionTable),
+                          combinator='*',
+                          description='Number of territories owned by %s' % (players[player].name))
+        players[player].setState('territory',0)
+        world.dynamics[stateKey(players[player].name,'territory')] = True
+        world.defineState(players[player].name,'value',int,lo=0,
+                          hi=sum([region['value'] for region in regionTable.values()]),
+                          combinator='*',
+                          description='Total vaue of territories owned by %s' % (players[player].name))
+        players[player].setState('value',0)
+        world.dynamics[stateKey(players[player].name,'value')] = True
+
+        # Reward functions
+        for name in regionTable.keys():
+#            players[player].setReward(maximizeFeature(stateKey(players[player].name,'resources')),1.)
+#            players[player].setReward(maximizeFeature(stateKey(players[player].name,'territory')),1.)
+            players[player].setReward(maximizeFeature(stateKey(players[player].name,'value')),1.)
+        players[player].setAttribute('rationality',10.)
+        players[player].setAttribute('discount',-10.)
+
     # Create agent for "enemy"
     enemy = Agent('Enemy')
     world.addAgent(enemy)
@@ -496,17 +640,20 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
 
         world.defineState(region.name,'invader',set,set(owners)-{enemy.name}|{world.nullAgent},
                           description='Name of invader who will own %s if successful' % (region))
-        try:
-            index = starts.index(region.name)
-            region.setState('invader','Player%d' % (index+1))
-        except ValueError:
-            region.setState('invader',world.nullAgent)
+        # try:
+        #     index = starts.index(region.name)
+        #     region.setState('invader','Player%d' % (index+1))
+        # except ValueError:
+        region.setState('invader',world.nullAgent)
         world.dynamics[stateKey(region.name,'invader')] = True
 
     # Set players' initial territories
+    world.objects.sort(lambda x,y: cmp(x.name,y.name))
     for index in range(numPlayers):
         region = world.agents[starts[index]]
         region.setState('owner',players[index].name)
+        world.objects.remove(region)
+        world.objects.append(region)
         # Players can invade only if enemy owns it and they (or teammate) own a neighboring country
         for region in regions:
             tree = False
@@ -524,7 +671,7 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
         region.addAction({'verb': 'generate'})
     
     # Set order of play
-    world.setOrder([set([region.name for region in regions]),set([player.name for player in players])])
+    world.setOrder([set([region.name for region in world.objects]),set([player.name for player in players])])
 
     # Winner determination
     for region in regions:
@@ -539,63 +686,56 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
         value = stateKey(region.name,'value')
         for player in players:
             resources = stateKey(player.name,'resources')
-            # Determine how many resources lost
-            action = Action({'subject': player.name,'verb': 'allocate','object': region.name})
-            world.addDependency(resources,invader)
-            if generation == 'additive': # or generation == 'none':
-                # Lose only those resources allocated
-                tree = makeTree(incrementMatrix(resources,'-%s' % (actionKey('amount'))))
-            else:
-                # Lose all resources
-                tree = makeTree(setToConstantMatrix(resources,0))
-            world.setDynamics(resources,action,tree)
-            # Regain resources from owned territories
-            action = Action({'subject': region.name,'verb': 'generate'})
-            if generation == 'additive' or generation == 'restorative':
-                tree = makeTree({'if': equalRow(owner,player.name),
-                                 True: addFeatureMatrix(resources,value),
-                                 False: None})
-            elif generation == 'minimal':
-                if region is world.agents[starts[int(player.name[-1])-1]]:
-                    # Get resources from home base (repeated)
-                    tree = makeTree({'if': equalRow(owner,player.name),
-                                     True: addFeatureMatrix(resources,value),
-                                     False: None})
-                else:
-                    # And any new winnings (one-time)
-                    tree = makeTree({'if': equalRow(owner,player.name),
-                                     True: {'if': equalFeatureRow(owner,invader),
-                                            True: addFeatureMatrix(resources,value),
-                                            False: None},
-                                     False: None})
-            elif generation is 'none':
-                if region is world.agents[starts[int(player.name[-1])-1]]:
-                    # Get resources from home base if below threshold
-                    tree = makeTree({'if': greaterThanRow(resources,value),
-                                     True: None,
-                                     False: setToFeatureMatrix(resources,value)})
-                else:
-                    tree = makeTree({'if': equalRow(owner,player.name),
-                                     True: {'if': equalFeatureRow(owner,invader),
-                                            True: addFeatureMatrix(resources,value),
-                                            False: None},
-                                     False: None})
-            world.setDynamics(resources,action,tree)
+            world.dynamics[resources] = True
+#             # Determine how many resources lost
+#             action = Action({'subject': player.name,'verb': 'allocate','object': region.name})
+# #            world.addDependency(resources,invader)
+#             if generation == 'additive': # or generation == 'none':
+#                 # Lose only those resources allocated
+#                 tree = makeTree(incrementMatrix(resources,'-%s' % (actionKey('amount'))))
+#             else:
+#                 # Lose all resources
+#                 tree = makeTree(setToConstantMatrix(resources,0))
+# #            world.setDynamics(resources,action,tree)
+#             # Regain resources from owned territories
+#             action = Action({'subject': region.name,'verb': 'generate'})
+#             if generation == 'additive' or generation == 'restorative':
+#                 tree = makeTree({'if': equalRow(owner,player.name),
+#                                  True: addFeatureMatrix(resources,value),
+#                                  False: None})
+#             elif generation == 'minimal':
+#                 if region is world.agents[starts[int(player.name[-1])-1]]:
+#                     # Get resources from home base (repeated)
+#                     tree = makeTree({'if': equalRow(owner,player.name),
+#                                      True: addFeatureMatrix(resources,value),
+#                                      False: None})
+#                 else:
+#                     # And any new winnings (one-time)
+#                     tree = makeTree({'if': equalRow(owner,player.name),
+#                                      True: {'if': equalFeatureRow(owner,invader),
+#                                             True: addFeatureMatrix(resources,value),
+#                                             False: None},
+#                                      False: None})
+#             elif generation is 'none':
+#                 if region is world.agents[starts[int(player.name[-1])-1]]:
+#                     # Get resources from home base if below threshold
+#                     tree = makeTree(addFeatureMatrix(resources,value))
+# #                    tree = makeTree({'if': greaterThanRow(resources,value),
+# #                                     True: None,
+# #                                     False: setToFeatureMatrix(resources,value)})
+#                 else:
+#                     tree = makeTree({'if': equalRow(owner,player.name),
+#                                      True: {'if': equalFeatureRow(owner,invader),
+#                                             True: addFeatureMatrix(resources,value),
+#                                             False: None},
+#                                      False: None})
+#             world.setDynamics(resources,action,tree)
     # The game has two phases: generating resources and allocating resources
     world.defineState(None,'phase',list,['generate','allocate'],combinator='*',
                       description='The current phase of the game')
     world.setState(None,'phase','generate')
     key = stateKey(None,'phase')
-    # If we generate, then the phase becomes allocate
-    action = Action({'subject': list(regions)[0].name,'verb': 'generate'})
-    tree = makeTree(setToConstantMatrix(key,'allocate'))
-    world.setDynamics(key,action,tree)
-    # If we allocate, then the phase becomes generate
-    tree = makeTree(setToConstantMatrix(key,'generate'))
-    for region in regions:
-        for player in players:
-            action = Action({'subject': player.name,'verb': 'allocate','object': region.name})
-            world.setDynamics(key,action,tree)
+    world.dynamics[key] = True
 
     # Game ends when territory is all won
     tree = {'if': equalRow(key,'allocate'),
@@ -700,6 +840,9 @@ def createAsia():
     mapSave(asia,'asia.xml')
     return asia
 
+def replay(world):
+    print world.history
+    
 if __name__ == '__main__':
     ######
     # Parse command-line arguments
@@ -768,12 +911,16 @@ if __name__ == '__main__':
 
     if os.path.isfile(args['file']):
         # Existing scenario file
+        startTime = time.time()
         world = ResourceWorld(args['file'])
+        print >> sys.stderr,'Load:\t\t%3dms' % (1000.*(time.time()-startTime))
         if world.terminated():
-            raise RuntimeError,'Game already over in scenario file %s' % (args['file'])
+            replay(world)
+            sys.exit(0)
     else:
         world = createWorld(len(starts),regions,starts,args['generation'])
         world.save(args['file'])
+#        world.printState()
 
     # Set up end-of-game stat storage
     stats = {'rounds': Distribution(),                       # How many rounds did it take to win?
@@ -797,7 +944,7 @@ if __name__ == '__main__':
         ######
         # Game loop
         ######
-
+ 
         # The probability of this current run
         probability = 1.
 
@@ -812,9 +959,14 @@ if __name__ == '__main__':
                     print '--------'
                     resources = world.getResources()
                     regions = world.getOwnership()
+                    values = world.getTotalValue('value')
                     for player in range(4):
-                        print 'Player %d: %d resources' % (player+1,resources['Player%d' % (player+1)])
-                        print '\tTerritories owned: %s' % (', '.join(sorted(regions['Player%d' % (player+1)])))
+                        playerName = 'Player%d' % (player+1)
+                        print 'Player %d: %d resources' % (player+1,resources[playerName])
+                        print '\t%2d territories (value: %3d): %s' % \
+                            (world.getValue(stateKey(playerName,'territory')),
+                             world.getValue(stateKey(playerName,'value')),
+                             ', '.join(sorted(regions[playerName])))
                         total = 0
                         for region in regions['Player%d' % (player+1)]:
                             total += world.getValue(stateKey(region,'value'))
@@ -825,11 +977,16 @@ if __name__ == '__main__':
                 if world.terminated():
                     break
             # Who's doing what
+            turns = world.next()
             if phase == 'generate':
                 actions = []
             else:
                 actions = {}
-            turns = world.next()
+                # Initialize other players to be doing nothing
+                others = {}
+                for name in turns:
+                    actions[name] = ActionSet()
+                    others[name] = ActionSet()
             if args['manual']:
                 turns.sort()
             for name in turns:
@@ -846,7 +1003,7 @@ if __name__ == '__main__':
                     agent = world.agents[name]
                     if args['manual']:
                         # Manual selection of actions
-                        objects = agent.legalObjects(world.state)
+                        objects = agent.legalObjects(world.state[None])
                         objects.sort()
                         resources = world.getValue(stateKey(agent.name,agent.resourceName))
                         choices = set()
@@ -897,13 +1054,37 @@ if __name__ == '__main__':
                                 break
                         actions[name] = ActionSet(choices)
                     else:
-                        actions[name] = agent.sampleAction(world.state,2)
+                        startTime = time.time()
+                        currentWorld = world.state[None].domain()[0]
+                        choices = agent.singletonActions(currentWorld)
+                        choices.sort(lambda x,y: cmp(str(x),str(y)))
+                        keys = {}
+                        for action in choices:
+                            keys[action] = {stateKey(None,'phase'),
+                                            stateKey(agent.name,'resources'),
+                                            stateKey(agent.name,'territory'),
+                                            stateKey(agent.name,'value'),
+                                            stateKey(action['object'],'invader'),
+                                            stateKey(action['object'],'owner')}
+                        decision = agent.decide(currentWorld,horizon=2,others=actions,
+                                                selection='uniform',actions=choices,keys=keys)
+                        if len(choices) > 1:
+                            print agent.name,', '.join(['%s %d (%5.3f)' % (a['object'],a['amount'],decision['V'][a]['__EV__']) for a in sorted(choices,lambda x,y: -cmp(decision['V'][x]['__EV__'],decision['V'][y]['__EV__']))])
+                        if isinstance(decision['action'],Distribution):
+                            actions[name] = decision['action'].sample()
+                        else:
+                            actions[name] = decision['action']
+                        print >> sys.stderr,'Decision:\t%3dms (%s)' % \
+                            (1000*(time.time()-startTime),actions[name])
+#                        actions[name] = agent.sampleAction(world.state[None],1,joint=actions)
             if phase == 'allocate' and not args['quiet']:
                 for player in range(4):
                     print 'Player %d invades: %s' % (player+1,', '.join(['%s (%d)' % (a['object'],a['amount']) for a in actions['Player%d' % (player+1)]]))
             # Predict at possible outcomes
             if args['predict'] and phase == 'allocate' and not args['quiet']:
+                startTime = time.time()
                 prediction = world.predictResult(actions)
+                print >> sys.stderr,'Prediction:\t%3dms' % (1000.*(time.time()-startTime))
                 objects = prediction.keys()
                 objects.sort()
                 print
@@ -913,11 +1094,13 @@ if __name__ == '__main__':
                     print '\t\tLeader:',','.join(prediction[obj]['leader'].domain())
                     print '\t\tWin: %d%%' % (100-int(100*prediction[obj]['winner']['Enemy']))
             # Perform actions
+            startTime = time.time()
             outcomes = world.step(actions,select=False)
-            if len(world.state) > 1:
-                original = VectorDistribution(world.state)
-                sample = world.state.select(True)
-                sampleProb = original[world.state.domain()[0]]
+            print >> sys.stderr,'Step:\t\t%3dms' % (1000.*(time.time()-startTime))
+            if len(world.state[None]) > 1:
+                original = VectorDistribution(world.state[None])
+                sample = world.state[None].select(True)
+                sampleProb = original[world.state[None].domain()[0]]
                 probability *= sampleProb
                 if not args['quiet']:
                     if not args['predict']:
@@ -954,9 +1137,12 @@ if __name__ == '__main__':
             stats['rounds'].addProb(world.getValue('round'),probability)
         for player in world.allocators:
             stats[player.name]['resources'].addProb(resources[player.name],probability)
-            stats[player.name]['territory'].addProb(len(regions[player.name]),probability)
-            stats[player.name]['value'].addProb(sum([world.getValue(stateKey(region,'value')) \
-                                                         for region in regions[player.name]]),probability)
+            territory = len(regions[player.name])
+            assert world.getValue(stateKey(player.name,'territory')) == territory
+            stats[player.name]['territory'].addProb(territory,probability)
+            value = sum([world.getValue(stateKey(region,'value')) for region in regions[player.name]])
+            assert world.getValue(stateKey(player.name,'value')) == value
+            stats[player.name]['value'].addProb(value,probability)
             for region in world.objects:
                 owned = world.getValue(stateKey(region.name,'owner')) == player.name
                 stats[player.name][region.name].addProb(owned,probability)

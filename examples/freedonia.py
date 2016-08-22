@@ -395,7 +395,7 @@ def fitWorld(world):
         else:
             sylv = agent
     world.setState(None,'phase','offer')
-    state = world.state.domain()[0]
+    state = world.state[None].domain()[0]
     freeModel = world.getModel(free.name,state)
     beliefs = free.getBelief(state,freeModel)
     # Compute transition trees
@@ -523,9 +523,9 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
 
     for t in range(rounds):
         for step in range(steps):
-            assert len(world.state) == 1
+            assert len(world.state[None]) == 1
             phase = world.getState(None,'phase').expectation()
-            state = world.state.domain()[0]
+            state = world.state[None].domain()[0]
             if not world.terminated(state):
                 if t == 0 and phase == 'offer' and offer > 0:
                     # Force Freedonia to make low offer in first step
@@ -539,12 +539,12 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
                         if (t == 0 and step == 1) or (t == 1 and step == 0):
                             for entry in outcome:
                                 world.explainAction(entry,buf,1)
-                world.state.select()
+                world.state[None].select()
                 if not testMode and debug > 0:
                     world.printState(beliefs=True)
                 for agent in world.agents.values():
                     print agent.name,len(agent.models)
-            assert len(world.state) == 1
+            assert len(world.state[None]) == 1
             phase = world.getState(None,'phase').expectation()
             if phase == 'offer':
                 # Looped around
@@ -801,4 +801,4 @@ if __name__ == '__main__':
     world = World(args['output'])
     scenarioSimulationUseCase(world,args['amount'],args['time'],args['debug'],args['model'])
 #    findPolicies(args)
-#    world.printState(world.agents[args['enemy']].getBelief(world.state.domain()[0],'false'))
+#    world.printState(world.agents[args['enemy']].getBelief(world.state[None].domain()[0],'false'))

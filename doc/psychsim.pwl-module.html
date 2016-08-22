@@ -16,7 +16,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -34,7 +34,7 @@
       <th class="navbar" align="right" width="100%">
         <table border="0" cellpadding="0" cellspacing="0">
           <tr><th class="navbar" align="center"
-            >PsychSim</th>
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
           </tr></table></th>
   </tr>
 </table>
@@ -121,6 +121,14 @@
     </td><td class="summary">
         <a href="psychsim.pwl.KeyedPlane-class.html" class="summary-name">KeyedPlane</a><br />
       String indexable hyperplane class
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="psychsim.pwl.KeyedBranch-class.html" class="summary-name">KeyedBranch</a><br />
+      Disjuction/conjunction of individual planes
     </td>
   </tr>
 <tr>
@@ -432,6 +440,26 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <td><span class="summary-sig"><a href="psychsim.pwl-module.html#andRow" class="summary-sig-name">andRow</a>(<span class="summary-sig-arg">trueKeys</span>=<span class="summary-sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>,
+        <span class="summary-sig-arg">falseKeys</span>=<span class="summary-sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>)</span><br />
+      Returns:
+      a plane testing whether all boolean keyed values are set as desired</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.pwl-pysrc.html#andRow">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type"><a href="psychsim.pwl.KeyedPlane-class.html" 
+      class="link">KeyedPlane</a></span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
           <td><span class="summary-sig"><a href="psychsim.pwl-module.html#equalRow" class="summary-sig-name">equalRow</a>(<span class="summary-sig-arg">key</span>,
         <span class="summary-sig-arg">value</span>)</span><br />
       Returns:
@@ -439,6 +467,27 @@
       value</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.pwl-pysrc.html#equalRow">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type"><a href="psychsim.pwl.KeyedPlane-class.html" 
+      class="link">KeyedPlane</a></span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.pwl-module.html#equalFeatureRow" class="summary-sig-name">equalFeatureRow</a>(<span class="summary-sig-arg">key1</span>,
+        <span class="summary-sig-arg">key2</span>)</span><br />
+      Returns:
+      a plane testing whether the values of the two given features are 
+      equal</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.pwl-pysrc.html#equalFeatureRow">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -801,6 +850,37 @@
   </dl>
 </td></tr></table>
 </div>
+<a name="andRow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">andRow</span>(<span class="sig-arg">trueKeys</span>=<span class="sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>,
+        <span class="sig-arg">falseKeys</span>=<span class="sig-default"><code class="variable-group">[</code><code class="variable-group">]</code></span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.pwl-pysrc.html#andRow">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>trueKeys</code></strong> (str[]) - list of keys which must be <code>True</code> (default is empty 
+          list)</li>
+        <li><strong class="pname"><code>falseKeys</code></strong> (str[]) - list of keys which must be <code>False</code> (default is empty 
+          list)</li>
+    </ul></dd>
+    <dt>Returns: <a href="psychsim.pwl.KeyedPlane-class.html" 
+      class="link">KeyedPlane</a></dt>
+        <dd>a plane testing whether all boolean keyed values are set as 
+          desired</dd>
+  </dl>
+</td></tr></table>
+</div>
 <a name="equalRow"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
@@ -825,6 +905,30 @@
   </dl>
 </td></tr></table>
 </div>
+<a name="equalFeatureRow"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">equalFeatureRow</span>(<span class="sig-arg">key1</span>,
+        <span class="sig-arg">key2</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.pwl-pysrc.html#equalFeatureRow">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns: <a href="psychsim.pwl.KeyedPlane-class.html" 
+      class="link">KeyedPlane</a></dt>
+        <dd>a plane testing whether the values of the two given features are 
+          equal</dd>
+  </dl>
+</td></tr></table>
+</div>
 <br />
 <!-- ==================== NAVIGATION BAR ==================== -->
 <table class="navbar" border="0" width="100%" cellpadding="0"
@@ -832,7 +936,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -850,14 +954,14 @@
       <th class="navbar" align="right" width="100%">
         <table border="0" cellpadding="0" cellspacing="0">
           <tr><th class="navbar" align="center"
-            >PsychSim</th>
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
           </tr></table></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Sat Jan 18 16:18:59 2014
+    Generated by Epydoc 3.0.1 on Fri Dec 19 02:49:48 2014
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

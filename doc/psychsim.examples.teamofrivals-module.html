@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>psychsim.examples.teamofrivals</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="psychsim-module.html">Package&nbsp;psychsim</a> ::
+        <a href="psychsim.examples-module.html">Package&nbsp;examples</a> ::
+        Module&nbsp;teamofrivals
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="psychsim.examples.teamofrivals-module.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== MODULE DESCRIPTION ==================== -->
+<h1 class="epydoc">Module teamofrivals</h1><p class="nomargin-top"><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html">source&nbsp;code</a></span></p>
+<p>Scenario for cooperative conquest game:</p>
+<pre class="literalblock">
+  usage: teamofrivals.py [-h] [-p] [-n NUMBER] [-1] [-f FILE] [-u] [-q]
+                         [-m | -a]
+                         [--additive | --restorative | --minimal | --none]
+                         map
+
+  positional arguments:
+    map                   XML file containing world map
+
+  optional arguments:
+    -h, --help            show this help message and exit
+    -p, --predict         print out predictions before stepping [default: False]
+    -n NUMBER, --number NUMBER
+                          Number of games to play [default: 1]
+    -1, --single          stop execution after one round [default: False]
+    -f FILE, --file FILE  name of scenario file [default: &lt;map root&gt;.psy]
+    -u, --update          update scenario file [default: False]
+    -q, --quiet           suppress all output [default: False]
+
+  Decision Mode:
+    -m, --manual          enter actions manually
+    -a, --auto            agents choose actions autonomously [default]
+
+  Resource Generation:
+    --additive            Resources from all territories, unused ones kept
+    --restorative         Resources from all territories, unused ones lost
+                       [default]
+    --minimal             Resources from initial territories, unused ones lost
+    --none                Resources from winning only, unused ones kept
+</pre>
+  <h1 class="heading">Input:</h1>
+    <h2 class="heading">Map file</h2>
+      <p>XML file containing regions, specifying their individual 
+      parameters and neighbors. If omitted, the &quot;value&quot; attribute
+      defaults to 5, as does the &quot;occupants&quot; attribute&quot;. The
+      &quot;owner&quot; attribute indicates which player, 1-N, owns the 
+      territory at the start of the game. The default is 0, which indicates
+      that the enemy side owns the territory:</p>
+<pre class="literalblock">
+  &lt;map&gt;
+    &lt;region name=&quot;Alaska&quot; value=&quot;5&quot; occupants=&quot;2&quot; owner=&quot;0&quot;&gt;
+      &lt;neighbor name=&quot;Northwest Territory&quot;/&gt;
+      &lt;neighbor name=&quot;Alberta&quot;/&gt;&quot;
+      &lt;neighbor name=&quot;Kamchatka&quot;/&gt;&quot;
+    &lt;/region&gt;
+    &lt;region&gt;
+  .
+  .
+  .
+</pre>
+  <h1 class="heading">Output:</h1>
+    <h2 class="heading">Round number</h2>
+      <p>Player: how many resources this player currently owns which 
+      territories this player currently owns</p>
+      <p>Enemy: which territories are still currently owned by the enemy 
+      (number of defenders in each territory in parens)</p>
+      <p>Player actions: which territories the player has chosen to invade 
+      (number of armies allocated in parens)</p>
+      <p>Optional Predictions: Territory being invaded (how many resources 
+      are gained by the owner) The player(s) who would be the owner if the 
+      invasion is successful The probability that the invasion will be 
+      successful</p>
+    <p>Results (overall probability of outcome) Territory being invaded: 
+    the result of the invasion (spinner result of individual invasion, 
+    *not* probability of individual outcome)</p>
+
+<!-- ==================== CLASSES ==================== -->
+<a name="section-Classes"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Classes</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Classes"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="psychsim.examples.teamofrivals.ResourceWorld-class.html" class="summary-name">ResourceWorld</a>
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a href="psychsim.examples.teamofrivals.ResourceAgent-class.html" class="summary-name">ResourceAgent</a>
+    </td>
+  </tr>
+</table>
+<!-- ==================== FUNCTIONS ==================== -->
+<a name="section-Functions"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Functions</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Functions"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals-module.html#closeRegions" class="summary-sig-name">closeRegions</a>(<span class="summary-sig-arg">regions</span>)</span><br />
+      Makes the links symmetric in the given region map</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#closeRegions">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">set</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals-module.html#powerSet" class="summary-sig-name">powerSet</a>(<span class="summary-sig-arg">limit</span>)</span><br />
+      Returns:
+      a list of all possible combinations of numbers in the range of 1 to 
+      the given limit</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#powerSet">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals-module.html#createWorld" class="summary-sig-name">createWorld</a>(<span class="summary-sig-arg">numPlayers</span>,
+        <span class="summary-sig-arg">regionTable</span>,
+        <span class="summary-sig-arg">starts</span>,
+        <span class="summary-sig-arg">generation</span>=<span class="summary-sig-default"><code class="variable-quote">'</code><code class="variable-string">additive</code><code class="variable-quote">'</code></span>,
+        <span class="summary-sig-arg">maxResources</span>=<span class="summary-sig-default">32</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#createWorld">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="mapSave"></a><span class="summary-sig-name">mapSave</span>(<span class="summary-sig-arg">regions</span>,
+        <span class="summary-sig-arg">filename</span>)</span><br />
+      Saves a region map to an XML file</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#mapSave">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals-module.html#mapLoad" class="summary-sig-name">mapLoad</a>(<span class="summary-sig-arg">filename</span>,
+        <span class="summary-sig-arg">close</span>=<span class="summary-sig-default">False</span>)</span><br />
+      Parses an XML file representing a region map</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#mapLoad">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="createAsia"></a><span class="summary-sig-name">createAsia</span>()</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#createAsia">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+</table>
+<!-- ==================== VARIABLES ==================== -->
+<a name="section-Variables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-Variables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="__package__"></a><span class="summary-name">__package__</span> = <code title="'psychsim.examples'"><code class="variable-quote">'</code><code class="variable-string">psychsim.examples</code><code class="variable-quote">'</code></code>
+    </td>
+  </tr>
+</table>
+<!-- ==================== FUNCTION DETAILS ==================== -->
+<a name="section-FunctionDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Function Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-FunctionDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="closeRegions"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">closeRegions</span>(<span class="sig-arg">regions</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#closeRegions">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Makes the links symmetric in the given region map</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>regions</code></strong> (str&rarr;set(str))</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="powerSet"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">powerSet</span>(<span class="sig-arg">limit</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#powerSet">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns: set</dt>
+        <dd>a list of all possible combinations of numbers in the range of 1 
+          to the given limit</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="createWorld"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">createWorld</span>(<span class="sig-arg">numPlayers</span>,
+        <span class="sig-arg">regionTable</span>,
+        <span class="sig-arg">starts</span>,
+        <span class="sig-arg">generation</span>=<span class="sig-default"><code class="variable-quote">'</code><code class="variable-string">additive</code><code class="variable-quote">'</code></span>,
+        <span class="sig-arg">maxResources</span>=<span class="sig-default">32</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#createWorld">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>numPlayers</code></strong> (int) - number of players in the game</li>
+        <li><strong class="pname"><code>regionTable</code></strong> - a table of regions, indexed by name</li>
+        <li><strong class="pname"><code>starts</code></strong> - a list of starting regions, one for each player</li>
+        <li><strong class="pname"><code>maxResources</code></strong> (int) - the maximum number of resources a player may have</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="mapLoad"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">mapLoad</span>(<span class="sig-arg">filename</span>,
+        <span class="sig-arg">close</span>=<span class="sig-default">False</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#mapLoad">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Parses an XML file representing a region map</p>
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>close</code></strong> (bool) - if <code>True</code>, then fill in missing links and regions 
+          (default is False)</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Fri Dec 19 02:49:48 2014
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

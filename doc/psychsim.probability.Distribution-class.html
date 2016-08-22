@@ -16,7 +16,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -34,7 +34,7 @@
       <th class="navbar" align="right" width="100%">
         <table border="0" cellpadding="0" cellspacing="0">
           <tr><th class="navbar" align="center"
-            >PsychSim</th>
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
           </tr></table></th>
   </tr>
 </table>
@@ -62,20 +62,46 @@
 </table>
 <!-- ==================== CLASS DESCRIPTION ==================== -->
 <h1 class="epydoc">Class Distribution</h1><p class="nomargin-top"><span class="codelink"><a href="psychsim.probability-pysrc.html#Distribution">source&nbsp;code</a></span></p>
-<pre class="base-tree">
-object --+    
-         |    
-      dict --+
-             |
-            <strong class="uidshort">Distribution</strong>
-</pre>
-
-<dl><dt>Known Subclasses:</dt>
-<dd>
-      <ul class="subclass-list">
-<li><a href="psychsim.pwl.MatrixDistribution-class.html">pwl.MatrixDistribution</a></li><li>, <a href="psychsim.pwl.TreeDistribution-class.html">pwl.TreeDistribution</a></li><li>, <a href="psychsim.pwl.VectorDistribution-class.html">pwl.VectorDistribution</a></li>  </ul>
-</dd></dl>
-
+<center>
+<center>  <map id="uml_class_diagram_for_psychsim_6" name="uml_class_diagram_for_psychsim_6">
+<area shape="rect" id="node1_29" href="psychsim.probability.Distribution-class.html#epsilon" title="psychsim.probability.Distribution.epsilon" alt="" coords="151,387,406,407"/>
+<area shape="rect" id="node1_30" href="psychsim.probability.Distribution-class.html#__init__" title="x.__init__(...) initializes x; see help(type(x)) for signature" alt="" coords="151,410,406,430"/>
+<area shape="rect" id="node1_31" href="psychsim.probability.Distribution-class.html#__getitem__" title="x[y]" alt="" coords="151,430,406,450"/>
+<area shape="rect" id="node1_32" href="psychsim.probability.Distribution-class.html#__setitem__" title="x[i]=y" alt="" coords="151,450,406,470"/>
+<area shape="rect" id="node1_33" href="psychsim.probability.Distribution-class.html#addProb" title="Utility method that increases the probability of the given element by the &#160;given value" alt="" coords="151,470,406,490"/>
+<area shape="rect" id="node1_34" href="psychsim.probability.Distribution-class.html#getProb" title="Utility method that is almost identical to __getitem__, except that it &#160;returns 0 for missing elements, instead of throwing a KeyError" alt="" coords="151,490,406,510"/>
+<area shape="rect" id="node1_35" href="psychsim.probability.Distribution-class.html#__delitem__" title="del x[y]" alt="" coords="151,510,406,530"/>
+<area shape="rect" id="node1_36" href="psychsim.probability.Distribution-class.html#clear" title="Remove all items from D." alt="" coords="151,530,406,550"/>
+<area shape="rect" id="node1_37" href="psychsim.probability.Distribution-class.html#replace" title="Replaces on element in the sample space with another." alt="" coords="151,550,406,570"/>
+<area shape="rect" id="node1_38" href="psychsim.probability.Distribution-class.html#domain" title="Returns: &#160;the sample space of this probability distribution" alt="" coords="151,570,406,590"/>
+<area shape="rect" id="node1_39" href="psychsim.probability.Distribution-class.html#normalize" title="Normalizes the distribution so that the sum of values = 1" alt="" coords="151,590,406,610"/>
+<area shape="rect" id="node1_40" href="psychsim.probability.Distribution-class.html#expectation" title="Returns: &#160;the expected value of this distribution" alt="" coords="151,610,406,630"/>
+<area shape="rect" id="node1_41" href="psychsim.probability.Distribution-class.html#sample" title="Returns: &#160;an element from this domain, with a sample probability given by this &#160;distribution" alt="" coords="151,630,406,650"/>
+<area shape="rect" id="node1_42" href="psychsim.probability.Distribution-class.html#set" title="Reduce distribution to be 100% for the given element" alt="" coords="151,650,406,670"/>
+<area shape="rect" id="node1_43" href="psychsim.probability.Distribution-class.html#__copy__" title="psychsim.probability.Distribution.__copy__" alt="" coords="151,690,406,710"/>
+<area shape="rect" id="node1" href="psychsim.probability.Distribution-class.html" title="A probability distribution" alt="" coords="139,363,417,716"/>
+<area shape="rect" id="node3" href="psychsim.pwl.VectorDistribution-class.html" title="A class representing a Distribution over KeyedVector instances" alt="" coords="5,735,169,773"/>
+<area shape="rect" id="node4" href="psychsim.pwl.MatrixDistribution-class.html" title="psychsim.pwl.MatrixDistribution" alt="" coords="199,735,360,773"/>
+<area shape="rect" id="node5" href="psychsim.pwl.TreeDistribution-class.html" title="A class representing a Distribution over KeyedTree instances" alt="" coords="390,735,542,773"/>
+<area shape="rect" id="node2_44" href="javascript:void(0);" title="cmp(x,y)" alt="" coords="219,37,338,57"/>
+<area shape="rect" id="node2_45" href="javascript:void(0);" title="dict.__contains__" alt="" coords="219,57,338,77"/>
+<area shape="rect" id="node2_46" href="javascript:void(0);" title="x==y" alt="" coords="219,77,338,97"/>
+<area shape="rect" id="node2_47" href="javascript:void(0);" title="x&gt;=y" alt="" coords="219,97,338,117"/>
+<area shape="rect" id="node2_48" href="javascript:void(0);" title="x.__getattribute__(&#39;name&#39;) &lt;==&gt; x.name" alt="" coords="219,117,338,137"/>
+<area shape="rect" id="node2_49" href="javascript:void(0);" title="x&gt;y" alt="" coords="219,137,338,157"/>
+<area shape="rect" id="node2_50" href="javascript:void(0);" title="iter(x)" alt="" coords="219,157,338,177"/>
+<area shape="rect" id="node2_51" href="javascript:void(0);" title="x&lt;=y" alt="" coords="219,177,338,197"/>
+<area shape="rect" id="node2_52" href="javascript:void(0);" title="len(x)" alt="" coords="219,197,338,217"/>
+<area shape="rect" id="node2_53" href="javascript:void(0);" title="x&lt;y" alt="" coords="219,217,338,237"/>
+<area shape="rect" id="node2_54" href="javascript:void(0);" title="x!=y" alt="" coords="219,237,338,257"/>
+<area shape="rect" id="node2_55" href="javascript:void(0);" title="dict.__new__" alt="" coords="219,257,338,277"/>
+<area shape="rect" id="node2_56" href="javascript:void(0);" title="repr(x)" alt="" coords="219,277,338,297"/>
+<area shape="rect" id="node2_57" href="javascript:void(0);" title="dict.viewvalues" alt="" coords="219,317,338,337"/>
+<area shape="rect" id="node2" href="javascript:void(0);" title="dict() &#45;&gt; new empty dictionary dict(mapping) &#45;&gt; new dictionary initialized from a mapping object&#39;s (key, value) pairs dict(iterable) &#45;&gt; new dictionary initialized as if via: d = {} for k, v in iterable: d[k] = v dict(**kwargs) &#45;&gt; new dictionary initialized with the name=value pairs in the keyword argument list." alt="" coords="207,5,349,344"/>
+</map>
+  <img src="uml_class_diagram_for_psychsim_6.gif" alt='' usemap="#uml_class_diagram_for_psychsim_6" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
 <hr />
 <p>A probability distribution</p>
   <ul>
@@ -176,6 +202,46 @@ new empty dictionary
       x[i]=y</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.probability-pysrc.html#Distribution.__setitem__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="addProb"></a><span class="summary-sig-name">addProb</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">element</span>,
+        <span class="summary-sig-arg">value</span>)</span><br />
+      Utility method that increases the probability of the given element by
+      the given value</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.probability-pysrc.html#Distribution.addProb">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getProb"></a><span class="summary-sig-name">getProb</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">element</span>)</span><br />
+      Utility method that is almost identical to __getitem__, except that 
+      it returns 0 for missing elements, instead of throwing a 
+      <code>KeyError</code></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.probability-pysrc.html#Distribution.getProb">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -296,7 +362,8 @@ new empty dictionary
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-          <td><span class="summary-sig"><a href="psychsim.probability.Distribution-class.html#sample" class="summary-sig-name">sample</a>(<span class="summary-sig-arg">self</span>)</span><br />
+          <td><span class="summary-sig"><a href="psychsim.probability.Distribution-class.html#sample" class="summary-sig-name">sample</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">quantify</span>=<span class="summary-sig-default">False</span>)</span><br />
       Returns:
       an element from this domain, with a sample probability given by this 
       distribution</td>
@@ -460,6 +527,22 @@ new empty dictionary
         <span class="summary-sig-arg">node</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.probability-pysrc.html#Distribution.xml2element">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="sortedString"></a><span class="summary-sig-name">sortedString</span>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.probability-pysrc.html#Distribution.sortedString">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -867,7 +950,8 @@ new empty dictionary
 <tr><td>
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr valign="top"><td>
-  <h3 class="epydoc"><span class="sig"><span class="sig-name">sample</span>(<span class="sig-arg">self</span>)</span>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">sample</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">quantify</span>=<span class="sig-default">False</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.probability-pysrc.html#Distribution.sample">source&nbsp;code</a></span>&nbsp;
@@ -876,6 +960,12 @@ new empty dictionary
   
   
   <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>quantify</code></strong> - if <code>True</code>, also returns the amount of mass by which 
+          the sampling crosssed the threshold of the generated sample's 
+          range</li>
+    </ul></dd>
     <dt>Returns:</dt>
         <dd>an element from this domain, with a sample probability given by 
           this distribution</dd>
@@ -1031,7 +1121,7 @@ new empty dictionary
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -1049,14 +1139,14 @@ new empty dictionary
       <th class="navbar" align="right" width="100%">
         <table border="0" cellpadding="0" cellspacing="0">
           <tr><th class="navbar" align="center"
-            >PsychSim</th>
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
           </tr></table></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Sat Jan 18 16:18:59 2014
+    Generated by Epydoc 3.0.1 on Fri Dec 19 02:49:49 2014
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

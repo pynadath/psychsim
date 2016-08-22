@@ -2,6 +2,7 @@
 Class and function definitions for PieceWise Linear (PWL) representations
 """
 import copy
+import operator
 from xml.dom.minidom import Document,Node
 from probability import Distribution
 from action import Action
@@ -98,7 +99,7 @@ class KeyedVector(dict):
         self._string = None
         dict.__delitem__(self,key)
 
-    def desymbolize(self,table):
+    def desymbolize(self,table,debug=False):
         result = self.__class__()
         for key,value in self.items():
             if isinstance(value,str):
@@ -208,10 +209,7 @@ class VectorDistribution(Distribution):
                 for element in value.domain():
                     new = row.__class__(row)
                     new[key] = element
-                    try:
-                        self[new] += prob*value[element]
-                    except KeyError:
-                        self[new] = prob*value[element]
+                    self.addProb(new,prob*value[element])
             else:
                 row[key] = value
                 self[row] = prob
@@ -299,6 +297,8 @@ class VectorDistribution(Distribution):
 
 class KeyedMatrix(dict):
     def __init__(self,arg={}):
+        self._keysIn = None
+        self._keysOut = None
         if isinstance(arg,Node):
             dict.__init__(self)
             self.parse(arg)
@@ -376,7 +376,33 @@ class KeyedMatrix(dict):
                 (self.__class__.__name__,other.__class__.__name__)
         return result
 
-    def desymbolize(self,table):
+    def getKeysIn(self):
+        """
+        @return: a set of keys which affect the result of multiplying by this matrix
+        """
+        if self._keysIn is None:
+            self._keysIn = set()
+            self._keysOut = set()
+            for col,row in self.items():
+                self._keysIn |= set(row.keys())
+                self._keysOut.add(col)
+        return self._keysIn
+
+    def getKeysOut(self):
+        """
+        @return: a set of keys which are changed as a result of multiplying by this matrix
+        """
+        if self._keysOut is None:
+            self.getKeysIn()
+        return self._keysOut
+
+    # def getKeys(self):
+    #     result = set()
+    #     for row in self.values():
+    #         result |= set(row.keys())
+    #     return result
+
+    def desymbolize(self,table,debug=False):
         result = self.__class__()
         for key,row in self.items():
             result[key] = row.desymbolize(table)
@@ -520,10 +546,7 @@ class MatrixDistribution(Distribution):
                 for submatrix in matrix.domain():
                     new = copy.copy(old)
                     new.update(submatrix)
-                    try:
-                        self[new] += prob*matrix[submatrix]
-                    except KeyError:
-                        self[new] = prob*matrix[submatrix]
+                    self.addProb(new,prob*matrix[submatrix])
             else:
                 old.update(matrix)
                 self[old] = prob
@@ -577,19 +600,29 @@ class KeyedPlane:
             return total+self.vector.epsilon > self.threshold
         elif self.comparison < 0:
             return total-self.vector.epsilon < self.threshold
+        elif self.comparison == 0:
+            if isinstance(self.threshold,list):
+                return reduce(operator.or_,[abs(total-t) < self.vector.epsilon for t in self.threshold])
+            else:
+                return abs(total-self.threshold) < self.vector.epsilon
         else:
-            return abs(total-self.threshold) < self.vector.epsilon
+            raise ValueError,'Unknown comparison for %s: %s' % (self.__class__.__name__,self.comparison)
 
-    def desymbolize(self,table):
-        if isinstance(self.threshold,str):
+    def desymbolize(self,table,debug=False):
+        threshold = self.desymbolizeThreshold(self.threshold,table)
+        return self.__class__(self.vector.desymbolize(table),threshold,self.comparison)
+
+    def desymbolizeThreshold(self,threshold,table):
+        if isinstance(threshold,str):
             try:
-                threshold = eval(self.threshold,globals(),table)
+                return eval(threshold,globals(),table)
             except NameError:
                 # Undefined reference: assume it'll get sorted out later
-                threshold = self.threshold
+                return threshold
+        elif isinstance(threshold,list):
+            return [self.desymbolizeThreshold(t,table) for t in threshold]
         else:
-            threshold = self.threshold
-        return self.__class__(self.vector.desymbolize(table),threshold,self.comparison)
+            return threshold
 
     def scale(self,table):
         vector = self.vector.__class__(self.vector)
@@ -698,8 +731,11 @@ class KeyedPlane:
         try:
             self.threshold = float(element.getAttribute('threshold'))
         except ValueError:
-            self.threshold = str(element.getAttribute('threshold'))
-        self.comparison = int(element.getAttribute('comparison'))
+            self.threshold = eval(str(element.getAttribute('threshold')))
+        try:
+            self.comparison = int(element.getAttribute('comparison'))
+        except ValueError:
+            self.comparison = str(element.getAttribute('comparison'))
         self.vector = KeyedVector(element)
 
 def thresholdRow(key,threshold):
@@ -726,6 +762,21 @@ def trueRow(key):
     @rtype: L{KeyedPlane}
     """
     return thresholdRow(key,0.5)
+def andRow(trueKeys=[],falseKeys=[]):
+    """
+    @param trueKeys: list of keys which must be C{True} (default is empty list)
+    @type trueKeys: str[]
+    @param falseKeys: list of keys which must be C{False} (default is empty list)
+    @type falseKeys: str[]
+    @return: a plane testing whether all boolean keyed values are set as desired
+    @rtype: L{KeyedPlane}
+    """
+    weights = {}
+    for key in trueKeys:
+        weights[key] = 1.
+    for key in falseKeys:
+        weights[key] = -1.
+    return KeyedPlane(KeyedVector(weights),float(len(trueKeys))-0.5)
 def equalRow(key,value):
     """
     @return: a plane testing whether the given keyed value equals the given target value
@@ -757,6 +808,8 @@ class KeyedTree:
     """
     def __init__(self,leaf=None):
         self._string = None
+        self._keysIn = None
+        self._keysOut = None
         if isinstance(leaf,Node):
             self.parse(leaf)
         else:
@@ -787,6 +840,61 @@ class KeyedTree:
         @rtype: bool
         """
         return self.branch is None and not self.isLeaf()
+
+    def getKeysIn(self):
+        """
+        @return: a set of all keys that affect the output of this PWL function
+        """
+        if self._keysIn is None:
+            self._keysIn = set()
+            self._keysOut = set()
+            if self.isProbabilistic():
+                # Keys are taken from each child
+                children = self.children.domain()
+            else:
+                children = self.children.values()
+                if not self.isLeaf():
+                    # Keys also include those in the branch
+                    self._keysIn |= set(self.branch.vector.keys())
+            # Accumulate keys across children
+            for child in children:
+                if isinstance(child,KeyedVector):
+                    self._keysIn |= set(child.keys())
+                elif not child is None and not isinstance(child,bool):
+                    self._keysIn |= child.getKeysIn()
+                    self._keysOut |= child.getKeysOut()
+        return self._keysIn
+
+    def getKeysOut(self):
+        """
+        @return: a set of all keys that are affected by this PWL function
+        """
+        if self._keysOut is None:
+            self.getKeysIn()
+        return self._keysOut
+
+    # def getKeys(self):
+    #     """
+    #     @return: a set of all keys references in this PWL function
+    #     """
+    #     if self.isProbabilistic():
+    #         # Keys are taken from each child
+    #         result = set()
+    #         children = self.children.domain()
+    #     else:
+    #         children = self.children.values()
+    #         if self.isLeaf():
+    #             result = set()
+    #         else:
+    #             # Keys also include those in the branch
+    #             result = set(self.branch.vector.keys())
+    #     # Accumulate keys across children
+    #     for child in children:
+    #         if isinstance(child,KeyedVector):
+    #             result |= set(child.keys())
+    #         elif not child is None and not isinstance(child,bool):
+    #             result |= child.getKeys()
+    #     return result
 
     def collapseProbabilistic(self):
         """
@@ -835,7 +943,7 @@ class KeyedTree:
             # Deterministic branch
             return self.children[self.branch.evaluate(index)][index]
 
-    def desymbolize(self,table):
+    def desymbolize(self,table,debug=False):
         """
         @return: a new tree with any symbolic references replaced with numeric values according to the table of element lists
         @rtype: L{KeyedTree}
@@ -844,17 +952,17 @@ class KeyedTree:
         if self.isLeaf():
             leaf = self.children[None]
             if isinstance(leaf,KeyedVector) or isinstance(leaf,KeyedMatrix):
-                tree.makeLeaf(leaf.desymbolize(table))
+                tree.makeLeaf(leaf.desymbolize(table,debug))
             else:
                 tree.makeLeaf(leaf)
         elif self.branch:
             tree.makeBranch(self.branch.desymbolize(table),self.children[True].desymbolize(table),
                             self.children[False].desymbolize(table))
         else:
-            new = {}
+            new = TreeDistribution()
             for child in self.children.domain():
-                new[child.desymbolize(table)] = self.children[child]
-            tree.makeProbabilistic(TreeDistribution(new))
+                new.addProb(child.desymbolize(table),self.children[child])
+            tree.makeProbabilistic(new)
         return tree
 
     def floor(self,key,lo):
@@ -989,15 +1097,9 @@ class KeyedTree:
                     new = old.compose(other,leafOp,planeOp)
                     if isinstance(new,Distribution):
                         for tree in new.domain():
-                            try:
-                                distribution[tree] += self.children[old]*new[tree]
-                            except KeyError:
-                                distribution[tree] = self.children[old]*new[tree]
+                            distribution.addProb(tree,self.children[old]*new[tree])
                     else:
-                        try:
-                            distribution[new] += self.children[old]
-                        except KeyError:
-                            distribution[new] = self.children[old]
+                        distribution.addProb(new,self.children[old])
                 if len(distribution) > 1:
                     result.makeProbabilistic(distribution)
                     result.collapseProbabilistic()
@@ -1023,15 +1125,9 @@ class KeyedTree:
                 new = self.compose(old,leafOp,planeOp)
                 if isinstance(new,Distribution):
                     for tree in new.domain():
-                        try:
-                            distribution[tree] += other.children[old]*new[tree]
-                        except KeyError:
-                            distribution[tree] = other.children[old]*new[tree]
+                        distribution.addProb(tree,other.children[old]*new[tree])
                 else:
-                    try:
-                        distribution[new] += other.children[old]
-                    except KeyError:
-                        distribution[new] = other.children[old]
+                    distribution.addProb(new,other.children[old])
             if len(distribution) > 1:
                 result.makeProbabilistic(distribution)
                 result.collapseProbabilistic()

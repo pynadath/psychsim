@@ -16,7 +16,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -34,7 +34,7 @@
       <th class="navbar" align="right" width="100%">
         <table border="0" cellpadding="0" cellspacing="0">
           <tr><th class="navbar" align="center"
-            >PsychSim</th>
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
           </tr></table></th>
   </tr>
 </table>
@@ -174,6 +174,43 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <td><span class="summary-sig"><a href="psychsim.pwl.KeyedPlane-class.html#compare" class="summary-sig-name">compare</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">other</span>,
+        <span class="summary-sig-arg">value</span>)</span><br />
+      Identifies any potential conflicts between two hyperplanes</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.compare">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.pwl.KeyedPlane-class.html#minimize" class="summary-sig-name">minimize</a>(<span class="summary-sig-arg">self</span>)</span><br />
+      Returns:
+      an equivalent plane with no constant element in the weights</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.minimize">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
           <td><span class="summary-sig"><a name="__str__"></a><span class="summary-sig-name">__str__</span>(<span class="summary-sig-arg">self</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.__str__">source&nbsp;code</a></span>
@@ -262,13 +299,81 @@
     </td>
   </tr>
 </table>
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Method Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-MethodDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="compare"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">compare</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">other</span>,
+        <span class="sig-arg">value</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.compare">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  <p>Identifies any potential conflicts between two hyperplanes</p>
+  <dl class="fields">
+    <dt>Returns:</dt>
+        <dd><code>None</code> if no conflict was detected, <code>True</code> 
+          if the tests are redundant, <code>False</code> if the tests are 
+          conflicting</dd>
+  </dl>
+<div class="fields">      <p><strong>Warning:</strong>
+        correct, but not complete
+      </p>
+</div></td></tr></table>
+</div>
+<a name="minimize"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">minimize</span>(<span class="sig-arg">self</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.pwl-pysrc.html#KeyedPlane.minimize">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns:</dt>
+        <dd>an equivalent plane with no constant element in the weights</dd>
+  </dl>
+</td></tr></table>
+</div>
+<br />
 <!-- ==================== NAVIGATION BAR ==================== -->
 <table class="navbar" border="0" width="100%" cellpadding="0"
        bgcolor="#a0c0ff" cellspacing="0">
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -286,14 +391,14 @@
       <th class="navbar" align="right" width="100%">
         <table border="0" cellpadding="0" cellspacing="0">
           <tr><th class="navbar" align="center"
-            >PsychSim</th>
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
           </tr></table></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Sat Jan 18 16:18:59 2014
+    Generated by Epydoc 3.0.1 on Fri Dec 19 02:49:49 2014
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"

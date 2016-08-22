@@ -1,0 +1,789 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>psychsim.examples.teamofrivals.ResourceWorld</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="psychsim-module.html">Package&nbsp;psychsim</a> ::
+        <a href="psychsim.examples-module.html">Package&nbsp;examples</a> ::
+        <a href="psychsim.examples.teamofrivals-module.html">Module&nbsp;teamofrivals</a> ::
+        Class&nbsp;ResourceWorld
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="psychsim.examples.teamofrivals.ResourceWorld-class.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS DESCRIPTION ==================== -->
+<h1 class="epydoc">Class ResourceWorld</h1><p class="nomargin-top"><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld">source&nbsp;code</a></span></p>
+<center>
+<center>  <map id="uml_class_diagram_for_psychsim_5" name="uml_class_diagram_for_psychsim_5">
+<area shape="rect" id="node1_37" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#nullAgent" title="string label that means none of the ResourceAgent members of this world" alt="" coords="39,562,627,582"/>
+<area shape="rect" id="node1_38" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#memory" title="psychsim.examples.teamofrivals.ResourceWorld.memory" alt="" coords="39,582,627,602"/>
+<area shape="rect" id="node1_39" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#carryOver" title="if True, then unallocated resources carry over to next round (default is &#160;False)" alt="" coords="39,602,627,622"/>
+<area shape="rect" id="node1_40" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#floor" title="minimum number of resources that a player can have (default is no minimum)" alt="" coords="39,622,627,642"/>
+<area shape="rect" id="node1_41" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#__init__" title="psychsim.examples.teamofrivals.ResourceWorld.__init__" alt="" coords="39,645,627,665"/>
+<area shape="rect" id="node1_42" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#addAgent" title="psychsim.examples.teamofrivals.ResourceWorld.addAgent" alt="" coords="39,665,627,685"/>
+<area shape="rect" id="node1_43" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#getResources" title="Returns: &#160;a table of amount of resources owned by each player" alt="" coords="39,685,627,705"/>
+<area shape="rect" id="node1_44" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#getOwnership" title="Returns: &#160;a table of territories owned by each agent" alt="" coords="39,705,627,725"/>
+<area shape="rect" id="node1_45" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#getTotalValue" title="Returns: &#160;a table of total value of territories owned by each agent" alt="" coords="39,725,627,745"/>
+<area shape="rect" id="node1_46" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#predictResult" title="Returns: &#160;a dictionary of predictions in dictionary form for each object included in &#160;the action:" alt="" coords="39,745,627,765"/>
+<area shape="rect" id="node1_47" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#next" title="Returns: &#160;a list of agents (by name) whose turn it is in the current epoch" alt="" coords="39,765,627,785"/>
+<area shape="rect" id="node1_48" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#getDynamics" title="psychsim.examples.teamofrivals.ResourceWorld.getDynamics" alt="" coords="39,785,627,805"/>
+<area shape="rect" id="node1_49" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#__xml__" title="psychsim.examples.teamofrivals.ResourceWorld.__xml__" alt="" coords="39,805,627,825"/>
+<area shape="rect" id="node1_50" href="psychsim.examples.teamofrivals.ResourceWorld-class.html#parse" title="psychsim.examples.teamofrivals.ResourceWorld.parse" alt="" coords="39,825,627,845"/>
+<area shape="rect" id="node1" href="psychsim.examples.teamofrivals.ResourceWorld-class.html" title="psychsim.examples.teamofrivals.ResourceWorld" alt="" coords="26,537,638,851"/>
+<area shape="rect" id="node2_51" href="psychsim.world.World-class.html#agents" title="table of agents in this world, indexed by name" alt="" coords="17,30,649,50"/>
+<area shape="rect" id="node2_52" href="psychsim.world.World-class.html#color" title="color of nodes associated with the global state when displayed in the UI" alt="" coords="17,50,649,70"/>
+<area shape="rect" id="node2_53" href="psychsim.world.World-class.html#dependency" title="table of dependencies among state features that impose temporal constraints" alt="" coords="17,70,649,90"/>
+<area shape="rect" id="node2_54" href="psychsim.world.World-class.html#dynamics" title="table of action effect models" alt="" coords="17,90,649,110"/>
+<area shape="rect" id="node2_55" href="psychsim.world.World-class.html#history" title="accumulated list of outcomes from simulation steps" alt="" coords="17,110,649,130"/>
+<area shape="rect" id="node2_56" href="psychsim.world.World-class.html#state" title="the distribution over states of the world" alt="" coords="17,130,649,150"/>
+<area shape="rect" id="node2_57" href="psychsim.world.World-class.html#symbols" title="utility storage of symbols used across all enumerated state variables" alt="" coords="17,150,649,170"/>
+<area shape="rect" id="node2_58" href="psychsim.world.World-class.html#termination" title="list of conditions under which the simulation terminates (default is none)" alt="" coords="17,170,649,190"/>
+<area shape="rect" id="node2_59" href="psychsim.world.World-class.html#variables" title="definitions of the domains of possible variables (state features, &#160;relationships, observations)" alt="" coords="17,190,649,210"/>
+<area shape="rect" id="node2_60" href="psychsim.world.World-class.html#initialize" title="psychsim.world.World.initialize" alt="" coords="17,213,649,233"/>
+<area shape="rect" id="node2_61" href="psychsim.world.World-class.html#step" title="The simulation method" alt="" coords="17,233,649,253"/>
+<area shape="rect" id="node2_62" href="psychsim.world.World-class.html#stepFromState" title="Compute the resulting states when starting in a given possible world (as &#160;opposed to a distribution over possible worlds)" alt="" coords="17,253,649,273"/>
+<area shape="rect" id="node2_63" href="psychsim.world.World-class.html#effect" title="psychsim.world.World.effect" alt="" coords="17,273,649,293"/>
+<area shape="rect" id="node2_64" href="psychsim.world.World-class.html#multiDeltaVector" title="psychsim.world.World.multiDeltaVector" alt="" coords="17,293,649,313"/>
+<area shape="rect" id="node2_65" href="psychsim.world.World-class.html#singleDeltaVector" title="psychsim.world.World.singleDeltaVector" alt="" coords="17,313,649,333"/>
+<area shape="rect" id="node2_66" href="psychsim.world.World-class.html#deltaState" title="Computes the change across a subset of state features" alt="" coords="17,333,649,353"/>
+<area shape="rect" id="node2_67" href="psychsim.world.World-class.html#addTermination" title="Adds a possible termination condition to the list" alt="" coords="17,353,649,373"/>
+<area shape="rect" id="node2_68" href="psychsim.world.World-class.html#terminated" title="Evaluates world states with respect to termination conditions" alt="" coords="17,373,649,393"/>
+<area shape="rect" id="node2_69" href="psychsim.world.World-class.html#has_agent" title="Returns: &#160;True iff this World already has an agent with the same name" alt="" coords="17,393,649,413"/>
+<area shape="rect" id="node2_70" href="psychsim.world.World-class.html#setTurnDynamics" title="Convenience method for setting custom dynamics for the turn order" alt="" coords="17,413,649,433"/>
+<area shape="rect" id="node2_71" href="psychsim.world.World-class.html#setDynamics" title="Defines the effect of an action on a given state feature" alt="" coords="17,433,649,453"/>
+<area shape="rect" id="node2_72" href="psychsim.world.World-class.html#addDependency" title="Adds a dependency between the dependent key and the independent key, &#160;indicating that the new value for the independent key should be determined &#160;first" alt="" coords="17,453,649,473"/>
+<area shape="rect" id="node2_73" href="psychsim.world.World-class.html#save" title="Returns: &#160;the filename used (possibly with a .psy extension added)" alt="" coords="17,493,649,513"/>
+<area shape="rect" id="node2" href="psychsim.world.World-class.html" title="psychsim.world.World" alt="" coords="5,5,661,519"/>
+</map>
+  <img src="uml_class_diagram_for_psychsim_5.gif" alt='' usemap="#uml_class_diagram_for_psychsim_5" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
+<hr />
+<!-- ==================== INSTANCE METHODS ==================== -->
+<a name="section-InstanceMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Instance Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-InstanceMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceWorld-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">xml</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">allocateVerb</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">allocationState</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">winnerState</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">floor</span>=<span class="summary-sig-default">None</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.__init__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceWorld-class.html#addAgent" class="summary-sig-name">addAgent</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">agent</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.addAgent">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">str&rarr;int</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceWorld-class.html#getResources" class="summary-sig-name">getResources</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Returns:
+      a table of amount of resources owned by each player</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.getResources">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">str&rarr;set(str)</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceWorld-class.html#getOwnership" class="summary-sig-name">getOwnership</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Returns:
+      a table of territories owned by each agent</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.getOwnership">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">str&rarr;int</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceWorld-class.html#getTotalValue" class="summary-sig-name">getTotalValue</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">feature</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Returns:
+      a table of total value of territories owned by each agent</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.getTotalValue">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">str{S-&gt;}str{S-&gt;}<a 
+      href="psychsim.probability.Distribution-class.html" 
+      class="link">Distribution</a>(str)</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceWorld-class.html#predictResult" class="summary-sig-name">predictResult</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">actions</span>)</span><br />
+      Returns:
+      a dictionary of predictions in dictionary form for each object 
+      included in the action:</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.predictResult">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">str[]</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceWorld-class.html#next" class="summary-sig-name">next</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">vector</span>=<span class="summary-sig-default">None</span>)</span><br />
+      Returns:
+      a list of agents (by name) whose turn it is in the current epoch</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.next">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceWorld-class.html#getDynamics" class="summary-sig-name">getDynamics</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">key</span>,
+        <span class="summary-sig-arg">action</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.getDynamics">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceWorld-class.html#__xml__" class="summary-sig-name">__xml__</a>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.__xml__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceWorld-class.html#parse" class="summary-sig-name">parse</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">element</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.parse">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code><a href="psychsim.world.World-class.html">world.World</a></code></b>:
+      <code><a href="psychsim.world.World-class.html#addDependency">addDependency</a></code>,
+      <code><a href="psychsim.world.World-class.html#addTermination">addTermination</a></code>,
+      <code><a href="psychsim.world.World-class.html#decodeVariable">decodeVariable</a></code>,
+      <code><a href="psychsim.world.World-class.html#defineRelation">defineRelation</a></code>,
+      <code><a href="psychsim.world.World-class.html#defineState">defineState</a></code>,
+      <code><a href="psychsim.world.World-class.html#defineVariable">defineVariable</a></code>,
+      <code><a href="psychsim.world.World-class.html#deltaOrder">deltaOrder</a></code>,
+      <code><a href="psychsim.world.World-class.html#deltaState">deltaState</a></code>,
+      <code><a href="psychsim.world.World-class.html#effect">effect</a></code>,
+      <code><a href="psychsim.world.World-class.html#encodeVariable">encodeVariable</a></code>,
+      <code><a href="psychsim.world.World-class.html#explain">explain</a></code>,
+      <code><a href="psychsim.world.World-class.html#explainAction">explainAction</a></code>,
+      <code><a href="psychsim.world.World-class.html#explainDecision">explainDecision</a></code>,
+      <code><a href="psychsim.world.World-class.html#float2value">float2value</a></code>,
+      <code><a href="psychsim.world.World-class.html#getActions">getActions</a></code>,
+      <code><a href="psychsim.world.World-class.html#getDescription">getDescription</a></code>,
+      <code><a href="psychsim.world.World-class.html#getFeature">getFeature</a></code>,
+      <code><a href="psychsim.world.World-class.html#getGraph">getGraph</a></code>,
+      <code><a href="psychsim.world.World-class.html#getMentalModel">getMentalModel</a></code>,
+      <code><a href="psychsim.world.World-class.html#getModel">getModel</a></code>,
+      <code><a href="psychsim.world.World-class.html#getState">getState</a></code>,
+      <code><a href="psychsim.world.World-class.html#getValue">getValue</a></code>,
+      <code><a href="psychsim.world.World-class.html#has_agent">has_agent</a></code>,
+      <code><a href="psychsim.world.World-class.html#initialize">initialize</a></code>,
+      <code><a href="psychsim.world.World-class.html#modelGC">modelGC</a></code>,
+      <code><a href="psychsim.world.World-class.html#multiDeltaVector">multiDeltaVector</a></code>,
+      <code><a href="psychsim.world.World-class.html#nearestVector">nearestVector</a></code>,
+      <code><a href="psychsim.world.World-class.html#printDelta">printDelta</a></code>,
+      <code><a href="psychsim.world.World-class.html#printState">printState</a></code>,
+      <code><a href="psychsim.world.World-class.html#printVector">printVector</a></code>,
+      <code><a href="psychsim.world.World-class.html#pruneModels">pruneModels</a></code>,
+      <code><a href="psychsim.world.World-class.html#reachable">reachable</a></code>,
+      <code><a href="psychsim.world.World-class.html#save">save</a></code>,
+      <code><a href="psychsim.world.World-class.html#scaleState">scaleState</a></code>,
+      <code><a href="psychsim.world.World-class.html#setDynamics">setDynamics</a></code>,
+      <code><a href="psychsim.world.World-class.html#setFeature">setFeature</a></code>,
+      <code><a href="psychsim.world.World-class.html#setMentalModel">setMentalModel</a></code>,
+      <code><a href="psychsim.world.World-class.html#setModel">setModel</a></code>,
+      <code><a href="psychsim.world.World-class.html#setOrder">setOrder</a></code>,
+      <code><a href="psychsim.world.World-class.html#setState">setState</a></code>,
+      <code><a href="psychsim.world.World-class.html#setTurnDynamics">setTurnDynamics</a></code>,
+      <code><a href="psychsim.world.World-class.html#singleDeltaVector">singleDeltaVector</a></code>,
+      <code><a href="psychsim.world.World-class.html#step">step</a></code>,
+      <code><a href="psychsim.world.World-class.html#stepFromState">stepFromState</a></code>,
+      <code><a href="psychsim.world.World-class.html#terminated">terminated</a></code>,
+      <code><a href="psychsim.world.World-class.html#updateModels">updateModels</a></code>,
+      <code><a href="psychsim.world.World-class.html#value2float">value2float</a></code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS VARIABLES ==================== -->
+<a name="section-ClassVariables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Class Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-ClassVariables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="nullAgent"></a><span class="summary-name">nullAgent</span> = <code title="'__none__'"><code class="variable-quote">'</code><code class="variable-string">__none__</code><code class="variable-quote">'</code></code><br />
+      string label that means none of the ResourceAgent members of this 
+      world
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="memory"></a><span class="summary-name">memory</span> = <code title="False">False</code>
+    </td>
+  </tr>
+</table>
+<!-- ==================== INSTANCE VARIABLES ==================== -->
+<a name="section-InstanceVariables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Instance Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-InstanceVariables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">bool</span>
+    </td><td class="summary">
+        <a name="carryOver"></a><span class="summary-name">carryOver</span><br />
+      if <code>True</code>, then unallocated resources carry over to next 
+      round (default is <code>False</code>)
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">int</span>
+    </td><td class="summary">
+        <a name="floor"></a><span class="summary-name">floor</span><br />
+      minimum number of resources that a player can have (default is no 
+      minimum)
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code><a href="psychsim.world.World-class.html">world.World</a></code></b>:
+      <code><a href="psychsim.world.World-class.html#agents">agents</a></code>,
+      <code><a href="psychsim.world.World-class.html#color">color</a></code>,
+      <code><a href="psychsim.world.World-class.html#dependency">dependency</a></code>,
+      <code><a href="psychsim.world.World-class.html#dynamics">dynamics</a></code>,
+      <code><a href="psychsim.world.World-class.html#history">history</a></code>,
+      <code><a href="psychsim.world.World-class.html#state">state</a></code>,
+      <code><a href="psychsim.world.World-class.html#symbols">symbols</a></code>,
+      <code><a href="psychsim.world.World-class.html#termination">termination</a></code>,
+      <code><a href="psychsim.world.World-class.html#variables">variables</a></code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Method Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-MethodDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="__init__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">xml</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">allocateVerb</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">allocationState</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">winnerState</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">floor</span>=<span class="sig-default">None</span>)</span>
+    <br /><em class="fname">(Constructor)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.__init__">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>xml</code></strong> - Initialization argument, either an XML Element, or a filename</li>
+    </ul></dd>
+    <dt>Overrides:
+        <a href="psychsim.world.World-class.html#__init__">world.World.__init__</a>
+        <dd><em class="note">(inherited documentation)</em></dd>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="addAgent"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">addAgent</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">agent</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.addAgent">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Overrides:
+        <a href="psychsim.world.World-class.html#addAgent">world.World.addAgent</a>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getResources"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getResources</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">state</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.getResources">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns: str&rarr;int</dt>
+        <dd>a table of amount of resources owned by each player</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getOwnership"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getOwnership</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">state</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.getOwnership">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns: str&rarr;set(str)</dt>
+        <dd>a table of territories owned by each agent</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getTotalValue"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getTotalValue</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">feature</span>,
+        <span class="sig-arg">state</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.getTotalValue">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>feature</code></strong> (str) - the name of the state feature containing the value to be totaled</li>
+    </ul></dd>
+    <dt>Returns: str&rarr;int</dt>
+        <dd>a table of total value of territories owned by each agent</dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="predictResult"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">predictResult</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">actions</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.predictResult">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>actions</code></strong> (<a href="psychsim.action.ActionSet-class.html" 
+          class="link">ActionSet</a>) - the (sub)set of actions to predict the results of</li>
+    </ul></dd>
+    <dt>Returns: str{S-&gt;}str{S-&gt;}<a 
+      href="psychsim.probability.Distribution-class.html" 
+      class="link">Distribution</a>(str)</dt>
+        <dd>a dictionary of predictions in dictionary form for each object 
+          included in the action:
+          <ul>
+            <li>
+              leader: prediction of which allocator would own the object, 
+              if successful
+            </li>
+            <li>
+              winner: prediction of who owns the object, including 
+              possibility of being unsuccessful
+            </li>
+          </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="next"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">next</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">vector</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.next">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns: str[]</dt>
+        <dd>a list of agents (by name) whose turn it is in the current epoch</dd>
+    <dt>Overrides:
+        <a href="psychsim.world.World-class.html#next">world.World.next</a>
+        <dd><em class="note">(inherited documentation)</em></dd>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getDynamics"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getDynamics</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">key</span>,
+        <span class="sig-arg">action</span>,
+        <span class="sig-arg">state</span>=<span class="sig-default">None</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.getDynamics">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Overrides:
+        <a href="psychsim.world.World-class.html#getDynamics">world.World.getDynamics</a>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="__xml__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__xml__</span>(<span class="sig-arg">self</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.__xml__">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Overrides:
+        <a href="psychsim.world.World-class.html#__xml__">world.World.__xml__</a>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="parse"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">parse</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">element</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceWorld.parse">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Overrides:
+        <a href="psychsim.world.World-class.html#parse">world.World.parse</a>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Fri Dec 19 02:49:49 2014
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

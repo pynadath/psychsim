@@ -1,4 +1,5 @@
-from xml.dom.minidom import Document,Node,NodeList,parseString
+import itertools
+from xml.dom.minidom import Document,Element,Node,NodeList,parseString
 
 class Action(dict):
     """
@@ -15,6 +16,17 @@ class Action(dict):
             dict.__init__(self,arg)
         self._string = None
         
+    def agentLess(self):
+        """
+        Utility method that returns a subject-independent version of this action
+        @rtype: L{Action}
+        """
+        args = dict(self)
+        try:
+            del args['subject']
+            return self.__class__(args)
+        except KeyError:
+            return self.__class__(self)
 
     def getParameters(self):
         """
@@ -90,6 +102,33 @@ class Action(dict):
             child = child.nextSibling
     
 class ActionSet(frozenset):
+
+    def __new__(cls,elements=[]):
+        if isinstance(elements,Element):
+            iterable = []
+            node = elements.firstChild
+            while node:
+                if node.nodeType == node.ELEMENT_NODE and node.tagName == 'action':
+                    assert node.tagName == 'action','Element has tag %s instead of action' % (node.tagName)
+                    atom = Action(node)
+                    iterable.append(atom)
+                node = node.nextSibling
+                
+        elif isinstance(elements,NodeList):
+            iterable = []
+            for node in elements:
+                if node.nodeType == node.ELEMENT_NODE and node.tagName == 'action':
+                    assert node.tagName == 'action','Element has tag %s instead of action' % (node.tagName)
+                    atom = Action(node)
+                    iterable.append(atom)
+        elif isinstance(elements,Action):
+            iterable = [elements]
+        elif isinstance(elements,dict):
+            iterable = reduce(ActionSet.union,elements.values(),ActionSet())
+        else:
+            iterable = elements
+        return frozenset.__new__(cls,iterable)
+
     def match(self,pattern):
         """
         @param pattern: a table of key-value patterns that the action must match
@@ -109,21 +148,6 @@ class ActionSet(frozenset):
             # No matching actions
             return None
 
-    def __new__(cls,elements=[]):
-        if isinstance(elements,NodeList):
-            iterable = []
-            for node in elements:
-                if node.nodeType == node.ELEMENT_NODE:
-                    assert node.tagName == 'action','Element has tag %s instead of action' % (node.tagName)
-                    iterable.append(Action(node))
-        elif isinstance(elements,Action):
-            iterable = [elements]
-        elif isinstance(elements,dict):
-            iterable = reduce(ActionSet.union,elements.values(),ActionSet())
-        else:
-            iterable = elements
-        return frozenset.__new__(cls,iterable)
-
     def __getitem__(self,key):
         elements = list(self)
         result = elements[0][key]
@@ -137,6 +161,16 @@ class ActionSet(frozenset):
 
     def __hash__(self):
         return hash(str(self))
+
+    def __lt__(self,other):
+        return str(self) < str(other)
+
+    def agentLess(self):
+        """
+        Utility method that returns a subject-independent version of this action set
+        @rtype: L{ActionSet}
+        """
+        return self.__class__([a.agentLess() for a in self])
 
     def __xml__(self):
         doc = Document()
@@ -152,6 +186,14 @@ def filterActions(pattern,actions):
     @return: the subset of given actions that match the given pattern
     """
     return filter(lambda a: a.match(pattern),actions)
+
+def powerset(iterable):
+    """
+    Utility function, taken from Python doc recipes
+    powerset([1,2,3]) --> () (1,) (2,) (3,) (1,2) (1,3) (2,3) (1,2,3)
+    """
+    s = list(iterable)
+    return itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(len(s)+1))
 
 if __name__ == '__main__':
     act1 = Action({'subject': 'I','verb': 'help','object': 'you'})    

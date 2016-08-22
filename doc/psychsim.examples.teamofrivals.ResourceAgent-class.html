@@ -1,0 +1,667 @@
+<?xml version="1.0" encoding="ascii"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+          "DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>psychsim.examples.teamofrivals.ResourceAgent</title>
+  <link rel="stylesheet" href="epydoc.css" type="text/css" />
+  <script type="text/javascript" src="epydoc.js"></script>
+</head>
+
+<body bgcolor="white" text="black" link="blue" vlink="#204080"
+      alink="#204080">
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr valign="top">
+    <td width="100%">
+      <span class="breadcrumbs">
+        <a href="psychsim-module.html">Package&nbsp;psychsim</a> ::
+        <a href="psychsim.examples-module.html">Package&nbsp;examples</a> ::
+        <a href="psychsim.examples.teamofrivals-module.html">Module&nbsp;teamofrivals</a> ::
+        Class&nbsp;ResourceAgent
+      </span>
+    </td>
+    <td>
+      <table cellpadding="0" cellspacing="0">
+        <!-- hide/show private -->
+        <tr><td align="right"><span class="options">[<a href="javascript:void(0);" class="privatelink"
+    onclick="toggle_private();">hide&nbsp;private</a>]</span></td></tr>
+        <tr><td align="right"><span class="options"
+            >[<a href="frames.html" target="_top">frames</a
+            >]&nbsp;|&nbsp;<a href="psychsim.examples.teamofrivals.ResourceAgent-class.html"
+            target="_top">no&nbsp;frames</a>]</span></td></tr>
+      </table>
+    </td>
+  </tr>
+</table>
+<!-- ==================== CLASS DESCRIPTION ==================== -->
+<h1 class="epydoc">Class ResourceAgent</h1><p class="nomargin-top"><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent">source&nbsp;code</a></span></p>
+<center>
+<center>  <map id="uml_class_diagram_for_psychsim_4" name="uml_class_diagram_for_psychsim_4">
+<area shape="rect" id="node1_32" href="psychsim.examples.teamofrivals.ResourceAgent-class.html#allocateAll" title="if True, then agent cannot leave resources unallocated (default is False)" alt="" coords="132,539,537,559"/>
+<area shape="rect" id="node1_33" href="psychsim.examples.teamofrivals.ResourceAgent-class.html#__init__" title="psychsim.examples.teamofrivals.ResourceAgent.__init__" alt="" coords="132,561,537,581"/>
+<area shape="rect" id="node1_34" href="psychsim.examples.teamofrivals.ResourceAgent-class.html#getActions" title="Returns: &#160;the set of possible actions to choose from in the given state vector" alt="" coords="132,581,537,601"/>
+<area shape="rect" id="node1_35" href="psychsim.examples.teamofrivals.ResourceAgent-class.html#hasAction" title="Returns: &#160;True iff this agent has the given action (possibly in combination with &#160;other actions)" alt="" coords="132,601,537,621"/>
+<area shape="rect" id="node1_36" href="psychsim.examples.teamofrivals.ResourceAgent-class.html#getCombos" title="psychsim.examples.teamofrivals.ResourceAgent.getCombos" alt="" coords="132,621,537,641"/>
+<area shape="rect" id="node1_37" href="psychsim.examples.teamofrivals.ResourceAgent-class.html#sampleAction" title="psychsim.examples.teamofrivals.ResourceAgent.sampleAction" alt="" coords="132,641,537,661"/>
+<area shape="rect" id="node1_38" href="psychsim.examples.teamofrivals.ResourceAgent-class.html#legalObjects" title="psychsim.examples.teamofrivals.ResourceAgent.legalObjects" alt="" coords="132,661,537,681"/>
+<area shape="rect" id="node1_39" href="psychsim.examples.teamofrivals.ResourceAgent-class.html#singletonActions" title="Generates all possible single&#45;country invasions I can do in the given world" alt="" coords="132,681,537,701"/>
+<area shape="rect" id="node1_40" href="psychsim.examples.teamofrivals.ResourceAgent-class.html#__xml__" title="psychsim.examples.teamofrivals.ResourceAgent.__xml__" alt="" coords="132,701,537,721"/>
+<area shape="rect" id="node1_41" href="psychsim.examples.teamofrivals.ResourceAgent-class.html#parse" title="psychsim.examples.teamofrivals.ResourceAgent.parse" alt="" coords="132,721,537,741"/>
+<area shape="rect" id="node1_42" href="psychsim.examples.teamofrivals.ResourceAgent-class.html#isXML" title="psychsim.examples.teamofrivals.ResourceAgent.isXML" alt="" coords="132,741,537,761"/>
+<area shape="rect" id="node1" href="psychsim.examples.teamofrivals.ResourceAgent-class.html" title="psychsim.examples.teamofrivals.ResourceAgent" alt="" coords="120,515,549,768"/>
+<area shape="rect" id="node2_43" href="psychsim.agent.Agent-class.html#actions" title="the set of possible actions that the agent can choose from" alt="" coords="17,30,652,50"/>
+<area shape="rect" id="node2_44" href="psychsim.agent.Agent-class.html#color" title="color name to be used in UI" alt="" coords="17,50,652,70"/>
+<area shape="rect" id="node2_45" href="psychsim.agent.Agent-class.html#legal" title="a set of conditions under which certain action choices are allowed (default is that all actions are allowed at all times)" alt="" coords="17,70,652,90"/>
+<area shape="rect" id="node2_46" href="psychsim.agent.Agent-class.html#name" title="agent name" alt="" coords="17,90,652,110"/>
+<area shape="rect" id="node2_47" href="psychsim.agent.Agent-class.html#omega" title="the set of possible observations this agent may receive" alt="" coords="17,110,652,130"/>
+<area shape="rect" id="node2_48" href="psychsim.agent.Agent-class.html#x" title="X coordinate to be used in UI" alt="" coords="17,130,652,150"/>
+<area shape="rect" id="node2_49" href="psychsim.agent.Agent-class.html#y" title="Y coordinate to be used in UI" alt="" coords="17,150,652,170"/>
+<area shape="rect" id="node2_50" href="psychsim.agent.Agent-class.html#decide" title="Generate an action choice for this agent in the given state" alt="" coords="17,173,652,193"/>
+<area shape="rect" id="node2_51" href="psychsim.agent.Agent-class.html#value" title="Computes the expected value of a state vector (and optional action choice) &#160;to this agent" alt="" coords="17,193,652,213"/>
+<area shape="rect" id="node2_52" href="psychsim.agent.Agent-class.html#valueIteration" title="Compute a value function for the given model" alt="" coords="17,213,652,233"/>
+<area shape="rect" id="node2_53" href="psychsim.agent.Agent-class.html#setPolicy" title="psychsim.agent.Agent.setPolicy" alt="" coords="17,233,652,253"/>
+<area shape="rect" id="node2_54" href="psychsim.agent.Agent-class.html#setHorizon" title="psychsim.agent.Agent.setHorizon" alt="" coords="17,253,652,273"/>
+<area shape="rect" id="node2_55" href="psychsim.agent.Agent-class.html#setParameter" title="psychsim.agent.Agent.setParameter" alt="" coords="17,273,652,293"/>
+<area shape="rect" id="node2_56" href="psychsim.agent.Agent-class.html#setAttribute" title="Set a parameter value for the given model(s)" alt="" coords="17,293,652,313"/>
+<area shape="rect" id="node2_57" href="psychsim.agent.Agent-class.html#findAttribute" title="Returns: &#160;the name of the nearest ancestor model (include the given model itself) &#160;that specifies a value for the named feature" alt="" coords="17,313,652,333"/>
+<area shape="rect" id="node2_58" href="psychsim.agent.Agent-class.html#getAttribute" title="Returns: &#160;the value for the specified parameter of the specified mental model" alt="" coords="17,333,652,353"/>
+<area shape="rect" id="node2_59" href="psychsim.agent.Agent-class.html#addAction" title="Returns: &#160;the action added" alt="" coords="17,353,652,373"/>
+<area shape="rect" id="node2_60" href="psychsim.agent.Agent-class.html#setLegal" title="Sets the legality decision tree for a given action" alt="" coords="17,373,652,393"/>
+<area shape="rect" id="node2_61" href="psychsim.agent.Agent-class.html#setState" title="psychsim.agent.Agent.setState" alt="" coords="17,393,652,413"/>
+<area shape="rect" id="node2_62" href="psychsim.agent.Agent-class.html#getState" title="psychsim.agent.Agent.getState" alt="" coords="17,413,652,433"/>
+<area shape="rect" id="node2_63" href="psychsim.agent.Agent-class.html#__copy__" title="psychsim.agent.Agent.__copy__" alt="" coords="17,453,652,473"/>
+<area shape="rect" id="node2" href="psychsim.agent.Agent-class.html" title="psychsim.agent.Agent" alt="" coords="5,5,664,479"/>
+<area shape="rect" id="node3" href="psychsim.pwl.KeyedTree-class.html" title="Decision tree node using symbolic PWL structures" alt="" coords="579,622,701,661"/>
+<area shape="poly" id="edge1" href="psychsim.agent.Agent-class.html#O" title="psychsim.agent.Agent.O" alt="" coords="536,473,566,513,601,566,629,614,624,616,597,569,562,516,532,476"/>
+<area shape="rect" id="edge1-label" href="psychsim.agent.Agent-class.html#O" title="O" alt="" coords="553,489,564,504"/>
+<area shape="rect" id="node4" href="psychsim.world.World-class.html" title="psychsim.world.World" alt="" coords="731,622,835,661"/>
+<area shape="poly" id="edge2" href="psychsim.agent.Agent-class.html#world" title="psychsim.agent.Agent.world" alt="" coords="656,451,718,513,753,565,776,613,771,616,748,567,714,516,652,454"/>
+<area shape="rect" id="edge2-label" href="psychsim.agent.Agent-class.html#world" title="world" alt="" coords="699,489,731,504"/>
+</map>
+  <img src="uml_class_diagram_for_psychsim_4.gif" alt='' usemap="#uml_class_diagram_for_psychsim_4" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
+<hr />
+<!-- ==================== INSTANCE METHODS ==================== -->
+<a name="section-InstanceMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Instance Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-InstanceMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceAgent-class.html#__init__" class="summary-sig-name">__init__</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">name</span>,
+        <span class="summary-sig-arg">resource</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">verb</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">objects</span>=<span class="summary-sig-default">None</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.__init__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">{<a href="psychsim.action.ActionSet-class.html" 
+      class="link">ActionSet</a>}</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceAgent-class.html#getActions" class="summary-sig-name">getActions</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">vector</span>)</span><br />
+      Returns:
+      the set of possible actions to choose from in the given state vector</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.getActions">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">bool</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceAgent-class.html#hasAction" class="summary-sig-name">hasAction</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">atom</span>)</span><br />
+      Returns:
+      <code>True</code> iff this agent has the given action (possibly in 
+      combination with other actions)</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.hasAction">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getCombos"></a><span class="summary-sig-name">getCombos</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">targets</span>,
+        <span class="summary-sig-arg">resources</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.getCombos">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceAgent-class.html#sampleAction" class="summary-sig-name">sampleAction</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">vector</span>,
+        <span class="summary-sig-arg">numTargets</span>=<span class="summary-sig-default">0</span>,
+        <span class="summary-sig-arg">minResources</span>=<span class="summary-sig-default">0</span>,
+        <span class="summary-sig-arg">joint</span>=<span class="summary-sig-default"><code class="variable-group">{</code><code class="variable-group">}</code></span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.sampleAction">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="legalObjects"></a><span class="summary-sig-name">legalObjects</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">vector</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.legalObjects">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="singletonActions"></a><span class="summary-sig-name">singletonActions</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">vector</span>)</span><br />
+      Generates all possible single-country invasions I can do in the given
+      world</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.singletonActions">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceAgent-class.html#__xml__" class="summary-sig-name">__xml__</a>(<span class="summary-sig-arg">self</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.__xml__">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceAgent-class.html#parse" class="summary-sig-name">parse</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">element</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.parse">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code><a href="psychsim.agent.Agent-class.html">agent.Agent</a></code></b>:
+      <code><a href="psychsim.agent.Agent-class.html#__copy__">__copy__</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#addAction">addAction</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#addModel">addModel</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#belief2model">belief2model</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#decide">decide</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#defineObservation">defineObservation</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#deleteModel">deleteModel</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#findAttribute">findAttribute</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#getAttribute">getAttribute</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#getBelief">getBelief</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#getState">getState</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#index2model">index2model</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#model2index">model2index</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#observe">observe</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#predict">predict</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#printBeliefs">printBeliefs</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#printModel">printModel</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#printReward">printReward</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#reward">reward</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#setAttribute">setAttribute</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#setBelief">setBelief</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#setHorizon">setHorizon</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#setLegal">setLegal</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#setParameter">setParameter</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#setPolicy">setPolicy</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#setRecursiveLevel">setRecursiveLevel</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#setReward">setReward</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#setState">setState</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#stateEstimator">stateEstimator</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#value">value</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#valueIteration">valueIteration</a></code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== STATIC METHODS ==================== -->
+<a name="section-StaticMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Static Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-StaticMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a href="psychsim.examples.teamofrivals.ResourceAgent-class.html#isXML" class="summary-sig-name">isXML</a>(<span class="summary-sig-arg">element</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.isXML">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+</table>
+<!-- ==================== INSTANCE VARIABLES ==================== -->
+<a name="section-InstanceVariables"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Instance Variables</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-InstanceVariables"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+        <a name="allocateAll"></a><span class="summary-name">allocateAll</span><br />
+      if <code>True</code>, then agent cannot leave resources unallocated 
+      (default is <code>False</code>)
+    </td>
+  </tr>
+  <tr>
+    <td colspan="2" class="summary">
+    <p class="indent-wrapped-lines"><b>Inherited from <code><a href="psychsim.agent.Agent-class.html">agent.Agent</a></code></b>:
+      <code><a href="psychsim.agent.Agent-class.html#O">O</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#actions">actions</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#color">color</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#legal">legal</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#name">name</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#omega">omega</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#world">world</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#x">x</a></code>,
+      <code><a href="psychsim.agent.Agent-class.html#y">y</a></code>
+      </p>
+    </td>
+  </tr>
+</table>
+<!-- ==================== METHOD DETAILS ==================== -->
+<a name="section-MethodDetails"></a>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Method Details</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-MethodDetails"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+</table>
+<a name="__init__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__init__</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">name</span>,
+        <span class="sig-arg">resource</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">verb</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">objects</span>=<span class="sig-default">None</span>)</span>
+    <br /><em class="fname">(Constructor)</em>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.__init__">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Overrides:
+        <a href="psychsim.agent.Agent-class.html#__init__">agent.Agent.__init__</a>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="getActions"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">getActions</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">vector</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.getActions">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>vector</code></strong> - the world in which to test legality</li>
+        <li><strong class="pname"><code>actions</code></strong> - the set of actions to test legality of (default is all available 
+          actions)</li>
+    </ul></dd>
+    <dt>Returns: {<a href="psychsim.action.ActionSet-class.html" 
+      class="link">ActionSet</a>}</dt>
+        <dd>the set of possible actions to choose from in the given state 
+          vector</dd>
+    <dt>Overrides:
+        <a href="psychsim.agent.Agent-class.html#getActions">agent.Agent.getActions</a>
+        <dd><em class="note">(inherited documentation)</em></dd>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="hasAction"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">hasAction</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">atom</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.hasAction">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns: bool</dt>
+        <dd><code>True</code> iff this agent has the given action (possibly 
+          in combination with other actions)</dd>
+    <dt>Overrides:
+        <a href="psychsim.agent.Agent-class.html#hasAction">agent.Agent.hasAction</a>
+        <dd><em class="note">(inherited documentation)</em></dd>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="sampleAction"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">sampleAction</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">vector</span>,
+        <span class="sig-arg">numTargets</span>=<span class="sig-default">0</span>,
+        <span class="sig-arg">minResources</span>=<span class="sig-default">0</span>,
+        <span class="sig-arg">joint</span>=<span class="sig-default"><code class="variable-group">{</code><code class="variable-group">}</code></span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.sampleAction">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>numTargets</code></strong> - maximum number of targets for allocation. 0 means no limit 
+          (default is 0)</li>
+        <li><strong class="pname"><code>minResources</code></strong> - minimum number of resources to leave unallocated (default is 0)</li>
+        <li><strong class="pname"><code>joint</code></strong> - current joint action with which to coordinate Generates a random 
+          (legal) action for this agent in the given world</li>
+    </ul></dd>
+  </dl>
+</td></tr></table>
+</div>
+<a name="__xml__"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">__xml__</span>(<span class="sig-arg">self</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.__xml__">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Overrides:
+        <a href="psychsim.agent.Agent-class.html#__xml__">agent.Agent.__xml__</a>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="parse"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">parse</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">element</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.parse">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Overrides:
+        <a href="psychsim.agent.Agent-class.html#parse">agent.Agent.parse</a>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<a name="isXML"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">isXML</span>(<span class="sig-arg">element</span>)</span>
+    <br /><em class="fname">Static Method</em>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.examples.teamofrivals-pysrc.html#ResourceAgent.isXML">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Overrides:
+        <a href="psychsim.agent.Agent-class.html#isXML">agent.Agent.isXML</a>
+    </dt>
+  </dl>
+</td></tr></table>
+</div>
+<br />
+<!-- ==================== NAVIGATION BAR ==================== -->
+<table class="navbar" border="0" width="100%" cellpadding="0"
+       bgcolor="#a0c0ff" cellspacing="0">
+  <tr valign="middle">
+  <!-- Home link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Tree link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="module-tree.html">Trees</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Index link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="identifier-index.html">Indices</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Help link -->
+      <th>&nbsp;&nbsp;&nbsp;<a
+        href="help.html">Help</a>&nbsp;&nbsp;&nbsp;</th>
+
+  <!-- Project homepage -->
+      <th class="navbar" align="right" width="100%">
+        <table border="0" cellpadding="0" cellspacing="0">
+          <tr><th class="navbar" align="center"
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
+          </tr></table></th>
+  </tr>
+</table>
+<table border="0" cellpadding="0" cellspacing="0" width="100%%">
+  <tr>
+    <td align="left" class="footer">
+    Generated by Epydoc 3.0.1 on Fri Dec 19 02:49:49 2014
+    </td>
+    <td align="right" class="footer">
+      <a target="mainFrame" href="http://epydoc.sourceforge.net"
+        >http://epydoc.sourceforge.net</a>
+    </td>
+  </tr>
+</table>
+
+<script type="text/javascript">
+  <!--
+  // Private objects are initially displayed (because if
+  // javascript is turned off then we want them to be
+  // visible); but by default, we want to hide them.  So hide
+  // them unless we have a cookie that says to show them.
+  checkCookie();
+  // -->
+</script>
+</body>
+</html>

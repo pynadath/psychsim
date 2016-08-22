@@ -22,6 +22,12 @@ class Agent:
     @type ivar omega: {str}
     @ivar O: the observation function; default is C{True}, which means perfect observations of actions
     @type O: L{KeyedTree}
+    @ivar x: X coordinate to be used in UI
+    @type x: int
+    @ivar y: Y coordinate to be used in UI
+    @type y: int
+    @ivar color: color name to be used in UI
+    @type color: str
     """
 
     def __init__(self,name):
@@ -32,6 +38,9 @@ class Agent:
         self.O = True
         self.models = {}
         self.modelList = {}
+        self.x = None
+        self.y = None
+        self.color = None
         if isinstance(name,Document):
             self.parse(name.documentElement)
         elif isinstance(name,Node):
@@ -46,7 +55,7 @@ class Agent:
     """Policy methods"""
     """------------------"""
 
-    def decide(self,vector,horizon=None,others=None,model=None,selection=None):
+    def decide(self,vector,horizon=None,others=None,model=None,selection=None,actions=None,keys=None):
         """
         Generate an action choice for this agent in the given state
         @param vector: the current state in which the agent is making its decision
@@ -64,6 +73,8 @@ class Agent:
            - consistent: make a deterministic choice among the maximum-value actions (default setting for a model)
            - C{None}: use the selection method specified by the given model (default)
         @type selection: str
+        @param actions: possible action choices (default is all legal actions)
+        @param keys: subset of state features to project over (default is all state features)
         """
         if model is None:
             model = self.world.getModel(self.name,vector)
@@ -82,10 +93,11 @@ class Agent:
                 return {'action': action}
         if horizon is None:
             horizon = self.getAttribute('horizon',model)
-        # Consider all legal actions (legality determined by my belief, circumscribed by real world)
-        actions = self.getActions(vector)
-        for state in belief.domain():
-            actions = actions & self.getActions(state) 
+        if actions is None:
+            # Consider all legal actions (legality determined by my belief, circumscribed by real world)
+            actions = self.getActions(vector)
+            for state in belief.domain():
+                actions = actions & self.getActions(state) 
         if len(actions) == 0:
             # Someone made a boo-boo because there is no legal action for this agent right now
             buf = StringIO.StringIO()
@@ -105,8 +117,12 @@ class Agent:
         for action in actions:
             # Compute value across possible worlds
             V[action] = {'__EV__': 0.}
+            if isinstance(keys,dict):
+                subkeys = keys[action]
+            else:
+                subkeys = keys
             for state in belief.domain():
-                V[action][state] = self.value(state,action,horizon,others,model)
+                V[action][state] = self.value(state,action,horizon,others,model,subkeys)
                 V[action]['__EV__'] += belief[state]*V[action][state]['V']
             if len(V[action]) > 1:
                 # Determine whether this action is the best
@@ -141,7 +157,7 @@ class Agent:
             result['action'] = best[0]
         return result
                 
-    def value(self,vector,action=None,horizon=None,others=None,model=None):
+    def value(self,vector,action=None,horizon=None,others=None,model=None,keys=None):
         """
         Computes the expected value of a state vector (and optional action choice) to this agent
         @param vector: the state vector (not distribution) representing the possible world under consideration
@@ -153,6 +169,7 @@ class Agent:
         @param others: optional table of actions being performed by other agents in this time step (default is no other actions)
         @type others: strS{->}L{ActionSet}
         @param model: the model of this agent to use (default is C{True})
+        @param keys: subset of state features to project over in computing future value (default is all state features)
         """
         if model is None:
             model = self.world.getModel(self.name,vector)
@@ -181,9 +198,9 @@ class Agent:
                     turn = {}
                 else:
                     turn = copy.copy(others)
-                if action:
+                if not action is None:
                     turn[self.name] = action
-                outcome = self.world.stepFromState(vector,turn,horizon)
+                outcome = self.world.stepFromState(vector,turn,horizon,keys=keys)
                 if not outcome.has_key('new'):
                     # No consistent outcome
                     pass
@@ -193,7 +210,7 @@ class Agent:
                     for newVector in outcome['new'].domain():
                         entry = copy.copy(outcome)
                         entry['probability'] = outcome['new'][newVector]
-                        Vrest = self.value(newVector,None,horizon-1,None,model)
+                        Vrest = self.value(newVector,None,horizon-1,None,model,keys)
                         entry.update(Vrest)
                         try:
                             future[entry['V']] += entry['probability']
@@ -211,7 +228,7 @@ class Agent:
                 else:
                     # Deterministic outcome
                     outcome['probability'] = 1.
-                    Vrest = self.value(outcome['new'],None,horizon-1,None,model)
+                    Vrest = self.value(outcome['new'],None,horizon-1,None,model,keys)
                     outcome.update(Vrest)
                     if discount < -1e-6:
                         # Only final value matters
@@ -396,7 +413,7 @@ class Agent:
         @rtype: L{ActionSet}
         """
         actions = []
-        if isinstance(action,set):
+        if isinstance(action,set) or isinstance(action,frozenset) or isinstance(action,list):
             for atom in action:
                 if isinstance(atom,Action):
                     actions.append(Action(atom))
@@ -469,8 +486,11 @@ class Agent:
     """State methods"""
     """------------------"""
 
-    def setState(self,feature,value):
-        self.world.setState(self.name,feature,value)
+    def setState(self,feature,value,state=None):
+        return self.world.setState(self.name,feature,value,state)
+
+    def getState(self,feature,state=None):
+        return self.world.getState(self.name,feature,state)
 
     """------------------"""
     """Reward methods"""
@@ -688,10 +708,13 @@ class Agent:
                 'Distorted beliefs have not been re-implemented yet.'
         self.world.setFeature(key,distribution,beliefs)
 
-    def getBelief(self,vector,model=True):
+    def getBelief(self,vector,model=None):
         """
+        @param model: the model of the agent to use, default is to use model specified in the state vector
         @return: the agent's belief in the given world
         """
+        if model is None:
+            model = self.world.getModel(self.name,vector)
         world = VectorDistribution({vector: 1.})
         beliefs = self.getAttribute('beliefs',model)
         if not beliefs is True:
@@ -791,13 +814,9 @@ class Agent:
                             omegaDist = self.observe(newWorld,actions,model)
                         else:
                             omegaDist = VectorDistribution({KeyedVector(): 1.})
-                        if omega in omegaDist.domain():
-                            # Otherwise, this observation is impossible in this state
-                            newProb = actionDistribution[joint]*effect['new'][newWorld]*omegaDist[omega]
-                            try:
-                                newBeliefs[newBelief] += oldBeliefDiff[oldWorld]*newProb
-                            except KeyError:
-                                newBeliefs[newBelief] = oldBeliefDiff[oldWorld]*newProb
+                        # Include the probability of given observation
+                        newProb = omegaDist.getProb(omega)*actionDistribution[joint]*effect['new'][newWorld]
+                        newBeliefs.addProb(newBelief,oldBeliefDiff[oldWorld]*newProb)
         # Find models corresponding to new beliefs
         if len(newBeliefs) == 0:
             return None
@@ -838,9 +857,11 @@ class Agent:
         else:
             O = self.O
         if isinstance(actions,ActionSet):
-            actor = actions['subject']
             jointAction = actions
-            actions = {actor: jointAction}
+            if actions:
+                actions = {actions['subject']: jointAction}
+            else:
+                actions = {}
         else:
             # Table of actions across multiple agents
             jointAction = reduce(lambda x,y: x|y,actions.values())
@@ -922,6 +943,11 @@ class Agent:
         root = doc.createElement('agent')
         doc.appendChild(root)
         doc.documentElement.setAttribute('name',self.name)
+        if self.x:
+            doc.documentElement.setAttribute('x',str(self.x))
+            doc.documentElement.setAttribute('y',str(self.y))
+        if self.color:
+            doc.documentElement.setAttribute('color',self.color)
         # Actions
         node = doc.createElement('actions')
         root.appendChild(node)
@@ -1015,6 +1041,12 @@ class Agent:
 
     def parse(self,element):
         self.name = str(element.getAttribute('name'))
+        try:
+            self.x = int(element.getAttribute('x'))
+            self.y = int(element.getAttribute('y'))
+        except ValueError:
+            pass
+        self.color = str(element.getAttribute('color'))
         node = element.firstChild
         while node:
             if node.nodeType == node.ELEMENT_NODE:
@@ -1022,7 +1054,8 @@ class Agent:
                     subnode = node.firstChild
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
-                            self.actions.add(ActionSet(subnode.childNodes))
+                            assert subnode.tagName == 'option'
+                            self.actions.add(ActionSet(subnode))
                         subnode = subnode.nextSibling
                 elif node.tagName == 'omega':
                     self.omega.add(str(node.firstChild.data).strip())
@@ -1037,7 +1070,7 @@ class Agent:
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
                             if subnode.tagName == 'option':
-                                action = ActionSet(subnode.childNodes)
+                                action = ActionSet(subnode)
                             elif subnode.tagName == 'tree':
                                 tree = KeyedTree(subnode)
                         subnode = subnode.nextSibling
@@ -1123,7 +1156,7 @@ class Agent:
                     while subnode:
                         if subnode.nodeType == subnode.ELEMENT_NODE:
                             if subnode.tagName == 'option':
-                                action = ActionSet(subnode.childNodes)
+                                action = ActionSet(subnode)
                             elif subnode.tagName == 'tree':
                                 tree = KeyedTree(subnode)
                         subnode = subnode.nextSibling
@@ -1206,6 +1239,9 @@ class ValueFunction:
             print
             agent.world.printVector(state)
             print self.get(agent.name,state,None,horizon)
+
+    def __lt__(self,other):
+        return self.name < other.name
 
     def __xml__(self):
         doc = Document()

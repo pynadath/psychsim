@@ -88,7 +88,6 @@
     <neighbor name="Ukraine"/>
     <neighbor name="Scandinavia"/>
     <neighbor name="S Europe"/>
-    <neighbor name="Congo"/>
     <neighbor name="UK"/>
     <neighbor name="W Europe"/>
   </region>
@@ -120,6 +119,7 @@
   <region name="Ural" value="8" occupants="8" owner="0">
     <neighbor name="Afghanistan"/>
     <neighbor name="China"/>
+    <neighbor name="Ukraine"/>
     <neighbor name="Siberia"/>
   </region>
   <region name="N Africa" value="7" occupants="5" owner="0">
@@ -145,6 +145,7 @@
   <region name="Ukraine" value="7" occupants="7" owner="0">
     <neighbor name="Afghanistan"/>
     <neighbor name="N Europe"/>
+    <neighbor name="Ural"/>
     <neighbor name="Scandinavia"/>
     <neighbor name="S Europe"/>
     <neighbor name="Middle East"/>
@@ -226,7 +227,6 @@
     <neighbor name="S Africa"/>
     <neighbor name="E Africa"/>
     <neighbor name="N Africa"/>
-    <neighbor name="N Europe"/>
   </region>
   <region name="Siberia" value="5" occupants="5" owner="0">
     <neighbor name="Ural"/>

@@ -16,7 +16,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -34,7 +34,7 @@
       <th class="navbar" align="right" width="100%">
         <table border="0" cellpadding="0" cellspacing="0">
           <tr><th class="navbar" align="center"
-            >PsychSim</th>
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
           </tr></table></th>
   </tr>
 </table>
@@ -62,6 +62,42 @@
 </table>
 <!-- ==================== CLASS DESCRIPTION ==================== -->
 <h1 class="epydoc">Class Agent</h1><p class="nomargin-top"><span class="codelink"><a href="psychsim.agent-pysrc.html#Agent">source&nbsp;code</a></span></p>
+<center>
+<center>  <map id="uml_class_diagram_for_psychsim_3" name="uml_class_diagram_for_psychsim_3">
+<area shape="rect" id="node1_21" href="psychsim.agent.Agent-class.html#actions" title="the set of possible actions that the agent can choose from" alt="" coords="104,30,739,50"/>
+<area shape="rect" id="node1_22" href="psychsim.agent.Agent-class.html#color" title="color name to be used in UI" alt="" coords="104,50,739,70"/>
+<area shape="rect" id="node1_23" href="psychsim.agent.Agent-class.html#legal" title="a set of conditions under which certain action choices are allowed (default is that all actions are allowed at all times)" alt="" coords="104,70,739,90"/>
+<area shape="rect" id="node1_24" href="psychsim.agent.Agent-class.html#name" title="agent name" alt="" coords="104,90,739,110"/>
+<area shape="rect" id="node1_25" href="psychsim.agent.Agent-class.html#omega" title="the set of possible observations this agent may receive" alt="" coords="104,110,739,130"/>
+<area shape="rect" id="node1_26" href="psychsim.agent.Agent-class.html#x" title="X coordinate to be used in UI" alt="" coords="104,130,739,150"/>
+<area shape="rect" id="node1_27" href="psychsim.agent.Agent-class.html#y" title="Y coordinate to be used in UI" alt="" coords="104,150,739,170"/>
+<area shape="rect" id="node1_28" href="psychsim.agent.Agent-class.html#__init__" title="psychsim.agent.Agent.__init__" alt="" coords="104,173,739,193"/>
+<area shape="rect" id="node1_29" href="psychsim.agent.Agent-class.html#decide" title="Generate an action choice for this agent in the given state" alt="" coords="104,193,739,213"/>
+<area shape="rect" id="node1_30" href="psychsim.agent.Agent-class.html#value" title="Computes the expected value of a state vector (and optional action choice) &#160;to this agent" alt="" coords="104,213,739,233"/>
+<area shape="rect" id="node1_31" href="psychsim.agent.Agent-class.html#valueIteration" title="Compute a value function for the given model" alt="" coords="104,233,739,253"/>
+<area shape="rect" id="node1_32" href="psychsim.agent.Agent-class.html#setPolicy" title="psychsim.agent.Agent.setPolicy" alt="" coords="104,253,739,273"/>
+<area shape="rect" id="node1_33" href="psychsim.agent.Agent-class.html#setHorizon" title="psychsim.agent.Agent.setHorizon" alt="" coords="104,273,739,293"/>
+<area shape="rect" id="node1_34" href="psychsim.agent.Agent-class.html#setParameter" title="psychsim.agent.Agent.setParameter" alt="" coords="104,293,739,313"/>
+<area shape="rect" id="node1_35" href="psychsim.agent.Agent-class.html#setAttribute" title="Set a parameter value for the given model(s)" alt="" coords="104,313,739,333"/>
+<area shape="rect" id="node1_36" href="psychsim.agent.Agent-class.html#findAttribute" title="Returns: &#160;the name of the nearest ancestor model (include the given model itself) &#160;that specifies a value for the named feature" alt="" coords="104,333,739,353"/>
+<area shape="rect" id="node1_37" href="psychsim.agent.Agent-class.html#getAttribute" title="Returns: &#160;the value for the specified parameter of the specified mental model" alt="" coords="104,353,739,373"/>
+<area shape="rect" id="node1_38" href="psychsim.agent.Agent-class.html#addAction" title="Returns: &#160;the action added" alt="" coords="104,373,739,393"/>
+<area shape="rect" id="node1_39" href="psychsim.agent.Agent-class.html#getActions" title="Returns: &#160;the set of possible actions to choose from in the given state vector" alt="" coords="104,393,739,413"/>
+<area shape="rect" id="node1_40" href="psychsim.agent.Agent-class.html#setLegal" title="Sets the legality decision tree for a given action" alt="" coords="104,413,739,433"/>
+<area shape="rect" id="node1_41" href="psychsim.agent.Agent-class.html#isXML" title="psychsim.agent.Agent.isXML" alt="" coords="104,453,739,473"/>
+<area shape="rect" id="node1" href="psychsim.agent.Agent-class.html" title="psychsim.agent.Agent" alt="" coords="92,5,751,479"/>
+<area shape="rect" id="node2" href="psychsim.pwl.KeyedTree-class.html" title="Decision tree node using symbolic PWL structures" alt="" coords="5,515,128,553"/>
+<area shape="poly" id="edge1" href="psychsim.agent.Agent-class.html#O" title="psychsim.agent.Agent.O" alt="" coords="141,476,95,513,91,509,137,472"/>
+<area shape="rect" id="edge1-label" href="psychsim.agent.Agent-class.html#O" title="O" alt="" coords="119,489,129,504"/>
+<area shape="rect" id="node3" href="psychsim.world.World-class.html" title="psychsim.world.World" alt="" coords="157,515,261,553"/>
+<area shape="poly" id="edge2" href="psychsim.agent.Agent-class.html#world" title="psychsim.agent.Agent.world" alt="" coords="255,476,229,510,225,507,250,472"/>
+<area shape="rect" id="edge2-label" href="psychsim.agent.Agent-class.html#world" title="world" alt="" coords="241,489,273,504"/>
+<area shape="rect" id="node4" href="psychsim.examples.teamofrivals.ResourceAgent-class.html" title="psychsim.examples.teamofrivals.ResourceAgent" alt="" coords="291,515,551,553"/>
+</map>
+  <img src="uml_class_diagram_for_psychsim_3.gif" alt='' usemap="#uml_class_diagram_for_psychsim_3" ismap="ismap" class="graph-without-title" />
+</center>
+</center>
+<hr />
 <!-- ==================== INSTANCE METHODS ==================== -->
 <a name="section-InstanceMethods"></a>
 <table class="summary" border="1" cellpadding="3"
@@ -107,7 +143,9 @@
         <span class="summary-sig-arg">horizon</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">others</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">None</span>,
-        <span class="summary-sig-arg">selection</span>=<span class="summary-sig-default">None</span>)</span><br />
+        <span class="summary-sig-arg">selection</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">actions</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">keys</span>=<span class="summary-sig-default">None</span>)</span><br />
       Generate an action choice for this agent in the given state</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.decide">source&nbsp;code</a></span>
@@ -129,7 +167,8 @@
         <span class="summary-sig-arg">action</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">horizon</span>=<span class="summary-sig-default">None</span>,
         <span class="summary-sig-arg">others</span>=<span class="summary-sig-default">None</span>,
-        <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">None</span>)</span><br />
+        <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">None</span>,
+        <span class="summary-sig-arg">keys</span>=<span class="summary-sig-default">None</span>)</span><br />
       Computes the expected value of a state vector (and optional action 
       choice) to this agent</td>
           <td align="right" valign="top">
@@ -249,6 +288,27 @@
     </td><td class="summary">
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
+          <td><span class="summary-sig"><a href="psychsim.agent.Agent-class.html#findAttribute" class="summary-sig-name">findAttribute</a>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">name</span>,
+        <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">True</span>)</span><br />
+      Returns:
+      the name of the nearest ancestor model (include the given model 
+      itself) that specifies a value for the named feature</td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.findAttribute">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
           <td><span class="summary-sig"><a href="psychsim.agent.Agent-class.html#getAttribute" class="summary-sig-name">getAttribute</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">name</span>,
         <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">True</span>)</span><br />
@@ -292,7 +352,8 @@
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td><span class="summary-sig"><a href="psychsim.agent.Agent-class.html#getActions" class="summary-sig-name">getActions</a>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">vector</span>)</span><br />
+        <span class="summary-sig-arg">vector</span>,
+        <span class="summary-sig-arg">actions</span>=<span class="summary-sig-default">None</span>)</span><br />
       Returns:
       the set of possible actions to choose from in the given state vector</td>
           <td align="right" valign="top">
@@ -351,9 +412,28 @@
         <tr>
           <td><span class="summary-sig"><a name="setState"></a><span class="summary-sig-name">setState</span>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">feature</span>,
-        <span class="summary-sig-arg">value</span>)</span></td>
+        <span class="summary-sig-arg">value</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>)</span></td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.setState">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="getState"></a><span class="summary-sig-name">getState</span>(<span class="summary-sig-arg">self</span>,
+        <span class="summary-sig-arg">feature</span>,
+        <span class="summary-sig-arg">state</span>=<span class="summary-sig-default">None</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.getState">source&nbsp;code</a></span>
             
           </td>
         </tr>
@@ -508,7 +588,8 @@
       <table width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
           <td><span class="summary-sig"><a href="psychsim.agent.Agent-class.html#index2model" class="summary-sig-name">index2model</a>(<span class="summary-sig-arg">self</span>,
-        <span class="summary-sig-arg">index</span>)</span><br />
+        <span class="summary-sig-arg">index</span>,
+        <span class="summary-sig-arg">throwException</span>=<span class="summary-sig-default">False</span>)</span><br />
       Convert a numeric representation of a model to a name</td>
           <td align="right" valign="top">
             <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.index2model">source&nbsp;code</a></span>
@@ -602,7 +683,7 @@
         <tr>
           <td><span class="summary-sig"><a href="psychsim.agent.Agent-class.html#getBelief" class="summary-sig-name">getBelief</a>(<span class="summary-sig-arg">self</span>,
         <span class="summary-sig-arg">vector</span>,
-        <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">True</span>)</span><br />
+        <span class="summary-sig-arg">model</span>=<span class="summary-sig-default">None</span>)</span><br />
       Returns:
       the agent's belief in the given world</td>
           <td align="right" valign="top">
@@ -744,6 +825,40 @@
     </td>
   </tr>
 </table>
+<!-- ==================== STATIC METHODS ==================== -->
+<a name="section-StaticMethods"></a>
+<table class="summary" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr bgcolor="#70b0f0" class="table-header">
+  <td colspan="2" class="table-header">
+    <table border="0" cellpadding="0" cellspacing="0" width="100%">
+      <tr valign="top">
+        <td align="left"><span class="table-header">Static Methods</span></td>
+        <td align="right" valign="top"
+         ><span class="options">[<a href="#section-StaticMethods"
+         class="privatelink" onclick="toggle_private();"
+         >hide private</a>]</span></td>
+      </tr>
+    </table>
+  </td>
+</tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">&nbsp;</span>
+    </td><td class="summary">
+      <table width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td><span class="summary-sig"><a name="isXML"></a><span class="summary-sig-name">isXML</span>(<span class="summary-sig-arg">element</span>)</span></td>
+          <td align="right" valign="top">
+            <span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.isXML">source&nbsp;code</a></span>
+            
+          </td>
+        </tr>
+      </table>
+      
+    </td>
+  </tr>
+</table>
 <!-- ==================== INSTANCE VARIABLES ==================== -->
 <a name="section-InstanceVariables"></a>
 <table class="summary" border="1" cellpadding="3"
@@ -781,6 +896,14 @@
   </tr>
 <tr>
     <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">str</span>
+    </td><td class="summary">
+        <a name="color"></a><span class="summary-name">color</span><br />
+      color name to be used in UI
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
       <span class="summary-type"><a href="psychsim.action.ActionSet-class.html" 
       class="link">ActionSet</a>&rarr;<a 
       href="psychsim.pwl.KeyedPlane-class.html" class="link">KeyedPlane</a></span>
@@ -814,6 +937,22 @@
       the environment that this agent inhabits
     </td>
   </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">int</span>
+    </td><td class="summary">
+        <a name="x"></a><span class="summary-name">x</span><br />
+      X coordinate to be used in UI
+    </td>
+  </tr>
+<tr>
+    <td width="15%" align="right" valign="top" class="summary">
+      <span class="summary-type">int</span>
+    </td><td class="summary">
+        <a name="y"></a><span class="summary-name">y</span><br />
+      Y coordinate to be used in UI
+    </td>
+  </tr>
 </table>
 <!-- ==================== METHOD DETAILS ==================== -->
 <a name="section-MethodDetails"></a>
@@ -845,7 +984,9 @@
         <span class="sig-arg">horizon</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">others</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">model</span>=<span class="sig-default">None</span>,
-        <span class="sig-arg">selection</span>=<span class="sig-default">None</span>)</span>
+        <span class="sig-arg">selection</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">actions</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">keys</span>=<span class="sig-default">None</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.decide">source&nbsp;code</a></span>&nbsp;
@@ -886,6 +1027,9 @@
               given model (default)
             </li>
           </ul></li>
+        <li><strong class="pname"><code>actions</code></strong> - possible action choices (default is all legal actions)</li>
+        <li><strong class="pname"><code>keys</code></strong> - subset of state features to project over (default is all state 
+          features)</li>
     </ul></dd>
   </dl>
 </td></tr></table>
@@ -902,7 +1046,8 @@
         <span class="sig-arg">action</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">horizon</span>=<span class="sig-default">None</span>,
         <span class="sig-arg">others</span>=<span class="sig-default">None</span>,
-        <span class="sig-arg">model</span>=<span class="sig-default">None</span>)</span>
+        <span class="sig-arg">model</span>=<span class="sig-default">None</span>,
+        <span class="sig-arg">keys</span>=<span class="sig-default">None</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.value">source&nbsp;code</a></span>&nbsp;
@@ -927,6 +1072,8 @@
           class="link">ActionSet</a>) - optional table of actions being performed by other agents in this
           time step (default is no other actions)</li>
         <li><strong class="pname"><code>model</code></strong> - the model of this agent to use (default is <code>True</code>)</li>
+        <li><strong class="pname"><code>keys</code></strong> - subset of state features to project over in computing future 
+          value (default is all state features)</li>
     </ul></dd>
   </dl>
 </td></tr></table>
@@ -995,6 +1142,30 @@
   </dl>
 </td></tr></table>
 </div>
+<a name="findAttribute"></a>
+<div>
+<table class="details" border="1" cellpadding="3"
+       cellspacing="0" width="100%" bgcolor="white">
+<tr><td>
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr valign="top"><td>
+  <h3 class="epydoc"><span class="sig"><span class="sig-name">findAttribute</span>(<span class="sig-arg">self</span>,
+        <span class="sig-arg">name</span>,
+        <span class="sig-arg">model</span>=<span class="sig-default">True</span>)</span>
+  </h3>
+  </td><td align="right" valign="top"
+    ><span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.findAttribute">source&nbsp;code</a></span>&nbsp;
+    </td>
+  </tr></table>
+  
+  
+  <dl class="fields">
+    <dt>Returns:</dt>
+        <dd>the name of the nearest ancestor model (include the given model 
+          itself) that specifies a value for the named feature</dd>
+  </dl>
+</td></tr></table>
+</div>
 <a name="getAttribute"></a>
 <div>
 <table class="details" border="1" cellpadding="3"
@@ -1056,7 +1227,8 @@
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr valign="top"><td>
   <h3 class="epydoc"><span class="sig"><span class="sig-name">getActions</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">vector</span>)</span>
+        <span class="sig-arg">vector</span>,
+        <span class="sig-arg">actions</span>=<span class="sig-default">None</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.getActions">source&nbsp;code</a></span>&nbsp;
@@ -1065,6 +1237,12 @@
   
   
   <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>vector</code></strong> - the world in which to test legality</li>
+        <li><strong class="pname"><code>actions</code></strong> - the set of actions to test legality of (default is all available 
+          actions)</li>
+    </ul></dd>
     <dt>Returns: {<a href="psychsim.action.ActionSet-class.html" 
       class="link">ActionSet</a>}</dt>
         <dd>the set of possible actions to choose from in the given state 
@@ -1310,7 +1488,8 @@
   <table width="100%" cellpadding="0" cellspacing="0" border="0">
   <tr valign="top"><td>
   <h3 class="epydoc"><span class="sig"><span class="sig-name">index2model</span>(<span class="sig-arg">self</span>,
-        <span class="sig-arg">index</span>)</span>
+        <span class="sig-arg">index</span>,
+        <span class="sig-arg">throwException</span>=<span class="sig-default">False</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.index2model">source&nbsp;code</a></span>&nbsp;
@@ -1336,7 +1515,7 @@
   <tr valign="top"><td>
   <h3 class="epydoc"><span class="sig"><span class="sig-name">getBelief</span>(<span class="sig-arg">self</span>,
         <span class="sig-arg">vector</span>,
-        <span class="sig-arg">model</span>=<span class="sig-default">True</span>)</span>
+        <span class="sig-arg">model</span>=<span class="sig-default">None</span>)</span>
   </h3>
   </td><td align="right" valign="top"
     ><span class="codelink"><a href="psychsim.agent-pysrc.html#Agent.getBelief">source&nbsp;code</a></span>&nbsp;
@@ -1345,6 +1524,11 @@
   
   
   <dl class="fields">
+    <dt>Parameters:</dt>
+    <dd><ul class="nomargin-top">
+        <li><strong class="pname"><code>model</code></strong> - the model of the agent to use, default is to use model specified 
+          in the state vector</li>
+    </ul></dd>
     <dt>Returns:</dt>
         <dd>the agent's belief in the given world</dd>
   </dl>
@@ -1411,7 +1595,7 @@
   <tr valign="middle">
   <!-- Home link -->
       <th>&nbsp;&nbsp;&nbsp;<a
-        href="psychsim-module.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
+        href="psychsim.world.World-class.html">Home</a>&nbsp;&nbsp;&nbsp;</th>
 
   <!-- Tree link -->
       <th>&nbsp;&nbsp;&nbsp;<a
@@ -1429,14 +1613,14 @@
       <th class="navbar" align="right" width="100%">
         <table border="0" cellpadding="0" cellspacing="0">
           <tr><th class="navbar" align="center"
-            >PsychSim</th>
+            ><a class="navbar" target="_top" href="http://pynadath.net/projects/psychsim">PsychSim</a></th>
           </tr></table></th>
   </tr>
 </table>
 <table border="0" cellpadding="0" cellspacing="0" width="100%%">
   <tr>
     <td align="left" class="footer">
-    Generated by Epydoc 3.0.1 on Sat Jan 18 16:18:59 2014
+    Generated by Epydoc 3.0.1 on Fri Dec 19 02:49:49 2014
     </td>
     <td align="right" class="footer">
       <a target="mainFrame" href="http://epydoc.sourceforge.net"
