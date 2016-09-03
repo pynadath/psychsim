@@ -68,7 +68,8 @@ Territory being invaded: the result of the invasion (spinner result of individua
 
 """
 from argparse import ArgumentParser
-import logging
+import csv
+from datetime import datetime
 import os.path
 import random
 import sys
@@ -563,7 +564,21 @@ def closeRegions(regions):
             regions[dest]['neighbors'].add(orig)
     return regions
 
-def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources=32):
+def powerSet(limit):
+    """
+    @return: a list of all possible combinations of numbers in the range of 1 to the given limit
+    @rtype: set
+    """
+    old = [[]]
+    for i in range(limit):
+        new = []
+        for partial in old:
+            new.append(partial+[i+1])
+            new.append(partial)
+        old = new
+    return old
+
+def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources=32,incentive='value'):
     """
     @param numPlayers: number of players in the game
     @type numPlayers: int
@@ -571,7 +586,14 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
     @param starts: a list of starting regions, one for each player
     @param maxResources: the maximum number of resources a player may have
     @type maxResources: int
+    @param incentive: the type of reward for the agents (default is "value" for all)
+       - B{value}: reward for cumulative value of individually owned territories
+       - B{territory}: reward for number of individually owned territories
+       - B{team}: reward for number of team owned territories
+    @type: str (applied to all) or str[] (individually specified reward)
     """
+    if isinstance(incentive,str):
+        incentive = [incentive for player in range(numPlayers)]
     world = ResourceWorld(allocateVerb='allocate',allocationState='invaders',winnerState='invader')
 
     # Create regions
@@ -618,11 +640,15 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
                           description='Total vaue of territories owned by %s' % (players[player].name))
         players[player].setState('value',0)
         world.dynamics[stateKey(players[player].name,'value')] = True
-
-        # Reward functions
-        for name in regionTable.keys():
-#            players[player].setReward(maximizeFeature(stateKey(players[player].name,'resources')),1.)
-#            players[player].setReward(maximizeFeature(stateKey(players[player].name,'territory')),1.)
+    # Reward functions
+    for player in range(numPlayers):
+        if incentive[player] == 'team':
+            for other in range(numPlayers):
+                players[player].setReward(maximizeFeature(stateKey(players[other].name,'territory')),1.)
+        elif incentive[player] == 'territory':
+            players[player].setReward(maximizeFeature(stateKey(players[player].name,'territory')),1.)
+        else:
+            # Assume "value"
             players[player].setReward(maximizeFeature(stateKey(players[player].name,'value')),1.)
         players[player].setAttribute('rationality',10.)
         players[player].setAttribute('discount',-10.)
@@ -764,7 +790,161 @@ def createWorld(numPlayers,regionTable,starts,generation='additive',maxResources
     key = stateKey(None,'round')
     world.setDynamics(key,action,makeTree(incrementMatrix(key,1)))
     return world
-    
+
+def readLogs(world,root):
+    ignore = {'getPlayerRegionOwnershipInfo','getPrediction','getCommitCount',
+              'updateCommitFlagToMinusOne','getCompletedSurveyCount','inGameSurvey',
+              'getActionsForCurrentTurn','logMessage','updateCommitFlagToNull'}
+    game = {'users': [],'states': [], 'moves': []}
+    timeline = []
+    game['timeline'] = timeline
+    for player in range(1,5):
+        with open('%s_%d_logs.csv' % (root,player),'r') as csvfile:
+            turn = 0
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                msg = row['spl_message']
+                elements = msg.split('|')
+                assert len(elements) > 1
+                now = datetime.strptime(elements[0],'%Y-%m-%d %H:%M:%S.%f')
+                if elements[1] in ignore:
+                    continue
+                elif elements[1] == 'joinGame':
+                    entry = int(elements[2].split()[2])
+                    game['users'].append(entry)
+                elif elements[1] == 'preGameSurvey':
+                    entry = None
+                elif elements[1] == 'pollStatus':
+                    if not 'PlayerRegionOwnershipInfo' in elements[2]:
+                        continue
+                    if player == 1:
+                        game['states'].append({})
+                        game['moves'].append({i: {} for i in range(1,5)})
+                    if not elements[2].split()[-1] in ['wait','=']:
+                        state = {'resources': {}, 'territories': {},'ownership': {}}
+                        for element in elements[3:7]:
+                            field = element.split(':')
+                            try:
+                                state['resources'][int(field[0][-1])] = int(field[1])
+                            except ValueError:
+                                state['resources'][int(field[0][-1])] = int(field[1].split()[0])
+                        for element in elements[7:49]:
+                            field = element.split(',')
+                            territory = field[0]
+                            if field[3][:5] == 'Enemy':
+                                owner = 0
+                            else:
+                                owner = int(field[3][6])
+                            state['territories'][territory] = owner
+                            if not state['ownership'].has_key(owner):
+                                state['ownership'][owner] = []
+                            state['ownership'][owner].append(territory)
+                        if turn >= len(game['states']):
+                            print 'Extra turn %d for player %d' % (turn,player)
+                        else:
+                            if game['states'][turn]:
+                                if game['states'][turn] != state:
+                                    print 'Discrepancy for player %d on turn %d' % (player,turn)
+                            else:
+                                game['states'][turn].update(state)
+                    turn += 1
+                    entry = turn
+                elif elements[1] == 'actionTaken':
+                    subelements = elements[2].split()
+                    if subelements[-1] == 'armies':
+                        territory = ' '.join(subelements[3:-3])
+                        resources = int(subelements[-2])
+                        entry = '%s,%d' % (territory,resources)
+                        game['moves'][turn-1][player][territory] = resources
+                    else:
+                        continue
+                elif elements[1] == 'commitTurn':
+                    entry = None
+                else:
+                    raise ValueError,'Unknown message type: %s' % (elements[1])
+                timeline.append((now,player,elements[1],entry))
+    timeline.sort()
+    return game
+
+def analyzeGame(world,game,gameID):
+    regions = sorted(game['states'][0]['territories'].keys())
+    fields = ['gameID','turn','content']+regions
+    flow = []
+    collaborations = 0
+    solos = 0
+    moves = 0
+    outcomes = {'wins': 0, 'losses': 0}
+    favorables = {'wins': 0,'losses': 0}
+    coinflips = {'wins': 0,'losses': 0}
+    unfavorables = {'wins': 0,'losses': 0}
+    for index in range(len(game['moves'])):
+        state = game['states'][index]
+        record = {'gameID': gameID,
+                  'turn': index,
+                  'content': 'ownership',
+                  }
+        for region in regions:
+            record[region] = state['territories'][region]
+        if index > 0:
+            # Check what the outcome of previous moves was
+            for region,prob in flow[-1]['win'].items():
+                pct = round(100.*prob)
+                if record[region] == 0:
+                    # Loss
+                    outcomes['losses'] += 1
+                    if pct > 50:
+                        favorables['losses'] += 1
+                    elif pct == 50:
+                        coinflips['losses'] += 1
+                    else:
+                        unfavorables['losses'] += 1
+                else:
+                    # Win
+                    outcomes['wins'] += 1
+                    if pct > 50:
+                        favorables['wins'] += 1
+                    elif pct == 50:
+                        coinflips['wins'] += 1
+                    else:
+                        unfavorables['wins'] += 1
+        flow.append(record)
+        record = {'gameID': gameID,
+                  'turn': index+1,
+                  'content': 'allocation',
+                  'win': {}}
+        for region in regions:
+            record[region] = []
+            invaders = 0
+            leader = 0
+            for player,allocation in game['moves'][index].items():
+                try:
+                    record[region].append('%d' % (allocation[region]))
+                    if allocation[region] > 0:
+                        invaders += allocation[region]
+                        leader = max(leader,allocation[region])
+                        moves += 1
+                except KeyError:
+                    record[region].append('0')
+            assert len(record[region]) == 4
+            if record[region].count('0') == 3:
+                solos += 1
+            else:
+                collaborations += 4-record[region].count('0')
+            record[region] = '|'.join(record[region])
+            if invaders > 0:
+                # Compute win probability
+                defenders = world.state[None].domain()[0][stateKey(region,'occupants')]
+                record['win'][region] = float(invaders)/float(invaders+defenders)
+        flow.append(record)
+    print '%2d Turns' % (len(game['moves'])-1)
+    print '%2d/42 Territories Won' % (len([region for region in regions if game['states'][-1]['territories'][region] != 0]))
+    print '%2d/%2d Moves are Collaborative' % (collaborations,moves)
+    print '%2d/%2d Invasions Won' % (outcomes['wins'],sum(outcomes.values()))
+    print '%2d/%2d Favorable invasions won' % (favorables['wins'],sum(favorables.values()))
+    print '%2d/%2d 50-50 invasions won' % (coinflips['wins'],sum(coinflips.values()))
+    print '%2d/%2d Unfavorable invasions won' % (unfavorables['wins'],sum(unfavorables.values()))
+    return fields,flow[:-1]
+
 def mapSave(regions,filename):
     """
     Saves a region map to an XML file
@@ -840,9 +1020,14 @@ def createAsia():
     mapSave(asia,'asia.xml')
     return asia
 
-def replay(world):
-    print world.history
-    
+def counts2incentives(counts):
+    """
+    @return: a list of incentive specs that matches the given counts
+    """
+    return ['value' for i in range(counts['value'])] + \
+        ['territory' for i in range(counts['individual'])] + \
+        ['team' for i in range(counts['team'])]
+
 if __name__ == '__main__':
     ######
     # Parse command-line arguments
@@ -864,6 +1049,10 @@ if __name__ == '__main__':
                       help='stop execution after one round [default: %(default)s]')
     # Optional argument that specifies the name of the scenario file
     parser.add_argument('-f','--file',help='name of scenario file [default: <map root>.psy]')
+    # Optional argument that specifies the root of the log file to replay
+    parser.add_argument('-r','--replay',help='root of log files')
+    # Optional argument that specifies the name of the log file
+    parser.add_argument('-l','--log',help='name of log file [default: <map root>.csv]')
     # Optional argument that indicates game execution should lead to update of scenario file
     parser.add_argument('-u','--update',action='store_true',default=False,
                         help='update scenario file [default: %(default)s]')
@@ -880,6 +1069,15 @@ if __name__ == '__main__':
     group.add_argument('-a','--auto',action='store_false',
                         dest='manual',
                         help='agents choose actions autonomously [default]')
+
+    # Optional arguments that determine the agent selection mode
+    label = parser.add_argument_group('Agent Rewards')
+    label.add_argument('-v','--value',type=int,default=0,
+                       help='Value of individually owned territories')
+    label.add_argument('-i','--individual',type=int,default=0,
+                       help='Number of individually owned territories')
+    label.add_argument('-t','--team',type=int,default=0,
+                       help='Number of team owned territories')
 
     # Optional arguments that select the resource generation model
     label = parser.add_argument_group('Resource Generation')
@@ -899,7 +1097,12 @@ if __name__ == '__main__':
         assert args['number'] == 1,'Unable to update scenario file based on multiple games'
     if args['single']:
         assert args['number'] == 1,'Unable to perform single rounds based on multiple games'
-
+    assert args['value'] + args['individual'] + args['team'] <= 4,\
+        'Number of agent rewards exceeds number of players'
+    args['value'] = 4 - args['individual'] - args['team']
+    incentives = counts2incentives(args)
+    print incentives
+    
     ######
     # Set up map and world
     ######
@@ -908,20 +1111,36 @@ if __name__ == '__main__':
 #    mapSave(regions,args['map'])
     if args['file'] is None:
         args['file'] = '%s.psy' % (os.path.splitext(args['map'])[0])
+    if args['log'] is None:
+        args['log'] = '%s.csv' % (os.path.splitext(args['map'])[0])
 
     if os.path.isfile(args['file']):
         # Existing scenario file
         startTime = time.time()
         world = ResourceWorld(args['file'])
-        print >> sys.stderr,'Load:\t\t%3dms' % (1000.*(time.time()-startTime))
+        if not args['quiet']:
+            print >> sys.stderr,'Load:\t\t%3dms' % (1000.*(time.time()-startTime))
         if world.terminated():
-            replay(world)
-            sys.exit(0)
+            raise RuntimeError,'Game already over in scenario file %s' % (args['file'])
     else:
-        world = createWorld(len(starts),regions,starts,args['generation'])
+        world = createWorld(len(starts),regions,starts,args['generation'],incentive=incentives)
         world.save(args['file'])
 #        world.printState()
-
+    if args['replay']:
+        if args['replay'] == 'all':
+            games = ['1145','1146','1149','1154','1155']
+        else:
+            games = [args['replay']]
+        for gameID in games:
+            print 'Game: %s' % (gameID)
+            game = readLogs(world,gameID)
+            fields,flow = analyzeGame(world,game,args['replay'])
+            with open('%s.csv' % (args['replay']),'w') as csvfile:
+                writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
+                writer.writeheader()
+                for record in flow:
+                    writer.writerow(record)
+        sys.exit(0)
     # Set up end-of-game stat storage
     stats = {'rounds': Distribution(),                       # How many rounds did it take to win?
              'win': Distribution({True: 0.,False: 0.})}      # How often did the team win?
@@ -1069,12 +1288,14 @@ if __name__ == '__main__':
                         decision = agent.decide(currentWorld,horizon=2,others=actions,
                                                 selection='uniform',actions=choices,keys=keys)
                         if len(choices) > 1:
-                            print agent.name,', '.join(['%s %d (%5.3f)' % (a['object'],a['amount'],decision['V'][a]['__EV__']) for a in sorted(choices,lambda x,y: -cmp(decision['V'][x]['__EV__'],decision['V'][y]['__EV__']))])
+                            if not args['quiet']:
+                                print agent.name,', '.join(['%s %d (%5.3f)' % (a['object'],a['amount'],decision['V'][a]['__EV__']) for a in sorted(choices,lambda x,y: -cmp(decision['V'][x]['__EV__'],decision['V'][y]['__EV__']))])
                         if isinstance(decision['action'],Distribution):
                             actions[name] = decision['action'].sample()
                         else:
                             actions[name] = decision['action']
-                        print >> sys.stderr,'Decision:\t%3dms (%s)' % \
+                        if not args['quiet']:
+                            print >> sys.stderr,'Decision:\t%3dms (%s)' % \
                             (1000*(time.time()-startTime),actions[name])
 #                        actions[name] = agent.sampleAction(world.state[None],1,joint=actions)
             if phase == 'allocate' and not args['quiet']:
@@ -1084,7 +1305,8 @@ if __name__ == '__main__':
             if args['predict'] and phase == 'allocate' and not args['quiet']:
                 startTime = time.time()
                 prediction = world.predictResult(actions)
-                print >> sys.stderr,'Prediction:\t%3dms' % (1000.*(time.time()-startTime))
+                if not args['quiet']:
+                    print >> sys.stderr,'Prediction:\t%3dms' % (1000.*(time.time()-startTime))
                 objects = prediction.keys()
                 objects.sort()
                 print
@@ -1096,7 +1318,8 @@ if __name__ == '__main__':
             # Perform actions
             startTime = time.time()
             outcomes = world.step(actions,select=False)
-            print >> sys.stderr,'Step:\t\t%3dms' % (1000.*(time.time()-startTime))
+            if not args['quiet']:
+                print >> sys.stderr,'Step:\t\t%3dms' % (1000.*(time.time()-startTime))
             if len(world.state[None]) > 1:
                 original = VectorDistribution(world.state[None])
                 sample = world.state[None].select(True)
@@ -1128,26 +1351,42 @@ if __name__ == '__main__':
         # Accumulate end-of-game stats
         resources = world.getResources()
         regions = world.getOwnership()
+        entry = {'probability': probability,'valueRewards': args['value'],
+                 'territoryRewards': args['individual'],'teamRewards': args['team']}
         if regions.has_key('Enemy'):
             # Team lost
             stats['win'][False] += probability
+            entry['win'] = 'no'
         else:
             # Team won
             stats['win'][True] += probability
             stats['rounds'].addProb(world.getValue('round'),probability)
+            entry['win'] = 'yes'
+        entry['rounds'] = world.getValue('round')
         for player in world.allocators:
             stats[player.name]['resources'].addProb(resources[player.name],probability)
+            entry['resources%s' % (player.name)] = resources[player.name]
             territory = len(regions[player.name])
             assert world.getValue(stateKey(player.name,'territory')) == territory
             stats[player.name]['territory'].addProb(territory,probability)
+            entry['territory%s' % (player.name)] = territory
             value = sum([world.getValue(stateKey(region,'value')) for region in regions[player.name]])
             assert world.getValue(stateKey(player.name,'value')) == value
             stats[player.name]['value'].addProb(value,probability)
+            entry['value%s' % (player.name)] = value
             for region in world.objects:
                 owned = world.getValue(stateKey(region.name,'owner')) == player.name
                 stats[player.name][region.name].addProb(owned,probability)
         totalProb += probability
-                                
+        with open(args['log'],'a') as csvfile:
+            fieldnames = ['probability','win','rounds']+\
+                         ['resources%s' % (p.name) for p in world.allocators]+\
+                         ['territory%s' % (p.name) for p in world.allocators]+\
+                         ['value%s' % (p.name) for p in world.allocators]+\
+                         ['valueRewards','territoryRewards','teamRewards']
+            writer = csv.DictWriter(csvfile,fieldnames=fieldnames)
+            writer.writerow(entry)
+
     if args['number'] > 1:
         # Normalize end-of-game stats
         stats['win'].normalize()
