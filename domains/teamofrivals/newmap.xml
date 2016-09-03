@@ -1,0 +1,252 @@
+<map>
+  <region name="Costaguana" value="8" occupants="10" owner="0">
+    <neighbor name="Vespugia"/>
+    <neighbor name="San Lorenzo"/>
+    <neighbor name="Zamunda"/>
+    <neighbor name="Miranda"/>
+  </region>
+  <region name="Basenji" value="5" occupants="6" owner="0">
+    <neighbor name="Latveria"/>
+    <neighbor name="Eastasia"/>
+    <neighbor name="Altruria"/>
+    <neighbor name="Lugash"/>
+    <neighbor name="Agrabah"/>
+  </region>
+  <region name="Kambezi" value="5" occupants="5" owner="0">
+    <neighbor name="Wakanda"/>
+    <neighbor name="Ruritania"/>
+  </region>
+  <region name="Gilead" value="6" occupants="6" owner="0">
+    <neighbor name="Bolvangar"/>
+    <neighbor name="Franklin"/>
+    <neighbor name="Romdeau"/>
+    <neighbor name="Panem"/>
+    <neighbor name="Brobdingnag"/>
+    <neighbor name="Deseret"/>
+  </region>
+  <region name="Franklin" value="12" occupants="12" owner="0">
+    <neighbor name="San Marcos"/>
+    <neighbor name="Gilead"/>
+    <neighbor name="Romdeau"/>
+    <neighbor name="Panem"/>
+  </region>
+  <region name="Guilder" value="10" occupants="9" owner="0">
+    <neighbor name="Latveria"/>
+    <neighbor name="Fenwick"/>
+    <neighbor name="Birani"/>
+    <neighbor name="Agrabah"/>
+    <neighbor name="Gerolstein"/>
+    <neighbor name="Zamunda"/>
+  </region>
+  <region name="Cortina" value="5" occupants="5" owner="0">
+    <neighbor name="Sidonia"/>
+    <neighbor name="Parmistan"/>
+    <neighbor name="Eastasia"/>
+    <neighbor name="Bregna"/>
+    <neighbor name="Erewhon"/>
+  </region>
+  <region name="Orsinia" value="8" occupants="7" owner="0">
+    <neighbor name="Tsalal"/>
+    <neighbor name="Gerolstein"/>
+    <neighbor name="Strackenz"/>
+    <neighbor name="Fenwick"/>
+  </region>
+  <region name="Agrabah" value="10" occupants="6" owner="0">
+    <neighbor name="Latveria"/>
+    <neighbor name="Basenji"/>
+    <neighbor name="Wakanda"/>
+    <neighbor name="Birani"/>
+    <neighbor name="Lugash"/>
+    <neighbor name="Guilder"/>
+  </region>
+  <region name="Miranda" value="5" occupants="5" owner="0">
+    <neighbor name="Costaguana"/>
+    <neighbor name="Vespugia"/>
+    <neighbor name="San Lorenzo"/>
+  </region>
+  <region name="Brobdingnag" value="5" occupants="5" owner="0">
+    <neighbor name="Gilead"/>
+    <neighbor name="Deseret"/>
+    <neighbor name="Panem"/>
+    <neighbor name="Arcadia"/>
+  </region>
+  <region name="Vespugia" value="5" occupants="5" owner="2">
+    <neighbor name="Costaguana"/>
+    <neighbor name="Miranda"/>
+  </region>
+  <region name="San Lorenzo" value="7" occupants="5" owner="0">
+    <neighbor name="San Marcos"/>
+    <neighbor name="Costaguana"/>
+    <neighbor name="Miranda"/>
+  </region>
+  <region name="Patusan" value="5" occupants="5" owner="0">
+    <neighbor name="Lugash"/>
+    <neighbor name="Kinakuta"/>
+    <neighbor name="Eastasia"/>
+  </region>
+  <region name="Fenwick" value="10" occupants="9" owner="0">
+    <neighbor name="Latveria"/>
+    <neighbor name="Strackenz"/>
+    <neighbor name="Guilder"/>
+    <neighbor name="Orsinia"/>
+    <neighbor name="Gerolstein"/>
+  </region>
+  <region name="Tsalal" value="5" occupants="5" owner="0">
+    <neighbor name="Orsinia"/>
+    <neighbor name="Strackenz"/>
+    <neighbor name="Bolvangar"/>
+  </region>
+  <region name="Parmistan" value="5" occupants="5" owner="0">
+    <neighbor name="Zubrowka"/>
+    <neighbor name="Bregna"/>
+    <neighbor name="Cortina"/>
+    <neighbor name="Erewhon"/>
+  </region>
+  <region name="Eastasia" value="12" occupants="20" owner="0">
+    <neighbor name="Basenji"/>
+    <neighbor name="Lugash"/>
+    <neighbor name="Cortina"/>
+    <neighbor name="Patusan"/>
+    <neighbor name="Altruria"/>
+    <neighbor name="Erewhon"/>
+  </region>
+  <region name="Panem" value="10" occupants="10" owner="0">
+    <neighbor name="San Marcos"/>
+    <neighbor name="Brobdingnag"/>
+    <neighbor name="Gilead"/>
+    <neighbor name="Franklin"/>
+  </region>
+  <region name="Altruria" value="8" occupants="8" owner="0">
+    <neighbor name="Basenji"/>
+    <neighbor name="Eastasia"/>
+    <neighbor name="Latveria"/>
+    <neighbor name="Erewhon"/>
+  </region>
+  <region name="Zamunda" value="7" occupants="5" owner="0">
+    <neighbor name="Costaguana"/>
+    <neighbor name="Wakanda"/>
+    <neighbor name="Birani"/>
+    <neighbor name="Guilder"/>
+    <neighbor name="Bangalla"/>
+    <neighbor name="Gerolstein"/>
+  </region>
+  <region name="Bregna" value="5" occupants="5" owner="0">
+    <neighbor name="Sidonia"/>
+    <neighbor name="Parmistan"/>
+    <neighbor name="Zubrowka"/>
+    <neighbor name="Arcadia"/>
+    <neighbor name="Cortina"/>
+  </region>
+  <region name="Romdeau" value="6" occupants="6" owner="0">
+    <neighbor name="Franklin"/>
+    <neighbor name="Gilead"/>
+    <neighbor name="Bolvangar"/>
+  </region>
+  <region name="Latveria" value="7" occupants="7" owner="0">
+    <neighbor name="Basenji"/>
+    <neighbor name="Fenwick"/>
+    <neighbor name="Altruria"/>
+    <neighbor name="Strackenz"/>
+    <neighbor name="Guilder"/>
+    <neighbor name="Agrabah"/>
+  </region>
+  <region name="Zubrowka" value="5" occupants="5" owner="0">
+    <neighbor name="Parmistan"/>
+    <neighbor name="Bregna"/>
+    <neighbor name="Erewhon"/>
+  </region>
+  <region name="Strackenz" value="5" occupants="5" owner="1">
+    <neighbor name="Latveria"/>
+    <neighbor name="Tsalal"/>
+    <neighbor name="Orsinia"/>
+    <neighbor name="Fenwick"/>
+  </region>
+  <region name="Kinakuta" value="5" occupants="8" owner="0">
+    <neighbor name="Patusan"/>
+    <neighbor name="Oceania"/>
+    <neighbor name="Bora Gora"/>
+  </region>
+  <region name="Arcadia" value="8" occupants="5" owner="0">
+    <neighbor name="Brobdingnag"/>
+    <neighbor name="Deseret"/>
+    <neighbor name="Bregna"/>
+  </region>
+  <region name="Bora Gora" value="5" occupants="5" owner="0">
+    <neighbor name="Kinakuta"/>
+    <neighbor name="Oceania"/>
+    <neighbor name="Eastern Australia"/>
+  </region>
+  <region name="Bolvangar" value="5" occupants="5" owner="0">
+    <neighbor name="Tsalal"/>
+    <neighbor name="Gilead"/>
+    <neighbor name="Deseret"/>
+    <neighbor name="Romdeau"/>
+  </region>
+  <region name="Wakanda" value="5" occupants="5" owner="0">
+    <neighbor name="Kambezi"/>
+    <neighbor name="Ruritania"/>
+    <neighbor name="Birani"/>
+    <neighbor name="Bangalla"/>
+    <neighbor name="Agrabah"/>
+    <neighbor name="Zamunda"/>
+  </region>
+  <region name="Oceania" value="5" occupants="5" owner="0">
+    <neighbor name="Eastern Australia"/>
+    <neighbor name="Kinakuta"/>
+    <neighbor name="Bora Gora"/>
+  </region>
+  <region name="Ruritania" value="5" occupants="5" owner="3">
+    <neighbor name="Kambezi"/>
+    <neighbor name="Bangalla"/>
+    <neighbor name="Wakanda"/>
+  </region>
+  <region name="San Marcos" value="5" occupants="6" owner="0">
+    <neighbor name="Franklin"/>
+    <neighbor name="San Lorenzo"/>
+    <neighbor name="Panem"/>
+  </region>
+  <region name="Lugash" value="8" occupants="16" owner="0">
+    <neighbor name="Basenji"/>
+    <neighbor name="Patusan"/>
+    <neighbor name="Eastasia"/>
+    <neighbor name="Agrabah"/>
+  </region>
+  <region name="Deseret" value="5" occupants="5" owner="0">
+    <neighbor name="Brobdingnag"/>
+    <neighbor name="Gilead"/>
+    <neighbor name="Arcadia"/>
+    <neighbor name="Bolvangar"/>
+  </region>
+  <region name="Birani" value="5" occupants="5" owner="0">
+    <neighbor name="Zamunda"/>
+    <neighbor name="Wakanda"/>
+    <neighbor name="Guilder"/>
+    <neighbor name="Agrabah"/>
+  </region>
+  <region name="Bangalla" value="5" occupants="5" owner="0">
+    <neighbor name="Ruritania"/>
+    <neighbor name="Wakanda"/>
+    <neighbor name="Zamunda"/>
+  </region>
+  <region name="Erewhon" value="5" occupants="5" owner="0">
+    <neighbor name="Altruria"/>
+    <neighbor name="Zubrowka"/>
+    <neighbor name="Eastasia"/>
+    <neighbor name="Parmistan"/>
+    <neighbor name="Cortina"/>
+  </region>
+  <region name="Sidonia" value="7" occupants="10" owner="0">
+    <neighbor name="Bregna"/>
+    <neighbor name="Cortina"/>
+  </region>
+  <region name="Gerolstein" value="10" occupants="12" owner="0">
+    <neighbor name="Fenwick"/>
+    <neighbor name="Orsinia"/>
+    <neighbor name="Guilder"/>
+    <neighbor name="Zamunda"/>
+  </region>
+  <region name="Eastern Australia" value="5" occupants="8" owner="4">
+    <neighbor name="Oceania"/>
+    <neighbor name="Bora Gora"/>
+  </region>
+</map>
