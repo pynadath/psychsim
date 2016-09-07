@@ -842,6 +842,8 @@ class World:
         @param entity: if C{None}, the given feature is on the global world state; otherwise, it is local to the named agent
         @type entity: str
         """
+        if isinstance(entity,Agent):
+            entity = entity.name
         key = stateKey(entity,feature)
         try:
             self.locals[entity][feature] = key
