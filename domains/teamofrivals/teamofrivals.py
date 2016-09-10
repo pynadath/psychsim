@@ -855,7 +855,10 @@ def readLogs(world,root):
                         territory = ' '.join(subelements[3:-3])
                         resources = int(subelements[-2])
                         entry = '%s,%d' % (territory,resources)
-                        game['moves'][turn-1][player][territory] = resources
+                        try:
+                            game['moves'][turn-1][player][territory] = resources
+                        except IndexError:
+                            print 'Illegal move %d for player %d' % (turn,player)
                     else:
                         continue
                 elif elements[1] == 'commitTurn':
@@ -1128,18 +1131,32 @@ if __name__ == '__main__':
 #        world.printState()
     if args['replay']:
         if args['replay'] == 'all':
-            games = ['1145','1146','1149','1154','1155']
+            files = set(os.listdir('.'))
+            possibles = [fname[:4] for fname in files if fname[4:] == '_1_logs.csv']
+            games = []
+            for game in possibles:
+                if not '%s.csv' % (game) in files:
+                    # No pre-existing merged log file
+                    for player in range(2,5):
+                        if not '%s_%d_logs.csv' % (game,player) in files:
+                            # Missing a player log
+                            break
+                    else:
+                        games.append(game)
+            games.sort()
         else:
             games = [args['replay']]
+        gameLogs = {}
         for gameID in games:
             print 'Game: %s' % (gameID)
             game = readLogs(world,gameID)
-            fields,flow = analyzeGame(world,game,args['replay'])
-            with open('%s.csv' % (args['replay']),'w') as csvfile:
-                writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
-                writer.writeheader()
-                for record in flow:
-                    writer.writerow(record)
+            if game['states']:
+                fields,flow = analyzeGame(world,game,args['replay'])
+                with open('%s.csv' % (args['replay']),'w') as csvfile:
+                    writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
+                    writer.writeheader()
+                    for record in flow:
+                        writer.writerow(record)
         sys.exit(0)
     # Set up end-of-game stat storage
     stats = {'rounds': Distribution(),                       # How many rounds did it take to win?

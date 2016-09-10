@@ -13,23 +13,25 @@ def readLog(gameID,cursor):
                        'sigs_game_id=%d ' % (gameID)+
                        'AND sigs_player_number=%d' % (player+1))
         results = cursor.fetchall()
-        fields = sorted(results[0].keys())
-        with open('%d_%d_survey_db.csv' % (gameID,player+1),'w') as csvfile:
-            writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
-            writer.writeheader()
-            for record in results:
-                writer.writerow(record)
+        if results:
+            fields = sorted(results[0].keys())
+            with open('%d_%d_survey_db.csv' % (gameID,player+1),'w') as csvfile:
+                writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
+                writer.writeheader()
+                for record in results:
+                    writer.writerow(record)
         # Read game log data from db
         cursor.execute('SELECT spl_message FROM sim_project_log WHERE '+
                        'spl_game_id=%d ' % (gameID)+
                        'AND spl_player_number=%d' % (player+1))
         results = cursor.fetchall()
-        fields = sorted(results[0].keys())
-        with open('%d_%d_logs.csv' % (gameID,player+1),'w') as csvfile:
-            writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
-            writer.writeheader()
-            for record in results:
-                writer.writerow(record)
+        if results:
+            fields = sorted(results[0].keys())
+            with open('%d_%d_logs.csv' % (gameID,player+1),'w') as csvfile:
+                writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
+                writer.writeheader()
+                for record in results:
+                    writer.writerow(record)
     
 if __name__ == '__main__':
     config = ConfigParser.SafeConfigParser()
@@ -49,6 +51,13 @@ if __name__ == '__main__':
                          passwd=config.get('mysql','passwd'),db='simproject',
                          cursorclass=MySQLdb.cursors.DictCursor)
     cursor = db.cursor()
-    readLog(int(args['gameID']),cursor)
+    idList = args['gameID'].split(',')
+    idList = [int(element) if isinstance(element,str) else map(int,element.split('-')) for element in idList]
+    for gameId in idList:
+        if isinstance(gameId,int):
+            readLog(gameId,cursor)
+        else:
+            for subgameId in range(gameId[0],gameId[1]):
+                readLog(subgameId,cursor)
     cursor.close()
     db.close()
