@@ -921,8 +921,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-b','--beliefs',action='store_true',
                       help='store robot beliefs in scenario file [default: %(default)s]')
+    parser.add_argument('-s','--seed',action='store',default=None,type=int,
+                      help='seed for random number generator [default: %(default)s]')
     args = vars(parser.parse_args())
 
+    random.seed(args['seed'])
     username = 'autotest'
     sequence = ['scrn','snrn','snry','scry','scdn','sndn','sndy','scdy']
     random.shuffle(sequence)
