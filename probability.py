@@ -145,7 +145,7 @@ class Distribution(dict):
                 else:
                     return element
         else:
-            raise ValueError,'Random number exceeded total probability in distribution.'
+            raise ValueError('Random number exceeded total probability in distribution.')
 
     def set(self,element):
         """
@@ -154,6 +154,12 @@ class Distribution(dict):
         """
         self.clear()
         self[element] = 1.
+
+    def information(self):
+        total = 0.
+        for prob in self.values():
+            total += prob*math.log(prob)
+        return total
 
     def select(self):
         """
@@ -185,7 +191,14 @@ class Distribution(dict):
             return result
 
     def __sub__(self,other):
-        return self + (-other)
+        if isinstance(other,Distribution):
+            result = self.__class__()
+            for me in self.domain():
+                for you in other.domain():
+                    result.addProb(me-you,self[me]*other[you])
+            return result
+        else:
+            return self + (-other)
 
     def __neg__(self):
         result = self.__class__()
@@ -194,9 +207,17 @@ class Distribution(dict):
         return result
 
     def __mul__(self,other):
+        """
+        Mutiplication of a L{Distribution} by some other object. If the other object is also a L{Distribution}, the result is assumed to be of my class
+        """
         if isinstance(other,Distribution):
-            raise NotImplementedError,'Unable to multiply %s by %s.' \
-                % (self.__class__.__name__,other.__class__.__name__)
+            result = self.__class__()
+            for me in self.domain():
+                for you in other.domain():
+                    result.addProb(me*you,self[me]*other[you])
+#            raise NotImplementedError('Unable to multiply %s by %s.' \
+#                % (self.__class__.__name__,other.__class__.__name__))
+            return result
         else:
             result = self.__class__()
             for element in self.domain():
@@ -224,7 +245,7 @@ class Distribution(dict):
         return doc
         
     def element2xml(self,value):
-        raise NotImplementedError,'Unable to generate XML for distributions over %s' % (value.__class__.__name__)
+        raise NotImplementedError('Unable to generate XML for distributions over %s' % (value.__class__.__name__))
 
     def parse(self,element):
         """Extracts the distribution from the given XML element
