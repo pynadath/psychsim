@@ -1,10 +1,18 @@
-from pwl import *
+from psychsim.pwl import *
         
 def maximizeFeature(key):
     return KeyedTree(KeyedVector({key: 1.}))
         
 def minimizeFeature(key):
     return KeyedTree(KeyedVector({key: -1.}))
+
+def achieveFeature(key):
+    """
+    A goal of achieving (*and* maintaining) a boolean feature as C{True}
+    """
+    return makeTree({'if': trueRow(key),
+                     True: KeyedVector({CONSTANT: 1.}),
+                     False: KeyedVector({CONSTANT: 0.})})
 
 def achieveFeatureValue(key,value):
     return makeTree({'if': equalRow(key,value),
