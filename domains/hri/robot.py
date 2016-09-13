@@ -937,4 +937,4 @@ if __name__ == '__main__':
         embodiment = CODES['embodiment'][config[2]]
         acknowledgment = CODES['acknowledgment'][config[3]]
         runMission(username,level,ability,explanation,embodiment,acknowledgment,args['beliefs'])
-    print time.time()-start
+#    print time.time()-start

@@ -1,4 +1,5 @@
 import itertools
+import psychsim.probability
 from xml.dom.minidom import Document,Element,Node,NodeList,parseString
 
 class Action(dict):
@@ -59,7 +60,7 @@ class Action(dict):
             elements = []
             keys = self.keys()
             for special in self.special:
-                if self.has_key(special):
+                if special in  self:
                     elements.append(self[special])
                     keys.remove(special)
             keys.sort()
@@ -69,7 +70,7 @@ class Action(dict):
 
     def __hash__(self):
         return hash(str(self))
-
+    
     def __xml__(self):
         doc = Document()
         root = doc.createElement('action')
@@ -153,11 +154,11 @@ class ActionSet(frozenset):
         result = elements[0][key]
         for atom in elements[1:]:
             if atom.has_key(key) and atom[key] != result:
-                raise ValueError,'Conflicting values for key: %s' % (key)
+                raise ValueError('Conflicting values for key: %s' % (key))
         return result
 
     def __str__(self):
-        return ','.join(map(str,self))
+        return ','.join(sorted(map(str,self)))
 
     def __hash__(self):
         return hash(str(self))
@@ -195,12 +196,26 @@ def powerset(iterable):
     s = list(iterable)
     return itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(len(s)+1))
 
+def jointProb(actions):
+    """
+    @param actions: table of distributions over actions of different agents
+    @return: a distribution over joint actions
+    """
+    oldJoint = psychsim.probability.Distribution({ActionSet(): 1.})
+    for dist in actions.values():
+        newJoint = {}
+        for action in dist.domain():
+            newJoint.update({ActionSet(old|action): oldJoint[old]*dist[action] \
+                             for old in oldJoint.domain()})
+        oldJoint = psychsim.probability.Distribution(newJoint)
+    return oldJoint
+
 if __name__ == '__main__':
     act1 = Action({'subject': 'I','verb': 'help','object': 'you'})    
     act2 = Action({'subject': 'you','verb': 'help','object': 'I'})
     old = ActionSet([act1,act2])
-    print old
+    print(old)
     doc = parseString(old.__xml__().toprettyxml())
     new = ActionSet(doc.documentElement.childNodes)
-    print new
-    print old == new
+    print(new)
+    print(old == new)
