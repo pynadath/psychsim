@@ -1,18 +1,17 @@
 """
 Class and function definitions for PieceWise Linear (PWL) representations
 """
+import psychsim.keys
 import copy
 import operator
 from xml.dom.minidom import Document,Node
-from probability import Distribution
-from action import Action
-
-CONSTANT = ''
+import psychsim.probability
+from psychsim.action import Action
 
 class KeyedVector(dict):
     """
     Class for a compact, string-indexable vector
-    @cvar epsilon: the margin used for equality of vectors (as well as for testing hyperplanes in L{KeyedPlane})
+    @cvar epsilon: the margin used for equality of vectors (as well as for testing hyperplanes in L{Keyedlane})
     @type epsilon: float
     @ivar _string: the C{str} representation of this vector
     @type _string: bool
@@ -27,6 +26,12 @@ class KeyedVector(dict):
             dict.__init__(self,arg)
         self._string = None
 
+    def makePresent(self):
+        for key,value in self.items():
+            if psychsim.keys.isFuture(key):
+                del self[key]
+                self[psychsim.keys.makePresent(key)] = value
+                
     def __eq__(self,other):
         delta = 0.
         tested = {}
@@ -87,9 +92,12 @@ class KeyedVector(dict):
                         except KeyError:
                             result[col] = self[key]*other[key][col]
             return result
+        elif isinstance(other,VectorDistribution):
+            # Treat as symmetric and go
+            return other*self
         else:
-            raise TypeError,'Unable to multiply %s by %s' % \
-                (self.__class__.__name__,other.__class__.__name__)
+            raise NotImplementedError('Unable to multiply %s by %s' % \
+                                      (self.__class__.__name__,other.__class__.__name__))
 
     def __setitem__(self,key,value):
         self._string = None
@@ -152,8 +160,7 @@ class KeyedVector(dict):
 
     def __str__(self):
         if self._string is None:
-            keys = self.keys()
-            keys.sort()
+            keys = sorted(list(self.keys()))
             self._string = '\n'.join(map(lambda k: '%s: %s' % (k,self[k]),keys))
         return self._string
 
@@ -188,9 +195,9 @@ class KeyedVector(dict):
                 dict.__setitem__(self,key,value)
             node = node.nextSibling
 
-class VectorDistribution(Distribution):
+class VectorDistribution(psychsim.probability.Distribution):
     """
-    A class representing a L{Distribution} over L{KeyedVector} instances
+    A class representing a L{psychsim.probability.Distribution} over L{KeyedVector} instances
     """
 
     def join(self,key,value):
@@ -198,14 +205,14 @@ class VectorDistribution(Distribution):
         Modifies the distribution over vectors to have the given value for the given key
         @param key: the key to the column to modify
         @type key: str
-        @param value: either a single value to apply to all vectors, or else a L{Distribution} over possible values
+        @param value: either a single value to apply to all vectors, or else a L{psychsim.probability.Distribution} over possible values
         """
         original = dict(self)
         domain = self.domain()
         self.clear()
         for row in domain:
             prob = original[str(row)]
-            if isinstance(value,Distribution):
+            if isinstance(value,psychsim.probability.Distribution):
                 for element in value.domain():
                     new = row.__class__(row)
                     new[key] = element
@@ -228,7 +235,7 @@ class VectorDistribution(Distribution):
                 new.update(diff)
                 result[new] = self[old]*other[diff]
         return self.__class__(result)
-        
+
     def element2xml(self,value):
         return value.__xml__().documentElement
 
@@ -242,7 +249,7 @@ class VectorDistribution(Distribution):
                 result[row[key]] += self[row]
             except KeyError:
                 result[row[key]] = self[row]
-        return Distribution(result)
+        return psychsim.probability.Distribution(result)
 
     def select(self,incremental=False):
         """
@@ -272,7 +279,7 @@ class VectorDistribution(Distribution):
                 index += 1
             return sample
         else:
-            Distribution.select(self)
+            return psychsim.probability.Distribution.select(self)
             
     def hasColumn(self,key):
         """
@@ -372,8 +379,8 @@ class KeyedMatrix(dict):
                 except KeyError:
                     result[product] = other[vector]
         else:
-            raise TypeError,'Unable to multiply %s by %s' % \
-                (self.__class__.__name__,other.__class__.__name__)
+            raise TypeError('Unable to multiply %s by %s' % \
+                            (self.__class__.__name__,other.__class__.__name__))
         return result
 
     def getKeysIn(self):
@@ -386,6 +393,7 @@ class KeyedMatrix(dict):
             for col,row in self.items():
                 self._keysIn |= set(row.keys())
                 self._keysOut.add(col)
+            self._keysIn -= set([psychsim.keys.CONSTANT])
         return self._keysIn
 
     def getKeysOut(self):
@@ -396,13 +404,14 @@ class KeyedMatrix(dict):
             self.getKeysIn()
         return self._keysOut
 
-    # def getKeys(self):
-    #     result = set()
-    #     for row in self.values():
-    #         result |= set(row.keys())
-    #     return result
-
-    def desymbolize(self,table,debug=False):
+    def makePresent(self):
+        for key,row in self.items():
+            row.makePresent()
+            if psychsim.keys.isFuture(key):
+                del self[key]
+                self[psychsim.keys.makePresent(key)] = row
+                
+    def desymbolize(self,table):
         result = self.__class__()
         for key,row in self.items():
             result[key] = row.desymbolize(table)
@@ -420,17 +429,17 @@ class KeyedMatrix(dict):
                         # Same value
                         result[row][col] = value
                         constant += value*lo
-                    elif col != CONSTANT:
+                    elif col != psychsim.keys.CONSTANT:
                         # Scale weight for another feature
                         if abs(value) > vector.epsilon:
                             assert table.has_key(col),'Unable to mix symbolic and numeric values in single vector'
                             colLo,colHi = table[col]
                             result[row][col] = value*(colHi-colLo)*(hi-lo)
                             constant += value*colLo
-                result[row][CONSTANT] = constant - lo
-                if vector.has_key(CONSTANT):
-                    result[row][CONSTANT] += vector[CONSTANT]
-                result[row][CONSTANT] /- (hi-lo)
+                result[row][psychsim.keys.CONSTANT] = constant - lo
+                if vector.has_key(psychsim.keys.CONSTANT):
+                    result[row][psychsim.keys.CONSTANT] += vector[psychsim.keys.CONSTANT]
+                result[row][psychsim.keys.CONSTANT] /- (hi-lo)
             else:
                 result[row] = KeyedVector(vector)
         return result
@@ -483,7 +492,7 @@ def scaleMatrix(key,weight):
     @return: a dynamics matrix modifying the given keyed value by scaling it by the given weight
     @rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({key: weight})})
+    return KeyedMatrix({psychsim.keys.makeFuture(key): KeyedVector({key: weight})})
 def noChangeMatrix(key):
     """
     @return: a dynamics matrix indicating no change to the given keyed value
@@ -499,7 +508,8 @@ def approachMatrix(key,weight,limit):
     @return: a dynamics matrix modifying the given keyed value by approaching the given limit by the given weighted percentage of distance
     @rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({key: 1.-weight,CONSTANT: weight*limit})})
+    return KeyedMatrix({psychsim.keys.makeFuture(key): KeyedVector({key: 1.-weight,
+                                                      psychsim.keys.CONSTANT: weight*limit})})
 def incrementMatrix(key,delta):
     """
     @param delta: the constant value to add to the state feature
@@ -507,41 +517,52 @@ def incrementMatrix(key,delta):
     @return: a dynamics matrix incrementing the given keyed value by the constant delta
     @rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({key: 1.,CONSTANT: delta})})
+    return KeyedMatrix({psychsim.keys.makeFuture(key): KeyedVector({key: 1.,psychsim.keys.CONSTANT: delta})})
 def setToConstantMatrix(key,value):
     """
     @type value: float
     @return: a dynamics matrix setting the given keyed value to the constant value
     @rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({CONSTANT: value})})
+    return KeyedMatrix({psychsim.keys.makeFuture(key): KeyedVector({psychsim.keys.CONSTANT: value})})
 def setToFeatureMatrix(key,otherKey,pct=1.,shift=0.):
     """
     @type otherKey: str
     @return: a dynamics matrix setting the given keyed value to a percentage of another keyed value plus a constant shift (default is 100% with shift of 0)
     @rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({otherKey: pct,CONSTANT: shift})})
+    return KeyedMatrix({psychsim.keys.makeFuture(key): KeyedVector({otherKey: pct,psychsim.keys.CONSTANT: shift})})
 def addFeatureMatrix(key,otherKey,pct=1.):
     """
     @type otherKey: str
     @return: a dynamics matrix adding a percentage of another feature value to the given feature value (default percentage is 100%)
     @rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({key: 1.,otherKey: pct})})
+    return KeyedMatrix({psychsim.keys.makeFuture(key): KeyedVector({key: 1.,otherKey: pct})})
+def setToSumMatrix(key,keyList):
+    """
+    @type key: str
+    @type keyList: str[]
+    @return: a dynamics matrix that sets the given feature to the sum of the given list of features
+    @rtype: L{KeyedMatrix}
+    """
+    row = KeyedVector()
+    for key in keyList:
+        row[key] = 1.
+    return KeyedMatrix({psychsim.keys.makeFuture(key): row})
 def setTrueMatrix(key):
     return setToConstantMatrix(key,1.)
 def setFalseMatrix(key):
     return setToConstantMatrix(key,0.)
 
-class MatrixDistribution(Distribution):
+class MatrixDistribution(psychsim.probability.Distribution):
     def update(self,matrix):
         original = dict(self)
         domain = self.domain()
         self.clear()
         for old in domain:
             prob = original[old]
-            if isinstance(matrix,Distribution):
+            if isinstance(matrix,psychsim.probability.Distribution):
                 # Merge distributions
                 for submatrix in matrix.domain():
                     new = copy.copy(old)
@@ -552,8 +573,8 @@ class MatrixDistribution(Distribution):
                 self[old] = prob
 
     def __mul__(self,other):
-        if isinstance(other,Distribution):
-            raise NotImplementedError,'Unable to multiply two distributions.'
+        if isinstance(other,psychsim.probability.Distribution):
+            raise NotImplementedError('Unable to multiply two distributions.')
         else:
             result = {}
             for element in self.domain():
@@ -566,7 +587,7 @@ class MatrixDistribution(Distribution):
             elif isinstance(other,KeyedMatrix):
                 return self.__class__(result)
             else:
-                raise TypeError,'Unable to process multiplication by %s' % (other.__class__.__name__)
+                raise TypeError('Unable to process multiplication by %s' % (other.__class__.__name__))
 
     def element2xml(self,value):
         return value.__xml__().documentElement
@@ -596,7 +617,9 @@ class KeyedPlane:
 
     def evaluate(self,vector):
         total = self.vector * vector
-        if self.comparison > 0:
+        if self.threshold is None:
+            return round(total)
+        elif self.comparison > 0:
             return total+self.vector.epsilon > self.threshold
         elif self.comparison < 0:
             return total-self.vector.epsilon < self.threshold
@@ -606,9 +629,12 @@ class KeyedPlane:
             else:
                 return abs(total-self.threshold) < self.vector.epsilon
         else:
-            raise ValueError,'Unknown comparison for %s: %s' % (self.__class__.__name__,self.comparison)
+            raise ValueError('Unknown comparison for %s: %s' % (self.__class__.__name__,self.comparison))
 
-    def desymbolize(self,table,debug=False):
+    def makePresent(self):
+        self.vector.makePresent()
+    
+    def desymbolize(self,table):
         threshold = self.desymbolizeThreshold(self.threshold,table)
         return self.__class__(self.vector.desymbolize(table),threshold,self.comparison)
 
@@ -623,13 +649,13 @@ class KeyedPlane:
             return [self.desymbolizeThreshold(t,table) for t in threshold]
         else:
             return threshold
-
+        
     def scale(self,table):
         vector = self.vector.__class__(self.vector)
         threshold = self.threshold
         symbolic = False
         span = None
-        assert not vector.has_key(CONSTANT),'Unable to scale hyperplanes with constant factors. Move constant factor into threshold.'
+        assert not vector.has_key(psychsim.keys.CONSTANT),'Unable to scale hyperplanes with constant factors. Move constant factor into threshold.'
         for key in vector.keys():
             if table.has_key(key):
                 assert not symbolic,'Unable to scale hyperplanes with both numeric and symbolic variables'
@@ -707,9 +733,9 @@ class KeyedPlane:
         @return: an equivalent plane with no constant element in the weights
         """
         weights = self.vector.__class__(self.vector)
-        if self.vector.has_key(CONSTANT):
-            threshold = self.threshold - self.vector[CONSTANT]
-            del weights[CONSTANT]
+        if self.vector.has_key(psychsim.keys.CONSTANT):
+            threshold = self.threshold - self.vector[psychsim.keys.CONSTANT]
+            del weights[psychsim.keys.CONSTANT]
         else:
             threshold = self.threshold
         return self.__class__(weights,threshold,self.comparison)
@@ -717,21 +743,25 @@ class KeyedPlane:
     def __str__(self):
         if self._string is None:
             operator = ['==','>','<'][self.comparison]
-            self._string = '%s %s %s' % (' + '.join(map(lambda (k,v): '%5.3f*%s' % (v,k),self.vector.items())),
-                                             operator,self.threshold)
+            self._string = '%s %s %s' % (' + '.join(['%5.3f*%s' % (v,k) for k,v in self.vector.items()]),operator,self.threshold)
         return self._string
 
     def __xml__(self):
         doc = self.vector.__xml__()
-        doc.documentElement.setAttribute('threshold',str(self.threshold))
+        if not self.threshold is None:
+            doc.documentElement.setAttribute('threshold',str(self.threshold))
         doc.documentElement.setAttribute('comparison',str(self.comparison))
         return doc
 
     def parse(self,element):
-        try:
-            self.threshold = float(element.getAttribute('threshold'))
-        except ValueError:
-            self.threshold = eval(str(element.getAttribute('threshold')))
+        self.threshold = element.getAttribute('threshold')
+        if self.threshold:
+            try:
+                self.threshold = float(self.threshold)
+            except ValueError:
+                self.threshold = eval(str(self.threshold))
+        else:
+            self.threshold = None
         try:
             self.comparison = int(element.getAttribute('comparison'))
         except ValueError:
@@ -829,7 +859,7 @@ class KeyedTree:
         self.leaf = False
 
     def makeProbabilistic(self,distribution):
-        assert isinstance(distribution,Distribution)
+        assert isinstance(distribution,psychsim.probability.Distribution)
         self.children = distribution
         self.branch = None
         self.leaf = False
@@ -873,36 +903,32 @@ class KeyedTree:
             self.getKeysIn()
         return self._keysOut
 
-    # def getKeys(self):
-    #     """
-    #     @return: a set of all keys references in this PWL function
-    #     """
-    #     if self.isProbabilistic():
-    #         # Keys are taken from each child
-    #         result = set()
-    #         children = self.children.domain()
-    #     else:
-    #         children = self.children.values()
-    #         if self.isLeaf():
-    #             result = set()
-    #         else:
-    #             # Keys also include those in the branch
-    #             result = set(self.branch.vector.keys())
-    #     # Accumulate keys across children
-    #     for child in children:
-    #         if isinstance(child,KeyedVector):
-    #             result |= set(child.keys())
-    #         elif not child is None and not isinstance(child,bool):
-    #             result |= child.getKeys()
-    #     return result
-
+    def makePresent(self):
+        # Cache string and key before modifying
+        str(self)
+        self.getKeysIn()
+        if self.isProbabilistic():
+            distribution = self.children.__class__()
+            for child in self.children.domain():
+                prob = self.children[child]
+                child.makePresent()
+                distribution[child] = prob
+            self.makeProbabilistic(distribution)
+        else:
+            if not self.isLeaf():
+                self.branch.makePresent()
+            for key,child in self.children.items():
+                del self.children[key]
+                child.makePresent()
+                self.children[key] = child
+            
     def collapseProbabilistic(self):
         """
         Utility method that combines any consecutive probabilistic branches at this node into a single distribution
         """
         if self.isProbabilistic():
             collapse = False
-            distribution = Distribution(self.children)
+            distribution = psychsim.probability.Distribution(self.children)
             for child in self.children.domain():
                 if child.isProbabilistic():
                     # Probabilistic branch to merge
@@ -923,27 +949,41 @@ class KeyedTree:
             return self.children[None]
         elif self.branch is None:
             # Probabilistic branch
-            result = {}
+            result = psychsim.probability.Distribution()
             for element in self.children.domain():
                 prob = self.children[element]
                 subtree = element[index]
-                if isinstance(subtree,Distribution):
+                if isinstance(subtree,psychsim.probability.Distribution):
                     for subelement in subtree.domain():
-                        try:
-                            result[subelement] += prob*subtree[subelement]
-                        except KeyError:
-                            result[subelement] = prob*subtree[subelement]
+                        result.addProb(subelement,prob*subtree[subelement])
                 else:
-                    try:
-                        result[subtree] += prob
-                    except KeyError:
-                        result[subtree] = prob
-            return Distribution(result)
+                    result.addProb(subtree,prob)
+            return result
+        elif index.__class__.__name__ == 'MultiVectorDistribution':
+            # Not the best way of doing this test
+            raise DeprecationWarning('Use <state>.applyTree(<tree>) instead')
+        elif isinstance(index,psychsim.probability.Distribution):
+            # Deterministic branch, probabilistic value
+            result = None
+            for element in index.domain():
+                prob = index[element]
+                value = self[element]
+                if result is None:
+                    if value.__class__ is KeyedVector:
+                        result = VectorDistribution()
+                    else:
+                        result = psychsim.probability.Distribution()
+                if isinstance(value,psychsim.probability.Distribution):
+                    for subelement in value.domain():
+                        result.addProb(subelement,prob*value[subelement])
+                else:
+                    result.addProb(value,prob)
+            return result
         else:
-            # Deterministic branch
+            # Deterministic branch, single value
             return self.children[self.branch.evaluate(index)][index]
 
-    def desymbolize(self,table,debug=False):
+    def desymbolize(self,table):
         """
         @return: a new tree with any symbolic references replaced with numeric values according to the table of element lists
         @rtype: L{KeyedTree}
@@ -952,7 +992,7 @@ class KeyedTree:
         if self.isLeaf():
             leaf = self.children[None]
             if isinstance(leaf,KeyedVector) or isinstance(leaf,KeyedMatrix):
-                tree.makeLeaf(leaf.desymbolize(table,debug))
+                tree.makeLeaf(leaf.desymbolize(table))
             else:
                 tree.makeLeaf(leaf)
         elif self.branch:
@@ -1031,8 +1071,8 @@ class KeyedTree:
                 return self.children[None] == other.children[None]
             else:
                 return False
-        elif isinstance(self.children,Distribution):
-            if isinstance(other.children,Distribution):
+        elif isinstance(self.children,psychsim.probability.Distribution):
+            if isinstance(other.children,psychsim.probability.Distribution):
                 return self.children == other.children
             else:
                 return false
@@ -1095,7 +1135,7 @@ class KeyedTree:
                 distribution = self.children.__class__()
                 for old in self.children.domain():
                     new = old.compose(other,leafOp,planeOp)
-                    if isinstance(new,Distribution):
+                    if isinstance(new,psychsim.probability.Distribution):
                         for tree in new.domain():
                             distribution.addProb(tree,self.children[old]*new[tree])
                     else:
@@ -1123,7 +1163,7 @@ class KeyedTree:
             distribution = other.children.__class__()
             for old in other.children.domain():
                 new = self.compose(old,leafOp,planeOp)
-                if isinstance(new,Distribution):
+                if isinstance(new,psychsim.probability.Distribution):
                     for tree in new.domain():
                         distribution.addProb(tree,other.children[old]*new[tree])
                 else:
@@ -1283,7 +1323,7 @@ class KeyedTree:
         if not self.isLeaf():
             if self.branch:
                 root.appendChild(self.branch.__xml__().documentElement)
-        if isinstance(self.children,Distribution):
+        if isinstance(self.children,psychsim.probability.Distribution):
             root.appendChild(self.children.__xml__().documentElement)
         else:
             for key,value in self.children.items():
@@ -1340,14 +1380,14 @@ class KeyedTree:
             node = node.nextSibling
         if plane:
             self.makeBranch(plane,children[True],children[False])
-        elif isinstance(children,Distribution):
+        elif isinstance(children,psychsim.probability.Distribution):
             self.makeProbabilistic(children)
         else:
             self.makeLeaf(children[None])
 
-class TreeDistribution(Distribution):
+class TreeDistribution(psychsim.probability.Distribution):
     """
-    A class representing a L{Distribution} over L{KeyedTree} instances
+    A class representing a L{psychsim.probability.Distribution} over L{KeyedTree} instances
     """
     def element2xml(self,value):
         return value.__xml__().documentElement

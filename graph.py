@@ -1,9 +1,9 @@
 """
 Class definition for representation of dependency structure among all variables in a PsychSim scenario
 """
-import pwl
-import world
-from action import ActionSet
+import psychsim.keys
+import psychsim.world
+from psychsim.action import ActionSet
 
 class DependencyGraph(dict):
     """
@@ -42,27 +42,19 @@ class DependencyGraph(dict):
 
     def computeGraph(self):
         # Process the unary state features
-        for agent,variables in self.world.locals.items():
-            for feature in variables.keys():
-                self[world.stateKey(agent,feature)] = {'agent': agent,
-                                                       'type': 'state pre',
-                                                       'children': set(),
-                                                       'parents': set()}
-                self[world.stateKey(agent,feature,True)] = {'agent': agent,
-                                                            'type': 'state post',
-                                                            'children': set(),
-                                                            'parents': set()}
-        # Process the binary state features
-        for relation,table in self.world.relations.items():
-            for key,entry in table.items():
-                self[key] = {'agent': entry['subject'],
-                             'type': 'state pre',
-                             'children': set(),
-                             'parents': set()}
-                self[world.makeFuture(key)] = {'agent': entry['subject'],
-                                         'type': 'state post',
-                                         'children': set(),
-                                         'parents': set()}
+        for key in self.world.variables:
+            if psychsim.keys.isTurnKey(key):
+                agent = psychsim.keys.turn2name(key)
+            else:
+                agent = psychsim.keys.state2agent(key)
+            self[key] = {'agent': agent,
+                         'type': 'state pre',
+                         'children': set(),
+                         'parents': set()}
+            self[psychsim.keys.makeFuture(key)] = {'agent': agent,
+                                          'type': 'state post',
+                                          'children': set(),
+                                          'parents': set()}
         for name,agent in self.world.agents.items():
             # Create the agent reward node
             if agent.getAttribute('R',True):
@@ -80,8 +72,8 @@ class DependencyGraph(dict):
                                     'children': set()}
         # Create links from dynamics
         for key,dynamics in self.world.dynamics.items():
-            if world.isTurnKey(key):
-                continue
+#            if psychsim.world.isTurnKey(key):
+#                continue
             assert self.has_key(key),'Graph has not accounted for key: %s' % (key)
             if isinstance(dynamics,bool):
                 continue
@@ -89,24 +81,24 @@ class DependencyGraph(dict):
                 if not action is True:
                     # Link between action to this feature
                     assert self.has_key(action),'Graph has not accounted for action: %s' % (action)
-                    dict.__getitem__(self,world.makeFuture(key))['parents'].add(action)
-                    dict.__getitem__(self,action)['children'].add(world.makeFuture(key))
+                    dict.__getitem__(self,psychsim.world.makeFuture(key))['parents'].add(action)
+                    dict.__getitem__(self,action)['children'].add(psychsim.world.makeFuture(key))
                 # Link between dynamics variables and this feature
-                for parent in tree.getKeysIn() - set([pwl.CONSTANT]):
-                    dict.__getitem__(self,world.makeFuture(key))['parents'].add(parent)
-                    dict.__getitem__(self,parent)['children'].add(world.makeFuture(key))
+                for parent in tree.getKeysIn() - set([psychsim.keys.CONSTANT]):
+                    dict.__getitem__(self,psychsim.world.makeFuture(key))['parents'].add(parent)
+                    dict.__getitem__(self,parent)['children'].add(psychsim.world.makeFuture(key))
         for name,agent in self.world.agents.items():
             # Create links from reward
             if agent.models[True].has_key('R'):
                 for R,weight in agent.models[True]['R'].items():
-                    for parent in R.getKeysIn() - set([pwl.CONSTANT]):
+                    for parent in R.getKeysIn() - set([psychsim.keys.CONSTANT]):
                         # Link between variable and agent utility
-                        dict.__getitem__(self,name)['parents'].add(world.makeFuture(parent))
-                        dict.__getitem__(self,world.makeFuture(parent))['children'].add(name)
+                        dict.__getitem__(self,name)['parents'].add(psychsim.world.makeFuture(parent))
+                        dict.__getitem__(self,psychsim.world.makeFuture(parent))['children'].add(name)
             # Create links from legality
             for action,tree in agent.legal.items():
                 action = ActionSet([a.root() for a in action])
-                for parent in tree.getKeysIn() - set([pwl.CONSTANT]):
+                for parent in tree.getKeysIn() - set([psychsim.keys.CONSTANT]):
                     # Link between prerequisite variable and action
                     assert self.has_key(action),'Graph has not accounted for action: %s' % (action)
                     dict.__getitem__(self,action)['parents'].add(parent)
@@ -167,9 +159,7 @@ class DependencyGraph(dict):
         """
         self.getLayers()
         self.evaluation = []
-        for agent,variables in self.world.locals.items():
-            for feature in variables.keys():
-                key = world.stateKey(agent,feature,True)
-                while len(self.evaluation) <= self[key]['level']:
-                    self.evaluation.append(set())
-                self.evaluation[self[key]['level']].add(world.makePresent(key))
+        for key in self.world.variables:
+            while len(self.evaluation) <= self[key]['level']:
+                self.evaluation.append(set())
+            self.evaluation[self[key]['level']].add(psychsim.world.makePresent(key))

@@ -1,12 +1,16 @@
+from __future__ import print_function
 import copy
+import logging
 import math
 import random
-import StringIO
+import io
 from xml.dom.minidom import Document,Node
 
-from action import Action,ActionSet
-from pwl import *
-from probability import Distribution
+from psychsim.action import Action,ActionSet
+from psychsim.pwl import *
+import psychsim.probability
+from psychsim.state import MultiVectorDistribution
+import psychsim.timeline
 
 class Agent:
     """
@@ -22,12 +26,6 @@ class Agent:
     @type ivar omega: {str}
     @ivar O: the observation function; default is C{True}, which means perfect observations of actions
     @type O: L{KeyedTree}
-    @ivar x: X coordinate to be used in UI
-    @type x: int
-    @ivar y: Y coordinate to be used in UI
-    @type y: int
-    @ivar color: color name to be used in UI
-    @type color: str
     """
 
     def __init__(self,name):
@@ -38,9 +36,6 @@ class Agent:
         self.O = True
         self.models = {}
         self.modelList = {}
-        self.x = None
-        self.y = None
-        self.color = None
         if isinstance(name,Document):
             self.parse(name.documentElement)
         elif isinstance(name,Node):
@@ -49,17 +44,18 @@ class Agent:
             self.name = name
             # Default model settings
             self.addModel(True,R={},horizon=2,level=2,rationality=1.,discount=1.,selection='consistent',
-                          beliefs=True,parent=None,projector=Distribution.expectation)
+                          beliefs=True,parent=None,projector=psychsim.probability.Distribution.expectation)
 
     """------------------"""
     """Policy methods"""
     """------------------"""
 
-    def decide(self,vector,horizon=None,others=None,model=None,selection=None,actions=None,keys=None):
+    def newDecide(self,vector=None,belief=None,horizon=None,others=None,model=None,selection=None,actions=None,keys=None):
         """
         Generate an action choice for this agent in the given state
-        @param vector: the current state in which the agent is making its decision
+        @param vector: the current state in which the agent is making its decision (unnecessary if L{belief}, L{actions}, and L{model} provided)
         @type vector: L{KeyedVector}
+        @param belief: the agent's current belief state (default is current belief state in the given L{vector} and L{model}
         @param horizon: the value function horizon (default is use horizon specified in model)
         @type horizon: int
         @param others: the optional action choices of other agents in the current time step
@@ -76,12 +72,48 @@ class Agent:
         @param actions: possible action choices (default is all legal actions)
         @param keys: subset of state features to project over (default is all state features)
         """
+        if vector is None:
+            vector = self.world.state
+        if model is None:
+            model = self.world.getModel(self.name,vector)
+        # What are my subjective beliefs for this decision?
+        if belief is None:
+            belief = self.getBelief(vector,model)
+        result = psychsim.timeline.Decision(self,belief,model,None,selection,horizon)
+        result.getDecision()
+        return result
+
+    def decide(self,vector=None,belief=None,horizon=None,others=None,model=None,selection=None,actions=None,keys=None):
+        """
+        Generate an action choice for this agent in the given state
+        @param vector: the current state in which the agent is making its decision (unnecessary if L{belief}, L{actions}, and L{model} provided)
+        @type vector: L{KeyedVector}
+        @param belief: the agent's current belief state (default is current belief state in the given L{vector} and L{model}
+        @param horizon: the value function horizon (default is use horizon specified in model)
+        @type horizon: int
+        @param others: the optional action choices of other agents in the current time step
+        @type others: strS{->}L{ActionSet}
+        @param model: the mental model to use (default is model specified in vector)
+        @type model: str
+        @param selection: how to translate value function into action selection
+           - random: choose one of the maximum-value actions at random
+           - uniform: return a uniform distribution over the maximum-value actions
+           - distribution: return a distribution (a la quantal response or softmax) using rationality of the given model
+           - consistent: make a deterministic choice among the maximum-value actions (default setting for a model)
+           - C{None}: use the selection method specified by the given model (default)
+        @type selection: str
+        @param actions: possible action choices (default is all legal actions)
+        @param keys: subset of state features to project over (default is all state features)
+        """
+        if vector is None:
+            vector = self.world.state
         if model is None:
             model = self.world.getModel(self.name,vector)
         if selection is None:
             selection = self.getAttribute('selection',model)
         # What are my subjective beliefs for this decision?
-        belief = self.getBelief(vector,model)
+        if belief is None:
+            belief = self.getBelief(vector,model)
         # Do I have a policy telling me what to do?
         policy = self.getAttribute('policy',model)
         if policy:
@@ -96,18 +128,18 @@ class Agent:
         if actions is None:
             # Consider all legal actions (legality determined by my belief, circumscribed by real world)
             actions = self.getActions(vector)
-            for state in belief.domain():
-                actions = actions & self.getActions(state) 
+            actions = actions & self.getActions(belief)
+        
         if len(actions) == 0:
             # Someone made a boo-boo because there is no legal action for this agent right now
-            buf = StringIO.StringIO()
-            print >> buf,'%s has no legal actions in:' % (self.name)
+            buf = io.StringIO()
+            print('%s has no legal actions in:' % (self.name),file=buf)
             self.world.printVector(vector,buf)
-            print >> buf,'\nwhen believing:'
+            print('\nwhen believing:',file=buf)
             self.world.printState(belief,buf)
             msg = buf.getvalue()
             buf.close()
-            raise RuntimeError,msg
+            logging.error(msg)
         elif len(actions) == 1:
             # Only one possible action
             return {'action': iter(actions).next()}
@@ -116,29 +148,34 @@ class Agent:
         best = None
         for action in actions:
             # Compute value across possible worlds
-            V[action] = {'__EV__': 0.}
+            # projection = psychsim.timeline.Timeline(self.world,belief)
+#        projection.branchDecision(self,model)
+#        projection.expand()
+
+            V[action] = {}
             if isinstance(keys,dict):
                 subkeys = keys[action]
             else:
                 subkeys = keys
-            for state in belief.domain():
-                V[action][state] = self.value(state,action,horizon,others,model,subkeys)
-                V[action]['__EV__'] += belief[state]*V[action][state]['V']
-            if len(V[action]) > 1:
+            V[action]['__EV__'] = self.value(belief,action,horizon,others,model,subkeys)
+#            for state in belief.domain():
+#                V[action][state] = self.value(state,action,horizon,others,model,subkeys)
+#                V[action]['__EV__'] += belief[state]*V[action][state]['V']
+#            if len(V[action]) > 1:
                 # Determine whether this action is the best
-                if best is None:
-                    best = [action]
-                elif V[action]['__EV__'] == V[best[0]]['__EV__']:
-                    best.append(action)
-                elif V[action]['__EV__'] > V[best[0]]['__EV__']:
-                    best = [action]
-        result = {'V*': V[best[0]]['__EV__'],'V': V}
+            if best is None:
+                best = [action]
+            elif V[action]['__EV__']['V'] == V[best[0]]['__EV__']['V']:
+                best.append(action)
+            elif V[action]['__EV__']['V'] > V[best[0]]['__EV__']['V']:
+                best = [action]
+        result = {'V*': V[best[0]]['__EV__']['V'],'V': V}
         # Make an action selection based on the value function
         if selection == 'distribution':
             values = {}
             for key,entry in V.items():
-                values[key] = entry['__EV__']
-            result['action'] = Distribution(values,self.getAttribute('rationality',model))
+                values[key] = entry['__EV__']['V']
+            result['action'] = psychsim.probability.Distribution(values,self.getAttribute('rationality',model))
         elif len(best) == 1:
             # If there is only one best action, all of the selection mechanisms devolve 
             # to the same unique choice
@@ -150,18 +187,17 @@ class Agent:
             prob = 1./float(len(best))
             for action in best:
                 result['action'][action] = prob
-            result['action'] = Distribution(result['action'])
+            result['action'] = psychsim.probability.Distribution(result['action'])
         else:
             assert selection == 'consistent','Unknown action selection method: %s' % (selection)
             best.sort()
             result['action'] = best[0]
         return result
                 
-    def value(self,vector,action=None,horizon=None,others=None,model=None,keys=None):
+    def value(self,belief,action=None,horizon=None,others=None,model=None,keys=None):
         """
-        Computes the expected value of a state vector (and optional action choice) to this agent
-        @param vector: the state vector (not distribution) representing the possible world under consideration
-        @type vector: L{KeyedVector}
+        Computes the expected value of given belief state (and optional action choice) to this agent
+        @param belief: the agent's current beliefs from which it's computing its expected value
         @param action: prescribed action choice for the agent to evaluate; if C{None}, then use agent's own action choice (default is C{None})
         @type action: L{ActionSet}
         @param horizon: the number of time steps to project into the future (default is agent's horizon)
@@ -172,27 +208,34 @@ class Agent:
         @param keys: subset of state features to project over in computing future value (default is all state features)
         """
         if model is None:
-            model = self.world.getModel(self.name,vector)
+            model = self.world.getModel(self.name,belief)
         # Determine horizon
         if horizon is None:
             horizon = self.getAttribute('horizon',model)
         # Determine discount factor
         discount = self.getAttribute('discount',model)
         # Compute immediate reward
-        R = self.reward(vector,model)
+        R = self.reward(belief,model)
         result = {'R': R,
                   'agent': self.name,
-                  'state': vector,
+                  'state': belief,
                   'horizon': horizon,
                   'projection': []}
         # Check for pre-computed value function
-        V = self.getAttribute('V',model).get(self.name,vector,action,horizon,
-                                             self.getAttribute('ignore',model))
+        V = self.getAttribute('V',model).get(self.name,belief,action,horizon,self.getAttribute('ignore',model))
         if V is not None:
             result['V'] = V
         else:
             result['V'] = R
-            if horizon > 0 and not self.world.terminated(vector):
+            if isinstance(belief,KeyedVector):
+                termination = self.world.terminated(belief)
+                if termination:
+                    termination,live,dead = 1.,MultiVectorDistribution(empty=True),belief
+                else:
+                    termination,live,dead = 0.,belief,MultiVectorDistribution(empty=True)
+            else:
+                termination,live,dead = self.world.terminated(belief)
+            if horizon > 0 and termination < 1.:
                 # Perform action(s)
                 if others is None:
                     turn = {}
@@ -200,22 +243,19 @@ class Agent:
                     turn = copy.copy(others)
                 if not action is None:
                     turn[self.name] = action
-                outcome = self.world.stepFromState(vector,turn,horizon,keys=keys)
+                outcome = self.world.stepFromState(live,turn,horizon,keys=keys)
                 if not outcome.has_key('new'):
                     # No consistent outcome
                     pass
-                elif isinstance(outcome['new'],Distribution):
+                elif isinstance(outcome['new'],psychsim.probability.Distribution):
                     # Uncertain outcomes
-                    future = Distribution()
+                    future = psychsim.probability.Distribution()
                     for newVector in outcome['new'].domain():
                         entry = copy.copy(outcome)
                         entry['probability'] = outcome['new'][newVector]
                         Vrest = self.value(newVector,None,horizon-1,None,model,keys)
                         entry.update(Vrest)
-                        try:
-                            future[entry['V']] += entry['probability']
-                        except KeyError:
-                            future[entry['V']] = entry['probability']
+                        future[entry['V']].addProb(entry['probability'])
                         result['projection'].append(entry)
                     # The following is typically "expectation", but might be "max" or "min", too
                     op = self.getAttribute('projector',model)
@@ -238,7 +278,7 @@ class Agent:
                         result['V'] += discount*Vrest['V']
                     result['projection'].append(outcome)
             # Do some caching
-            self.getAttribute('V',model).set(self.name,vector,action,horizon,result['V'])
+            self.getAttribute('V',model).set(self.name,belief,action,horizon,result['V'])
         return result
 
     def valueIteration(self,horizon=None,ignore=None,model=True,epsilon=1e-6,debug=0,maxIterations=None):
@@ -252,7 +292,7 @@ class Agent:
         # Find transition matrix
         transition = self.world.reachable(horizon=horizon,ignore=ignore,debug=(debug > 1))
         if debug:
-            print '|S|=%d' % (len(transition))
+            print('|S|=%d' % (len(transition)))
         # Initialize value function
         V = self.getAttribute('V',model)
         newChanged = set()
@@ -273,7 +313,7 @@ class Agent:
         while len(newChanged) > 0 and (maxIterations is None or iterations < maxIterations):
             iterations += 1
             if debug > 0:
-                print 'Iteration %d' % (iterations)
+                print('Iteration %d' % (iterations))
             oldChanged = newChanged.copy()
             newChanged.clear()
             recomputed = set()
@@ -291,7 +331,7 @@ class Agent:
                         if action == '__predecessors__':
                             continue
                         if debug > 2:
-                            print '\t\t%s' % (action)
+                            print('\t\t%s' % (action))
                         # Make sure only one actor is acting at a time
                         if actor is None:
                             actor = action['subject']
@@ -326,11 +366,11 @@ class Agent:
                                     ER += distribution[end]*(R+discount*Vrest)
                             newV.set(agent.name,start,action,0,ER)
                             if debug > 2:
-                                print '\t\t\tV_%s = %5.3f' % (agent.name,ER)
+                                print('\t\t\tV_%s = %5.3f' % (agent.name,ER))
                     # Value of state is the value of the chosen action in this state
                     choice = self.predict(start,actor,newV,0)
                     if debug > 2:
-                        print '\tPrediction\n%s' % (choice)
+                        print('\tPrediction\n%s' % (choice))
                     delta = 0.
                     for name in self.world.agents.keys():
                         for action in choice.domain():
@@ -341,13 +381,13 @@ class Agent:
                         else:
                             delta += abs(newV.get(name,start,None,0) - old)
                         if debug > 1:
-                            print '\tV_%s = %5.3f' % (name,newV.get(name,start,None,0))
+                            print('\tV_%s = %5.3f' % (name,newV.get(name,start,None,0)))
                     if delta > epsilon:
                         newChanged.add(start)
             V = newV
             self.setAttribute('V',V,model)
         if debug > 0:
-            print 'Completed after %d iterations' % (iterations)
+            print('Completed after %d iterations' % (iterations))
         return self.getAttribute('V',model)
 
     def setPolicy(self,policy,model=None,level=None):
@@ -362,7 +402,7 @@ class Agent:
         self.setAttribute('horizon',horizon,model,level)
 
     def setParameter(self,name,value,model=None,level=None):
-        raise DeprecationWarning,'Use setAttribute instead'
+        raise DeprecationWarning('Use setAttribute instead')
 
     def setAttribute(self,name,value,model=None,level=None):
         """
@@ -412,35 +452,40 @@ class Agent:
         @return: the action added
         @rtype: L{ActionSet}
         """
-        actions = []
-        if isinstance(action,set) or isinstance(action,frozenset) or isinstance(action,list):
-            for atom in action:
-                if isinstance(atom,Action):
-                    actions.append(Action(atom))
-                else:
-                    actions.append(atom)
-        elif isinstance(action,Action):
-            actions.append(action)
+        if isinstance(action,ActionSet):
+            new = action
         else:
-            assert isinstance(action,dict),'Argument to addAction must be at least a dictionary'
-            actions.append(Action(action))
-        for atom in actions:
+            actions = []
+            if isinstance(action,set) or isinstance(action,frozenset) or isinstance(action,list):
+                for atom in action:
+                    if isinstance(atom,Action):
+                        actions.append(Action(atom))
+                    else:
+                        actions.append(atom)
+            elif isinstance(action,Action):
+                actions.append(action)
+            else:
+                assert isinstance(action,dict),'Argument to addAction must be at least a dictionary'
+                actions.append(Action(action))
+            new = ActionSet(actions)
+        for atom in new:
             if not atom.has_key('subject'):
                 # Make me the subject of these actions
                 atom['subject'] = self.name
-        new = ActionSet(actions)
         self.actions.add(new)
         if condition:
             self.legal[new] = condition
         return new
 
-    def getActions(self,vector,actions=None):
+    def getActions(self,vector=None,actions=None):
         """
         @param vector: the world in which to test legality
         @param actions: the set of actions to test legality of (default is all available actions)
         @return: the set of possible actions to choose from in the given state vector
         @rtype: {L{ActionSet}}
         """
+        if vector is None:
+            vector = self.world.state
         if actions is None:
             actions = self.actions
         if len(self.legal) == 0:
@@ -448,6 +493,7 @@ class Agent:
             return actions
         # Otherwise, filter out illegal actions
         result = set()
+        substates = set()
         for action in actions:
             try:
                 tree = self.legal[action]
@@ -456,7 +502,17 @@ class Agent:
                 result.add(action)
                 continue
             # Must satisfy all conditions
-            if tree[vector]:
+            if isinstance(vector,MultiVectorDistribution):
+                test,newStates = vector.applyTree(tree)
+                substates |= newStates
+            else:
+                test = tree[vector]
+            if isinstance(test,psychsim.probability.Distribution):
+                if test.getProb(False) > 0.:
+                    test = False
+                else:
+                    test = True
+            if test:
                 result.add(action)
         return result
 
@@ -516,6 +572,22 @@ class Agent:
         total = 0.
         if vector is None:
             total = self.reward(self.world.state,model,recurse)
+        elif isinstance(vector,MultiVectorDistribution):
+            R = self.getAttribute('R',model)
+            if R is None:
+                # No reward components
+                return total
+            for tree,weight in R.items():
+                if isinstance(tree,str):
+                    raise NotImplementedError('Currently unable to compute recursive rewards in uncertain belief states')
+                else:
+                    weights,substates = vector.applyTree(tree)
+                    if isinstance(weights,VectorDistribution):
+                        weights = weights.expectation()
+                    substates |= vector.substate(weights)
+                    assert len(substates) == 1
+                    ER = weights*vector.distributions[list(substates)[0]].expectation()
+                    total += ER*weight
         elif isinstance(vector,VectorDistribution):
             for element in vector.domain():
                 total += vector[element]*self.reward(element,model,recurse)
@@ -543,12 +615,12 @@ class Agent:
         trees.sort()
         for tree in trees:
             if first:
-                print >> buf,'%s\tR\t\t%3.1f %s' % (prefix,R[tree],str(tree).replace('\n','\n%s\t\t\t' % \
-                                                                                         (prefix)))
+                print('%s\tR\t\t%3.1f %s' % (prefix,R[tree],str(tree).replace('\n','\n%s\t\t\t' % \
+                                                                                         (prefix))),file=buf)
                 first = False
             else:
-                print >> buf,'%s\t\t\t%3.1f %s' % (prefix,R[tree],str(tree).replace('\n','\n%s\t\t\t' % \
-                                                                                        (prefix)))
+                print('%s\t\t\t%3.1f %s' % (prefix,R[tree],str(tree).replace('\n','\n%s\t\t\t' % \
+                                                                                        (prefix))),file=buf)
 
     """------------------"""
     """Mental model methods"""
@@ -571,10 +643,10 @@ class Agent:
         @rtype: dict
         """
         if name is None:
-            raise NameError,'"None" is an illegal model name'
+            raise NameError('"None" is an illegal model name')
         if self.models.has_key(name):
-            raise NameError,'Model %s already exists for agent %s' % \
-                (name,self.name)
+            raise NameError('Model %s already exists for agent %s' % \
+                            (name,self.name))
         model = {'name': name,'index': 0,'parent': True,
                  'V': ValueFunction(),'policy': {},'ignore': []}
         model.update(kwargs)
@@ -601,7 +673,7 @@ class Agent:
         """
         if isinstance(V,ValueFunction):
             V = V.actionTable(name,vector,horizon)
-        choices = Distribution()
+        choices = psychsim.probability.Distribution()
         if name == self.name:
             # I predict myself to maximize
             best = None
@@ -614,7 +686,7 @@ class Agent:
         else:
             rationality = self.world.agents[name].getAttribute('rationality',
                                                                self.world.getModel(name,vector))
-            choices = Distribution(V,rationality)
+            choices = psychsim.probability.Distribution(V,rationality)
         return choices
 
     def model2index(self,model):
@@ -640,7 +712,7 @@ class Agent:
         except KeyError:
             # Unknown model index (hopefully, because of explaining post-GC)
             if throwException:
-                raise IndexError,'Unknown model index %s of %s' % (index,self.name)
+                raise IndexError('Unknown model index %s of %s' % (index,self.name))
             else:
                 return None
 
@@ -670,19 +742,19 @@ class Agent:
         if isinstance(index,int) or isinstance(index,float):
             model = self.index2model(index)
         if model is None:
-            print >> buf,'%s\t%-12s\t%-12s' % \
-                (prefix,'__model__','__unknown(%s)__' % (index))
+            print('%s\t%-12s\t%-12s' % \
+                  (prefix,'__model__','__unknown(%s)__' % (index)),file=buf)
             return
         if not isinstance(model,dict):
             model = self.models[model]
-        print >> buf,'%s\t%-12s\t%-12s' % \
-            (prefix,'__model__',model['name'])
+        print('%s\t%-12s\t%-12s' % \
+              (prefix,'__model__',model['name']),file=buf)
         if model.has_key('R') and not model['R'] is True:
             self.printReward(model['name'],buf,'%s\t\t' % (prefix))
         if model.has_key('beliefs') and not model['beliefs'] is True:
-            print >> buf,'%s\t\t\t----beliefs:----' % (prefix)
+            print('%s\t\t\t----beliefs:----' % (prefix),file=buf)
             self.world.printState(model['beliefs'],buf,prefix+'\t\t\t',beliefs=True)
-            print >> buf,'%s\t\t\t----------------' % (prefix)
+            print('%s\t\t\t----------------' % (prefix),file=buf)
         
     """---------------------"""
     """Belief update methods"""
@@ -701,11 +773,11 @@ class Agent:
         except KeyError:
             beliefs = True
         if beliefs is True:
-            beliefs = VectorDistribution({KeyedVector(): 1.})
+            beliefs = MultiVectorDistribution()
             self.models[model]['beliefs'] = beliefs
         if isinstance(distribution,MatrixDistribution) or isinstance(distribution,KeyedMatrix):
-            raise NotImplementedError,'New implementation of beliefs uses vectors, not matrices. '\
-                'Distorted beliefs have not been re-implemented yet.'
+            raise NotImplementedError('New implementation of beliefs uses vectors, not matrices. '\
+                'Distorted beliefs have not been re-implemented yet.')
         self.world.setFeature(key,distribution,beliefs)
 
     def getBelief(self,vector,model=None):
@@ -715,10 +787,21 @@ class Agent:
         """
         if model is None:
             model = self.world.getModel(self.name,vector)
-        world = VectorDistribution({vector: 1.})
         beliefs = self.getAttribute('beliefs',model)
-        if not beliefs is True:
-            world = world.merge(beliefs)
+        world = MultiVectorDistribution()
+        if beliefs is True:
+            # True beliefs
+            world = vector # self.world.state
+        else:
+            # Incorrect beliefs, must be merged with true state
+            for substate,distribution in beliefs.distributions.items():
+                world.distributions[substate] = copy.deepcopy(distribution)
+            world.keyMap.update(beliefs.keyMap)
+            for key in vector.keys():
+                if not world.keyMap.has_key(key):
+                    # No belief about this feature, so use true value
+                    world.keyMap[key] = None
+                    world.distributions[None].join(key,vector[key])
         return world
 
     def stateEstimator(self,oldReal,newReal,omega,model=True):
@@ -745,7 +828,7 @@ class Agent:
             probOmega = 1.
             # What actions do I think have been performed?
             joint = ActionSet()
-            actionDistribution = Distribution({joint: 1.})
+            actionDistribution = psychsim.probability.Distribution({joint: 1.})
             actionMapping = {joint: {}}
             world = self.world.pruneModels(oldReal)
             world.update(oldWorld)
@@ -768,7 +851,7 @@ class Agent:
                             # confidence that agent would have performed the observed action
                             decision = self.world.agents[actor].decide(world,model=actorModel,
                                                                        selection='distribution')
-                            if isinstance(decision['action'],Distribution):
+                            if isinstance(decision['action'],psychsim.probability.Distribution):
                                 probActions *= decision['action'][actions[actor]]
                             elif decision['action'] != actions[actor]:
                                 probActions = 0.
@@ -779,8 +862,8 @@ class Agent:
                         # Predict what this agent *might* have snuck past our keen observations
                         decision = self.world.agents[actor].decide(world,model=actorModel,
                                                                    selection='distribution')
-                        if not isinstance(decision['action'],Distribution):
-                            decision['action'] = Distribution({decision['action']: 1.})
+                        if not isinstance(decision['action'],psychsim.probability.Distribution):
+                            decision['action'] = psychsim.probability.Distribution({decision['action']: 1.})
                         # Merge each possible action into overall joint action
                         for action in decision['action'].domain():
                             newJoint = joint | action
@@ -827,7 +910,7 @@ class Agent:
             return index
 
     def printBeliefs(self,model=True):
-        raise DeprecationWarning,'Use the "beliefs=True" argument to printState instead'
+        raise DeprecationWarning('Use the "beliefs=True" argument to printState instead')
 
     """--------------------"""
     """Observation  methods"""
@@ -850,7 +933,7 @@ class Agent:
     def observe(self,vector,actions,model=True):
         """
         @return: distribution over observations received by this agent in the given world when the given actions are performed
-        @rtype: L{Distribution}
+        @rtype: L{psychsim.probability.Distribution}
         """
         if self.O is True:
             O = {}
@@ -881,7 +964,7 @@ class Agent:
                         continue
                     else:
                         # Awkward, someone defined an observation function that doesn't cover the action space
-                        raise ValueError,'Observation function for %s does not cover action space' % (key)
+                        raise ValueError('Observation function for %s does not cover action space' % (key))
             if actions.has_key(key):
                 # Observation of action
                 omega[key] = tree[vector]
@@ -899,8 +982,8 @@ class Agent:
                     # Action is unobservable
                     del omega[key]
                 else:
-                    if not isinstance(omega[key],Distribution):
-                        omega[key] = Distribution({omega[key]: 1.})
+                    if not isinstance(omega[key],psychsim.probability.Distribution):
+                        omega[key] = psychsim.probability.Distribution({omega[key]: 1.})
                     for element in omega[key].domain():
                         if element is True:
                             # Action is observable
@@ -943,11 +1026,6 @@ class Agent:
         root = doc.createElement('agent')
         doc.appendChild(root)
         doc.documentElement.setAttribute('name',self.name)
-        if self.x:
-            doc.documentElement.setAttribute('x',str(self.x))
-            doc.documentElement.setAttribute('y',str(self.y))
-        if self.color:
-            doc.documentElement.setAttribute('color',self.color)
         # Actions
         node = doc.createElement('actions')
         root.appendChild(node)
@@ -989,6 +1067,10 @@ class Agent:
                     else:
                         for tree,weight in model['R'].items():
                             subnode = doc.createElement(key)
+                            if isinstance(weight,tuple):
+                                if weight[1]:
+                                    subnode.setAttribute('substate',weight[1])
+                                weight = weight[0]
                             subnode.setAttribute('weight',str(weight))
                             if isinstance(tree,str):
                                 # Goal on another agent
@@ -1041,12 +1123,6 @@ class Agent:
 
     def parse(self,element):
         self.name = str(element.getAttribute('name'))
-        try:
-            self.x = int(element.getAttribute('x'))
-            self.y = int(element.getAttribute('y'))
-        except ValueError:
-            pass
-        self.color = str(element.getAttribute('color'))
         node = element.firstChild
         while node:
             if node.nodeType == node.ELEMENT_NODE:
@@ -1121,13 +1197,18 @@ class Agent:
                                             # PWL goal
                                             if not kwargs.has_key(key):
                                                 kwargs[key] = {}
-                                            kwargs[key][KeyedTree(subchild)] = float(subnode.getAttribute('weight'))
+                                            weight = float(subnode.getAttribute('weight'))
+                                            substate = str(subnode.getAttribute('substate'))
+                                            if substate:
+                                                kwargs[key][KeyedTree(subchild)] = (weight,substate)
+                                            else:
+                                                kwargs[key][KeyedTree(subchild)] = weight
                                         elif key == 'policy':
                                             kwargs[key] = KeyedTree(subchild)
                                         elif key == 'beliefs':
-                                            kwargs[key] = VectorDistribution(subchild)
+                                            kwargs[key] = MultiVectorDistribution(subchild)
                                         else:
-                                            raise NameError,'Unknown element found when parsing model\'s %s' % (key)
+                                            raise NameError('Unknown element found when parsing model\'s %s' % (key))
                                     elif subchild.nodeType == subchild.TEXT_NODE:
                                         text = subchild.data.strip()
                                         if text:
@@ -1141,12 +1222,12 @@ class Agent:
                                             elif key == 'horizon':
                                                 kwargs[key] = int(text)
                                             elif key == 'projector':
-                                                kwargs[key] = eval('Distribution.%s' % (text))
+                                                kwargs[key] = eval('psychsim.probability.Distribution.%s' % (text))
                                             else:
                                                 try:
                                                     kwargs[key] = float(text)
                                                 except ValueError:
-                                                    raise ValueError,'Unable to parse attribute %s of model %s'  % (key,name)
+                                                    raise ValueError('Unable to parse attribute %s of model %s'  % (key,name))
                                     subchild = subchild.nextSibling
                         subnode = subnode.nextSibling
                     # Add new model
@@ -1238,7 +1319,7 @@ class ValueFunction:
         for state in V.keys():
             print
             agent.world.printVector(state)
-            print self.get(agent.name,state,None,horizon)
+            print(self.get(agent.name,state,None,horizon))
 
     def __lt__(self,other):
         return self.name < other.name
@@ -1263,6 +1344,9 @@ class ValueFunction:
             root.appendChild(subnode)
         return doc
 
+    def __str__(self):
+        return self.name
+    
     def parse(self,element):
         assert element.tagName == 'V',element.tagName
         del self.table[:]
