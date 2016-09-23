@@ -383,8 +383,8 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     filename = getFilename(username,level,ext,root)
 
     world.save(filename,ext=='psy')
-    WriteLogData('%s user %s, level %d, ability %s, explanation %s' % \
-                     (CREATE_TAG,username,level,ability,explanation),username,level,root=root)
+    WriteLogData('%s user %s, level %d, ability %s, explanation %s, embodiment %s' % \
+                     (CREATE_TAG,username,level,ability,explanation,embodiment),username,level,root=root)
     return world
 
 def generateMicO(world,key):
