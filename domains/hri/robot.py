@@ -161,6 +161,7 @@ LOCATION_TAG = 'Location:'
 USER_TAG = 'Protective:'
 COMPLETE_TAG = 'Complete'
 ACK_TAG = 'Acknowledged:'
+RECOMMEND_TAG = 'Recommend protection:'
 
 CODES = {'ability': {'s': 'badSensor','g': 'good','m': 'badModel'},
          'explanation': {'n': 'none','a': 'ability','c': 'confidence'},
@@ -384,7 +385,8 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 
     world.save(filename,ext=='psy')
     WriteLogData('%s user %s, level %d, ability %s, explanation %s, embodiment %s' % \
-                     (CREATE_TAG,username,level,ability,explanation,embodiment),username,level,root=root)
+                     (CREATE_TAG,username,level,ability,explanation,embodiment),
+                 username,level,root=root)
     return world
 
 def generateMicO(world,key):
@@ -762,12 +764,12 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         POMDP['A'] = 'recommend unprotected'
         safety = True
         world.setState(robotWaypoint['symbol'],'recommendation','unprotected')
-        WriteLogData('Recommend protection: no',username,level,root=root)
+        WriteLogData('%s: no' % (RECOMMEND_TAG),username,level,root=root)
     else:
         POMDP['A'] = 'recommend protected'
         safety = False
         world.setState(robotWaypoint['symbol'],'recommendation','protected')
-        WriteLogData('Recommend protection: yes',username,level,root=root)
+        WriteLogData('%s: yes' % (RECOMMEND_TAG),username,level,root=root)
     # Add B_t, my current beliefs
     for key in keyList:
         belief = subBeliefs.marginal(key)
@@ -842,10 +844,12 @@ def readLogData(username,level,root='.'):
     start = None
     for line in fileinput.input(filename):
         elements = line.split()
-        if elements[2] == MESSAGE_TAG:
+        if '%s %s' % (elements[2],elements[3]) == RECOMMEND_TAG:
             now = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
-            log.insert(0,{'type': 'message','content': ' '.join(elements[3:]),
+            log.insert(0,{'type': 'message','recommendation': elements[4],
                           'time': now-start})
+        elif elements[2] == MESSAGE_TAG:
+            log[0]['content'] = ' '.join(elements[3:])
         elif elements[2] == LOCATION_TAG:
             now = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
             index = symbol2index(elements[3],level)
@@ -856,7 +860,8 @@ def readLogData(username,level,root='.'):
         elif elements[2] == CREATE_TAG:
             start = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
             log.insert(0,{'type': 'create',
-                          'time': 'Start','start': start})
+                          'time': 'Start','start': start,
+                          'ability': elements[8], 'explanation': elements[10]})
         elif elements[2] == COMPLETE_TAG:
             now = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
             log.insert(0,{'type': 'complete','success': elements[3] == 'success',
