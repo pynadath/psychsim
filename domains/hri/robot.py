@@ -871,8 +871,12 @@ def readLogData(username,level,root='.'):
             log[0]['location'] = WAYPOINTS[level][symbol2index(elements[4],level)]['name']
             log[0]['danger'] = elements[5]
             log[0]['dead'] = elements[6]
-            log[0]['image'] = elements[7]
-            log[0]['content'] = ' '.join(elements[8:])[1:-1]
+            if elements[7][0] == '(':
+                log[0]['image'] = None
+                log[0]['content'] = ' '.join(elements[7:])[1:-1]
+            else:
+                log[0]['image'] = elements[7]
+                log[0]['content'] = ' '.join(elements[8:])[1:-1]
             if ') (' in log[0]['content']:
                 log[0]['content'],log[0]['ack'] = log[0]['content'].split(') (')
             else:
