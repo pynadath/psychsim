@@ -162,6 +162,7 @@ USER_TAG = 'Protective:'
 COMPLETE_TAG = 'Complete'
 ACK_TAG = 'Acknowledged:'
 RECOMMEND_TAG = 'Recommend protection:'
+VALUE_TAG = 'Value'
 
 CODES = {'ability': {'s': 'badSensor','g': 'good','m': 'badModel'},
          'explanation': {'n': 'none','a': 'ability','c': 'confidence'},
@@ -753,7 +754,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
             outcome = result['new'].domain()[0]
             reward = subBeliefs[newVector]*robot.reward(outcome)
             value[verb] += reward
-        WriteLogData('Value of %s: %4.2f' % (verb,value[verb]),username,level,root=root)
+        WriteLogData('%s of %s: %4.2f' % (VALUE_TAG,verb,value[verb]),username,level,root=root)
     # Package up the separate components of my current model
     POMDP = {}
     # Add Omega_t, my latest observation
@@ -848,6 +849,22 @@ def readLogData(username,level,root='.'):
             now = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
             log.insert(0,{'type': 'message','recommendation': elements[4],
                           'time': now-start})
+        elif elements[2] == VALUE_TAG:
+            value = float(elements[-1])
+            if elements[5] == 'unprotected:':
+                recommendation = 'no'
+            elif elements[5] == 'protected:':
+                recommendation = 'yes'
+            else:
+                raise ValueError,'Unknown recommendation: %s' % (elements[5])
+            if log[0]['type'] == 'message':
+                if value > log[0]['value']:
+                    log[0]['value'] = value
+                    log[0]['recommendation'] = recommendation
+            else:
+                now = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
+                log.insert(0,{'type': 'message','recommendation': recommendation,'value': value,
+                              'time': now-start})
         elif elements[2] == MESSAGE_TAG:
             log[0]['content'] = ' '.join(elements[3:])
         elif elements[2] == LOCATION_TAG:
@@ -861,11 +878,12 @@ def readLogData(username,level,root='.'):
             start = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
             log.insert(0,{'type': 'create',
                           'time': 'Start','start': start,
-                          'ability': elements[8], 'explanation': elements[10]})
+                          'ability': elements[8][:-1], 'explanation': elements[10]})
         elif elements[2] == COMPLETE_TAG:
-            now = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
-            log.insert(0,{'type': 'complete','success': elements[3] == 'success',
-                          'time': now-start})
+            if log[0]['type'] != 'complete':
+                now = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
+                log.insert(0,{'type': 'complete','success': elements[3] == 'success',
+                              'time': now-start})
         elif elements[2] == USER_TAG:
             log[0]['choice'] = elements[3]
             log[0]['location'] = WAYPOINTS[level][symbol2index(elements[4],level)]['name']

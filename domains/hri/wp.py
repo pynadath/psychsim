@@ -1,6 +1,7 @@
 import ConfigParser
 import csv
 import datetime
+import itertools
 import os
 import sys
 
@@ -39,6 +40,8 @@ SEQUENCE = [
     {'explanation_mode': 'confidence','robot_ability': 'badSensor','robot_ack': 'yes',
      'robot_embodiment': 'robot'},
 ]
+
+ignore = {'A6RP0QY5H66Y2','AWA9E0MXCUZEX'}
 
 def readSurvey(fname):
     data = {}
@@ -157,6 +160,8 @@ def readAMTData(conditions,logs):
         if f[-4:] == '.log':
             # Extract user ID
             user = f[:-6]
+            if user in ignore:
+                continue
             # Extract mission number
             try:
                 mission = int(f[-5])
@@ -170,8 +175,22 @@ def readAMTData(conditions,logs):
             if log[0]['type'] == 'complete':
                 if not user in conditions:
                     conditions[user] = {}
-                conditions[user][mission] = {'robot_ability': log[-1]['ability'],
-                                             'explanation_mode': log[-1]['explanation'],
+                # Translate ability
+                if log[-1]['ability'] == 'False':
+                    ability = 'badSensor'
+                elif log[-1]['ability'] == 'True':
+                    ability = 'good'
+                else:
+                    ability = log[-1]['ability']
+                # Translate explanation
+                if log[-1]['explanation'] == 'ability':
+                    explanation = 'SensorV2'
+                elif log[-1]['explanation'] == 'abilitybenevolence':
+                    explanation = 'SensorV1'
+                else:
+                    explanation = log[-1]['explanation']
+                conditions[user][mission] = {'robot_ability': ability,
+                                             'explanation_mode': explanation,
                                              'robot_embodiment': 'robot',
                                              'robot_ack': 'no'}
                 if not user in logs:
@@ -194,10 +213,215 @@ def condition2str(condition):
 #                                            condition['robot_embodiment'][0])
 
 class HRILog:
-    def __init__(self.log):
+    def __init__(self,log):
         self.log = log
-        self.line = 1
+        self.line = len(self.log)-1
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        return self.__next__()
     
+    def __next__(self):
+        epoch = {}
+        while self.line >= 0:
+            entry = self.log[self.line]
+            if entry['type'] == 'message':
+                if 'recommendation' in epoch:
+                    assert epoch['recommendation'] == entry['recommendation']
+                else:
+                    epoch['recommendation'] = entry['recommendation']
+                    epoch['start'] = entry['time']
+            elif entry['type'] == 'location' or \
+                 (entry['type'] == 'complete' and entry['success']):
+                if len(epoch) > 0:
+                    if 'ack' in entry and entry['ack'] != '':
+                        epoch['acknowledgment'] = True
+                    else:
+                        epoch['acknowledgment'] = False
+                    if entry['dead'] == 'True':
+                        epoch['dead'] = 'dead'
+                    else:
+                        epoch['dead'] = 'alive'
+                    epoch['danger'] = entry['danger']
+                    epoch['protective'] = entry['choice'] == 'yes'
+                    epoch['location'] = entry['location']
+                    # Classify the agent's decision and the user's response
+                    if epoch['recommendation'] == 'yes':
+                        if entry['choice'] == 'False':
+                            epoch['choice'] = 'ignore'
+                        else:
+                            epoch['choice'] = 'follow'
+                        if entry['danger'] == 'none':
+                            epoch['case'] = 'false+'
+                        else:
+                            epoch['case'] = 'true+'
+                    else:
+                        if entry['choice'] == 'False':
+                            epoch['choice'] = 'follow'
+                        else:
+                            epoch['choice'] = 'ignore'
+                        if entry['danger'] == 'none':
+                            epoch['case'] = 'true-'
+                        else:
+                            epoch['case'] = 'false-'
+                    # Classify user correctness
+                    if epoch['choice'] == 'follow':
+                        # User is right if following a true +/-
+                        epoch['correct'] = epoch['case'][0] == 't'
+                    else:
+                        # User is right if ignoring a false +/-
+                        epoch['correct'] = epoch['case'][0] == 'f'
+                    epoch['end'] = entry['time']
+                    epoch['duration'] = epoch['end'] - epoch['start']
+                    self.line -= 1
+                    return epoch
+            self.line -= 1
+        raise StopIteration
+
+    # TODO: print choices and right/wrong per room (each room at most once per mission)
+
+def writeSequences(users,logs,conditions,field=None,total=None):
+    if field is None and total is None:
+        field = 'choice'
+    fieldnames = ['ID']
+    turnFields = set()
+    with open('sequences_%s.csv' % (field),'w') as csvfile:
+        data = []
+        for user in users:
+            data.append({'ID': user})
+            for mission in conditions[user]:
+                if len(fieldnames) == 1:
+                    fieldnames += sorted(conditions[user][mission].keys())
+                if total:
+                    fieldnames.append(total[0])
+                data[-1].update(conditions[user][mission])
+                visited = set()
+                count = 0
+                for epoch in HRILog(logs[user][mission]):
+                    if not epoch['location'] in visited:
+                        visited.add(epoch['location'])
+                        if field:
+                            count += 1
+                            label = '%d.%02d' % (mission+1,turn)
+                            turnFields.add(label)
+                            data[-1][label] = epoch[field]
+                        else:
+                            if epoch[total[0]] == total[1]:
+                                count += 1
+                if total:
+                    data[-1][total[0]] = count
+        if field:
+            fieldnames += sorted(turnFields)
+        writer = csv.DictWriter(csvfile,fieldnames,'NA')
+        writer.writeheader()
+        for datum in data:
+            writer.writerow(datum)
+                    
+def writeIndividuals(users,logs,conditions,fname,states,actions):
+    fieldnames = ['ID','mission']
+    lhs = set()
+    with open(fname,'w') as csvfile:
+        data = []
+        conditionData = {}
+        for user in users:
+            statsAll = {}
+            for feature in states:
+                if feature == 'mistake':
+                    statsAll[feature] = False
+                else:
+                    statsAll[feature] = 0
+            datumAll = {'ID': user,'mission': '*'}
+            data.append(datumAll)
+            for mission in conditions[user]:
+                datum = {'ID': user,'mission': mission+1}
+                data.append(datum)
+                datum.update(conditions[user][mission])
+                if len(fieldnames) == 2:
+                    fieldnames += sorted(conditions[user][mission].keys())
+                stats = {}
+                for feature in states:
+                    if feature == 'mistake':
+                        stats[feature] = False
+                    elif feature == 'mistakes':
+                        stats[feature] = 0
+                    elif feature == 'recommendation':
+                        stats[feature] = None
+                    else:
+                        raise NameError,'Unknown state feature: %s' % (feature)
+                for key,value in conditions[user][mission].items():
+                    if key in datumAll:
+                        if datumAll[key] != value:
+                            # Conditions change from mission to mission
+                            datumAll[key] = ''
+                    else:
+                        datumAll[key] = value
+                # Set up data across this condition
+                condition = condition2str(conditions[user][mission])
+                if not condition in conditionData:
+                    conditionData[condition] = {'ID': '*','mission': '*'}
+                    conditionData[condition].update(conditions[user][mission])
+                visited = set()
+                for epoch in HRILog(logs[user][mission]):
+                    # Update state features known a priori
+                    if not epoch['location'] in visited:
+                        visited.add(epoch['location'])
+                        for feature in states:
+                            if feature == 'recommendation':
+                                stats[feature] = epoch['recommendation']
+                                statsAll[feature] = epoch['recommendation']
+                        # Update policy
+                        state = ','.join(['%s=%s' % (feature,stats[feature]) for feature in states])
+                        stateAll = ','.join(['%s=%s' % (feature,statsAll[feature]) \
+                                             for feature in states])
+                        lhs.add(state)
+                        lhs.add(stateAll)
+                        for action in actions:
+                            if not '%s:%s' % (state,action) in datum:
+                                datum['%s:%s' % (state,action)] = 0
+                            if not '%s:%s' % (stateAll,action) in datumAll:
+                                datumAll['%s:%s' % (stateAll,action)] = 0
+                            if not '%s:%s' % (stateAll,action) in conditionData[condition]:
+                                conditionData[condition]['%s:%s' % (stateAll,action)] = 0
+                        for action in actions:
+                            if action == 'follow':
+                                if epoch['choice'] == 'follow':
+                                    datum['%s:%s' % (state,action)] += 1
+                                    datumAll['%s:%s' % (stateAll,action)] += 1
+                                    conditionData[condition]['%s:%s' % (stateAll,action)] += 1
+                            elif action == 'ignore':
+                                if epoch['choice'] == 'ignore':
+                                    datum['%s:%s' % (state,action)] += 1
+                                    datumAll['%s:%s' % (stateAll,action)] += 1
+                                    conditionData[condition]['%s:%s' % (stateAll,action)] += 1
+                            else:
+                                raise NameError,'Unknown action: %s' % (action)
+                        # Update state features known a posteriori
+                        for feature in states:
+                            if feature == 'recommendation':
+                                pass
+                            elif feature == 'mistakes':
+                                if epoch['case'][0] == 'f':
+                                    stats[feature] += 1
+                                    statsAll[feature] += 1
+                            elif feature == 'mistake':
+                                if epoch['case'][0] == 'f':
+                                    stats[feature] = True
+                                    statsAll[feature] = True
+                            else:
+                                raise NameError,'Unknown state feature: %s' % (feature)
+        # Write out data
+        lhs = sorted(lhs)
+        for state in lhs:
+            fieldnames += ['%s:%s' % (state,action) for action in actions]
+        writer = csv.DictWriter(csvfile,fieldnames=fieldnames)
+        writer.writeheader()
+        for condition in sorted(conditionData):
+            writer.writerow(conditionData[condition])
+        for datum in data:
+            writer.writerow(datum)
+                                    
 if __name__ == '__main__':
     conditions = {}
     logs = {}
@@ -206,180 +430,23 @@ if __name__ == '__main__':
     valid |= readAMTData(conditions,logs)
     checkSurveys = False
     print '%d Valid Users' % (len(valid))
+    # Extract behavior sequences
+    writeSequences(valid,logs,conditions,'case')
+    writeSequences(valid,logs,conditions,'choice')
+    writeSequences(valid,logs,conditions,'correct')
+    writeSequences(valid,logs,conditions,'dead')
+    writeIndividuals(valid,logs,conditions,'following.csv',
+                     ['recommendation','mistake'],['follow','ignore'])
+    sys.exit(0)
+    # Identify conditions in the data
     conditionSet = set()
     for user in valid:
         for mission in conditions[user]:
             conditionSet.add(condition2str(conditions[user][mission]))
-    decisionCases = ['true+', 'false+', 'true-', 'false-']
-    behavior = {}
-    behaviors = {condition: {} for condition in conditionSet}
-    policy = {}
-    agent = {}
-    with open('individual.csv','w') as csvfile:
-        fieldnames = ['Participant']
-        for field in sorted(conditionSet):
-            fieldnames.append(field)
-        writer = csv.DictWriter(csvfile,fieldnames=fieldnames)
-        writer.writeheader()
-        for user in valid:
-            behavior[user] = {}
-            policy[user] = {}
-            agent[user] = {}
-            csvRow = {'Participant': user}
-            for mission in range(len(logs[user])):
-    #            print 'User %d, Mission %d' % (user,mission+1)
-#                condition = (sequences[user]+mission) % 8
-                condition = conditions[user][mission]
-                behavior[user][condition2str(condition)] = ''
-                initial = {'follow': 0,
-                           'follow bad': 0,
-                           'ignore': 0,
-                           'ignore good': 0}
-                policy[user][condition2str(condition)] = {'yes': {'false-': dict(initial),
-                                                                  'true+': dict(initial),
-                                                                  'true-': dict(initial)},
-                                                          'no': {'false-': dict(initial),
-                                                                 'true+': dict(initial),
-                                                                 'true-': dict(initial)},
-                                                          }
-                agent[user][condition2str(condition)] = []
-                # Process the data from this mission
-                datum = {'mission': mission+1,
-                         'deaths': 0,
-                }
-                if isinstance(user,int):
-                    datum['gameID'] = 'WP%03d' % (user)
-                    # Check for surveys
-                    try:
-                        datum['surveyID'] = surveyMap[datum['gameID']].upper()
-                    except KeyError:
-                        datum['surveyID'] = datum['gameID']
-                else:
-                    datum['gameID'] = user
-                for case in decisionCases:
-                    datum[case] = 0
-                for case in decisionCases:
-                    datum['follow_%s' % (case)] = 0
-                    datum['ignore_%s' % (case)] = 0
-                log = logs[user][mission]
-                log.reverse()
-                datum['explanation'] = log[0]['explanation']
-                datum['time'] = log[-1]['time']
-                for entry in log[1:]:
-                    if entry['type'] == 'message':
-                        recommendation = entry['recommendation']
-                        start = entry['time']
-                    elif entry['type'] == 'location' or entry['type'] == 'complete':
-                        if entry['type'] == 'complete' and not entry['success']:
-                            continue
-                        if 'ack' in entry and entry['ack'] != '':
-                            datum['acknowledgment'] = True
-                        if entry['dead'] == 'True':
-                            datum['deaths'] += 1
-                        # Classify the agent's decision and the user's response
-                        if recommendation == 'yes':
-                            if entry['choice'] == 'False':
-                                choice = 'ignore'
-                            else:
-                                choice = 'follow'
-                            if entry['danger'] == 'none':
-                                case = 'false+'
-                            else:
-                                case = 'true+'
-                        else:
-                            if entry['choice'] == 'False':
-                                choice = 'follow'
-                            else:
-                                choice = 'ignore'
-                            if entry['danger'] == 'none':
-                                case = 'true-'
-                            else:
-                                case = 'false-'
-                        end = entry['time']
-                        print end-start
-                        datum[case] += 1
-                        datum['%s_%s' % (choice,case)] += 1
-                        # Categorize behavior
-                        if len(agent[user][condition2str(condition)]) > 0:
-                            policy[user][condition2str(condition)][recommendation][agent[user][condition2str(condition)][-1]][choice] += 1
-                            if choice == 'follow' and case[:5] == 'false':
-                                # User followed, but agent was wrong
-                                policy[user][condition2str(condition)][recommendation][agent[user][condition2str(condition)][-1]]['follow bad'] += 1
-                            elif choice == 'ignore' and case[:4] == 'true':
-                                # User ignored, but agent was right
-                                policy[user][condition2str(condition)][recommendation][agent[user][condition2str(condition)][-1]]['ignore good'] += 1
-                        if choice == 'ignore' and entry['dead'] == 'True':
-                            behavior[user][condition2str(condition)] += 'w'
-                        else:
-                            behavior[user][condition2str(condition)] += 'r'
-                        agent[user][condition2str(condition)].append(case)
-                if not datum.has_key('acknowledgment'):
-                    datum['acknowledgment'] = False
-                # Condition check
-                datum['embodiment'] = condition['robot_embodiment']
-                decisions = sum([datum[case] for case in decisionCases])
-                datum['follow'] = sum([datum['follow_%s' % (case)] for case in decisionCases])
-                datum['ignore'] = sum([datum['ignore_%s' % (case)] for case in decisionCases])
-                # Update raw behavior sequence
+            if isinstance(user,int):
+                datum['gameID'] = 'WP%03d' % (user)
+                # Check for surveys
                 try:
-                    behaviors[condition2str(condition)][behavior[user][condition2str(condition)]] += 1
+                    datum['surveyID'] = surveyMap[datum['gameID']].upper()
                 except KeyError:
-                    behaviors[condition2str(condition)][behavior[user][condition2str(condition)]] = 1
-                csvRow[condition2str(condition)] = datum['ignore']
-            writer.writerow(csvRow)
-    with open('behaviors.csv','w') as csvfile:
-        fieldnames = ['Behavior']+sorted(conditionSet)
-        writer = csv.DictWriter(csvfile,fieldnames=fieldnames)
-        writer.writeheader()
-        observedBehavior = reduce(set.union,[set(table.keys()) for table in behaviors.values()])
-        for b in sorted(observedBehavior):
-            datum = {'Behavior': b}
-            for condition in conditionSet:
-                try:
-                    datum[condition] = behaviors[condition][b]
-                except KeyError:
-                    datum[condition] = 0
-            writer.writerow(datum)
-    with open('policies.csv','w') as csvfile:
-        fieldnames = sorted(sum([['%s Follow' % (c),'%s Ignore' % (c),'%s Follow Bad' % (c),
-                                  '%s Ignore Good' % (c)] for c in sorted(conditionSet)],[]))
-        fieldnames = ['Recommendation','Previous Outcome'] + fieldnames
-        writer = csv.DictWriter(csvfile,fieldnames=fieldnames)
-        writer.writeheader()
-        policies = {condition: {'yes': {'false-': dict(initial),
-                                        'true+': dict(initial),
-                                        'true-': dict(initial)},
-                                'no': {'false-': dict(initial),
-                                       'true+': dict(initial),
-                                       'true-': dict(initial)}} for condition in conditionSet}
-        for user,table in policy.items():
-            for condition,policyTable in table.items():
-                for recommendation in ['yes','no']:
-                    for outcome,counts in policyTable[recommendation].items():
-                        for field,count in counts.items():
-                            policies[condition][recommendation][outcome][field] += count
-        for recommendation in ['yes','no']:
-            for outcome in ['false-','true-','true+']:
-                datum = {'Recommendation': recommendation,
-                         'Previous Outcome': outcome}
-                for condition,policyTable in policies.items():
-                    if recommendation in policies[condition] and outcome in policies[condition][recommendation]:
-                        datum['%s Follow' % (condition)] = policyTable[recommendation][outcome]['follow']
-                        datum['%s Ignore' % (condition)] = policyTable[recommendation][outcome]['ignore']
-                        datum['%s Follow Bad' % (condition)] = policyTable[recommendation][outcome]['follow bad']
-                        datum['%s Ignore Good' % (condition)] = policyTable[recommendation][outcome]['ignore good']
-                writer.writerow(datum)
-    sys.exit()
-    # Write data to file
-    with open('wpdata.csv', 'w') as csvfile:
-        fieldnames = ['gameID','surveyID','mission','explanation','acknowledgment','embodiment','time','deaths']
-        fieldnames += decisionCases
-        fieldnames += ['follow','ignore']
-        fieldnames += ['follow_%s' % (case) for case in decisionCases]
-        fieldnames += ['ignore_%s' % (case) for case in decisionCases]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        for datum in data:
-            writer.writerow(datum)
-    for ids in remaining:
-        print >> sys.stderr,ids
+                    datum['surveyID'] = datum['gameID']
