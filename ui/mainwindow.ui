@@ -52,7 +52,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>25</height>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -87,6 +87,7 @@
     </property>
     <addaction name="actionAgent"/>
     <addaction name="actionLikelihood"/>
+    <addaction name="actionMap"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -242,6 +243,14 @@
   <action name="actionStep">
    <property name="text">
     <string>Step</string>
+   </property>
+  </action>
+  <action name="actionMap">
+   <property name="text">
+    <string>Map</string>
+   </property>
+   <property name="toolTip">
+    <string>Show map view of scenario</string>
    </property>
   </action>
  </widget>
