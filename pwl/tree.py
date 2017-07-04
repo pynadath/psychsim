@@ -5,6 +5,7 @@ from psychsim.action import Action
 
 from vector import KeyedVector
 from matrix import KeyedMatrix
+from plane import KeyedPlane
 
 class KeyedTree:
     """

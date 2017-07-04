@@ -3,7 +3,7 @@ from xml.dom.minidom import Document,Node
 
 from psychsim.probability import Distribution
 
-from vector import KeyedVector
+from vector import *
 from . import CONSTANT
 
 class KeyedMatrix(dict):
@@ -83,10 +83,24 @@ class KeyedMatrix(dict):
                 except KeyError:
                     result[product] = other[vector]
         else:
-            raise TypeError,'Unable to multiply %s by %s' % \
-                (self.__class__.__name__,other.__class__.__name__)
+            return NotImplemented
         return result
 
+    def __rmul__(self,other):
+        if isinstance(other,KeyedVector):
+            # Transform vector
+            result = KeyedVector()
+            for key in other.keys():
+                if self.has_key(key):
+                    for col in self[key].keys():
+                        try:
+                            result[col] += other[key]*self[key][col]
+                        except KeyError:
+                            result[col] = other[key]*self[key][col]
+        else:
+            return NotImplemented
+        return result
+            
     def getKeysIn(self):
         """
         @return: a set of keys which affect the result of multiplying by this matrix
@@ -126,20 +140,20 @@ class KeyedMatrix(dict):
                 result[row] = KeyedVector()
                 lo,hi = table[row]
                 constant = 0.
-                for col,value in vector.items():
+                for col,value in items():
                     if col == row:
                         # Same value
                         result[row][col] = value
                         constant += value*lo
                     elif col != CONSTANT:
                         # Scale weight for another feature
-                        if abs(value) > vector.epsilon:
+                        if abs(value) > epsilon:
                             assert table.has_key(col),'Unable to mix symbolic and numeric values in single vector'
                             colLo,colHi = table[col]
                             result[row][col] = value*(colHi-colLo)*(hi-lo)
                             constant += value*colLo
                 result[row][CONSTANT] = constant - lo
-                if vector.has_key(CONSTANT):
+                if has_key(CONSTANT):
                     result[row][CONSTANT] += vector[CONSTANT]
                 result[row][CONSTANT] /- (hi-lo)
             else:

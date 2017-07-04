@@ -69,20 +69,8 @@ class KeyedVector(dict):
             for key,value in self.items():
                 result[key] = value*other
             return result
-        elif isinstance(other,KeyedMatrix):
-            # Transform vector
-            result = KeyedVector()
-            for key in self.keys():
-                if other.has_key(key):
-                    for col in other[key].keys():
-                        try:
-                            result[col] += self[key]*other[key][col]
-                        except KeyError:
-                            result[col] = self[key]*other[key][col]
-            return result
         else:
-            raise TypeError,'Unable to multiply %s by %s' % \
-                (self.__class__.__name__,other.__class__.__name__)
+            return NotImplemented
 
     def __setitem__(self,key,value):
         self._string = None
