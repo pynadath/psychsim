@@ -2,8 +2,7 @@
 Class and function definitions for PieceWise Linear (PWL) representations
 """
 
-CONSTANT = ''
-
+from keys import *
 from vector import *
 from matrix import *
 from plane import *
