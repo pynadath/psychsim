@@ -222,10 +222,6 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     world.defineState(None,'time',float)
     world.setState(None,'time',0.)
 
-    world.defineState(None,'complete',bool)
-    world.setState(None,'complete',False)
-    world.addTermination(makeTree({'if': trueRow('complete'), True: True, False: False}))
-
     # Buildings
     threats = ['none','NBC','armed']
     for waypoint in WAYPOINTS[level]:
@@ -246,6 +242,10 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         key = world.defineState(waypoint['symbol'],'recommendation',list,
                                 ['none','protected','unprotected'])
         world.setFeature(key,'none')
+
+    # All done when every building has been visited
+    row = andRow([stateKey(wp['symbol'],'visited') for wp in WAYPOINTS[level]])
+    world.addTermination(makeTree({'if': row, True: True, False: False}))
 
     # Human
     human = Agent('human')
@@ -499,7 +499,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
     if world is None:
         # Get the world from the scenario file
         world = World(filename)
-    oldVector = world.state[None].domain()[0]
+    oldVector = world.state
     
     robot = world.agents['robot']
 
@@ -541,9 +541,13 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
         vector[key] = world.value2float(key,robotWaypoint['symbol'])
         vector['time'] = 0.
         key = stateKey(action['object'],'visited')
-        vector[key] = oldVector[key]
+        value = oldVector.marginal(key)
+        assert len(value) == 1
+        vector[key] = iter(value.domain()).next()
         key = turnKey(robot.name)
-        vector[key] = oldVector[key]
+        value = oldVector.marginal(key)
+        assert len(value) == 1
+        vector[key] = iter(value.domain()).next()
         outcome = world.stepFromState(vector,action)
         ER = robot.reward(outcome['new']) - robot.reward(vector)
         WriteLogData('ER(%s) = %4.2f' % (action,ER),username,level,root=root)
@@ -565,7 +569,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         # Get the world from the scenario file
         filename = getFilename(username,level,ext,root)
         world = World(filename)
-    oldVector = world.state[None].domain()[0]
+    oldVector = world.state
     robotIndex = symbol2index(location,level)
     beliefs = {'B_waypoint': WAYPOINTS[level][robotIndex]['name']}
     if recommendation == 'unprotected' and danger != 'none':
@@ -613,7 +617,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     if world is None:
         # Get the world from the scenario file
         world = World(filename)
-    oldVector = world.state[None].domain()[0]
+    oldVector = world.state
     
     robot = world.agents['robot']
 
@@ -643,7 +647,8 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         sensorCorrect = True
     # Generate individual sensor readings
     omega = {}
-    danger = world.float2value(key,oldVector[key])
+    danger = world.getFeature(key,oldVector)
+#    danger = world.float2value(key,oldVector[key])
     for sensor in robot.omega:
         try:
             omega[sensor] = robotWaypoint[sensor][sensorCorrect]
@@ -733,12 +738,12 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     key = stateKey(robotWaypoint['symbol'],'danger')
     subBeliefs.join(key,world.value2float(key,assessment))
     key = stateKey('human','alive')
-    subBeliefs.join(key,world.state[None].marginal(key))
+    subBeliefs.join(key,world.state.marginal(key))
     key = stateKey(robot.name,'embodiment')
-    subBeliefs.join(key,world.state[None].marginal(key))
-    subBeliefs.join('time',world.state[None].marginal('time'))
+    subBeliefs.join(key,world.state.marginal(key))
+    subBeliefs.join('time',world.state.marginal('time'))
     key = turnKey(robot.name)
-    subBeliefs.join(key,world.state[None].marginal(key))
+    subBeliefs.join(key,world.state.marginal(key))
     keyList = subBeliefs.domain()[0].keys()
     keyList.remove(CONSTANT)
     # Which recommendation is better?
@@ -911,9 +916,8 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
         recommendation = world.getState(index2symbol(waypoint,level),'recommendation').domain()[0]
         danger = world.getState(index2symbol(waypoint,level),'danger').domain()[0]
         print GetAcknowledgment(None,recommendation,location,danger,username,level,parameters,world)
-        
         if allVisited(world,level):
-            world.setFeature('complete',True)
+            world.setFeature(TERMINATED,True)
             world.save(getFilename(username,level),False)
         else:
             # Continue onward

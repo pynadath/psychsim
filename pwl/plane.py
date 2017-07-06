@@ -2,6 +2,7 @@ import operator
 from xml.dom.minidom import Node
 
 from vector import KeyedVector
+from psychsim.probability import Distribution
 
 class KeyedPlane:
     """
@@ -23,8 +24,14 @@ class KeyedPlane:
             self.threshold = threshold
             self.comparison = comparison
 
+    def keys(self):
+        return self.vector.keys()
+    
     def evaluate(self,vector):
         total = self.vector * vector
+        if isinstance(total,Distribution):
+            assert len(total) == 1,'Unable to handle uncertain test results'
+            total = iter(total.domain()).next()
         if self.comparison > 0:
             return total+self.vector.epsilon > self.threshold
         elif self.comparison < 0:

@@ -66,7 +66,7 @@ class KeyedTree:
                 children = self.children.values()
                 if not self.isLeaf():
                     # Keys also include those in the branch
-                    self._keysIn |= set(self.branch.vector.keys())
+                    self._keysIn |= set(self.branch.keys())
             # Accumulate keys across children
             for child in children:
                 if isinstance(child,KeyedVector):
@@ -84,29 +84,9 @@ class KeyedTree:
             self.getKeysIn()
         return self._keysOut
 
-    # def getKeys(self):
-    #     """
-    #     @return: a set of all keys references in this PWL function
-    #     """
-    #     if self.isProbabilistic():
-    #         # Keys are taken from each child
-    #         result = set()
-    #         children = self.children.domain()
-    #     else:
-    #         children = self.children.values()
-    #         if self.isLeaf():
-    #             result = set()
-    #         else:
-    #             # Keys also include those in the branch
-    #             result = set(self.branch.vector.keys())
-    #     # Accumulate keys across children
-    #     for child in children:
-    #         if isinstance(child,KeyedVector):
-    #             result |= set(child.keys())
-    #         elif not child is None and not isinstance(child,bool):
-    #             result |= child.getKeys()
-    #     return result
-
+    def keys(self):
+        return self.getKeysIn() | self.getKeysOut()
+        
     def collapseProbabilistic(self):
         """
         Utility method that combines any consecutive probabilistic branches at this node into a single distribution

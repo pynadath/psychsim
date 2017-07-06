@@ -80,7 +80,7 @@ class DependencyGraph(dict):
                                     'children': set()}
         # Create links from dynamics
         for key,dynamics in self.world.dynamics.items():
-            if world.isTurnKey(key):
+            if pwl.isTurnKey(key) or key == pwl.TERMINATED:
                 continue
             assert self.has_key(key),'Graph has not accounted for key: %s' % (key)
             if isinstance(dynamics,bool):

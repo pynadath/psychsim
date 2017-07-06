@@ -121,11 +121,8 @@ class KeyedMatrix(dict):
             self.getKeysIn()
         return self._keysOut
 
-    # def getKeys(self):
-    #     result = set()
-    #     for row in self.values():
-    #         result |= set(row.keys())
-    #     return result
+    def keys(self):
+        return self.getKeysIn() | self.getKeysOut()
 
     def desymbolize(self,table,debug=False):
         result = self.__class__()
