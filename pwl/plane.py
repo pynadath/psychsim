@@ -28,7 +28,15 @@ class KeyedPlane:
         return self.vector.keys()
     
     def evaluate(self,vector):
-        total = self.vector * vector
+        """
+        Tests whether the given vector passes or fails this test.
+        Also accepts a numeric value, in lieuf of doing a dot product.
+        @rtype: bool
+        """
+        if isinstance(vector,float):
+            total = vector
+        else:
+            total = self.vector * vector
         if isinstance(total,Distribution):
             assert len(total) == 1,'Unable to handle uncertain test results'
             total = iter(total.domain()).next()

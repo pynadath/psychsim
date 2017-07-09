@@ -242,6 +242,8 @@ class KeyedTree:
     def __mul__(self,other):
         if isinstance(other,KeyedTree):
             return self.compose(other,lambda x,y: x*y,lambda x,y: x*y)
+        elif isinstance(other,KeyedVector):
+            return self[other]*other
         else:
             return self*KeyedTree(other)
 

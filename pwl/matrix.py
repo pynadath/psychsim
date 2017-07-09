@@ -4,7 +4,7 @@ from xml.dom.minidom import Document,Node
 from psychsim.probability import Distribution
 
 from vector import *
-from . import CONSTANT
+from keys import CONSTANT,makeFuture
 
 class KeyedMatrix(dict):
     def __init__(self,arg={}):
@@ -54,6 +54,9 @@ class KeyedMatrix(dict):
         return self + (-other)
 
     def __mul__(self,other):
+        """
+        @warning: Muy destructivo for L{VectorDistributionSet}
+        """
         if isinstance(other,KeyedMatrix):
             result = KeyedMatrix()
             for r1,v1 in self.items():
@@ -205,7 +208,7 @@ def scaleMatrix(key,weight):
     @return: a dynamics matrix modifying the given keyed value by scaling it by the given weight
     @rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({key: weight})})
+    return KeyedMatrix({makeFuture(key): KeyedVector({key: weight})})
 def noChangeMatrix(key):
     """
     @return: a dynamics matrix indicating no change to the given keyed value
@@ -221,7 +224,8 @@ def approachMatrix(key,weight,limit):
     @return: a dynamics matrix modifying the given keyed value by approaching the given limit by the given weighted percentage of distance
     @rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({key: 1.-weight,CONSTANT: weight*limit})})
+    return KeyedMatrix({makeFuture(key): KeyedVector({key: 1.-weight,
+                                                      CONSTANT: weight*limit})})
 def incrementMatrix(key,delta):
     """
     @param delta: the constant value to add to the state feature
@@ -229,28 +233,28 @@ def incrementMatrix(key,delta):
     @return: a dynamics matrix incrementing the given keyed value by the constant delta
     @rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({key: 1.,CONSTANT: delta})})
+    return KeyedMatrix({makeFuture(key): KeyedVector({key: 1.,CONSTANT: delta})})
 def setToConstantMatrix(key,value):
     """
     @type value: float
     @return: a dynamics matrix setting the given keyed value to the constant value
     @rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({CONSTANT: value})})
+    return KeyedMatrix({makeFuture(key): KeyedVector({CONSTANT: value})})
 def setToFeatureMatrix(key,otherKey,pct=1.,shift=0.):
     """
     @type otherKey: str
     @return: a dynamics matrix setting the given keyed value to a percentage of another keyed value plus a constant shift (default is 100% with shift of 0)
     @rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({otherKey: pct,CONSTANT: shift})})
+    return KeyedMatrix({makeFuture(key): KeyedVector({otherKey: pct,CONSTANT: shift})})
 def addFeatureMatrix(key,otherKey,pct=1.):
     """
     @type otherKey: str
     @return: a dynamics matrix adding a percentage of another feature value to the given feature value (default percentage is 100%)
     @rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({key: 1.,otherKey: pct})})
+    return KeyedMatrix({makeFuture(key): KeyedVector({key: 1.,otherKey: pct})})
 def setTrueMatrix(key):
     return setToConstantMatrix(key,1.)
 def setFalseMatrix(key):

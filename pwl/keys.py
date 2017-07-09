@@ -3,6 +3,8 @@ CONSTANT = ''
 
 TERMINATED = '__END__'
 
+VALUE = '__VALUE__'
+
 def stateKey(name,feature,future=False):
     """
     @param future: if C{True}, then this refers to the projected value of this feature (default is C{False})

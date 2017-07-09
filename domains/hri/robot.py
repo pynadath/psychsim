@@ -244,8 +244,11 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         world.setFeature(key,'none')
 
     # All done when every building has been visited
-    row = andRow([stateKey(wp['symbol'],'visited') for wp in WAYPOINTS[level]])
-    world.addTermination(makeTree({'if': row, True: True, False: False}))
+    row = andRow([makeFuture(stateKey(wp['symbol'],'visited'))
+                  for wp in WAYPOINTS[level]])
+    world.addTermination(makeTree({'if': row,
+                                   True: setTrueMatrix(TERMINATED),
+                                   False: setFalseMatrix(TERMINATED)}))
 
     # Human
     human = Agent('human')
@@ -635,6 +638,12 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         if not robotWaypoint.has_key('symbol'):
             robotWaypoint['symbol'] = robotWaypoint['name'].replace(' ','')
 
+    action = Action({'subject': robot.name,
+                     'verb': 'moveto',
+                     'object': robotWaypoint['symbol']})
+    world.step(action)
+    world.printState()
+    sys.exit(0)
     world.setState(robotWaypoint['symbol'],'visited',True)
 #    print robotWaypoint['name']
 
