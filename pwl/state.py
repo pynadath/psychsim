@@ -22,6 +22,9 @@ class VectorDistributionSet:
             self.distributions[0] = VectorDistribution()
             self.keyMap[keys.CONSTANT] = 0
 
+    def keys(self):
+        return self.keyMap.keys()
+    
     def __iter__(self):
         """
         Iterate through elements of this set, with each element being a L{VectorDistributionSet} (with probability not necessarily 1)
@@ -146,18 +149,20 @@ class VectorDistributionSet:
         else:
             result = self.__class__()
         try:
-            destination = list(substates)[0]
-        except IndexError:
+            destination = iter(substates).next()
+        except StopIteration:
             return result
         for substate,distribution in self.distributions.items():
             if substate == destination:
                 if not inPlace:
                     result.distributions[substate] = copy.deepcopy(distribution)
             elif substate in substates:
-                result.distributions[destination].merge(distribution)
+                result.distributions[destination].merge(distribution,True)
+                if inPlace:
+                    del self.distributions[substate]
             elif not inPlace:
                 result.distributions[substate] = copy.deepcopy(distribution)
-        for key,substate in self.keyMap:
+        for key,substate in self.keyMap.items():
             if substate in substates:
                 result.keyMap[key] = destination
             elif not inPlace:
@@ -191,28 +196,33 @@ class VectorDistributionSet:
         self.distributions.clear()
         self.keyMap.clear()
 
-    def update(self,other):
-        neighbors = {}
-        # Who are my neighbors
-        change = True
-        for substate,dist in self.distributions.items()+other.distribution.items():
-            vector = iter(dist.domain()).next()
-            for key in vector.keys():
-                if not key in neighbors:
-                    neighbors[key] = set()
-                neighbors[key] |= {k for k in vector if k != key}
-        # Play the Kevin Bacon game
-        change = True
-        while change:
-            change = False
-            for key,nextDoor in neighbors.items():
-                for neighbor in nextDoor:
-                    for nextNextDoor in neighbors[neighbor]:
-                        if not nextNextDoor in nextDoor:
-                            change = True
-                            nextDoor.add(nextNextDoor)
-        print neighbors
-        raise UserWarning
+    def update(self,other,keySet):
+        # Anyone else mixed up in this?
+        toMerge = set(keySet)
+        for key in keySet:
+            # Any new keys in the same joint as this guy?
+            for newKey in self.keyMap:
+                if self.keyMap[key] == self.keyMap[newKey] or \
+                   other.keyMap[key] == other.keyMap[newKey]:
+                    # This key is in the same joint
+                    if len(self.distributions[self.keyMap[newKey]]) == 1 and \
+                       len(other.distributions[other.keyMap[newKey]]) == 1:
+                        # Maybe this key's value collapses into certainty?
+                        if self.marginal(newKey) == other.marginal(newKey):
+                            continue
+                    toMerge.add(newKey)
+        if len(toMerge) > 0: # If 0, no difference between self and other to begin with
+            # Prepare myself to merge
+            substates = {self.keyMap[k] for k in toMerge}
+            self.collapse(substates,False)
+            key = iter(toMerge).next()
+            destination = self.keyMap[key]
+            # Align and merge the other
+            substates = {other.keyMap[k] for k in toMerge}
+            other.collapse(substates,False)
+            dist = other.distributions[other.keyMap[key]]
+            for vector in dist.domain():
+                self.distributions[destination].addProb(vector,dist[vector])
                 
     def __add__(self,other):
         if isinstance(other,self.__class__):
@@ -223,7 +233,7 @@ class VectorDistributionSet:
                 result[substate] = value + other.distributions[substate]
             return result
         else:
-            raise NotImplemented
+            return NotImplemented
 
     def __sub__(self,other):
         if isinstance(other,self.__class__):
@@ -234,7 +244,7 @@ class VectorDistributionSet:
                 result.distributions[substate] = value - other.distributions[substate]
             return result
         else:
-            raise NotImplemented
+            return NotImplemented
 
     def __imul__(self,other):
         if isinstance(other,KeyedMatrix):
@@ -255,7 +265,7 @@ class VectorDistributionSet:
                 if len(result) == 1:
                     # We can create a new subset for this value
                     destination = max(self.keyMap.values())+1
-                    assert not destination in self.distributions,len(self.distributions[destination].domain())
+                    assert not destination in self.distributions,self.distributions[destination]
                     self.join(rowKey,result,destination)
                 elif destination is None:
                     # We can create a new subset for this value, but no more
@@ -271,7 +281,8 @@ class VectorDistributionSet:
                 raise UserWarning
             else:
                 # Evaluate the hyperplane and split the state
-                substates = self.substate(other.branch.keys())
+                branchKeys = set(other.branch.keys())
+                substates = self.substate(branchKeys)
                 self.collapse(substates)
                 self *= other.branch.vector
                 valSub = self.keyMap[keys.VALUE]
@@ -296,16 +307,17 @@ class VectorDistributionSet:
                         if len(vector) > 1:
                             falseState.distributions[valSub][vector] = prob
                         fPossible = True
+                existingKeys = set(self.keyMap.keys())
                 if tPossible:
                     if len(self.distributions[valSub].domain()) == 0:
                         del self.distributions[valSub]
                     self *= other.children[True]
                 if fPossible:
                     if tPossible:
-                        if len(falseState.distributions[valSub].domain()) == 0:
-                            del falseState.distributions[valSub]
+                        newKeys = set(other.getKeysOut())
+                        assert len(falseState.distributions[valSub].domain()) > 0
                         falseState *= other.children[False]
-                        self.update(falseState)
+                        self.update(falseState,newKeys|branchKeys)
                     else:
                         if len(falseState.distributions[valSub].domain()) > 0:
                             self.distributions[valSub] = falseState.distributions[valSub]
@@ -389,8 +401,8 @@ class VectorDistributionSet:
                     del distribution[vector]
                     vector[now] = vector[future]
                     del vector[future]
-                if len(vector) > 1:
-                    distribution[vector] = prob
+                    if len(vector) > 1:
+                        distribution[vector] = prob
             assert now in self.keyMap
             assert self.keyMap[now] in self.distributions,now
                 

@@ -620,7 +620,6 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     if world is None:
         # Get the world from the scenario file
         world = World(filename)
-    oldVector = world.state
     
     robot = world.agents['robot']
 
@@ -642,9 +641,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                      'verb': 'moveto',
                      'object': robotWaypoint['symbol']})
     world.step(action)
-    world.printState()
-    sys.exit(0)
-    world.setState(robotWaypoint['symbol'],'visited',True)
+#    world.setState(robotWaypoint['symbol'],'visited',True)
 #    print robotWaypoint['name']
 
     # Process scripted observations 
@@ -656,7 +653,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         sensorCorrect = True
     # Generate individual sensor readings
     omega = {}
-    danger = world.getFeature(key,oldVector)
+    danger = world.getFeature(key,world.state)
 #    danger = world.float2value(key,oldVector[key])
     for sensor in robot.omega:
         try:
@@ -742,31 +739,30 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
 
     # What are my new beliefs?
     value = {}
-    key = stateKey(robot.name,'waypoint')
-    subBeliefs = VectorDistribution({KeyedVector({CONSTANT: 1.,key: world.value2float(key,robotWaypoint['symbol'])}): 1.})
-    key = stateKey(robotWaypoint['symbol'],'danger')
-    subBeliefs.join(key,world.value2float(key,assessment))
-    key = stateKey('human','alive')
-    subBeliefs.join(key,world.state.marginal(key))
-    key = stateKey(robot.name,'embodiment')
-    subBeliefs.join(key,world.state.marginal(key))
-    subBeliefs.join('time',world.state.marginal('time'))
-    key = turnKey(robot.name)
-    subBeliefs.join(key,world.state.marginal(key))
-    keyList = subBeliefs.domain()[0].keys()
-    keyList.remove(CONSTANT)
+#    subBeliefs = copy.deepcopy(world.state)
+#    key = stateKey(robot.name,'waypoint')
+#    subBeliefs = VectorDistribution({KeyedVector({CONSTANT: 1.,key: world.value2float(key,robotWaypoint['symbol'])}): 1.})
+#    key = stateKey(robotWaypoint['symbol'],'danger')
+#    subBeliefs.join(key,world.value2float(key,assessment))
+    # key = stateKey('human','alive')
+    # subBeliefs.join(key,world.state.marginal(key))
+    # key = stateKey(robot.name,'embodiment')
+    # subBeliefs.join(key,world.state.marginal(key))
+    # subBeliefs.join('time',world.state.marginal('time'))
+    # key = turnKey(robot.name)
+    # subBeliefs.join(key,world.state.marginal(key))
+    # keyList = subBeliefs.domain()[0].keys()
+    # keyList.remove(CONSTANT)
     # Which recommendation is better?
-    for verb in ['recommend protected','recommend unprotected']:
-        value[verb] = 0.
+    for verb in ['recommend unprotected','recommend protected']:
         action = Action({'subject': robot.name,
                          'verb': verb,
                          'object': robotWaypoint['symbol']})
-        for newVector in subBeliefs.domain():
-            result = world.stepFromState(newVector,action)
-            assert len(result['new']) == 1
-            outcome = result['new'].domain()[0]
-            reward = subBeliefs[newVector]*robot.reward(outcome)
-            value[verb] += reward
+        subBeliefs = copy.deepcopy(world.state)
+        key = stateKey(robotWaypoint['symbol'],'danger')
+        subBeliefs.join(key,world.value2float(key,assessment))
+        result = world.stepFromState(subBeliefs,action)
+        value[verb] = robot.reward(subBeliefs)
         WriteLogData('Value of %s: %4.2f' % (verb,value[verb]),username,level,root=root)
     # Package up the separate components of my current model
     POMDP = {}
@@ -785,18 +781,23 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         world.setState(robotWaypoint['symbol'],'recommendation','protected')
         WriteLogData('%s: yes' % (RECOMMEND_TAG),username,level,root=root)
     # Add B_t, my current beliefs
-    for key in keyList:
-        belief = subBeliefs.marginal(key)
-        feature = state2feature(key)
-        best = belief.max()
-        POMDP['B_%s' % (feature)] = world.float2value(key,best)
-        if feature == 'waypoint':
-            POMDP['B_%s' % (feature)] = WAYPOINTS[level][symbol2index(POMDP['B_%s' % (feature)],level)]['name']
-        POMDP['B_maxprob'] = belief[best]
-        for value in belief.domain():
-            pct = round(100.*belief[value])
-            POMDP['B_%s_%s' % (feature,world.float2value(key,value))] = pct
-            POMDP['B_%s_not_%s' % (feature,world.float2value(key,value))] = 100-pct
+    for key in subBeliefs.keys():
+        if key != keys.CONSTANT:
+            entity = state2agent(key)
+            if entity != 'robot' and entity != robotWaypoint['symbol']:
+                continue
+            belief = subBeliefs.marginal(key)
+            feature = state2feature(key)
+            best = belief.max()
+            POMDP['B_%s' % (feature)] = world.float2value(key,best)
+            if feature == 'waypoint':
+                POMDP['B_%s' % (feature)] = WAYPOINTS[level][symbol2index(POMDP['B_%s' % (feature)],level)]['name']
+            POMDP['B_maxprob'] = belief[best]
+            for value in belief.domain():
+                pct = int(round(100.*belief[value]))
+                POMDP['B_%s_%s' % (feature,world.float2value(key,value))] = pct
+                POMDP['B_%s_not_%s' % (feature,world.float2value(key,value))] = 100-pct
+
     # Use fixed explanation
     # TODO: make this a dynamic decision by the robot
     mode = world.getState(robot.name,'explanation').max()

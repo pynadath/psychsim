@@ -110,10 +110,10 @@ class World:
         if state is None:
             state = self.state
         outcomes = []
-        # Iterate through each possible world
         if isinstance(state,VectorDistributionSet):
             outcomes.append(self.stepFromState(state,actions,keySubset,real))
         else:
+            # Iterate through each possible world
             oldStates = state.domain()
             for stateVector in oldStates:
                 prob = state[stateVector]
@@ -125,7 +125,7 @@ class World:
                 assert keySubset is None,'Cannot perform real step over a subset of keys'
                 state.clear()
                 for outcome in outcomes:
-                    if not outcome.has_key('new'):
+                    if not 'new' in outcome:
                         # No effect. Just keep moving
                         continue
                     elif isinstance(outcome['new'],psychsim.probability.Distribution):
@@ -184,7 +184,7 @@ class World:
                 if not (name in turn):
                     raise NameError('Agent %s must wait for its turn' % (name))
             for name in turn:
-                if not outcome['actions'].has_key(name):
+                if not name in outcome['actions']:
                     model = self.getModel(name,vector)
                     decision = self.agents[name].decide(vector,None,horizon,outcome['actions'],model,tiebreak)
                     outcome['decisions'][name] = decision
@@ -206,7 +206,7 @@ class World:
                 if len(effect) == 0:
                     # No consistent transition for this action (don't blame me, I'm just the messenger)
                     continue
-                elif outcome.has_key('new'):
+                elif 'new' in outcome:
                     for vector in effect['new'].domain():
                         try:
                             outcome['new'][vector] += effect['new'][vector]
@@ -219,11 +219,11 @@ class World:
         else:
             effect = self.effect(outcome['actions'],outcome['old'],1.,updateBeliefs,keySubset,real)
             outcome.update(effect)
-        if outcome.has_key('effect'):
-            if not outcome.has_key('new'):
+        if 'effect' in outcome:
+            if not 'new' in outcome:
                 # Apply effects
                 outcome['new'] = outcome['effect']*outcome['old']
-#            if not outcome.has_key('delta'):
+#            if not 'delta' in outcome:
 #                outcome['delta'] = outcome['new'] - outcome['old']
         else:
             # No consistent effect
@@ -257,7 +257,7 @@ class World:
                 if not (name in turn):
                     raise NameError('Agent %s must wait for its turn' % (name))
             for name in turn:
-                if not outcome['actions'].has_key(name):
+                if not name in outcome['actions']:
                     model = self.getModel(name,vector)
                     decision = self.agents[name].decide(vector,None,horizon,outcome['actions'],model,tiebreak)
                     outcome['decisions'][name] = decision
@@ -279,7 +279,7 @@ class World:
                 if len(effect) == 0:
                     # No consistent transition for this action (don't blame me, I'm just the messenger)
                     continue
-                elif outcome.has_key('new'):
+                elif 'new' in outcome:
                     for vector in effect['new'].domain():
                         try:
                             outcome['new'][vector] += effect['new'][vector]
@@ -292,11 +292,11 @@ class World:
         else:
             effect = self.effect(outcome['actions'],outcome['old'],1.,updateBeliefs,keySubset,real)
             outcome.update(effect)
-        if outcome.has_key('effect'):
-            if not outcome.has_key('new'):
+        if 'effect' in outcome:
+            if not 'new' in outcome:
                 # Apply effects
                 outcome['new'] = outcome['effect']*outcome['old']
-            if not outcome.has_key('delta'):
+            if not 'delta' in outcome:
                 print(outcome['new'].__class__,outcome['old'].__class__)
                 outcome['delta'] = outcome['new'] - outcome['old']
         else:
@@ -340,13 +340,16 @@ class World:
         if updateBeliefs:
             # Update agent models included in the original world (after finding out possible new worlds)
             if isinstance(vector,VectorDistributionSet):
-                agentsModeled = filter(lambda name: vector.keyMap.has_key(modelKey(name)),self.agents.keys())
+                agentsModeled = [name for name in self.agents.keys()
+                                 if modelKey(name) in vector.keyMap]
             else:
-                agentsModeled = [name for name in self.agents.keys() if vector.has_key(modelKey(name)) and \
-                                     (keySubset is None or modelKey(name) in keySubset)]
+                agentsModeled = [name for name in self.agents.keys()
+                                 if modelKey(name) in vector and \
+                                 (keySubset is None or modelKey(name) in keySubset)]
             for name in agentsModeled:
                 result['SE %s' % (name)] = {}
-                agentsModeled = filter(lambda name: vector.has_key(modelKey(name)),self.agents.keys())
+                agentsModeled = [name for name in self.agents.keys()
+                                 if modelKey(name) in vector]
             if agentsModeled:
                 delta = MatrixDistribution({psychsim.pwl.KeyedMatrix(): 1.})
                 for newVector in result['new'].domain():
@@ -355,7 +358,7 @@ class World:
                         key = modelKey(name)
                         agent = self.agents[name]
                         oldModel = self.getModel(name,vector)
-                        if not agent.models[oldModel].has_key('beliefs') or \
+                        if not 'beliefs' in agent.models[oldModel] or \
                                 agent.models[oldModel]['beliefs'] is True or \
                                 agent.getAttribute('static',oldModel):
                             # No need to update the model
@@ -374,7 +377,8 @@ class World:
                         if len(modelDistribution) > 0:
                             delta.update(modelDistribution)
                 for matrix in delta.domain():
-                    errors = [name for name in agentsModeled if not matrix.has_key(modelKey(name))]
+                    errors = [name for name in agentsModeled
+                              if not modelKey(name) in matrix]
                     if errors:
                         # Some agents have no consistent belief update
                         del delta[matrix]
@@ -445,7 +449,7 @@ class World:
         for key in keys:
             partial = self.singleDeltaVector(actions,old,key)
             if isinstance(partial,psychsim.pwl.KeyedVector):
-                if partial.has_key(key):
+                if key in partial:
                     new.join(key,psychsim.probability.Distribution({partial[key]: 1.}))
             else:
                 new.join(key,partial.marginal(key))
@@ -526,7 +530,7 @@ class World:
             dynamics = self.dynamics[TERMINATED]
         except KeyError:
             dynamics = self.dynamics[TERMINATED] = {}
-        if dynamics.has_key(action) and action is True:
+        if action in dynamics and action is True:
             raise DeprecationWarning,'Multiple termination conditions no longer supported. Please merge into single boolean PWL tree.'
         self.setDynamics(TERMINATED,action,tree)
 
@@ -571,9 +575,9 @@ class World:
         @rtype: bool
         """
         if isinstance(agent,str):
-            return self.agents.has_key(agent)
+            return agent in self.agents
         else:
-            return self.agents.has_key(agent.name)
+            return agent.name in self.agents
 
     def setTurnDynamics(self,name,action,tree):
         """
@@ -588,7 +592,7 @@ class World:
         if self.maxTurn is None:
             raise ValueError('Call setOrder before setting turn dynamics')
         key = turnKey(name)
-        if not self.variables.has_key(key):
+        if not key in self.variables:
             self.defineVariable(key,int,hi=self.maxTurn,evaluate=False)
         self.setDynamics(key,action,tree)
 
@@ -596,7 +600,7 @@ class World:
         if isinstance(action,Action):
             action = ActionSet(action)
         assert action is True or isinstance(action,ActionSet),'Action must be True/ActionSet/Action for addDynamics'
-        if not self.newDynamics.has_key(action):
+        if not action in self.newDynamics:
             self.newDynamics[action] = []
         tree = tree.desymbolize(self.symbols)
         keysIn = tree.getKeysIn()
@@ -621,12 +625,14 @@ class World:
                 action = Action(action)
             # Action -> ActionSet
             action = ActionSet([action])
-        assert self.variables.has_key(key),'No state element "%s"' % (key) 
+        assert key in self.variables,'No state element "%s"' % (key) 
         if not action is True:
             for atom in action:
-                assert self.agents.has_key(atom['subject']),'Unknown actor %s' % (atom['subject'])
-                assert self.agents[atom['subject']].hasAction(atom),'Unknown action %s' % (atom)
-        if not self.dynamics.has_key(key):
+                assert atom['subject'] in self.agents,\
+                    'Unknown actor %s' % (atom['subject'])
+                assert self.agents[atom['subject']].hasAction(atom),\
+                    'Unknown action %s' % (atom)
+        if not key in self.dynamics:
             self.dynamics[key] = {}
         # Translate symbolic names into numeric values
         tree = tree.desymbolize(self.symbols)
@@ -639,7 +645,7 @@ class World:
         self.dynamics[key][action] = tree
 
     def getDynamics(self,key,action,state=None):
-        if not self.dynamics.has_key(key):
+        if not key in self.dynamics:
             return []
         if isinstance(action,Action):
             return self.getDynamics(key,ActionSet([action]),state)
@@ -672,7 +678,7 @@ class World:
                             dynamics.append(tree.desymbolize(table))
             if len(dynamics) == 0:
                 # No action-specific dynamics, fall back to default dynamics
-                if self.dynamics[key].has_key(True):
+                if True in self.dynamics[key]:
                     dynamics.append(self.dynamics[key][True])
             return dynamics
 
@@ -698,7 +704,7 @@ class World:
             for name in names:
                 key = turnKey(name)
                 self.turnKeys.add(key)
-                if not self.variables.has_key(key):
+                if not key in self.variables:
                     if self.turnSubstate == None:
                         self.turnSubstate = max(self.state.distributions.keys())+1
                     self.defineVariable(key,int,hi=self.maxTurn,evaluate=False,substate=self.turnSubstate)
@@ -725,7 +731,7 @@ class World:
             for element in distribution.domain():
                 names = self.next(element)
                 label = ','.join(names)
-                if results.has_key(label):
+                if label in results:
                     results[label]['worlds'][element] = distribution[element]
                 else:
                     results[label] = {'agents': names,
@@ -746,7 +752,8 @@ class World:
         @warning: assumes that no one is acting out of turn
         @return: the new turn sequence resulting from the performance of the given actions
         """
-        potentials = [name for name in self.agents.keys() if vector.has_key(turnKey(name))]
+        potentials = [name for name in self.agents.keys()
+                      if turnKey(name) in vector]
         if len(potentials) == 0:
             return None
         if self.maxTurn is None:
@@ -849,7 +856,7 @@ class World:
         @param combinator: how should multiple dynamics for this variable be combined
         @param substate: name of independent state subvector this variable belongs to
         """
-        if self.variables.has_key(key):
+        if key in self.variables:
             raise NameError('Variable %s already defined' % (key))
         if key[-1] == "'":
             raise ValueError('Ending single-quote reserved for indicating future state')
@@ -867,7 +874,7 @@ class World:
                 'Please provide set/list of elements for features of the set/list type'
             self.variables[key].update({'elements': lo,'lo': None,'hi': None})
             for element in lo:
-                if not self.symbols.has_key(element):
+                if not element in self.symbols:
                     self.symbols[element] = len(self.symbols)
                     self.symbolList.append(element)
         elif domain is bool:
@@ -875,7 +882,7 @@ class World:
         elif domain is ActionSet:
             # The actions of an agent
             if isinstance(lo,float):
-                assert self.agents.has_key(key)
+                assert key in self.agents
                 lo = self.agents[key].actions
             self.variables[key].update({'elements': lo,'lo': None,'hi': None})
             for action in lo:
@@ -896,7 +903,7 @@ class World:
         @param state: the state distribution to modify (default is the current world state)
         @type state: L{VectorDistribution}
         """
-        assert self.variables.has_key(key),'Unknown element "%s"' % (key)
+        assert key in self.variables,'Unknown element "%s"' % (key)
         if state is None:
             state = self.state
         state.join(key,self.value2float(key,value),self.variables[key]['substate'])
@@ -967,7 +974,7 @@ class World:
         """
         if state is None:
             state = self.state
-        assert self.variables.has_key(key),'Unknown element "%s"' % (key)
+        assert key in self.variables,'Unknown element "%s"' % (key)
         marginal = state.marginal(key)
         assert isinstance(marginal,psychsim.probability.Distribution)
         return self.float2value(key,marginal)
@@ -1065,7 +1072,7 @@ class World:
         agent = self.agents[modelee]
         if isinstance(vector,VectorDistributionSet):
             key = modelKey(modelee)
-            if self.variables.has_key(key):
+            if key in self.variables:
                 model = self.getValue(key,vector)
             else:
                 model = True
@@ -1090,7 +1097,7 @@ class World:
                 distribution.replace(element,float(self.agents[modelee].model2index(element)))
         distribution.normalize()
         key = modelKey(modelee)
-        if not self.variables.has_key(key):
+        if not key in self.variables:
             self.defineVariable(key)
         if isinstance(state,str):
             # This is the name of the modeling agent (*cough* hack *cough*)
@@ -1140,7 +1147,7 @@ class World:
                 # Look for models of each agent
                 for name,agent in self.agents.items():
                     key = modelKey(name)
-                    if vector.has_key(key):
+                    if key in vector:
                         # This world specifies an active model
                         model = agent.index2model(vector[key])
                     elif realWorld:
@@ -1154,7 +1161,7 @@ class World:
                             parents[name][agent.models[model]['parent']].append(model)
                         except KeyError:
                             parents[name][agent.models[model]['parent']] = [model]
-                        if agent.models[model].has_key('beliefs'):
+                        if 'beliefs' in agent.models[model]:
                             while not isinstance(agent.models[model]['beliefs'],psychsim.pwl.VectorDistribution):
                                 # Beliefs are symbolic link to another model
                                 model = agent.models[model]['beliefs']
@@ -1172,7 +1179,7 @@ class World:
 #        for name,active in children.items():
 #            agent = self.agents[name]
 #            for model in agent.models.keys():
-#                if not model in active and not parents[name].has_key(model):
+#                if not model in active and not model in parents[name]:
 #                    # Inactive model with no dependencies
 #                    agent.deleteModel(model)
         if check:
@@ -1208,7 +1215,7 @@ class World:
                             for alternative in self.agents[actor].getActions(outcome['old']):
                                 # Evaluate all available actions with respect to the hypothesized mental model
                                 V[alternative] = self.agents[actor].value(state,alternative,model=hypothesis['name'])['V']
-                            if not V.has_key(actions):
+                            if not actions in V:
                                 # Agent performed a non-prescribed action
                                 V[actions] = self.agents[actor].value(state,alternative,model=hypothesis['name'])['V']
                             # Convert into probability distribution of observed action given hypothesized mental model
@@ -1236,23 +1243,23 @@ class World:
         remaining = dict(vector)
         # Handle defined state features
         for key,entry in self.variables.items():
-            if remaining.has_key(key):
+            if key in remaining:
                 new = scaleValue(remaining[key],entry)
                 result[key] = new
                 del remaining[key]
         for name in self.agents.keys():
             # Handle turns
             key = turnKey(name)
-            if remaining.has_key(key):
+            if key in remaining:
                 result[key] = remaining[key] / len(self.agents)
                 del remaining[key]
             # Handle models
             key = modelKey(name)
-            if remaining.has_key(key):
+            if key in remaining:
                 result[key] = remaining[key] / len(self.agents[name].models)
                 del remaining[key]
         # Handle constant term
-        if remaining.has_key(CONSTANT):
+        if CONSTANT in remaining:
             result[CONSTANT] = remaining[CONSTANT]
             del remaining[CONSTANT]
         if remaining:
@@ -1284,7 +1291,7 @@ class World:
                 self.printVector(vector)
             node = vector.filter(ignore)
             # If no entry yet, then this is a start node
-            if not transition.has_key(node):
+            if not node in transition:
                 transition[node] = {'__predecessors__': set()}
             # Process next steps from this state
             if not self.terminated(vector) and horizon != 0:
@@ -1300,7 +1307,7 @@ class World:
                             self.printVector(newVector)
                         newNode = newVector.filter(ignore)
                         transition[node][actions][newNode] = future[newVector]
-                        if transition.has_key(newNode):
+                        if newNode in transition:
                             transition[newNode]['__predecessors__'].add(node)
                         else:
                             envelope.add((newNode,horizon-1))
@@ -1339,10 +1346,10 @@ class World:
         """
         for outcome in outcomes:
             if level > 0: print('%d%%' % (outcome['probability']*100.),file=buf)
-            if outcome.has_key('actions'):
+            if 'actions' in outcome:
                 self.explainAction(outcome,buf,level)
                 for name,action in outcome['actions'].items():
-                    if not outcome['decisions'].has_key(name):
+                    if not name in outcome['decisions']:
                         # No decision made
                         if level > 1: print(buf,'\tforced',file=buf)
                     elif level > 1:
@@ -1360,7 +1367,7 @@ class World:
         """
         Subroutine of L{explain} for explaining agent decisions
         """
-        if not decision.has_key('V'):
+        if not 'V' in decision:
             # No value function
             return
         actions = decision['V'].keys()
@@ -1411,7 +1418,7 @@ class World:
                     entity = keys.state2agent(key)
                     if entity is None:
                         feature = keys.state2feature(key)
-                        key = stateKey('__WORLD__',feature)
+                        key = stateKey(keys.WORLD,feature)
                     if minKeys[substate] is None or key < minKeys[substate]:
                         minKeys[substate] = key
             minKeys = [(k,s) for s,k in minKeys.items()]
@@ -1472,16 +1479,16 @@ class World:
             except KeyError:
                 table = {}
             if entity is None:
-                label = 'World'
+                label = keys.WORLD
             else:
-                if vector.has_key(entity):
+                if entity in vector:
                     # Action performed in this vector
                     table['__action__'] = entity
                 label = entity
             newEntity = True
             # Print state features for this entity
             for feature,key in table.items():
-                if vector.has_key(key):
+                if key in vector:
                     value = self.float2value(key,vector[key])
                     if csv:
                         elements.append(label)
@@ -1489,7 +1496,7 @@ class World:
                         elements.append(value)
                     else:
                         future = makeFuture(key)
-                        if vector.has_key(future):
+                        if future in vector:
                             fValue = self.float2value(key,vector[future])
                             if fValue != value:
                                 value = '%s->%s' % (value,fValue)
@@ -1508,9 +1515,9 @@ class World:
                         print('%s\t%-12s\t%-12s\t%s' % (start,label,feature+':',
                                                         value),file=buf)
             # Print relationships
-            if relations.has_key(entity):
+            if entity in relations:
                 for link,obj,key in relations[entity]:
-                    if vector.has_key(key):
+                    if key in vector:
                         if newEntity:
                             print('\t%-12s' % (label),file=buf)
                             newEntity = False
@@ -1519,7 +1526,7 @@ class World:
             if not entity is None:
                 # Print model of this entity
                 key = modelKey(entity)
-                if vector.has_key(key):
+                if key in vector:
                     if csv:
                         elements.append(label)
                         elements.append('__model__')
@@ -1560,9 +1567,9 @@ class World:
             for name in self.agents.keys():
                 # Look for change in mental model of this agent
                 key = modelKey(name)
-                if vector.has_key(key):
+                if key in vector:
                     deltakeys.append(key)
-                    if not old.has_key(key):
+                    if not key in old:
                         old = psychsim.pwl.KeyedVector(vector)
                         old[key] = self.agents[name].model2index(True)
             for key in deltakeys:
@@ -1605,7 +1612,7 @@ class World:
             subnode.setAttribute('name',key)
             subnode.setAttribute('domain',entry['domain'].__name__)
             for coord in ['xpre','ypre','xpost','ypost']:
-                if entry.has_key(coord):
+                if coord in entry:
                     subnode.setAttribute(coord,str(entry[coord]))
             if not entry['lo'] is None:
                 subnode.setAttribute('lo',str(entry['lo']))
@@ -1680,9 +1687,9 @@ class World:
             for outcome in entry:
                 subsubnode = doc.createElement('outcome')
                 for name in self.agents.keys():
-                    if outcome.has_key('actions') and outcome['actions'].has_key(name):
+                    if 'actions' in outcome and name in outcome['actions']:
                         subsubnode.appendChild(outcome['actions'][name].__xml__().documentElement)
-        #        if outcome.has_key('delta'):
+        #        if 'delta' in outcome:
         #            subsubnode.appendChild(outcome['delta'].__xml__().documentElement)
                 subsubnode.appendChild(outcome['old'].__xml__().documentElement)
                 subnode.appendChild(subsubnode)
