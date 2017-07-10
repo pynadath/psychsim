@@ -1,9 +1,9 @@
 
+# Special keys
 CONSTANT = ''
-
 TERMINATED = '__END__'
-
 VALUE = '__VALUE__'
+WORLD = '__WORLD__'
 
 def stateKey(name,feature,future=False):
     """
