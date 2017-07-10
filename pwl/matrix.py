@@ -46,7 +46,7 @@ class KeyedMatrix(dict):
             except KeyError:
                 result[key] = KeyedVector(vector)
         for key,vector in other.items():
-            if not result.has_key(key):
+            if not key in result:
                 result[key] = KeyedVector(vector)
         return result
 
@@ -62,7 +62,7 @@ class KeyedMatrix(dict):
             for r1,v1 in self.items():
                 result[r1] = KeyedVector()
                 for c1,value1 in v1.items():
-                    if other.has_key(c1):
+                    if c1 in other:
                         for c2,value2 in other[c1].items():
                             try:
                                 result[r1][c2] += value1*value2
@@ -72,7 +72,7 @@ class KeyedMatrix(dict):
             result = KeyedVector()
             for r1,v1 in self.items():
                 for c1,value1 in v1.items():
-                    if other.has_key(c1):
+                    if c1 in other:
                         try:
                             result[r1] += value1*other[c1]
                         except KeyError:
@@ -94,7 +94,7 @@ class KeyedMatrix(dict):
             # Transform vector
             result = KeyedVector()
             for key in other.keys():
-                if self.has_key(key):
+                if key in self:
                     for col in self[key].keys():
                         try:
                             result[col] += other[key]*self[key][col]
@@ -136,7 +136,7 @@ class KeyedMatrix(dict):
     def scale(self,table):
         result = self.__class__()
         for row,vector in self.items():
-            if table.has_key(row):
+            if row in table:
                 result[row] = KeyedVector()
                 lo,hi = table[row]
                 constant = 0.
@@ -148,12 +148,12 @@ class KeyedMatrix(dict):
                     elif col != CONSTANT:
                         # Scale weight for another feature
                         if abs(value) > epsilon:
-                            assert table.has_key(col),'Unable to mix symbolic and numeric values in single vector'
+                            assert col in table,'Unable to mix symbolic and numeric values in single vector'
                             colLo,colHi = table[col]
                             result[row][col] = value*(colHi-colLo)*(hi-lo)
                             constant += value*colLo
                 result[row][CONSTANT] = constant - lo
-                if has_key(CONSTANT):
+                if CONSTANT in vector:
                     result[row][CONSTANT] += vector[CONSTANT]
                 result[row][CONSTANT] /- (hi-lo)
             else:
