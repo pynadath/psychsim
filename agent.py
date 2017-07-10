@@ -532,7 +532,7 @@ class Agent:
                         # Compute agent's reward but don't recurse any further
                         ER = self.world.agents[tree].reward(vector,model,False)
                 else:
-                    ER = tree[vector]*self.world.scaleState(vector)
+                    ER = tree[vector]*vector #self.world.scaleState(vector)
                 total += ER*weight
         return total
 
