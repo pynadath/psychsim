@@ -1,9 +1,10 @@
+import collections
 from xml.dom.minidom import Document,Node
 
 from psychsim.probability import Distribution
 import keys
 
-class KeyedVector(dict):
+class KeyedVector(collections.MutableMapping):
     """
     Class for a compact, string-indexable vector
     @cvar epsilon: the margin used for equality of vectors (as well as for testing hyperplanes in L{KeyedPlane})
@@ -14,12 +15,13 @@ class KeyedVector(dict):
     epsilon = 1e-8
 
     def __init__(self,arg={}):
+        collections.MutableMapping.__init__(self)
+        self._data = {}
+        self._string = None
         if isinstance(arg,Node):
-            dict.__init__(self)
             self.parse(arg)
         else:
-            dict.__init__(self,arg)
-        self._string = None
+            self._data.update(arg)
 
     def __eq__(self,other):
         delta = 0.
@@ -61,7 +63,7 @@ class KeyedVector(dict):
             # Dot product
             total = 0.
             for key,value in self.items():
-                if other.has_key(key):
+                if key in other:
                     total += value*other[key]
             return total
         elif isinstance(other,float):
@@ -73,14 +75,23 @@ class KeyedVector(dict):
         else:
             return NotImplemented
 
+    def __getitem__(self,key):
+        return self._data[key]
+    
     def __setitem__(self,key,value):
         self._string = None
-        dict.__setitem__(self,key,value)
+        self._data[key] = value
 
     def __delitem__(self,key):
         self._string = None
-        dict.__delitem__(self,key)
+        del self._data[key]
 
+    def __iter__(self):
+        return self._data.__iter__()
+    
+    def __len__(self):
+        return len(self._data)
+            
     def desymbolize(self,table,debug=False):
         result = self.__class__()
         for key,value in self.items():
@@ -180,6 +191,13 @@ class VectorDistribution(Distribution):
             args = {KeyedVector({keys.CONSTANT:1.}):1.}
         Distribution.__init__(self,args)
 
+    def keys(self):
+        """
+        @return: The keys of the vectors in the domain (assumed to be uniform),
+        NOT the keys of the domain itself
+        """
+        return iter(self.domain()).next().keys()
+    
     def join(self,key,value):
         """
         Modifies the distribution over vectors to have the given value for the given key
@@ -201,20 +219,33 @@ class VectorDistribution(Distribution):
                 row[key] = value
                 self[row] = prob
 
-    def merge(self,other):
+    def merge(self,other,inPlace=False):
         """
         Merge two distributions (the passed-in distribution takes precedence over this one in case of conflict)
         @type other: L{VectorDistribution}
+        @param inPlace: if C{True}, modify this distribution directly; otherwise, return a new distribution (default is C{False})
+        @type inPlace: bool
         @return: the merged distribution
         @rtype: L{VectorDistribution}
         """
-        result = {}
+        if inPlace:
+            result = self
+        else:
+            result = {}
         for diff in other.domain():
             for old in self.domain():
-                new = old.__class__(old)
+                prob = self[old]
+                if inPlace:
+                    new = old
+                    del self[old]
+                else:
+                    new = old.__class__(old)
                 new.update(diff)
-                result[new] = self[old]*other[diff]
-        return self.__class__(result)
+                result[new] = prob*other[diff]
+        if inPlace:
+            return self
+        else:
+            return self.__class__(result)
         
     def element2xml(self,value):
         return value.__xml__().documentElement
