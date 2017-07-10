@@ -257,7 +257,11 @@ class VectorDistributionSet:
                 result = Distribution()
                 # Go through the inputs to the new value
                 for colKey in vector.keys():
-                    substate = self.keyMap[colKey]
+                    if colKey == keys.CONSTANT:
+                        # Doesn't really matter
+                        substate = self.distributions.keys()[0]
+                    else:
+                        substate = self.keyMap[colKey]
                     # Go through the distribution subset containing this key
                     for state in self.distributions[substate].domain():
                         result.addProb(vector[colKey]*state[colKey],
@@ -278,7 +282,7 @@ class VectorDistributionSet:
             if other.isLeaf():
                 self *= other.children[None]
             elif other.isProbabilistic():
-                raise UserWarning
+                raise NotImplementedError,'This is so easy to implement.'
             else:
                 # Evaluate the hyperplane and split the state
                 branchKeys = set(other.branch.keys())
@@ -347,12 +351,18 @@ class VectorDistributionSet:
                 self.distributions[destination][vector] = prob
         else:
             return NotImplemented
+        for s in self.distributions:
+            assert s in self.keyMap.values(),self.distributions[s]
+        for k,s in self.keyMap.items():
+            if k != keys.CONSTANT:
+                assert s in self.distributions
         return self
 
     def __rmul__(self,other):
         if isinstance(other,KeyedVector):
             self *= other
-            distribution = self.distributions[self.keyMap[keys.VALUE]]
+            substate = self.keyMap[keys.VALUE]
+            distribution = self.distributions[substate]
             del self.keyMap[keys.VALUE]
             total = 0.
             for vector in distribution.domain():
@@ -360,7 +370,15 @@ class VectorDistributionSet:
                 del distribution[vector]
                 total += prob*vector[keys.VALUE]
                 del vector[keys.VALUE]
-                distribution[vector] = prob
+                if len(vector) > 1:
+                    distribution[vector] = prob
+            if len(distribution) == 0:
+                del self.distributions[substate]
+            for s in self.distributions:
+                assert s in self.keyMap.values(),self.distributions[s]
+            for k,s in self.keyMap.items():
+                if k != keys.CONSTANT:
+                    assert s in self.distributions
             return total
         else:
             return NotImplemented
@@ -405,6 +423,11 @@ class VectorDistributionSet:
                         distribution[vector] = prob
             assert now in self.keyMap
             assert self.keyMap[now] in self.distributions,now
+        for s in self.distributions:
+            assert s in self.keyMap.values(),self.distributions[s]
+        for k,s in self.keyMap.items():
+            if k != keys.CONSTANT:
+                assert s in self.distributions,'%s: %s' % (k,s)
                 
     def __xml__(self):
         doc = Document()

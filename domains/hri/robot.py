@@ -539,22 +539,25 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
     values = []
     actions = robot.getActions(oldVector)
     for action in actions:
-        vector = KeyedVector({CONSTANT: 1.})
-        key = stateKey(robot.name,'waypoint')
-        vector[key] = world.value2float(key,robotWaypoint['symbol'])
-        vector['time'] = 0.
-        key = stateKey(action['object'],'visited')
-        value = oldVector.marginal(key)
-        assert len(value) == 1
-        vector[key] = iter(value.domain()).next()
-        key = turnKey(robot.name)
-        value = oldVector.marginal(key)
-        assert len(value) == 1
-        vector[key] = iter(value.domain()).next()
-        outcome = world.stepFromState(vector,action)
-        ER = robot.reward(outcome['new']) - robot.reward(vector)
+        # vector = KeyedVector({CONSTANT: 1.})
+        # key = stateKey(robot.name,'waypoint')
+        # vector[key] = world.value2float(key,robotWaypoint['symbol'])
+        # vector['time'] = 0.
+        # key = stateKey(action['object'],'visited')
+        # value = oldVector.marginal(key)
+        # assert len(value) == 1
+        # vector[key] = iter(value.domain()).next()
+        # key = turnKey(robot.name)
+        # value = oldVector.marginal(key)
+        # assert len(value) == 1
+        # vector[key] = iter(value.domain()).next()
+        # outcome = world.stepFromState(vector,action)
+        # ER = robot.reward(outcome['new']) - robot.reward(vector)
+        beliefs = copy.deepcopy(world.state)
+        outcome = world.stepFromState(beliefs,action)
+        ER = robot.reward(outcome['new']) 
         WriteLogData('ER(%s) = %4.2f' % (action,ER),username,level,root=root)
-        values.append((ER,action,outcome['delta']))
+        values.append((ER,action))
     best = max(values)
     decision = list(best[1])[0]
     destination = decision['object']
