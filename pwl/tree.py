@@ -561,12 +561,12 @@ def makeTree(table):
     elif isinstance(table,frozenset):
         # Set leaf (e.g., ActionSet for a policy)
         return KeyedTree(table)
-    elif table.has_key('if'):
+    elif 'if' in table:
         # Deterministic branch
         tree = KeyedTree()
         tree.makeBranch(table['if'],makeTree(table[True]),makeTree(table[False]))
         return tree
-    elif table.has_key('distribution'):
+    elif 'distribution'in table:
         # Probabilistic branch
         tree = KeyedTree()
         branch = {}
