@@ -55,7 +55,7 @@ class Agent:
     """Policy methods"""
     """------------------"""
 
-    def decide(self,vector,horizon=None,others=None,model=None,selection=None,actions=None,keys=None):
+    def decide(self,vector,horizon=None,others=None,model=None,selection=None,actions=None,keySet=None):
         """
         Generate an action choice for this agent in the given state
         @param vector: the current state in which the agent is making its decision
@@ -74,7 +74,7 @@ class Agent:
            - C{None}: use the selection method specified by the given model (default)
         @type selection: str
         @param actions: possible action choices (default is all legal actions)
-        @param keys: subset of state features to project over (default is all state features)
+        @param keySet: subset of state features to project over (default is all state features)
         """
         if model is None:
             model = self.world.getModel(self.name,vector)
@@ -86,7 +86,7 @@ class Agent:
         policy = self.getAttribute('policy',model)
         if policy:
             assert len(belief) == 1,'Unable to apply PWL policies to uncertain beliefs'
-            action = policy[belief.domain()[0]]
+            action = policy[iter(belief.domain()).next()]
             if action:
                 if isinstance(action,Action):
                     action = ActionSet([action])
@@ -95,14 +95,12 @@ class Agent:
             horizon = self.getAttribute('horizon',model)
         if actions is None:
             # Consider all legal actions (legality determined by my belief, circumscribed by real world)
-            actions = self.getActions(vector)
-            for state in belief.domain():
-                actions = actions & self.getActions(state) 
+            actions = self.getActions(vector) & self.getActions(belief) 
         if len(actions) == 0:
             # Someone made a boo-boo because there is no legal action for this agent right now
             buf = StringIO.StringIO()
             print >> buf,'%s has no legal actions in:' % (self.name)
-            self.world.printVector(vector,buf)
+            self.world.printState(vector,buf)
             print >> buf,'\nwhen believing:'
             self.world.printState(belief,buf)
             msg = buf.getvalue()
@@ -116,22 +114,25 @@ class Agent:
         best = None
         for action in actions:
             # Compute value across possible worlds
-            V[action] = {'__EV__': 0.}
-            if isinstance(keys,dict):
-                subkeys = keys[action]
+            V[action] = {'__EV__': 0.,'__ER__': []}
+            if isinstance(keySet,dict):
+                subkeys = keySet[action]
             else:
-                subkeys = keys
-            for state in belief.domain():
-                V[action][state] = self.value(state,action,horizon,others,model,subkeys)
-                V[action]['__EV__'] += belief[state]*V[action][state]['V']
-            if len(V[action]) > 1:
-                # Determine whether this action is the best
-                if best is None:
-                    best = [action]
-                elif V[action]['__EV__'] == V[best[0]]['__EV__']:
-                    best.append(action)
-                elif V[action]['__EV__'] > V[best[0]]['__EV__']:
-                    best = [action]
+                subkeys = keySet
+            current = copy.deepcopy(belief)
+            start = action
+            for t in range(horizon):
+                outcome = self.world.step(start,current,keySubset=subkeys)
+                V[action]['__ER__'].append(self.reward(current))
+                V[action]['__EV__'] += V[action]['__ER__'][-1]
+                start = None
+            # Determine whether this action is the best
+            if best is None:
+                best = [action]
+            elif V[action]['__EV__'] == V[best[0]]['__EV__']:
+                best.append(action)
+            elif V[action]['__EV__'] > V[best[0]]['__EV__']:
+                best = [action]
         result = {'V*': V[best[0]]['__EV__'],'V': V}
         # Make an action selection based on the value function
         if selection == 'distribution':
@@ -200,7 +201,7 @@ class Agent:
                     turn = copy.copy(others)
                 if not action is None:
                     turn[self.name] = action
-                outcome = self.world.stepFromState(vector,turn,horizon,keys=keys)
+                outcome = self.world.stepFromState(vector,turn,horizon,keySubset=keys)
                 if not outcome.has_key('new'):
                     # No consistent outcome
                     pass
@@ -519,6 +520,21 @@ class Agent:
         elif isinstance(vector,VectorDistribution):
             for element in vector.domain():
                 total += vector[element]*self.reward(element,model,recurse)
+        elif isinstance(vector,VectorDistributionSet):
+            R = self.getAttribute('R',model)
+            if R is None:
+                # No reward components
+                return total
+            for tree,weight in R.items():
+                if isinstance(tree,str):
+                    if recurse:
+                        # Name of an agent I'm trying to make (un)happy
+                        model = self.world.getModel(tree,vector)
+                        # Compute agent's reward but don't recurse any further
+                        ER = self.world.agents[tree].reward(vector,model,False)
+                else:
+                    ER = tree*vector
+                total += ER*weight
         else:
             R = self.getAttribute('R',model)
             if R is None:
@@ -532,7 +548,7 @@ class Agent:
                         # Compute agent's reward but don't recurse any further
                         ER = self.world.agents[tree].reward(vector,model,False)
                 else:
-                    ER = tree[vector]*vector #self.world.scaleState(vector)
+                    ER = tree[vector]*self.world.scaleState(vector)
                 total += ER*weight
         return total
 
@@ -715,7 +731,7 @@ class Agent:
         """
         if model is None:
             model = self.world.getModel(self.name,vector)
-        world = VectorDistribution({vector: 1.})
+        world = copy.deepcopy(vector)
         beliefs = self.getAttribute('beliefs',model)
         if not beliefs is True:
             world = world.merge(beliefs)
