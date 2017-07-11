@@ -42,6 +42,13 @@ class Distribution(dict):
                     self[key] = math.exp(rationality*V)
                 self.normalize()
 
+    def singleton(self):
+        """
+        If there is only one element in the domain of this distribution, return it
+        """
+        assert len(self.domain()) == 1
+        return iter(self.domain()).next()
+    
     def __getitem__(self,element):
         key = str(element)
         return dict.__getitem__(self,key)
