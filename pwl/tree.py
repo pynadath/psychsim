@@ -245,7 +245,8 @@ class KeyedTree:
         elif isinstance(other,KeyedVector):
             return self[other]*other
         else:
-            return self*KeyedTree(other)
+            return NotImplemented
+#            return self*KeyedTree(other)
 
     def max(self,other):
         return self.compose(other,self.__max)

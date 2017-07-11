@@ -359,7 +359,7 @@ class VectorDistributionSet:
         return self
 
     def __rmul__(self,other):
-        if isinstance(other,KeyedVector):
+        if isinstance(other,KeyedVector) or isinstance(other,KeyedTree):
             self *= other
             substate = self.keyMap[keys.VALUE]
             distribution = self.distributions[substate]
