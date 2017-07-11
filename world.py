@@ -186,7 +186,7 @@ class World:
             for name in turn:
                 if not name in outcome['actions']:
                     model = self.getModel(name,vector)
-                    decision = self.agents[name].decide(vector,None,horizon,outcome['actions'],model,tiebreak)
+                    decision = self.agents[name].decide(vector,horizon,outcome['actions'],model,tiebreak,None,keySubset)
                     outcome['decisions'][name] = decision
                     outcome['actions'][name] = decision['action']
                 elif isinstance(outcome['actions'][name],Action):
