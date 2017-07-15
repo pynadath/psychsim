@@ -465,7 +465,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
         world.setState(robot.name,'waypoint',robotWaypoint['symbol'])
     else:
         # Read world state
-        robotIndex = symbol2index(world.getState(robot.name,'waypoint').singleton(),
+        robotIndex = symbol2index(world.getState(robot.name,'waypoint').first(),
                                   level)
         robotWaypoint = WAYPOINTS[level][robotIndex]
         if not robotWaypoint.has_key('symbol'):
@@ -523,12 +523,12 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                      'verb': 'recommend %s' % (recommendation),
                      'object': location})
     world.step(action)
-    if world.getState('robot','acknowledgment').singleton() == 'yes':
+    if world.getState('robot','acknowledgment').first() == 'yes':
         ack = Template(TEMPLATES['acknowledgment'][error]).substitute(beliefs)
     else:
         ack = ''
     # Did the user die?
-    death = not world.getState('human','alive').singleton()
+    death = not world.getState('human','alive').first()
     if death:
         key = stateKey('human','deaths')
         old = world.getValue(key)
@@ -814,7 +814,7 @@ def readLogData(username,level,root='.'):
 def allVisited(world,level):
     for index in range(len(WAYPOINTS[level])):
         waypoint = index2symbol(index,level)
-        visited = world.getState(waypoint,'visited').singleton()
+        visited = world.getState(waypoint,'visited').first()
         if not visited:
             return False
     else:
@@ -831,7 +831,7 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
     # Create initial scenario
     world = createWorld(username,level,ability,explanation,embodiment,acknowledgment,
                         beliefs=beliefs)
-    location = world.getState('robot','waypoint').singleton()
+    location = world.getState('robot','waypoint').first()
     waypoint = symbol2index(location,level)
     # Go through all the waypoints
     while not world.terminated():
@@ -839,9 +839,9 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
                       'level': level}
         print GetRecommendation(username,level,parameters,world)
         # Was the robot right?
-        location = world.getState('robot','waypoint').singleton()
-        recommendation = world.getState(location,'recommendation').singleton()
-        danger = world.getState(index2symbol(waypoint,level),'danger').singleton()
+        location = world.getState('robot','waypoint').first()
+        recommendation = world.getState(location,'recommendation').first()
+        danger = world.getState(index2symbol(waypoint,level),'danger').first()
         print GetAcknowledgment(None,recommendation,location,danger,username,level,
                                 parameters,world)
         if not world.terminated():

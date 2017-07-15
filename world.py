@@ -1412,7 +1412,7 @@ class World:
             distribution = self.state
         if isinstance(distribution,VectorDistributionSet):
             minKeys = {s: None for s in distribution.distributions}
-            certains = []
+            certain = KeyedVector()
             for key,substate in distribution.keyMap.items():
                 if key != keys.CONSTANT:
                     entity = keys.state2agent(key)
@@ -1423,18 +1423,19 @@ class World:
                         minKeys[substate] = key
             minKeys = [(k,s) for s,k in minKeys.items()]
             minKeys = [item[1] for item in sorted(minKeys)]
+
+            remaining = []
             for substate in minKeys:
                 if len(distribution.distributions[substate]) == 1:
-                    certains.append(substate)
-            for label in certains:
-                vector = iter(distribution.distributions[label].domain()).next()
-                self.printVector(vector,buf,prefix,beliefs)
-            for label in minKeys:
+                    certain.update(distribution.distributions[substate].first())
+                else:
+                    remaining.append(substate)
+            self.printVector(certain,buf,prefix,beliefs)
+            for label in remaining:
                 subdistribution = distribution.distributions[label]
-                if not label is None and not label in certains:
+                if not label is None:
                     print('-------------------',file=buf)
-                if not label in certains:
-                    self.printState(subdistribution,buf,prefix,beliefs)
+                self.printState(subdistribution,buf,prefix,beliefs)
         else:
             for vector in distribution.domain():
                 print('%s%d%%' % (prefix,distribution[vector]*100.),file=buf)
@@ -1459,8 +1460,7 @@ class World:
                 elements = [prefix]
             else:
                 elements = []
-        entities = self.agents.keys()
-        entities.sort()
+        entities = sorted(self.agents.keys())
         entities.insert(0,None)
         change = False
         # Sort relations
@@ -1487,7 +1487,7 @@ class World:
                 label = entity
             newEntity = True
             # Print state features for this entity
-            for feature,key in table.items():
+            for feature,key in sorted(table.items()):
                 if key in vector:
                     value = self.float2value(key,vector[key])
                     if csv:

@@ -42,11 +42,10 @@ class Distribution(dict):
                     self[key] = math.exp(rationality*V)
                 self.normalize()
 
-    def singleton(self):
+    def first(self):
         """
-        If there is only one element in the domain of this distribution, return it
+        @return: the first element in this distribution's domain (most useful if there's only one element)
         """
-        assert len(self.domain()) == 1
         return iter(self.domain()).next()
     
     def __getitem__(self,element):
