@@ -142,6 +142,7 @@ class Distribution(dict):
         """
         import random
         selection = random.random()
+        original = selection
         for element in self.domain():
             if selection > self[element]:
                 selection -= self[element]
@@ -151,7 +152,7 @@ class Distribution(dict):
                 else:
                     return element
         else:
-            raise ValueError,'Random number exceeded total probability in distribution.'
+            raise ValueError,'Random number (%4.2f) exceeded total probability in distribution (%4.2f).' % (original,sum(self.values()))
 
     def set(self,element):
         """
