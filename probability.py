@@ -141,7 +141,7 @@ class Distribution(dict):
         @return: an element from this domain, with a sample probability given by this distribution
         """
         import random
-        selection = random.random()
+        selection = random.uniform(0.,sum(self.values()))
         original = selection
         for element in self.domain():
             if selection > self[element]:
@@ -151,8 +151,8 @@ class Distribution(dict):
                     return element,selection
                 else:
                     return element
-        else:
-            raise ValueError,'Random number (%4.2f) exceeded total probability in distribution (%4.2f).' % (original,sum(self.values()))
+        # We shouldn't get here. But in case of some floating-point weirdness?
+        return element
 
     def set(self,element):
         """
