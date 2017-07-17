@@ -232,14 +232,11 @@ class VectorDistribution(Distribution):
             result = self
         else:
             result = {}
-        for diff in other.domain():
-            for old in self.domain():
-                prob = self[old]
-                if inPlace:
-                    new = old
-                    del self[old]
-                else:
-                    new = old.__class__(old)
+        for old in self.domain():
+            prob = self[old]
+            del self[old]
+            for diff in other.domain():
+                new = old.__class__(old)
                 new.update(diff)
                 result[new] = prob*other[diff]
         if inPlace:
