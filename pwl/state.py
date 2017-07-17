@@ -46,26 +46,32 @@ class VectorDistributionSet:
                 value.distributions[substate] = VectorDistribution({element: prob})
             yield value
 
-    def split(self,relevant,onlyRelevant=False):
+    def __len__(self):
         """
-        @return: divides this distribution into relevant and irrelevant subsets, with the relevant sets becoming a joint
-        @rtype: L{VectorDistributionSet}
+        @return: the number of elements in the implied joint distribution
+        @rtype: int
         """
-        relSet = self.__class__()
-        if not onlyRelevant:
-            irrelSet = self.__class__()
-        substates = self.substate(relevant)
-        for substate in self.distributions:
-            if substate in substates or substate == self.keyMap[keys.CONSTANT]:
-                relSet.distributions[substate] = self.distributions[substate]
-        for key in self.keyMap:
-            if self.keyMap[key] in substates:
-                relSet.keyMap[key] = self.keyMap[key]
-            elif not onlyRelevant:
-                irrelSet.keyMap[key] = self.keyMap[key]
-        relSet.keyMap[keys.CONSTANT] = self.keyMap[keys.CONSTANT]
-        relSet.collapse([s for s in substates if len(self.distributions[s]) > 1])
-        return relSet,irrelSet
+        return reduce(operator.mul,[len(d) for d in self.distributions.values()],1)
+    
+    def split(self,key):
+        """
+        @return: partitions this distribution into subsets corresponding to possible values for the given key
+        @rtype: strS{->}L{VectorDistributionSet}
+        """
+        destination = self.keyMap[key]
+        original = self.distributions[destination]
+        result = {}
+        for vector in original.domain():
+            value = vector[key]
+            if not value in result:
+                # Copy everything from me except the distribution of the given key
+                result[value] = self.__class__()
+                result.keyMap.update(self.keyMap)
+                for substate,distribution in self.distributions.items():
+                    if substate != destination:
+                        result.distributions[substate] = copy.deepcopy(distribution)
+            result[value].distributions[destination][vector] = original[vector]
+        return result
         
     def collapse(self,substates,preserveCertainty=True):
         """
@@ -259,7 +265,7 @@ class VectorDistributionSet:
                 for colKey in vector.keys():
                     if colKey == keys.CONSTANT:
                         # Doesn't really matter
-                        substate = self.distributions.keys()[0]
+                        substate = iter(self.distributions.keys()).next()
                     else:
                         substate = self.keyMap[colKey]
                     # Go through the distribution subset containing this key
@@ -304,12 +310,12 @@ class VectorDistributionSet:
                     if test:
                         # This vector passes the test
                         if len(vector) > 1:
-                            self.distributions[valSub][vector] = prob
+                            self.distributions[valSub].addProb(vector,prob)
                         tPossible = True
                     else:
                         # This vector fails the test
                         if len(vector) > 1:
-                            falseState.distributions[valSub][vector] = prob
+                            falseState.distributions[valSub].addProb(vector,prob)
                         fPossible = True
                 existingKeys = set(self.keyMap.keys())
                 if tPossible:
