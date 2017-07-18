@@ -97,7 +97,7 @@ class World:
     """Simulation methods"""
     """------------------"""
                 
-    def step(self,actions=None,state=None,real=True,select=True,keySubset=None):
+    def step(self,actions=None,state=None,real=True,select=False,keySubset=None):
         """
         The simulation method
         @param actions: optional argument setting a subset of actions to be performed in this turn
@@ -112,49 +112,13 @@ class World:
         outcomes = []
         if isinstance(state,VectorDistributionSet):
             outcomes.append(self.stepFromState(state,actions,keySubset,real))
-        else:
-            # Iterate through each possible world
-            oldStates = state.domain()
-            for stateVector in oldStates:
-                prob = state[stateVector]
-                outcome = self.stepFromState(stateVector,actions,keySubset,real)
-                outcome['probability'] = prob
-                outcomes.append(outcome)
-            if real:
-                # Apply effects
-                assert keySubset is None,'Cannot perform real step over a subset of keys'
-                state.clear()
-                for outcome in outcomes:
-                    if not 'new' in outcome:
-                        # No effect. Just keep moving
-                        continue
-                    elif isinstance(outcome['new'],psychsim.probability.Distribution):
-                        if select:
-                            new = outcome['new'].sample()
-                            dist = [(new,1.)]
-                        else:
-                            dist = map(lambda el: (el,outcome['new'][el]),outcome['new'].domain())
-                    else:
-                        dist = [(outcome['new'],1.)]
-                    for new,prob in dist:
-                        try:
-                            state[new] += prob*outcome['probability']
-                        except KeyError:
-                            state[new] = prob*outcome['probability']
-                if len(state) == 0:
-                    # This is the safest place to detect an inconsistency
-                    buf = io.StringIO()
-                    print >> buf,'Unable to find consistent transition when actions:'
-                    print >> buf,' and '.join([str(ActionSet(outcome['actions'])) for outcome in outcomes])
-                    print >> buf,'are performed in states:'
-                    for stateVector in oldStates:
-                        self.printVector(stateVector,buf)
-                    msg = buf.getvalue()
-                    buf.close()
-                    raise RuntimeError(msg)
-                if self.memory:
-                    self.history.append(outcomes)
-    #            self.modelGC(False)
+            if select:
+                newState = outcomes[0]['new']
+                for dist in newState.distributions.values():
+                    dist.select()
+            if self.memory:
+                self.history.append(outcomes)
+                # self.modelGC(False)
         return outcomes
 
     def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=True,keySubset=None,real=True):
@@ -335,6 +299,13 @@ class World:
                     new.addProb(newVector,result['new'][old])
                 result['new'] = new
                 result['effect'].append(delta)
+        # Generate observations
+        for name in self.agents:
+            O = self.agents[name].getO(result['new'],actions)
+            result['effect'].append(O.values())
+            if O:
+                for key,tree in O.items():
+                    result['new'] *= tree
         # The future becomes the present
         result['new'].rollback()
         if updateBeliefs:
@@ -834,8 +805,8 @@ class World:
     """State methods"""
     """-------------"""
 
-    def defineVariable(self,key,domain=float,lo=-1.,hi=1.,description=None,combinator=None,
-                       substate=None,evaluate=True):
+    def defineVariable(self,key,domain=float,lo=-1.,hi=1.,description=None,
+                       combinator=None,substate=None,evaluate=True):
         """
         Define the type and domain of a given element of the state vector
         @param key: string label for the column being defined
@@ -860,6 +831,8 @@ class World:
             raise NameError('Variable %s already defined' % (key))
         if key[-1] == "'":
             raise ValueError('Ending single-quote reserved for indicating future state')
+        if substate is None:
+            substate = max(self.state.distributions.keys())+1
         self.variables[key] = {'domain': domain,
                                'description': description,
                                'substate': substate,

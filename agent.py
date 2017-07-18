@@ -849,20 +849,54 @@ class Agent:
     """Observation  methods"""
     """--------------------"""
 
-    def defineObservation(self,omega,tree,actions=None,**kwargs):
+    def defineObservation(self,omega,**kwargs):
         """
         @param omega: The label of this dimension of observations (e.g., an existing feature key, or a new observation dimension)
         @type omega: str
         """
-        if not self.world.variables.has_key(omega):
-            self.world.defineVariable(omega,**kwargs)
+        key = stateKey(self.name,omega)
+        if not self.world.variables.has_key(key):
+            self.world.defineVariable(key,**kwargs)
         self.omega.add(omega)
         if self.O is True:
             self.O = {}
-        if not self.O.has_key(omega):
-            self.O[omega] = {}
-        self.O[omega][actions] = tree.desymbolize(self.world.symbols)
+        if not self.O.has_key(key):
+            self.O[key] = {}
+        return key
 
+    def setO(self,omega,actions,tree):
+        O = tree.desymbolize(self.world.symbols)
+        self.O[stateKey(self.name,omega)][actions] = O
+        return O
+        
+    def getO(self,state,actions,model=True):
+        if self.O is True:
+            return {}
+        else:
+            O = self.O
+        if isinstance(actions,ActionSet):
+            jointAction = actions
+            if actions:
+                actions = {actions['subject']: jointAction}
+            else:
+                actions = {}
+        else:
+            # Table of actions across multiple agents
+            jointAction = reduce(lambda x,y: x|y,actions.values())
+        # Generate observations along each dimension
+        omega = {}
+        for key,table in O.items():
+            try:
+                # Look up the observation function for the actions performed
+                omega[key] = table[jointAction]
+            except KeyError:
+                # Maybe a tree that applies for all possible actions
+                try:
+                    omega[key] = table[None]
+                except KeyError:
+                    pass
+        return omega
+        
     def observe(self,vector,actions,model=True):
         """
         @return: distribution over observations received by this agent in the given world when the given actions are performed

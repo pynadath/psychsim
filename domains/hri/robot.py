@@ -220,6 +220,18 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     world.defineState(robot.name,'command',list,['none']+[point['symbol'] for point in WAYPOINTS[level]])
     robot.setState('command','none')
 
+    # Robot's sensor observations
+    omega = robot.defineObservation('microphone',domain=list,
+                                    lo=['nobody','friendly','suspicious'])
+    world.setFeature(omega,'nobody')
+    robot.setO('microphone',None,makeTree(setToConstantMatrix(omega,'nobody')))
+    omega = robot.defineObservation('NBCsensor',domain=bool)
+    world.setFeature(omega,False)
+    robot.setO('NBCsensor',None,makeTree(setFalseMatrix(omega)))
+    omega = robot.defineObservation('camera',domain=bool)
+    world.setFeature(omega,False)
+    robot.setO('camera',None,makeTree(setFalseMatrix(omega)))
+
     # Actions
     for end in range(len(WAYPOINTS[level])):
         symbol = WAYPOINTS[level][end]['symbol']
@@ -258,6 +270,16 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                         True: setToConstantMatrix(key,float(distance)/1000.),
                         False: tree}
         world.setDynamics(key,action,makeTree(tree))
+        
+        # Observations from scanning this waypoint
+        key = stateKey(symbol,'danger')
+        omega = stateKey(robot.name,'microphone')
+        robot.setO('microphone',action,makeTree(generateMicO(world,key)))
+        omega = stateKey(robot.name,'NBCsensor')
+        robot.setO('NBCsensor',action,makeTree(generateNBCO(world,key)))
+        omega = stateKey(robot.name,'camera')
+        robot.setO('camera',action,makeTree(generateCameraO(world,key)))
+
         # Human entry: Dead or alive if unprotected?
         key = stateKey(human.name,'alive')
         action = robot.addAction({'verb': 'recommend unprotected','object': symbol})
@@ -320,16 +342,6 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 #            tree = {'if': equalRow(stateKey(robot.name,'waypoint'),waypoint['symbol']),
 #                    True: generateO(world,key),
 #                    False: tree}
-#        robot.defineObservation(omega,makeTree(tree),domain=list,lo=['none','NBC','armed'])
-        robot.defineObservation('microphone',makeTree(None),None,domain=list,
-                                lo=['nobody','friendly','suspicious'])
-        robot.defineObservation('NBCsensor',makeTree(None),None,domain=bool)
-        robot.defineObservation('camera',makeTree(None),None,domain=bool)
-    else:
-        robot.defineObservation('microphone',makeTree(None),None,domain=list,
-                                lo=['nobody','friendly','suspicious'])
-        robot.defineObservation('NBCsensor',makeTree(None),None,domain=bool)
-        robot.defineObservation('camera',makeTree(None),None,domain=bool)
     robot.setAttribute('horizon',1)
 
     world.setOrder([robot.name])
@@ -343,28 +355,30 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     return world
 
 def generateMicO(world,key):
+    omega = stateKey('robot','microphone')
     return {'if': equalRow(key,'armed'),
             True: {'distribution':
-                   [(KeyedVector({CONSTANT: world.value2float('microphone','nobody')}),0.04),
-                    (KeyedVector({CONSTANT: world.value2float('microphone','friendly')}),0.03),
-                    (KeyedVector({CONSTANT: world.value2float('microphone','suspicious')}),0.93)]},
+                   [(setToConstantMatrix(omega,'nobody'),0.04),
+                    (setToConstantMatrix(omega,'friendly'),0.03),
+                    (setToConstantMatrix(omega,'suspicious'),0.93)]},
             False: {'distribution':
-                    [(KeyedVector({CONSTANT: world.value2float('microphone','nobody')}),0.48),
-                     (KeyedVector({CONSTANT: world.value2float('microphone','friendly')}),0.49),
-                     (KeyedVector({CONSTANT: world.value2float('microphone','suspicious')}),0.03)]}}
+                    [(setToConstantMatrix(omega,'nobody'),0.48),
+                     (setToConstantMatrix(omega,'friendly'),0.49),
+                     (setToConstantMatrix(omega,'suspicious'),0.03)]}}
 
 def generateNBCO(world,key):
     """
     @return: a observation function specification of the robot's NBC sensor
     @rtype: dict
     """
+    omega = stateKey('robot','NBCsensor')
     return {'if': equalRow(key,'NBC'),
             True: {'distribution':
-                   [(KeyedVector({CONSTANT: world.value2float('NBCsensor',False)}),0.1),
-                    (KeyedVector({CONSTANT: world.value2float('NBCsensor',True)}),0.9)]},
+                   [(setFalseMatrix(omega),0.1),
+                    (setTrueMatrix(omega),0.9)]},
             False: {'distribution':
-                   [(KeyedVector({CONSTANT: world.value2float('NBCsensor',False)}),0.95),
-                    (KeyedVector({CONSTANT: world.value2float('NBCsensor',True)}),0.05)]},
+                   [(setFalseMatrix(omega),0.95),
+                    (setTrueMatrix(omega),0.05)]},
             }
     
 def generateCameraO(world,key,belief=False):
@@ -372,23 +386,24 @@ def generateCameraO(world,key,belief=False):
     @return: a observation function specification for use in a PWL function
     @rtype: dict
     """
+    omega = stateKey('robot','camera')
     return {'if': equalRow(stateKey('robot','ability'),'badModel'),
             # Robot's O doesn't match up with its good observations
             True: {'if': equalRow(key,'armed'),
                     True: {'distribution':
-                           [(KeyedVector({CONSTANT: world.value2float('camera',False)}),0.02),
-                            (KeyedVector({CONSTANT: world.value2float('camera',True)}),0.98)]},
+                           [(setToConstantMatrix(omega,False),0.02),
+                            (setToConstantMatrix(omega,True),0.98)]},
                     False: {'distribution':
-                            [(KeyedVector({CONSTANT: world.value2float('camera',False)}),0.72),
-                             (KeyedVector({CONSTANT: world.value2float('camera',True)}),0.28)]},
+                            [(setToConstantMatrix(omega,False),0.72),
+                             (setToConstantMatrix(omega,True),0.28)]},
                    },
             False: {'if': equalRow(key,'armed'),
                     True: {'distribution':
-                           [(KeyedVector({CONSTANT: world.value2float('camera',False)}),0.05),
-                            (KeyedVector({CONSTANT: world.value2float('camera',True)}),0.95)]},
+                           [(setToConstantMatrix(omega,False),0.05),
+                            (setToConstantMatrix(omega,True),0.95)]},
                     False: {'distribution':
-                            [(KeyedVector({CONSTANT: world.value2float('camera',False)}),0.95),
-                             (KeyedVector({CONSTANT: world.value2float('camera',True)}),0.05)]},
+                            [(setToConstantMatrix(omega,False),0.95),
+                             (setToConstantMatrix(omega,True),0.05)]},
                     }}
     
 def getStart(level):
@@ -588,7 +603,6 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     # Generate individual sensor readings
     omega = {}
     danger = world.getFeature(key,world.state)
-#    danger = world.float2value(key,oldVector[key])
     for sensor in robot.omega:
         try:
             omega[sensor] = robotWaypoint[sensor][sensorCorrect]
@@ -598,18 +612,6 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                 omega[sensor] = 'nobody'
             else:
                 omega[sensor] = False
-#    try:
-#        omega = KeyedVector({'danger': robotWaypoint['observe'][sensorCorrect]})
-#    except KeyError:
-#        # By default observe true value
-#        omega = KeyedVector({'danger': world.float2value(key,oldVector[key])})
-#    try:
-#        omega['microphone'] = robotWaypoint['microphone'][sensorCorrect]
-#    except KeyError:
-#        # By default observe nothing
-#        omega['microphone'] = False
-#    omega['NBCsensor'] =  (omega['danger'] == 'NBC')
-#    omega['camera'] =  (omega['danger'] == 'armed')
     WriteLogData('NBC sensor: %s' % (omega['NBCsensor']),username,level,root=root)
     WriteLogData('Camera: %s' % (omega['camera']),username,level,root=root)
     WriteLogData('Microphone: %s' % (omega['microphone']),username,level,root=root)
@@ -628,11 +630,26 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
             
             vector = KeyedVector({CONSTANT: 1., 
                                   key: world.value2float(key,belief)})
-            probMic = world.float2value('microphone',Omic[vector]*vector)
+            # Microphone
+            micDist = Omic[vector]*vector
+            omegaKey = stateKey(robot.name,'microphone')
+            micDist = Distribution({v[makeFuture(omegaKey)]: micDist[v]
+                                    for v in micDist.domain()})
+            probMic = world.float2value(omegaKey,micDist)
             prob *= probMic[omega['microphone']]
-            probNBC = world.float2value('NBCsensor',ONBC[vector]*vector)
+            # NBC
+            NBCDist = ONBC[vector]*vector
+            omegaKey = stateKey(robot.name,'NBCsensor')
+            NBCDist = Distribution({v[makeFuture(omegaKey)]: NBCDist[v]
+                                    for v in NBCDist.domain()})
+            probNBC = world.float2value(omegaKey,NBCDist)
             prob *= probNBC[omega['NBCsensor']]
-            probCamera = world.float2value('camera',Ocamera[vector]*vector)
+            # Camera
+            cameraDist = Ocamera[vector]*vector
+            omegaKey = stateKey(robot.name,'camera')
+            cameraDist = Distribution({v[makeFuture(omegaKey)]: cameraDist[v]
+                                    for v in cameraDist.domain()})
+            probCamera = world.float2value(omegaKey,cameraDist)
             prob *= probCamera[omega['camera']]
             assessment.addProb(belief,prob)
     else:
@@ -838,16 +855,19 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
         parameters = {'robotWaypoint': waypoint,
                       'level': level}
         print GetRecommendation(username,level,parameters,world)
+        print len(world.state)
         # Was the robot right?
         location = world.getState('robot','waypoint').first()
         recommendation = world.getState(location,'recommendation').first()
         danger = world.getState(index2symbol(waypoint,level),'danger').first()
         print GetAcknowledgment(None,recommendation,location,danger,username,level,
                                 parameters,world)
+        print len(world.state)
         if not world.terminated():
             # Continue onward
             waypoint = GetDecision(username,level,parameters,world)
             print index2symbol(waypoint,level)
+            print len(world.state)
 
 if __name__ == '__main__':
     import argparse
