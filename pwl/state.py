@@ -13,14 +13,13 @@ class VectorDistributionSet:
     """
     Represents a distribution over independent state vectors, i.e., independent L{VectorDistribution}s
     """
-    def __init__(self,node=None,empty=False):
+    def __init__(self,node=None):
         self.distributions = {}
         self.keyMap = {}
         if node:
             self.parse(node)
-        elif not empty:
-            self.distributions[0] = VectorDistribution()
-            self.keyMap[keys.CONSTANT] = 0
+#        elif not empty:
+#            self.distributions[0] = VectorDistribution()
 
     def keys(self):
         return self.keyMap.keys()
@@ -202,14 +201,14 @@ class VectorDistributionSet:
         self.distributions.clear()
         self.keyMap.clear()
 
-    def update(self,other,keySet):
+    def update(self,other,keySet,scale=1.):
         # Anyone else mixed up in this?
         toMerge = set(keySet)
         for key in keySet:
             # Any new keys in the same joint as this guy?
             for newKey in self.keyMap:
-                if self.keyMap[key] == self.keyMap[newKey] or \
-                   other.keyMap[key] == other.keyMap[newKey]:
+                if (key in self.keyMap and self.keyMap[key] == self.keyMap[newKey]) \
+                   or other.keyMap[key] == other.keyMap[newKey]:
                     # This key is in the same joint
                     if len(self.distributions[self.keyMap[newKey]]) == 1 and \
                        len(other.distributions[other.keyMap[newKey]]) == 1:
@@ -219,16 +218,24 @@ class VectorDistributionSet:
                     toMerge.add(newKey)
         if len(toMerge) > 0: # If 0, no difference between self and other to begin with
             # Prepare myself to merge
-            substates = {self.keyMap[k] for k in toMerge}
+            substates = {self.keyMap[k] for k in toMerge if k in self.keyMap}
             self.collapse(substates,False)
-            key = iter(toMerge).next()
-            destination = self.keyMap[key]
+            for key in toMerge:
+                if key in self.keyMap:
+                    destination = self.keyMap[key]
+                    break
+            else:
+                destination = max(self.keyMap.values())+1
+                self.distributions[destination] = VectorDistribution()
             # Align and merge the other
             substates = {other.keyMap[k] for k in toMerge}
             other.collapse(substates,False)
             dist = other.distributions[other.keyMap[key]]
             for vector in dist.domain():
-                self.distributions[destination].addProb(vector,dist[vector])
+                self.distributions[destination].addProb(vector,dist[vector]*scale)
+                for key in vector.keys():
+                    if key != keys.CONSTANT:
+                        self.keyMap[key] = destination
                 
     def __add__(self,other):
         if isinstance(other,self.__class__):
@@ -288,7 +295,30 @@ class VectorDistributionSet:
             if other.isLeaf():
                 self *= other.children[None]
             elif other.isProbabilistic():
-                raise NotImplementedError,'This is so easy to implement.'
+                oldKids = list(other.children.domain())
+                # Multiply out children, other than first-born
+                newKids = []
+                for child in oldKids[1:]:
+                    assert child.isLeaf(),'Move probabilistic branches to bottom of your trees; otherwise, I haven\'t figured out the easiest math yet.'
+                    myChild = copy.deepcopy(self)
+                    myChild *= child
+                    newKids.append(myChild)
+                # Compute first-born child
+                self *= oldKids[0]
+                # Scale by probability of this child
+                prob = other.children[oldKids[0]]
+                subkeys = oldKids[0].getKeysOut()
+                substates = self.substate(subkeys)
+                substate = self.keyMap[iter(subkeys).next()]
+                distribution = self.distributions[substate]
+                for vector in distribution.domain():
+                    distribution[vector] *= prob
+                if len(substates) > 1:
+                    raise RuntimeError,'Somebody got greedy and independent-ified variables that are dependent'
+                # Merge products into first-born
+                for index in range(len(newKids)):
+                    self.update(newKids[index],oldKids[index+1].getKeysOut(),
+                                other.children[oldKids[index+1]])
             else:
                 # Evaluate the hyperplane and split the state
                 branchKeys = set(other.branch.keys())
