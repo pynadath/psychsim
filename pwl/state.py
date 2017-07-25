@@ -51,7 +51,35 @@ class VectorDistributionSet:
         @rtype: int
         """
         return reduce(operator.mul,[len(d) for d in self.distributions.values()],1)
-    
+
+    def __setitem__(self,key,value):
+        """
+        Computes a conditional probability of this distribution given the value for this key. To do so, it removes any elements from the distribution that are inconsistent with the given value and then normalizes.
+        @warning: If you want to overwrite any existing values for this key use L{join} (which computes a new joint probability)
+        """
+        dist = self.distributions[self.keyMap[key]]
+        for vector in dist.domain():
+            if abs(vector[key]-value) > 1e-8:
+                del dist[vector]
+        dist.normalize()
+        
+    def __delitem__(self,key):
+        """"
+        Removes the given column from its corresponding vector (raises KeyError if not present in this distribution)
+        """
+        substate = self.keyMap[key]
+        del self.keyMap[key]
+        dist = self.distributions[substate]
+        if len(iter(dist).next()) == 2:
+            # Assume CONSTANT is the other key, so this whole distribution goes
+            del self.distributions[substate]
+        else:
+            # Go through each vector and remove the key one by one
+            for vector in dist.domain():
+                prob = dist[vector]
+                del vector[key]
+                dist.addProb(vector,prob)
+            
     def split(self,key):
         """
         @return: partitions this distribution into subsets corresponding to possible values for the given key
