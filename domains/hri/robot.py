@@ -326,23 +326,19 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         robot.setReward(maximizeFeature(stateKey(point['symbol'],'visited')),2.)
 
     if beliefs:
-#        omega = 'danger'
         world.defineVariable(robot.name,ActionSet)
         # Robot beliefs
         world.setModel(robot.name,True)
         value = 1./float(len(WAYPOINTS[level]))
-#        tree = KeyedVector({CONSTANT: world.value2float(omega,'none')})
         for index in range(len(WAYPOINTS[level])):
             waypoint = WAYPOINTS[level][index]
             key = stateKey(waypoint['symbol'],'danger')
-    #        if index > 0:
-                # Starting state is safe
-            robot.setBelief(key,psychsim.probability.Distribution({'NBC': value/2., 'armed': value/2.,'none': 1.-value}))
-            # Observation function
-#            tree = {'if': equalRow(stateKey(robot.name,'waypoint'),waypoint['symbol']),
-#                    True: generateO(world,key),
-#                    False: tree}
-    robot.setAttribute('horizon',1)
+            dist = psychsim.probability.Distribution({'NBC': value/2.,
+                                                      'armed': value/2.,
+                                                      'none': 1.-value})
+            robot.setBelief(key,dist)
+            
+    robot.setAttribute('horizon',2)
 
     world.setOrder([robot.name])
 
@@ -652,17 +648,19 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
             probCamera = world.float2value(omegaKey,cameraDist)
             prob *= probCamera[omega['camera']]
             assessment.addProb(belief,prob)
+        assessment.normalize()
     else:
         # Use explicit beliefs
-        oldBeliefs = world.getFeature(key,robot.models[True]['beliefs'])
-        assessment = Distribution()
-        for belief in oldBeliefs.domain():
-            vector = KeyedVector({CONSTANT: 1., 
-                                  key: world.value2float(key,belief),
-                                  loc: world.value2float(key,robotWaypoint['symbol'])})
-            joint = robot.observe(vector,ActionSet())
-            assessment.addProb(belief,oldBeliefs[belief]*joint[omega])
-    assessment.normalize()
+        oldBeliefs = robot.getBelief(world.state)
+        O = robot.getO(oldBeliefs,ActionSet({action}))
+        for omegKey,tree in O.items():
+            oldBeliefs *= tree
+        oldBeliefs.rollback()
+        for sensor,observation in omega.items():
+            omegaKey = stateKey(robot.name,sensor)
+            value = world.value2float(omegaKey,observation)
+            oldBeliefs[omegaKey] = value
+        assessment = world.float2value(key,oldBeliefs.marginal(key))
     for danger in assessment.domain():
         WriteLogData('Posterior belief in %s: %d%%' % (danger,assessment[danger]*100.),
                      username,level,root=root)

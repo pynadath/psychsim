@@ -111,7 +111,7 @@ class World:
             state = self.state
         outcomes = []
         if isinstance(state,VectorDistributionSet):
-            outcomes.append(self.stepFromState(state,actions,keySubset,real))
+            outcomes.append(self.stepFromState(state,actions,keySubset=keySubset,real=real))
             if select:
                 newState = outcomes[0]['new']
                 for dist in newState.distributions.values():
@@ -121,7 +121,7 @@ class World:
                 # self.modelGC(False)
         return outcomes
 
-    def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=True,keySubset=None,real=True):
+    def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=False,keySubset=None,real=True):
         """
         Compute the resulting states when starting in a given possible world (as opposed to a distribution over possible worlds)
         """

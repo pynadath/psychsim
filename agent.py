@@ -121,7 +121,9 @@ class Agent:
                 subkeys = keySet
             current = copy.deepcopy(belief)
             start = action
+            print action
             for t in range(horizon):
+                print t
                 outcome = self.world.step(start,current,keySubset=subkeys)
                 V[action]['__ER__'].append(self.reward(current))
                 V[action]['__EV__'] += V[action]['__ER__'][-1]
@@ -717,11 +719,8 @@ class Agent:
         except KeyError:
             beliefs = True
         if beliefs is True:
-            beliefs = VectorDistribution({KeyedVector(): 1.})
+            beliefs = VectorDistributionSet()
             self.models[model]['beliefs'] = beliefs
-        if isinstance(distribution,MatrixDistribution) or isinstance(distribution,KeyedMatrix):
-            raise NotImplementedError,'New implementation of beliefs uses vectors, not matrices. '\
-                'Distorted beliefs have not been re-implemented yet.'
         self.world.setFeature(key,distribution,beliefs)
 
     def getBelief(self,vector,model=None):
@@ -731,10 +730,24 @@ class Agent:
         """
         if model is None:
             model = self.world.getModel(self.name,vector)
-        world = copy.deepcopy(vector)
         beliefs = self.getAttribute('beliefs',model)
-        if not beliefs is True:
-            world = world.merge(beliefs)
+        if beliefs is True:
+            beliefs = copy.deepcopy(vector)
+        else:
+            if len(beliefs.keyMap) < len(vector.keyMap):
+                # Beliefs are only a diff, not complete
+                print 'applying belief patch'
+                world = copy.deepcopy(vector)
+                for newDist in beliefs.distributions.values():
+                    keyList = newDist.keys()
+                    for key in keyList:
+                        if key != keys.CONSTANT:
+                            break
+                    world.collapse(keyList)
+                    oldDist = world.distributions[world.keyMap[key]]
+                    assert oldDist.keys() == keyList,'Currently unable to apply belief patches to mis-aligned cliques'
+                    # Overwrite existing distribution with my beliefs
+                    world.distributions[world.keyMap[key]] = copy.deepcopy(newDist)
         return world
 
     def stateEstimator(self,oldReal,newReal,omega,model=True):
@@ -902,19 +915,7 @@ class Agent:
         @return: distribution over observations received by this agent in the given world when the given actions are performed
         @rtype: L{Distribution}
         """
-        if self.O is True:
-            O = {}
-        else:
-            O = self.O
-        if isinstance(actions,ActionSet):
-            jointAction = actions
-            if actions:
-                actions = {actions['subject']: jointAction}
-            else:
-                actions = {}
-        else:
-            # Table of actions across multiple agents
-            jointAction = reduce(lambda x,y: x|y,actions.values())
+        O = self.getO(vector,actions,model)
         # Generate observations along each dimension
         omega = {}
         for key,table in O.items():
