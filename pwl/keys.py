@@ -19,6 +19,13 @@ def stateKey(name,feature,future=False):
     else:
         return '%s\'s %s' % (name,feature)
 
+def isStateKey(key):
+    """
+    @return: C{True} iff this key refers to a state feature
+    @rtype: bool
+    """
+    return '\'s ' in key
+
 def state2feature(key):
     """
     @return: the feature string from the given key
