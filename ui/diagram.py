@@ -1,6 +1,7 @@
 import random
 from xml.dom.minidom import Document,Node
-from PyQt4.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
 
 class Diagram:
     """

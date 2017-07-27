@@ -1,6 +1,6 @@
 import os.path
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
 from ui.mainwindow import Ui_MainWindow
 from ui.worldview import WorldView
 from world import World
@@ -70,9 +70,11 @@ if __name__ == '__main__':
     win = PsychSimUI()
     if args.scenario is None:
         settings = QSettings()
-        filename = settings.value('LastFile').toString()
-        if filename and QFile.exists(filename):
-            win.openScenario(str(filename))
+        last = settings.value('LastFile')
+        if last:
+            filename = last.toString()
+            if filename and QFile.exists(filename):
+                win.openScenario(str(filename))
     else:
         win.openScenario(args.scenario)
     win.show()
