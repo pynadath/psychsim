@@ -121,10 +121,9 @@ class Agent:
                 subkeys = keySet
             current = copy.deepcopy(belief)
             start = action
-            print action
             for t in range(horizon):
-                print t
-                outcome = self.world.step(start,current,keySubset=subkeys)
+                outcome = self.world.step(start,current,keySubset=subkeys,
+                                          horizon=horizon-t)
                 V[action]['__ER__'].append(self.reward(current))
                 V[action]['__EV__'] += V[action]['__ER__'][-1]
                 start = None
@@ -732,7 +731,7 @@ class Agent:
             model = self.world.getModel(self.name,vector)
         beliefs = self.getAttribute('beliefs',model)
         if beliefs is True:
-            beliefs = copy.deepcopy(vector)
+            world = copy.deepcopy(vector)
         else:
             if len(beliefs.keyMap) < len(vector.keyMap):
                 # Beliefs are only a diff, not complete
@@ -750,6 +749,12 @@ class Agent:
                     world.distributions[world.keyMap[key]] = copy.deepcopy(newDist)
         return world
 
+    def updateBeliefs(self,state):
+        key = modelKey(self.name)
+        distribution = state.distributions[state.keyMap[key]]
+        print distribution
+        raise UserWarning
+    
     def stateEstimator(self,oldReal,newReal,omega,model=True):
         # Extract belief vector (in minimal diff form)
         try:
@@ -1176,7 +1181,7 @@ class Agent:
                                         elif key == 'policy':
                                             kwargs[key] = KeyedTree(subchild)
                                         elif key == 'beliefs':
-                                            kwargs[key] = VectorDistribution(subchild)
+                                            kwargs[key] = VectorDistributionSet(subchild)
                                         else:
                                             raise NameError,'Unknown element found when parsing model\'s %s' % (key)
                                     elif subchild.nodeType == subchild.TEXT_NODE:
