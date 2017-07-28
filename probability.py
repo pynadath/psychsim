@@ -238,7 +238,8 @@ class Distribution(dict):
         @param element: The XML Element object specifying the distribution
         @type element: Element
         @return: This L{Distribution} object"""
-        assert element.tagName == 'distribution'
+        assert element.tagName == 'distribution','Unexpected tag %s for %s' \
+            % (element.tagName,self.__class__.__name__)
         self.clear()
         node = element.firstChild
         while node:
