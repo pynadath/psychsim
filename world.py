@@ -98,7 +98,7 @@ class World:
     """------------------"""
                 
     def step(self,actions=None,state=None,real=True,select=False,keySubset=None,
-             horizon=None):
+             horizon=None,updateBeliefs=True):
         """
         The simulation method
         @param actions: optional argument setting a subset of actions to be performed in this turn
@@ -113,7 +113,7 @@ class World:
         outcomes = []
         assert isinstance(state,VectorDistributionSet)
         outcomes.append(self.stepFromState(state,actions,horizon,keySubset=keySubset,
-                                           real=real,updateBeliefs=True))
+                                           real=real,updateBeliefs=updateBeliefs))
         if select:
             newState = outcomes[0]['new']
             for dist in newState.distributions.values():
