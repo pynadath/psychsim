@@ -676,9 +676,12 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
             time.sleep(1)
 
     # Which recommendation is better?
-    beliefs = copy.deepcopy(world.state)
-    key = stateKey(robotWaypoint['symbol'],'danger')
-    beliefs.join(key,world.value2float(key,assessment))
+    if robot.models[True]['beliefs'] is True:
+        beliefs = copy.deepcopy(world.state)
+        key = stateKey(robotWaypoint['symbol'],'danger')
+        beliefs.join(key,world.value2float(key,assessment))
+    else:
+        beliefs = beliefs.values()[0]
     result = robot.decide(beliefs)
     value = {}
     for verb in ['recommend unprotected','recommend protected']:
