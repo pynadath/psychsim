@@ -608,6 +608,9 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                 omega[sensor] = 'nobody'
             else:
                 omega[sensor] = False
+        if not robot.models[True]['beliefs'] is True:
+            omegaKey = stateKey(robot.name,sensor)
+            world.state[omegaKey] = world.value2float(omegaKey,omega[sensor])
     WriteLogData('NBC sensor: %s' % (omega['NBCsensor']),username,level,root=root)
     WriteLogData('Camera: %s' % (omega['camera']),username,level,root=root)
     WriteLogData('Microphone: %s' % (omega['microphone']),username,level,root=root)
@@ -651,22 +654,16 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         assessment.normalize()
     else:
         # Use explicit beliefs
-        oldBeliefs = robot.getBelief(world.state)
-        O = robot.getO(oldBeliefs,ActionSet({action}))
-        for omegKey,tree in O.items():
-            oldBeliefs *= tree
-        oldBeliefs.rollback()
-        for sensor,observation in omega.items():
-            omegaKey = stateKey(robot.name,sensor)
-            value = world.value2float(omegaKey,observation)
-            oldBeliefs[omegaKey] = value
-        assessment = world.float2value(key,oldBeliefs.marginal(key))
+        beliefs = robot.getBelief(world.state)
+        assert len(beliefs) == 1
+        assessment = world.getFeature(key,beliefs.values()[0])
     for danger in assessment.domain():
         WriteLogData('Posterior belief in %s: %d%%' % (danger,assessment[danger]*100.),
                      username,level,root=root)
 
     # Save file in as synchronized a fashion as we can
-    with tempfile.NamedTemporaryFile('w',dir=os.path.dirname(filename), delete=False) as tf:
+    with tempfile.NamedTemporaryFile('w',dir=os.path.dirname(filename),
+                                     delete=False) as tf:
         tf.write(world.__xml__().toprettyxml())
         tempname = tf.name
     done = False
