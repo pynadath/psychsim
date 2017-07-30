@@ -70,7 +70,7 @@ class VectorDistributionSet:
         substate = self.keyMap[key]
         del self.keyMap[key]
         dist = self.distributions[substate]
-        if len(iter(dist).next()) == 2:
+        if len(dist.first()) == 2:
             # Assume CONSTANT is the other key, so this whole distribution goes
             del self.distributions[substate]
         else:
@@ -211,7 +211,7 @@ class VectorDistributionSet:
         @substate: name of substate vector distribution to join with
         """
         assert not substate is None
-        if self.keyMap.has_key(key):
+        if key in self.keyMap:
             substate = self.keyMap[key]
         else:
             self.keyMap[key] = substate
@@ -489,10 +489,29 @@ class VectorDistributionSet:
             assert self.keyMap[now] in self.distributions,now
         for s in self.distributions:
             assert s in self.keyMap.values(),self.distributions[s]
+            for k in self.distributions[s].keys():
+                assert not keys.isFuture(k),'Future key %s persists after rollback' \
+                    % (k)
         for k,s in self.keyMap.items():
             if k != keys.CONSTANT:
                 assert s in self.distributions,'%s: %s' % (k,s)
-                
+            assert not keys.isFuture(k)
+
+    def __eq__(self,other):
+        remaining = set(self.keyMap.keys())
+        if remaining != set(other.keyMap.keys()):
+            # The two do not even contain the same columns
+            return False
+        else:
+            while remaining:
+                key = remaining.pop()
+                distributionMe = self.distributions[self.keyMap[key]]
+                distributionYou = other.distributions[other.keyMap[key]]
+                if distributionMe != distributionYou:
+                    return False
+                remaining -= set(distributionMe.keys())
+            return True
+        
     def __xml__(self):
         doc = Document()
         root = doc.createElement('worlds')
@@ -508,16 +527,29 @@ class VectorDistributionSet:
         self.keyMap.clear()
         assert element.tagName == 'worlds'
         node = element.firstChild
+        distributions = {}
         while node:
             if node.nodeType == node.ELEMENT_NODE:
-                label = str(node.getAttribute('label'))
-                if not label:
-                    label = None
-                self.distributions[label] = VectorDistribution(node)
-                for key in self.distributions[label].domain()[0].keys():
-                    if key != keys.CONSTANT:
-                        self.keyMap[key] = label
+                distribution = VectorDistribution(node)
+                try:
+                    substate = int(node.getAttribute('label'))
+                    for key in distribution.keys():
+                        self.keyMap[key] = substate
+                except ValueError:
+                    substate = str(node.getAttribute('label'))
+                    distributions[substate] = distribution
             node = node.nextSibling
+        if distributions:
+            # For backward compatibility with non-integer substates
+            if self.distributions:
+                substate = max(self.distributions.keys())+1
+            else:
+                substate = 0
+            for distribution in distributions.values():
+                self.distributions[substate] = distribution
+                for key in distribution.keys():
+                    self.keyMap[key] = substate
+                substate += 1
         
     def __deepcopy__(self,memo):
         result = self.__class__()
