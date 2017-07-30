@@ -730,29 +730,26 @@ class Agent:
         """
         if model is None:
             model = self.world.getModel(self.name,vector)
-        beliefs = self.getAttribute('beliefs',model)
-        if beliefs is True:
-            world = copy.deepcopy(vector)
-        # elif len(beliefs.keyMap) < len(vector.keyMap):
-        #     print set(vector.keyMap) - set(beliefs.keyMap)
-        #     # Beliefs are only a diff, not complete
-        #     print 'applying belief patch'
-        #     world = copy.deepcopy(vector)
-        #     for newDist in beliefs.distributions.values():
-        #         keyList = newDist.keys()
-        #         for key in keyList:
-        #             if key != keys.CONSTANT:
-        #                 break
-        #     world.collapse(keyList)
-        #     oldDist = world.distributions[world.keyMap[key]]
-        #     assert oldDist.keys() == keyList,'Currently unable to apply belief patches to mis-aligned cliques'
-        #     # Overwrite existing distribution with my beliefs
-        #     world.distributions[world.keyMap[key]] = copy.deepcopy(newDist)
+        if isinstance(model,Distribution):
+            return {element: self.getBelief(vector,element) \
+                    for element in model.domain()}
         else:
-            world = copy.deepcopy(beliefs)
-        return world
+            beliefs = self.getAttribute('beliefs',model)
+            if beliefs is True:
+                world = copy.deepcopy(vector)
+            else:
+                world = copy.deepcopy(beliefs)
+            return world
 
     def updateBeliefs(self,trueState,actions):
+        """
+        @warning: Even if this agent starts with C{True} beliefs, its beliefs can
+        deviate after actions with stochastic effects (i.e., the world transitions
+        to a specific state with some probability, but the agent only knows a 
+        posterior distribution over that resulting state). If you want the agent's 
+        beliefs to stay correct, then set the C{static} attribute on the model to 
+        C{True}.
+        """
         oldModelKey = modelKey(self.name)
         newModelKey = makeFuture(oldModelKey)
         substate = trueState.keyMap[oldModelKey]
@@ -769,21 +766,24 @@ class Agent:
                              ['%s' % (self.world.float2value(omega,vector[keys.makeFuture(omega)])) \
                               for omega in Omega])
             if not label in SE:
-                # Work to be done. Start by getting old belief state.
-                beliefs = self.getAttribute('beliefs',oldModel)
-                if beliefs is True:
-                    beliefs = copy.deepcopy(trueState)
+                if self.getAttribute('static',oldModel) is True:
+                    SE[label] = vector[oldModelKey]
                 else:
-                    beliefs = copy.deepcopy(self.getAttribute('beliefs',oldModel))
-                # Project direct effect of the actions, including possible observations
-                self.world.step(actions,beliefs)
-                # Condition on actual observations
-                for omega in Omega:
-                    beliefs[omega] = vector[keys.makeFuture(omega)]
-                # Create model with these new beliefs
-                # TODO: Look for matching model?
-                newModel = self.belief2model(oldModel,beliefs)
-                SE[label] = newModel['index']
+                    # Work to be done. Start by getting old belief state.
+                    beliefs = self.getAttribute('beliefs',oldModel)
+                    if beliefs is True:
+                        beliefs = copy.deepcopy(trueState)
+                    else:
+                        beliefs = copy.deepcopy(self.getAttribute('beliefs',oldModel))
+                    # Project direct effect of the actions, including possible observations
+                    self.world.step(actions,beliefs)
+                    # Condition on actual observations
+                    for omega in Omega:
+                        beliefs[omega] = vector[keys.makeFuture(omega)]
+                    # Create model with these new beliefs
+                    # TODO: Look for matching model?
+                    newModel = self.belief2model(oldModel,beliefs)
+                    SE[label] = newModel['index']
             # Insert new model into true state
             if isinstance(SE[label],int):
                 vector[newModelKey] = SE[label]
