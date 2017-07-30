@@ -718,7 +718,8 @@ class Agent:
         except KeyError:
             beliefs = True
         if beliefs is True:
-            beliefs = VectorDistributionSet()
+            beliefs = copy.deepcopy(self.world.state) #VectorDistributionSet()
+            del beliefs[keys.modelKey(self.name)]
             self.models[model]['beliefs'] = beliefs
         self.world.setFeature(key,distribution,beliefs)
 
@@ -732,28 +733,64 @@ class Agent:
         beliefs = self.getAttribute('beliefs',model)
         if beliefs is True:
             world = copy.deepcopy(vector)
+        # elif len(beliefs.keyMap) < len(vector.keyMap):
+        #     print set(vector.keyMap) - set(beliefs.keyMap)
+        #     # Beliefs are only a diff, not complete
+        #     print 'applying belief patch'
+        #     world = copy.deepcopy(vector)
+        #     for newDist in beliefs.distributions.values():
+        #         keyList = newDist.keys()
+        #         for key in keyList:
+        #             if key != keys.CONSTANT:
+        #                 break
+        #     world.collapse(keyList)
+        #     oldDist = world.distributions[world.keyMap[key]]
+        #     assert oldDist.keys() == keyList,'Currently unable to apply belief patches to mis-aligned cliques'
+        #     # Overwrite existing distribution with my beliefs
+        #     world.distributions[world.keyMap[key]] = copy.deepcopy(newDist)
         else:
-            if len(beliefs.keyMap) < len(vector.keyMap):
-                # Beliefs are only a diff, not complete
-                print 'applying belief patch'
-                world = copy.deepcopy(vector)
-                for newDist in beliefs.distributions.values():
-                    keyList = newDist.keys()
-                    for key in keyList:
-                        if key != keys.CONSTANT:
-                            break
-                    world.collapse(keyList)
-                    oldDist = world.distributions[world.keyMap[key]]
-                    assert oldDist.keys() == keyList,'Currently unable to apply belief patches to mis-aligned cliques'
-                    # Overwrite existing distribution with my beliefs
-                    world.distributions[world.keyMap[key]] = copy.deepcopy(newDist)
+            world = copy.deepcopy(beliefs)
         return world
 
-    def updateBeliefs(self,state):
-        key = modelKey(self.name)
-        distribution = state.distributions[state.keyMap[key]]
-        print distribution
-        raise UserWarning
+    def updateBeliefs(self,trueState,actions):
+        oldModelKey = modelKey(self.name)
+        newModelKey = makeFuture(oldModelKey)
+        substate = trueState.keyMap[oldModelKey]
+        trueState.keyMap[newModelKey] = substate
+        distribution = trueState.distributions[substate]
+        Omega = self.O.keys()
+        assert isinstance(Omega,list)
+        SE = {} # State estimator table
+        for vector in distribution.domain():
+            prob = distribution[vector]
+            del distribution[vector]
+            oldModel = self.world.float2value(oldModelKey,vector[oldModelKey])
+            label = ','.join([str(oldModel)]+
+                             ['%s' % (self.world.float2value(omega,vector[keys.makeFuture(omega)])) \
+                              for omega in Omega])
+            if not label in SE:
+                # Work to be done. Start by getting old belief state.
+                beliefs = self.getAttribute('beliefs',oldModel)
+                if beliefs is True:
+                    beliefs = copy.deepcopy(trueState)
+                else:
+                    beliefs = copy.deepcopy(self.getAttribute('beliefs',oldModel))
+                # Project direct effect of the actions, including possible observations
+                self.world.step(actions,beliefs)
+                # Condition on actual observations
+                for omega in Omega:
+                    beliefs[omega] = vector[keys.makeFuture(omega)]
+                # Create model with these new beliefs
+                # TODO: Look for matching model?
+                newModel = self.belief2model(oldModel,beliefs)
+                SE[label] = newModel['index']
+            # Insert new model into true state
+            if isinstance(SE[label],int):
+                vector[newModelKey] = SE[label]
+            else:
+                raise RuntimeError,'Unable to process stochastic belief updates'
+            distribution.addProb(vector,prob)
+        return SE
     
     def stateEstimator(self,oldReal,newReal,omega,model=True):
         # Extract belief vector (in minimal diff form)
@@ -860,8 +897,6 @@ class Agent:
 #            self.models[model]['SE'][oldBelief][newReal][omega] = index
             return index
 
-    def printBeliefs(self,model=True):
-        raise DeprecationWarning,'Use the "beliefs=True" argument to printState instead'
 
     """--------------------"""
     """Observation  methods"""

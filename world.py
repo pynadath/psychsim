@@ -97,7 +97,8 @@ class World:
     """Simulation methods"""
     """------------------"""
                 
-    def step(self,actions=None,state=None,real=True,select=False,keySubset=None):
+    def step(self,actions=None,state=None,real=True,select=False,keySubset=None,
+             horizon=None):
         """
         The simulation method
         @param actions: optional argument setting a subset of actions to be performed in this turn
@@ -110,15 +111,16 @@ class World:
         if state is None:
             state = self.state
         outcomes = []
-        if isinstance(state,VectorDistributionSet):
-            outcomes.append(self.stepFromState(state,actions,keySubset=keySubset,real=real))
-            if select:
-                newState = outcomes[0]['new']
-                for dist in newState.distributions.values():
-                    dist.select()
-            if self.memory:
-                self.history.append(outcomes)
-                # self.modelGC(False)
+        assert isinstance(state,VectorDistributionSet)
+        outcomes.append(self.stepFromState(state,actions,horizon,keySubset=keySubset,
+                                           real=real,updateBeliefs=True))
+        if select:
+            newState = outcomes[0]['new']
+            for dist in newState.distributions.values():
+                dist.select()
+        if self.memory:
+            self.history.append(outcomes)
+            # self.modelGC(False)
         return outcomes
 
     def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=False,keySubset=None,real=True):
@@ -168,7 +170,8 @@ class World:
                 actions[stochastic[0]] = action 
                 effect = self.effect(actions,outcome['old'],prob,updateBeliefs=updateBeliefs,keySubset=keySubset)
                 if len(effect) == 0:
-                    # No consistent transition for this action (don't blame me, I'm just the messenger)
+                    # No consistent transition for this action
+                    # (don't blame me, I'm just the messenger)
                     continue
                 elif 'new' in outcome:
                     for vector in effect['new'].domain():
@@ -267,7 +270,37 @@ class World:
             # No consistent effect
             pass
         return outcome
-            
+
+    def stepTurn(self,start,end,actions):
+        """
+        Computes the change in the turn order based on the given actions
+        @param start: The original state
+        @param end: The final state (which will be modified to reflect the new turn order)
+        @type start,end: L{VectorDistributionSet}
+        @return: The dynamics functions applied to update the turn order
+        """
+        turnKeys = {k for k in start.keyMap.keys() if isTurnKey(k)}
+        turnDynamics = []
+        for key in turnKeys:
+            dynamics = self.getTurnDynamics(key,actions)
+            turnDynamics += dynamics
+            for tree in dynamics:
+                end *= tree
+        return turnDynamics
+
+    def stepObservations(self,state,actions):
+        """
+        Computes the new observations for each agent in the given state 
+        """
+        Olist = []
+        for name in self.agents:
+            O = self.agents[name].getO(state,actions)
+            if O:
+                Olist.append(O.values())
+                for key,tree in O.items():
+                    state *= tree
+        return Olist
+        
     def effect(self,actions,vector,probability=1.,updateBeliefs=True,keySubset=None,real=True):
         """
         @param probability: the likelihood of this particular action set (default is 100%)
@@ -281,14 +314,7 @@ class World:
         result['new'] = self.deltaState(actions,result['new'],result['effect'],keySubset,real)
         # Update turn order
         if isinstance(vector,VectorDistributionSet):
-            turnKeys = {k for k in vector.keyMap.keys() if isTurnKey(k)}
-            turnDynamics = []
-            for key in turnKeys:
-                dynamics = self.getTurnDynamics(key,actions)
-                turnDynamics += dynamics
-                for tree in dynamics:
-                    result['new'] *= tree
-            result['effect'].append(turnDynamics)
+            result['effect'].append(self.stepTurn(vector,result['new'],actions))
         else:
             delta = self.deltaOrder(actions,vector)
             if delta:
@@ -300,72 +326,26 @@ class World:
                 result['new'] = new
                 result['effect'].append(delta)
         # Generate observations
-        for name in self.agents:
-            O = self.agents[name].getO(result['new'],actions)
-            result['effect'].append(O.values())
-            if O:
-                for key,tree in O.items():
-                    result['new'] *= tree
-        # The future becomes the present
-        result['new'].rollback()
+        result['effect'].append(self.stepObservations(result['new'],actions))
         if updateBeliefs:
             # Update agent models included in the original world (after finding out possible new worlds)
-            if isinstance(vector,VectorDistributionSet):
-                agentsModeled = [name for name in self.agents.keys()
-                                 if modelKey(name) in vector.keyMap]
-            else:
-                agentsModeled = [name for name in self.agents.keys()
-                                 if modelKey(name) in vector and \
-                                 (keySubset is None or modelKey(name) in keySubset)]
+            agentsModeled = [name for name in self.agents.keys()
+                             if modelKey(name) in vector.keyMap]
             for name in agentsModeled:
                 result['SE %s' % (name)] = {}
-                agentsModeled = [name for name in self.agents.keys()
-                                 if modelKey(name) in vector]
-            if agentsModeled:
-                delta = MatrixDistribution({psychsim.pwl.KeyedMatrix(): 1.})
-                for newVector in result['new'].domain():
-                    # Update the agent model under each possible outcome
-                    for name in agentsModeled:
-                        key = modelKey(name)
-                        agent = self.agents[name]
-                        oldModel = self.getModel(name,vector)
-                        if not 'beliefs' in agent.models[oldModel] or \
-                                agent.models[oldModel]['beliefs'] is True or \
-                                agent.getAttribute('static',oldModel):
-                            # No need to update the model
-                            modelDistribution = psychsim.pwl.KeyedMatrix({key: psychsim.pwl.KeyedVector({key: 1})})
-                        else:
-                            # Imperfect beliefs need to be updated
-                            omegaDistribution = agent.observe(newVector,actions)
-                            modelDistribution = MatrixDistribution()
-                            for omega in omegaDistribution.domain():
-                                newModel = agent.stateEstimator(vector,newVector,omega,oldModel)
-                                if newModel is None:
-                                    pass
-                                else:
-                                    matrix = psychsim.pwl.KeyedMatrix({key: psychsim.pwl.KeyedVector({CONSTANT: newModel})})
-                                    modelDistribution.addProb(matrix,omegaDistribution[omega])
-                        if len(modelDistribution) > 0:
-                            delta.update(modelDistribution)
-                for matrix in delta.domain():
-                    errors = [name for name in agentsModeled
-                              if not modelKey(name) in matrix]
-                    if errors:
-                        # Some agents have no consistent belief update
-                        del delta[matrix]
-                if delta:
-                    delta.normalize()
-                    result['effect'].append(delta)
-                    new = psychsim.pwl.VectorDistribution()
-                    for old in result['new'].domain():
-                        newVector = psychsim.pwl.KeyedVector(old)
-                        for matrix in delta.domain():
-                            newVector.update(matrix*old)
-                            new.addProb(newVector,result['new'][old]*delta[matrix])
-                    result['new'] = new
-                else:
-                    # No possible transition at all!
-                    result.clear()
+                key = modelKey(name)
+                agent = self.agents[name]
+                oldModel = self.getModel(name,vector)
+                if 'beliefs' in agent.models[oldModel] and \
+                   not agent.models[oldModel]['beliefs'] is True and \
+                   agent.getAttribute('static',oldModel) != True:
+                    # Imperfect beliefs need to be updated
+                    Omega = {keys.makeFuture(keys.stateKey(agent.name,omega)) \
+                             for omega in agent.omega}
+                    vector.collapse(Omega|{key},False)
+                    result['effect'].append(agent.updateBeliefs(vector,actions))
+        # The future becomes the present
+        result['new'].rollback()
         return result
 
     def deltaState(self,actions,old,effects,keySubset=None,real=True):
@@ -1448,7 +1428,9 @@ class World:
                     relations[subj] = [(link,obj,key)]
         for entity in entities:
             try:
-                table = self.locals[entity]
+                table = {state2feature(k): k for k in vector.keys() \
+                         if keys.isStateKey(k) and keys.state2agent(k) == entity \
+                         and not keys.isFuture(k)}
             except KeyError:
                 table = {}
             if entity is None:
@@ -1462,7 +1444,10 @@ class World:
             # Print state features for this entity
             for feature,key in sorted(table.items()):
                 if key in vector:
-                    value = self.float2value(key,vector[key])
+                    if isFuture(key):
+                        value = self.float2value(makePresent(key),vector[key])
+                    else:
+                        value = self.float2value(key,vector[key])
                     if csv:
                         elements.append(label)
                         elements.append(feature)
@@ -1504,6 +1489,14 @@ class World:
                         elements.append(label)
                         elements.append('__model__')
                         elements.append(self.agents[entity].index2model(vector[key]))
+                    elif not beliefs:
+                        if first:
+                            print('\t%-12s:\t%s' % (label,self.agents[entity].index2model(vector[key])),file=buf)
+                            first = False
+                        else:
+                            print('%s\t%-12s\t%s' % (prefix,label,self.agents[entity].index2model(vector[key])),file=buf)
+                        change = True
+                        newEntity = False
                     elif newEntity:
                         if first:
                             print('\t%-12s' % (label),file=buf)
