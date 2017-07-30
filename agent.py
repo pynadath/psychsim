@@ -78,6 +78,10 @@ class Agent:
         """
         if model is None:
             model = self.world.getModel(self.name,vector)
+        if isinstance(model,Distribution):
+            return {submodel: self.decide(vector,horizon,others,submodel,selection,
+                                          actions,keySet) \
+                    for submodel in model.domain()}
         if selection is None:
             selection = self.getAttribute('selection',model)
         # What are my subjective beliefs for this decision?
@@ -592,7 +596,7 @@ class Agent:
         if self.models.has_key(name):
             raise NameError,'Model %s already exists for agent %s' % \
                 (name,self.name)
-        model = {'name': name,'index': 0,'parent': True,
+        model = {'name': name,'index': 0,'parent': True,'SE': {},
                  'V': ValueFunction(),'policy': {},'ignore': []}
         model.update(kwargs)
         while self.modelList.has_key(model['index']):
@@ -719,7 +723,6 @@ class Agent:
             beliefs = True
         if beliefs is True:
             beliefs = copy.deepcopy(self.world.state) #VectorDistributionSet()
-            del beliefs[keys.modelKey(self.name)]
             self.models[model]['beliefs'] = beliefs
         self.world.setFeature(key,distribution,beliefs)
 
@@ -762,12 +765,14 @@ class Agent:
             prob = distribution[vector]
             del distribution[vector]
             oldModel = self.world.float2value(oldModelKey,vector[oldModelKey])
-            label = ','.join([str(oldModel)]+
-                             ['%s' % (self.world.float2value(omega,vector[keys.makeFuture(omega)])) \
-                              for omega in Omega])
+            label = ','.join(['%s' % (self.world.float2value(omega,vector[keys.makeFuture(omega)])) for omega in Omega])
+            if not oldModel in SE:
+                SE[oldModel] = {}
             if not label in SE:
                 if self.getAttribute('static',oldModel) is True:
                     SE[label] = vector[oldModelKey]
+                elif label in self.models[oldModel]['SE']:
+                    SE[label] = self.world.value2float(oldModelKey,self.models[oldModel]['SE'][label])
                 else:
                     # Work to be done. Start by getting old belief state.
                     beliefs = self.getAttribute('beliefs',oldModel)
@@ -776,7 +781,7 @@ class Agent:
                     else:
                         beliefs = copy.deepcopy(self.getAttribute('beliefs',oldModel))
                     # Project direct effect of the actions, including possible observations
-                    self.world.step(actions,beliefs)
+                    self.world.step(actions,beliefs,updateBeliefs=False)
                     # Condition on actual observations
                     for omega in Omega:
                         beliefs[omega] = vector[keys.makeFuture(omega)]
@@ -784,8 +789,9 @@ class Agent:
                     # TODO: Look for matching model?
                     newModel = self.belief2model(oldModel,beliefs)
                     SE[label] = newModel['index']
+                    self.models[oldModel]['SE'][label] = newModel['name']
             # Insert new model into true state
-            if isinstance(SE[label],int):
+            if isinstance(SE[label],int) or isinstance(SE[label],float):
                 vector[newModelKey] = SE[label]
             else:
                 raise RuntimeError,'Unable to process stochastic belief updates'
