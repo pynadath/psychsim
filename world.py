@@ -328,22 +328,17 @@ class World:
         # Generate observations
         result['effect'].append(self.stepObservations(result['new'],actions))
         if updateBeliefs:
-            # Update agent models included in the original world (after finding out possible new worlds)
+            # Update agent models included in the original world
+            # (after finding out possible new worlds)
             agentsModeled = [name for name in self.agents.keys()
                              if modelKey(name) in vector.keyMap]
             for name in agentsModeled:
-                result['SE %s' % (name)] = {}
                 key = modelKey(name)
                 agent = self.agents[name]
-                oldModel = self.getModel(name,vector)
-                if 'beliefs' in agent.models[oldModel] and \
-                   not agent.models[oldModel]['beliefs'] is True and \
-                   agent.getAttribute('static',oldModel) != True:
-                    # Imperfect beliefs need to be updated
-                    Omega = {keys.makeFuture(keys.stateKey(agent.name,omega)) \
-                             for omega in agent.omega}
-                    vector.collapse(Omega|{key},False)
-                    result['effect'].append(agent.updateBeliefs(vector,actions))
+                Omega = {keys.makeFuture(keys.stateKey(agent.name,omega)) \
+                         for omega in agent.omega}
+                vector.collapse(Omega|{key},False)
+                result['effect'].append(agent.updateBeliefs(vector,actions))
         # The future becomes the present
         result['new'].rollback()
         return result
@@ -1026,7 +1021,7 @@ class World:
         if isinstance(vector,VectorDistributionSet):
             key = modelKey(modelee)
             if key in self.variables:
-                model = self.getValue(key,vector)
+                model = self.getFeature(key,vector)
             else:
                 model = True
         else:
