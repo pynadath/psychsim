@@ -23,6 +23,9 @@ class KeyedVector(collections.MutableMapping):
         else:
             self._data.update(arg)
 
+    def __contains__(self,key):
+        return key in self._data
+    
     def __eq__(self,other):
         delta = 0.
         tested = {}
@@ -178,7 +181,7 @@ class KeyedVector(collections.MutableMapping):
                     value = float(node.getAttribute('value'))
                 except ValueError:
                     value = str(node.getAttribute('value'))
-                dict.__setitem__(self,key,value)
+                self._data.__setitem__(key,value)
             node = node.nextSibling
 
 class VectorDistribution(Distribution):
