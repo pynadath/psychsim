@@ -4,6 +4,7 @@ CONSTANT = ''
 TERMINATED = '__END__'
 VALUE = '__VALUE__'
 WORLD = '__WORLD__'
+ACTION = '__ACTION__'
 
 def stateKey(name,feature,future=False):
     """
