@@ -23,6 +23,9 @@ class VectorDistributionSet:
 
     def keys(self):
         return self.keyMap.keys()
+
+    def __contains__(self,key):
+        return key in self.keyMap
     
     def __iter__(self):
         """
@@ -52,6 +55,12 @@ class VectorDistributionSet:
         """
         return reduce(operator.mul,[len(d) for d in self.distributions.values()],1)
 
+    def __getitem__(self,key):
+        if key == 0:
+            raise DeprecationWarning,'step no longer returns a list of outcomes, but rather a single VectorDistributionSet'
+        else:
+            return NotImplemented
+        
     def __setitem__(self,key,value):
         """
         Computes a conditional probability of this distribution given the value for this key. To do so, it removes any elements from the distribution that are inconsistent with the given value and then normalizes.
