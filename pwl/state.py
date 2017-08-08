@@ -231,6 +231,9 @@ class VectorDistributionSet:
     def marginal(self,key):
         return self.distributions[self.keyMap[key]].marginal(key)
 
+    def domain(self,key):
+        return {v[key] for v in self.distributions[self.keyMap[key]].domain()}
+    
     def items(self):
         return self.distributions.items()
 
