@@ -78,6 +78,15 @@ class KeyedVector(collections.MutableMapping):
         else:
             return NotImplemented
 
+    def __rmul__(self,other):
+        if isinstance(other,float):
+            result = self.__class__()
+            for key,value in self.items():
+                result[key] = other*value
+            return result
+        else:
+            return NotImplemented
+        
     def __getitem__(self,key):
         return self._data[key]
     
@@ -98,14 +107,17 @@ class KeyedVector(collections.MutableMapping):
     def desymbolize(self,table,debug=False):
         result = self.__class__()
         for key,value in self.items():
-            if isinstance(value,str):
-                try:
-                    result[key] = eval(value,globals(),table)
-                except NameError:
-                    # Undefined reference: assume it'll get sorted out later
-                    result[key] = value
-            else:
+            if isinstance(value,float) or isinstance(value,int):
                 result[key] = value
+            else:
+#            if isinstance(value,str):
+#                try:
+                result[key] = table[value]#eval(value,globals(),table)
+#                except KeyError:
+                    # Undefined reference: assume it'll get sorted out later
+#                    result[key] = value
+#            else:
+#                result[key] = value
         return result
 
     def filter(self,ignore):
@@ -199,7 +211,10 @@ class VectorDistribution(Distribution):
         @return: The keys of the vectors in the domain (assumed to be uniform),
         NOT the keys of the domain itself
         """
-        return iter(self.domain()).next().keys()
+        if len(self) > 0:
+            return iter(self.domain()).next().keys()
+        else:
+            return {}
     
     def join(self,key,value):
         """
