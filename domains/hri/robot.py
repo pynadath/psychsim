@@ -157,7 +157,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     for waypoint in WAYPOINTS[level]:
         if not waypoint.has_key('symbol'):
             waypoint['symbol'] = waypoint['name'].replace(' ','')
-        world.addAgent(Agent(waypoint['symbol']))
+        world.addAgent(waypoint['symbol'])
         # Have we visited this waypoint?
         key = world.defineState(waypoint['symbol'],'visited',bool)
         world.setFeature(key,False)
@@ -180,8 +180,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                                    True: setTrueMatrix(TERMINATED),
                                    False: setFalseMatrix(TERMINATED)}))
     # Human
-    human = Agent('human')
-    world.addAgent(human)
+    human = world.addAgent('human')
 
     world.defineState(human.name,'alive',bool)
     human.setState('alive',True)
@@ -189,8 +188,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     human.setState('deaths',0)
 
     # Robot
-    robot = Agent('robot')
-    world.addAgent(robot)
+    robot = world.addAgent('robot')
 
     # Robot states
     world.defineState(robot.name,'waypoint',list,[point['symbol'] for point in WAYPOINTS[level]])
@@ -240,7 +238,8 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         # Legal if no contradictory command
         tree = makeTree({'if': equalRow('phase','move'),
                          True: {'if': equalRow(stateKey(robot.name,'command'),'none'),
-                                True: True,
+                                True: {'if': trueRow(stateKey(symbol,'visited')),
+                                                     True: False, False: True},
                                 False: {'if': equalRow(stateKey(robot.name,'command'),
                                                        symbol),
                                         True: True, False: False}},
@@ -325,22 +324,21 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     for point in WAYPOINTS[level]:
         robot.setReward(maximizeFeature(stateKey(point['symbol'],'visited')),2.)
 
-    if beliefs:
-        world.defineVariable(robot.name,ActionSet)
-        # Robot beliefs
-        world.setModel(robot.name,True)
-        value = 1./float(len(WAYPOINTS[level]))
-        for index in range(len(WAYPOINTS[level])):
-            waypoint = WAYPOINTS[level][index]
-            key = stateKey(waypoint['symbol'],'danger')
-            dist = psychsim.probability.Distribution({'NBC': value/2.,
-                                                      'armed': value/2.,
-                                                      'none': 1.-value})
-            robot.setBelief(key,dist)
+    world.setOrder([robot.name])
+
+    # Robot beliefs
+    model = '%s0' % (robot.name)
+    world.setModel(robot.name,model)
+    value = 10./float(len(WAYPOINTS[level]))
+    for index in range(len(WAYPOINTS[level])):
+        waypoint = WAYPOINTS[level][index]
+        key = stateKey(waypoint['symbol'],'danger')
+        dist = psychsim.probability.Distribution({'NBC': value/2.,
+                                                  'armed': value/2.,
+                                                  'none': 1.-value})
+        robot.setBelief(key,dist,model)
             
     robot.setAttribute('horizon',2)
-
-    world.setOrder([robot.name])
 
     filename = getFilename(username,level,ext,root)
 
@@ -499,8 +497,10 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
 
     # Find the best action
     values = []
-    result = robot.decide(oldVector,2)
-    destination = result['action']['object']
+    print sorted(map(str,robot.getActions(world.state)))
+    model = world.getModel(robot.name).first()
+    result = robot.decide(oldVector,2,model=model)
+    destination = result[model]['action']['object']
     WriteLogData('%s %s' % (LOCATION_TAG,destination),username,level,root=root)
     index = symbol2index(destination,level)
     destination = WAYPOINTS[level][index]
@@ -533,7 +533,9 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     action = Action({'subject': 'robot',
                      'verb': 'recommend %s' % (recommendation),
                      'object': location})
+    assert len(world.getModel('robot')) == 1
     world.step(action)
+    assert len(world.getModel('robot')) == 1
     if world.getState('robot','acknowledgment').first() == 'yes':
         ack = Template(TEMPLATES['acknowledgment'][error]).substitute(beliefs)
     else:
@@ -608,92 +610,37 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                 omega[sensor] = 'nobody'
             else:
                 omega[sensor] = False
-        if not robot.models[True]['beliefs'] is True:
-            omegaKey = stateKey(robot.name,sensor)
-            world.state[omegaKey] = world.value2float(omegaKey,omega[sensor])
+        omegaKey = stateKey(robot.name,sensor)
+        world.state[omegaKey] = world.value2float(omegaKey,omega[sensor])
+    model = world.getModel(robot.name)
+    assert len(model) == 1
+    model = model.first()
     WriteLogData('NBC sensor: %s' % (omega['NBCsensor']),username,level,root=root)
     WriteLogData('Camera: %s' % (omega['camera']),username,level,root=root)
     WriteLogData('Microphone: %s' % (omega['microphone']),username,level,root=root)
     # Get robot's beliefs
     loc = stateKey(robot.name,'waypoint')
-    if robot.models[True]['beliefs'] is True:
-        # No explicit beliefs
-        oldBeliefs = psychsim.probability.Distribution({'NBC': .2, 'armed': .2,
-                                                        'none': .6})
-        Omic = makeTree(generateMicO(world,key)).desymbolize(world.symbols)
-        ONBC = makeTree(generateNBCO(world,key)).desymbolize(world.symbols)
-        Ocamera = makeTree(generateCameraO(world,key)).desymbolize(world.symbols)
-        assessment = Distribution()
-        for belief in oldBeliefs.domain():
-            prob = oldBeliefs[belief]
-            
-            vector = KeyedVector({CONSTANT: 1., 
-                                  key: world.value2float(key,belief)})
-            # Microphone
-            micDist = Omic[vector]*vector
-            omegaKey = stateKey(robot.name,'microphone')
-            micDist = Distribution({v[makeFuture(omegaKey)]: micDist[v]
-                                    for v in micDist.domain()})
-            probMic = world.float2value(omegaKey,micDist)
-            prob *= probMic[omega['microphone']]
-            # NBC
-            NBCDist = ONBC[vector]*vector
-            omegaKey = stateKey(robot.name,'NBCsensor')
-            NBCDist = Distribution({v[makeFuture(omegaKey)]: NBCDist[v]
-                                    for v in NBCDist.domain()})
-            probNBC = world.float2value(omegaKey,NBCDist)
-            prob *= probNBC[omega['NBCsensor']]
-            # Camera
-            cameraDist = Ocamera[vector]*vector
-            omegaKey = stateKey(robot.name,'camera')
-            cameraDist = Distribution({v[makeFuture(omegaKey)]: cameraDist[v]
-                                    for v in cameraDist.domain()})
-            probCamera = world.float2value(omegaKey,cameraDist)
-            prob *= probCamera[omega['camera']]
-            assessment.addProb(belief,prob)
-        assessment.normalize()
-    else:
-        # Use explicit beliefs
-        beliefs = robot.getBelief(world.state)
-        assert len(beliefs) == 1
-        assessment = world.getFeature(key,beliefs.values()[0])
+    # Use explicit beliefs
+    beliefs = robot.getBelief(world.state)
+    assert len(beliefs) == 1
+    model = world.getModel(robot.name)
+    assert len(model) == 1
+    model = model.first()
+    assessment = world.getFeature(key,beliefs[model])
     for danger in assessment.domain():
         WriteLogData('Posterior belief in %s: %d%%' % (danger,assessment[danger]*100.),
                      username,level,root=root)
 
-    # Save file in as synchronized a fashion as we can
-    with tempfile.NamedTemporaryFile('w',dir=os.path.dirname(filename),
-                                     delete=False) as tf:
-        tf.write(world.__xml__().toprettyxml())
-        tempname = tf.name
-    done = False
-    while not done:
-        try:
-            os.remove(filename)
-            os.rename(tempname, filename)
-            done = True
-        except WindowsError:
-            time.sleep(1)
-
     # Which recommendation is better?
-    if robot.models[True]['beliefs'] is True:
-        beliefs = copy.deepcopy(world.state)
-        key = stateKey(robotWaypoint['symbol'],'danger')
-        beliefs.join(key,world.value2float(key,assessment))
-    else:
-        beliefs = beliefs.values()[0]
-    result = robot.decide(beliefs)
-    value = {}
+    result = robot.decide(world.state)
+    policy = result['policy']
+    del result['policy']
+    value = {a['verb']: V['__EV__'] for a,V in result.values()[0]['V'].items()}
+    subBeliefs = {a['verb']: V['__beliefs__'] \
+                  for a,V in result.values()[0]['V'].items()}
     for verb in ['recommend unprotected','recommend protected']:
-        action = Action({'subject': robot.name,
-                         'verb': verb,
-                         'object': robotWaypoint['symbol']})
-        subBeliefs = copy.deepcopy(world.state)
-        key = stateKey(robotWaypoint['symbol'],'danger')
-        subBeliefs.join(key,world.value2float(key,assessment))
-        result = world.stepFromState(subBeliefs,action)
-        value[verb] = robot.reward(subBeliefs)
-        WriteLogData('Value of %s: %4.2f' % (verb,value[verb]),username,level,root=root)
+        WriteLogData('Value of %s: %4.2f' % (verb,value[verb]),username,level,
+                     root=root)
     # Package up the separate components of my current model
     POMDP = {}
     # Add Omega_t, my latest observation
@@ -712,12 +659,12 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         world.setState(robotWaypoint['symbol'],'recommendation','protected')
         WriteLogData('%s: yes' % (RECOMMEND_TAG),username,level,root=root)
     # Add B_t, my current beliefs
-    for key in subBeliefs.keys():
+    for key in subBeliefs[POMDP['A']].keys():
         if key != keys.CONSTANT:
             entity = state2agent(key)
             if entity != 'robot' and entity != robotWaypoint['symbol']:
                 continue
-            belief = subBeliefs.marginal(key)
+            belief = subBeliefs[POMDP['A']].marginal(key)
             feature = state2feature(key)
             best = belief.max()
             POMDP['B_%s' % (feature)] = world.float2value(key,best)
@@ -729,6 +676,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                 POMDP['B_%s_%s' % (feature,world.float2value(key,value))] = pct
                 POMDP['B_%s_not_%s' % (feature,world.float2value(key,value))] = 100-pct
 
+
     # Use fixed explanation
     # TODO: make this a dynamic decision by the robot
     mode = world.getState(robot.name,'explanation').max()
@@ -737,6 +685,20 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     explanation = ' '.join(explainDecision(safety,POMDP,mode))
 
     WriteLogData('%s %s' % (MESSAGE_TAG,explanation),username,level,root=root)
+
+    # Save file in as synchronized a fashion as we can
+    with tempfile.NamedTemporaryFile('w',dir=os.path.dirname(filename),
+                                     delete=False) as tf:
+        tf.write(world.__xml__().toprettyxml())
+        tempname = tf.name
+    done = False
+    while not done:
+        try:
+            os.remove(filename)
+            os.rename(tempname, filename)
+            done = True
+        except WindowsError:
+            time.sleep(1)
     return explanation
 
 def explainDecision(decision,beliefs,mode):
@@ -853,19 +815,16 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
         parameters = {'robotWaypoint': waypoint,
                       'level': level}
         print GetRecommendation(username,level,parameters,world)
-        print len(world.state)
         # Was the robot right?
         location = world.getState('robot','waypoint').first()
         recommendation = world.getState(location,'recommendation').first()
         danger = world.getState(index2symbol(waypoint,level),'danger').first()
         print GetAcknowledgment(None,recommendation,location,danger,username,level,
                                 parameters,world)
-        print len(world.state)
         if not world.terminated():
             # Continue onward
             waypoint = GetDecision(username,level,parameters,world)
             print index2symbol(waypoint,level)
-            print len(world.state)
 
 if __name__ == '__main__':
     import argparse
