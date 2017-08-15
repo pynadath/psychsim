@@ -246,7 +246,23 @@ class KeyedTree:
             return self[other]*other
         else:
             return NotImplemented
-#            return self*KeyedTree(other)
+
+    def __rmul__(self,other):
+        if isinstance(other,float):
+            tree = self.__class__()
+            if self.isLeaf():
+                tree.makeLeaf(other*self.children[None])
+            elif self.isProbabilistic():
+                dist = {}
+                for child in self.children.domain():
+                    dist[other*child] = self.children[child]
+                tree.makeProbabilistic(TreeDistribution(dist))
+            else:
+                tree.makeBranch(self.branch,other*self.children[True],
+                            other*self.children[False])
+            return tree
+        else:
+            return NotImplemented
 
     def max(self,other):
         return self.compose(other,self.__max)
@@ -562,6 +578,8 @@ def makeTree(table):
     elif isinstance(table,frozenset):
         # Set leaf (e.g., ActionSet for a policy)
         return KeyedTree(table)
+    elif isinstance(table,KeyedTree):
+        return table
     elif 'if' in table:
         # Deterministic branch
         tree = KeyedTree()
