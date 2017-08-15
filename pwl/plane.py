@@ -30,7 +30,7 @@ class KeyedPlane:
     def evaluate(self,vector):
         """
         Tests whether the given vector passes or fails this test.
-        Also accepts a numeric value, in lieuf of doing a dot product.
+        Also accepts a numeric value, in lieu of doing a dot product.
         @rtype: bool
         """
         if isinstance(vector,float):
@@ -50,7 +50,8 @@ class KeyedPlane:
             else:
                 return abs(total-self.threshold) < self.vector.epsilon
         else:
-            raise ValueError,'Unknown comparison for %s: %s' % (self.__class__.__name__,self.comparison)
+            # Return raw value, to be used in unspeakable ways
+            return total
 
     def desymbolize(self,table,debug=False):
         threshold = self.desymbolizeThreshold(self.threshold,table)
@@ -233,6 +234,12 @@ def equalFeatureRow(key1,key2):
     @rtype: L{KeyedPlane}
     """
     return KeyedPlane(KeyedVector({key1: 1.,key2: -1.}),0,0)
+def caseRow(key):
+    """
+    @return: a plane potentially testing the value of the given feature against multiple target values
+    @rtype: L{KeyedPlane}
+    """
+    return KeyedPlane(KeyedVector({key: 1.}),0,'switch')
 
 class KeyedBranch:
     """
