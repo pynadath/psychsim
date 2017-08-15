@@ -30,8 +30,8 @@ class Agent:
     @type color: str
     """
 
-    def __init__(self,name):
-        self.world = None
+    def __init__(self,name,world=None):
+        self.world = world
         self.actions = set()
         self.legal = {}
         self.omega = set()
@@ -48,7 +48,8 @@ class Agent:
         else:
             self.name = name
             # Default model settings
-            self.addModel(True,R={},horizon=2,level=2,rationality=1.,discount=1.,selection='consistent',
+            self.addModel('%s0' % (self.name),R={},horizon=2,level=2,rationality=1.,
+                          discount=1.,selection='consistent',
                           beliefs=True,parent=None,projector=Distribution.expectation)
 
     """------------------"""
@@ -79,9 +80,22 @@ class Agent:
         if model is None:
             model = self.world.getModel(self.name,vector)
         if isinstance(model,Distribution):
-            return {submodel: self.decide(vector,horizon,others,submodel,selection,
-                                          actions,keySet) \
-                    for submodel in model.domain()}
+            result = {}
+            tree = None
+            myAction = keys.stateKey(self.name,keys.ACTION)
+            myModel = keys.modelKey(self.name)
+            for submodel in model.domain():
+                result[submodel] = self.decide(vector,horizon,others,submodel,
+                                               selection,actions,keySet)
+                matrix = setToConstantMatrix(myAction,result[submodel]['action'])
+                if tree is None:
+                    # Assume it's this model (?)
+                    tree = matrix
+                else:
+                    plane = equalRow(myModel,submodel)
+                    tree = {'if': plane, True: matrix,False: tree}
+            result['policy'] = makeTree(tree).desymbolize(self.world.symbols)
+            return result
         if selection is None:
             selection = self.getAttribute('selection',model)
         # What are my subjective beliefs for this decision?
@@ -99,14 +113,22 @@ class Agent:
             horizon = self.getAttribute('horizon',model)
         if actions is None:
             # Consider all legal actions (legality determined by my belief, circumscribed by real world)
-            actions = self.getActions(vector) & self.getActions(belief) 
+            actions = self.getActions(belief) 
         if len(actions) == 0:
             # Someone made a boo-boo because there is no legal action for this agent right now
             buf = StringIO.StringIO()
-            print >> buf,'%s has no legal actions in:' % (self.name)
-            self.world.printState(vector,buf)
-            print >> buf,'\nwhen believing:'
-            self.world.printState(belief,buf)
+            if len(self.getActions(vector)) == 0:
+                print >> buf,'%s has no legal actions in:' % (self.name)
+                self.world.printState(vector,buf)
+            else:
+                print >> buf,'%s has true legal actions:' % (self.name),\
+                    ';'.join(map(str,sorted(self.getActions(vector))))
+            if len(self.getActions(belief)) == 0:
+                print >> buf,'%s has no legal actions when believing:' % (self.name)
+                self.world.printState(belief,buf)
+            else:
+                print >> buf,'%s believes it has legal actions:' % (self.name),\
+                    ';'.join(map(str,sorted(self.getActions(belief))))
             msg = buf.getvalue()
             buf.close()
             raise RuntimeError,msg
@@ -131,6 +153,7 @@ class Agent:
                 V[action]['__ER__'].append(self.reward(current))
                 V[action]['__EV__'] += V[action]['__ER__'][-1]
                 start = None
+            V[action]['__beliefs__'] = current
             # Determine whether this action is the best
             if best is None:
                 best = [action]
@@ -506,13 +529,39 @@ class Agent:
         """
         Adds/updates a goal weight within the reward function for the specified model.
         """
+        if not model in self.models:
+            model = '%s0' % (self.name)
         if not self.models[model].has_key('R'):
             self.models[model]['R'] = {}
         if not isinstance(tree,str):
             tree = tree.desymbolize(self.world.symbols)
         self.models[model]['R'][tree] = weight
 
-    def reward(self,vector=None,model=True,recurse=True):
+    def getReward(self,model):
+        R = self.getAttribute('R',model)
+        if R is None:
+            # No reward components
+            R = KeyedTree(KeyedVector())
+            self.setAttribute('R',R,model)
+            return R
+        elif isinstance(R,dict):
+            Rsum = None
+            for tree,weight in R.items():
+                if isinstance(tree,str):
+                    raise NotImplementedError
+                else:
+                    if Rsum is None:
+                        Rsum = weight*tree
+                    else:
+                        Rsum += weight*tree
+            if Rsum is None:
+                Rsum = KeyedTree(KeyedVector())
+            self.setAttribute('R',Rsum,model)
+            return Rsum
+        else:
+            return R
+        
+    def reward(self,vector=None,model=None,recurse=True):
         """
         @param recurse: C{True} iff it is OK to recurse into another agent's reward (default is C{True})
         @type recurse: bool
@@ -526,20 +575,18 @@ class Agent:
             for element in vector.domain():
                 total += vector[element]*self.reward(element,model,recurse)
         elif isinstance(vector,VectorDistributionSet):
-            R = self.getAttribute('R',model)
-            if R is None:
-                # No reward components
-                return total
-            for tree,weight in R.items():
-                if isinstance(tree,str):
-                    if recurse:
-                        # Name of an agent I'm trying to make (un)happy
-                        model = self.world.getModel(tree,vector)
-                        # Compute agent's reward but don't recurse any further
-                        ER = self.world.agents[tree].reward(vector,model,False)
+            modelK = modelKey(self.name)
+            models = self.world.float2value(modelK,vector.domain(modelK))
+            tree = None
+            for submodel in models:
+                R = self.getReward(submodel)
+                if tree is None:
+                    tree = R
                 else:
-                    ER = tree*vector
-                total += ER*weight
+                    tree = {'if': equalRow(modelK,submodel),
+                             True: R,False: tree}
+            tree = makeTree(tree).desymbolize(self.world.symbols)
+            total = tree*vector
         else:
             R = self.getAttribute('R',model)
             if R is None:
@@ -596,13 +643,16 @@ class Agent:
         if self.models.has_key(name):
             raise NameError,'Model %s already exists for agent %s' % \
                 (name,self.name)
+        if name in self.world.symbols:
+            raise NameError('Model %s conflicts with existing symbol' % (name))
         model = {'name': name,'index': 0,'parent': True,'SE': {},
                  'V': ValueFunction(),'policy': {},'ignore': []}
         model.update(kwargs)
-        while self.modelList.has_key(model['index']):
-            model['index'] += 1
+        model['index'] = len(self.world.symbolList)
         self.models[name] = model
         self.modelList[model['index']] = name
+        self.world.symbols[name] = model['index']
+        self.world.symbolList.append(name)
         return model
 
     def deleteModel(self,name):
@@ -726,11 +776,13 @@ class Agent:
             self.models[model]['beliefs'] = beliefs
         self.world.setFeature(key,distribution,beliefs)
 
-    def getBelief(self,vector,model=None):
+    def getBelief(self,vector=None,model=None):
         """
         @param model: the model of the agent to use, default is to use model specified in the state vector
         @return: the agent's belief in the given world
         """
+        if vector is None:
+            vector = self.world.state
         if model is None:
             model = self.world.getModel(self.name,vector)
         if isinstance(model,Distribution):
@@ -767,12 +819,14 @@ class Agent:
             oldModel = self.world.float2value(oldModelKey,vector[oldModelKey])
             label = ','.join(['%s' % (self.world.float2value(omega,vector[keys.makeFuture(omega)])) for omega in Omega])
             if not oldModel in SE:
-                SE[oldModel] = {}
+                SE[oldModel] = {actions: {}}
             if not label in SE:
                 if self.getAttribute('static',oldModel) is True:
                     SE[label] = vector[oldModelKey]
-                elif label in self.models[oldModel]['SE']:
-                    SE[label] = self.world.value2float(oldModelKey,self.models[oldModel]['SE'][label])
+                elif actions in self.models[oldModel]['SE'] and \
+                     label in self.models[oldModel]['SE'][actions]:
+                    newModel = self.models[oldModel]['SE'][actions][label]
+                    SE[label] = self.models[newModel]['index']
                 else:
                     # Work to be done. Start by getting old belief state.
                     beliefs = self.getAttribute('beliefs',oldModel)
@@ -789,12 +843,15 @@ class Agent:
                     # TODO: Look for matching model?
                     newModel = self.belief2model(oldModel,beliefs)
                     SE[label] = newModel['index']
-                    self.models[oldModel]['SE'][label] = newModel['name']
+                    if not actions in self.models[oldModel]['SE']:
+                        self.models[oldModel]['SE'] = {actions: {}}
+                    self.models[oldModel]['SE'][actions][label] = newModel['name']
             # Insert new model into true state
             if isinstance(SE[label],int) or isinstance(SE[label],float):
                 vector[newModelKey] = SE[label]
             else:
-                raise RuntimeError,'Unable to process stochastic belief updates'
+                raise RuntimeError,'Unable to process stochastic belief updates:%s' \
+                    % (SE[label])
             distribution.addProb(vector,prob)
         return SE
     
@@ -1083,6 +1140,10 @@ class Agent:
                         subnode = doc.createElement(key)
                         subnode.appendChild(doc.createTextNode(str(model[key])))
                         node.appendChild(subnode)
+                    elif isinstance(model['R'],KeyedTree):
+                        subnode = doc.createElement(key)
+                        subnode.appendChild(model['R'].__xml__().documentElement)
+                        node.appendChild(subnode)
                     else:
                         for tree,weight in model['R'].items():
                             subnode = doc.createElement(key)
@@ -1216,9 +1277,10 @@ class Agent:
                                     if subchild.nodeType == subchild.ELEMENT_NODE:
                                         if key == 'R':
                                             # PWL goal
+                                            tree = KeyedTree(subchild)
                                             if not kwargs.has_key(key):
                                                 kwargs[key] = {}
-                                            kwargs[key][KeyedTree(subchild)] = float(subnode.getAttribute('weight'))
+                                            kwargs[key][tree] = float(subnode.getAttribute('weight'))
                                         elif key == 'policy':
                                             kwargs[key] = KeyedTree(subchild)
                                         elif key == 'beliefs':
