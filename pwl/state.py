@@ -59,7 +59,7 @@ class VectorDistributionSet:
         if key == 0:
             raise DeprecationWarning,'step no longer returns a list of outcomes, but rather a single VectorDistributionSet'
         else:
-            return NotImplemented
+            return self.marginal(key)
         
     def __setitem__(self,key,value):
         """
