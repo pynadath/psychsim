@@ -125,7 +125,7 @@ class World:
             values = [e for e in state.domain(makeFuture(key))]
             choices = [self.float2value(key,e) for e in values]
             if len(choices) == 1:
-                effect = self.effect(choices[0],state,1.,updateBeliefs,keySubset,True)
+                effect = self.effect(choices[0],state,updateBeliefs,keySubset)
                 outcome.update(effect)
             else:
                 print(choices)
@@ -247,7 +247,7 @@ class World:
             state *= policy
         return actions
 
-    def stepTurn(self,start,end,actions):
+    def deltaTurn(self,state,actions):
         """
         Computes the change in the turn order based on the given actions
         @param start: The original state
@@ -255,14 +255,11 @@ class World:
         @type start,end: L{VectorDistributionSet}
         @return: The dynamics functions applied to update the turn order
         """
-        turnKeys = {k for k in start.keyMap.keys() if isTurnKey(k)}
-        turnDynamics = []
+        turnKeys = {k for k in state.keyMap.keys() if isTurnKey(k)}
+        dynamics = {}
         for key in turnKeys:
-            dynamics = self.getTurnDynamics(key,actions)
-            turnDynamics += dynamics
-            for tree in dynamics:
-                end *= tree
-        return turnDynamics
+            dynamics.update(self.getTurnDynamics(key,actions))
+        return dynamics
 
     def stepObservations(self,state,actions):
         """
@@ -277,49 +274,47 @@ class World:
                     state *= tree
         return Olist
         
-    def effect(self,actions,vector,probability=1.,updateBeliefs=True,keySubset=None,
-               real=True):
-        """
-        @param probability: the likelihood of this particular action set (default is 100%)
-        @type probability: float
-        """
-        result = {'effect': []}
-        if isinstance(vector,psychsim.pwl.KeyedVector):
-            result['new'] = psychsim.pwl.VectorDistribution({vector: probability})
-        else:
-            result['new'] = vector
-        result['new'] = self.deltaState(actions,result['new'],result['effect'],
-                                        keySubset,real)
+    def effect(self,actions,state,updateBeliefs=True,keySubset=None):
+        if not isinstance(state,VectorDistributionSet):
+            state = psychsim.pwl.VectorDistributionSet(state)
+        result = {'new': state}
+        # Get effect on state variables
+        result['effect'] = self.deltaState(actions,result['new'],keySubset)
         # Update turn order
-        if isinstance(vector,VectorDistributionSet):
-            result['effect'].append(self.stepTurn(vector,result['new'],actions))
-        else:
-            delta = self.deltaOrder(actions,vector)
-            if delta:
-                new = psychsim.pwl.VectorDistribution()
-                for old in result['new'].domain():
-                    newVector = psychsim.pwl.KeyedVector(old)
-                    newVector.update(delta*old)
-                    new.addProb(newVector,result['new'][old])
-                result['new'] = new
-                result['effect'].append(delta)
+        result['effect'].append(self.deltaTurn(result['new'],actions))
+        for stage in result['effect']:
+            for key,dynamics in stage.items():
+                if dynamics is None:
+                    # No dynamics, so status quo
+                    substate = result['new'].keyMap[key]
+                    newKey = makeFuture(key)
+                    result['new'].keyMap[newKey] = substate
+                    dist = result['new'].distributions[substate]
+                    for vector in dist.domain():
+                        prob = dist[vector]
+                        del dist[vector]
+                        vector[newKey] = vector[key]
+                        dist[vector] = prob
+                else:
+                    for tree in dynamics:
+                        result['new'] *= tree
         # Generate observations
         result['effect'].append(self.stepObservations(result['new'],actions))
         if updateBeliefs:
             # Update agent models included in the original world
             # (after finding out possible new worlds)
             agentsModeled = [name for name in self.agents.keys()
-                             if modelKey(name) in vector.keyMap]
+                             if modelKey(name) in result['new'].keyMap]
             for name in agentsModeled:
                 key = modelKey(name)
                 agent = self.agents[name]
                 Omega = {keys.makeFuture(keys.stateKey(agent.name,omega)) \
                          for omega in agent.omega}
-                vector.collapse(Omega|{key},False)
-                result['effect'].append(agent.updateBeliefs(vector,actions))
+                result['new'].collapse(Omega|{key},False)
+                result['effect'].append(agent.updateBeliefs(result['new'],actions))
         return result
 
-    def deltaState(self,actions,old,effects,keySubset=None,real=True,test=None):
+    def deltaState(self,actions,state,keySubset=None):
         """
         Computes the change across a subset of state features
         """
@@ -330,41 +325,16 @@ class World:
                 keySet = {k for k in keySet if k in keySubset}
             if len(keySet) > 0:
                 keyOrder.append(keySet)
-        if isinstance(old,VectorDistributionSet):
-            if real:
-                new = old
-            else:
-                new = copy.deepcopy(old)
-            for keySet in keyOrder:
-                dynamics = {}
-                for key in keySet:
-                    dynamics[key] = self.getDynamics(key,actions,old)
-                    if dynamics[key]:
-                        for tree in dynamics[key]:
-                            # Got me a PWL function, gonna apply it
-                            new *= tree
-                    else:
-                        # No dynamics, no change
-                        substate = new.keyMap[key]
-                        marginal = old.marginal(key)
-                        new.keyMap[makeFuture(key)] = substate
-                        for vector in new.distributions[substate].domain():
-                            prob = new.distributions[substate][vector]
-                            del new.distributions[substate][vector]
-                            vector[makeFuture(key)] = vector[key]
-                            new.distributions[substate][vector] = prob
-                effects.append(dynamics)
-        else:
-            # Go vector by vector
-            for keySet in keyOrder:
-                new = psychsim.pwl.VectorDistribution()
-                for oldVector in old.domain():
-                    partial = self.multiDeltaVector(actions,oldVector,keySet)
-                    for newVector in partial.domain():
-                        new.addProb(newVector,old[oldVector]*partial[newVector])
-                old = new
-            effects.append(psychsim.pwl.MatrixDistribution({psychsim.pwl.KeyedMatrix(): 1.}))
-        return new
+        effects = []
+        for keySet in keyOrder:
+            dynamics = {}
+            for key in keySet:
+                dynamics[key] = self.getDynamics(key,actions,state)
+                if len(dynamics[key]) == 0:
+                    # No dynamics, no change
+                    dynamics[key] = None
+            effects.append(dynamics)
+        return effects
 
     def multiDeltaVector(self,actions,old,keys):
         new = psychsim.pwl.VectorDistribution({old: 1.})
@@ -738,7 +708,7 @@ class World:
                 tree = psychsim.pwl.makeTree(psychsim.pwl.incrementMatrix(key,-1))
 #            self.setTurnDynamics(name,actions,tree)
             dynamics = [tree]
-        return dynamics
+        return {key: dynamics}
         
     def getActions(self,vector,agents=None,actions=None):
         """
