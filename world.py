@@ -98,7 +98,7 @@ class World:
     """------------------"""
                 
     def step(self,actions=None,state=None,real=True,select=False,keySubset=None,
-             horizon=None,updateBeliefs=True):
+             horizon=None,tiebreak=None,updateBeliefs=True):
         """
         The simulation method
         @param actions: optional argument setting a subset of actions to be performed in this turn
@@ -110,92 +110,36 @@ class World:
         """
         if state is None:
             state = self.state
-        outcomes = []
+        if real is False:
+            state = copy.deepcopy(state)
         assert isinstance(state,VectorDistributionSet)
-        outcomes.append(self.stepFromState(state,actions,horizon,keySubset=keySubset,
-                                           real=real,updateBeliefs=updateBeliefs))
+        outcome = {'old': state,
+                   'decisions': {}}
+        # Check whether we are already in a terminal state
+        if self.terminated(state):
+            return state
+        # Determine the actions taken by the agents in this world
+        outcome['actions'] = self.stepPolicy(state,actions,horizon,tiebreak)
+        for actor in outcome['actions']:
+            key = stateKey(actor,ACTION)
+            values = [e for e in state.domain(makeFuture(key))]
+            choices = [self.float2value(key,e) for e in values]
+            if len(choices) == 1:
+                effect = self.effect(choices[0],state,1.,updateBeliefs,keySubset,True)
+                outcome.update(effect)
+            else:
+                print(choices)
+                raise ValueError
+        # The future becomes the present
+        state.rollback()
         if select:
             newState = outcomes[0]['new']
             for dist in newState.distributions.values():
                 dist.select()
         if self.memory:
-            self.history.append(outcomes)
+            self.history.append(copy.deepcopy(state))
             # self.modelGC(False)
-        return outcomes
-
-    def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=False,keySubset=None,real=True):
-        """
-        Compute the resulting states when starting in a given possible world (as opposed to a distribution over possible worlds)
-        """
-        outcome = {'old': vector,
-                   'decisions': {}}
-        # Check whether we are already in a terminal state
-        if self.terminated(vector):
-            outcome['new'] = outcome['old']
-            return outcome
-        # Determine the actions taken by the agents in this world
-        if actions is None:
-            outcome['actions'] = {}
-        else:
-            if isinstance(actions,Action):
-                actions = ActionSet([actions])
-            outcome['actions'] = copy.copy(actions)
-        # Keep track of whether there is uncertainty about the actions to perform
-        stochastic = []
-        if not isinstance(outcome['actions'],ActionSet) and not isinstance(outcome['actions'],list):
-            # ActionSet indicates that we should perform just these actions. 
-            # Otherwise, we look at whose turn it is:
-            turn = self.next(vector)
-            for name in outcome['actions'].keys():
-                if not (name in turn):
-                    raise NameError('Agent %s must wait for its turn' % (name))
-            for name in turn:
-                if not name in outcome['actions']:
-                    model = self.getModel(name,vector)
-                    decision = self.agents[name].decide(vector,horizon,outcome['actions'],model,tiebreak,None,keySubset)
-                    outcome['decisions'][name] = decision
-                    outcome['actions'][name] = decision['action']
-                elif isinstance(outcome['actions'][name],Action):
-                    outcome['actions'][name] = ActionSet([outcome['actions'][name]])
-                if isinstance(outcome['actions'][name],psychsim.probability.Distribution):
-                    stochastic.append(name)
-        if stochastic:
-            # Merge effects of multiple possible actions into single effect
-            if len(stochastic) > 1:
-                raise NotImplementedError('Currently unable to handle stochastic expectations over multiple agents: %s' % (stochastic))
-            effects = []
-            for action in outcome['actions'][stochastic[0]].domain():
-                prob = outcome['actions'][stochastic[0]][action]
-                actions = dict(outcome['actions'])
-                actions[stochastic[0]] = action 
-                effect = self.effect(actions,outcome['old'],prob,updateBeliefs=updateBeliefs,keySubset=keySubset)
-                if len(effect) == 0:
-                    # No consistent transition for this action
-                    # (don't blame me, I'm just the messenger)
-                    continue
-                elif 'new' in outcome:
-                    for vector in effect['new'].domain():
-                        try:
-                            outcome['new'][vector] += effect['new'][vector]
-                        except KeyError:
-                            outcome['new'][vector] = effect['new'][vector]
-                    outcome['effect'] += effect['effect']
-                else:
-                    outcome['new'] = effect['new']
-                    outcome['effect'] = effect['effect']
-        else:
-            effect = self.effect(outcome['actions'],outcome['old'],1.,updateBeliefs,keySubset,real)
-            outcome.update(effect)
-        if 'effect' in outcome:
-            if not 'new' in outcome:
-                # Apply effects
-                outcome['new'] = outcome['effect']*outcome['old']
-#            if not 'delta' in outcome:
-#                outcome['delta'] = outcome['new'] - outcome['old']
-        else:
-            # No consistent effect
-            pass
-        return outcome
+        return state
 
     def stepFromVector(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=True,keySubset=None,real=True):
         """
@@ -271,6 +215,38 @@ class World:
             pass
         return outcome
 
+    def stepPolicy(self,state=None,actions=None,horizon=None,tiebreak=None):
+        if state is None:
+            state = self.state
+        if isinstance(actions,Action):
+            actions = {actions['subject']: ActionSet({actions})}
+        elif isinstance(actions,ActionSet):
+            actions = {actions['subject']: actions}
+        if isinstance(actions,dict):
+            for name,policy in actions.items():
+                if isinstance(policy,ActionSet):
+                    # Transfer fixed action into policy
+                    key = keys.stateKey(name,keys.ACTION)
+                    actions[name] = makeTree({'if': equalRow(turnKey(name),0),
+                                              True: setToConstantMatrix(key,policy),
+                                              False: noChangeMatrix(key)})
+                actions[name] = actions[name].desymbolize(self.symbols)
+        else:
+            assert actions is None
+            actions = {}
+        for name in self.agents:
+            if not name in actions:
+                # No action pre-specified
+                key = keys.turnKey(name)
+                if key in state.keyMap and 0 in state.domain(key):
+                    # This agent might have a turn now
+                    decision = self.agents[name].decide(state,horizon,actions,
+                                                        None,tiebreak)
+                    actions[name] = decision['policy']
+        for name,policy in actions.items():
+            state *= policy
+        return actions
+
     def stepTurn(self,start,end,actions):
         """
         Computes the change in the turn order based on the given actions
@@ -301,7 +277,8 @@ class World:
                     state *= tree
         return Olist
         
-    def effect(self,actions,vector,probability=1.,updateBeliefs=True,keySubset=None,real=True):
+    def effect(self,actions,vector,probability=1.,updateBeliefs=True,keySubset=None,
+               real=True):
         """
         @param probability: the likelihood of this particular action set (default is 100%)
         @type probability: float
@@ -311,7 +288,8 @@ class World:
             result['new'] = psychsim.pwl.VectorDistribution({vector: probability})
         else:
             result['new'] = vector
-        result['new'] = self.deltaState(actions,result['new'],result['effect'],keySubset,real)
+        result['new'] = self.deltaState(actions,result['new'],result['effect'],
+                                        keySubset,real)
         # Update turn order
         if isinstance(vector,VectorDistributionSet):
             result['effect'].append(self.stepTurn(vector,result['new'],actions))
@@ -339,11 +317,9 @@ class World:
                          for omega in agent.omega}
                 vector.collapse(Omega|{key},False)
                 result['effect'].append(agent.updateBeliefs(vector,actions))
-        # The future becomes the present
-        result['new'].rollback()
         return result
 
-    def deltaState(self,actions,old,effects,keySubset=None,real=True):
+    def deltaState(self,actions,old,effects,keySubset=None,real=True,test=None):
         """
         Computes the change across a subset of state features
         """
@@ -504,7 +480,7 @@ class World:
 
     def addAgent(self,agent):
         if isinstance(agent,str):
-            agent = Agent(agent)
+            agent = Agent(agent,self)
         if self.has_agent(agent):
             raise NameError('Agent %s already exists in this world' % (agent.name))
         else:
@@ -512,6 +488,7 @@ class World:
             agent.world = self
             self.turnSubstate = None
             self.turnKeys = set()
+        return agent
 
     def has_agent(self,agent):
         """
@@ -648,6 +625,7 @@ class World:
             else:
                 names = [order[index]]
             for name in names:
+                # Insert turn key
                 key = turnKey(name)
                 self.turnKeys.add(key)
                 if not key in self.variables:
@@ -655,6 +633,11 @@ class World:
                         self.turnSubstate = max(self.state.distributions.keys())+1
                     self.defineVariable(key,int,hi=self.maxTurn,evaluate=False,substate=self.turnSubstate)
                 self.state.join(key,index)
+                # Insert action key
+                key = stateKey(name,keys.ACTION)
+                if not key in self.variables:
+                    self.defineVariable(key,ActionSet)
+                    self.setFeature(key,iter(self.variables[key]['elements']).next())
 
     def next(self,vector=None):
         """
@@ -802,6 +785,10 @@ class World:
         @param combinator: how should multiple dynamics for this variable be combined
         @param substate: name of independent state subvector this variable belongs to
         """
+        for agent in self.agents.values():
+            for model in agent.models.values():
+                if 'beliefs' in model and not model['beliefs'] is True:
+                    raise RuntimeError('Define all variables before setting beliefs')
         if key in self.variables:
             raise NameError('Variable %s already defined' % (key))
         if key[-1] == "'":
@@ -830,13 +817,14 @@ class World:
         elif domain is ActionSet:
             # The actions of an agent
             if isinstance(lo,float):
-                assert key in self.agents
-                lo = self.agents[key].actions
+                if key in self.agents:
+                    lo = self.agents[key].actions
+                else:
+                    lo = self.agents[keys.state2agent(key)].actions
             self.variables[key].update({'elements': lo,'lo': None,'hi': None})
             for action in lo:
                 self.symbols[action] = len(self.symbols)
                 self.symbolList.append(action)
-                assert self.symbolList[self.symbols[action]] == action
         else:
             raise ValueError('Unknown domain type %s for %s' % (domain,key))
         self.variables[key]['key'] = key
@@ -851,6 +839,12 @@ class World:
         @param state: the state distribution to modify (default is the current world state)
         @type state: L{VectorDistribution}
         """
+        if state is None or state is self.state:
+            for agent in self.agents.values():
+                for model in agent.models.values():
+                    if 'beliefs' in model and not model['beliefs'] is True and \
+                       not key in model['beliefs']:
+                        raise RuntimeError('Set all variable values before setting beliefs')
         assert key in self.variables,'Unknown element "%s"' % (key)
         if state is None:
             state = self.state
@@ -870,13 +864,16 @@ class World:
                 except KeyError:
                     value[newElement] = flt[element]
             return value
+        elif isinstance(flt,set):
+            return {self.float2value(key,element) for element in flt}
         elif self.variables[key]['domain'] is bool:
             if flt > 0.5:
                 return True
             else:
                 return False
-        elif self.variables[key]['domain'] is list or self.variables[key]['domain'] is set or \
-                self.variables[key]['domain'] is ActionSet:
+        elif self.variables[key]['domain'] is list or \
+             self.variables[key]['domain'] is set or \
+             self.variables[key]['domain'] is ActionSet:
             index = int(float(flt)+0.1)
             return self.symbolList[index]
         elif self.variables[key]['domain'] is int:
@@ -1010,13 +1007,15 @@ class World:
     """Mental model methods"""
     """------------------"""
 
-    def getModel(self,modelee,vector):
+    def getModel(self,modelee,vector=None):
         """
         @return: the name of the model of the given agent indicated by the given state vector
         @type modelee: str
         @type vector: L{psychsim.pwl.KeyedVector}
         @rtype: str
         """
+        if vector is None:
+            vector = self.state
         agent = self.agents[modelee]
         if isinstance(vector,VectorDistributionSet):
             key = modelKey(modelee)
@@ -1644,17 +1643,18 @@ class World:
         # Event history
         node = doc.createElement('history')
         for entry in self.history:
-            subnode = doc.createElement('entry')
-            for outcome in entry:
-                subsubnode = doc.createElement('outcome')
-                for name in self.agents.keys():
-                    if 'actions' in outcome and name in outcome['actions']:
-                        subsubnode.appendChild(outcome['actions'][name].__xml__().documentElement)
-        #        if 'delta' in outcome:
-        #            subsubnode.appendChild(outcome['delta'].__xml__().documentElement)
-                subsubnode.appendChild(outcome['old'].__xml__().documentElement)
-                subnode.appendChild(subsubnode)
-            node.appendChild(subnode)
+            node.appendChild(entry.__xml__().documentElement)
+        #     subnode = doc.createElement('entry')
+        #     for outcome in entry:
+        #         subsubnode = doc.createElement('outcome')
+        #         for name in self.agents.keys():
+        #             if 'actions' in outcome and name in outcome['actions']:
+        #                 subsubnode.appendChild(outcome['actions'][name].__xml__().documentElement)
+        # #        if 'delta' in outcome:
+        # #            subsubnode.appendChild(outcome['delta'].__xml__().documentElement)
+        #         subsubnode.appendChild(outcome['old'].__xml__().documentElement)
+        #         subnode.appendChild(subsubnode)
+        #     node.appendChild(subnode)
         root.appendChild(node)
         # UI Diagram
         if self.diagram:
