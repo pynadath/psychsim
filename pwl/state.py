@@ -16,7 +16,12 @@ class VectorDistributionSet:
     def __init__(self,node=None):
         self.distributions = {}
         self.keyMap = {}
-        if node:
+        if isinstance(node,KeyedVector):
+            node = VectorDistribution({node:1.})
+        if isinstance(node,VectorDistribution):
+            self.distributions[0] = node
+            self.keyMap = {k: 0 for k in node.keys()}
+        elif node:
             self.parse(node)
 #        elif not empty:
 #            self.distributions[0] = VectorDistribution()
