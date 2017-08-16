@@ -261,18 +261,18 @@ class World:
             dynamics.update(self.getTurnDynamics(key,actions))
         return dynamics
 
-    def stepObservations(self,state,actions):
+    def deltaObservations(self,state,actions):
         """
         Computes the new observations for each agent in the given state 
+        @warning: Does not currently enforce order between observations that have direct dependencies. If you want such a dependency, introduce a state feature to indirectly capture it. 
         """
-        Olist = []
+        Ofuns = {}
         for name in self.agents:
             O = self.agents[name].getO(state,actions)
             if O:
-                Olist.append(O.values())
                 for key,tree in O.items():
-                    state *= tree
-        return Olist
+                    Ofuns[key] = [tree]
+        return Ofuns
         
     def effect(self,actions,state,updateBeliefs=True,keySubset=None):
         if not isinstance(state,VectorDistributionSet):
@@ -282,6 +282,9 @@ class World:
         result['effect'] = self.deltaState(actions,result['new'],keySubset)
         # Update turn order
         result['effect'].append(self.deltaTurn(result['new'],actions))
+        # Generate observations
+        result['effect'].append(self.deltaObservations(result['new'],actions))
+        # Apply all of these update functions
         for stage in result['effect']:
             for key,dynamics in stage.items():
                 if dynamics is None:
@@ -298,8 +301,6 @@ class World:
                 else:
                     for tree in dynamics:
                         result['new'] *= tree
-        # Generate observations
-        result['effect'].append(self.stepObservations(result['new'],actions))
         if updateBeliefs:
             # Update agent models included in the original world
             # (after finding out possible new worlds)
