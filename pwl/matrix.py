@@ -215,6 +215,12 @@ def noChangeMatrix(key):
     @rtype: L{KeyedMatrix}
     """
     return scaleMatrix(key,1.)
+def nullMatrix(key):
+    """
+    @return: a fake dynamics matrix that doesn't change time
+    @rtype: L{KeyedMatrix}
+    """
+    return KeyedMatrix({key: KeyedVector({key: 1.})})
 def approachMatrix(key,weight,limit):
     """
     @param weight: the percentage by which you want the feature to approach the limit
