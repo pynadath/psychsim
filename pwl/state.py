@@ -1,4 +1,6 @@
+from collections import OrderedDict
 import copy
+import itertools
 import operator
 from xml.dom.minidom import Document,Node
 
@@ -237,7 +239,26 @@ class VectorDistributionSet:
         return self.distributions[self.keyMap[key]].marginal(key)
 
     def domain(self,key):
-        return {v[key] for v in self.distributions[self.keyMap[key]].domain()}
+        if isinstance(key,str):
+            return {v[key] for v in self.distributions[self.keyMap[key]].domain()}
+        elif isinstance(key,list):
+            # Identify the relevant subdistributions
+            substates = OrderedDict()
+            for subkey in key:
+                loc = self.keyMap[subkey]
+                try:
+                    substates[loc].append(subkey)
+                    raise RuntimeError,'Currently unable to compute domains over interdependent state features'
+                except KeyError:
+                    substates[loc] = [subkey]
+            # Determine the domain of each feature across distributions
+            domains = []
+            for loc,keys in substates.items():
+                dist = self.distributions[loc]
+                domains.append([[vector[k] for k in keys] for vector in dist.domain()])
+            return [sum(combo,[]) for combo in itertools.product(*domains)]
+        else:
+            return NotImplemented
     
     def items(self):
         return self.distributions.items()
