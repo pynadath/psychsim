@@ -30,7 +30,7 @@ class World:
     @ivar termination: list of conditions under which the simulation terminates (default is none)
     @type termination: L{psychsim.pwl.KeyedTree}[]
     """
-    memory = True
+    memory = False
 
     def __init__(self,xml=None):
         """
@@ -138,7 +138,7 @@ class World:
                 dist.select()
         if self.memory:
             self.history.append(copy.deepcopy(state))
-            # self.modelGC(False)
+           # self.modelGC(False)
         return state
 
     def stepFromVector(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=True,keySubset=None,real=True):
