@@ -158,8 +158,11 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         if not waypoint.has_key('symbol'):
             waypoint['symbol'] = waypoint['name'].replace(' ','')
         world.addAgent(waypoint['symbol'])
-        # Have we visited this waypoint?
-        key = world.defineState(waypoint['symbol'],'visited',bool)
+        # Has the robot scanned this waypoint?
+        key = world.defineState(waypoint['symbol'],'scanned',bool)
+        world.setFeature(key,False)
+        # Has the human teammate entered this waypoint?
+        key = world.defineState(waypoint['symbol'],'entered',bool)
         world.setFeature(key,False)
         # Are there dangerous chemicals or armed people here?
         key = world.defineState(waypoint['symbol'],'danger',list,threats[:])
@@ -173,8 +176,8 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                                 ['none','protected','unprotected'])
         world.setFeature(key,'none')
 
-    # All done when every building has been visited
-    row = andRow([makeFuture(stateKey(wp['symbol'],'visited'))
+    # All done when every building has been visited by teammate
+    row = andRow([makeFuture(stateKey(wp['symbol'],'entered'))
                   for wp in WAYPOINTS[level]])
     world.addTermination(makeTree({'if': row,
                                    True: setTrueMatrix(TERMINATED),
@@ -184,8 +187,8 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 
     world.defineState(human.name,'alive',bool)
     human.setState('alive',True)
-    world.defineState(human.name,'deaths',int)
-    human.setState('deaths',0)
+#    world.defineState(human.name,'deaths',int)
+#    human.setState('deaths',0)
 
     # Robot
     robot = world.addAgent('robot')
@@ -238,7 +241,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         # Legal if no contradictory command
         tree = makeTree({'if': equalRow('phase','move'),
                          True: {'if': equalRow(stateKey(robot.name,'command'),'none'),
-                                True: {'if': trueRow(stateKey(symbol,'visited')),
+                                True: {'if': trueRow(stateKey(symbol,'scanned')),
                                                      True: False, False: True},
                                 False: {'if': equalRow(stateKey(robot.name,'command'),
                                                        symbol),
@@ -246,8 +249,17 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                          False: False})
         robot.setLegal(action,tree)
         # Dynamics of robot's location
-        tree = makeTree(setToConstantMatrix(stateKey(action['subject'],'waypoint'),symbol))
-        world.setDynamics(stateKey(action['subject'],'waypoint'),action,tree)
+        key = stateKey(action['subject'],'waypoint')
+        tree = makeTree(setToConstantMatrix(key,symbol))
+        world.setDynamics(key,action,tree)
+        # Dynamics of scanned flag
+        key = stateKey(symbol,'scanned')
+        tree = makeTree(setTrueMatrix(key))
+        world.setDynamics(key,action,tree)
+        # He has risen!
+        key = stateKey(human.name,'alive')
+        tree = makeTree(setTrueMatrix(key))
+        world.setDynamics(key,action,tree)
         # Dynamics of time
         key = stateKey(None,'time')
         tree = setToConstantMatrix(key,0.)
@@ -285,6 +297,11 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         tree = makeTree({'if': equalRow(stateKey(symbol,'danger'),'none'),
                          True: setTrueMatrix(key), False: setFalseMatrix(key)})
         world.setDynamics(key,action,tree)
+#        key = stateKey(human.name,'deaths')
+#        tree = makeTree({'if': equalRow(stateKey(symbol,'danger'),'none'),
+#                         True: noChangeMatrix(key), False: incrementMatrix(key,1.)})
+#        world.setDynamics(key,action,tree)
+        # Going in without protection takes no time
         key = stateKey(None,'time')
         world.setDynamics(key,action,makeTree(setToConstantMatrix(key,0.)))
         tree = makeTree({'if': equalRow('phase','scan'),
@@ -294,10 +311,27 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                                 False: False},
                          False: False})
         robot.setLegal(action,tree)
-        # Dynamics of visited flag
-        key = stateKey(symbol,'visited')
+        # Dynamics of entered flag
+        key = stateKey(symbol,'entered')
         tree = makeTree(setTrueMatrix(key))
         world.setDynamics(key,action,tree)
+        # # Observation upon entering
+        # danger = stateKey(symbol,'danger')
+        # omega = stateKey(robot.name,'microphone')
+        # robot.setO('microphone',action,
+        #            makeTree({'if': equalRow(danger,'armed'),
+        #                      True: setToConstantMatrix(omega,'suspicious'),
+        #                      False: setToConstantMatrix(omega,'friendly')}))
+        # omega = stateKey(robot.name,'NBCsensor')
+        # robot.setO('NBCsensor',action,
+        #            makeTree({'if': equalRow(danger,'NBC'),
+        #                      True: setTrueMatrix(omega),
+        #                      False: setFalseMatrix(omega)}))
+        # omega = stateKey(robot.name,'camera')
+        # robot.setO('camera',action,
+        #            makeTree({'if': equalRow(danger,'armed'),
+        #                      True: setTrueMatrix(omega),
+        #                      False: setFalseMatrix(omega)}))
         # Human entry: How much "time" if protected?
         action = robot.addAction({'verb': 'recommend protected','object': symbol})
         key = stateKey(None,'time')
@@ -309,10 +343,27 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                                 False: False},
                          False: False})
         robot.setLegal(action,tree)
-        # Dynamics of visited flag
-        key = stateKey(symbol,'visited')
+        # Dynamics of entered flag
+        key = stateKey(symbol,'entered')
         tree = makeTree(setTrueMatrix(key))
         world.setDynamics(key,action,tree)
+        # # Observation upon entering
+        # danger = stateKey(symbol,'danger')
+        # omega = stateKey(robot.name,'microphone')
+        # robot.setO('microphone',action,
+        #            makeTree({'if': equalRow(danger,'armed'),
+        #                      True: setToConstantMatrix(omega,'suspicious'),
+        #                      False: setToConstantMatrix(omega,'friendly')}))
+        # omega = stateKey(robot.name,'NBCsensor')
+        # robot.setO('NBCsensor',action,
+        #            makeTree({'if': equalRow(danger,'NBC'),
+        #                      True: setTrueMatrix(omega),
+        #                      False: setFalseMatrix(omega)}))
+        # omega = stateKey(robot.name,'camera')
+        # robot.setO('camera',action,
+        #            makeTree({'if': equalRow(danger,'armed'),
+        #                      True: setTrueMatrix(omega),
+        #                      False: setFalseMatrix(omega)}))
 
     # Robot goals
     goal = minimizeFeature(stateKey(None,'time'))
@@ -322,7 +373,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     robot.setReward(goal,1.)
 
     for point in WAYPOINTS[level]:
-        robot.setReward(maximizeFeature(stateKey(point['symbol'],'visited')),2.)
+        robot.setReward(maximizeFeature(stateKey(point['symbol'],'scanned')),2.)
 
     world.setOrder([robot.name])
 
@@ -338,10 +389,9 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                                                   'none': 1.-value})
         robot.setBelief(key,dist,model)
             
-    robot.setAttribute('horizon',2)
+    robot.setAttribute('horizon',1)
 
     filename = getFilename(username,level,ext,root)
-
     world.save(filename,ext=='psy')
     WriteLogData('%s user %s, level %d, ability %s, explanation %s, embodiment %s' % \
                      (CREATE_TAG,username,level,ability,explanation,embodiment),
@@ -497,10 +547,9 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
 
     # Find the best action
     values = []
-    print sorted(map(str,robot.getActions(world.state)))
     model = world.getModel(robot.name).first()
-    result = robot.decide(oldVector,2,model=model)
-    destination = result[model]['action']['object']
+    result = robot.decide(oldVector,model=model)
+    destination = result['action']['object']
     WriteLogData('%s %s' % (LOCATION_TAG,destination),username,level,root=root)
     index = symbol2index(destination,level)
     destination = WAYPOINTS[level][index]
@@ -542,11 +591,11 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         ack = ''
     # Did the user die?
     death = not world.getState('human','alive').first()
-    if death:
-        key = stateKey('human','deaths')
-        old = world.getValue(key)
-        world.setFeature(key,old+1)
-    world.setState('human','alive',True)
+    # if death:
+    #     key = stateKey('human','deaths')
+    #     old = world.getValue(key)
+    #     world.setFeature(key,old+1)
+    # world.setState('human','alive',True)
     WriteLogData('%s %s %s %s %s %s (%s) (%s)' % \
                  (USER_TAG,user,location,danger,death,
                   WAYPOINTS[level][robotIndex]['image'],
@@ -653,6 +702,11 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         world.setState(robotWaypoint['symbol'],'recommendation','unprotected')
         WriteLogData('%s: no' % (RECOMMEND_TAG),username,level,root=root)
     else:
+        if assessment['none'] > 0.5:
+            print assessment
+            print value
+            world.printState(subBeliefs['recommend protected'])
+            world.printState(subBeliefs['recommend unprotected'])
         assert assessment['none'] < 0.5
         POMDP['A'] = 'recommend protected'
         safety = False
@@ -791,7 +845,7 @@ def readLogData(username,level,root='.'):
 def allVisited(world,level):
     for index in range(len(WAYPOINTS[level])):
         waypoint = index2symbol(index,level)
-        visited = world.getState(waypoint,'visited').first()
+        visited = world.getState(waypoint,'entered').first()
         if not visited:
             return False
     else:
