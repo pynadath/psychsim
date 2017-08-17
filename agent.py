@@ -1,3 +1,4 @@
+from __future__ import print_function
 import copy
 import math
 import random
@@ -118,17 +119,18 @@ class Agent:
             # Someone made a boo-boo because there is no legal action for this agent right now
             buf = StringIO.StringIO()
             if len(self.getActions(vector)) == 0:
-                print >> buf,'%s has no legal actions in:' % (self.name)
+                print('%s has no legal actions in:' % (self.name),file=buf)
                 self.world.printState(vector,buf)
             else:
-                print >> buf,'%s has true legal actions:' % (self.name),\
-                    ';'.join(map(str,sorted(self.getActions(vector))))
+                print('%s has true legal actions:' % (self.name),\
+                      ';'.join(map(str,sorted(self.getActions(vector)))),file=buf)
             if len(self.getActions(belief)) == 0:
-                print >> buf,'%s has no legal actions when believing:' % (self.name)
+                print('%s has no legal actions when believing:' % (self.name),
+                      file=buf)
                 self.world.printState(belief,buf)
             else:
-                print >> buf,'%s believes it has legal actions:' % (self.name),\
-                    ';'.join(map(str,sorted(self.getActions(belief))))
+                print('%s believes it has legal actions:' % (self.name),\
+                      ';'.join(map(str,sorted(self.getActions(belief)))),file=buf)
             msg = buf.getvalue()
             buf.close()
             raise RuntimeError,msg
@@ -281,7 +283,7 @@ class Agent:
         # Find transition matrix
         transition = self.world.reachable(horizon=horizon,ignore=ignore,debug=(debug > 1))
         if debug:
-            print '|S|=%d' % (len(transition))
+            print('|S|=%d' % (len(transition)))
         # Initialize value function
         V = self.getAttribute('V',model)
         newChanged = set()
@@ -302,7 +304,7 @@ class Agent:
         while len(newChanged) > 0 and (maxIterations is None or iterations < maxIterations):
             iterations += 1
             if debug > 0:
-                print 'Iteration %d' % (iterations)
+                print('Iteration %d' % (iterations))
             oldChanged = newChanged.copy()
             newChanged.clear()
             recomputed = set()
@@ -320,7 +322,7 @@ class Agent:
                         if action == '__predecessors__':
                             continue
                         if debug > 2:
-                            print '\t\t%s' % (action)
+                            print('\t\t%s' % (action))
                         # Make sure only one actor is acting at a time
                         if actor is None:
                             actor = action['subject']
@@ -355,11 +357,11 @@ class Agent:
                                     ER += distribution[end]*(R+discount*Vrest)
                             newV.set(agent.name,start,action,0,ER)
                             if debug > 2:
-                                print '\t\t\tV_%s = %5.3f' % (agent.name,ER)
+                                print('\t\t\tV_%s = %5.3f' % (agent.name,ER))
                     # Value of state is the value of the chosen action in this state
                     choice = self.predict(start,actor,newV,0)
                     if debug > 2:
-                        print '\tPrediction\n%s' % (choice)
+                        print('\tPrediction\n%s' % (choice))
                     delta = 0.
                     for name in self.world.agents.keys():
                         for action in choice.domain():
@@ -370,13 +372,13 @@ class Agent:
                         else:
                             delta += abs(newV.get(name,start,None,0) - old)
                         if debug > 1:
-                            print '\tV_%s = %5.3f' % (name,newV.get(name,start,None,0))
+                            print('\tV_%s = %5.3f' % (name,newV.get(name,start,None,0)))
                     if delta > epsilon:
                         newChanged.add(start)
             V = newV
             self.setAttribute('V',V,model)
         if debug > 0:
-            print 'Completed after %d iterations' % (iterations)
+            print('Completed after %d iterations' % (iterations))
         return self.getAttribute('V',model)
 
     def setPolicy(self,policy,model=None,level=None):
@@ -607,16 +609,19 @@ class Agent:
     def printReward(self,model=True,buf=None,prefix=''):
         first = True
         R = self.getAttribute('R',model)
-        trees = R.keys()
-        trees.sort()
-        for tree in trees:
-            if first:
-                print >> buf,'%s\tR\t\t%3.1f %s' % (prefix,R[tree],str(tree).replace('\n','\n%s\t\t\t' % \
-                                                                                         (prefix)))
-                first = False
-            else:
-                print >> buf,'%s\t\t\t%3.1f %s' % (prefix,R[tree],str(tree).replace('\n','\n%s\t\t\t' % \
-                                                                                        (prefix)))
+        if isinstance(R,dict):
+            for tree,weight in R.items():
+                if first:
+                    msg = '%s\tR\t\t%3.1f %s' % (prefix,weight,str(tree))
+                    print(msg.replace('\n','\n%s\t\t\t' % (prefix)),file=buf)
+                    first = False
+                else:
+                    msg = '%s\t\t\t%3.1f %s' % (prefix,weight,str(tree))
+                    print(msg.replace('\n','\n%s\t\t\t' % (prefix)),file=buf)
+        else:
+            msg = '%s\tR\t\t%s' % (prefix,str(R))
+            print(msg.replace('\n','\n%s\t\t\t' % (prefix)),file=buf)
+
 
     """------------------"""
     """Mental model methods"""
@@ -741,19 +746,19 @@ class Agent:
         if isinstance(index,int) or isinstance(index,float):
             model = self.index2model(index)
         if model is None:
-            print >> buf,'%s\t%-12s\t%-12s' % \
-                (prefix,'__model__','__unknown(%s)__' % (index))
+            print('%s\t%-12s\t%-12s' % \
+                  (prefix,'__model__','__unknown(%s)__' % (index)),file=buf)
             return
         if not isinstance(model,dict):
             model = self.models[model]
-        print >> buf,'%s\t%-12s\t%-12s' % \
-            (prefix,'__model__',model['name'])
+        print('%s\t%-12s\t%-12s' % \
+              (prefix,'__model__',model['name']),file=buf)
         if model.has_key('R') and not model['R'] is True:
             self.printReward(model['name'],buf,'%s\t\t' % (prefix))
         if model.has_key('beliefs') and not model['beliefs'] is True:
-            print >> buf,'%s\t\t\t----beliefs:----' % (prefix)
+            print('%s\t\t\t----beliefs:----' % (prefix),file=buf)
             self.world.printState(model['beliefs'],buf,prefix+'\t\t\t',beliefs=True)
-            print >> buf,'%s\t\t\t----------------' % (prefix)
+            print('%s\t\t\t----------------' % (prefix),file=buf)
         
     """---------------------"""
     """Belief update methods"""
@@ -1397,7 +1402,7 @@ class ValueFunction:
         for state in V.keys():
             print
             agent.world.printVector(state)
-            print self.get(agent.name,state,None,horizon)
+            print(self.get(agent.name,state,None,horizon))
 
     def __lt__(self,other):
         return self.name < other.name
