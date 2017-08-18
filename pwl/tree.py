@@ -5,7 +5,7 @@ from psychsim.action import Action
 
 from vector import KeyedVector
 from matrix import KeyedMatrix
-from plane import KeyedPlane
+from plane import KeyedPlane,equalRow
 
 class KeyedTree:
     """
@@ -581,10 +581,27 @@ def makeTree(table):
     elif isinstance(table,KeyedTree):
         return table
     elif 'if' in table:
-        # Deterministic branch
+        # Binary deterministic branch
         tree = KeyedTree()
         tree.makeBranch(table['if'],makeTree(table[True]),makeTree(table[False]))
         return tree
+    elif 'case' in table:
+        # Non-binary deterministic branch
+        keys = table.keys()
+        keys.remove('case')
+        if 'otherwise' in table:
+            tree = table['otherwise']
+            keys.remove('otherwise')
+        else:
+            # No default, assume entries are exhaustive and take anyone as the last
+            tree = table[keys.pop()]
+        for key in keys:
+            if isinstance(table['case'],str):
+                tree = {'if': equalRow(table['case'],key),
+                        True: table[key], False: tree}
+            else:
+                return NotImplemented
+        return makeTree(tree)
     elif 'distribution'in table:
         # Probabilistic branch
         tree = KeyedTree()
