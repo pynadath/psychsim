@@ -452,7 +452,7 @@ class VectorDistributionSet:
                 destination = max(self.keyMap.values())+1
             total = 0.
             for key in other:
-                if self.keyMap[key] != destination:
+                if key != keys.CONSTANT and self.keyMap[key] != destination:
                     # Certain value for this key
                     marginal = self.marginal(key)
                     total += other[key]*iter(marginal.domain()).next()
@@ -461,7 +461,7 @@ class VectorDistributionSet:
                 prob = self.distributions[destination][vector]
                 del self.distributions[destination][vector]
                 for key in other:
-                    if self.keyMap[key] == destination:
+                    if key == keys.CONSTANT or self.keyMap[key] == destination:
                         # Uncertain value
                         vector[keys.VALUE] += other[key]*vector[key]
                 self.distributions[destination][vector] = prob
