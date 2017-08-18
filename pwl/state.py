@@ -334,29 +334,41 @@ class VectorDistributionSet:
             # Go through each key this matrix sets
             for rowKey,vector in other.items():
                 result = Distribution()
-                # Go through the inputs to the new value
-                for colKey in vector.keys():
-                    if colKey == keys.CONSTANT:
-                        # Doesn't really matter
-                        substate = iter(self.distributions.keys()).next()
-                    else:
-                        substate = self.keyMap[colKey]
-                    # Go through the distribution subset containing this key
-                    for state in self.distributions[substate].domain():
-                        result.addProb(vector[colKey]*state[colKey],
-                                       self.distributions[substate][state])
-                if len(result) == 1:
-                    # We can create a new subset for this value
+                if destination is None:
+                    # Every value is 100%
+                    total = 0.
+                    for colKey in vector.keys():
+                        if colKey == keys.CONSTANT:
+                            # Doesn't really matter
+                            total += vector[colKey]
+                        else:
+                            substate = self.keyMap[colKey]
+                            value = self.distributions[substate].first()[colKey]
+                            total += vector[colKey]*value
                     destination = max(self.keyMap.values())+1
                     assert not destination in self.distributions,self.distributions[destination]
-                    self.join(rowKey,result,destination)
-                elif destination is None:
-                    # We can create a new subset for this value, but no more
-                    destination = max(self.keyMap.values())+1
-                    self.join(rowKey,result,destination)
+                    self.join(rowKey,total,destination)
                 else:
-                    # We have an uncertain substate to store this value in
-                    self.join(rowKey,result,destination)
+                    # There is at least one uncertain multiplicand
+                    for state in self.distributions[destination].domain():
+                        prob = self.distributions[destination][state]
+                        del self.distributions[destination][state]
+                        total = 0.
+                        for colKey in vector.keys():
+                            if colKey == keys.CONSTANT:
+                                # Doesn't really matter
+                                total += vector[colKey]
+                            else:
+                                substate = self.keyMap[colKey]
+                                if substate == destination:
+                                    value = state[colKey]
+                                else:
+                                    # Certainty
+                                    value = self.distributions[substate].first()[colKey]
+                                total += vector[colKey]*state[colKey]
+                        state[rowKey] = total
+                        self.distributions[destination][state] = prob
+                self.keyMap[rowKey] = destination
         elif isinstance(other,KeyedTree):
             if other.isLeaf():
                 self *= other.children[None]
