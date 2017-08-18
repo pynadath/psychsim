@@ -92,7 +92,7 @@ CODES = {'ability': {'s': 'badSensor','g': 'good','m': 'badModel'},
 
 def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                 embodiment='robot',acknowledgment='no',sequence=False,
-                root='.',ext='xml',beliefs=True):
+                root='.',ext='xml'):
     """
     Creates the initial PsychSim scenario and saves it
     @param username: name of user ID to use in filenames
@@ -120,8 +120,6 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
       - xml: Save as uncompressed XML
       - psy: Save as bzipped XML
     @type ext: str
-    @param beliefs: if C{True}, store robot's uncertain beliefs in scenario file, rather than compute them on the fly. Storing in scenario file makes the scenario a more complete model, but greatly increases file sixe. Default is C{True}
-    @type beliefs: bool
     """
 
     print "**************************createWorld***********************"
@@ -852,7 +850,7 @@ def allVisited(world,level):
         return True
 
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
-               acknowledgment='no',beliefs=False):
+               acknowledgment='no'):
     # Remove any existing log file
     try:
         os.remove(getFilename(username,level,extension='log'))
@@ -860,8 +858,7 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
         # Probably didn't exist to begin with
         pass
     # Create initial scenario
-    world = createWorld(username,level,ability,explanation,embodiment,acknowledgment,
-                        beliefs=beliefs)
+    world = createWorld(username,level,ability,explanation,embodiment,acknowledgment)
     location = world.getState('robot','waypoint').first()
     waypoint = symbol2index(location,level)
     # Go through all the waypoints
@@ -884,8 +881,6 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-b','--beliefs',action='store_true',
-                      help='store robot beliefs in scenario file [default: %(default)s]')
     parser.add_argument('-s','--seed',action='store_true',
                       help='reuse seed for random number generator [default: %(default)s]')
     args = vars(parser.parse_args())
@@ -902,5 +897,5 @@ if __name__ == '__main__':
         explanation = CODES['explanation'][config[1]]
         embodiment = CODES['embodiment'][config[2]]
         acknowledgment = CODES['acknowledgment'][config[3]]
-        runMission(username,level,ability,explanation,embodiment,acknowledgment,args['beliefs'])
+        runMission(username,level,ability,explanation,embodiment,acknowledgment)
     print time.time()-start
