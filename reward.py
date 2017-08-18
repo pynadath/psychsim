@@ -11,6 +11,11 @@ def achieveFeatureValue(key,value):
                      True: KeyedVector({CONSTANT: 1.}),
                      False: KeyedVector({CONSTANT: 0.})})
 
+def achieveGoal(key):
+    return makeTree({'if': trueRow(key),
+                     True: KeyedVector({CONSTANT: 1.}),
+                     False: KeyedVector({CONSTANT: 0.})})
+
 def minimizeDifference(key1, key2):
     return makeTree({'if': greaterThanRow(key1, key2),
                      True: KeyedVector({key1: -1., key2: 1.}),
