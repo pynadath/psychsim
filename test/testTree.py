@@ -10,48 +10,50 @@ class TestTree(unittest.TestCase):
         self.state.join('x',Distribution({0: 0.5, 1: 0.2, 2: 0.3}))
 
 
+    def verifyDistribution(self,key,correct):
+        actual = self.state.marginal(key)
+        self.assertEqual(len(actual),len(correct))
+        for value in actual.domain():
+            for match in correct:
+                if abs(value-match)<1e-8:
+                    self.assertAlmostEqual(actual[value],correct[match])
+                    break
+            else:
+                self.fail('Illegal element %4.2f' % (value))
+            
     def testMatrix(self):
         matrix = incrementMatrix('x',1.)
         self.state *= matrix
-        dist = self.state.marginal(makeFuture('x'))
-        for x in dist.domain():
-            if abs(x-1.)<1e-8:
-                self.assertAlmostEqual(dist[x],0.5)
-            elif abs(x-2.)<1e-8:
-                self.assertAlmostEqual(dist[x],0.2)
-            elif abs(x-3.)<1e-8:
-                self.assertAlmostEqual(dist[x],0.3)
-            else:
-                self.fail('Illegal element %4.2f' % (x))
+        self.verifyDistribution(makeFuture('x'),{1: 0.5,2: 0.2, 3: 0.3})
         self.state.rollback()
-        dist = self.state.marginal('x')
-        for x in dist.domain():
-            if abs(x-1.)<1e-8:
-                self.assertAlmostEqual(dist[x],0.5)
-            elif abs(x-2.)<1e-8:
-                self.assertAlmostEqual(dist[x],0.2)
-            elif abs(x-3.)<1e-8:
-                self.assertAlmostEqual(dist[x],0.3)
-            else:
-                self.fail('Illegal element %4.2f' % (x))
+        self.verifyDistribution('x',{1: 0.5,2: 0.2, 3: 0.3})
 
-    def DONTtestIf(self):
-        print self.state
+    def testIf(self):
         tree = makeTree({'if': thresholdRow('x',0.5),
                          True: noChangeMatrix('x'),
                          False: incrementMatrix('x',1)})
         self.state *= tree
-        print self.state
+        self.verifyDistribution(makeFuture('x'),{1: 0.7, 2: 0.3})
+        self.state.rollback()
+        self.verifyDistribution('x',{1: 0.7, 2: 0.3})
         
-    def DONTtestCase(self):
-        print self.state
+    def testCase(self):
         tree = makeTree({'case': 'x',
                          0: incrementMatrix('x',1),
                          1: incrementMatrix('x',-1),
                          2: noChangeMatrix('x')})
         self.state *= tree
+        self.verifyDistribution(makeFuture('x'),{0: 0.2, 1: 0.5, 2: 0.3})
         self.state.rollback()
-        print self.state
+        self.verifyDistribution('x',{0: 0.2, 1: 0.5, 2: 0.3})
+        tree = makeTree({'case': 'x',
+                         0: incrementMatrix('x',1),
+                         1: incrementMatrix('x',-1),
+                         'otherwise': noChangeMatrix('x')})
+        self.state *= tree
+        self.verifyDistribution(makeFuture('x'),{0: 0.5, 1: 0.2, 2: 0.3})
+        self.state.rollback()
+        self.verifyDistribution('x',{0: 0.5, 1: 0.2, 2: 0.3})
 
 if __name__ == '__main__':
     unittest.main()
