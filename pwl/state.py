@@ -435,6 +435,8 @@ class VectorDistributionSet:
                         newKeys = set(other.getKeysOut())
                         assert len(falseState.distributions[valSub].domain()) > 0
                         falseState *= other.children[False]
+                        falseState.collapse(falseState.substate(other.children[False]),
+                                            False)
                         self.update(falseState,newKeys|branchKeys)
                     else:
                         if len(falseState.distributions[valSub].domain()) > 0:
@@ -521,7 +523,7 @@ class VectorDistributionSet:
                 else:
                     del vector[now]
                 if len(vector) > 1:
-                    distribution[vector] = prob
+                    distribution.addProb(vector,prob)
             if nowSub != futureSub:
                 # Kill two birds with two stones
                 if len(distribution) == 0:
@@ -534,7 +536,7 @@ class VectorDistributionSet:
                     vector[now] = vector[future]
                     del vector[future]
                     if len(vector) > 1:
-                        distribution[vector] = prob
+                        distribution.addProb(vector,prob)
             assert now in self.keyMap
             assert self.keyMap[now] in self.distributions,now
         for s in self.distributions:
