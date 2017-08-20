@@ -1810,33 +1810,35 @@ class World:
         return filename
 
 def parseDomain(subnode):
-    domain = str(subnode.getAttribute('domain'))
+    varType = str(subnode.getAttribute('type'))
+    if not varType:
+        varType = str(subnode.getAttribute('domain'))
     description = None
     lo = str(subnode.getAttribute('lo'))
     if not lo: lo = None
     hi = str(subnode.getAttribute('hi'))
     if not hi: hi = None
-    if domain == 'int':
-        domain = int
+    if varType == 'int':
+        varType = int
         if lo: lo = int(lo)
         if hi: hi = int(hi)
-    elif domain == 'float':
-        domain = float
+    elif varType == 'float':
+        varType = float
         if lo: lo = float(lo)
         if hi: hi = float(hi)
-    elif domain == 'bool':
-        domain = bool
-    elif domain == 'list':
-        domain = list
+    elif varType == 'bool':
+        varType = bool
+    elif varType == 'list':
+        varType = list
         lo = []
-    elif domain == 'set':
-        domain = set
+    elif varType == 'set':
+        varType = set
         lo = []
-    elif domain == 'ActionSet':
-        domain = ActionSet
+    elif varType == 'ActionSet':
+        varType = ActionSet
         lo = []
     else:
-        raise TypeError('Unknown feature domain type: %s' % (domain))
+        raise TypeError('Unknown feature domain type: %s' % (varType))
     combinator = str(subnode.getAttribute('combinator'))
     if len(combinator) == 0:
         combinator = None
@@ -1844,16 +1846,16 @@ def parseDomain(subnode):
     while subsubnode:
         if subsubnode.nodeType == subsubnode.ELEMENT_NODE:
             if subsubnode.tagName == 'element':
-                if domain is list or domain is set:
+                if varType is list or varType is set:
                     lo.append(str(subsubnode.firstChild.data).strip())
                 else:
-                    assert domain is ActionSet
+                    assert varType is ActionSet
                     lo.append(ActionSet(subsubnode.getElementsByTagName('action')))
             else:
                 assert subsubnode.tagName == 'description'
                 description = str(subsubnode.firstChild.data).strip()
         subsubnode = subsubnode.nextSibling
-    return domain,lo,hi,description,combinator
+    return varType,lo,hi,description,combinator
 
 def scaleValue(value,entry):
     """
