@@ -223,13 +223,13 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     omega = robot.defineObservation('microphone',domain=list,
                                     lo=['nobody','friendly','suspicious'])
     world.setFeature(omega,'nobody')
-    robot.setO('microphone',None,makeTree(setToConstantMatrix(omega,'nobody')))
+#    robot.setO('microphone',None,makeTree(setToConstantMatrix(omega,'nobody')))
     omega = robot.defineObservation('NBCsensor',domain=bool)
     world.setFeature(omega,False)
-    robot.setO('NBCsensor',None,makeTree(setFalseMatrix(omega)))
+#    robot.setO('NBCsensor',None,makeTree(setFalseMatrix(omega)))
     omega = robot.defineObservation('camera',domain=bool)
     world.setFeature(omega,False)
-    robot.setO('camera',None,makeTree(setFalseMatrix(omega)))
+#    robot.setO('camera',None,makeTree(setFalseMatrix(omega)))
 
     # Actions
     for end in range(len(WAYPOINTS[level])):
@@ -313,23 +313,23 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         key = stateKey(symbol,'entered')
         tree = makeTree(setTrueMatrix(key))
         world.setDynamics(key,action,tree)
-        # # Observation upon entering
-        # danger = stateKey(symbol,'danger')
-        # omega = stateKey(robot.name,'microphone')
-        # robot.setO('microphone',action,
-        #            makeTree({'if': equalRow(danger,'armed'),
-        #                      True: setToConstantMatrix(omega,'suspicious'),
-        #                      False: setToConstantMatrix(omega,'friendly')}))
-        # omega = stateKey(robot.name,'NBCsensor')
-        # robot.setO('NBCsensor',action,
-        #            makeTree({'if': equalRow(danger,'NBC'),
-        #                      True: setTrueMatrix(omega),
-        #                      False: setFalseMatrix(omega)}))
-        # omega = stateKey(robot.name,'camera')
-        # robot.setO('camera',action,
-        #            makeTree({'if': equalRow(danger,'armed'),
-        #                      True: setTrueMatrix(omega),
-        #                      False: setFalseMatrix(omega)}))
+        # Observation upon entering
+        danger = stateKey(symbol,'danger')
+        omega = stateKey(robot.name,'microphone')
+        robot.setO('microphone',action,
+                   makeTree({'if': equalRow(danger,'armed'),
+                             True: setToConstantMatrix(omega,'suspicious'),
+                             False: setToConstantMatrix(omega,'friendly')}))
+        omega = stateKey(robot.name,'NBCsensor')
+        robot.setO('NBCsensor',action,
+                   makeTree({'if': equalRow(danger,'NBC'),
+                             True: setTrueMatrix(omega),
+                             False: setFalseMatrix(omega)}))
+        omega = stateKey(robot.name,'camera')
+        robot.setO('camera',action,
+                   makeTree({'if': equalRow(danger,'armed'),
+                             True: setTrueMatrix(omega),
+                             False: setFalseMatrix(omega)}))
         # Human entry: How much "time" if protected?
         action = robot.addAction({'verb': 'recommend protected','object': symbol})
         key = stateKey(None,'time')
@@ -345,30 +345,30 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         key = stateKey(symbol,'entered')
         tree = makeTree(setTrueMatrix(key))
         world.setDynamics(key,action,tree)
-        # # Observation upon entering
-        # danger = stateKey(symbol,'danger')
-        # omega = stateKey(robot.name,'microphone')
-        # robot.setO('microphone',action,
-        #            makeTree({'if': equalRow(danger,'armed'),
-        #                      True: setToConstantMatrix(omega,'suspicious'),
-        #                      False: setToConstantMatrix(omega,'friendly')}))
-        # omega = stateKey(robot.name,'NBCsensor')
-        # robot.setO('NBCsensor',action,
-        #            makeTree({'if': equalRow(danger,'NBC'),
-        #                      True: setTrueMatrix(omega),
-        #                      False: setFalseMatrix(omega)}))
-        # omega = stateKey(robot.name,'camera')
-        # robot.setO('camera',action,
-        #            makeTree({'if': equalRow(danger,'armed'),
-        #                      True: setTrueMatrix(omega),
-        #                      False: setFalseMatrix(omega)}))
+        # Observation upon entering
+        danger = stateKey(symbol,'danger')
+        omega = stateKey(robot.name,'microphone')
+        robot.setO('microphone',action,
+                   makeTree({'if': equalRow(danger,'armed'),
+                             True: setToConstantMatrix(omega,'suspicious'),
+                             False: setToConstantMatrix(omega,'friendly')}))
+        omega = stateKey(robot.name,'NBCsensor')
+        robot.setO('NBCsensor',action,
+                   makeTree({'if': equalRow(danger,'NBC'),
+                             True: setTrueMatrix(omega),
+                             False: setFalseMatrix(omega)}))
+        omega = stateKey(robot.name,'camera')
+        robot.setO('camera',action,
+                   makeTree({'if': equalRow(danger,'armed'),
+                             True: setTrueMatrix(omega),
+                             False: setFalseMatrix(omega)}))
 
     # Robot goals
     goal = minimizeFeature(stateKey(None,'time'))
-    robot.setReward(goal,2.)
+    robot.setReward(goal,100.)
 
-    goal = maximizeFeature(stateKey(human.name,'alive'))
-    robot.setReward(goal,1.)
+    goal = achieveGoal(stateKey(human.name,'alive'))
+    robot.setReward(goal,20.)
 
     for point in WAYPOINTS[level]:
         robot.setReward(maximizeFeature(stateKey(point['symbol'],'scanned')),2.)
@@ -583,6 +583,12 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     assert len(world.getModel('robot')) == 1
     world.step(action)
     assert len(world.getModel('robot')) == 1
+    belief = world.getState(location,'danger',
+                            world.agents['robot'].getBelief().values()[0])
+    real = world.getState(location,'danger')
+    assert len(real) == 1
+    assert len(belief) == 1
+    assert real.first() == belief.first()
     if world.getState('robot','acknowledgment').first() == 'yes':
         ack = Template(TEMPLATES['acknowledgment'][error]).substitute(beliefs)
     else:
@@ -703,8 +709,12 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         if assessment['none'] > 0.5:
             print assessment
             print value
-            world.printState(subBeliefs['recommend protected'])
-            world.printState(subBeliefs['recommend unprotected'])
+            for a,V in result.values()[0]['V'].items():
+                print a
+            for action,bel in subBeliefs.items():
+                for key in ['human\'s alive','time']:
+                    print action,key
+                    print world.float2value(key,bel.marginal(key))
         assert assessment['none'] < 0.5
         POMDP['A'] = 'recommend protected'
         safety = False
