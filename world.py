@@ -1811,8 +1811,9 @@ class World:
 
 def parseDomain(subnode):
     varType = str(subnode.getAttribute('type'))
+    domain = str(subnode.getAttribute('domain'))
     if not varType:
-        varType = str(subnode.getAttribute('domain'))
+        varType = domain
     description = None
     lo = str(subnode.getAttribute('lo'))
     if not lo: lo = None
