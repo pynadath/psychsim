@@ -74,7 +74,7 @@ class KeyedPlane:
         return self.__class__(vector,threshold)
 
     def __eq__(self,other):
-        if not isinstance(other,KeyedVector):
+        if not isinstance(other,KeyedPlane):
             return False
         elif self.vector == other.vector and \
                 self.threshold == other.threshold and \
