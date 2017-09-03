@@ -202,8 +202,8 @@ class Distribution(dict):
 
     def __mul__(self,other):
         if isinstance(other,Distribution):
-            raise NotImplementedError,'Unable to multiply %s by %s.' \
-                % (self.__class__.__name__,other.__class__.__name__)
+            raise NotImplementedError('Unable to multiply %s by %s.' \
+                                      % (self.__class__.__name__,other.__class__.__name__))
         else:
             result = self.__class__()
             for element in self.domain():
@@ -231,7 +231,7 @@ class Distribution(dict):
         return doc
         
     def element2xml(self,value):
-        raise NotImplementedError,'Unable to generate XML for distributions over %s' % (value.__class__.__name__)
+        raise NotImplementedError('Unable to generate XML for distributions over %s' % (value.__class__.__name__))
 
     def parse(self,element):
         """Extracts the distribution from the given XML element

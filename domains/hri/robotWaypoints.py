@@ -1121,19 +1121,19 @@ def genLevels():
             counts[building['image']] += 1
     for i in range(len(levels)):
         level = levels[i]
-        print 'Level %d' % (i+1)
+        print('Level %d' % (i+1))
         for building in level:
-            print '\t%s: %s %s' % (building['name'],dangerp(building,'armed'),
-                                      dangerp(building,'NBC'))
+            print('\t%s: %s %s' % (building['name'],dangerp(building,'armed'),
+                                   dangerp(building,'NBC')))
         
     for building in SAFE+NBC:
-        print '%d %s' % (counts[building['image']],building['image'])
+        print('%d %s' % (counts[building['image']],building['image']))
     return levels
 
 def countBuildings():
     count = {}
     for level in range(len(WAYPOINTS)):
-        print 'Level %d' % (level+1)
+        print('Level %d' % (level+1))
         for building in WAYPOINTS[level]:
             try:
                 count[building['image']] += 1
@@ -1225,14 +1225,14 @@ DISTANCES = {'Yellow Mosque': {'Auto Parts Store': 160,
 if __name__ == '__main__':
     used = {}
     for level in range(len(WAYPOINTS)):
-        print 'Level %d' % (level+1)
+        print('Level %d' % (level+1))
         for building in WAYPOINTS[level]:
-            print '\t',building['name']
+            print('\t',building['name'])
             assert not used.has_key(building['name']),'%s has already appeared' % (building['name'])
             used[building['name']] = True
     count = countBuildings()
     for key in sorted(count.keys()):
-        print '\t',key,count[key]
+        print('\t',key,count[key])
 #    WAYPOINTS.append(genLevel(count))
 #    count = countBuildings()
 #    WAYPOINTS.append(genLevel(count))

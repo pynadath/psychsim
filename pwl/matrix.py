@@ -3,8 +3,8 @@ from xml.dom.minidom import Document,Node
 
 from psychsim.probability import Distribution
 
-from vector import *
-from keys import CONSTANT,makeFuture
+from psychsim.pwl.vector import *
+from psychsim.pwl.keys import CONSTANT,makeFuture
 
 class KeyedMatrix(dict):
     def __init__(self,arg={}):
@@ -285,7 +285,7 @@ class MatrixDistribution(Distribution):
 
     def __mul__(self,other):
         if isinstance(other,Distribution):
-            raise NotImplementedError,'Unable to multiply two distributions.'
+            raise NotImplementedError('Unable to multiply two distributions.')
         else:
             result = {}
             for element in self.domain():
@@ -298,7 +298,7 @@ class MatrixDistribution(Distribution):
             elif isinstance(other,KeyedMatrix):
                 return self.__class__(result)
             else:
-                raise TypeError,'Unable to process multiplication by %s' % (other.__class__.__name__)
+                raise TypeError('Unable to process multiplication by %s' % (other.__class__.__name__))
 
     def element2xml(self,value):
         return value.__xml__().documentElement

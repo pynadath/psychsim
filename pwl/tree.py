@@ -3,9 +3,9 @@ from xml.dom.minidom import Document,Node
 from psychsim.probability import Distribution
 from psychsim.action import Action
 
-from vector import KeyedVector
-from matrix import KeyedMatrix
-from plane import KeyedPlane,equalRow
+from psychsim.pwl.vector import KeyedVector
+from psychsim.pwl.matrix import KeyedMatrix
+from psychsim.pwl.plane import KeyedPlane,equalRow
 
 class KeyedTree:
     """
@@ -164,7 +164,7 @@ class KeyedTree:
         if self.isLeaf():
             tMatrix = self.children[None]
             assert len(tMatrix) == 1,'Unable to handle dynamics of more than one feature'
-            assert tMatrix.has_key(key),'Are you sure you should be flooring me on a key I don\'t have?'
+            assert key in tMatrix,'Are you sure you should be flooring me on a key I don\'t have?'
             del self.children[None]
             fMatrix = setToConstantMatrix(key,lo)
             branch = KeyedPlane(KeyedVector(tMatrix[key]),lo)
@@ -187,7 +187,7 @@ class KeyedTree:
         if self.isLeaf():
             fMatrix = self.children[None]
             assert len(fMatrix) == 1,'Unable to handle dynamics of more than one feature'
-            assert fMatrix.has_key(key),'Are you sure you should be ceiling me on a key I don\'t have?'
+            assert key in fMatrix,'Are you sure you should be ceiling me on a key I don\'t have?'
             del self.children[None]
             tMatrix = setToConstantMatrix(key,hi)
             branch = KeyedPlane(KeyedVector(fMatrix[key]),hi)
@@ -478,7 +478,7 @@ class KeyedTree:
         if self._string is None:
             if self.isLeaf():
                 self._string = str(self.children[None])
-            elif self.children.has_key(True):
+            elif True in self.children:
                 # Deterministic branch
                 self._string = 'if %s\nThen\t%s\nElse\t%s' % (str(self.branch),str(self.children[True]).replace('\n','\n\t'),
                                                       str(self.children[False]).replace('\n','\n\t'))

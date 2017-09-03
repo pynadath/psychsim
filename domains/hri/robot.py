@@ -5,6 +5,7 @@ A robot that teams with a human to perform a task in a virtual environment.
 @var DISTANCES: A table of travel times between waypoints (asymmetric)
 @var TEMPLATES: Explanation templates
 """
+from __future__ import print_function
 import datetime
 import fileinput
 import os
@@ -122,14 +123,14 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     @type ext: str
     """
 
-    print "**************************createWorld***********************"
-    print 'Username:\t%s\nLevel:\t\t%s' % (username,level+1)
-    print 'Ability\t\t%s\nExplanation:\t%s\nEmbodiment:\t%s\nAcknowledge:\t%s' % \
-        (ability,explanation,embodiment,acknowledgment)
+    print("**************************createWorld***********************")
+    print('Username:\t%s\nLevel:\t\t%s' % (username,level+1))
+    print('Ability\t\t%s\nExplanation:\t%s\nEmbodiment:\t%s\nAcknowledge:\t%s' % \
+          (ability,explanation,embodiment,acknowledgment))
 
     # Pre-compute symbols for this level's waypoints
     for point in WAYPOINTS[level]:
-        if not point.has_key('symbol'):
+        if not 'symbol' in point:
             point['symbol'] = point['name'].replace(' ','')
 
     world = World()
@@ -153,7 +154,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     # Buildings
     threats = ['none','NBC','armed']
     for waypoint in WAYPOINTS[level]:
-        if not waypoint.has_key('symbol'):
+        if not 'symbol' in waypoint:
             waypoint['symbol'] = waypoint['name'].replace(' ','')
         world.addAgent(waypoint['symbol'])
         # Has the robot scanned this waypoint?
@@ -164,9 +165,9 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         world.setFeature(key,False)
         # Are there dangerous chemicals or armed people here?
         key = world.defineState(waypoint['symbol'],'danger',list,threats[:])
-        if waypoint.has_key('NBC') and waypoint['NBC']:
+        if 'NBC' in waypoint and waypoint['NBC']:
             world.setFeature(key,'NBC')
-        elif waypoint.has_key('armed') and waypoint['armed']:
+        elif 'armed' in waypoint and waypoint['armed']:
             world.setFeature(key,'armed')
         else:
             world.setFeature(key,'none')
@@ -454,7 +455,7 @@ def getStart(level):
     @rtype: int
     """
     for index in range(len(WAYPOINTS[level])):
-        if WAYPOINTS[level][index].has_key('start'):
+        if 'start' in WAYPOINTS[level][index]:
             return index
     else:
         return 0
@@ -465,13 +466,13 @@ def symbol2index(symbol,level=0):
     @rtype: int
     """
     for index in range(len(WAYPOINTS[level])):
-        if WAYPOINTS[level][index].has_key('symbol'):
+        if 'symbol' in WAYPOINTS[level][index]:
             if WAYPOINTS[level][index]['symbol'] == symbol:
                 return index
         elif WAYPOINTS[level][index]['name'].replace(' ','') == symbol:
             return index
     else:
-        raise NameError,'Unknown waypoint %s for level %d' % (symbol,level)
+        raise NameError('Unknown waypoint %s for level %d' % (symbol,level))
 
 def index2symbol(index,level=0):
     """
@@ -501,7 +502,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
     """
     @param parameters: ignored if request is provided
     """ 
-    print "***********************GetDecision********************";
+    print("***********************GetDecision********************")
 
     if sleep:
         time.sleep(sleep)
@@ -517,7 +518,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
         # Project world state
         robotIndex = int(parameters['robotWaypoint'])
         robotWaypoint = WAYPOINTS[level][robotIndex]
-        if not robotWaypoint.has_key('symbol'):
+        if not 'symbol' in robotWaypoint:
             robotWaypoint['symbol'] = robotWaypoint['name'].replace(' ','')
         world.setState(robot.name,'waypoint',robotWaypoint['symbol'])
     else:
@@ -525,7 +526,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
         robotIndex = symbol2index(world.getState(robot.name,'waypoint').first(),
                                   level)
         robotWaypoint = WAYPOINTS[level][robotIndex]
-        if not robotWaypoint.has_key('symbol'):
+        if not 'symbol' in robotWaypoint:
             robotWaypoint['symbol'] = robotWaypoint['name'].replace(' ','')
 
     # Process command
@@ -546,7 +547,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
     # Find the best action
     values = []
     model = world.getModel(robot.name).first()
-    result = robot.decide(oldVector,model=model)
+    result = robot.decide(oldVector,horizon=2,model=model)
     destination = result['action']['object']
     WriteLogData('%s %s' % (LOCATION_TAG,destination),username,level,root=root)
     index = symbol2index(destination,level)
@@ -556,7 +557,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
 
 def GetAcknowledgment(user,recommendation,location,danger,username,level,parameters,
                       world=None,ext='xml',root='.'):
-    print "**********************Get Acknowledgment*******************"
+    print("**********************Get Acknowledgment*******************")
 
     if world is None:
         # Get the world from the scenario file
@@ -614,7 +615,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     Processes incoming observation and makes an assessment
     """
 
-    print "**********************Get Recommendation********************"
+    print("**********************Get Recommendation********************")
 
     if sleep:
         time.sleep(sleep)
@@ -629,14 +630,14 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         # Project world state
         robotIndex = int(parameters['robotWaypoint'])
         robotWaypoint = WAYPOINTS[level][robotIndex]
-        if not robotWaypoint.has_key('symbol'):
+        if not 'symbol' in robotWaypoint:
             robotWaypoint['symbol'] = robotWaypoint['name'].replace(' ','')
         world.setState(robot.name,'waypoint',robotWaypoint['symbol'])
     else:
         # Read world state
         robotIndex = symbol2index(world.getState(robot.name,'waypoint').domain()[0],level)
         robotWaypoint = WAYPOINTS[level][robotIndex]
-        if not robotWaypoint.has_key('symbol'):
+        if not 'symbol'in robotWaypoint:
             robotWaypoint['symbol'] = robotWaypoint['name'].replace(' ','')
 
     action = Action({'subject': robot.name,
@@ -707,14 +708,14 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         WriteLogData('%s: no' % (RECOMMEND_TAG),username,level,root=root)
     else:
         if assessment['none'] > 0.5:
-            print assessment
-            print value
+            print(assessment)
+            print(value)
             for a,V in result.values()[0]['V'].items():
-                print a
+                print(a)
             for action,bel in subBeliefs.items():
                 for key in ['human\'s alive','time']:
-                    print action,key
-                    print world.float2value(key,bel.marginal(key))
+                    print(action,key)
+                    print(world.float2value(key,bel.marginal(key)))
         assert assessment['none'] < 0.5
         POMDP['A'] = 'recommend protected'
         safety = False
@@ -792,8 +793,8 @@ def explainDecision(decision,beliefs,mode):
 
 def WriteErrorLog(content="",root='.'):
     f = open(os.path.join(root,'ErrorLog.txt'),'a')
-    print >> f,'[%s] %s' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                            content)
+    print('[%s] %s' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                       content),file=f)
     f.close()
 
 def WriteLogData(content="",username=None,level=None,root='.'):
@@ -802,7 +803,8 @@ def WriteLogData(content="",username=None,level=None,root='.'):
     """
     filename = getFilename(username,level,extension='log',root=root)
     f = open(filename,'a')
-    print >> f,'[%s] %s' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),content)
+    print('[%s] %s' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                       content),file=f)
     f.close()
 
 def readLogData(username,level,root='.'):
@@ -875,17 +877,17 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
     while not world.terminated():
         parameters = {'robotWaypoint': waypoint,
                       'level': level}
-        print GetRecommendation(username,level,parameters,world)
+        print(GetRecommendation(username,level,parameters,world))
         # Was the robot right?
         location = world.getState('robot','waypoint').first()
         recommendation = world.getState(location,'recommendation').first()
         danger = world.getState(index2symbol(waypoint,level),'danger').first()
-        print GetAcknowledgment(None,recommendation,location,danger,username,level,
-                                parameters,world)
+        print(GetAcknowledgment(None,recommendation,location,danger,username,level,
+                                parameters,world))
         if not world.terminated():
             # Continue onward
             waypoint = GetDecision(username,level,parameters,world)
-            print index2symbol(waypoint,level)
+            print(index2symbol(waypoint,level))
 
 if __name__ == '__main__':
     import argparse
@@ -908,4 +910,4 @@ if __name__ == '__main__':
         embodiment = CODES['embodiment'][config[2]]
         acknowledgment = CODES['acknowledgment'][config[3]]
         runMission(username,level,ability,explanation,embodiment,acknowledgment)
-    print time.time()-start
+    print(time.time()-start)

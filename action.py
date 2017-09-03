@@ -50,16 +50,16 @@ class Action(dict):
         """
         root = {}
         for key in self.special:
-            if self.has_key(key):
+            if key in self:
                 root[key] = self[key]
         return Action(root)
 
     def __str__(self):
         if self._string is None:
             elements = []
-            keys = self.keys()
+            keys = list(self.keys())
             for special in self.special:
-                if self.has_key(special):
+                if special in self:
                     elements.append(self[special])
                     keys.remove(special)
             keys.sort()
@@ -138,7 +138,7 @@ class ActionSet(frozenset):
         """
         for action in self:
             for key,value in pattern.items():
-                if not action.has_key(key) or action[key] != value:
+                if not key in action or action[key] != value:
                     # Mismatch
                     break
             else:
@@ -152,8 +152,8 @@ class ActionSet(frozenset):
         elements = list(self)
         result = elements[0][key]
         for atom in elements[1:]:
-            if atom.has_key(key) and atom[key] != result:
-                raise ValueError,'Conflicting values for key: %s' % (key)
+            if key in atom and atom[key] != result:
+                raise ValueError('Conflicting values for key: %s' % (key))
         return result
 
     def __str__(self):
@@ -199,8 +199,8 @@ if __name__ == '__main__':
     act1 = Action({'subject': 'I','verb': 'help','object': 'you'})    
     act2 = Action({'subject': 'you','verb': 'help','object': 'I'})
     old = ActionSet([act1,act2])
-    print old
+    print(old)
     doc = parseString(old.__xml__().toprettyxml())
     new = ActionSet(doc.documentElement.childNodes)
-    print new
-    print old == new
+    print(new)
+    print(old == new)

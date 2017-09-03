@@ -1,7 +1,7 @@
 import operator
 from xml.dom.minidom import Node
 
-from vector import KeyedVector
+from psychsim.pwl.vector import KeyedVector
 from psychsim.probability import Distribution
 
 class KeyedPlane:
@@ -162,8 +162,9 @@ class KeyedPlane:
     def __str__(self):
         if self._string is None:
             operator = ['==','>','<'][self.comparison]
-            self._string = '%s %s %s' % (' + '.join(map(lambda (k,v): '%5.3f*%s' % (v,k),self.vector.items())),
-                                             operator,self.threshold)
+            self._string = '%s %s %s' % (' + '.join(['%5.3f*%s' % (v,k)
+                                                     for k,v in self.vector.items()]),
+                                         operator,self.threshold)
         return self._string
 
     def __xml__(self):

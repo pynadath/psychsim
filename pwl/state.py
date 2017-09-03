@@ -5,11 +5,11 @@ import operator
 from xml.dom.minidom import Document,Node
 
 from psychsim.probability import Distribution
-import keys
+from . import keys
 
-from vector import KeyedVector,VectorDistribution
-from matrix import KeyedMatrix
-from tree import KeyedTree
+from psychsim.pwl.vector import KeyedVector,VectorDistribution
+from psychsim.pwl.matrix import KeyedMatrix
+from psychsim.pwl.tree import KeyedTree
 
 class VectorDistributionSet:
     """
@@ -64,7 +64,7 @@ class VectorDistributionSet:
 
     def __getitem__(self,key):
         if key == 0:
-            raise DeprecationWarning,'step no longer returns a list of outcomes, but rather a single VectorDistributionSet'
+            raise DeprecationWarning('step no longer returns a list of outcomes, but rather a single VectorDistributionSet')
         else:
             return self.marginal(key)
         
@@ -231,7 +231,7 @@ class VectorDistributionSet:
             substate = self.keyMap[key]
         else:
             self.keyMap[key] = substate
-        if not self.distributions.has_key(substate):
+        if not substate in self.distributions:
             self.distributions[substate] = VectorDistribution()
         return self.distributions[substate].join(key,value)
 
@@ -248,7 +248,7 @@ class VectorDistributionSet:
                 loc = self.keyMap[subkey]
                 try:
                     substates[loc].append(subkey)
-                    raise RuntimeError,'Currently unable to compute domains over interdependent state features'
+                    raise RuntimeError('Currently unable to compute domains over interdependent state features')
                 except KeyError:
                     substates[loc] = [subkey]
             # Determine the domain of each feature across distributions
@@ -392,7 +392,7 @@ class VectorDistributionSet:
                 for vector in distribution.domain():
                     distribution[vector] *= prob
                 if len(substates) > 1:
-                    raise RuntimeError,'Somebody got greedy and independent-ified variables that are dependent'
+                    raise RuntimeError('Somebody got greedy and independent-ified variables that are dependent')
                 # Merge products into first-born
                 for index in range(len(newKids)):
                     self.update(newKids[index],oldKids[index+1].getKeysOut(),

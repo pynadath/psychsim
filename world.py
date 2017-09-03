@@ -414,7 +414,7 @@ class World:
                 if isinstance(subtree.children[None],bool):
                     msg = 'Use set%sMatrix(psychsim.keys.TERMINATED) instead of %s' % \
                           (subtree.children[None],subtree.children[None])
-                    raise DeprecationWarning,msg
+                    raise DeprecationWarning(msg)
             elif subtree.isProbabilistic():
                 remaining += subtree.children.domain()
             else:
@@ -424,7 +424,7 @@ class World:
         except KeyError:
             dynamics = self.dynamics[TERMINATED] = {}
         if action in dynamics and action is True:
-            raise DeprecationWarning,'Multiple termination conditions no longer supported. Please merge into single boolean PWL tree.'
+            raise DeprecationWarning('Multiple termination conditions no longer supported. Please merge into single boolean PWL tree.')
         self.setDynamics(TERMINATED,action,tree)
 
     def terminated(self,state=None):
@@ -608,7 +608,7 @@ class World:
                 key = stateKey(name,keys.ACTION)
                 if not key in self.variables:
                     self.defineVariable(key,ActionSet)
-                    self.setFeature(key,iter(self.variables[key]['elements']).next())
+                    self.setFeature(key,next(iter(self.variables[key]['elements'])))
 
     def next(self,vector=None):
         """

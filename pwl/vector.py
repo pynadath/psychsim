@@ -2,7 +2,7 @@ import collections
 from xml.dom.minidom import Document,Node
 
 from psychsim.probability import Distribution
-import keys
+from . import keys
 
 class KeyedVector(collections.MutableMapping):
     """
@@ -160,7 +160,7 @@ class KeyedVector(collections.MutableMapping):
 
     def __str__(self):
         if self._string is None:
-            mykeys = self.keys()
+            mykeys = list(self.keys())
             mykeys.sort()
             self._string = '\n'.join(map(lambda k: '%s: %s' % (k,self[k]),mykeys))
         return self._string
