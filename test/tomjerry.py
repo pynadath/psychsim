@@ -61,8 +61,8 @@ class TestAgents(unittest.TestCase):
         goal = achieveFeatureValue(stateKey(self.tom.name,'status'),'injured')
         self.jerry.setReward(goal,1.)
         self.saveload()
-        self.assertEqual(len(self.world.state),1)
-        vector = self.world.state.domain()[0]
+        self.assertEqual(len(self.world.state[None]),1)
+        vector = self.world.state[None].domain()[0]
         tVal = self.tom.reward(vector)
         self.assertAlmostEqual(tVal,1.,8)
         jVal = self.jerry.reward(vector)
@@ -83,7 +83,7 @@ class TestAgents(unittest.TestCase):
         self.world.setMentalModel(self.jerry.name,self.tom.name,{'optimist': 0.5,'pessimist': 0.5})
         actions = {self.tom.name: self.hit}
         self.world.step(actions)
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         beliefs = self.jerry.getAttribute('beliefs',self.world.getModel(self.jerry.name,vector))
         for belief in beliefs.domain():
             model = self.world.getModel(self.tom.name,belief)
@@ -109,7 +109,7 @@ class TestAgents(unittest.TestCase):
                                                   (KeyedVector({CONSTANT: 20}),.8)]}})
         self.jerry.defineObservation(key,tree)
         actions = {self.tom.name: self.hit}
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         omegaDist = self.jerry.observe(vector,actions)
         for omega in omegaDist.domain():
             new = KeyedVector(vector)
@@ -145,10 +145,10 @@ class TestAgents(unittest.TestCase):
         self.jerry.defineObservation(self.tom.name,tree,self.hit,domain=ActionSet)
         tree = makeTree({'distribution': [(True,0.25),(False,0.75)]})
         self.jerry.defineObservation(self.tom.name,tree,self.chase,domain=ActionSet)
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         self.saveload()
         self.world.step({self.tom.name: self.hit})
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
 
     def testRewardModels(self):
         self.addStates()
@@ -164,7 +164,7 @@ class TestAgents(unittest.TestCase):
         # Hitting should make Jerry think Tom is more of a foe
         actions = {self.tom.name: self.hit}
         self.world.step(actions)
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         belief01 = self.jerry.getAttribute('beliefs',self.world.getModel(self.jerry.name,vector))
         key = modelKey(self.tom.name)
         for belief in belief01.domain():
@@ -177,7 +177,7 @@ class TestAgents(unittest.TestCase):
         self.tom.setAttribute('rationality',10.,'friend')
         self.world.setMentalModel(self.jerry.name,self.tom.name,{'friend': 0.5,'foe': 0.5})
         self.world.step(actions)
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         model = self.world.getModel(self.jerry.name,vector)
         belief10 = self.jerry.getAttribute('beliefs',model)
         key = modelKey(self.tom.name)
@@ -188,7 +188,7 @@ class TestAgents(unittest.TestCase):
         self.assertGreater(prob10,prob01)
         # If we keep the same models, but get another observation, we should update even more
         self.world.step(actions)
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         model = self.world.getModel(self.jerry.name,vector)
         belief1010 = self.jerry.getAttribute('beliefs',model)
         key = modelKey(self.tom.name)
@@ -204,8 +204,8 @@ class TestAgents(unittest.TestCase):
         self.addActions()
         self.addDynamics()
         key = stateKey(self.jerry.name,'health')
-        self.assertEqual(len(self.world.state),1)
-        vector = self.world.state.domain()[0]
+        self.assertEqual(len(self.world.state[None]),1)
+        vector = self.world.state[None].domain()[0]
         self.assertTrue(vector.has_key(stateKey(self.tom.name,'health')))
         self.assertTrue(vector.has_key(turnKey(self.tom.name)))
         self.assertTrue(vector.has_key(key))
@@ -215,8 +215,8 @@ class TestAgents(unittest.TestCase):
         self.assertEqual(vector[key],50)
         outcome = self.world.step({self.tom.name: self.chase})
         for i in range(7):
-            self.assertEqual(len(self.world.state),1)
-            vector = self.world.state.domain()[0]
+            self.assertEqual(len(self.world.state[None]),1)
+            vector = self.world.state[None].domain()[0]
             self.assertTrue(vector.has_key(stateKey(self.tom.name,'health')))
             self.assertTrue(vector.has_key(turnKey(self.tom.name)))
             self.assertTrue(vector.has_key(key))
@@ -232,7 +232,7 @@ class TestAgents(unittest.TestCase):
         self.addActions()
         self.addDynamics()
         self.world.setOrder([self.tom.name])
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         # Create Jerry's goals
         goal = maximizeFeature(stateKey(self.jerry.name,'health'))
         self.jerry.setReward(goal,1.)
@@ -262,10 +262,12 @@ class TestAgents(unittest.TestCase):
         goal = makeTree({'if': thresholdRow(key,5),
                          True: KeyedVector({key: -2}),
                          False: KeyedVector({key: -1})})
+        goal = goal.desymbolize(self.world.symbols)
         self.jerry.setReward(goal,1.)
         R = self.jerry.models[True]['R']
         self.assertEqual(len(R),1)
-        self.assertEqual(R.keys()[0],goal)
+        newGoal = R.keys()[0]
+        self.assertEqual(newGoal,goal)
         self.assertAlmostEqual(R[goal],1.,8)
         self.jerry.setReward(goal,2.)
         self.assertEqual(len(R),1)
@@ -278,19 +280,19 @@ class TestAgents(unittest.TestCase):
         self.world.setOrder([self.tom.name,self.jerry.name])
         self.assertEqual(self.world.maxTurn,1)
         self.saveload()
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         jTurn = turnKey(self.jerry.name)
         tTurn = turnKey(self.tom.name)
         self.assertEqual(self.world.next(),[self.tom.name])
         self.assertEqual(vector[tTurn],0)
         self.assertEqual(vector[jTurn],1)
         self.world.step()
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         self.assertEqual(self.world.next(),[self.jerry.name])
         self.assertEqual(vector[tTurn],1)
         self.assertEqual(vector[jTurn],0)
         self.world.step()
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         self.assertEqual(self.world.next(),[self.tom.name])
         self.assertEqual(vector[tTurn],0)
         self.assertEqual(vector[jTurn],1)
@@ -298,12 +300,12 @@ class TestAgents(unittest.TestCase):
         self.world.setTurnDynamics(self.tom.name,self.hit,makeTree(noChangeMatrix(tTurn)))
         self.world.setTurnDynamics(self.jerry.name,self.hit,makeTree(noChangeMatrix(tTurn)))
         self.world.step()
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         self.assertEqual(self.world.next(),[self.tom.name])
         self.assertEqual(vector[tTurn],0)
         self.assertEqual(vector[jTurn],1)
         self.world.step({self.tom.name: self.chase})
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         self.assertEqual(self.world.next(),[self.jerry.name])
         self.assertEqual(vector[tTurn],1)
         self.assertEqual(vector[jTurn],0)
@@ -316,11 +318,11 @@ class TestAgents(unittest.TestCase):
         self.world.setModel(self.jerry.name,True)
         self.world.setMentalModel(self.jerry.name,self.tom.name,{'friend': 0.5,'foe': 0.5})
         self.world.setOrder([self.tom.name])
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         model = self.world.getModel(self.jerry.name,vector)
         belief0 = self.jerry.models[model]['beliefs']
-        self.world.step()
-        vector = self.world.state.domain()[0]
+        result = self.world.step({self.tom.name: self.hit})
+        vector = self.world.state[None].domain()[0]
         model = self.world.getModel(self.jerry.name,vector)
         belief1 = self.jerry.models[model]['beliefs']
         key = modelKey(self.tom.name)
@@ -333,7 +335,7 @@ class TestAgents(unittest.TestCase):
         self.jerry.setAttribute('static',True,model)
         self.saveload()
         self.world.step()
-        vector = self.world.state.domain()[0]
+        vector = self.world.state[None].domain()[0]
         model = self.world.getModel(self.jerry.name,vector)
         belief2 = self.jerry.models[model]['beliefs']
         for vector in belief1.domain():
