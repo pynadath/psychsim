@@ -4,7 +4,7 @@ from psychsim.probability import Distribution
 from psychsim.action import Action
 
 from vector import KeyedVector
-from matrix import KeyedMatrix
+from matrix import *
 from plane import KeyedPlane
 
 class KeyedTree:
