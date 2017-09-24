@@ -586,7 +586,7 @@ WAYPOINTS = [
          'camera':{True: True,
                    False: False},
         },
-	{'name': 'Scenic Overlook',
+	{'name': 'Scenice Overlook',
          'image': 'Potential_Sniper_Spot',
          'comment': 'Unobstructed views over the market, but nothing suspicious observed',
         },
