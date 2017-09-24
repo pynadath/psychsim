@@ -6,8 +6,12 @@ import sys
 
 import robot
 
-import MySQLdb
-import MySQLdb.cursors
+try:
+    import MySQLdb
+    import MySQLdb.cursors
+    __db__ = True
+except ImportError:
+    __db__ = False
 
 surveyMap = {'WP018': 'x92899',
              'WP025': 'emily.sexauer',
@@ -46,7 +50,10 @@ def readSurvey(fname):
         for row in reader:
             data[row['Participant ID'].strip().replace(' ','').upper()] = row
     return data
-    
+
+def processLogs(directory):
+    pass
+
 if __name__ == '__main__':
     # Read survey files
     survey = []
