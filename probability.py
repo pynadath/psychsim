@@ -47,6 +47,10 @@ class Distribution(dict):
         @return: the first element in this distribution's domain (most useful if there's only one element)
         """
         return iter(self.domain()).next()
+
+    def get(self,element):
+        key = str(element)
+        return dict.get(self,key,0.)
     
     def __getitem__(self,element):
         key = str(element)
