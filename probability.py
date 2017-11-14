@@ -42,6 +42,12 @@ class Distribution(dict):
                     self[key] = math.exp(rationality*V)
                 self.normalize()
 
+    def first(self):
+        """
+        @return: the first element in this distribution's domain (most useful if there's only one element)
+        """
+        return iter(self.domain()).next()
+    
     def __getitem__(self,element):
         key = str(element)
         return dict.__getitem__(self,key)
@@ -135,7 +141,8 @@ class Distribution(dict):
         @return: an element from this domain, with a sample probability given by this distribution
         """
         import random
-        selection = random.random()
+        selection = random.uniform(0.,sum(self.values()))
+        original = selection
         for element in self.domain():
             if selection > self[element]:
                 selection -= self[element]
@@ -144,8 +151,8 @@ class Distribution(dict):
                     return element,selection
                 else:
                     return element
-        else:
-            raise ValueError,'Random number exceeded total probability in distribution.'
+        # We shouldn't get here. But in case of some floating-point weirdness?
+        return element
 
     def set(self,element):
         """
@@ -231,7 +238,8 @@ class Distribution(dict):
         @param element: The XML Element object specifying the distribution
         @type element: Element
         @return: This L{Distribution} object"""
-        assert element.tagName == 'distribution'
+        assert element.tagName == 'distribution','Unexpected tag %s for %s' \
+            % (element.tagName,self.__class__.__name__)
         self.clear()
         node = element.firstChild
         while node:

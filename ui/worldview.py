@@ -1,6 +1,7 @@
 import math
-from PyQt4.QtCore import *
-from PyQt4.QtGui import *
+from PyQt5.QtCore import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
 import graph
 import diagram
 from world import *
@@ -192,7 +193,8 @@ class WorldView(QGraphicsScene):
         y0 = rect0.y()+rect0.height()/2
         x1 = rect1.x()
         y1 = rect1.y()+rect1.height()/2
-        edge = QGraphicsLineItem(x0,y0,x1,y1,scene=node0.scene())
+        edge = QGraphicsLineItem(x0,y0,x1,y1)
+        node0.scene().addItem(edge)
         edge.setZValue(0.)
         # # Draw arrow
         # line = edge.line()
@@ -335,7 +337,7 @@ def initializeNode(node,label):
     node.setPen(QPen(QBrush(QColor('black')),3))
     # Draw label
     rect = node.boundingRect()
-    node.text = QGraphicsTextItem(node,node.scene())
+    node.text = QGraphicsTextItem(node)
     doc = QTextDocument(label,node.text)
     doc.setDefaultTextOption(QTextOption(Qt.AlignCenter))
     node.text.setDocument(doc)
@@ -358,7 +360,8 @@ class VariableNode(QGraphicsEllipseItem):
             w = self.defaultWidth
         if h is None:
             h = self.defaultHeight
-        super(VariableNode,self).__init__(x,y,w,h,scene=scene)
+        super(VariableNode,self).__init__(x,y,w,h)
+        scene.addItem(self)
         self.agent = agent
         self.feature = feature
         if isFuture(key):
@@ -397,7 +400,8 @@ class ActionNode(QGraphicsRectItem):
             w = self.defaultWidth
         if h is None:
             h = max(self.defaultHeight,len(action)*25)
-        super(ActionNode,self).__init__(x,y,w,h,scene=scene)
+        super(ActionNode,self).__init__(x,y,w,h)
+        scene.addItem(self)
         self.agent = agent
         self.action = action
         initializeNode(self,'\n'.join(map(str,self.action.agentLess())))
@@ -420,7 +424,8 @@ class UtilityNode(QGraphicsPolygonItem):
 
     def __init__(self,agent,x=None,y=None,scene=None):
         poly = QPolygonF([QPointF(x+pt[0],y+pt[1]) for pt in self.points])
-        super(UtilityNode,self).__init__(poly,scene=scene)
+        super(UtilityNode,self).__init__(poly)
+        scene.addItem(self)
         self.agent = agent
         initializeNode(self,self.agent.name)
         self.setToolTip('%s\'s utility' % (self.agent.name))

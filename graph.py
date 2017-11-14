@@ -65,7 +65,7 @@ class DependencyGraph(dict):
                                          'parents': set()}
         for name,agent in self.world.agents.items():
             # Create the agent reward node
-            if agent.getAttribute('R',True):
+            if agent.getAttribute('R','%s0' % (name)):
                 self[name] = {'agent': name,
                               'type': 'utility',
                               'parents': set(),
@@ -80,7 +80,7 @@ class DependencyGraph(dict):
                                     'children': set()}
         # Create links from dynamics
         for key,dynamics in self.world.dynamics.items():
-            if world.isTurnKey(key):
+            if pwl.isTurnKey(key):
                 continue
             assert self.has_key(key),'Graph has not accounted for key: %s' % (key)
             if isinstance(dynamics,bool):
@@ -97,8 +97,8 @@ class DependencyGraph(dict):
                     dict.__getitem__(self,parent)['children'].add(world.makeFuture(key))
         for name,agent in self.world.agents.items():
             # Create links from reward
-            if agent.models[True].has_key('R'):
-                for R,weight in agent.models[True]['R'].items():
+            if agent.models['%s0' % (agent.name)].has_key('R'):
+                for R,weight in agent.models['%s0' % (agent.name)]['R'].items():
                     for parent in R.getKeysIn() - set([pwl.CONSTANT]):
                         # Link between variable and agent utility
                         dict.__getitem__(self,name)['parents'].add(world.makeFuture(parent))
