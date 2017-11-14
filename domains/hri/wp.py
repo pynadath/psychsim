@@ -6,6 +6,7 @@ import os
 import sys
 
 import wpRobot
+from wpRobotWaypoints import WAYPOINTS
 from psychsim.probability import Distribution
 
 try:
@@ -90,6 +91,36 @@ SURVEY = {'The robot is capable of performing its tasks.': 'capable',
 	  'How would you rate the expected performance of the robot relative to your expected performance?': 'expected',
 }
 
+specials = {}
+for mission in range(8):
+    specials[mission] = {'compliant': '',
+                         'correct': '',
+                         'follow confident': '',
+                         'protect': '',
+                         'unprotect': ''}
+    for waypoint in WAYPOINTS[mission]:
+        specials[mission]['compliant'] += 'f'
+        if 'armed' in waypoint and waypoint['armed']:
+            # Robot says safe, reality says unsafe
+            specials[mission]['correct'] += 'i'
+            specials[mission]['follow confident'] += 'i'
+            specials[mission]['protect'] += 'i'
+            specials[mission]['unprotect'] += 'f'
+        elif 'NBC' in waypoint and waypoint['NBC']:
+            # Robot says unsafe, reality says unsafe
+            specials[mission]['correct'] += 'f'
+            specials[mission]['follow confident'] += 'i'
+            specials[mission]['protect'] += 'f'
+            specials[mission]['unprotect'] += 'i'
+        else:
+            # Robot says safe, reality says safe
+            specials[mission]['correct'] += 'f'
+            specials[mission]['follow confident'] += 'f'
+            specials[mission]['protect'] += 'i'
+            specials[mission]['unprotect'] += 'f'
+labeler = {mission: {behavior: label for label,behavior in specials[mission].items()}
+           for mission in range(8)}
+
 def readSurvey(fname):
     data = {}
     with open(fname,'r') as csvfile:
@@ -142,27 +173,55 @@ def analyzeBehaviors(data,correct):
                     behaviors[mission][datum['sequence']].add(userID)
                 except KeyError:
                     behaviors[mission][datum['sequence']] = {userID}
+    samePolicy = {}
     rows = []
+    conditions = ['explanation','acknowledgment','biomorphic']
     for mission in range(8):
+        if mission > 0:
+            for label,sequence in specials[mission].items():
+                if sequence in behaviors[mission]:
+                    if label in {'correct','follow confident'}:
+                        # No one can follow these policies without explanation
+                        followers = {u for u in behaviors[mission][sequence] \
+                                     if data[u][mission]['explanation'] == 'confidence'}
+                    else:
+                        followers = behaviors[mission][sequence]
+                    print mission,label
+                    print followers
+                    if label in samePolicy:
+                        # Are these users still following the same policy?
+                        samePolicy[label] &= followers
+                    else:
+                        # Haven't started looking at users following this policy
+                        samePolicy[label] = followers
         for behavior in sorted(behaviors[mission]):
             users = behaviors[mission][behavior]
             row = {'mission': mission+1,
                    'sequence': behavior,
+                   'label': None,
                    'count': len(behaviors[mission][behavior]),
                    'compliance': behavior.count('f'),
                    'correctness': len([i for i in range(len(behavior)) \
                                        if behavior[i] == correct[mission][i]]),
                    'explanation': len([u for u in users if data[u][mission]['explanation'] == 'confidence']),
+                   'acknowledgment': len([u for u in users if data[u][mission]['acknowledgment'] == 'True']),
                    'biomorphic': len([u for u in users if data[u][mission]['embodiment'] == 'dog']),
                    }
+            for category in conditions:
+                row['%% %s' % (category)] = float(row[category])/float(row['count'])
+            for label,sequence in specials[mission].items():
+                if behavior == sequence:
+                    row['label'] = label
+                    break
             rows.append(row)
     with open('wpbehaviors.csv', 'w') as csvfile:
-        fieldnames = ['sequence','mission','count','compliance','correctness',
-                      'explanation','biomorphic']
+        fieldnames = ['sequence','label','mission','count','compliance','correctness']+\
+                     conditions+['%% %s' % (category) for category in conditions]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames,extrasaction='ignore')
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
+    print samePolicy
     return behaviors
 
 def hamming(b1,b2,length):
@@ -274,6 +333,18 @@ def analyzeBuckets(data,behaviors,surveys,minSize=2,mission=None):
                     data[user][8]['%s full approx' % (prefix)] = prediction.get(datum[q]-1)+prediction.get(datum[q])+prediction.get(datum[q]+1)
                     data[user][8]['%s improve exact' % (prefix)] = data[user][8]['%s model exact' % (prefix)] > data[user][8]['%s full exact' % (prefix)]
                     data[user][8]['%s improve approx' % (prefix)] = data[user][8]['%s model approx' % (prefix)] > data[user][8]['%s full approx' % (prefix)]
+                    if t == 15 and data[user][8]['%s improve exact' % (prefix)] and q == 'capable' and len(neighbors) == 1 and data[user][mission]['sequence'] in labeler[mission] and mission > 0:
+                        print user,mission+1
+                        print data[user][mission]['sequence']
+                        print neighbors[0]
+                        print question,data[user][mission][q]
+                        print labeler[mission][neighbors[0]]
+                        for var in ['|neighbors|','neighbor distance','model exact','full exact']:
+                            key = '%s %s' % (prefix,var)
+                            print key,data[user][8][key]
+                        sys.exit(0)
+                    else:
+                        print 'skipping',user,mission+1
 
 def getPrediction(data,q,behaviors,subset,mission,leaveOut=None):
     dist = {}
@@ -284,7 +355,11 @@ def getPrediction(data,q,behaviors,subset,mission,leaveOut=None):
                 dist[a] = dist.get(a,0)+1
         if leaveOut and behavior == leaveOut[0]:
             # Used as model data point, so remove
-            dist[leaveOut[1]] -= 1
+            try:
+                dist[leaveOut[1]] -= 1
+            except KeyError:
+                print 'Missing:',leaveOut[1], dist
+    print dist
     prediction = Distribution({k: float(v) for k,v in dist.items()})
     prediction.normalize()
     return prediction
@@ -301,7 +376,7 @@ def analyzePredictions(data,behaviors,surveys,minSize=0):
             for t in range(1,15):
                 obs = oneOut[:t]
                 model = {b for b in behaviors[mission].keys() \
-                         if len(behaviors[mission][b]) > minSize}
+                         if len(behaviors[mission][b]) >= minSize}
                 if len(behaviors[mission][oneOut]) == 1:
                     # Only one person, so remove whole bucket
                     model -= {oneOut}
@@ -334,6 +409,101 @@ def analyzePredictions(data,behaviors,surveys,minSize=0):
                                          for mission in range(8)],[]))))
     print dumbScore
     return
+
+def analyzeCorrectness(data,behaviors,survey,minSize):
+    conditions = [('explanation',{'confidence','none'}),
+                  ('acknowledgment',{False, True}),
+                  ('embodiment',{'robot','dog'})]
+    variations = {'%s%s%s' % (list(conditions[0][1])[i%2],list(conditions[1][1])[(i/2)%2],
+                              list(conditions[2][1])[(i/4)%2]) for i in range(8)}
+    # Keep track of how many participants fall into each cluster
+    split = {c: {seq: 0 for seq in specials[0]} for c in variations}
+    # Keep track of how many participants match each prototype behavior exactly
+    exact = {c: {seq: 0 for seq in specials[0]} for c in variations}
+    # Keep track of behaviors after mission 1
+    warm = {c: {seq: 0 for seq in specials[0]} for c in variations}
+    # Keep track of which conditions engender which behaviors for each user
+    reactions = {}
+    groups = {'always': set(),
+              'never': set(),
+              'robot': set()}
+    for user,datum in sorted(data.items()):
+        datum[0]['transition'] = {}
+        datum[0]['split'] = {'confidence': {},'none': {}}
+        mySplit = datum[0]['split']
+        reactions[user] = {}
+        for mission in range(8):
+            if datum[mission]['sequence']:
+                condition = '%s%s%s' % tuple([datum[mission][c[0]] for c in conditions])
+                if not condition in split:
+                    continue
+                neighbors,distance = nearestNeighbors(datum[mission]['sequence'],15,
+                                                      specials[mission].values())
+                entry = {'bucket': {labeler[mission][seq] for seq in neighbors},
+                         'distance': distance}
+                if datum[mission]['sequence'] in labeler[mission]:
+                    label = labeler[mission][datum[mission]['sequence']]
+                    exact[condition][label] += 1
+                    if condition[:3] == 'con':
+                        reactions[user][label] = reactions[user].get(label,set()) | {condition}
+                elif condition[:3] == 'con':
+                    reactions[user]['other'] = reactions[user].get('other',set()) | {condition}
+                for seq in neighbors:
+                    label = labeler[mission][seq]
+                    if label in split[condition]:
+                        split[condition][label] += 1
+                        if mission > 0:
+                            warm[condition][label] += 1
+                    mySplit[datum[mission]['explanation']][label] = mySplit[datum[mission]['explanation']].get(label,0)+1
+                for condition in conditions:
+                    value = datum[mission][condition[0]]
+                    entry[condition[0]] = value
+                datum[0]['transition'][mission] = entry
+        if len(datum[0]['transition']) == 8:
+#            print [datum[0]['transition'][mission]['bucket'] for mission in range(8) \
+#                   if mission in datum[0]['transition']]
+            print user
+            for condition,seqs in sorted(reactions[user].items()):
+                print '%s: %s' % (condition,','.join(list(seqs)))
+            if len(reactions[user]) == 1 and 'correct' in reactions[user]:
+                groups['always'].add(user)
+            elif not 'correct' in reactions[user]:
+                groups['never'].add(user)
+            elif len(reactions[user]) > 1 and 'correct' in reactions[user]:
+                # Sometimes correct, sometimes not
+                if reactions[user]['correct'] == {'confidenceTruerobot',
+                                                  'confidenceFalserobot'}:
+                    groups['robot'].add(user)
+    for condition,table in sorted(split.items()):
+        print condition
+        print sorted(table.items())
+        print sorted(exact[condition].items())
+    answers = {}
+    common = set()
+    for group in ['always','never']:
+        print group
+        answers[group] = {}
+        for user in groups[group]:
+            surveyID = data[user][0]['surveyID']
+            if not surveyID in survey[0]:
+                # User did not fill out background survey
+                continue
+            for question,table in survey[0][surveyID].items():
+                if not question in answers[group]:
+                    answers[group][question] = {}
+                try:
+                    answer = int(survey[0][surveyID][question])
+                except ValueError:
+                    continue
+                answers[group][question][answer] = answers[group][question].get(answer,set()) | {user}
+        if group == 'always':
+            for question,table in answers['always'].items():
+                if 0 < len(table) < 3:
+                    common.add(question)
+    for question in common:
+        print question
+        print sorted(answers['always'][question])
+        print sorted(answers['never'][question])
         
 if __name__ == '__main__':
     # Read data from file
@@ -491,6 +661,7 @@ if __name__ == '__main__':
                 writer.writerow(datum)
     # Analyze behavioral observations
     behaviors = analyzeBehaviors(data,correctSeq)
-    analyzeBuckets(data,behaviors,survey,1)
-    analyzeBuckets(data,behaviors,survey,3)
+#    analyzeBuckets(data,behaviors,survey,1)
+#    analyzeBuckets(data,behaviors,survey,3)
     analyzeBuckets(data,behaviors,survey,5)
+#    analyzeCorrectness(data,behaviors,survey,5)
