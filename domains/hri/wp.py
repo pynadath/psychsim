@@ -1,7 +1,6 @@
 import ConfigParser
 import csv
 import datetime
-import difflib
 import os
 import sys
 
@@ -120,6 +119,7 @@ for mission in range(8):
             specials[mission]['unprotect'] += 'f'
 labeler = {mission: {behavior: label for label,behavior in specials[mission].items()}
            for mission in range(8)}
+ignore = {'A6RP0QY5H66Y2','AWA9E0MXCUZEX'}
 
 def readSurvey(fname):
     data = {}
@@ -539,10 +539,10 @@ if __name__ == '__main__':
     logs = processLogs('.')
     sequences = {}
     correctSeq = ['' for mission in range(8)]
-    valid = []
+    valid = set()
     for user in sorted(logs.keys()):
         if len(logs[user]) == 8:
-            valid.append(user)
+            valid.add(user)
         else:
             print >> sys.stderr, 'User %d did not complete 8 missions' % (user)
     print >> sys.stderr,'%d Valid Users' % (len(valid))

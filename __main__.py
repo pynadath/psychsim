@@ -1,8 +1,10 @@
 import os.path
 from PyQt5.QtCore import *
+from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from ui.mainwindow import Ui_MainWindow
 from ui.worldview import WorldView
+from ui.mapview import MapView
 from world import World
 
 class PsychSimUI(QMainWindow, Ui_MainWindow):
@@ -11,6 +13,7 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
         super(PsychSimUI, self).__init__(parent)
         self.setupUi(self)
         self.scene = WorldView(self.graphicsView)
+        self.map = MapView(self.graphicsView)
         self.graphicsView.setScene(self.scene)
 
     @pyqtSlot() # signal with no arguments
@@ -45,11 +48,16 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
         self.scene.colorNodes('likelihood')
 
     @pyqtSlot() # signal with no arguments
+    def on_actionMap_triggered(self):
+        self.graphicsView.setScene(self.map)
+
+    @pyqtSlot() # signal with no arguments
     def on_actionStep_triggered(self):
         self.scene.step()
 
     def wheelEvent(self,event):
-        factor = 1.41**(-event.delta()/240.)
+#        factor = 1.41**(-event.delta()/240.)
+        factor = 1.41**(-event.pixelDelta().y()/240.)
         self.graphicsView.scale(factor,factor)
 
 if __name__ == '__main__':
@@ -70,11 +78,9 @@ if __name__ == '__main__':
     win = PsychSimUI()
     if args.scenario is None:
         settings = QSettings()
-        last = settings.value('LastFile')
-        if last:
-            filename = last.toString()
-            if filename and QFile.exists(filename):
-                win.openScenario(str(filename))
+#        filename = settings.value('LastFile').toString()
+#        if filename and QFile.exists(filename):
+#            win.openScenario(str(filename))
     else:
         win.openScenario(args.scenario)
     win.show()
