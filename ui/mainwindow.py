@@ -37,7 +37,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.graphicsView)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 25))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 30))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -91,6 +91,8 @@ class Ui_MainWindow(object):
         self.actionLikelihood.setObjectName("actionLikelihood")
         self.actionStep = QtWidgets.QAction(MainWindow)
         self.actionStep.setObjectName("actionStep")
+        self.actionMap = QtWidgets.QAction(MainWindow)
+        self.actionMap.setObjectName("actionMap")
         self.menuFile.addAction(self.actionNew)
         self.menuFile.addAction(self.actionOpen)
         self.menuFile.addAction(self.actionRecent_Files)
@@ -109,6 +111,7 @@ class Ui_MainWindow(object):
         self.menuEdit.addAction(self.actionPaste)
         self.menuView.addAction(self.actionAgent)
         self.menuView.addAction(self.actionLikelihood)
+        self.menuView.addAction(self.actionMap)
         self.menuTools.addAction(self.actionStep)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuEdit.menuAction())
@@ -153,5 +156,7 @@ class Ui_MainWindow(object):
         self.actionLikelihood.setText(_translate("MainWindow", "Likelihood"))
         self.actionLikelihood.setToolTip(_translate("MainWindow", "Color code nodes by relative likelihood"))
         self.actionStep.setText(_translate("MainWindow", "Step"))
+        self.actionMap.setText(_translate("MainWindow", "Map"))
+        self.actionMap.setToolTip(_translate("MainWindow", "Show map view of scenario"))
 
 import psychsim_rc
