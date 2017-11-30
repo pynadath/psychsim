@@ -52,10 +52,9 @@ class Domain:
         result = {field: {} for field in self.targets}
         for record in self.data.values():
             for field in self.targets:
-                try:
-                    result[field][record[field]] += 1
-                except KeyError:
-                    result[field][record[field]] = 1
+                if not record[field] in result[field]:
+                    result[field][record[field]] = set()
+                result[field][record[field]].add(self.recordID(record))
         return result
     
     def recordID(self,record):

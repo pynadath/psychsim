@@ -815,9 +815,12 @@ class Agent:
         substate = trueState.keyMap[oldModelKey]
         trueState.keyMap[newModelKey] = substate
         distribution = trueState.distributions[substate]
-        Omega = self.O.keys()
-        assert isinstance(Omega,list)
         SE = {} # State estimator table
+        if self.O is True:
+            Omega = []
+        else:
+            Omega = self.O.keys()
+        assert isinstance(Omega,list)
         for vector in distribution.domain():
             prob = distribution[vector]
             del distribution[vector]

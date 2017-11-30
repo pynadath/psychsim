@@ -72,6 +72,8 @@ def createWorld(domain,codebook,logger=logging.getLogger()):
             if not world.agents.has_key(field['agent']):
                 world.addAgent(field['agent'])
             agent = world.agents[field['agent']]
+            model = '%s0' % (agent.name)
+            world.setModel(agent.name,model)
         else:
             agent = None
         if field['class'] == 'state':
@@ -99,12 +101,25 @@ def modelIndividual(domain,world,record,codebook,logger=logging.getLogger()):
             key = stateKey(field['agent'],field['field'])
             agent = world.agents[field['agent']]
             if world.variables[key]['domain'] is list:
-                value = codebook[field['field']]['labels'][value]
+                try:
+                    value = codebook[field['field']]['labels'][value]
+                except KeyError:
+                    logger.warning('Unknown value %s[%s]=%s' % (domain.recordID(record),
+                                                                field['field'],value))
+                    continue
             agent.setState(field['variable'],value)
             logger.debug('%s: %s' % (key,value))
     agent = world.agents['respondent']
-#    behavior = agent.newDecide()
-            
+    behavior = agent.decide(world.state)
+
+def tabulate(data,field):
+    table = {}
+    for datum in data:
+        table[datum[field]] = table.get(datum[field],0)+1
+    total = float(sum(table.values()))
+    table = {k: float(v)/total for k,v in table.items()}
+    return table
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
@@ -121,10 +136,14 @@ if __name__ == '__main__':
     domain = Domain('afrobarometer')
     logging.debug('#records = %d' % (len(domain.data)))
     world = createWorld(domain,codebook)
-    for field,histogram in domain.targetHistogram().items():
-        print field
-        for key,count in sorted(histogram.items(),key=lambda item: -item[1]):
-            print '\t%5d: %s' % (count,codebook[field]['labels'][key])
-    for ID,record in domain.data.items():
-        modelIndividual(domain,world,record,codebook)
-        break
+    for input in domain.fields:
+        print input
+        for field,histogram in domain.targetHistogram().items():
+            print field
+            for key,matches in sorted(histogram.items(),key=lambda item: -len(item[1])):
+                print '\t%5d: %s' % (len(matches),codebook[field]['labels'][key])
+                table = tabulate([domain.data[ID] for ID in matches],input)
+                print table.keys()
+                print ', '.join(['%s: %4.1f%%' % (codebook[input]['labels'].get(k,k),table[k]*100.) for k in sorted(table.keys())])
+#    for ID,record in domain.data.items():
+#        modelIndividual(domain,world,record,codebook)
