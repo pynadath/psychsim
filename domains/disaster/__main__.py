@@ -1143,7 +1143,7 @@ def readPredictions(data,variations,filename):
             links = []
             for variation in variations:
                 code = variation['code']
-                if record[code] == '':
+                if record.get(code,'') == '':
                     value = None
                 else:
                     value = map(int,list(record[code].split(':')))
@@ -1153,7 +1153,27 @@ def readPredictions(data,variations,filename):
             if record['P(Leave)']:
                 data[record['V1']]['P(Leave)'][model] = float(record['P(Leave)'])
     return data
-    
+
+def confusion(data,model,field):
+    matrix = {}
+    for record in data.values():
+        try:
+            prediction = record['predictions'][model]
+        except KeyError:
+            continue
+        response = record[field]
+        if not response in matrix:
+            matrix[response] = {}
+        matrix[response][prediction] = matrix[response].get(prediction,0)+1
+    return matrix
+
+def printConfusion(matrix):
+    columns = ['%d' % (i+1) for i in range(5)]
+    logging.info('Real\t'+'\t'.join(columns))
+    for real in range(5):
+        counts = [str(matrix.get(str(real+1),{}).get(str(col+1),0)) for col in range(5)]
+        logging.info('\t'.join([str(real+1)]+counts))
+        
 if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR)
     parser = ArgumentParser()
@@ -1248,5 +1268,7 @@ if __name__ == '__main__':
     for index in range(len(choices)):
         model,num = choices[index]
         total += num
-        logging.info('%2d: %s covers %3d (Total covered: %3d)' % (index+1,model,num,total))
+        logging.info('%2d: %s covers %3d new (Cumulative: %3d)' % (index+1,model,num,total))
+        logging.info('Covers %3d total' % (len([r for r in data.values() if r['predictions'].get(model,'')==r['Leave']])))
+        printConfusion(confusion(data,model,'Leave'))
     logging.info('%d/%d' % (len(data)-len(unmatchable),len(data)))
