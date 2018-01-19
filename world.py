@@ -423,9 +423,11 @@ class World:
     def addAgent(self,agent):
         if self.has_agent(agent):
             raise NameError,'Agent %s already exists in this world' % (agent.name)
-        else:
-            self.agents[agent.name] = agent
-            agent.world = self
+        if isinstance(agent,str):
+            agent = Agent(agent)
+        self.agents[agent.name] = agent
+        agent.world = self
+        return agent
 
     def has_agent(self,agent):
         """
