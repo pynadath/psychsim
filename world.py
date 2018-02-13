@@ -176,10 +176,14 @@ class World:
             for name in outcome['actions'].keys():
                 if not (name in turn):
                     raise NameError,'Agent %s must wait for its turn' % (name)
+
+            # todo: Pedro added: prevented outcome['actions'] to influence other's decisions
+            # for agents that act in parallel, keep copy of other's actions
+            others = outcome['actions'].copy()
             for name in turn:
                 if not outcome['actions'].has_key(name):
                     model = self.getModel(name,vector)
-                    decision = self.agents[name].decide(vector,horizon,outcome['actions'],model,tiebreak)
+                    decision = self.agents[name].decide(vector,horizon,others,model,tiebreak)
                     outcome['decisions'][name] = decision
                     outcome['actions'][name] = decision['action']
                 elif isinstance(outcome['actions'][name],Action):

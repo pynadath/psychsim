@@ -8,6 +8,9 @@ from action import Action,ActionSet
 from pwl import *
 from probability import Distribution
 
+# todo Pedro added
+from itertools import imap
+
 class Agent:
     """
     @ivar name: agent name
@@ -185,21 +188,25 @@ class Agent:
                   'state': vector,
                   'horizon': horizon,
                   'projection': []}
-        # Check for pre-computed value function
-        V = self.getAttribute('V',model).get(self.name,vector,action,horizon,
-                                             self.getAttribute('ignore',model))
+
+        # todo Pedro moved this out of conditional
+        if others is None:
+            turn = {}
+        else:
+            turn = copy.copy(others)
+        if not action is None:
+            turn[self.name] = action
+
+        # todo Pedro added all agents' actions to retrieve from cache
+        V = self.getAttribute('V', model).get(self.name, vector, self.getActionsStr(turn),
+                                              horizon, self.getAttribute('ignore', model))
+
         if V is not None:
             result['V'] = V
         else:
             result['V'] = R
             if horizon > 0 and not self.world.terminated(vector):
                 # Perform action(s)
-                if others is None:
-                    turn = {}
-                else:
-                    turn = copy.copy(others)
-                if not action is None:
-                    turn[self.name] = action
                 outcome = self.world.stepFromState(vector,turn,horizon,keys=keys)
                 if not outcome.has_key('new'):
                     # No consistent outcome
@@ -238,8 +245,15 @@ class Agent:
                         result['V'] += discount*Vrest['V']
                     result['projection'].append(outcome)
             # Do some caching
-            self.getAttribute('V',model).set(self.name,vector,action,horizon,result['V'])
+            # todo Pedro added all agents' actions to store in cache
+            self.getAttribute('V', model).set(self.name, vector, self.getActionsStr(turn),
+                                              horizon, result['V'])
         return result
+
+    # todo Pedro added function to combine all agent's actions
+    def getActionsStr(self, actions):
+        if actions is None: return ''
+        return ''.join(sorted(imap(str, actions.values())))
 
     def valueIteration(self,horizon=None,ignore=None,model=True,epsilon=1e-6,debug=0,maxIterations=None):
         """
