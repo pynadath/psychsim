@@ -9,6 +9,10 @@ from pwl import *
 from probability import Distribution
 from agent import Agent
 
+#todo Pedro added to allow multi-threads (not really faster here)
+from multiprocessing.pool import ThreadPool
+
+
 class World:
     """
     @ivar agents: table of agents in this world, indexed by name
@@ -47,6 +51,9 @@ class World:
         self.relations = {}
 
         self.maxTurn = None
+
+        # todo Pedro added parallelization
+        self.parallel = False
 
         # Action effect information
         self.dynamics = {}
@@ -103,6 +110,7 @@ class World:
         @param real: if C{True}, then modify the given state; otherwise, this is only hypothetical (default is C{True})
         @type real: bool
         """
+
         if state is None:
             state = self.state[None]
         outcomes = []
@@ -110,7 +118,7 @@ class World:
         oldStates = state.domain()
         for stateVector in oldStates:
             prob = state[stateVector]
-            outcome = self.stepFromState(stateVector,actions,keys=keys)
+            outcome = self.stepFromState(stateVector,actions,keys=keys,top=True)
             outcome['probability'] = prob
             outcomes.append(outcome)
         if real:
@@ -148,12 +156,23 @@ class World:
             if self.memory:
                 self.history.append(outcomes)
             self.modelGC(False)
+
         return outcomes
 
-    def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=True,keys=None):
+    def step_agent_from_state(self, name, vector, horizon, others, tiebreak):
+        """
+        # todo Pedro added parallelization in agent's decision
+        Run a step from state for an agent asynchronously
+        """
+        model = self.getModel(name, vector)
+        decision = self.agents[name].decide(vector, horizon, others, model, tiebreak)
+        return decision
+
+    def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=True,keys=None,top=False):
         """
         Compute the resulting states when starting in a given possible world (as opposed to a distribution over possible worlds)
         """
+
         outcome = {'old': vector,
                    'decisions': {}}
         # Check whether we are already in a terminal state
@@ -177,19 +196,41 @@ class World:
                 if not (name in turn):
                     raise NameError,'Agent %s must wait for its turn' % (name)
 
-            # todo: Pedro added: prevented outcome['actions'] to influence other's decisions
+            # todo: Pedro added: prevented outcome['actions'] of influencing other's decisions
             # for agents that act in parallel, keep copy of other's actions
             others = outcome['actions'].copy()
+
+            # todo: Pedro added: parallelization
+            names = []
             for name in turn:
                 if not outcome['actions'].has_key(name):
-                    model = self.getModel(name,vector)
-                    decision = self.agents[name].decide(vector,horizon,others,model,tiebreak)
+                    names.append(name)
+                elif isinstance(outcome['actions'][name], Action):
+                    outcome['actions'][name] = ActionSet([outcome['actions'][name]])
+
+            if self.parallel and top:
+                pool = ThreadPool(processes=1)
+                async_results = {}
+                for name in names:
+                    async_results[name] = pool.apply_async(
+                        self.step_agent_from_state, (name, vector, horizon, others, tiebreak))
+
+                for name, async_result in async_results.iteritems():
+                    decision = async_result.get()
                     outcome['decisions'][name] = decision
                     outcome['actions'][name] = decision['action']
-                elif isinstance(outcome['actions'][name],Action):
-                    outcome['actions'][name] = ActionSet([outcome['actions'][name]])
-                if isinstance(outcome['actions'][name],Distribution):
+                #todo join?
+            else:
+                for name in names:
+                    model = self.getModel(name, vector)
+                    decision = self.agents[name].decide(vector, horizon, others, model, tiebreak)
+                    outcome['decisions'][name] = decision
+                    outcome['actions'][name] = decision['action']
+
+            for name in turn:
+                if isinstance(outcome['actions'][name], Distribution):
                     stochastic.append(name)
+
         if stochastic:
             # Merge effects of multiple possible actions into single effect
             if len(stochastic) > 1:
@@ -234,7 +275,9 @@ class World:
         """
         result = {'effect': [],
                   'new': VectorDistribution({vector: probability})}
-        result['new'] = self.deltaState(actions,result['new'],result['effect'],keys)
+        # todo Pedro added create ActionSet here
+        # result['new'] = self.deltaState(actions,result['new'],result['effect'],keys)
+        result['new'] = self.deltaState(ActionSet(actions), result['new'], result['effect'], keys)
         # Update turn order
         delta = self.deltaOrder(actions,vector)
         if delta:
@@ -242,7 +285,7 @@ class World:
             new = VectorDistribution()
             for old in result['new'].domain():
                 newVector = KeyedVector(old)
-                newVector.update(delta*old)
+                newVector.update(delta * old)
                 new.addProb(newVector,result['new'][old])
             result['new'] = new
         # Update agent models included in the original world (after finding out possible new worlds)
@@ -264,13 +307,14 @@ class World:
                         # No need to update the model
                         modelDistribution = KeyedMatrix({key: KeyedVector({key: 1})})
                     else:
-                        # Imperfect beliefs need to be updated
-                        omegaDistribution = agent.observe(newVector,actions)
-                        modelDistribution = MatrixDistribution()
                         if result['SE %s' % (name)].has_key(oldModel):
                             raise NotImplementedError,'Unable to re-merge beliefs'
                         else:
                             result['SE %s' % (name)][oldModel] = {}
+
+                        # Imperfect beliefs need to be updated
+                        omegaDistribution = agent.observe(newVector,actions)
+                        modelDistribution = MatrixDistribution()
                         for omega in omegaDistribution.domain():
                             newModel = agent.stateEstimator(vector,newVector,omega,oldModel)
                             result['SE %s' % (name)][oldModel][omega] = newModel
@@ -302,14 +346,20 @@ class World:
         return result
 
     def multiDeltaVector(self,actions,old,keys):
-        new = VectorDistribution({old: 1.})
+        # todo Pedro added store new values and update only once
+        # new = VectorDistribution({old: 1.})
+        news = {}
         for key in keys:
             partial = self.singleDeltaVector(actions,old,key)
             if isinstance(partial,KeyedVector):
                 if partial.has_key(key):
-                    new.join(key,Distribution({partial[key]: 1.}))
+                    #new.join(key,Distribution({partial[key]: 1.}))
+                    news[key] = Distribution({partial[key]: 1.})
             else:
-                new.join(key,partial.marginal(key))
+                #new.join(key,partial.marginal(key))
+                news[key] = partial.marginal(key)
+        new = VectorDistribution({old: 1.})
+        new.joinKeyValues(news)
         return new
 
     def singleDeltaVector(self,actions,old,key,dynamics=None):
@@ -373,6 +423,7 @@ class World:
         """
         for keySet in self.evaluationOrder:
             if not keys is None:
+                # todo keySet = keySet | keys?
                 keySet = {k for k in keySet if k in keys}
             new = VectorDistribution()
             for oldVector in old.domain():
@@ -493,19 +544,26 @@ class World:
         if enforceMax and self.variables[key]['domain'] in [int,float]:
             # Modify tree to enforce ceiling
             tree.ceil(key,self.variables[key]['hi'])
-        self.dynamics[key][action] = tree
+        # todo Pedro added make it a list to allow caching
+        # self.dynamics[key][action] = tree
+        self.dynamics[key][action] = [tree]
+
 
     def getDynamics(self,key,action,state=None):
         if not self.dynamics.has_key(key):
             return []
         if isinstance(action,Action):
-            return self.getDynamics(key,ActionSet([action]),state)
+            # todo Pedro added simplify ActionSet
+            # return self.getDynamics(key,ActionSet([action]),state)
+            return self.getDynamics(key, ActionSet(action), state)
         elif not isinstance(action,ActionSet) and not isinstance(action,list):
             # Table of actions by multiple agents
             return self.getDynamics(key,ActionSet(action),state)
         error = None
         try:
-            return [self.dynamics[key][action]]
+            # todo Pedro added already is a list
+            # return [self.dynamics[key][action]]
+            return self.dynamics[key][action]
         except KeyError:
             error = 'key'
         except TypeError:
@@ -514,23 +572,38 @@ class World:
             dynamics = []
             for atom in action:
                 try:
-                    dynamics.append(self.dynamics[key][ActionSet([atom])])
+                    # todo Pedro added simplify ActionSet and join lists
+                    # dynamics.append(self.dynamics[key][ActionSet([atom])])
+                    dynamics = dynamics + self.dynamics[key][ActionSet(atom)]
                 except KeyError:
                     if len(atom) > len(atom.special):
                         # Extra parameters
                         try:
-                            tree = self.dynamics[key][ActionSet([atom.root()])]
+                            # todo Pedro added simplify ActionSet
+                            # tree = self.dynamics[key][ActionSet([atom.root()])]
+                            tree = self.dynamics[key][ActionSet(atom.root())]
                         except KeyError:
                             tree = None
                         if tree:
                             table = {}
                             for field in atom.getParameters():
                                 table[actionKey(field)] = atom[field]
-                            dynamics.append(tree.desymbolize(table))
+                            # todo Pedro added join lists
+                            # dynamics.append(tree.desymbolize(table))
+                            dynamics = dynamics + tree.desymbolize(table)
             if len(dynamics) == 0:
                 # No action-specific dynamics, fall back to default dynamics
                 if self.dynamics[key].has_key(True):
-                    dynamics.append(self.dynamics[key][True])
+                    # todo Pedro added join lists
+                    # dynamics.append(self.dynamics[key][True])
+                    dynamics = dynamics+self.dynamics[key][True]
+
+            # todo Pedro added cache dynamics
+            if key not in self.dynamics:
+                self.dynamics[key] = {}
+            if action not in self.dynamics[key]:
+                self.dynamics[key][action] = {}
+            self.dynamics[key][action]=dynamics
             return dynamics
 
     def addDependency(self,dependent,independent):
@@ -621,10 +694,12 @@ class World:
                 except KeyError:
                     table[atom['subject']] = ActionSet(atom)
         elif isinstance(actions,dict):
+            # todo Pedro added use ActionSet constructor
             table = actions
-            actions = ActionSet()
-            for atom in table.values():
-                actions = actions | atom
+            #actions = ActionSet()
+            #for atom in table.values():
+            #    actions = actions | atom
+            actions = ActionSet(table)
         else:
             assert isinstance(actions,list)
             actionList = actions
@@ -925,6 +1000,8 @@ class World:
         distribution.normalize()
         key = modelKey(modelee)
         if not self.variables.has_key(key):
+            #model_state = self.defineState(None, key)
+            #self.setFeature(model_state, 0)
             self.defineVariable(key)
         if isinstance(state,str):
             # This is the name of the modeling agent (*cough* hack *cough*)

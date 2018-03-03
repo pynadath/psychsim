@@ -15,6 +15,7 @@ class Action(dict):
         else:
             dict.__init__(self,arg)
         self._string = None
+        self._hashCode = None
         
     def agentLess(self):
         """
@@ -104,7 +105,15 @@ class Action(dict):
 class ActionSet(frozenset):
 
     def __new__(cls,elements=[]):
-        if isinstance(elements,Element):
+        # todo Pedro added changed verification order
+        if isinstance(elements, Action):
+            iterable = [elements]
+        elif isinstance(elements, dict):
+            if(len(elements)==1):
+                iterable = ActionSet(elements.values()[0])
+            else:
+                iterable = reduce(ActionSet.union, elements.values(), ActionSet())
+        elif isinstance(elements,Element):
             iterable = []
             node = elements.firstChild
             while node:
@@ -113,7 +122,7 @@ class ActionSet(frozenset):
                     atom = Action(node)
                     iterable.append(atom)
                 node = node.nextSibling
-                
+
         elif isinstance(elements,NodeList):
             iterable = []
             for node in elements:
@@ -121,12 +130,9 @@ class ActionSet(frozenset):
                     assert node.tagName == 'action','Element has tag %s instead of action' % (node.tagName)
                     atom = Action(node)
                     iterable.append(atom)
-        elif isinstance(elements,Action):
-            iterable = [elements]
-        elif isinstance(elements,dict):
-            iterable = reduce(ActionSet.union,elements.values(),ActionSet())
         else:
             iterable = elements
+
         return frozenset.__new__(cls,iterable)
 
     def match(self,pattern):
@@ -159,8 +165,9 @@ class ActionSet(frozenset):
     def __str__(self):
         return ','.join(map(str,self))
 
-    def __hash__(self):
-        return hash(str(self))
+    # todo Pedro added use default frozenset hash
+    # def __hash__(self):
+    #     return hash(str(self))
 
     def __lt__(self,other):
         return str(self) < str(other)

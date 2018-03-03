@@ -20,26 +20,31 @@ class KeyedVector(dict):
     epsilon = 1e-8
 
     def __init__(self,arg={}):
-        if isinstance(arg,Node):
+        if isinstance(arg, KeyedVector):
+            # todo Pedro added copy other's string
+            dict.__init__(self, arg)
+            self._string=arg._string
+        elif isinstance(arg,Node):
             dict.__init__(self)
             self.parse(arg)
+            self._string = None
         else:
             dict.__init__(self,arg)
-        self._string = None
+            self._string = None
 
-    def __eq__(self,other):
-        delta = 0.
-        tested = {}
-        for key,value in self.items():
-            try:
-                delta += abs(value-other[key])
-            except KeyError:
-                delta += abs(value)
-            tested[key] = True
-        for key,value in other.items():
-            if not tested.has_key(key):
-                delta += abs(value)
-        return delta < self.epsilon
+    # def __eq__(self,other):
+    #     delta = 0.
+    #     tested = {}
+    #     for key,value in self.items():
+    #         try:
+    #             delta += abs(value-other[key])
+    #         except KeyError:
+    #             delta += abs(value)
+    #         tested[key] = True
+    #     for key,value in other.items():
+    #         if not tested.has_key(key):
+    #             delta += abs(value)
+    #     return delta < self.epsilon
 
     def __ne__(self,other):
         return not self == other
@@ -54,7 +59,9 @@ class KeyedVector(dict):
         return result
 
     def __neg__(self):
-        result = KeyedVector()
+        # todo Pedro added copy vector
+        # result = KeyedVector()
+        result = KeyedVector(self)
         for key,value in self.items():
             result[key] = -value
         return result
@@ -92,12 +99,19 @@ class KeyedVector(dict):
                 (self.__class__.__name__,other.__class__.__name__)
 
     def __setitem__(self,key,value):
-        self._string = None
+        # todo Pedro added check existing
+        if key in self and dict.__getitem__(self, key) == value:
+            return
         dict.__setitem__(self,key,value)
+        self._string = None
 
     def __delitem__(self,key):
-        self._string = None
         dict.__delitem__(self,key)
+        self._string = None
+
+    def update(self, dic):
+        for key, value in dic.iteritems():
+            self[key] = value
 
     def desymbolize(self,table,debug=False):
         result = self.__class__()
@@ -193,26 +207,74 @@ class VectorDistribution(Distribution):
     A class representing a L{Distribution} over L{KeyedVector} instances
     """
 
-    def join(self,key,value):
+    def join(self, key, value):
         """
         Modifies the distribution over vectors to have the given value for the given key
         @param key: the key to the column to modify
         @type key: str
         @param value: either a single value to apply to all vectors, or else a L{Distribution} over possible values
         """
-        original = dict(self)
+        # todo Pedro added don't clear if not necessary
+        # original = dict(self)
         domain = self.domain()
-        self.clear()
+        # self.clear()
         for row in domain:
-            prob = original[str(row)]
-            if isinstance(value,Distribution):
+            # prob = original[str(row)]
+            old = str(row)
+            prob = self[old]
+            if isinstance(value, Distribution):
                 for element in value.domain():
                     new = row.__class__(row)
                     new[key] = element
-                    self.addProb(new,prob*value[element])
+                    if str(new) not in self:
+                        del self[old]
+                    # self.addProb(new, prob * value[element])
+                    self[new] = prob * value[element]
             else:
+                # check if key is already in row
+                old = str(row)
                 row[key] = value
+                if str(row) != old:
+                    del self[old]
                 self[row] = prob
+
+    # todo Pedro added join several keys and values in one single step
+    def joinKeyValues(self,keyValues):
+        """
+        Modifies the distribution over vectors to have the given values for the given keys
+        @param keyValues: the keys to the columns to modify and respective values
+        @type keyValues: dict
+        """
+        for row in self.domain():
+            old = str(row)
+            prob = self[old]
+            newProbs = [[row.__class__(row),prob]]
+            for key, value in keyValues.iteritems():
+                if isinstance(value, Distribution):
+                    valDomain = value.domain()
+                    toAdd = []
+                    for newProb in newProbs:
+                        if len(value) == 1:
+                            newProb[0][key] = valDomain[0]
+                            newProb[1] *= value[valDomain[0]]
+                        else:
+                            orig = [row.__class__(newProb[0]),newProb[1]]
+                            newProb[0][key] = valDomain[0]
+                            newProb[1] *= value[valDomain[0]]
+                            for i in range(1, len(valDomain)):
+                                add = [row.__class__(orig),orig[1]]
+                                add[0][key] = valDomain[i]
+                                add[1] *= value[valDomain[i]]
+                                toAdd.append(add)
+                    newProbs.extend(toAdd)
+                else:
+                    for newProb in newProbs:
+                        newProb[0][key] = value
+
+            for newProb in newProbs:
+                if str(newProb[0]) not in self:
+                    del self[old]
+                self[newProb[0]] = newProb[1]
 
     def merge(self,other):
         """
@@ -228,7 +290,7 @@ class VectorDistribution(Distribution):
                 new.update(diff)
                 result[new] = self[old]*other[diff]
         return self.__class__(result)
-        
+
     def element2xml(self,value):
         return value.__xml__().documentElement
 
@@ -273,7 +335,7 @@ class VectorDistribution(Distribution):
             return sample
         else:
             Distribution.select(self)
-            
+
     def hasColumn(self,key):
         """
         @return: C{True} iff the given key appears in all of the vectors of this distribution
@@ -305,7 +367,7 @@ class KeyedMatrix(dict):
         else:
             dict.__init__(self,arg)
             self._string = None
-        
+
     def __eq__(self,other):
         return str(self) == str(other)
          # for key,vector in self.items():
@@ -434,24 +496,29 @@ class KeyedMatrix(dict):
             else:
                 result[row] = KeyedVector(vector)
         return result
-        
+
     def __setitem__(self,key,value):
         assert isinstance(value,KeyedVector),'Illegal row type: %s' % \
             (value.__class__.__name__)
-        self._string = None
+
+        # todo Pedro added check existing
+        if key in self and dict.__getitem__(self, key) == value:
+            return
         dict.__setitem__(self,key,value)
+        self._string = None
 
     def update(self,other):
-        self._string = None
-        dict.update(self,other)
-    
+        # todo Pedro added do not reset string if it does not change
+        for key,value in other.iteritems():
+            self[key]=value
+        # self._string = None
+        # dict.update(self,other)
+
     def __str__(self):
         if self._string is None:
-            joiner = lambda item: '%s*%s' % (item[1],item[0])
-            self._string = '\n'.join(map(lambda item: '%s) %s' % \
-                                             (item[0],' + '.join(map(joiner,
-                                                                    item[1].items()))),
-                                         self.items()))
+            joiner = lambda item: '%s*%s' % (item[1], item[0])
+            self._string = '\n'.join(
+                map(lambda item: '%s) %s' % (item[0], ' + '.join(map(joiner, item[1].items()))), self.items()))
         return self._string
 
     def __hash__(self):
@@ -573,7 +640,7 @@ class MatrixDistribution(Distribution):
 
     def xml2element(self,key,node):
         return KeyedMatrix(node)
-        
+
 class KeyedPlane:
     """
     String indexable hyperplane class
@@ -814,7 +881,7 @@ class KeyedTree:
             self.parse(leaf)
         else:
             self.makeLeaf(leaf)
-            
+
     def isLeaf(self):
         return self.leaf
 
@@ -917,7 +984,7 @@ class KeyedTree:
             if collapse:
                 assert sum(distribution.values()) == 1.
                 self.makeProbabilistic(distribution)
-            
+
     def __getitem__(self,index):
         if self.isLeaf():
             return self.children[None]
@@ -1041,13 +1108,13 @@ class KeyedTree:
                 return self.children == other.children
             else:
                 return False
-            
+
     def __add__(self,other):
         if isinstance(other,KeyedTree):
             return self.compose(other,lambda x,y: x+y)
         else:
             return self+KeyedTree(other)
-            
+
     def __mul__(self,other):
         if isinstance(other,KeyedTree):
             return self.compose(other,lambda x,y: x*y,lambda x,y: x*y)
@@ -1142,7 +1209,7 @@ class KeyedTree:
             else:
                 result.makeBranch(other.branch,trueTree,falseTree)
         return result
-            
+
     def replace(self,old,new):
         """
         @return: a new tree with the given substitution applied to all leaf nodes
@@ -1224,7 +1291,7 @@ class KeyedTree:
             result.makeLeaf(self.children[None])
         elif self.isProbabilistic():
             # Distributions are passed through
-            distribution = self.children.__class__() 
+            distribution = self.children.__class__()
             for tree in self.children.domain():
                 prob = self.children[tree]
                 tree.prune(path)
@@ -1260,7 +1327,7 @@ class KeyedTree:
             self.branch = self.branch.minimize()
             self.children[True].minimizePlanes()
             self.children[False].minimizePlanes()
-            
+
     def __hash__(self):
         return hash(str(self))
 
@@ -1328,7 +1395,7 @@ class KeyedTree:
                 elif node.tagName == 'bool':
                     key = eval(node.getAttribute('key'))
                     children[key] = eval(node.getAttribute('value'))
-                elif node.tagName == 'action': 
+                elif node.tagName == 'action':
                     key = eval(node.getAttribute('key'))
                     children[key] = Action(node)
                 elif node.tagName == 'str':

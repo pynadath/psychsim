@@ -10,6 +10,7 @@ from probability import Distribution
 
 # todo Pedro added
 from itertools import imap
+from multiprocessing import Lock
 
 class Agent:
     """
@@ -44,6 +45,7 @@ class Agent:
         self.x = None
         self.y = None
         self.color = None
+        self.importantFeatures = {}
         if isinstance(name,Document):
             self.parse(name.documentElement)
         elif isinstance(name,Node):
@@ -53,10 +55,59 @@ class Agent:
             # Default model settings
             self.addModel(True,R={},horizon=2,level=2,rationality=1.,discount=1.,selection='consistent',
                           beliefs=True,parent=None,projector=Distribution.expectation)
+        # todo Pedro added multi-thread sync
+        self.lock = Lock()
 
     """------------------"""
     """Policy methods"""
     """------------------"""
+
+    def discretize_state(self, vector, num_groups):
+        """
+        #todo Pedro added
+        Gets a discretized state
+        :param vector:
+        :param num_groups:
+        :return:
+        """
+        new_vec = KeyedVector()
+        for key in vector:
+            new_vec[key] = self.discretize_feature(key, vector[key], num_groups)
+        return new_vec
+
+
+    def discretize_feature(self, feature, value, num_groups):
+        """
+        #todo Pedro added
+        Discretizes the given feature's value according to the number of intended groups
+        :param feature:
+        :param value:
+        :param num_groups:
+        :return:
+        """
+        if feature not in self.world.variables:
+            return value
+        variable = self.world.variables[feature]
+        high = variable['hi']
+        low = variable['lo']
+
+        # check domain
+        proceed = False
+        for row in self.world.state[None].domain():
+            if feature in row:
+                proceed = True
+                break
+        if not proceed:
+            return value
+
+        # check high and low
+        if high is None or low is None:
+            return value
+
+        # discretizes feature's value
+        ran = float(high - low)
+        value = int(round((float(value - low) / ran) * num_groups)) * (ran / num_groups) + low
+        return value
 
     def decide(self,vector,horizon=None,others=None,model=None,selection=None,actions=None,keys=None):
         """
@@ -85,6 +136,16 @@ class Agent:
             selection = self.getAttribute('selection',model)
         # What are my subjective beliefs for this decision?
         belief = self.getBelief(vector,model)
+
+        # todo Pedro added state discretization
+        num_groups = self.getAttribute('discretization', model)
+        if num_groups is not None:
+            for state in belief.domain():
+                disc_state = self.discretize_state(state, num_groups)
+                if str(disc_state) != str(state):
+                    belief[disc_state] = belief[state]
+                    del belief[state]
+
         # Do I have a policy telling me what to do?
         policy = self.getAttribute('policy',model)
         if policy:
@@ -159,6 +220,7 @@ class Agent:
             best.sort()
             result['action'] = best[0]
         return result
+
                 
     def value(self,vector,action=None,horizon=None,others=None,model=None,keys=None):
         """
@@ -181,6 +243,7 @@ class Agent:
             horizon = self.getAttribute('horizon',model)
         # Determine discount factor
         discount = self.getAttribute('discount',model)
+
         # Compute immediate reward
         R = self.reward(vector,model)
         result = {'R': R,
@@ -198,8 +261,10 @@ class Agent:
             turn[self.name] = action
 
         # todo Pedro added all agents' actions to retrieve from cache
-        V = self.getAttribute('V', model).get(self.name, vector, self.getActionsStr(turn),
-                                              horizon, self.getAttribute('ignore', model))
+        self.lock.acquire()
+        V = self.getAttribute('V', model).get(
+            self.name, vector, self.getActionsStr(turn), horizon, self.getAttribute('ignore', model))
+        self.lock.release()
 
         if V is not None:
             result['V'] = V
@@ -246,12 +311,19 @@ class Agent:
                     result['projection'].append(outcome)
             # Do some caching
             # todo Pedro added all agents' actions to store in cache
-            self.getAttribute('V', model).set(self.name, vector, self.getActionsStr(turn),
-                                              horizon, result['V'])
+            self.lock.acquire()
+            self.getAttribute('V', model).set(
+                self.name, vector, self.getActionsStr(turn), horizon, result['V'])
+            self.lock.release()
+
         return result
 
-    # todo Pedro added function to combine all agent's actions
     def getActionsStr(self, actions):
+        """
+        # todo Pedro added function to combine all agent's actions
+        :param actions:
+        :return:
+        """
         if actions is None: return ''
         return ''.join(sorted(imap(str, actions.values())))
 
@@ -527,6 +599,8 @@ class Agent:
         @return: the reward I derive in the given state (under the given model, default being the C{True} model)
         @rtype: float
         """
+        # todo Pedro added
+        #from psychsim.world import scaleValue
         total = 0.
         if vector is None:
             total = self.reward(self.world.state,model,recurse)
@@ -546,7 +620,15 @@ class Agent:
                         # Compute agent's reward but don't recurse any further
                         ER = self.world.agents[tree].reward(vector,model,False)
                 else:
-                    ER = tree[vector]*self.world.scaleState(vector)
+                    # todo Pedro added ignore reward scaling
+                    rwdVector = tree[vector]
+                    # scaled = vector.__class__()
+                    # for key in rwdVector:
+                    #     scaled[key] = scaleValue(vector[key], self.world.variables[key])
+                    #scaled = self.world.scaleState(vector)
+                    # ER = rwdVector*scaled
+                    #ER = tree[vector] * self.world.scaleState(vector)
+                    ER = rwdVector * vector
                 total += ER*weight
         return total
 
@@ -1213,16 +1295,25 @@ class ValueFunction:
         return None
 
     def set(self,name,state,action,horizon,value):
-        while True:
-            try:
-                V = self.table[horizon]
-                break
-            except IndexError:
+        # todo Pedro changed use in
+        if horizon >= len(self.table):
+            for i in range(0, len(self.table) - horizon + 1):
                 self.table.append({})
-        if not V.has_key(state):
+        V = self.table[horizon]
+        if not state in V:
             V[state] = {}
-        if not V[state].has_key(name):
+        if not name in V[state]:
             V[state][name] = {}
+        # while True:
+        #     try:
+        #         V = self.table[horizon]
+        #         break
+        #     except IndexError:
+        #         self.table.append({})
+        # if not V.has_key(state):
+        #     V[state] = {}
+        # if not V[state].has_key(name):
+        #     V[state][name] = {}
         V[state][name][action] = value
 
     def add(self,name,state,action,horizon,value):
