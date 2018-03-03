@@ -32,6 +32,7 @@ class KeyedVector(dict):
             dict.__init__(self,arg)
             self._string = None
 
+    # todo Pedro added use default equality checker
     # def __eq__(self,other):
     #     delta = 0.
     #     tested = {}

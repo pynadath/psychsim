@@ -9,8 +9,8 @@ from pwl import *
 from probability import Distribution
 from agent import Agent
 
-#todo Pedro added to allow multi-threads (not really faster here)
-from multiprocessing.pool import ThreadPool
+#todo Pedro added to allow multi-processes (memory overhead though)
+from multiprocessing import Queue, Process
 
 
 class World:
@@ -159,14 +159,14 @@ class World:
 
         return outcomes
 
-    def step_agent_from_state(self, name, vector, horizon, others, tiebreak):
+    def step_agent_from_state(self, results, name, vector, horizon, others, tiebreak):
         """
         # todo Pedro added parallelization in agent's decision
         Run a step from state for an agent asynchronously
         """
         model = self.getModel(name, vector)
         decision = self.agents[name].decide(vector, horizon, others, model, tiebreak)
-        return decision
+        results.put((name, decision))
 
     def stepFromState(self,vector,actions=None,horizon=None,tiebreak=None,updateBeliefs=True,keys=None,top=False):
         """
@@ -209,17 +209,27 @@ class World:
                     outcome['actions'][name] = ActionSet([outcome['actions'][name]])
 
             if self.parallel and top:
-                pool = ThreadPool(processes=1)
-                async_results = {}
+                self.count = 0
+                results = Queue()
+                processes = []
                 for name in names:
-                    async_results[name] = pool.apply_async(
-                        self.step_agent_from_state, (name, vector, horizon, others, tiebreak))
+                    p = Process(target=self.step_agent_from_state,
+                                args=(results, name, vector, horizon, others, tiebreak))
+                    processes.append(p)
 
-                for name, async_result in async_results.iteritems():
-                    decision = async_result.get()
+                for x in processes:
+                    x.start()
+
+                for name in names:
+                    result = results.get()
+                    name = result[0]
+                    decision = result[1]
                     outcome['decisions'][name] = decision
                     outcome['actions'][name] = decision['action']
-                #todo join?
+
+                results.close()
+                results.join_thread()
+                [x.join() for x in processes]
             else:
                 for name in names:
                     model = self.getModel(name, vector)
@@ -546,7 +556,7 @@ class World:
             tree.ceil(key,self.variables[key]['hi'])
         # todo Pedro added make it a list to allow caching
         # self.dynamics[key][action] = tree
-        self.dynamics[key][action] = [tree]
+        self.dynamics[key][str(action)] = [tree]
 
 
     def getDynamics(self,key,action,state=None):
@@ -560,10 +570,11 @@ class World:
             # Table of actions by multiple agents
             return self.getDynamics(key,ActionSet(action),state)
         error = None
+        act_str = str(action)
         try:
             # todo Pedro added already is a list
             # return [self.dynamics[key][action]]
-            return self.dynamics[key][action]
+            return self.dynamics[key][act_str]
         except KeyError:
             error = 'key'
         except TypeError:
@@ -574,14 +585,14 @@ class World:
                 try:
                     # todo Pedro added simplify ActionSet and join lists
                     # dynamics.append(self.dynamics[key][ActionSet([atom])])
-                    dynamics = dynamics + self.dynamics[key][ActionSet(atom)]
+                    dynamics = dynamics + self.dynamics[key][str(atom)]
                 except KeyError:
                     if len(atom) > len(atom.special):
                         # Extra parameters
                         try:
                             # todo Pedro added simplify ActionSet
                             # tree = self.dynamics[key][ActionSet([atom.root()])]
-                            tree = self.dynamics[key][ActionSet(atom.root())]
+                            tree = self.dynamics[key][str(atom.root())]
                         except KeyError:
                             tree = None
                         if tree:
@@ -601,9 +612,9 @@ class World:
             # todo Pedro added cache dynamics
             if key not in self.dynamics:
                 self.dynamics[key] = {}
-            if action not in self.dynamics[key]:
-                self.dynamics[key][action] = {}
-            self.dynamics[key][action]=dynamics
+            if act_str not in self.dynamics[key]:
+                self.dynamics[key][act_str] = {}
+            self.dynamics[key][act_str]=dynamics
             return dynamics
 
     def addDependency(self,dependent,independent):
@@ -1749,7 +1760,8 @@ class World:
                                         assert action is True
                                         action = ActionSet(subsubnode)
                                     elif subsubnode.tagName == 'tree':
-                                        self.dynamics[key][action] = KeyedTree(subsubnode)
+                                        # todo Pedro added use action str
+                                        self.dynamics[key][str(action)] = KeyedTree(subsubnode)
                                         action = True
                                     else:
                                         raise NameError,'Unknown dynamics element: %s' % (subsubnode.tagName)

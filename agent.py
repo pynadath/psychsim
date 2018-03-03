@@ -10,7 +10,6 @@ from probability import Distribution
 
 # todo Pedro added
 from itertools import imap
-from multiprocessing import Lock
 
 class Agent:
     """
@@ -55,8 +54,6 @@ class Agent:
             # Default model settings
             self.addModel(True,R={},horizon=2,level=2,rationality=1.,discount=1.,selection='consistent',
                           beliefs=True,parent=None,projector=Distribution.expectation)
-        # todo Pedro added multi-thread sync
-        self.lock = Lock()
 
     """------------------"""
     """Policy methods"""
@@ -261,10 +258,8 @@ class Agent:
             turn[self.name] = action
 
         # todo Pedro added all agents' actions to retrieve from cache
-        self.lock.acquire()
         V = self.getAttribute('V', model).get(
             self.name, vector, self.getActionsStr(turn), horizon, self.getAttribute('ignore', model))
-        self.lock.release()
 
         if V is not None:
             result['V'] = V
@@ -311,10 +306,8 @@ class Agent:
                     result['projection'].append(outcome)
             # Do some caching
             # todo Pedro added all agents' actions to store in cache
-            self.lock.acquire()
             self.getAttribute('V', model).set(
                 self.name, vector, self.getActionsStr(turn), horizon, result['V'])
-            self.lock.release()
 
         return result
 
@@ -1280,30 +1273,37 @@ class ValueFunction:
         if V:
             if ignore:
                 substate = state.filter(ignore)
-                if V.has_key(substate):
-                    value = V[substate][name][action]
+                # todo Pedro use state hash to save memory
+                state_id = hash(substate)
+                if V.has_key(state_id):
+                    value = V[state_id][name][action]
                 else:
                     substate = self.world.nearestVector(substate,V.keys())
-                    value = V[substate][name][action]
+                    state_id = hash(substate)
+                    value = V[state_id][name][action]
                 return value
             else:
                 try:
-                    value = V[state][name][action]
+                    # todo Pedro use state hash to save memory
+                    state_id = hash(state)
+                    value = V[state_id][name][action]
                     return value
                 except KeyError:
                     pass
         return None
 
     def set(self,name,state,action,horizon,value):
-        # todo Pedro changed use in
+        # todo Pedro changed use in for dictionaries
         if horizon >= len(self.table):
             for i in range(0, len(self.table) - horizon + 1):
                 self.table.append({})
         V = self.table[horizon]
-        if not state in V:
-            V[state] = {}
-        if not name in V[state]:
-            V[state][name] = {}
+        # todo Pedro use state hash to save memory (cannot recover state itself...)
+        state_id = hash(state)
+        if not state_id in V:
+            V[state_id] = {}
+        if not name in V[state_id]:
+            V[state_id][name] = {}
         # while True:
         #     try:
         #         V = self.table[horizon]
@@ -1314,7 +1314,7 @@ class ValueFunction:
         #     V[state] = {}
         # if not V[state].has_key(name):
         #     V[state][name] = {}
-        V[state][name][action] = value
+        V[state_id][name][action] = value
 
     def add(self,name,state,action,horizon,value):
         """
