@@ -589,7 +589,8 @@ def makeTree(table):
         tree = KeyedTree()
         branch = {}
         for subtable,prob in table['distribution']:
-            branch[makeTree(subtable)] = prob
+            subtree = makeTree(subtable)
+            branch[subtree] = prob + branch.get(subtree,0.)
         tree.makeProbabilistic(TreeDistribution(branch))
         return tree
     else:
