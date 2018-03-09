@@ -80,6 +80,7 @@ class Agent:
         """
         if model is None:
             model = self.world.getModel(self.name,vector)
+        assert not model is True
         if isinstance(model,Distribution):
             result = {}
             tree = None
@@ -650,7 +651,7 @@ class Agent:
                 (name,self.name))
         if name in self.world.symbols:
             raise NameError('Model %s conflicts with existing symbol' % (name))
-        model = {'name': name,'index': 0,'parent': True,'SE': {},
+        model = {'name': name,'index': 0,'parent': None,'SE': {},
                  'V': ValueFunction(),'policy': {},'ignore': []}
         model.update(kwargs)
         model['index'] = len(self.world.symbolList)
