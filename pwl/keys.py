@@ -86,6 +86,9 @@ def turn2name(key):
 def actionKey(feature):    
     return '__action__%s__' % (feature)
 
+def isActionKey(key):
+    return isStateKey(key) and state2feature(key) == ACTION
+
 def modelKey(name):
     return stateKey(name,'_model')
 
