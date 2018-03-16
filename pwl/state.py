@@ -93,6 +93,7 @@ class VectorDistributionSet:
             # Go through each vector and remove the key one by one
             for vector in dist.domain():
                 prob = dist[vector]
+                del dist[vector]
                 del vector[key]
                 dist.addProb(vector,prob)
             
