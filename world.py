@@ -993,7 +993,8 @@ class World:
             if key in self.variables:
                 model = self.getFeature(key,vector)
             else:
-                model = True
+                assert len(agent.models) == 1,'Ambiguous model of %s' % (modelee)
+                model = agent.models.keys()[0]
         else:
             try:
                 model = agent.index2model(vector[modelKey(modelee)])
@@ -1004,7 +1005,7 @@ class World:
     def getMentalModel(self,modelee,vector):
         raise DeprecationWarning('Substitute getModel instead (sorry for pedanticism, but a "model" may be real, not "mental")')
 
-    def setModel(self,modelee,distribution,state=None,model=True):
+    def setModel(self,modelee,distribution,state=None,model=None):
         # Make sure distribution is probability distribution over floats
         if not isinstance(distribution,dict):
             distribution = {distribution: 1.}
