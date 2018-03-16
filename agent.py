@@ -80,6 +80,7 @@ class Agent:
         """
         if model is None:
             model = self.world.getModel(self.name,vector)
+        print('%s: %s' % (self.name,model))
         assert not model is True
         if isinstance(model,Distribution):
             result = {}
@@ -628,6 +629,19 @@ class Agent:
     """Mental model methods"""
     """------------------"""
 
+    def ignore(self,agent,model=None):
+        try:
+            beliefs = self.models[model]['beliefs']
+        except KeyError:
+            beliefs = True
+        if beliefs is True:
+            beliefs = self.resetBelief(model)
+        if isinstance(agent,Agent):
+            agent = agent.name
+        for key in [keys.turnKey(agent),keys.modelKey(agent)]:
+            if key in beliefs.keyMap:
+                del beliefs[key]
+
     def addModel(self,name,**kwargs):
         """
         Adds a new possible model for this agent (to be used as either true model or else as mental model another agent has of it). Possible arguments are:
@@ -765,21 +779,25 @@ class Agent:
     """Belief update methods"""
     """---------------------"""
 
-    def setRecursiveLevel(self,level,model=True):
+    def resetBelief(self,model=None):
+        beliefs = copy.deepcopy(self.world.state)
+        self.models[model]['beliefs'] = beliefs
+        return beliefs
+        
+    def setRecursiveLevel(self,level,model=None):
         if model is None:
             for model in self.models.values():
                 model['level'] = level
         else:
             self.models[model]['level'] = level
 
-    def setBelief(self,key,distribution,model=True):
+    def setBelief(self,key,distribution,model=None):
         try:
             beliefs = self.models[model]['beliefs']
         except KeyError:
             beliefs = True
         if beliefs is True:
-            beliefs = copy.deepcopy(self.world.state) #VectorDistributionSet()
-            self.models[model]['beliefs'] = beliefs
+            self.resetBelief(model)
         self.world.setFeature(key,distribution,beliefs)
 
     def getBelief(self,vector=None,model=None):
