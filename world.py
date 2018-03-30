@@ -12,7 +12,6 @@ from agent import Agent
 #todo Pedro added to allow multi-processes (memory overhead though)
 from multiprocessing import Queue, Process
 
-
 class World:
     """
     @ivar agents: table of agents in this world, indexed by name
@@ -364,9 +363,17 @@ class World:
             if isinstance(partial,KeyedVector):
                 if partial.has_key(key):
                     #new.join(key,Distribution({partial[key]: 1.}))
-                    news[key] = Distribution({partial[key]: 1.})
+                    # todo Pedro set correct feature value according to its type
+                    value = self.float2value(key, partial[key])
+                    # value = partial[key]
+                    news[key] = Distribution({value: 1.})
             else:
                 #new.join(key,partial.marginal(key))
+                # todo Pedro set correct feature value according to its type
+                marginal = partial.marginal(key)
+                for value, prob in marginal:
+                    del marginal[value]
+                    marginal[self.float2value(key, value)] = prob
                 news[key] = partial.marginal(key)
         new = VectorDistribution({old: 1.})
         new.joinKeyValues(news)
@@ -859,7 +866,10 @@ class World:
             index = int(float(flt)+0.1)
             return self.symbolList[index]
         elif self.variables[key]['domain'] is int:
-            return int(flt)
+            # todo Pedro changed use ceil to round ints
+            from math import ceil
+            return ceil(flt)
+            # return int(flt)
         else:
             return flt
 
