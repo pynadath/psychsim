@@ -96,7 +96,37 @@ class VectorDistributionSet:
                 del dist[vector]
                 del vector[key]
                 dist.addProb(vector,prob)
-            
+
+    def deleteKeys(self,keys):
+        """
+        Removes multiple columns at once
+        """
+        distributions = {}
+        for key in keys:
+            substate = self.keyMap[key]
+            del self.keyMap[key]
+            if substate in distributions:
+                old = distributions[substate]
+                distributions[substate] = []
+                for vector,prob in old:
+                    del vector[key]
+                    distributions[substate].append((vector,prob))
+            else:
+                dist = self.distributions[substate]
+                distributions[substate] = []
+                for vector in dist.domain():
+                    prob = dist[vector]
+                    del vector[key]
+                    distributions[substate].append((vector,prob))
+        for substate,dist in distributions.items():
+            if len(dist[0]) == 1:
+                assert dist[0].keys()[0] == keys.CONSTANT
+                del self.distributions[substate]
+            else:
+                self.distributions[substate].clear()
+                for vector,prob in distributions[substate]:
+                    self.distributions[substate].addProb(vector,prob)
+        
     def split(self,key):
         """
         @return: partitions this distribution into subsets corresponding to possible values for the given key
