@@ -590,6 +590,10 @@ class Agent:
                     tree = {'if': equalRow(modelK,submodel),
                              True: R,False: tree}
             tree = makeTree(tree).desymbolize(self.world.symbols)
+            print(self.name)
+            print(sorted(list(tree.getKeysIn())))
+            print(sorted(list(tree.getKeysOut())))
+            print(sorted(vector.keys()))
             total = tree*vector
         else:
             R = self.getAttribute('R',model)
@@ -629,18 +633,19 @@ class Agent:
     """Mental model methods"""
     """------------------"""
 
-    def ignore(self,agent,model=None):
+    def ignore(self,agents,model=None):
         try:
             beliefs = self.models[model]['beliefs']
         except KeyError:
             beliefs = True
         if beliefs is True:
             beliefs = self.resetBelief(model)
-        if isinstance(agent,Agent):
-            agent = agent.name
-        for key in [keys.turnKey(agent),keys.modelKey(agent)]:
-            if key in beliefs.keyMap:
-                del beliefs[key]
+        if isinstance(agents,str):
+            del beliefs[keys.turnKey(agents)]
+            del beliefs[keys.modelKey(agents)]
+        else:
+            beliefs.deleteKeys([keys.turnKey(a) for a in agents]+
+                               [keys.modelKey(a) for a in agents])
 
     def addModel(self,name,**kwargs):
         """
