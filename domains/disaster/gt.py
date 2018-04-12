@@ -1,4 +1,10 @@
+from argparse import ArgumentParser
 import csv
+import logging
+import os
+import os.path
+import random
+import sys
 
 import psychsim.probability
 from psychsim.keys import *
@@ -9,163 +15,251 @@ from psychsim.world import *
 from psychsim.agent import Agent
 from psychsim.ui.diagram import Diagram
 
-world = World()
-world.diagram = Diagram()
+class Person(Agent):
+    pass
 
-# Main agent
-agent0 = world.addAgent('Resident')
-world.diagram.setColor(agent0.name,'lightsalmon')
-agent1 = world.addAgent('friend')
-world.diagram.setColor(agent1.name,'lightyellow')
+def world2cdf(world,dirname):
+    os.mkdir(dirname)
+    os.chdir(dirname)
+    os.mkdir('SimulationDefinition')
+    os.chdir('SimulationDefinition')
+    
+    with open('ActorVariableDefTable.txt','w') as csvfile:
+        fields = ['Name','LongName','Values','Observable','Type','Notes']
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',
+                                extrasaction='ignore')
+#        writer.writeheader()
+        agent = world.agents['Person00']
+        for name,variable in world.variables.items():
+            if keys.isStateKey(name) and keys.state2agent(name) == 'Person00':
+                if not keys.isTurnKey(name) and not keys.isActionKey(name):
+                    feature = keys.state2feature(name)
+                    record = {'Name': feature,
+                              'Notes': variable['description'],
+                              'Observable': 1,
+                              }
+                    if variable['domain'] is bool:
+                        record['Values'] = 'True,False'
+                    elif variable['domain'] is list:
+                        record['Values'] = ','.join(variable['elements'])
+                    elif variable['domain'] is float:
+                        record['Values'] = '%4.2f-%4.2f' % (variable['lo'],variable['hi'])
+                    else:
+                        raise TypeError,'Unable to write values for variables of type %s' \
+                            % (variable['domain'])
+                    if name in world.dynamics:
+                        record['Type'] = 'dynamic'
+                    else:
+                        record['Type'] = 'fixed'
+                    writer.writerow(record)
+        for tree,weight in agent.models['%s0' % (agent.name)]['R'].items():
+            assert tree.isLeaf(),'Unable to write nonlinear reward components to CDF'
+            vector = tree.children[None]
+            assert len(vector) == 1,'Unable to write combined reward componetns to CDF'
+            feature = keys.state2feature(vector.keys()[0])
+            record = {'Name': 'R(%s)' % (feature),
+                      'LongName': 'Reward from %s' % (feature),
+                      'Values': '-1.0-1.0',
+                      'Observable': 0,
+                      'Type': 'fixed',
+                      }
+            writer.writerow(record)
+    with open('GroupVariableDefTable.txt','w') as csvfile:
+        pass
+    with open('SystemVariableDefTable.txt','w') as csvfile:
+        pass
+    os.mkdir('Instances')
+    os.chdir('Instances')
+    for instance in range(1):
+        os.mkdir('Instance%d' % (instance+1))
+        os.chdir('Instance%d' % (instance+1))
+        with open('InstanceParameterTable.txt','w') as csvfile:
+            pass
+        os.mkdir('Runs')
+        os.chdir('Runs')
+        for run in range(1):
+            os.mkdir('run-%d' % (run))
+            os.chdir('run-%d' % (run))
+            with open('RunDataTable.txt','w') as csvfile:
+                fields = ['Timestep','VariableName','EntityIdx','Name','Value']
+                writer = csv.DictWriter(csvfile,fields,delimiter='\t',
+                                        extrasaction='ignore')
+                for name,variable in world.variables.items():
+                    if keys.isStateKey(name):
+                        if not keys.isTurnKey(name) and not keys.isActionKey(name):
+                            value = world.getFeature(name)
+                            assert len(value) == 1,'Unable to write uncertain values to CDF'
+                            value = value.domain()[0]
+                            record = {'Timestep': 0,
+                                      'VariableName': name,
+                                      'EntityIdx': keys.state2agent(name),
+                                      'Name': keys.state2feature(name),
+                                      'Value': value}
+                            writer.writerow(record)
+            os.chdir('..')
+        os.chdir('..')
+        os.chdir('..')
+        
+    
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.ERROR)
+    parser = ArgumentParser()
+    parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
+    args = vars(parser.parse_args())
+    # Extract logging level from command-line argument
+    level = getattr(logging, args['debug'].upper(), None)
+    if not isinstance(level, int):
+        raise ValueError('Invalid debug level: %s' % args['debug'])
+    logging.getLogger().setLevel(level)
 
-# States
-health = world.defineState(agent0.name,'health',bool)
-world.setFeature(health,True)
+    world = World()
+    world.diagram = Diagram()
+    neighborhoods = ['sw','nw','ne','se']
 
-pet = world.defineState(agent0.name,'pet',bool)
-rich = world.defineState(agent0.name,'wealth',float)
-kids = world.defineState(agent0.name,'kids',bool)
+    
+    # Shelter
+    shelter = world.addAgent('shelter')
+    world.diagram.setColor(shelter.name,'cornflowerblue')
+    allowPets = world.defineState(shelter.name,'allowPets',bool)
+    world.setFeature(allowPets,False)
 
-location = world.defineState(agent0.name,'neighborhood',list,['sw','nw','ne','se','shelter','gone'])
+    population = []
+    for i in range(100):
+        agent = world.addAgent('Person%02d' % (i))
+        world.setModel(agent.name,agent.models.keys()[0])
+        
+        # States
+        health = world.defineState(agent.name,'health',bool)
+        world.setFeature(health,True)
 
-# Shelter
-shelter = world.addAgent('shelter')
-world.diagram.setColor(shelter.name,'cornflowerblue')
-allowPets = world.defineState(shelter.name,'allowPets',bool)
-world.setFeature(allowPets,False)
+        pet = world.defineState(agent.name,'pet',bool)
+        world.setFeature(pet,random.random()>0.75)
+        rich = world.defineState(agent.name,'wealth',float)
+        world.setFeature(rich,random.random())
+        kids = world.defineState(agent.name,'kids',bool)
+        world.setFeature(kids,random.random()>0.75)
 
-risk = world.defineState(agent0.name,'risk',bool)
-friendRisk = world.defineState(agent1.name,'risk',bool)
-tree = makeTree(setToFeatureMatrix(risk,friendRisk))
-world.setDynamics(risk,True,tree)
-friendLeave = agent1.addAction({'verb': 'leave'})
-world.setDynamics(risk,friendLeave,makeTree(noChangeMatrix(risk)))
+        location = world.defineState(agent.name,'neighborhood',list,neighborhoods+['shelter','gone'])
+        world.setFeature(location,random.choice(neighborhoods))
 
-# Actions and Dynamics
+        attachmentStyles = ['secure','insecure']
+        attachment = world.defineState(agent.name,'attachment',list,attachmentStyles)
+        world.setFeature(attachment,random.choice(attachmentStyles))
 
-# A: Go to a shelter
-actShelter = agent0.addAction({'verb':'shelter'})
-# Effect on location
-tree = makeTree(setToConstantMatrix(location,'shelter'))
-world.setDynamics(location,actShelter,tree)
-# Effect on my health
-tree = makeTree(noChangeMatrix(health))
-world.setDynamics(health,actShelter,tree)
-# Effect on kids' health
-tree = makeTree(noChangeMatrix(kids))
-world.setDynamics(kids,actShelter,tree)
-# Effect on pets' health
-tree = makeTree({'if': trueRow(allowPets),
-                 True: setTrueMatrix(pet),
-                 False: setFalseMatrix(pet)})
-world.setDynamics(pet,actShelter,tree)
-# Effect on wealth
-tree = makeTree({'if': thresholdRow(rich,0.5),
-                 True: noChangeMatrix(rich),
-                 False: scaleMatrix(rich,0.5)})
-world.setDynamics(rich,actShelter,tree)
-# Effect on risk
-tree = makeTree(setFalseMatrix(risk))
-world.setDynamics(risk,actShelter,tree)
+        grievance = world.defineState(agent.name,'grievance',bool)
+        world.setFeature(grievance,random.random()>0.85)
 
-# # A: Leave city
-# actEvacuate = agent0.addAction({'verb': 'leaveCity'})
-# # Effect on location
-# tree = makeTree(setToConstantMatrix(location,'gone'))
-# world.setDynamics(location,actEvacuate,tree)
-# # Effect on my health
-# tree = makeTree(noChangeMatrix(health))
-# world.setDynamics(health,actEvacuate,tree)
-# # Effect on kids' health
-# tree = makeTree(noChangeMatrix(kids))
-# world.setDynamics(kids,actEvacuate,tree)
-# # Effect on pets' health (no hotels take pets)
-# tree = makeTree(setFalseMatrix(pet))
-# world.setDynamics(pet,actEvacuate,tree)
+        risk = world.defineState(agent.name,'risk',bool)
+        world.setFeature(risk,random.random()>0.75)
+#        friendRisk = world.defineState(agent1.name,'risk',bool)
+#        tree = makeTree(setToFeatureMatrix(risk,friendRisk))
+#        world.setDynamics(risk,True,tree)
+#        friendLeave = agent1.addAction({'verb': 'leave'})
+#        world.setDynamics(risk,friendLeave,makeTree(noChangeMatrix(risk)))
 
-# A: Shelter in place
-actStay = agent0.addAction({'verb': 'stay'})
-# Effect on location
-tree = makeTree(noChangeMatrix(location))
-world.setDynamics(location,actStay,tree)
-# Effect on my health
-tree = makeTree({'if': trueRow(risk),
-                  True: {'if': trueRow(rich),
-                         True: {'distribution': [(setTrueMatrix(health),0.75),
-                                                 (setFalseMatrix(health),0.25)]},
-                         False: {'distribution': [(setTrueMatrix(health),0.25),
-                                                  (setFalseMatrix(health),0.75)]}},
-                  False: setTrueMatrix(health)})
-world.setDynamics(health,actStay,tree)
-# Effect on kids' health
-tree = makeTree({'if': trueRow(kids),
-                 True: {'if': trueRow(risk),
-                        True: {'if': trueRow(rich),
-                               True: {'distribution': [(setTrueMatrix(kids),0.75),
-                                                       (setFalseMatrix(kids),0.25)]},
-                               False: {'distribution': [(setTrueMatrix(kids),0.25),
-                                                        (setFalseMatrix(kids),0.75)]}},
-                        False: setTrueMatrix(kids)},
-                 False: setFalseMatrix(kids)})
-world.setDynamics(kids,actStay,tree)
-# Effect on pets' health
-tree = makeTree({'if': trueRow(pet),
-                 True: {'if': trueRow(risk),
-                        True: {'if': trueRow(rich),
-                               True: {'distribution': [(setTrueMatrix(pet),0.75),
-                                                       (setFalseMatrix(pet),0.25)]},
-                               False: {'distribution': [(setTrueMatrix(pet),0.25),
-                                                        (setFalseMatrix(pet),0.75)]}},
-                        False: setTrueMatrix(pet)},
-                 False: setFalseMatrix(pet)})
-world.setDynamics(pet,actStay,tree)
+        # Actions and Dynamics
 
-world.setOrder([agent0.name])
+        # A: Go to a shelter
+        actShelter = agent.addAction({'verb':'shelter'})
+        # Effect on location
+        tree = makeTree(setToConstantMatrix(location,'shelter'))
+        world.setDynamics(location,actShelter,tree)
+        # Effect on my health
+        tree = makeTree(noChangeMatrix(health))
+        world.setDynamics(health,actShelter,tree)
+        # Effect on kids' health
+        tree = makeTree(noChangeMatrix(kids))
+        world.setDynamics(kids,actShelter,tree)
+        # Effect on pets' health
+        tree = makeTree({'if': trueRow(allowPets),
+                         True: setTrueMatrix(pet),
+                         False: setFalseMatrix(pet)})
+        world.setDynamics(pet,actShelter,tree)
+        # Effect on wealth
+        tree = makeTree({'if': thresholdRow(rich,0.5),
+                         True: noChangeMatrix(rich),
+                         False: scaleMatrix(rich,0.5)})
+        world.setDynamics(rich,actShelter,tree)
+        # Effect on risk
+        tree = makeTree(setFalseMatrix(risk))
+        world.setDynamics(risk,actShelter,tree)
 
-# Reward
-agent0.setReward(maximizeFeature(health),1.)
-agent0.setReward(maximizeFeature(pet),1.)
-agent0.setReward(maximizeFeature(rich),1.)
-agent0.setReward(maximizeFeature(kids),1.)
-# Decision-making parameters
-agent0.setAttribute('horizon',1)
-#agent0.setAttribute('selection','distribution')
-#agent0.setAttribute('rationality',1.)
+        # A: Leave city
+        actEvacuate = agent.addAction({'verb': 'leaveCity'})
+        # Effect on location
+        tree = makeTree(setToConstantMatrix(location,'gone'))
+        world.setDynamics(location,actEvacuate,tree)
+        # Effect on my health
+        tree = makeTree(noChangeMatrix(health))
+        world.setDynamics(health,actEvacuate,tree)
+        # Effect on kids' health
+        tree = makeTree(noChangeMatrix(kids))
+        world.setDynamics(kids,actEvacuate,tree)
+        # Effect on pets' health (no hotels take pets)
+        tree = makeTree(setFalseMatrix(pet))
+        world.setDynamics(pet,actEvacuate,tree)
 
-data = []
-shelter = 0
-for valueRich in [0.25,0.75]:
-    world.setFeature(rich,valueRich)
-    for valuePet in [True,False]:
-        world.setFeature(pet,valuePet)
-        for valueKid in [True,False]:
-            world.setFeature(kids,valueKid)
-            for valueLoc in ['sw','nw','ne','se']:
-                world.setFeature(location,valueLoc)
-                for valueFriend in [False]:
-                    world.setFeature(friendRisk,valueFriend)
-                    for valueRisk in [True,False]:
-                        world.setFeature(risk,valueRisk)
-                        entry = {'Rich': int(valueRich*100),'Pet': valuePet,'Children': valueKid,
-                                 'Neighborhood': valueLoc,'Risk Perception': valueRisk}
+        # A: Shelter in place
+        actStay = agent.addAction({'verb': 'stay'})
+        # Effect on location
+        tree = makeTree(noChangeMatrix(location))
+        world.setDynamics(location,actStay,tree)
+        # Effect on my health
+        tree = makeTree({'if': trueRow(risk),
+                          True: {'if': trueRow(rich),
+                                 True: {'distribution': [(setTrueMatrix(health),0.75),
+                                                         (setFalseMatrix(health),0.25)]},
+                                 False: {'distribution': [(setTrueMatrix(health),0.25),
+                                                          (setFalseMatrix(health),0.75)]}},
+                          False: setTrueMatrix(health)})
+        world.setDynamics(health,actStay,tree)
+        # Effect on kids' health
+        tree = makeTree({'if': trueRow(kids),
+                         True: {'if': trueRow(risk),
+                                True: {'if': trueRow(rich),
+                                       True: {'distribution': [(setTrueMatrix(kids),0.75),
+                                                               (setFalseMatrix(kids),0.25)]},
+                                       False: {'distribution': [(setTrueMatrix(kids),0.25),
+                                                                (setFalseMatrix(kids),0.75)]}},
+                                False: setTrueMatrix(kids)},
+                         False: setFalseMatrix(kids)})
+        world.setDynamics(kids,actStay,tree)
+        # Effect on pets' health
+        tree = makeTree({'if': trueRow(pet),
+                         True: {'if': trueRow(risk),
+                                True: {'if': trueRow(rich),
+                                       True: {'distribution': [(setTrueMatrix(pet),0.75),
+                                                               (setFalseMatrix(pet),0.25)]},
+                                       False: {'distribution': [(setTrueMatrix(pet),0.25),
+                                                                (setFalseMatrix(pet),0.75)]}},
+                                False: setTrueMatrix(pet)},
+                         False: setFalseMatrix(pet)})
+        world.setDynamics(pet,actStay,tree)
 
-                        nop = agent0.addAction({'verb': 'nop'})
-                        result = world.step({agent0.name: nop},select=True)
-                        agent0.actions.remove(nop)
-                        result = world.step(select=False)
-                        decision = result[0]['actions'][agent0.name] == actShelter
-                        entry['Go to Shelter'] = decision
-                        if decision:
-                            shelter += 1
-                        data.append(entry)
-fields = ['Children','Neighborhood','Pet','Rich','Risk Perception','Go to Shelter']
-with open('output0.csv','w') as csvfile:
-    writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
-    writer.writeheader()
-    for record in data:
-        writer.writerow(record)
+        # Reward
+        agent.setReward(maximizeFeature(health),1.)
+        agent.setReward(maximizeFeature(pet),1.)
+        agent.setReward(maximizeFeature(rich),1.)
+        agent.setReward(maximizeFeature(kids),1.)
+        # Decision-making parameters
+        agent.setAttribute('horizon',1)
+        #agent.setAttribute('selection','distribution')
+        #agent.setAttribute('rationality',1.)
 
-                          
-print float(shelter)/float(len(data))
+        population.append(agent)
 
-world.save('scenario.psy')
+    world.setOrder([{agent.name for agent in population}])
+    for agent in population:
+        for other in population:
+            if other.name != agent.name:
+                agent.ignore(other.name,'%s0' % (agent.name))
+
+    world2cdf(world,'/tmp/testing')
+#    data = []
+    result = world.step(select=False)
+    decision = result[0]['actions']
+    print decision
+
+#    print float(shelter)/float(len(data))
+
+#    world.save('scenario.psy')
