@@ -868,7 +868,7 @@ class World:
         elif self.variables[key]['domain'] is int:
             # todo Pedro changed use ceil to round ints
             from math import ceil
-            return ceil(flt)
+            return int(ceil(flt))
             # return int(flt)
         else:
             return flt
