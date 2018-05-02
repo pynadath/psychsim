@@ -1295,7 +1295,7 @@ class ValueFunction:
     def set(self,name,state,action,horizon,value):
         # todo Pedro changed use in for dictionaries
         if horizon >= len(self.table):
-            for i in range(0, len(self.table) - horizon + 1):
+            for i in range(0, horizon - len(self.table) + 1):
                 self.table.append({})
         V = self.table[horizon]
         # todo Pedro use state hash to save memory (cannot recover state itself...)
