@@ -802,7 +802,7 @@ class Agent:
         except KeyError:
             beliefs = True
         if beliefs is True:
-            self.resetBelief(model)
+            beliefs = self.resetBelief(model)
         self.world.setFeature(key,distribution,beliefs)
 
     def getBelief(self,vector=None,model=None):
