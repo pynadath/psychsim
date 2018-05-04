@@ -912,7 +912,7 @@ class Agent:
         else:
             newBeliefs.normalize()
             index = self.belief2model(model,newBeliefs)['index']
-#            self.models[model]['SE'][oldBelief][newReal][omega] = index
+            self.models[model]['SE'][oldBelief][newReal][omega] = index
             return index
 
     def printBeliefs(self,model=True):
