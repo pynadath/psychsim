@@ -548,7 +548,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
     # Find the best action
     values = []
     model = world.getModel(robot.name).first()
-    result = robot.decide(oldVector,horizon=2,model=model)
+    result = robot.decide(oldVector,horizon=1,model=model)
     destination = result['action']['object']
     WriteLogData('%s %s' % (LOCATION_TAG,destination),username,level,root=root)
     index = symbol2index(destination,level)
@@ -685,27 +685,19 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     for danger in assessment.domain():
         WriteLogData('Posterior belief in %s: %d%%' % (danger,assessment[danger]*100.),
                      username,level,root=root)
-
     # Which recommendation is better?
-    for verb in ['recommend protected','recommend unprotected']:
-        value[verb] = 0.
-        action = Action({'subject': robot.name,
-                         'verb': verb,
-                         'object': robotWaypoint['symbol']})
-        for newVector in subBeliefs.domain():
-            result = world.stepFromState(newVector,action)
-            assert len(result['new']) == 1
-            outcome = result['new'].domain()[0]
-            reward = subBeliefs[newVector]*robot.reward(outcome)
-            value[verb] += reward
-        WriteLogData('%s of %s: %4.2f' % (VALUE_TAG,verb,value[verb]),username,level,root=root)
+    decision = robot.decide(world.state,model=model)
+    for action in decision['V']:
+        WriteLogData('%s of %s: %4.2f' % (VALUE_TAG,action['verb'],
+                                          decision['V'][action]['__EV__']),
+                     username,level,root=root)
     # Package up the separate components of my current model
     POMDP = {}
     # Add Omega_t, my latest observation
     for key,observation in omega.items():
         POMDP['omega_%s' % (key)] = observation
     # Add A_t, my chosen action
-    if value['recommend unprotected'] > value['recommend protected']:
+    if decision['action']['verb'] == 'recommend unprotected':
         POMDP['A'] = 'recommend unprotected'
         safety = True
         world.setState(robotWaypoint['symbol'],'recommendation','unprotected')
@@ -714,7 +706,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         if assessment['none'] > 0.5:
             print(assessment)
             print(value)
-            for a,V in result.values()[0]['V'].items():
+            for a,V in decision['V'].items():
                 print(a)
             for action,bel in subBeliefs.items():
                 for key in ['human\'s alive','time']:
@@ -726,12 +718,13 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         world.setState(robotWaypoint['symbol'],'recommendation','protected')
         WriteLogData('%s: yes' % (RECOMMEND_TAG),username,level,root=root)
     # Add B_t, my current beliefs
-    for key in subBeliefs[POMDP['A']].keys():
+#    world.printState(beliefs[model])
+    for key in beliefs[model].keys():
         if key != keys.CONSTANT:
             entity = state2agent(key)
             if entity != 'robot' and entity != robotWaypoint['symbol']:
                 continue
-            belief = subBeliefs[POMDP['A']].marginal(key)
+            belief = beliefs[model].marginal(key)
             feature = state2feature(key)
             best = belief.max()
             POMDP['B_%s' % (feature)] = world.float2value(key,best)
