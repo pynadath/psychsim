@@ -80,7 +80,6 @@ class Agent:
         """
         if model is None:
             model = self.world.getModel(self.name,vector)
-        print('%s: %s' % (self.name,model))
         assert not model is True
         if isinstance(model,Distribution):
             result = {}
@@ -590,10 +589,6 @@ class Agent:
                     tree = {'if': equalRow(modelK,submodel),
                              True: R,False: tree}
             tree = makeTree(tree).desymbolize(self.world.symbols)
-            print(self.name)
-            print(sorted(list(tree.getKeysIn())))
-            print(sorted(list(tree.getKeysOut())))
-            print(sorted(vector.keys()))
             total = tree*vector
         else:
             R = self.getAttribute('R',model)
