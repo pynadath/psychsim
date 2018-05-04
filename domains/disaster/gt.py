@@ -15,6 +15,23 @@ from psychsim.world import *
 from psychsim.agent import Agent
 from psychsim.ui.diagram import Diagram
 
+class Group(Agent):
+    def __init__(self,name,world):
+        Agent.__init__(self,'Group%s' % (name),world)
+        world.addAgent(self)
+        world.setModel(self.name,self.models.keys()[0])
+
+    def potentialMembers(self,agents,weights=None):
+        assert len(self.models) == 1,'Define potential members before adding multiple models of group %s' % (self.name)
+        model = self.models.keys()[0]
+        for agent in agents:
+            self.world.defineRelation(agent,self.name,'memberOf',bool)
+        # Define reward function for this group as weighted sum of members
+        if weights is None:
+            weights = {a: 1. for a in agents}
+        for name,weight in weights.items():
+            self.setReward(name,weight,model)
+    
 class Person(Agent):
     def __init__(self,name,world):
         Agent.__init__(self,'Person%s' % (name),world)
