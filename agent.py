@@ -916,7 +916,9 @@ class Agent:
             return index
 
     def printBeliefs(self,model=True):
-        raise DeprecationWarning,'Use the "beliefs=True" argument to printState instead'
+        # raise DeprecationWarning,'Use the "beliefs=True" argument to printState instead'
+        # todo Pedro added: just print beliefs associated with the model
+        print self.models[model]['beliefs']
 
     """--------------------"""
     """Observation  methods"""
@@ -1293,12 +1295,12 @@ class ValueFunction:
         return None
 
     def set(self,name,state,action,horizon,value):
-        # todo Pedro changed use in for dictionaries
+        # todo Pedro changed dictionary initialization
         if horizon >= len(self.table):
             for i in range(0, horizon - len(self.table) + 1):
                 self.table.append({})
         V = self.table[horizon]
-        # todo Pedro use state hash to save memory (cannot recover state itself...)
+        # todo Pedro use state hash to save memory (caveat: cannot recover state itself & collisions can occur...)
         state_id = hash(state)
         if not state_id in V:
             V[state_id] = {}
