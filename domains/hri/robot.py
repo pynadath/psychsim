@@ -93,8 +93,8 @@ CODES = {'ability': {'s': 'badSensor','g': 'good','m': 'badModel'},
          }
 
 def createWorld(username='anonymous',level=0,ability='good',explanation='none',
-                embodiment='robot',acknowledgment='no',sequence=False,
-                root='.',ext='xml'):
+                embodiment='robot',acknowledgment='no',learning='no',
+                sequence=False,root='.',ext='xml'):
     """
     Creates the initial PsychSim scenario and saves it
     @param username: name of user ID to use in filenames
@@ -116,6 +116,9 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     @param acknowledgment: the robot's behavior regarding the acknowledgment of errors
       - no: The robot does not acknowledge its errors
       - yes: The robot acknowledges its errors
+    @param learning: the robot performs model-based RL
+      - no: The robot does not perform RL
+      - yes: The robot performs RL
     @type acknowledgment: str
     @param root: the root directory to use for files (default is current working directory)
     @param ext: the file extension for the PsychSim scenario file
@@ -126,8 +129,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 
     print("**************************createWorld***********************")
     print('Username:\t%s\nLevel:\t\t%s' % (username,level+1))
-    print('Ability\t\t%s\nExplanation:\t%s\nEmbodiment:\t%s\nAcknowledge:\t%s' % \
-          (ability,explanation,embodiment,acknowledgment))
+    print('Ability\t\t%s\nExplanation:\t%s\nEmbodiment:\t%s\nAcknowledge:\t%s\nLearning:\t%s' % (ability,explanation,embodiment,acknowledgment,learning))
 
     # Pre-compute symbols for this level's waypoints
     for point in WAYPOINTS[level]:
@@ -206,6 +208,9 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     world.defineState(robot.name,'acknowledgment',list,['no','yes'])
     robot.setState('acknowledgment',acknowledgment)
 
+    world.defineState(robot.name,'learning',list,['no','yes'])
+    robot.setState('learning',learning)
+    
     world.defineState(robot.name,'ability',list,['badSensor','badModel','good'])
     if ability is True:
         # Backward compatibility with boolean ability
@@ -499,7 +504,8 @@ def maxLevels():
     """
     return len(WAYPOINTS)
 
-def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=None):
+def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=None,
+                autonomous=False):
     """
     @param parameters: ignored if request is provided
     """ 
@@ -545,15 +551,21 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
         world.setState(robot.name,'command','none')
     WriteLogData('Received command: %s' % (command),username,level,root=root)
 
-    # Find the best action
-    values = []
-    model = world.getModel(robot.name).first()
-    result = robot.decide(oldVector,horizon=1,model=model)
-    destination = result['action']['object']
-    WriteLogData('%s %s' % (LOCATION_TAG,destination),username,level,root=root)
-    index = symbol2index(destination,level)
-    destination = WAYPOINTS[level][index]
-
+    if autonomous:
+        # Find the best action
+        values = []
+        model = world.getModel(robot.name).first()
+        result = robot.decide(oldVector,horizon=1,model=model)
+        destination = result['action']['object']
+        WriteLogData('%s %s' % (LOCATION_TAG,destination),username,level,root=root)
+        index = symbol2index(destination,level)
+        destination = WAYPOINTS[level][index]
+    elif command is None:
+        # Move to next building in sequence
+        index = robotIndex + 1
+    else:
+        # Commanded to move to specific building
+        index = int(command)
     return index
 
 def GetAcknowledgment(user,recommendation,location,danger,username,level,parameters,
@@ -912,20 +924,39 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-s','--seed',action='store_true',
-                      help='reuse seed for random number generator [default: %(default)s]')
+                        help='reuse seed for random numbers [default: %(default)s]')
+    parser.add_argument('--all',action='store_true',
+                        help='run all conditions [default: %(default)s]')
+    parser.add_argument('-k','--acknowledgment',action='store_const',
+                        const='yes',default='no',
+                        help='robot acknowledges mistakes [default: %(default)s]')
+    parser.add_argument('-l','--learning',action='store_const',
+                        const='yes',default='no',
+                        help='robot learns from mistakes [default: %(default)s]')
+    parser.add_argument('-a','--ability',choices=['badSensor','good','badModel'],
+                        default='badSensor',
+                        help='robot ability [default: %(default)s]')
+    parser.add_argument('-b','--embodiment',choices=['robot','dog'],default='robot',
+                      help='robot embodiment [default: %(default)s]')
+    parser.add_argument('-x','--explanation',choices=['none','ability','confidence'],
+                        default='confidence',
+                        help='robot explanation [default: %(default)s]')
     args = vars(parser.parse_args())
 
     username = 'autotest'
-    sequence = ['scrn','snrn','snry','scry','scdn','sndn','sndy','scdy']
-    if args['seed']:
-        random.seed(0)
-    random.shuffle(sequence)
-    start = time.time()
-    for level in range(len(sequence)):
-        config = sequence[level]
-        ability = CODES['ability'][config[0]]
-        explanation = CODES['explanation'][config[1]]
-        embodiment = CODES['embodiment'][config[2]]
-        acknowledgment = CODES['acknowledgment'][config[3]]
-        runMission(username,level,ability,explanation,embodiment,acknowledgment)
-    print(time.time()-start)
+    if args['all']:
+        sequence = ['scrn','snrn','snry','scry','scdn','sndn','sndy','scdy']
+        if args['seed']:
+            random.seed(0)
+        random.shuffle(sequence)
+        for level in range(len(sequence)):
+            config = sequence[level]
+            ability = CODES['ability'][config[0]]
+            explanation = CODES['explanation'][config[1]]
+            embodiment = CODES['embodiment'][config[2]]
+            acknowledgment = CODES['acknowledgment'][config[3]]
+            runMission(username,level,ability,explanation,embodiment,acknowledgment)
+    else:
+        for level in range(len(WAYPOINTS)):
+            runMission(username,level,args['ability'],args['explanation'],
+                       args['embodiment'],args['acknowledgment'])
