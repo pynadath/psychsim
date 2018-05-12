@@ -212,7 +212,10 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 
     world.defineState(robot.name,'learning',list,['no','yes'])
     robot.setState('learning',learning)
-    
+    world.defineState(robot.name,'cameraFNProb',
+                      description='Probability of false negative from camera')
+    robot.setState('cameraFNProb',0.02)
+
     world.defineState(robot.name,'ability',list,['badSensor','badModel','good'])
     if ability is True:
         # Backward compatibility with boolean ability
@@ -221,10 +224,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         ability = 'badSensor'
     robot.setState('ability',ability)
 
-    # State of the robot's sensors
-    world.defineState(robot.name,'cameraFalseNegative')
-    robot.setState('cameraFalseNegative',0.02)
-    
+    # Commands from teammate
     world.defineState(robot.name,'command',list,['none']+[point['symbol'] for point in WAYPOINTS[level]])
     robot.setState('command','none')
 
@@ -310,17 +310,6 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 #                         True: noChangeMatrix(key), False: incrementMatrix(key,1.)})
 #        world.setDynamics(key,action,tree)
 
-        # Learning of camera accuracy
-        # key = stateKey(robot.name,'cameraFalseNegative')
-        # tree = makeTree({'if': equalRow(stateKey(symbol,'danger'),'armed'),
-        #                  True: {'if': trueRow(stateKey(robot.name,'camera')),
-        #                         True: setToConstantMatrix(key,0.75),
-        #                         False: setToConstantMatrix(key,0.25)},
-        #                  False:  {'if': trueRow(stateKey(robot.name,'camera')),
-        #                         True: setToConstantMatrix(key,0.75),
-        #                         False: setToConstantMatrix(key,0.25)}})
-        # world.setDynamics(key,action,tree)
-        
         # Going in without protection takes no time
         key = stateKey(None,'time')
         world.setDynamics(key,action,makeTree(setToConstantMatrix(key,0.)))
@@ -606,6 +595,23 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     else:
         # Robot didn't say anything, so not it's problem
         error = None
+    if world.getFeature('robot\'s learning').get('yes') > 0.5:
+        # Let's learn!
+        if world.getFeature('%s\'s danger' % (location),oldVector).get('armed') > 0.5:
+            # Armed gunman was there
+            fnProb = world.getFeature('robot\'s cameraFNProb',oldVector)
+            print(fnProb)
+            assert len(fnProb) == 1
+            fnProb = fnProb.first()
+            alpha = 0.1
+            if world.getFeature('robot\'s camera',oldVector).get(False) > 0.5:
+                # False negative!
+                print('False negative')
+                fnProb = (1.-alpha)*fnProb + alpha
+            else:
+                print('True positive')
+                fnProb = (1.-alpha)*fnProb
+            world.setFeature('robot\'s cameraFNProb',fnProb)
     action = Action({'subject': 'robot',
                      'verb': 'recommend %s' % (recommendation),
                      'object': location})
@@ -920,7 +926,7 @@ def allVisited(world,level):
         return True
 
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
-               acknowledgment='no'):
+               acknowledgment='no',learning='no'):
     # Remove any existing log file
     try:
         os.remove(getFilename(username,level,extension='log'))
@@ -928,7 +934,8 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
         # Probably didn't exist to begin with
         pass
     # Create initial scenario
-    world = createWorld(username,level,ability,explanation,embodiment,acknowledgment)
+    world = createWorld(username,level,ability,explanation,embodiment,
+                        acknowledgment,learning)
     location = world.getState('robot','waypoint').first()
     waypoint = symbol2index(location,level)
     # Go through all the waypoints
@@ -987,4 +994,4 @@ if __name__ == '__main__':
     else:
         for level in range(len(WAYPOINTS)):
             runMission(username,level,args['ability'],args['explanation'],
-                       args['embodiment'],args['acknowledgment'])
+                       args['embodiment'],args['acknowledgment'],args['learning'])
