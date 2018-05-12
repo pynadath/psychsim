@@ -9,6 +9,8 @@ from __future__ import print_function
 import datetime
 import fileinput
 import os
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
 import random
 from string import Template
 import sys
@@ -220,8 +222,8 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     robot.setState('ability',ability)
 
     # State of the robot's sensors
-    world.defineState(robot.name,'sensorModel',list,['good','bad'])
-    robot.setState('sensorModel','good')
+    world.defineState(robot.name,'cameraFalseNegative')
+    robot.setState('cameraFalseNegative',0.02)
     
     world.defineState(robot.name,'command',list,['none']+[point['symbol'] for point in WAYPOINTS[level]])
     robot.setState('command','none')
@@ -292,7 +294,8 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         omega = stateKey(robot.name,'microphone')
         robot.setO('microphone',action,makeTree(generateMicO(world,key)))
         omega = stateKey(robot.name,'NBCsensor')
-        robot.setO('NBCsensor',action,makeTree(generateNBCO(world,key)))
+        tree = makeTree(generateNBCO(world,key))
+        robot.setO('NBCsensor',action,tree)
         omega = stateKey(robot.name,'camera')
         robot.setO('camera',action,makeTree(generateCameraO(world,key)))
 
@@ -306,6 +309,18 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 #        tree = makeTree({'if': equalRow(stateKey(symbol,'danger'),'none'),
 #                         True: noChangeMatrix(key), False: incrementMatrix(key,1.)})
 #        world.setDynamics(key,action,tree)
+
+        # Learning of camera accuracy
+        # key = stateKey(robot.name,'cameraFalseNegative')
+        # tree = makeTree({'if': equalRow(stateKey(symbol,'danger'),'armed'),
+        #                  True: {'if': trueRow(stateKey(robot.name,'camera')),
+        #                         True: setToConstantMatrix(key,0.75),
+        #                         False: setToConstantMatrix(key,0.25)},
+        #                  False:  {'if': trueRow(stateKey(robot.name,'camera')),
+        #                         True: setToConstantMatrix(key,0.75),
+        #                         False: setToConstantMatrix(key,0.25)}})
+        # world.setDynamics(key,action,tree)
+        
         # Going in without protection takes no time
         key = stateKey(None,'time')
         world.setDynamics(key,action,makeTree(setToConstantMatrix(key,0.)))
@@ -653,10 +668,10 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         if not 'symbol'in robotWaypoint:
             robotWaypoint['symbol'] = robotWaypoint['name'].replace(' ','')
 
-    action = Action({'subject': robot.name,
+    move = Action({'subject': robot.name,
                      'verb': 'moveto',
                      'object': robotWaypoint['symbol']})
-    world.step(action)
+    world.step(move)
 
     # Process scripted observations 
     key = stateKey(robotWaypoint['symbol'],'danger')
@@ -706,8 +721,21 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     # Package up the separate components of my current model
     POMDP = {}
     # Add Omega_t, my latest observation
-    for key,observation in omega.items():
-        POMDP['omega_%s' % (key)] = observation
+    for Omega,observation in omega.items():
+        POMDP['omega_%s' % (Omega)] = observation
+        O = robot.O[stateKey(robot.name,Omega)][ActionSet(move)]
+        omegaKey = stateKey(robot.name,Omega)
+        for danger in assessment.domain():
+            hypothetical = KeyedVector({key: world.value2float(key,danger),
+                                        CONSTANT: 1.})
+            distribution = O[hypothetical]*hypothetical
+            for vector in distribution.domain():
+                if vector[makeFuture(omegaKey)] == world.value2float(omegaKey,observation):
+                    prob = distribution[vector]
+                    break
+            else:
+                prob = 0.
+            POMDP['O_%s_%s_%s' % (Omega,observation,danger)] = prob
     # Add A_t, my chosen action
     if decision['action']['verb'] == 'recommend unprotected':
         POMDP['A'] = 'recommend unprotected'
@@ -755,7 +783,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     if mode == 'none':
         mode = ''
     explanation = ' '.join(explainDecision(safety,POMDP,mode))
-
+#    pp.pprint(POMDP)
     WriteLogData('%s %s' % (MESSAGE_TAG,explanation),username,level,root=root)
 
     # Save file in as synchronized a fashion as we can
