@@ -434,7 +434,7 @@ def generateNBCO(world,key):
                     (setTrueMatrix(omega),0.05)]},
             }
     
-def generateCameraO(world,key,belief=False):
+def generateCameraO(world,key,belief=False,falseNeg=0.05):
     """
     @return: a observation function specification for use in a PWL function
     @rtype: dict
@@ -452,8 +452,8 @@ def generateCameraO(world,key,belief=False):
                    },
             False: {'if': equalRow(key,'armed'),
                     True: {'distribution':
-                           [(setToConstantMatrix(omega,False),0.05),
-                            (setToConstantMatrix(omega,True),0.95)]},
+                           [(setToConstantMatrix(omega,False),falseNeg),
+                            (setToConstantMatrix(omega,True),1.-falseNeg)]},
                     False: {'distribution':
                             [(setToConstantMatrix(omega,False),0.95),
                              (setToConstantMatrix(omega,True),0.05)]},
@@ -600,7 +600,6 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         if world.getFeature('%s\'s danger' % (location),oldVector).get('armed') > 0.5:
             # Armed gunman was there
             fnProb = world.getFeature('robot\'s cameraFNProb',oldVector)
-            print(fnProb)
             assert len(fnProb) == 1
             fnProb = fnProb.first()
             alpha = 0.1
@@ -612,6 +611,13 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                 print('True positive')
                 fnProb = (1.-alpha)*fnProb
             world.setFeature('robot\'s cameraFNProb',fnProb)
+            for waypoint in WAYPOINTS[level][robotIndex+1:]:
+                symbol = waypoint['symbol']
+                action = ActionSet(Action({'subject': 'robot','verb': 'moveto',
+                                           'object': symbol}))
+                tree = makeTree(generateCameraO(world,stateKey(symbol,'danger'),
+                                                falseNeg=fnProb))
+                world.agents['robot'].setO('camera',action,tree)
     action = Action({'subject': 'robot',
                      'verb': 'recommend %s' % (recommendation),
                      'object': location})
@@ -673,12 +679,11 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         robotWaypoint = WAYPOINTS[level][robotIndex]
         if not 'symbol'in robotWaypoint:
             robotWaypoint['symbol'] = robotWaypoint['name'].replace(' ','')
-
+    
     move = Action({'subject': robot.name,
                      'verb': 'moveto',
                      'object': robotWaypoint['symbol']})
     world.step(move)
-
     # Process scripted observations 
     key = stateKey(robotWaypoint['symbol'],'danger')
     ability = robot.getState('ability').domain()[0]
@@ -714,6 +719,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     model = world.getModel(robot.name)
     assert len(model) == 1
     model = model.first()
+
     assessment = world.getFeature(key,beliefs[model])
     for danger in assessment.domain():
         WriteLogData('Posterior belief in %s: %d%%' % (danger,assessment[danger]*100.),
@@ -764,7 +770,6 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         world.setState(robotWaypoint['symbol'],'recommendation','protected')
         WriteLogData('%s: yes' % (RECOMMEND_TAG),username,level,root=root)
     # Add B_t, my current beliefs
-#    world.printState(beliefs[model])
     for key in beliefs[model].keys():
         if key != keys.CONSTANT:
             entity = state2agent(key)
@@ -995,3 +1000,4 @@ if __name__ == '__main__':
         for level in range(len(WAYPOINTS)):
             runMission(username,level,args['ability'],args['explanation'],
                        args['embodiment'],args['acknowledgment'],args['learning'])
+            break
