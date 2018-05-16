@@ -846,14 +846,14 @@ class Agent:
             oldModel = self.world.float2value(oldModelKey,vector[oldModelKey])
             label = ','.join(['%s' % (self.world.float2value(omega,vector[keys.makeFuture(omega)])) for omega in Omega])
             if not oldModel in SE:
-                SE[oldModel] = {actions: {}}
-            if not label in SE:
+                SE[oldModel] = {}
+            if not label in SE[oldModel]:
                 if self.getAttribute('static',oldModel) is True:
-                    SE[label] = vector[oldModelKey]
+                    SE[oldModel][label] = vector[oldModelKey]
                 elif actions in self.models[oldModel]['SE'] and \
                      label in self.models[oldModel]['SE'][actions]:
                     newModel = self.models[oldModel]['SE'][actions][label]
-                    SE[label] = self.models[newModel]['index']
+                    SE[oldModel][label] = self.models[newModel]['index']
                 else:
                     # Work to be done. Start by getting old belief state.
                     beliefs = self.getAttribute('beliefs',oldModel)
@@ -869,16 +869,16 @@ class Agent:
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
                     newModel = self.belief2model(oldModel,beliefs)
-                    SE[label] = newModel['index']
+                    SE[oldModel][label] = newModel['index']
                     if not actions in self.models[oldModel]['SE']:
                         self.models[oldModel]['SE'] = {actions: {}}
                     self.models[oldModel]['SE'][actions][label] = newModel['name']
             # Insert new model into true state
-            if isinstance(SE[label],int) or isinstance(SE[label],float):
-                vector[newModelKey] = SE[label]
+            if isinstance(SE[oldModel][label],int) or isinstance(SE[oldModel][label],float):
+                vector[newModelKey] = SE[oldModel][label]
             else:
                 raise RuntimeError('Unable to process stochastic belief updates:%s' \
-                    % (SE[label]))
+                    % (SE[oldModel][olabel]))
             distribution.addProb(vector,prob)
         return SE
     
