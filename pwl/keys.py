@@ -5,6 +5,7 @@ TERMINATED = '__END__'
 VALUE = '__VALUE__'
 WORLD = '__WORLD__'
 ACTION = '__ACTION__'
+REWARD = '__REWARD__'
 
 def stateKey(name,feature,future=False):
     """
@@ -116,3 +117,6 @@ def likesKey(subj,obj):
 
 def isLikesKey(key):
     return ' likes -> ' in key
+
+def rewardKey(name):
+    return stateKey(name,REWARD)
