@@ -539,6 +539,10 @@ class Agent:
         if not isinstance(tree,str):
             tree = tree.desymbolize(self.world.symbols)
         self.models[model]['R'][tree] = weight
+        key = rewardKey(self.name)
+        if not key in self.world.variables:
+            self.world.defineVariable(key,float)
+            self.world.setFeature(key,0.)
 
     def getReward(self,model):
         R = self.getAttribute('R',model)
@@ -589,7 +593,9 @@ class Agent:
                     tree = {'if': equalRow(modelK,submodel),
                              True: R,False: tree}
             tree = makeTree(tree).desymbolize(self.world.symbols)
-            total = tree*vector
+            vector *= tree
+            vector.rollback()
+            total = vector[rewardKey(self.name)].expectation()
         else:
             R = self.getAttribute('R',model)
             if R is None:
@@ -603,7 +609,7 @@ class Agent:
                         # Compute agent's reward but don't recurse any further
                         ER = self.world.agents[tree].reward(vector,model,False)
                 else:
-                    ER = tree[vector]*self.world.scaleState(vector)
+                    ER = tree[vector]*vector*self.world.scaleState(vector)
                 total += ER*weight
         return total
 
