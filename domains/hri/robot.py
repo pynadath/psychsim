@@ -95,7 +95,7 @@ CODES = {'ability': {'s': 'badSensor','g': 'good','m': 'badModel'},
          }
 
 def createWorld(username='anonymous',level=0,ability='good',explanation='none',
-                embodiment='robot',acknowledgment='no',learning='no',
+                embodiment='robot',acknowledgment='no',learning='no',fnProb=0.01,
                 sequence=False,root='.',ext='xml'):
     """
     Creates the initial PsychSim scenario and saves it
@@ -214,7 +214,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     robot.setState('learning',learning)
     world.defineState(robot.name,'cameraFNProb',
                       description='Probability of false negative from camera')
-    robot.setState('cameraFNProb',0.02)
+    robot.setState('cameraFNProb',fnProb)
 
     world.defineState(robot.name,'ability',list,['badSensor','badModel','good'])
     if ability is True:
@@ -297,7 +297,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         tree = makeTree(generateNBCO(world,key))
         robot.setO('NBCsensor',action,tree)
         omega = stateKey(robot.name,'camera')
-        robot.setO('camera',action,makeTree(generateCameraO(world,key)))
+        robot.setO('camera',action,makeTree(generateCameraO(world,key,falseNeg=fnProb)))
 
         # Human entry: Dead or alive if unprotected?
         key = stateKey(human.name,'alive')
@@ -375,14 +375,18 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                              False: setFalseMatrix(omega)}))
 
     # Robot goals
-    goal = minimizeFeature(stateKey(None,'time'))
-    robot.setReward(goal,100.)
+    goal = makeTree(setToFeatureMatrix(stateKey(robot.name,REWARD),
+                                       stateKey(None,'time'),-1.))
+#    goal = minimizeFeature(stateKey(None,'time'))
+    robot.setReward(goal,60.)
 
-    goal = achieveGoal(stateKey(human.name,'alive'))
+    goal = makeTree(setToFeatureMatrix(stateKey(robot.name,REWARD),
+                                       stateKey(human.name,'alive')))
+#    goal = achieveGoal(stateKey(human.name,'alive'))
     robot.setReward(goal,20.)
 
-    for point in WAYPOINTS[level]:
-        robot.setReward(maximizeFeature(stateKey(point['symbol'],'scanned')),2.)
+#    for point in WAYPOINTS[level]:
+#        robot.setReward(maximizeFeature(stateKey(point['symbol'],'scanned')),2.)
 
     world.setOrder([robot.name])
 
@@ -605,10 +609,8 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
             alpha = 0.1
             if world.getFeature('robot\'s camera',oldVector).get(False) > 0.5:
                 # False negative!
-                print('False negative')
                 fnProb = (1.-alpha)*fnProb + alpha
             else:
-                print('True positive')
                 fnProb = (1.-alpha)*fnProb
             world.setFeature('robot\'s cameraFNProb',fnProb)
             for waypoint in WAYPOINTS[level][robotIndex+1:]:
@@ -726,7 +728,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                      username,level,root=root)
     # Which recommendation is better?
     decision = robot.decide(world.state,model=model)
-    for action in decision['V']:
+    for action in sorted(decision['V']):
         WriteLogData('%s of %s: %4.2f' % (VALUE_TAG,action['verb'],
                                           decision['V'][action]['__EV__']),
                      username,level,root=root)
@@ -755,16 +757,6 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         world.setState(robotWaypoint['symbol'],'recommendation','unprotected')
         WriteLogData('%s: no' % (RECOMMEND_TAG),username,level,root=root)
     else:
-        if assessment['none'] > 0.5:
-            print(assessment)
-            print(value)
-            for a,V in decision['V'].items():
-                print(a)
-            for action,bel in subBeliefs.items():
-                for key in ['human\'s alive','time']:
-                    print(action,key)
-                    print(world.float2value(key,bel.marginal(key)))
-        assert assessment['none'] < 0.5
         POMDP['A'] = 'recommend protected'
         safety = False
         world.setState(robotWaypoint['symbol'],'recommendation','protected')
