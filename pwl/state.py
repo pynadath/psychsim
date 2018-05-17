@@ -276,11 +276,11 @@ class VectorDistributionSet:
                 if (key in self.keyMap and self.keyMap[key] == self.keyMap[newKey]) \
                    or other.keyMap[key] == other.keyMap[newKey]:
                     # This key is in the same joint
-                    if len(self.distributions[self.keyMap[newKey]]) == 1 and \
-                       len(other.distributions[other.keyMap[newKey]]) == 1:
+#                    if len(self.distributions[self.keyMap[newKey]]) == 1 and \
+#                       len(other.distributions[other.keyMap[newKey]]) == 1:
                         # Maybe this key's value collapses into certainty?
-                        if self.marginal(newKey) == other.marginal(newKey):
-                            continue
+#                        if self.marginal(newKey) == other.marginal(newKey):
+#                            continue
                     toMerge.add(newKey)
         if len(toMerge) > 0: # If 0, no difference between self and other to begin with
             # Prepare myself to merge
@@ -468,7 +468,7 @@ class VectorDistributionSet:
         else:
             return NotImplemented
         for s in self.distributions:
-            assert s in self.keyMap.values(),self.distributions[s]
+            assert s in self.keyMap.values(),'%d: %s' % (s,';'.join(['%s: %d' % (k,self.keyMap[k]) for k in self.distributions[s].keys() if k != keys.CONSTANT]))
         for k,s in self.keyMap.items():
             if k != keys.CONSTANT:
                 assert s in self.distributions
