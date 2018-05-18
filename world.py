@@ -114,7 +114,8 @@ class World:
             state = copy.deepcopy(state)
         assert isinstance(state,VectorDistributionSet)
         outcome = {'old': state,
-                   'decisions': {}}
+                   'decisions': {},
+                   'effect': {}}
         # Check whether we are already in a terminal state
         if self.terminated(state):
             return state
@@ -126,7 +127,7 @@ class World:
             choices = [self.float2value(key,e) for e in values]
             if len(choices) == 1:
                 effect = self.effect(choices[0],state,updateBeliefs,keySubset)
-                outcome.update(effect)
+                outcome['effect'].update(effect)
             else:
                 print(choices)
                 raise ValueError
