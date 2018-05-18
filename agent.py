@@ -143,7 +143,7 @@ class Agent:
         best = None
         for action in actions:
             # Compute value across possible worlds
-            V[action] = {'__EV__': 0.,'__ER__': []}
+            V[action] = {'__EV__': 0.,'__ER__': [],'__S__': []}
             if isinstance(keySet,dict):
                 subkeys = keySet[action]
             else:
@@ -155,6 +155,7 @@ class Agent:
                                           horizon=horizon-t)
                 V[action]['__ER__'].append(self.reward(current))
                 V[action]['__EV__'] += V[action]['__ER__'][-1]
+                V[action]['__S__'].append(current)
                 start = None
             V[action]['__beliefs__'] = current
             # Determine whether this action is the best
