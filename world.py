@@ -577,6 +577,21 @@ class World:
                     dynamics.append(self.dynamics[key][True])
             return dynamics
 
+    def getAncestors(self,keySubset,actions):
+        """
+        @return: a set of keys that potentially influence at least one key in the given set of keys (including this set as well)
+        """
+        remaining = set(keySubset)
+        result = set()
+        while remaining:
+            key = remaining.pop()
+            result.add(key)
+            dynamics = self.getDynamics(key,actions)
+            if dynamics:
+                for tree in dynamics:
+                    remaining |= tree.getKeysIn() - result - {CONSTANT}
+        return result
+        
     def addDependency(self,dependent,independent):
         raise DeprecationWarning('Dependencies are now determined automatically on a case-by-case basis. Simply use "makeFuture(\'%s\')" in the dynamics for %s' % (independent,dependent))
 
