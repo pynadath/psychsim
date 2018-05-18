@@ -138,6 +138,14 @@ class KeyedMatrix(dict):
             result[key] = row.desymbolize(table)
         return result
 
+    def makeFuture(self):
+        """
+        Transforms matrix so that each row refers to only future keys
+        """
+        self._string = None
+        for key,vector in self.items():
+            vector.makeFuture()
+            
     def scale(self,table):
         result = self.__class__()
         for row,vector in self.items():
