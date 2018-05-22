@@ -93,7 +93,6 @@ class VectorDistributionSet:
             # Go through each vector and remove the key one by one
             for vector in dist.domain():
                 prob = dist[vector]
-                del dist[vector]
                 del vector[key]
                 dist.addProb(vector,prob)
 
@@ -126,7 +125,7 @@ class VectorDistributionSet:
                 self.distributions[substate].clear()
                 for vector,prob in distributions[substate]:
                     self.distributions[substate].addProb(vector,prob)
-        
+            
     def split(self,key):
         """
         @return: partitions this distribution into subsets corresponding to possible values for the given key
@@ -307,11 +306,11 @@ class VectorDistributionSet:
                 if (key in self.keyMap and self.keyMap[key] == self.keyMap[newKey]) \
                    or other.keyMap[key] == other.keyMap[newKey]:
                     # This key is in the same joint
-                    if len(self.distributions[self.keyMap[newKey]]) == 1 and \
-                       len(other.distributions[other.keyMap[newKey]]) == 1:
+#                    if len(self.distributions[self.keyMap[newKey]]) == 1 and \
+#                       len(other.distributions[other.keyMap[newKey]]) == 1:
                         # Maybe this key's value collapses into certainty?
-                        if self.marginal(newKey) == other.marginal(newKey):
-                            continue
+#                        if self.marginal(newKey) == other.marginal(newKey):
+#                            continue
                     toMerge.add(newKey)
         if len(toMerge) > 0: # If 0, no difference between self and other to begin with
             # Prepare myself to merge
@@ -499,7 +498,7 @@ class VectorDistributionSet:
         else:
             return NotImplemented
         for s in self.distributions:
-            assert s in self.keyMap.values(),self.distributions[s]
+            assert s in self.keyMap.values(),'%d: %s' % (s,';'.join(['%s: %d' % (k,self.keyMap[k]) for k in self.distributions[s].keys() if k != keys.CONSTANT]))
         for k,s in self.keyMap.items():
             if k != keys.CONSTANT:
                 assert s in self.distributions

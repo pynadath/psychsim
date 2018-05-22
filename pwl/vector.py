@@ -120,6 +120,17 @@ class KeyedVector(collections.MutableMapping):
 #                result[key] = value
         return result
 
+    def makeFuture(self):
+        """
+        Transforms this vector to refer to only future versions of its columns
+        """
+        for key in self.keys():
+            if not key == keys.CONSTANT:
+                assert not keys.isFuture(key)
+                value = self[key]
+                del self[key]
+                self[keys.makeFuture(key)] = value
+        
     def filter(self,ignore):
         """
         @return: a copy of me applying the given lambda expression to the keys (if a list is provided, then any keys in that list are dropped out)
