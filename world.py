@@ -114,7 +114,8 @@ class World:
             state = copy.deepcopy(state)
         assert isinstance(state,VectorDistributionSet)
         outcome = {'old': state,
-                   'decisions': {}}
+                   'decisions': {},
+                   'effect': {}}
         # Check whether we are already in a terminal state
         if self.terminated(state):
             return state
@@ -126,7 +127,7 @@ class World:
             choices = [self.float2value(key,e) for e in values]
             if len(choices) == 1:
                 effect = self.effect(choices[0],state,updateBeliefs,keySubset)
-                outcome.update(effect)
+                outcome['effect'].update(effect)
             else:
                 print(choices)
                 raise ValueError
@@ -576,6 +577,21 @@ class World:
                     dynamics.append(self.dynamics[key][True])
             return dynamics
 
+    def getAncestors(self,keySubset,actions):
+        """
+        @return: a set of keys that potentially influence at least one key in the given set of keys (including this set as well)
+        """
+        remaining = set(keySubset)
+        result = set()
+        while remaining:
+            key = remaining.pop()
+            result.add(key)
+            dynamics = self.getDynamics(key,actions)
+            if dynamics:
+                for tree in dynamics:
+                    remaining |= tree.getKeysIn() - result - {CONSTANT}
+        return result
+        
     def addDependency(self,dependent,independent):
         raise DeprecationWarning('Dependencies are now determined automatically on a case-by-case basis. Simply use "makeFuture(\'%s\')" in the dynamics for %s' % (independent,dependent))
 
