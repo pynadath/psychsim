@@ -728,10 +728,34 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                      username,level,root=root)
     # Which recommendation is better?
     decision = robot.decide(world.state,model=model)
+    # R = robot.getReward(model)
+    # subset = set(R.getKeysIn()) - {CONSTANT}
+    # R.children[None].makeFuture()
+    projection = {}
     for action in sorted(decision['V']):
+    #     effect = world.deltaState(action,beliefs[model],subset)
+    #     assert len(effect) == 1,'Unable to multiply trees right now'
+    #     for dynamics in effect:
+    #         total = None
+    #         remaining = set(subset)
+    #         for key,tree in dynamics.items():
+    #             if tree:
+    #                 assert len(tree) == 1
+    #                 remaining.remove(key)
+    #                 if total is None:
+    #                     total = tree[0]
+    #                 else:
+    #                     total += tree[0]
+    #         for key in remaining:
+    #             tree = makeTree(noChangeMatrix(key))
+    #             total += tree
+    #         cumulative = total
+    #     projection[action] =  R*cumulative
         WriteLogData('%s of %s: %4.2f' % (VALUE_TAG,action['verb'],
                                           decision['V'][action]['__EV__']),
                      username,level,root=root)
+#    action1,action2 = projection.keys()
+#    difference = projection[action1]+(projection[action2]*-1.)
     # Package up the separate components of my current model
     POMDP = {}
     # Add Omega_t, my latest observation
