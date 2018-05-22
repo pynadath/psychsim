@@ -143,7 +143,7 @@ class Agent:
         best = None
         for action in actions:
             # Compute value across possible worlds
-            V[action] = {'__EV__': 0.,'__ER__': []}
+            V[action] = {'__EV__': 0.,'__ER__': [],'__S__': []}
             if isinstance(keySet,dict):
                 subkeys = keySet[action]
             else:
@@ -155,6 +155,7 @@ class Agent:
                                           horizon=horizon-t)
                 V[action]['__ER__'].append(self.reward(current))
                 V[action]['__EV__'] += V[action]['__ER__'][-1]
+                V[action]['__S__'].append(current)
                 start = None
             V[action]['__beliefs__'] = current
             # Determine whether this action is the best
@@ -539,6 +540,10 @@ class Agent:
         if not isinstance(tree,str):
             tree = tree.desymbolize(self.world.symbols)
         self.models[model]['R'][tree] = weight
+        key = rewardKey(self.name)
+        if not key in self.world.variables:
+            self.world.defineVariable(key,float)
+            self.world.setFeature(key,0.)
 
     def getReward(self,model):
         R = self.getAttribute('R',model)
@@ -589,7 +594,9 @@ class Agent:
                     tree = {'if': equalRow(modelK,submodel),
                              True: R,False: tree}
             tree = makeTree(tree).desymbolize(self.world.symbols)
-            total = tree*vector
+            vector *= tree
+            vector.rollback()
+            total = vector[rewardKey(self.name)].expectation()
         else:
             R = self.getAttribute('R',model)
             if R is None:
@@ -603,7 +610,7 @@ class Agent:
                         # Compute agent's reward but don't recurse any further
                         ER = self.world.agents[tree].reward(vector,model,False)
                 else:
-                    ER = tree[vector]*self.world.scaleState(vector)
+                    ER = tree[vector]*vector*self.world.scaleState(vector)
                 total += ER*weight
         return total
 
@@ -846,14 +853,14 @@ class Agent:
             oldModel = self.world.float2value(oldModelKey,vector[oldModelKey])
             label = ','.join(['%s' % (self.world.float2value(omega,vector[keys.makeFuture(omega)])) for omega in Omega])
             if not oldModel in SE:
-                SE[oldModel] = {actions: {}}
-            if not label in SE:
+                SE[oldModel] = {}
+            if not label in SE[oldModel]:
                 if self.getAttribute('static',oldModel) is True:
-                    SE[label] = vector[oldModelKey]
+                    SE[oldModel][label] = vector[oldModelKey]
                 elif actions in self.models[oldModel]['SE'] and \
                      label in self.models[oldModel]['SE'][actions]:
                     newModel = self.models[oldModel]['SE'][actions][label]
-                    SE[label] = self.models[newModel]['index']
+                    SE[oldModel][label] = self.models[newModel]['index']
                 else:
                     # Work to be done. Start by getting old belief state.
                     beliefs = self.getAttribute('beliefs',oldModel)
@@ -869,16 +876,16 @@ class Agent:
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
                     newModel = self.belief2model(oldModel,beliefs)
-                    SE[label] = newModel['index']
+                    SE[oldModel][label] = newModel['index']
                     if not actions in self.models[oldModel]['SE']:
                         self.models[oldModel]['SE'] = {actions: {}}
                     self.models[oldModel]['SE'][actions][label] = newModel['name']
             # Insert new model into true state
-            if isinstance(SE[label],int) or isinstance(SE[label],float):
-                vector[newModelKey] = SE[label]
+            if isinstance(SE[oldModel][label],int) or isinstance(SE[oldModel][label],float):
+                vector[newModelKey] = SE[oldModel][label]
             else:
                 raise RuntimeError('Unable to process stochastic belief updates:%s' \
-                    % (SE[label]))
+                    % (SE[oldModel][olabel]))
             distribution.addProb(vector,prob)
         return SE
     
