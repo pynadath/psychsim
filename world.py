@@ -121,16 +121,17 @@ class World:
             return state
         # Determine the actions taken by the agents in this world
         outcome['actions'] = self.stepPolicy(state,actions,horizon,tiebreak)
-        for actor in outcome['actions']:
+        joint = None
+        for actor,policy in outcome['actions'].items():
+            assert policy.isLeaf(),'Currently unable to project stochastic decisions'
             key = stateKey(actor,ACTION)
-            values = [e for e in state.domain(makeFuture(key))]
-            choices = [self.float2value(key,e) for e in values]
-            if len(choices) == 1:
-                effect = self.effect(choices[0],state,updateBeliefs,keySubset)
-                outcome['effect'].update(effect)
+            action = self.float2value(key,policy.children[None][makeFuture(key)][CONSTANT])
+            if joint is None:
+                joint = action
             else:
-                print(choices)
-                raise ValueError
+                joint |= action
+        effect = self.effect(joint,state,updateBeliefs,keySubset)
+        outcome['effect'].update(effect)
         # The future becomes the present
         state.rollback()
         if select:
