@@ -151,8 +151,8 @@ class Agent:
             current = copy.deepcopy(belief)
             start = action
             for t in range(horizon):
-                outcome = self.world.step(start,current,keySubset=subkeys,
-                                          horizon=horizon-t)
+#                outcome = self.world.step(start,current,keySubset=subkeys,
+#                                          horizon=horizon-t)
                 V[action]['__ER__'].append(self.reward(current))
                 V[action]['__EV__'] += V[action]['__ER__'][-1]
                 V[action]['__S__'].append(current)
@@ -787,6 +787,9 @@ class Agent:
     """---------------------"""
 
     def resetBelief(self,model=None):
+        if model is None:
+            assert len(self.models) == 1
+            model = list(self.models.keys())[0]
         beliefs = copy.deepcopy(self.world.state)
         self.models[model]['beliefs'] = beliefs
         return beliefs
@@ -869,7 +872,12 @@ class Agent:
                     else:
                         beliefs = copy.deepcopy(self.getAttribute('beliefs',oldModel))
                     # Project direct effect of the actions, including possible observations
-                    self.world.step(actions,beliefs,updateBeliefs=False)
+                    assert isinstance(actions,ActionSet)
+                    relevantActions = actions.__class__({action for action in actions
+                                                         if turnKey(action['subject']) in beliefs})
+                    if len(relevantActions) == 0:
+                        relevantActions = None
+                    self.world.step(relevantActions,beliefs,updateBeliefs=False)
                     # Condition on actual observations
                     for omega in Omega:
                         beliefs[omega] = vector[keys.makeFuture(omega)]
