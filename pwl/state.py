@@ -90,9 +90,10 @@ class VectorDistributionSet:
             # Assume CONSTANT is the other key, so this whole distribution goes
             del self.distributions[substate]
         else:
-            # Go through each vector and remove the key one by one
+            # Go through each vector and remove the key
             for vector in dist.domain():
                 prob = dist[vector]
+                del dist[vector]
                 del vector[key]
                 dist.addProb(vector,prob)
 
@@ -254,7 +255,7 @@ class VectorDistributionSet:
         @param key: the key to the column to modify
         @type key: str
         @param value: either a single value to apply to all vectors, or else a L{Distribution} over possible values
-        @substate: name of substate vector distribution to join with
+        @substate: name of substate vector distribution to join with, ignored if the key already exists in this state
         """
         assert not substate is None
         if key in self.keyMap:
@@ -375,6 +376,7 @@ class VectorDistributionSet:
                             substate = self.keyMap[colKey]
                             value = self.distributions[substate].first()[colKey]
                             total += vector[colKey]*value
+                    assert not rowKey in self.keyMap
                     destination = max(self.keyMap.values())+1
                     assert not destination in self.distributions,self.distributions[destination]
                     self.join(rowKey,total,destination)
@@ -501,7 +503,7 @@ class VectorDistributionSet:
             assert s in self.keyMap.values(),'%d: %s' % (s,';'.join(['%s: %d' % (k,self.keyMap[k]) for k in self.distributions[s].keys() if k != keys.CONSTANT]))
         for k,s in self.keyMap.items():
             if k != keys.CONSTANT:
-                assert s in self.distributions
+                assert s in self.distributions,'Substate %s of %s is missing' % (s,k)
         return self
 
     def __rmul__(self,other):
