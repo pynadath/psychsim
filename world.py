@@ -228,9 +228,16 @@ class World:
                 if isinstance(policy,ActionSet):
                     # Transfer fixed action into policy
                     key = keys.stateKey(name,keys.ACTION)
-                    actions[name] = makeTree({'if': equalRow(turnKey(name),0),
-                                              True: setToConstantMatrix(key,policy),
-                                              False: noChangeMatrix(key)})
+                    turn = turnKey(name)
+                    if turn in state.keyMap:
+                        turns = state.domain(turn)
+                        if len(turns) == 1:
+                            if 0 in turns:
+                                actions[name] = makeTree(setToConstantMatrix(key,policy))
+                        elif 0 in turns:
+                            actions[name] = makeTree({'if': equalRow(turnKey(name),0),
+                                                      True: setToConstantMatrix(key,policy),
+                                                      False: noChangeMatrix(key)})
                 actions[name] = actions[name].desymbolize(self.symbols)
         else:
             assert actions is None
