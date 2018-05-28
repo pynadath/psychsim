@@ -96,12 +96,12 @@ class DependencyGraph(dict):
                     dict.__getitem__(self,parent)['children'].add(makeFuture(key))
         for name,agent in self.world.agents.items():
             # Create links from reward
-            if agent.models['%s0' % (agent.name)].has_key('R'):
-                for R,weight in agent.models['%s0' % (agent.name)]['R'].items():
-                    for parent in R.getKeysIn() - set([CONSTANT]):
-                        # Link between variable and agent utility
-                        dict.__getitem__(self,name)['parents'].add(makeFuture(parent))
-                        dict.__getitem__(self,makeFuture(parent))['children'].add(name)
+            model = '%s0' % (agent.name)
+            R = agent.getReward(model)
+            for parent in R.getKeysIn() - set([CONSTANT]):
+                # Link between variable and agent utility
+                dict.__getitem__(self,name)['parents'].add(makeFuture(parent))
+                dict.__getitem__(self,makeFuture(parent))['children'].add(name)
             # Create links from legality
             for action,tree in agent.legal.items():
                 action = ActionSet([a.root() for a in action])
