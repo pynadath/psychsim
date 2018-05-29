@@ -116,7 +116,7 @@ class Scenario:
 
     def create_base(self):
         for index in range(0, self.D_ACTORS):
-            base = Agent('Base' + str(index))
+            base = Agent('Base' + str(index),self.world)
             self.world.addAgent(base)
             base.setHorizon(5)
 
@@ -149,7 +149,7 @@ class Scenario:
 
     def create_friendly_agents(self):
         for index in range(0, self.F_ACTORS):
-            actor = Agent('Actor' + str(index))
+            actor = Agent('Actor' + str(index),self.world)
             self.world.addAgent(actor)
             actor.setHorizon(5)
 
@@ -180,9 +180,9 @@ class Scenario:
             # Terminate if agent reaches goal
             tree = makeTree({'if': equalFeatureRow(stateKey(actor.name, 'x'), stateKey(actor.name, 'goal_x')),
                              True: {'if': equalFeatureRow(stateKey(actor.name, 'y'), stateKey(actor.name, 'goal_y')),
-                                    True: True,
-                                    False: False},
-                             False: False})
+                                    True: setTrueMatrix(TERMINATED),
+                                    False: setFalseMatrix(TERMINATED)},
+                             False: setFalseMatrix(TERMINATED)})
             self.world.addTermination(tree)
 
     def set_friendly_actions(self, actor):
@@ -251,7 +251,7 @@ class Scenario:
 
     def create_distract_agents(self):
         for index in range(0, self.D_ACTORS):
-            actor = Agent('Distractor' + str(index))
+            actor = Agent('Distractor' + str(index),self.world)
             self.world.addAgent(actor)
             actor.setHorizon(5)
 
@@ -367,7 +367,7 @@ class Scenario:
 
     def create_enemy_agents(self):
         for index in range(0, self.E_ACTORS):
-            actor = Agent('Enemy' + str(index))
+            actor = Agent('Enemy' + str(index),self.world)
             self.world.addAgent(actor)
             actor.setHorizon(5)
 
@@ -395,8 +395,9 @@ class Scenario:
             # Terminate if enemy captures agent
             tree = {'if': equalFeatureRow(stateKey(actor.name, 'x'), stateKey('Actor' + str(index), 'x')),
                     True: {'if': equalFeatureRow(stateKey(actor.name, 'y'), stateKey('Actor' + str(index), 'y')),
-                           True: True, False: False},
-                    False: False}
+                           True: setTrueMatrix(TERMINATED),
+                           False: setFalseMatrix(TERMINATED)},
+                    False: setFalseMatrix(TERMINATED)}
             self.world.addTermination(makeTree(tree))
 
     def set_enemy_actions(self, actor, index):
