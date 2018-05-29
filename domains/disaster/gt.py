@@ -42,8 +42,8 @@ class Person(Agent):
         health = world.defineState(self.name,'health',bool)
         world.setFeature(health,True)
 
-        pet = world.defineState(self.name,'pet',bool)
-        world.setFeature(pet,random.random()>0.75)
+#        pet = world.defineState(self.name,'pet',bool)
+#        world.setFeature(pet,random.random()>0.75)
         rich = world.defineState(self.name,'wealth',float)
         world.setFeature(rich,random.random())
         kids = world.defineState(self.name,'kids',bool)
@@ -81,10 +81,10 @@ class Person(Agent):
         tree = makeTree(noChangeMatrix(kids))
         world.setDynamics(kids,actShelter,tree)
         # Effect on pets' health
-        tree = makeTree({'if': trueRow(allowPets),
-                         True: setTrueMatrix(pet),
-                         False: setFalseMatrix(pet)})
-        world.setDynamics(pet,actShelter,tree)
+        # tree = makeTree({'if': trueRow(allowPets),
+        #                  True: setTrueMatrix(pet),
+        #                  False: setFalseMatrix(pet)})
+        # world.setDynamics(pet,actShelter,tree)
         # Effect on wealth
         tree = makeTree({'if': thresholdRow(rich,0.5),
                          True: noChangeMatrix(rich),
@@ -106,8 +106,8 @@ class Person(Agent):
         tree = makeTree(noChangeMatrix(kids))
         world.setDynamics(kids,actEvacuate,tree)
         # Effect on pets' health (no hotels take pets)
-        tree = makeTree(setFalseMatrix(pet))
-        world.setDynamics(pet,actEvacuate,tree)
+        # tree = makeTree(setFalseMatrix(pet))
+        # world.setDynamics(pet,actEvacuate,tree)
 
         # A: Shelter in place
         actStay = self.addAction({'verb': 'stay'})
@@ -135,20 +135,20 @@ class Person(Agent):
                          False: setFalseMatrix(kids)})
         world.setDynamics(kids,actStay,tree)
         # Effect on pets' health
-        tree = makeTree({'if': trueRow(pet),
-                         True: {'if': trueRow(risk),
-                                True: {'if': trueRow(rich),
-                                       True: {'distribution': [(setTrueMatrix(pet),0.75),
-                                                               (setFalseMatrix(pet),0.25)]},
-                                       False: {'distribution': [(setTrueMatrix(pet),0.25),
-                                                                (setFalseMatrix(pet),0.75)]}},
-                                False: setTrueMatrix(pet)},
-                         False: setFalseMatrix(pet)})
-        world.setDynamics(pet,actStay,tree)
+        # tree = makeTree({'if': trueRow(pet),
+        #                  True: {'if': trueRow(risk),
+        #                         True: {'if': trueRow(rich),
+        #                                True: {'distribution': [(setTrueMatrix(pet),0.75),
+        #                                                        (setFalseMatrix(pet),0.25)]},
+        #                                False: {'distribution': [(setTrueMatrix(pet),0.25),
+        #                                                         (setFalseMatrix(pet),0.75)]}},
+        #                         False: setTrueMatrix(pet)},
+        #                  False: setFalseMatrix(pet)})
+        # world.setDynamics(pet,actStay,tree)
 
         # Reward
         self.setReward(maximizeFeature(health),1.)
-        self.setReward(maximizeFeature(pet),1.)
+#        self.setReward(maximizeFeature(pet),1.)
         self.setReward(maximizeFeature(rich),1.)
         self.setReward(maximizeFeature(kids),1.)
         # Decision-making parameters
@@ -244,6 +244,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR)
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
+    parser.add_argument('-n','--number',default=100,type=int,help='Number of actors')
     args = vars(parser.parse_args())
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
@@ -259,26 +260,26 @@ if __name__ == '__main__':
     # Shelter
     shelter = world.addAgent('shelter')
     world.diagram.setColor(shelter.name,'cornflowerblue')
-    allowPets = world.defineState(shelter.name,'allowPets',bool)
-    world.setFeature(allowPets,False)
+#    allowPets = world.defineState(shelter.name,'allowPets',bool)
+#    world.setFeature(allowPets,False)
 
     population = []
-    for i in range(100):
+    for i in range(args['number']):
         agent = Person('%02d' % (i),world)
         population.append(agent)
 
     world.setOrder([{agent.name for agent in population}])
     for agent in population:
+        beliefs = agent.resetBelief()
         for other in population:
             if other.name != agent.name:
                 agent.ignore(other.name,'%s0' % (agent.name))
 
-    sys.exit(0)
-    world2cdf(world,'/tmp/testing')
+#    world.printState()
+#    world.toCDF(world,'/tmp/testing')
 #    data = []
     result = world.step(select=False)
-    decision = result[0]['actions']
-    print decision
+    world.explainAction(level=1)
 
 #    print float(shelter)/float(len(data))
 
