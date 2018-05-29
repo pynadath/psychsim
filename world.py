@@ -1299,11 +1299,17 @@ class World:
                         # Explain decision
                         self.explainDecision(outcome['decisions'][name],buf,level)
 
-    def explainAction(self,outcome,buf=None,level=0):
-        if level > 0:
-            for name,action in outcome['actions'].items():
-                print(action,file=buf)
-        return set(outcome['actions'].values())
+    def explainAction(self,state=None,buf=None,level=0):
+        if state is None:
+            state = self.state
+        joint = {}
+        for name in self.agents:
+            key = stateKey(name,ACTION)
+            if key in state:
+                joint[name] = self.float2value(key,state.marginal(key))
+                if level > 0:
+                    print(joint[name],file=buf)
+        return joint
         
 
     def explainDecision(self,decision,buf=None,level=2,prefix=''):
