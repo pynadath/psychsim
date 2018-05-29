@@ -11,10 +11,14 @@ from psychsim.pwl import *
 from psychsim.action import *
 from psychsim.world import *
 from psychsim.agent import *
+
 import pyglet
 from pyglet.window import key
+
+from argparse import ArgumentParser
 from threading import Thread
 from time import time
+import logging
 import os
 import random
 
@@ -682,6 +686,18 @@ class Scenario:
         # target=pyglet.app.run()
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.ERROR)
+    parser = ArgumentParser()
+    parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
+    parser.add_argument('-v','--visual',action='store_true',help='Run with visualization')
+    args = vars(parser.parse_args())
+
+    # Extract logging level from command-line argument
+    level = getattr(logging, args['debug'].upper(), None)
+    if not isinstance(level, int):
+        raise ValueError('Invalid debug level: %s' % args['debug'])
+    logging.getLogger().setLevel(level)
+
     run = Scenario(
         MAP_SIZE_X=10,
         MAP_SIZE_Y=10,
@@ -697,5 +713,8 @@ if __name__ == '__main__':
         DISTRACTOR=[-1.0, 1.0],
         ENEMY=[0.5, 0.6, -1.0],
         AGENT=[1.0,-0.5])
-    run.run_with_visual()
-#     print('RUN COMPLETE!')
+    if args['visual']:
+        run.run_with_visual()
+    else:
+        run.run_without_visual()
+        #     print('RUN COMPLETE!')
