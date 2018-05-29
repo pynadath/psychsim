@@ -58,7 +58,8 @@ class Scenario:
         self.world.defineState(None, 'turns', int)
         self.world.setState(None, 'turns', 0)
         self.world.addTermination(makeTree({'if': thresholdRow(stateKey(None, 'turns'), 20),
-                                            True: True, False: False}))
+                                            True: setTrueMatrix(TERMINATED),
+                                            False: setFalseMatrix(TERMINATED)}))
         self.obstacles = []
         self.generate_obstacles()
         self.create_friendly_agents()
