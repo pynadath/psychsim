@@ -468,6 +468,10 @@ class World:
             agent.world = self
             self.turnSubstate = None
             self.turnKeys = set()
+            # Initialize model of this agent to be uniform distribution (got a better idea?)
+            prob = 1./float(len(agent.models))
+            dist = {model: prob for model in agent.models}
+            self.setModel(agent.name,dist)
         return agent
 
     def has_agent(self,agent):
