@@ -711,9 +711,9 @@ class Scenario:
 if __name__ == '__main__':
     logging.basicConfig()
     parser = ArgumentParser()
-    parser.add_argument('-d','--debug',default='INFO',help='Level of logging detail')
-    parser.add_argument('-v','--visual',action='store_true',help='Run with visualization')
-    parser.add_argument('-n','--number',type=int,default=50,help='Number of trials (ignored if visualization)')
+    parser.add_argument('-d','--debug',default='INFO',help='Level of logging detail [default: %(default)s]')
+    parser.add_argument('-v','--visual',action='store_true',help='Run with visualization [default: %(default)s]')
+    parser.add_argument('-n','--number',type=int,default=50,help='Number of trials (only when no visualization) [default: %(default)s]')
     args = vars(parser.parse_args())
 
     # Extract logging level from command-line argument
@@ -748,6 +748,11 @@ if __name__ == '__main__':
             result = run.run_without_visual()
             result['reward'] = dict(reward)
             logging.info(result)
-            
 
-            #     print('RUN COMPLETE!')
+            if result['goals'][0]:
+                logging.info('Goal achieved')
+                
+            elif result['captures'][0]:
+                logging.info('Failure achieved')
+            else:
+                logging.info('Nothing achieved')
