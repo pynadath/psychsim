@@ -17,6 +17,7 @@ from pyglet.window import key
 from argparse import ArgumentParser
 
 import cStringIO
+import csv
 import logging
 import os
 import os.path
@@ -713,7 +714,8 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='INFO',help='Level of logging detail [default: %(default)s]')
     parser.add_argument('-v','--visual',action='store_true',help='Run with visualization [default: %(default)s]')
-    parser.add_argument('-n','--number',type=int,default=50,help='Number of trials (only when no visualization) [default: %(default)s]')
+    parser.add_argument('-n','--number',type=int,default=50,help='Number of trials (when no visualization) [default: %(default)s]')
+    parser.add_argument('-a','--alpha',type=float,default=0.2,help='Learning rate (when no visualization) [default: %(default)s]')
     args = vars(parser.parse_args())
 
     # Extract logging level from command-line argument
@@ -746,13 +748,69 @@ if __name__ == '__main__':
                 ENEMY=[0.5, 0.6, -1.0],
                 AGENT=[reward['agent'],reward['agent']-1.])
             result = run.run_without_visual()
-            result['reward'] = dict(reward)
+            result.update({'Rbase': reward['base'],
+                           'Ragent': reward['agent'],
+                           'Rdistractor': reward['distractor'],
+                           'trial': trial,
+                           'goal': result['goals'][0],
+                           'capture': result['captures'][0],
+                           'alpha': args['alpha'],
+                           })
             logging.info(result)
+            log.append(result)
 
+            # Let's learn!
+            totalDelta = 0.
             if result['goals'][0]:
                 logging.info('Goal achieved')
-                
+                # Base can be less aggressive in sending Distractor
+                delta = args['alpha']*(0.-reward['base'])
+                totalDelta += abs(delta)
+                reward['base'] += delta
+                # Agent can be less aggressive in pursuing goal
+                delta = args['alpha']*(0.-reward['agent'])
+                totalDelta += abs(delta)
+                reward['agent'] += delta
+                # Distractor can be less aggressive in distracting enemyy
+                delta = args['alpha']*(0.-reward['distractor'])
+                totalDelta += abs(delta)
+                reward['distractor'] += delta
             elif result['captures'][0]:
-                logging.info('Failure achieved')
+                logging.info('Capture achieved')
+                # Base needs to be more aggressive in sending Distractor
+                delta = args['alpha']*(1.-reward['base'])
+                totalDelta += abs(delta)
+                reward['base'] += delta
+                # Agent needs to be less aggressive in pursuing goal
+                delta = args['alpha']*(0.-reward['agent'])
+                totalDelta += abs(delta)
+                reward['agent'] += delta
+                # Distractor needs to be more aggressive in distracting enemyy
+                delta = args['alpha']*(1.-reward['distractor'])
+                totalDelta += abs(delta)
+                reward['distractor'] += delta
             else:
                 logging.info('Nothing achieved')
+                # Base needs to be more aggressive in sending Distractor
+                delta = args['alpha']*(1.-reward['base'])
+                totalDelta += abs(delta)
+                reward['base'] += delta
+                # Agent needs to be more aggressive in pursuing goal
+                delta = args['alpha']*(1.-reward['agent'])
+                totalDelta += abs(delta)
+                reward['agent'] += delta
+                # Base needs to be more aggressive in sending Distractor
+                reward['base'] = (1.-args['alpha'])*reward['base'] + ['learning-rate']*1.
+                # Distractor needs to be more aggressive in distracting enemyy
+                delta = args['alpha']*(1.-reward['distractor'])
+                totalDelta += abs(delta)
+                reward['distractor'] += delta
+            logging.info('Total delta: %5.2f' % (totalDelta))
+            result['delta'] = totalDelta
+        fields = ['trial','Rbase','Ragent','Rdistractor','alpha','goal','capture','delta']
+        with open(os.path.join('output','%s.csv' % (time)),'w') as csvfile:
+            writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
+            writer.writeheader()
+            for result in log:
+                writer.writerow(result)
+
