@@ -57,15 +57,17 @@ class Scenario:
         self.world = World()
         self.world.defineState(None, 'turns', int)
         self.world.setState(None, 'turns', 0)
-        self.world.addTermination(makeTree({'if': thresholdRow(stateKey(None, 'turns'), 20),
-                                            True: setTrueMatrix(TERMINATED),
-                                            False: setFalseMatrix(TERMINATED)}))
+
+        self.termination = makeTree({'if': thresholdRow(stateKey(None, 'turns'), 20),
+                                     True: setTrueMatrix(TERMINATED),
+                                     False: setFalseMatrix(TERMINATED)})
         self.obstacles = []
         self.generate_obstacles()
         self.create_friendly_agents()
         self.create_enemy_agents()
         self.create_distract_agents()
         self.create_base()
+        self.world.addTermination(self.termination)
         print(self.world.agents)
 
         self.paused = False
@@ -178,12 +180,12 @@ class Scenario:
             self.set_friendly_actions(actor)
 
             # Terminate if agent reaches goal
-            tree = makeTree({'if': equalFeatureRow(stateKey(actor.name, 'x'), stateKey(actor.name, 'goal_x')),
-                             True: {'if': equalFeatureRow(stateKey(actor.name, 'y'), stateKey(actor.name, 'goal_y')),
-                                    True: setTrueMatrix(TERMINATED),
-                                    False: setFalseMatrix(TERMINATED)},
-                             False: setFalseMatrix(TERMINATED)})
-            self.world.addTermination(tree)
+            self.termination = makeTree({'if': equalFeatureRow(stateKey(actor.name, 'x'),
+                                                               stateKey(actor.name, 'goal_x'))+
+                                         equalFeatureRow(stateKey(actor.name, 'y'),
+                                                         stateKey(actor.name, 'goal_y')),
+                                         True: setTrueMatrix(TERMINATED),
+                                         False: self.termination})
 
     def set_friendly_actions(self, actor):
         # Nop
@@ -393,12 +395,12 @@ class Scenario:
             self.set_enemy_actions(actor, index)
 
             # Terminate if enemy captures agent
-            tree = {'if': equalFeatureRow(stateKey(actor.name, 'x'), stateKey('Actor' + str(index), 'x')),
-                    True: {'if': equalFeatureRow(stateKey(actor.name, 'y'), stateKey('Actor' + str(index), 'y')),
-                           True: setTrueMatrix(TERMINATED),
-                           False: setFalseMatrix(TERMINATED)},
-                    False: setFalseMatrix(TERMINATED)}
-            self.world.addTermination(makeTree(tree))
+            self.termination = makeTree({'if': equalFeatureRow(stateKey(actor.name, 'x'),
+                                                               stateKey('Actor' + str(index), 'x'))+
+                                         equalFeatureRow(stateKey(actor.name, 'y'),
+                                                         stateKey('Actor' + str(index), 'y')),
+                                         True: setTrueMatrix(TERMINATED),
+                                         False: self.termination})
 
     def set_enemy_actions(self, actor, index):
         # Nop
