@@ -16,7 +16,6 @@ class KeyedPlane:
     """
     DEFAULT_THRESHOLD = 0.
     DEFAULT_COMPARISON = 1
-    CONJUNCTION = True
 
     def __init__(self,planes,threshold=None,comparison=None):
         """
@@ -44,7 +43,17 @@ class KeyedPlane:
                     raise ValueError,'Empty plane passed into constructor'
         self._string = None
         self._keys = None
+        self.isConjunction = True
 
+    def __add__(self,other):
+        """
+        @warning: Does not check for duplicate planes
+        """
+        assert self.isConjunction == other.isConjunction,'Planes must be both disjunctive or both conjunctive to be combined'
+        result = self.__class__(self.planes+other.planes)
+        result.isConjunction = self.isConjunction
+        return result
+    
     def keys(self):
         if self._keys is None:
             self._keys = set()
@@ -70,35 +79,35 @@ class KeyedPlane:
                 total = total.first()
             if self.comparison > 0:
                 if total+self.vector.epsilon > self.threshold:
-                    if not self.CONJUNCTION:
+                    if not self.isConjunction:
                         # Disjunction, so any positive result is sufficient
                         return True
-                elif self.CONJUNCTION:
+                elif self.isConjunction:
                     # Conjunction, so any negative result is sufficient
                     return False
             elif self.comparison < 0:
                 if total-self.vector.epsilon < self.threshold:
-                    if not self.CONJUNCTION:
+                    if not self.isConjunction:
                         # Disjunction, so any positive result is sufficient
                         return True
-                elif self.CONJUNCTION:
+                elif self.isConjunction:
                     # Conjunction, so any negative result is sufficient
                     return False
             elif self.comparison == 0:
                 if isinstance(self.threshold,list):
                     if reduce(operator.or_,[abs(total-t) < self.vector.epsilon for t in self.threshold]):
-                        if not self.CONJUNCTION:
+                        if not self.isConjunction:
                             # Disjunction, so any positive result is sufficient
                             return True
-                    elif self.CONJUNCTION:
+                    elif self.isConjunction:
                         # Conjunction, so any negative result is sufficient
                         return False
                 else:
                     if abs(total-self.threshold) < self.vector.epsilon:
-                        if not self.CONJUNCTION:
+                        if not self.isConjunction:
                             # Disjunction, so any positive result is sufficient
                             return True
-                    elif self.CONJUNCTION:
+                    elif self.isConjunction:
                         # Conjunction, so any negative result is sufficient
                         return False
             else:
@@ -106,7 +115,7 @@ class KeyedPlane:
                 raise ValueError,'Invalid comparison %s' % (self.comparison)
         else:
             # No planes matched
-            if self.CONJUNCTION:
+            if self.isConjunction:
                 return True
             else:
                 return False
@@ -220,7 +229,7 @@ class KeyedPlane:
 
     def __str__(self):
         if self._string is None:
-            if self.CONJUNCTION:
+            if self.isConjunction:
                 operator = '\nAND '
             else:
                 operator = '\nOR '
@@ -315,9 +324,3 @@ def caseRow(key):
     @rtype: L{KeyedPlane}
     """
     return KeyedPlane(KeyedVector({key: 1.}),0,'switch')
-
-class KeyedBranch:
-    """
-    Disjuction/conjunction of individual planes
-    """
-    pass
