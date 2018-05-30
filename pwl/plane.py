@@ -58,7 +58,8 @@ class KeyedPlane:
         if self._keys is None:
             self._keys = set()
             for vector,threshold,comparison in self.planes:
-                self._keys |= vector.keys()
+                print vector.keys()
+                self._keys |= set(vector.keys())
         return self._keys
     
     def evaluate(self,vector):
