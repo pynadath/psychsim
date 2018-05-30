@@ -158,7 +158,10 @@ class VectorDistributionSet:
             if preserveCertainty:
                 substates = {s for s in substates
                              if len(self.distributions[s]) > 1}
-            self.merge(substates,True)
+            result = self.merge(substates)
+            return result
+        else:
+            raise ValueError,'No substates to collapse'
         
     def uncertain(self):
         """
@@ -220,34 +223,30 @@ class VectorDistributionSet:
         else:
             return self.substate(obj.keys())
 
-    def merge(self,substates,inPlace=False):
+    def merge(self,substates):
         """
-        @return: a joint distribution across the given substates
+        @return: the substate into which they've all been merged
         """
-        if inPlace:
-            result = self
-        else:
-            result = self.__class__()
         try:
             destination = iter(substates).next()
         except StopIteration:
-            return result
+            return None
         for substate,distribution in self.distributions.items():
             if substate == destination:
                 if not inPlace:
-                    result.distributions[substate] = copy.deepcopy(distribution)
+                    self.distributions[substate] = copy.deepcopy(distribution)
             elif substate in substates:
-                result.distributions[destination].merge(distribution,True)
+                self.distributions[destination].merge(distribution,True)
                 if inPlace:
                     del self.distributions[substate]
             elif not inPlace:
-                result.distributions[substate] = copy.deepcopy(distribution)
+                self.distributions[substate] = copy.deepcopy(distribution)
         for key,substate in self.keyMap.items():
             if substate in substates:
-                result.keyMap[key] = destination
+                self.keyMap[key] = destination
             elif not inPlace:
-                result.keyMap[key] = substate
-        return result
+                self.keyMap[key] = substate
+        return destination
 
     def join(self,key,value,substate=0):
         """
@@ -433,49 +432,61 @@ class VectorDistributionSet:
                 # Evaluate the hyperplane and split the state
                 branchKeys = set(other.branch.keys())
                 substates = self.substate(branchKeys)
-                self.collapse(substates)
-                self *= other.branch.vector
-                valSub = self.keyMap[keys.VALUE]
-                falseState = copy.deepcopy(self)
-                tPossible = False
-                fPossible = False
-                del self.keyMap[keys.VALUE]
-                del falseState.keyMap[keys.VALUE]
-                for vector in self.distributions[valSub].domain():
-                    prob = self.distributions[valSub][vector]
-                    del self.distributions[valSub][vector]
-                    del falseState.distributions[valSub][vector]
-                    test = other.branch.evaluate(vector[keys.VALUE])
-                    del vector[keys.VALUE]
-                    if test:
-                        # This vector passes the test
-                        if len(vector) > 1:
-                            self.distributions[valSub].addProb(vector,prob)
-                        tPossible = True
+                valSub = self.collapse(substates)
+                assert len(other.branch.planes) == 1,'Currently unable to process conjunctive branches'
+                print valSub
+                if valSub is None:
+                    vector = KeyedVector({k: self.distributions[self.keyMap[k]].first()[k] for k in branchKeys})
+                    if other.branch.evaluate(vector):
+                        self *= other.children[True]
                     else:
-                        # This vector fails the test
-                        if len(vector) > 1:
-                            falseState.distributions[valSub].addProb(vector,prob)
-                        fPossible = True
-                existingKeys = set(self.keyMap.keys())
-                if tPossible:
-                    if len(self.distributions[valSub].domain()) == 0:
-                        del self.distributions[valSub]
-                    self *= other.children[True]
-                if fPossible:
-                    if tPossible:
-                        newKeys = set(other.getKeysOut())
-                        assert len(falseState.distributions[valSub].domain()) > 0
-                        falseState *= other.children[False]
-                        falseState.collapse(falseState.substate(other.children[False]),
-                                            False)
-                        self.update(falseState,newKeys|branchKeys)
-                    else:
-                        if len(falseState.distributions[valSub].domain()) > 0:
-                            self.distributions[valSub] = falseState.distributions[valSub]
-                        elif len(self.distributions[valSub].domain()) == 0:
-                            del self.distributions[valSub]
                         self *= other.children[False]
+                else:
+                    for vector in self.distributions[valSub].domain():
+                        print other.branch.evaluate(vector)
+                    print other.branch.planes[0][0]
+                    self *= other.branch.planes[0][0]
+                    valSub = self.keyMap[keys.VALUE]
+                    falseState = copy.deepcopy(self)
+                    tPossible = False
+                    fPossible = False
+                    del self.keyMap[keys.VALUE]
+                    del falseState.keyMap[keys.VALUE]
+                    for vector in self.distributions[valSub].domain():
+                        prob = self.distributions[valSub][vector]
+                        del self.distributions[valSub][vector]
+                        del falseState.distributions[valSub][vector]
+                        test = other.branch.evaluate(vector[keys.VALUE])
+                        del vector[keys.VALUE]
+                        if test:
+                            # This vector passes the test
+                            if len(vector) > 1:
+                                self.distributions[valSub].addProb(vector,prob)
+                            tPossible = True
+                        else:
+                            # This vector fails the test
+                            if len(vector) > 1:
+                                falseState.distributions[valSub].addProb(vector,prob)
+                            fPossible = True
+                    existingKeys = set(self.keyMap.keys())
+                    if tPossible:
+                        if len(self.distributions[valSub].domain()) == 0:
+                            del self.distributions[valSub]
+                        self *= other.children[True]
+                    if fPossible:
+                        if tPossible:
+                            newKeys = set(other.getKeysOut())
+                            assert len(falseState.distributions[valSub].domain()) > 0
+                            falseState *= other.children[False]
+                            falseState.collapse(falseState.substate(other.children[False]),
+                                                False)
+                            self.update(falseState,newKeys|branchKeys)
+                        else:
+                            if len(falseState.distributions[valSub].domain()) > 0:
+                                self.distributions[valSub] = falseState.distributions[valSub]
+                            elif len(self.distributions[valSub].domain()) == 0:
+                                del self.distributions[valSub]
+                            self *= other.children[False]
         elif isinstance(other,KeyedVector):
             substates = self.substate(other)
             self.collapse(substates)
