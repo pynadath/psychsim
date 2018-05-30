@@ -58,7 +58,6 @@ class KeyedPlane:
         if self._keys is None:
             self._keys = set()
             for vector,threshold,comparison in self.planes:
-                print vector.keys()
                 self._keys |= set(vector.keys())
         return self._keys
     
@@ -70,33 +69,33 @@ class KeyedPlane:
         @warning: If multiple planes are present, an AND over their results is assumed
         """
         result = None
-        for vector,threshold,comparison in self.planes:
+        for plane,threshold,comparison in self.planes:
             if isinstance(vector,float):
                 total = vector
             else:
-                total = self.vector * vector
+                total = plane * vector
             if isinstance(total,Distribution):
                 assert len(total) == 1,'Unable to handle uncertain test results'
                 total = total.first()
-            if self.comparison > 0:
-                if total+self.vector.epsilon > self.threshold:
+            if comparison > 0:
+                if total+plane.epsilon > threshold:
                     if not self.isConjunction:
                         # Disjunction, so any positive result is sufficient
                         return True
                 elif self.isConjunction:
                     # Conjunction, so any negative result is sufficient
                     return False
-            elif self.comparison < 0:
-                if total-self.vector.epsilon < self.threshold:
+            elif comparison < 0:
+                if total-plane.epsilon < threshold:
                     if not self.isConjunction:
                         # Disjunction, so any positive result is sufficient
                         return True
                 elif self.isConjunction:
                     # Conjunction, so any negative result is sufficient
                     return False
-            elif self.comparison == 0:
-                if isinstance(self.threshold,list):
-                    if reduce(operator.or_,[abs(total-t) < self.vector.epsilon for t in self.threshold]):
+            elif comparison == 0:
+                if isinstance(threshold,list):
+                    if reduce(operator.or_,[abs(total-t) < plane.epsilon for t in threshold]):
                         if not self.isConjunction:
                             # Disjunction, so any positive result is sufficient
                             return True
@@ -104,7 +103,7 @@ class KeyedPlane:
                         # Conjunction, so any negative result is sufficient
                         return False
                 else:
-                    if abs(total-self.threshold) < self.vector.epsilon:
+                    if abs(total-threshold) < plane.epsilon:
                         if not self.isConjunction:
                             # Disjunction, so any positive result is sufficient
                             return True
@@ -113,7 +112,7 @@ class KeyedPlane:
                         return False
             else:
                 # Return raw value, to be used in unspeakable ways
-                raise ValueError,'Invalid comparison %s' % (self.comparison)
+                raise ValueError,'Invalid comparison %s' % (comparison)
         else:
             # No planes matched
             if self.isConjunction:
