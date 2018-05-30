@@ -11,14 +11,18 @@ from psychsim.pwl import *
 from psychsim.action import *
 from psychsim.world import *
 from psychsim.agent import *
+
 import pyglet
 from pyglet.window import key
 from argparse import ArgumentParser
+
+import cStringIO
 import logging
+import os
+import os.path
+import random
 from threading import Thread
 from time import time
-import os
-import random
 
 class Scenario:
     def __init__(self,
@@ -63,7 +67,7 @@ class Scenario:
         self.create_enemy_agents()
         self.create_distract_agents()
         self.create_base()
-        print(self.world.agents)
+        logging.debug(self.world.agents)
 
         self.paused = False
 
@@ -468,9 +472,9 @@ class Scenario:
 
     def evaluate_score(self):
         cwd = os.getcwd()
-        print(cwd)
+        logging.debug(cwd)
         t = str(time())
-        file = open(cwd + "\output\\" + t + ".txt", "w")
+        file = open(os.path.join(cwd,'output','%s.txt' % (t)), "w")
         file.write("Parameters:\n")
         file.write("Map Size X: " + str(self.MAP_SIZE_X) + "\n")
         file.write("Map Size Y: " + str(self.MAP_SIZE_Y) + "\n")
@@ -544,15 +548,20 @@ class Scenario:
         for index in range(0, self.F_ACTORS):
             score = agent_goal_scores[index] + agent_enemy_scores[index] + 20 - helicopter_cost_scores[index] + 20 - turns
             possible = max_distance + 20 + 20
-            print(float(score * 100 / possible))
+            logging.info('Score: %5.2f' % (float(score * 100 / possible)))
             total = float(score * 100 / possible)
             file.write("Soldier" + str(index) + ": " + str(total))
+            assert self.F_ACTORS == 1,'Unable to process multiple seekers'
+            return total
 
     def run_without_visual(self):
         while not self.world.terminated():
             result = self.world.step()
-            self.world.explain(result, 2)
-        self.evaluate_score()
+            buf = cStringIO.StringIO()
+            self.world.explain(result, 2, buf)
+            logging.debug(buf.getvalue())
+            buf.close()
+        return self.evaluate_score()
 
     def run_with_visual(self):
         pyglet.resource.path = ['../resources']
@@ -653,10 +662,10 @@ class Scenario:
         def on_key_press(symbol, modifiers):
             if symbol == key.P:
                 self.paused = True
-                print('Paused')
+                logging.debug('Paused')
             if symbol == key.U:
                 self.paused = False
-                print('Resumed')
+                logging.debug('Resumed')
 
         def update(dt):
             if not self.paused:
@@ -684,9 +693,9 @@ class Scenario:
         # target=pyglet.app.run()
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.ERROR)
+    logging.basicConfig()
     parser = ArgumentParser()
-    parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
+    parser.add_argument('-d','--debug',default='INFO',help='Level of logging detail')
     parser.add_argument('-v','--visual',action='store_true',help='Run with visualization')
     args = vars(parser.parse_args())
 
