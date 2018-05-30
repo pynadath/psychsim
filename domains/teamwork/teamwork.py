@@ -697,6 +697,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='INFO',help='Level of logging detail')
     parser.add_argument('-v','--visual',action='store_true',help='Run with visualization')
+    parser.add_argument('-n','--number',type=int,default=50,help='Number of trials (ignored if visualization)')
     args = vars(parser.parse_args())
 
     # Extract logging level from command-line argument
@@ -705,23 +706,25 @@ if __name__ == '__main__':
         raise ValueError('Invalid debug level: %s' % args['debug'])
     logging.getLogger().setLevel(level)
 
-    run = Scenario(
-        MAP_SIZE_X=10,
-        MAP_SIZE_Y=10,
-        F_ACTORS=1,
-        F_START_LOC=["1,1"],
-        F_GOAL_LOC=["5,5"],
-        E_ACTORS=1,
-        E_START_LOC=["9,9"],
-        E_PATROL_RANGE=5,
-        D_ACTORS=1,
-        D_START_LOC=["0,0"],
-        BASE=[0.5, 0.2],
-        DISTRACTOR=[-1.0, 1.0],
-        ENEMY=[0.5, 0.6, -1.0],
-        AGENT=[1.0,-0.5])
     if args['visual']:
         run.run_with_visual()
     else:
-        run.run_without_visual()
-        #     print('RUN COMPLETE!')
+        results = []
+        for trial in range(args['number']):
+            run = Scenario(
+                MAP_SIZE_X=10,
+                MAP_SIZE_Y=10,
+                F_ACTORS=1,
+                F_START_LOC=["1,1"],
+                F_GOAL_LOC=["5,5"],
+                E_ACTORS=1,
+                E_START_LOC=["9,9"],
+                E_PATROL_RANGE=5,
+                D_ACTORS=1,
+                D_START_LOC=["0,0"],
+                BASE=[0.5, 0.2],
+                DISTRACTOR=[-1.0, 1.0],
+                ENEMY=[0.5, 0.6, -1.0],
+                AGENT=[1.0,-0.5])
+            results.append(run.run_without_visual())
+            #     print('RUN COMPLETE!')
