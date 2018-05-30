@@ -62,7 +62,7 @@ class Scenario:
         self.world.addTermination(makeTree({'if': thresholdRow(stateKey(None, 'turns'), 20),
                                             True: True, False: False}))
         self.obstacles = []
-        self.generate_obstacles()
+#        self.generate_obstacles()
         self.create_friendly_agents()
         self.create_enemy_agents()
         self.create_distract_agents()
@@ -70,7 +70,8 @@ class Scenario:
         logging.debug(self.world.agents)
 
         self.paused = False
-
+        self.result = None
+        
         # Parallel action
         # self.world.setOrder([set(self.world.agents.keys())])
         # Sequential action
@@ -502,6 +503,8 @@ class Scenario:
         file.write("Minimizing soldier and enemy distance : " + str(self.DISTRACTOR[1]) + "\n")
         file.write("\n \n")
 
+        result = {'obstacles': self.obstacles}
+        
         max_distance = self.MAP_SIZE_X + self.MAP_SIZE_Y
 
         file.write("Scores:\n")
@@ -515,7 +518,8 @@ class Scenario:
             agent_goal_scores.append(max_distance - soldier_goal_distance)
             file.write("Soldier" + str(index) + ": " + str(agent_goal_scores[index]) + "\n")
             # print(agent_goal_scores[index])
-
+        result['goal_score'] = agent_goal_scores
+        
         file.write("Soldier-Enemy Manhattan Distance: \n")
         agent_enemy_scores = []
         for index in range(0, self.F_ACTORS):
@@ -530,6 +534,7 @@ class Scenario:
             if(agent_enemy_scores[index] == 0):
                 file.write("Soldier was captured, penalty awarded")
             # print(agent_enemy_scores[index])
+        result['enemy_score'] = agent_enemy_scores
 
         file.write("Helicopter Deployment Costs: \n")
         helicopter_cost_scores =[]
@@ -537,14 +542,17 @@ class Scenario:
             helicopter_score = int(self.world.getState('Distractor'+str(index), 'cost').domain()[0])
             helicopter_cost_scores.append(helicopter_score)
             file.write("Distractor"+str(index)+": "+ str(helicopter_cost_scores[index])+"\n")
+        result['helicopter_cost'] = helicopter_cost_scores
 
         file.write("Turns Taken: \n")
         turns = int(self.world.getState(None,'turns').domain()[0])
         file.write(str(turns) + "\n")
         if(turns < 10):
             file.write("Bonus for taking less than 10 turns")
+        result['turns'] = turns
 
         file.write("Overall Score: \n")
+        total_scores = []
         for index in range(0, self.F_ACTORS):
             score = agent_goal_scores[index] + agent_enemy_scores[index] + 20 - helicopter_cost_scores[index] + 20 - turns
             possible = max_distance + 20 + 20
@@ -552,7 +560,9 @@ class Scenario:
             total = float(score * 100 / possible)
             file.write("Soldier" + str(index) + ": " + str(total))
             assert self.F_ACTORS == 1,'Unable to process multiple seekers'
-            return total
+            total_scores.append(total)
+        result['score'] = total_scores
+        return result
 
     def run_without_visual(self):
         while not self.world.terminated():
@@ -709,7 +719,10 @@ if __name__ == '__main__':
     if args['visual']:
         run.run_with_visual()
     else:
-        results = []
+        log = []
+        reward = {'base': 0.71,
+                  'distractor': 0.5,
+                  'agent': 0.67}
         for trial in range(args['number']):
             run = Scenario(
                 MAP_SIZE_X=10,
@@ -722,9 +735,13 @@ if __name__ == '__main__':
                 E_PATROL_RANGE=5,
                 D_ACTORS=1,
                 D_START_LOC=["0,0"],
-                BASE=[0.5, 0.2],
-                DISTRACTOR=[-1.0, 1.0],
+                BASE=[reward['base'], 1.-reward['base']],
+                DISTRACTOR=[-reward['distractor'], 1.-reward['distractor']],
                 ENEMY=[0.5, 0.6, -1.0],
-                AGENT=[1.0,-0.5])
-            results.append(run.run_without_visual())
+                AGENT=[reward['agent'],reward['agent']-1.])
+            result = run.run_without_visual()
+            result['reward'] = dict(reward)
+            logging.info(result)
+            
+
             #     print('RUN COMPLETE!')
