@@ -62,7 +62,7 @@ class Scenario:
         self.world.addTermination(makeTree({'if': thresholdRow(stateKey(None, 'turns'), 20),
                                             True: True, False: False}))
         self.obstacles = []
-#        self.generate_obstacles()
+        self.generate_obstacles()
         self.create_friendly_agents()
         self.create_enemy_agents()
         self.create_distract_agents()
@@ -510,18 +510,22 @@ class Scenario:
         file.write("Scores:\n")
         file.write("Soldier-Goal Manhattan Distance: \n")
         agent_goal_scores = []
+        agent_goals = []
         for index in range(0, self.F_ACTORS):
             ending_x = int(self.world.getState('Actor' + str(index), 'x').domain()[0])
             ending_y = int(self.world.getState('Actor' + str(index), 'y').domain()[0])
             soldier_goal_distance = abs(self.f_get_goal_x(index) - ending_x) + abs(
                 self.f_get_goal_y(index) - ending_y)
+            agent_goals.append(soldier_goal_distance == 0)
             agent_goal_scores.append(max_distance - soldier_goal_distance)
             file.write("Soldier" + str(index) + ": " + str(agent_goal_scores[index]) + "\n")
             # print(agent_goal_scores[index])
         result['goal_score'] = agent_goal_scores
+        result['goals'] = agent_goals
         
         file.write("Soldier-Enemy Manhattan Distance: \n")
         agent_enemy_scores = []
+        agent_captures = []
         for index in range(0, self.F_ACTORS):
             soldier_x = int(self.world.getState('Actor' + str(index), 'x').domain()[0])
             soldier_y = int(self.world.getState('Actor' + str(index), 'y').domain()[0])
@@ -531,10 +535,12 @@ class Scenario:
                 soldier_y - enemy_y)
             agent_enemy_scores.append(soldier_enemy_distance - max_distance)
             file.write("Soldier" + str(index) + ": " + str(agent_enemy_scores[index]) + "\n")
-            if(agent_enemy_scores[index] == 0):
+            agent_captures.append(soldier_enemy_distance == 0)
+            if(soldier_enemy_distance == 0):
                 file.write("Soldier was captured, penalty awarded")
             # print(agent_enemy_scores[index])
         result['enemy_score'] = agent_enemy_scores
+        result['captures'] = agent_captures
 
         file.write("Helicopter Deployment Costs: \n")
         helicopter_cost_scores =[]
