@@ -435,7 +435,6 @@ class VectorDistributionSet:
                 substates = self.substate(branchKeys)
                 valSub = self.collapse(substates)
                 assert len(other.branch.planes) == 1,'Currently unable to process conjunctive branches'
-                print valSub
                 if valSub is None:
                     vector = KeyedVector({k: self.distributions[self.keyMap[k]].first()[k] for k in branchKeys})
                     if other.branch.evaluate(vector):
