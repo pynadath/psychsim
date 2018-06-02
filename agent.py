@@ -31,8 +31,8 @@ class Agent:
     @type color: str
     """
 
-    def __init__(self,name,world=None):
-        self.world = world
+    def __init__(self,name):
+        self.world = None
         self.actions = set()
         self.legal = {}
         self.omega = set()
@@ -48,10 +48,6 @@ class Agent:
             self.parse(name)
         else:
             self.name = name
-            # Default model settings
-            self.addModel('%s0' % (self.name),R={},horizon=2,level=2,rationality=1.,
-                          discount=1.,selection='consistent',
-                          beliefs=True,parent=None,projector=Distribution.expectation)
 
     """------------------"""
     """Policy methods"""

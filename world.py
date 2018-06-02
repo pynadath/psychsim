@@ -3,6 +3,7 @@ import bz2
 import copy
 import logging
 import io
+import pprint
 from xml.dom.minidom import Document,Node,parseString
 
 from psychsim.action import ActionSet,Action
@@ -223,7 +224,9 @@ class World:
         if isinstance(actions,Action):
             actions = {actions['subject']: ActionSet({actions})}
         elif isinstance(actions,ActionSet):
-            actions = {actions['subject']: actions}
+            actions = {}
+            for action in actions:
+                actions[action['subject']] = ActionSet(actions.get(action['subject'],set())|action)
         if isinstance(actions,dict):
             for name,policy in actions.items():
                 if isinstance(policy,ActionSet):
@@ -460,7 +463,7 @@ class World:
 
     def addAgent(self,agent):
         if isinstance(agent,str):
-            agent = Agent(agent,self)
+            agent = Agent(agent)
         if self.has_agent(agent):
             raise NameError('Agent %s already exists in this world' % (agent.name))
         else:
@@ -468,6 +471,11 @@ class World:
             agent.world = self
             self.turnSubstate = None
             self.turnKeys = set()
+            if len(agent.models) == 0:
+                # Default model settings
+                agent.addModel('%s0' % (agent.name),R={},horizon=2,level=2,rationality=1.,
+                              discount=1.,selection='consistent',
+                              beliefs=True,parent=None,projector=Distribution.expectation)
             # Initialize model of this agent to be uniform distribution (got a better idea?)
             prob = 1./float(len(agent.models))
             dist = {model: prob for model in agent.models}
