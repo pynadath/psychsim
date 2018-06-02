@@ -25,6 +25,13 @@ class Neighborhood(Agent):
         risk = world.defineState(self.name,'risk',float)
         world.setFeature(risk,random.random()/2.+0.25)
 
+        security = world.defineState(self.name,'security',float)
+        world.setFeature(security,random.random()/2+0.25)
+
+class System(Agent):
+    def __init__(self,world):
+        Agent.__init__(self,'System')
+        world.addAgent(self)
         
 class Group(Agent):
     def __init__(self,name,world):
@@ -47,6 +54,8 @@ class Person(Agent):
         Agent.__init__(self,'Person%s' % (name))
         world.addAgent(self)
 
+        self.setAttribute('horizon',4,'%s0' % (self.name))
+        
         # States
         health = world.defineState(self.name,'health',bool)
         world.setFeature(health,True)
@@ -171,12 +180,26 @@ class Person(Agent):
         # A: Do good/bad
         for neighborhood in self.world.agents.values():
             if isinstance(neighborhood,Neighborhood):
-                # Doing good brings the risk in the neighborhood closer to False
+                ############Dynamics of doing good
                 good = self.addAction({'verb': 'doGood','object': neighborhood.name})
-                tree = makeTree({approachMatrix(stateKey(neighborhood.name,'risk'),.1,0.)})
-                # Doing good brings the risk in the neighborhood closer to 0
+                # Doing good makes a neigborhood less risky
+                key = stateKey(neighborhood.name,'risk')
+                tree = makeTree(approachMatrix(key,.1,0.))
+                world.setDynamics(key,good,tree)
+                # And more secure
+                key = stateKey(neighborhood.name,'security')
+                tree = makeTree(approachMatrix(key,.1,1.))
+                world.setDynamics(key,good,tree)
+                ############Dynamics of doing bad
                 bad = self.addAction({'verb': 'doBad','object': neighborhood.name})
-                tree = makeTree({approachMatrix(stateKey(neighborhood.name,'risk'),.1,1.)})
+                # Doing bad makes a neighborhood more risky
+                key = stateKey(neighborhood.name,'risk')
+                tree = makeTree(approachMatrix(key,.1,1.))
+                world.setDynamics(key,bad,tree)
+                # Doing bad makes a neighborhood less secure
+                key = stateKey(neighborhood.name,'security')
+                tree = makeTree(approachMatrix(key,.1,0.))
+                world.setDynamics(key,bad,tree)
                 
         # Reward
         self.setReward(maximizeFeature(health),1.)
@@ -276,7 +299,9 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR)
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
-    parser.add_argument('-n','--number',default=100,type=int,help='Number of actors')
+    parser.add_argument('-p','--population',default=2,type=int,help='Number of actors')
+    parser.add_argument('-a','--area',default=25,type=int,help='Number of neighborhoods')
+    parser.add_argument('-n','--number',default=1,type=int,help='Number of days to run')
     args = vars(parser.parse_args())
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
@@ -288,9 +313,9 @@ if __name__ == '__main__':
     world.diagram = Diagram()
 
     neighborhoods = {}
-    for neighborhood in ['sw','nw','ne','se']:
-        n = Neighborhood(neighborhood,world)
-    neighborhoods.update(world.agents)
+    for neighborhood in range(args['area']):
+        n = Neighborhood('Neighborhood%02d' % (neighborhood),world)
+        neighborhoods[n.name] = n
 
     # Shelter
     shelter = world.addAgent('shelter')
@@ -300,7 +325,7 @@ if __name__ == '__main__':
 #    world.setFeature(allowPets,False)
 
     population = []
-    for i in range(args['number']):
+    for i in range(args['population']):
         agent = Person('%02d' % (i),world)
         population.append(agent)
 
@@ -310,14 +335,19 @@ if __name__ == '__main__':
         for other in population:
             if other.name != agent.name:
                     agent.ignore(other.name,'%s0' % (agent.name))
-    print shelter.models['shelter0']['beliefs']
 
-#    world.printState()
-#    world.toCDF(world,'/tmp/testing')
-#    data = []
-    result = world.step(select=False)
-    world.explainAction(level=1)
+
+    oldState = world.state
+    world.printState(oldState)
+    newState = world.step(select=False)
+    world.explainAction(newState,level=1)
+    world.printState(newState)
 
 #    print float(shelter)/float(len(data))
 
 #    world.save('scenario.psy')
+
+#    world.printState()
+#    world.toCDF(world,'/tmp/testing')
+#    data = []
+
