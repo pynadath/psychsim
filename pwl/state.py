@@ -233,19 +233,19 @@ class VectorDistributionSet:
             return None
         for substate,distribution in self.distributions.items():
             if substate == destination:
-                if not inPlace:
-                    self.distributions[substate] = copy.deepcopy(distribution)
+                pass
+                # if not inPlace:
+                #     self.distributions[substate] = copy.deepcopy(distribution)
             elif substate in substates:
                 self.distributions[destination].merge(distribution,True)
-                if inPlace:
-                    del self.distributions[substate]
-            elif not inPlace:
-                self.distributions[substate] = copy.deepcopy(distribution)
+                del self.distributions[substate]
+            # elif not inPlace:
+            #     self.distributions[substate] = copy.deepcopy(distribution)
         for key,substate in self.keyMap.items():
             if substate in substates:
                 self.keyMap[key] = destination
-            elif not inPlace:
-                self.keyMap[key] = substate
+            # elif not inPlace:
+            #     self.keyMap[key] = substate
         return destination
 
     def join(self,key,value,substate=0):
@@ -359,7 +359,8 @@ class VectorDistributionSet:
         if isinstance(other,KeyedMatrix):
             # Focus on subset that this matrix affects
             substates = self.substate(other.getKeysIn())
-            self.collapse(substates)
+            if substates:
+                self.collapse(substates)
             destination = self.findUncertainty(substates)
             # Go through each key this matrix sets
             for rowKey,vector in other.items():
