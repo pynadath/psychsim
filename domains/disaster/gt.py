@@ -15,11 +15,21 @@ from psychsim.world import *
 from psychsim.agent import Agent
 from psychsim.ui.diagram import Diagram
 
+class Neighborhood(Agent):
+    def __init__(self,name,world):
+        Agent.__init__(self,name)
+        world.addAgent(self)
+
+        self.setAttribute('static',True)
+        
+        risk = world.defineState(self.name,'risk',float)
+        world.setFeature(risk,random.random()/2.+0.25)
+
+        
 class Group(Agent):
     def __init__(self,name,world):
-        Agent.__init__(self,'Group%s' % (name),world)
+        Agent.__init__(self,'Group%s' % (name))
         world.addAgent(self)
-        world.setModel(self.name,self.models.keys()[0])
 
     def potentialMembers(self,agents,weights=None):
         assert len(self.models) == 1,'Define potential members before adding multiple models of group %s' % (self.name)
@@ -34,23 +44,44 @@ class Group(Agent):
     
 class Person(Agent):
     def __init__(self,name,world):
-        Agent.__init__(self,'Person%s' % (name),world)
+        Agent.__init__(self,'Person%s' % (name))
         world.addAgent(self)
-        world.setModel(self.name,self.models.keys()[0])
-        
+
         # States
         health = world.defineState(self.name,'health',bool)
         world.setFeature(health,True)
+        resources = world.defineState(self.name,'resources',float)
+        world.setFeature(resources,random.random()/2.+0.25)
 
-#        pet = world.defineState(self.name,'pet',bool)
-#        world.setFeature(pet,random.random()>0.75)
-        rich = world.defineState(self.name,'wealth',float)
-        world.setFeature(rich,random.random())
-        kids = world.defineState(self.name,'kids',bool)
+        # Demographic info
+        ethnic = world.defineState(self.name,'ethnicGroup',list,['majority','minority'])
+        if random.random() > 0.75:
+            world.setFeature(ethnic,'minority')
+        else:
+            world.setFeature(ethnic,'majority')
+        wealthy = world.defineState(self.name,'wealthy',bool)
+        world.setFeature(wealthy,random.random()>0.75)
+        gender = world.defineState(self.name,'gender',list,['male','female'])
+        if random.random() > 0.5:
+            world.setFeature(gender,'male')
+        else:
+            world.setFeature(gender,'female')
+        kids = world.defineState(self.name,'children',bool)
         world.setFeature(kids,random.random()>0.75)
 
-        location = world.defineState(self.name,'neighborhood',list,neighborhoods+['shelter','gone'])
-        world.setFeature(location,random.choice(neighborhoods))
+        neighborhoods = [name for name in self.world.agents
+                         if isinstance(self.world.agents[name],Neighborhood)]
+        neighborhood = world.defineState(self.name,'neighborhood',list,neighborhoods)
+        home = random.choice(neighborhoods)
+        world.setFeature(neighborhood,home)
+        location = world.defineState(self.name,'location',list,neighborhoods+
+                                     ['shelter','gone','home'])
+        world.setFeature(location,'home')
+
+        x = world.defineState(self.name,'x',float)
+        world.setFeature(x,random.random())
+        y = world.defineState(self.name,'y',float)
+        world.setFeature(y,random.random())
 
         attachmentStyles = ['secure','insecure']
         attachment = world.defineState(self.name,'attachment',list,attachmentStyles)
@@ -59,18 +90,28 @@ class Person(Agent):
         grievance = world.defineState(self.name,'grievance',bool)
         world.setFeature(grievance,random.random()>0.85)
 
-        risk = world.defineState(self.name,'risk',bool)
-        world.setFeature(risk,random.random()>0.75)
-#        friendRisk = world.defineState(agent1.name,'risk',bool)
-#        tree = makeTree(setToFeatureMatrix(risk,friendRisk))
-#        world.setDynamics(risk,True,tree)
-#        friendLeave = agent1.addAction({'verb': 'leave'})
-#        world.setDynamics(risk,friendLeave,makeTree(noChangeMatrix(risk)))
+        risk = world.defineState(self.name,'risk',float)
+        world.setFeature(risk,random.random()/2.+0.25)
 
         # Actions and Dynamics
 
+        # A: Go home
+        actHome = self.addAction({'verb':'goHome'})
+        # Effect on location
+        tree = makeTree(setToConstantMatrix(location,'home'))
+        world.setDynamics(location,actHome,tree)
+        # Effect on my health
+        tree = makeTree(noChangeMatrix(health))
+        world.setDynamics(health,actHome,tree)
+        # Effect on kids' health
+        tree = makeTree(noChangeMatrix(kids))
+        world.setDynamics(kids,actHome,tree)
+        # Effect on risk
+        tree = makeTree(setToFeatureMatrix(risk,stateKey(home,'risk')))
+        world.setDynamics(risk,actHome,tree)
+
         # A: Go to a shelter
-        actShelter = self.addAction({'verb':'shelter'})
+        actShelter = self.addAction({'verb':'gotoShelter'})
         # Effect on location
         tree = makeTree(setToConstantMatrix(location,'shelter'))
         world.setDynamics(location,actShelter,tree)
@@ -80,22 +121,17 @@ class Person(Agent):
         # Effect on kids' health
         tree = makeTree(noChangeMatrix(kids))
         world.setDynamics(kids,actShelter,tree)
-        # Effect on pets' health
-        # tree = makeTree({'if': trueRow(allowPets),
-        #                  True: setTrueMatrix(pet),
-        #                  False: setFalseMatrix(pet)})
-        # world.setDynamics(pet,actShelter,tree)
         # Effect on wealth
-        tree = makeTree({'if': thresholdRow(rich,0.5),
-                         True: noChangeMatrix(rich),
-                         False: scaleMatrix(rich,0.5)})
-        world.setDynamics(rich,actShelter,tree)
+        tree = makeTree({'if': thresholdRow(wealthy,0.5),
+                         True: noChangeMatrix(wealthy),
+                         False: scaleMatrix(wealthy,0.5)})
+        world.setDynamics(wealthy,actShelter,tree)
         # Effect on risk
         tree = makeTree(setFalseMatrix(risk))
         world.setDynamics(risk,actShelter,tree)
 
         # A: Leave city
-        actEvacuate = self.addAction({'verb': 'leaveCity'})
+        actEvacuate = self.addAction({'verb': 'evacuate'})
         # Effect on location
         tree = makeTree(setToConstantMatrix(location,'gone'))
         world.setDynamics(location,actEvacuate,tree)
@@ -105,18 +141,15 @@ class Person(Agent):
         # Effect on kids' health
         tree = makeTree(noChangeMatrix(kids))
         world.setDynamics(kids,actEvacuate,tree)
-        # Effect on pets' health (no hotels take pets)
-        # tree = makeTree(setFalseMatrix(pet))
-        # world.setDynamics(pet,actEvacuate,tree)
 
         # A: Shelter in place
-        actStay = self.addAction({'verb': 'stay'})
+        actStay = self.addAction({'verb': 'noMove'})
         # Effect on location
         tree = makeTree(noChangeMatrix(location))
         world.setDynamics(location,actStay,tree)
         # Effect on my health
         tree = makeTree({'if': trueRow(risk),
-                          True: {'if': trueRow(rich),
+                          True: {'if': trueRow(wealthy),
                                  True: {'distribution': [(setTrueMatrix(health),0.75),
                                                          (setFalseMatrix(health),0.25)]},
                                  False: {'distribution': [(setTrueMatrix(health),0.25),
@@ -126,7 +159,7 @@ class Person(Agent):
         # Effect on kids' health
         tree = makeTree({'if': trueRow(kids),
                          True: {'if': trueRow(risk),
-                                True: {'if': trueRow(rich),
+                                True: {'if': trueRow(wealthy),
                                        True: {'distribution': [(setTrueMatrix(kids),0.75),
                                                                (setFalseMatrix(kids),0.25)]},
                                        False: {'distribution': [(setTrueMatrix(kids),0.25),
@@ -134,22 +167,21 @@ class Person(Agent):
                                 False: setTrueMatrix(kids)},
                          False: setFalseMatrix(kids)})
         world.setDynamics(kids,actStay,tree)
-        # Effect on pets' health
-        # tree = makeTree({'if': trueRow(pet),
-        #                  True: {'if': trueRow(risk),
-        #                         True: {'if': trueRow(rich),
-        #                                True: {'distribution': [(setTrueMatrix(pet),0.75),
-        #                                                        (setFalseMatrix(pet),0.25)]},
-        #                                False: {'distribution': [(setTrueMatrix(pet),0.25),
-        #                                                         (setFalseMatrix(pet),0.75)]}},
-        #                         False: setTrueMatrix(pet)},
-        #                  False: setFalseMatrix(pet)})
-        # world.setDynamics(pet,actStay,tree)
 
+        # A: Do good/bad
+        for neighborhood in self.world.agents.values():
+            if isinstance(neighborhood,Neighborhood):
+                # Doing good brings the risk in the neighborhood closer to False
+                good = self.addAction({'verb': 'doGood','object': neighborhood.name})
+                tree = makeTree({approachMatrix(stateKey(neighborhood.name,'risk'),.1,0.)})
+                # Doing good brings the risk in the neighborhood closer to 0
+                bad = self.addAction({'verb': 'doBad','object': neighborhood.name})
+                tree = makeTree({approachMatrix(stateKey(neighborhood.name,'risk'),.1,1.)})
+                
         # Reward
         self.setReward(maximizeFeature(health),1.)
 #        self.setReward(maximizeFeature(pet),1.)
-        self.setReward(maximizeFeature(rich),1.)
+        self.setReward(maximizeFeature(wealthy),1.)
         self.setReward(maximizeFeature(kids),1.)
         # Decision-making parameters
         self.setAttribute('horizon',1)
@@ -254,12 +286,16 @@ if __name__ == '__main__':
 
     world = World()
     world.diagram = Diagram()
-    neighborhoods = ['sw','nw','ne','se']
 
-    
+    neighborhoods = {}
+    for neighborhood in ['sw','nw','ne','se']:
+        n = Neighborhood(neighborhood,world)
+    neighborhoods.update(world.agents)
+
     # Shelter
     shelter = world.addAgent('shelter')
     world.diagram.setColor(shelter.name,'cornflowerblue')
+    shelter.setAttribute('static',True)
 #    allowPets = world.defineState(shelter.name,'allowPets',bool)
 #    world.setFeature(allowPets,False)
 
@@ -273,7 +309,8 @@ if __name__ == '__main__':
         beliefs = agent.resetBelief()
         for other in population:
             if other.name != agent.name:
-                agent.ignore(other.name,'%s0' % (agent.name))
+                    agent.ignore(other.name,'%s0' % (agent.name))
+    print shelter.models['shelter0']['beliefs']
 
 #    world.printState()
 #    world.toCDF(world,'/tmp/testing')
