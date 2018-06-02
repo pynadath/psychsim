@@ -211,7 +211,6 @@ class World:
                 # Apply effects
                 outcome['new'] = outcome['effect']*outcome['old']
             if not 'delta' in outcome:
-                print(outcome['new'].__class__,outcome['old'].__class__)
                 outcome['delta'] = outcome['new'] - outcome['old']
         else:
             # No consistent effect
@@ -310,9 +309,20 @@ class World:
                         del dist[vector]
                         vector[newKey] = vector[key]
                         dist[vector] = prob
+                elif len(dynamics) == 1:
+                    result['new'] *= dynamics[0]
                 else:
+                    cumulative = None
                     for tree in dynamics:
-                        result['new'] *= tree
+                        print(tree)
+                        if cumulative is None:
+                            cumulative = tree
+                        else:
+                            assert cumulative.isLeaf(),'Combining non-leaf trees not yet implemented'
+                            cumulative = copy.deepcopy(cumulative)
+                            cumulative.children[None].makeFuture([key])
+                            cumulative *= tree
+                    result['new'] *= cumulative
         if updateBeliefs:
             # Update agent models included in the original world
             # (after finding out possible new worlds)
