@@ -120,11 +120,14 @@ class KeyedVector(collections.MutableMapping):
 #                result[key] = value
         return result
 
-    def makeFuture(self):
+    def makeFuture(self,keyList=None):
         """
         Transforms this vector to refer to only future versions of its columns
+        @param keyList: If present, only references to these keys are made future
         """
-        for key in self.keys():
+        if keyList is None:
+            keyList = self.keys()
+        for key in keyList:
             if not key == keys.CONSTANT:
                 assert not keys.isFuture(key)
                 value = self[key]
