@@ -545,7 +545,7 @@ class Agent:
         R = self.getAttribute('R',model)
         if R is None:
             # No reward components
-            R = KeyedTree(KeyedVector())
+            R = KeyedTree(setToConstantMatrix(rewardKey(self.name),0.))
             self.setAttribute('R',R,model)
             return R
         elif isinstance(R,dict):
@@ -559,7 +559,7 @@ class Agent:
                     else:
                         Rsum += weight*tree
             if Rsum is None:
-                Rsum = KeyedTree(KeyedVector())
+                Rsum = KeyedTree(setToConstantMatrix(rewardKey(self.name),0.))
             self.setAttribute('R',Rsum,model)
             return Rsum
         else:
