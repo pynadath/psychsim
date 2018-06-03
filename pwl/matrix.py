@@ -217,6 +217,12 @@ class KeyedMatrix(dict):
                 dict.__setitem__(self,key,value)
             node = node.nextSibling
 
+def dynamicsMatrix(key,vector):
+    """
+    @return: a dynamics matrix setting the given key to be equal to the given weighted sum
+    @rtype: L{KeyedMatrix}
+    """
+    return KeyedMatrix({makeFuture(key): KeyedVector(vector)})
 def scaleMatrix(key,weight):
     """
     @return: a dynamics matrix modifying the given keyed value by scaling it by the given weight
