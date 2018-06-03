@@ -314,7 +314,6 @@ class World:
                 else:
                     cumulative = None
                     for tree in dynamics:
-                        print(tree)
                         if cumulative is None:
                             cumulative = tree
                         else:
