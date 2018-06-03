@@ -397,7 +397,7 @@ class VectorDistributionSet:
                                 else:
                                     # Certainty
                                     value = self.distributions[substate].first()[colKey]
-                                total += vector[colKey]*state[colKey]
+                                total += vector[colKey]*value
                         state[rowKey] = total
                         self.distributions[destination][state] = prob
                 self.keyMap[rowKey] = destination
