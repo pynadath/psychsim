@@ -133,7 +133,12 @@ class Person(Agent):
             world.setDynamics(location,actMove[neighborhood],tree)
 
         # Effect on my risk
-        tree = noChangeMatrix(risk)
+        tree = {'if': equalRow(makeFuture(location),'gone'),
+                True: approachMatrix(risk,0.9,0.),
+                False: {'if': equalRow(makeFuture(location),'shelter'),
+                        True: setToFeatureMatrix(risk,stateKey(keys.WORLD,'shelterRisk')),
+                        False: noChangeMatrix(risk),
+                        }}
         for neighborhood in neighborhoods:
             tree = {'if': equalRow(makeFuture(location),neighborhood),
                     True: setToFeatureRow(risk,stateKey(neighborhood,'risk')),
@@ -278,9 +283,9 @@ if __name__ == '__main__':
 
     
     # Shelter
-    world.defineState(None,'shelterRisk',float)
-    world.setFeature('shelterRisk',random.random()/5.)
-    
+    world.defineState(keys.WORLD,'shelterRisk',float)
+    world.setState(keys.WORLD,'shelterRisk',random.random()/5.)
+
 #    allowPets = world.defineState(shelter.name,'allowPets',bool)
 #    world.setFeature(allowPets,False)
 
@@ -308,7 +313,7 @@ if __name__ == '__main__':
         newState = world.step(select=False)
         print 'Day %d' % (day+1)
         world.explainAction(newState,level=1)
-        world.printState(newState)
+#        world.printState(newState)
 
 #    print float(shelter)/float(len(data))
 
