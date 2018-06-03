@@ -223,9 +223,12 @@ class World:
         if isinstance(actions,Action):
             actions = {actions['subject']: ActionSet({actions})}
         elif isinstance(actions,ActionSet):
-            actions = {}
+            actionDict = {}
             for action in actions:
-                actions[action['subject']] = ActionSet(actions.get(action['subject'],set())|action)
+                actionDict[action['subject']] = actionDict.get(action['subject'],[])+[action]
+            actions = {}
+            for name,policy in actionDict.items():
+                actions[name] = ActionSet(policy)
         if isinstance(actions,dict):
             for name,policy in actions.items():
                 if isinstance(policy,ActionSet):
@@ -1431,7 +1434,7 @@ class World:
             else:
                 elements = []
         entities = sorted(self.agents.keys())
-        entities.insert(0,None)
+        entities.insert(0,keys.WORLD)
         change = False
         # Sort relations
         relations = {}
