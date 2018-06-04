@@ -136,9 +136,7 @@ class World:
         # The future becomes the present
         state.rollback()
         if select:
-            newState = outcomes[0]['new']
-            for dist in newState.distributions.values():
-                dist.select()
+            prob = state.select()
         if self.memory:
             self.history.append(copy.deepcopy(state))
            # self.modelGC(False)
