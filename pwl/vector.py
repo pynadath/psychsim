@@ -319,7 +319,7 @@ class VectorDistribution(Distribution):
                 index += 1
             return sample
         else:
-            Distribution.select(self)
+            return Distribution.select(self)
             
     def hasColumn(self,key):
         """
