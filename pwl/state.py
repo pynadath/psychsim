@@ -360,8 +360,13 @@ class VectorDistributionSet:
             # Focus on subset that this matrix affects
             substates = self.substate(other.getKeysIn())
             if substates:
-                self.collapse(substates)
-            destination = self.findUncertainty(substates)
+                destination = self.collapse(substates)
+            else:
+                destination = None
+            #     if destination:
+            #         print self.distributions[destination]
+            #         print len(self.distributions[destination])
+            # destination = self.findUncertainty(substates)
             # Go through each key this matrix sets
             for rowKey,vector in other.items():
                 result = Distribution()
