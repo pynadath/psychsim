@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import ConfigParser
 import csv
 import logging
 import os
@@ -62,8 +63,6 @@ class Person(Agent):
             world.setFeature(ethnic,'minority')
         else:
             world.setFeature(ethnic,'majority')
-        wealthy = world.defineState(self.name,'wealthy',float)
-        world.setFeature(wealthy,random.random()/2.+0.25)
         gender = world.defineState(self.name,'gender',list,['male','female'])
         if random.random() > 0.5:
             world.setFeature(gender,'male')
@@ -95,8 +94,8 @@ class Person(Agent):
         world.setFeature(location,home)
         health = world.defineState(self.name,'health',float)
         world.setFeature(health,random.random()/2.+.5)
-        resources = world.defineState(self.name,'resources',float)
-        world.setFeature(resources,random.random()/2.+0.25)
+        wealth = world.defineState(self.name,'wealth',float)
+        world.setFeature(wealth,random.random()/2.+0.25)
 
         risk = world.defineState(self.name,'risk',float)
         world.setFeature(risk,world.getState(home,'risk').expectation())
@@ -170,13 +169,18 @@ class Person(Agent):
                                                                   (noChangeMatrix(kids),0.75)]},
                                          False: noChangeMatrix(kids)}}})
         world.setDynamics(kids,True,tree)
-        
+
+        # Effect on wealth
+        tree = makeTree({'if': thresholdRow(wealth,0.1),
+                         True: incrementMatrix(wealth,-0.1),
+                         False: setToConstantMatrix(wealth,0.)})
+        world.setDynamics(wealth,actEvacuate,tree)
         # Reward
         self.setReward(maximizeFeature(health,self.name),1.)
-        self.setReward(maximizeFeature(wealthy,self.name),1.)
+        self.setReward(maximizeFeature(wealth,self.name),1.)
         self.setReward(maximizeFeature(kids,self.name),1.)
         # Decision-making parameters
-        self.setAttribute('horizon',2)
+        self.setAttribute('horizon',1)
         #self.setAttribute('selection','distribution')
         #self.setAttribute('rationality',1.)
 
@@ -299,6 +303,12 @@ if __name__ == '__main__':
         agent = Person('%02d' % (i),world)
         population.append(agent)
 
+    for agent in population:
+        myHome = world.getState(agent.name,'neighborhood').first()
+        for other in population:
+            if other.name != agent.name:
+                if world.getState(other.name,'neighborhood').first() == myHome:
+                    agent.setReward(maximizeFeature(stateKey(other.name,'health'),agent.name),1.)
     world.setOrder([{agent.name for agent in population}])
     for agent in population:
         beliefs = agent.resetBelief()
@@ -313,7 +323,7 @@ if __name__ == '__main__':
         newState = world.step(select=False)
         print 'Day %d' % (day+1)
         world.explainAction(newState,level=1)
-#        world.printState(newState)
+#        world.printState()
 
 #    print float(shelter)/float(len(data))
 
