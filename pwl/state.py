@@ -381,7 +381,7 @@ class VectorDistributionSet:
                             substate = self.keyMap[colKey]
                             value = self.distributions[substate].first()[colKey]
                             total += vector[colKey]*value
-                    assert not rowKey in self.keyMap
+                    assert not rowKey in self.keyMap,'%s already exists' % (rowKey)
                     destination = max(self.keyMap.values())+1
                     assert not destination in self.distributions,self.distributions[destination]
                     self.join(rowKey,total,destination)
