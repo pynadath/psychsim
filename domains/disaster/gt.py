@@ -100,16 +100,22 @@ class Person(Agent):
         risk = world.defineState(self.name,'risk',float)
         world.setFeature(risk,world.getState(home,'risk').expectation())
 
-        grievance = world.defineState(self.name,'grievance',bool)
-        world.setFeature(grievance,random.random()>0.85)
+        grievance = world.defineState(self.name,'grievance',float)
+        world.setFeature(grievance,random.random()/2.)
 
         # Actions and Dynamics
 
         actHome = self.addAction({'verb':'goHome'})
         actShelter = self.addAction({'verb':'gotoShelter'})
         actEvacuate = self.addAction({'verb': 'evacuate'})
-        actGood = self.addAction({'verb': 'doGood'})
-        actBad = self.addAction({'verb': 'doBad'})
+        # Prosocial behavior
+        tree = makeTree({'if': equalRow(location,['shelter','gone']),
+                         True: False, False: True})
+        actGood = self.addAction({'verb': 'doGood'},tree.desymbolize(world.symbols))
+        # Antisocial behavior
+        tree = makeTree({'if': equalRow(location,['shelter','gone']),
+                         True: False, False: True})
+        actBad = self.addAction({'verb': 'doBad'},tree.desymbolize(world.symbols))
         actMove = {}
         neighborhoods = [n for n in self.world.agents.values()
                          if isinstance(neighborhood,Neighborhood)]
@@ -275,6 +281,7 @@ if __name__ == '__main__':
     parser.add_argument('-p','--population',default=2,type=int,help='Number of actors')
     parser.add_argument('-a','--area',default=4,type=int,help='Number of neighborhoods')
     parser.add_argument('-n','--number',default=1,type=int,help='Number of days to run')
+    parser.add_argument('-o','--output',default='output.csv',type=str,help='Output filename')
     args = vars(parser.parse_args())
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
@@ -296,12 +303,14 @@ if __name__ == '__main__':
     neighborhoods = {}
     for neighborhood in range(args['area']):
         n = Neighborhood('Neighborhood%02d' % (neighborhood),world)
-        neighborhoods[n.name] = n
+        neighborhoods[n.name] = {'agent': n, 'inhabitants': []}
 
     population = []
     for i in range(args['population']):
         agent = Person('%02d' % (i),world)
         population.append(agent)
+        neighborhood = agent.getState('neighborhood').first()
+        neighborhoods[neighborhood]['inhabitants'].append(agent)
 
     for agent in population:
         myHome = world.getState(agent.name,'neighborhood').first()
@@ -317,19 +326,45 @@ if __name__ == '__main__':
                     agent.ignore(other.name,'%s0' % (agent.name))
 
 
+    logs = {'health': [],'wealth': [], 'grievance': []}
     world.printState()
     for day in range(args['number']):
         oldState = world.state
-        newState = world.step(select=False)
+        newState = world.step(select=True)
         print 'Day %d' % (day+1)
         world.explainAction(newState,level=1)
-#        world.printState()
+        for field in logs:
+            entry = {'day': day + 1}
+            values = {}
+            for agent in population:
+                value = world.getState(agent.name,field).expectation()
+                entry[int(agent.name[-2:])+1] = value
+                values[agent.name] = value
+            logs[field].append(entry)
+            for index in range(args['area']):
+                inhabitants = neighborhoods['Neighborhood%02d' % (index)]['inhabitants']
+                if inhabitants:
+                    total = float(sum([values[agent.name] for agent in inhabitants]))
+                    entry['N%02d' % (index+1)] = total/float(len(inhabitants))
+
+    root,ext = os.path.splitext(args['output'])
+    for field,log in logs.items():
+        fields = ['day']+['N%02d' % (index+1) for index in range(args['area'])]+\
+                 range(1,args['population']+1)
+        with open('%s-%s%s' % (root,field,ext),'w') as csvfile:
+            writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
+            writer.writeheader()
+            entry = {'day': 'neighborhood'}
+            for agent in population:
+                neighborhood = agent.getState('neighborhood').first()
+                entry[int(agent.name[-2:])+1] = 'N%02d' % (int(neighborhood[-2:])+1)
+            writer.writerow(entry)
+            for entry in log:
+                writer.writerow(entry)
 
 #    print float(shelter)/float(len(data))
 
 #    world.save('scenario.psy')
 
-#    world.printState()
 #    world.toCDF(world,'/tmp/testing')
-#    data = []
 
