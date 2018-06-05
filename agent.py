@@ -2,7 +2,7 @@ from __future__ import print_function
 import copy
 import math
 import random
-from io import StringIO
+from cStringIO import StringIO
 from xml.dom.minidom import Document,Node
 
 from psychsim.action import Action,ActionSet
@@ -114,7 +114,7 @@ class Agent:
             actions = self.getActions(belief) 
         if len(actions) == 0:
             # Someone made a boo-boo because there is no legal action for this agent right now
-            buf = StringIO.StringIO()
+            buf = StringIO()
             if len(self.getActions(vector)) == 0:
                 print('%s has no legal actions in:' % (self.name),file=buf)
                 self.world.printState(vector,buf)
