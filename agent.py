@@ -552,12 +552,17 @@ class Agent:
             Rsum = None
             for tree,weight in R.items():
                 if isinstance(tree,str):
-                    raise NotImplementedError
-                else:
-                    if Rsum is None:
-                        Rsum = weight*tree
+                    agent = self.world.agents[tree]
+                    dist = self.world.getModel(agent.name,self.getBelief(model=model))
+                    if len(dist) == 1:
+                        otherModel = dist.first()
+                        tree = agent.getReward(otherModel)
                     else:
-                        Rsum += weight*tree
+                        raise NotImplementedError,'Simple fix needed to support agents having rewards tied to other agents about whom they have uncertain beliefs'
+                if Rsum is None:
+                    Rsum = weight*tree
+                else:
+                    Rsum += weight*tree
             if Rsum is None:
                 Rsum = KeyedTree(setToConstantMatrix(rewardKey(self.name),0.))
             self.setAttribute('R',Rsum,model)
