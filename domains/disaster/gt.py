@@ -29,6 +29,45 @@ class Neighborhood(Agent):
         security = world.defineState(self.name,'security',float)
         world.setFeature(security,random.random()/2+0.25)
 
+class Nature(Agent):
+    def __init__(self,world):
+        Agent.__init__(self,'Nature')
+        world.addAgent(self)
+        evolution = self.addAction({'verb': 'evolve'})
+
+        phase = world.defineState(self.name,'phase',int)
+        world.setFeature(phase,3)
+
+        neighborhoods = [name for name in self.world.agents
+                        if isinstance(self.world.agents[name],Neighborhood)]
+
+        # Phase dynamics
+        tree = makeTree({'if': equalRow(phase,20),
+                         True: setToConstantMatrix(phase,1),
+                         False: incrementMatrix(phase,1)})
+        world.setDynamics(phase,evolution,tree)
+        # Effect of disaster on risk
+        for neighborhood in neighborhoods:
+            risk = stateKey(neighborhood,'risk')
+            tree = makeTree({'if': thresholdRow(phase,10),
+                             True: {'if': thresholdRow(phase,15),
+                                    True: approachMatrix(risk,.1,0.),
+                                    False: approachMatrix(risk,.05,0.)},
+                             False: {'if': thresholdRow(phase,5),
+                                     True: approachMatrix(risk,.05,1.),
+                                     False: approachMatrix(risk,.1,1.)}})
+            world.setDynamics(risk,evolution,tree)
+        risk = stateKey(keys.WORLD,'shelterRisk')
+        tree = makeTree({'if': thresholdRow(phase,10),
+                         True: {'if': thresholdRow(phase,15),
+                                True: approachMatrix(risk,.1,0.),
+                                False: approachMatrix(risk,.05,0.)},
+                         False: {'if': thresholdRow(phase,5),
+                                 True: approachMatrix(risk,.05,1.),
+                                 False: approachMatrix(risk,.1,1.)}})
+        world.setDynamics(risk,evolution,tree)
+        self.setAttribute('static',True)
+        
 class System(Agent):
     def __init__(self,world):
         Agent.__init__(self,'System')
@@ -105,9 +144,14 @@ class Person(Agent):
 
         # Actions and Dynamics
 
-        actHome = self.addAction({'verb':'goHome'})
-        actShelter = self.addAction({'verb':'gotoShelter'})
-        actEvacuate = self.addAction({'verb': 'evacuate'})
+        # Go to shelter
+        tree = makeTree({'if': equalFeatureRow(location,stateKey(keys.WORLD,'shelterNeighborhood')),
+                         True: True, False: False})
+        actShelter = self.addAction({'verb':'gotoShelter'},tree.desymbolize(world.symbols))
+        # Evacuate city altogether
+        tree = makeTree({'if': equalRow(location,['Neighborhood00','gone']),
+                         True: True, False: False})
+        actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols))
         # Prosocial behavior
         tree = makeTree({'if': equalRow(location,['shelter','gone']),
                          True: False, False: True})
@@ -118,13 +162,14 @@ class Person(Agent):
         actBad = self.addAction({'verb': 'doBad'},tree.desymbolize(world.symbols))
         actMove = {}
         neighborhoods = [n for n in self.world.agents.values()
-                         if isinstance(neighborhood,Neighborhood)]
+                         if isinstance(n,Neighborhood)]
         for neighborhood in neighborhoods:
-            actMove[neighborhood] = self.addAction({'verb': 'moveTo','object': neighborhood.name})
+            tree = makeTree({'if': equalRow(location,'gone'),
+                             True: False, False: True})
+            actMove[neighborhood.name] = self.addAction({'verb': 'moveTo','object': neighborhood.name},
+                                                        tree.desymbolize(world.symbols))
 
         # Effect on location
-        tree = makeTree(setToConstantMatrix(location,home))
-        world.setDynamics(location,actHome,tree)
         tree = makeTree(setToConstantMatrix(location,'shelter'))
         world.setDynamics(location,actShelter,tree)
         tree = makeTree(setToConstantMatrix(location,'gone'))
@@ -134,8 +179,8 @@ class Person(Agent):
         tree = makeTree(noChangeMatrix(location))
         world.setDynamics(location,actBad,tree)
         for neighborhood in neighborhoods:
-            tree = makeTree(setToConstantMatrix(location,neighborhood))
-            world.setDynamics(location,actMove[neighborhood],tree)
+            tree = makeTree(setToConstantMatrix(location,neighborhood.name))
+            world.setDynamics(location,actMove[neighborhood.name],tree)
 
         # Effect on my risk
         tree = {'if': equalRow(makeFuture(location),'gone'),
@@ -145,8 +190,8 @@ class Person(Agent):
                         False: noChangeMatrix(risk),
                         }}
         for neighborhood in neighborhoods:
-            tree = {'if': equalRow(makeFuture(location),neighborhood),
-                    True: setToFeatureRow(risk,stateKey(neighborhood,'risk')),
+            tree = {'if': equalRow(makeFuture(location),neighborhood.name),
+                    True: setToFeatureMatrix(risk,stateKey(neighborhood.name,'risk')),
                     False: tree}
         world.setDynamics(risk,True,makeTree(tree))
         
@@ -155,8 +200,8 @@ class Person(Agent):
                          True: {'distribution': [(approachMatrix(health,0.75,0.),0.75),
                                                  (noChangeMatrix(health),0.25)]},
                          False: {'if': thresholdRow(makeFuture(risk),0.5),
-                                 True: {'distribution': [(approachMatrix(health,0.8,0),0.5),
-                                                         (noChangeMatrix(health),0.25)]},
+                                 True: {'distribution': [(approachMatrix(health,0.8,0.),0.5),
+                                                         (noChangeMatrix(health),0.5)]},
                                  False: {'if': thresholdRow(makeFuture(risk),0.25),
                                          True: {'distribution':  [(approachMatrix(health,0.85,0),0.25),
                                                                   (noChangeMatrix(health),0.75)]},
@@ -168,8 +213,8 @@ class Person(Agent):
                          True: {'distribution': [(approachMatrix(kids,0.6,0.),0.75),
                                                  (noChangeMatrix(kids),0.25)]},
                          False: {'if': thresholdRow(makeFuture(risk),0.5),
-                                 True: {'distribution': [(approachMatrix(kids,0.7,0),0.5),
-                                                         (noChangeMatrix(kids),0.25)]},
+                                 True: {'distribution': [(approachMatrix(kids,0.7,0.),0.5),
+                                                         (noChangeMatrix(kids),0.5)]},
                                  False: {'if': thresholdRow(makeFuture(risk),0.25),
                                          True: {'distribution':  [(approachMatrix(kids,0.8,0),0.25),
                                                                   (noChangeMatrix(kids),0.75)]},
@@ -181,6 +226,14 @@ class Person(Agent):
                          True: incrementMatrix(wealth,-0.1),
                          False: setToConstantMatrix(wealth,0.)})
         world.setDynamics(wealth,actEvacuate,tree)
+
+        # Effect of doing good
+        for neighborhood in neighborhoods:
+            key = stateKey(neighborhood.name,'risk')
+            tree = makeTree({'if': equalRow(location,neighborhood.name),
+                             True: approachMatrix(key,.1,0.),
+                             False: noChangeMatrix(key)})
+            world.setDynamics(key,actGood,tree)
         # Reward
         self.setReward(maximizeFeature(health,self.name),1.)
         self.setReward(maximizeFeature(wealth,self.name),1.)
@@ -282,6 +335,7 @@ if __name__ == '__main__':
     parser.add_argument('-a','--area',default=4,type=int,help='Number of neighborhoods')
     parser.add_argument('-n','--number',default=1,type=int,help='Number of days to run')
     parser.add_argument('-o','--output',default='output.csv',type=str,help='Output filename')
+    parser.add_argument('--nature',action='store_true',help='Include a "nature" actor')
     args = vars(parser.parse_args())
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
@@ -291,12 +345,7 @@ if __name__ == '__main__':
 
     world = World()
     world.diagram = Diagram()
-
     
-    # Shelter
-    world.defineState(keys.WORLD,'shelterRisk',float)
-    world.setState(keys.WORLD,'shelterRisk',random.random()/5.)
-
 #    allowPets = world.defineState(shelter.name,'allowPets',bool)
 #    world.setFeature(allowPets,False)
 
@@ -304,6 +353,15 @@ if __name__ == '__main__':
     for neighborhood in range(args['area']):
         n = Neighborhood('Neighborhood%02d' % (neighborhood),world)
         neighborhoods[n.name] = {'agent': n, 'inhabitants': []}
+
+    # Shelter
+    world.defineState(keys.WORLD,'shelterRisk',float)
+    world.setState(keys.WORLD,'shelterRisk',random.random()/5.)
+    world.defineState(keys.WORLD,'shelterNeighborhood',list,neighborhoods.keys())
+    world.setState(keys.WORLD,'shelterNeighborhood',random.choice(neighborhoods.keys()))
+
+    if args['nature']:
+        nature = Nature(world)
 
     population = []
     for i in range(args['population']):
@@ -318,13 +376,16 @@ if __name__ == '__main__':
             if other.name != agent.name:
                 if world.getState(other.name,'neighborhood').first() == myHome:
                     agent.setReward(maximizeFeature(stateKey(other.name,'health'),agent.name),1.)
-    world.setOrder([{agent.name for agent in population}])
+    order = [{agent.name for agent in population}]
+    if args['nature']:
+        order.append({'Nature'})
+    world.setOrder(order)
+
     for agent in population:
         beliefs = agent.resetBelief()
         for other in population:
             if other.name != agent.name:
                     agent.ignore(other.name,'%s0' % (agent.name))
-
 
     logs = {'health': [],'wealth': [], 'grievance': []}
     world.printState()
@@ -333,6 +394,7 @@ if __name__ == '__main__':
         newState = world.step(select=True)
         print 'Day %d' % (day+1)
         world.explainAction(newState,level=1)
+        newState = world.step(select=True)
         for field in logs:
             entry = {'day': day + 1}
             values = {}
@@ -368,3 +430,4 @@ if __name__ == '__main__':
 
 #    world.toCDF(world,'/tmp/testing')
 
+ 
