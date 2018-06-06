@@ -215,28 +215,18 @@ class VectorDistribution(Distribution):
         @type key: str
         @param value: either a single value to apply to all vectors, or else a L{Distribution} over possible values
         """
-        # todo Pedro added don't clear if not necessary
-        # original = dict(self)
+        original = dict(self)
         domain = self.domain()
-        # self.clear()
+        self.clear()
         for row in domain:
-            # prob = original[str(row)]
-            old = str(row)
-            prob = self[old]
+            prob = original[str(row)]
             if isinstance(value, Distribution):
                 for element in value.domain():
                     new = row.__class__(row)
                     new[key] = element
-                    if str(new) not in self:
-                        del self[old]
-                    # self.addProb(new, prob * value[element])
-                    self[new] = prob * value[element]
+                    self.addProb(new, prob * value[element])
             else:
-                # check if key is already in row
-                old = str(row)
                 row[key] = value
-                if str(row) != old:
-                    del self[old]
                 self[row] = prob
 
     # todo Pedro added join several keys and values in one single step

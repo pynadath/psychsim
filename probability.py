@@ -39,8 +39,10 @@ class Distribution(dict):
                         self[key] = value
             else:
                 # Do quantal response / softmax on table of values
+                # todo Pedro added avoid overflow
+                max_val = rationality * max(args.values())
                 for key, V in args.items():
-                    self[key] = math.exp(rationality * V)
+                    self[key] = math.exp((rationality * V) - max_val)
                 self.normalize()
 
     def __getitem__(self, element):

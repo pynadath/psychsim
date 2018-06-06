@@ -325,7 +325,10 @@ class World:
                         omegaDistribution = agent.observe(newVector,actions)
                         modelDistribution = MatrixDistribution()
                         for omega in omegaDistribution.domain():
-                            newModel = agent.stateEstimator(vector,newVector,omega,oldModel)
+
+                            # todo use the new model update function
+                            newModel = agent.update_model(vector, newVector, omega, oldModel)
+                            # newModel = agent.stateEstimator(vector,newVector,omega,oldModel)
                             result['SE %s' % (name)][oldModel][omega] = newModel
                             if newModel is None:
                                 pass
@@ -498,6 +501,8 @@ class World:
         else:
             self.agents[agent.name] = agent
             agent.world = self
+            # todo Pedro include agent's True model in the state
+            self.setModel(agent.name, Distribution({True: 1.0}))
 
     def has_agent(self,agent):
         """
