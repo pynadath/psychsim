@@ -1,5 +1,5 @@
 import operator
-from xml.dom.minidom import Node
+from xml.dom.minidom import Node,Document
 
 from psychsim.pwl.vector import KeyedVector
 from psychsim.probability import Distribution
@@ -247,6 +247,7 @@ class KeyedPlane:
             node.setAttribute('threshold',str(threshold))
             node.setAttribute('comparison',str(comparison))
             root.appendChild(node)
+        doc.appendChild(root)
         return doc
 
     def parse(self,element):
