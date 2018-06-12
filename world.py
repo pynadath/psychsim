@@ -471,7 +471,7 @@ class World:
     """Authoring methods"""
     """-----------------"""
 
-    def addAgent(self,agent):
+    def addAgent(self,agent,setModel=True):
         if isinstance(agent,str):
             agent = Agent(agent)
         if self.has_agent(agent):
@@ -486,10 +486,11 @@ class World:
                 agent.addModel('%s0' % (agent.name),R={},horizon=2,level=2,rationality=1.,
                               discount=1.,selection='consistent',
                               beliefs=True,parent=None,projector=Distribution.expectation)
-            # Initialize model of this agent to be uniform distribution (got a better idea?)
-            prob = 1./float(len(agent.models))
-            dist = {model: prob for model in agent.models}
-            self.setModel(agent.name,dist)
+            if setModel:
+                # Initialize model of this agent to be uniform distribution (got a better idea?)
+                prob = 1./float(len(agent.models))
+                dist = {model: prob for model in agent.models}
+                self.setModel(agent.name,dist)
         return agent
 
     def has_agent(self,agent):
@@ -811,7 +812,10 @@ class World:
         if key[-1] == "'":
             raise ValueError('Ending single-quote reserved for indicating future state')
         if substate is None:
-            substate = max(self.state.distributions.keys())+1
+            try:
+                substate = max(self.state.distributions.keys())+1
+            except ValueError:
+                substate = 0
         self.variables[key] = {'domain': domain,
                                'description': description,
                                'substate': substate,
@@ -1708,10 +1712,10 @@ class World:
             if node.nodeType == node.ELEMENT_NODE:
                 if node.tagName == 'agent':
                     if agentClass.isXML(node):
-                        self.addAgent(agentClass(node))
+                        self.addAgent(agentClass(node,self),False)
                     else:
                         assert Agent.isXML(node)
-                        self.addAgent(Agent(node))
+                        self.addAgent(Agent(node),False)
                 elif node.tagName == 'state':
                     label = str(node.getAttribute('label'))
                     if label:
