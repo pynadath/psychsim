@@ -18,6 +18,8 @@ from psychsim.ui.diagram import Diagram
 
 class City:
     def __init__(self,world,config):
+        world.defineState(WORLD,'day',int,lo=1)
+        world.setState(WORLD,'day',1)
         if config.get('Shelter','neighborhood') != 'none':
             # Shelter
             self.shelter = Agent('shelter')
@@ -50,39 +52,45 @@ class Nature(Agent):
         world.addAgent(self)
         evolution = self.addAction({'verb': 'evolve'})
 
-        phase = world.defineState(self.name,'phase',int)
-        world.setFeature(phase,3)
+#        phase = world.defineState(self.name,'phase',int)
+#        world.setFeature(phase,3)
 
-        neighborhoods = [name for name in self.world.agents
-                        if isinstance(self.world.agents[name],Neighborhood)]
+#        neighborhoods = [name for name in self.world.agents
+#                        if isinstance(self.world.agents[name],Neighborhood)]
 
         # Phase dynamics
-        tree = makeTree({'if': equalRow(phase,20),
-                         True: setToConstantMatrix(phase,1),
-                         False: incrementMatrix(phase,1)})
-        world.setDynamics(phase,evolution,tree)
+#        tree = makeTree({'if': equalRow(phase,20),
+#                         True: setToConstantMatrix(phase,1),
+#                         False: incrementMatrix(phase,1)})
+#        world.setDynamics(phase,evolution,tree)
+
         # Effect of disaster on risk
-        for neighborhood in neighborhoods:
-            risk = stateKey(neighborhood,'risk')
-            tree = makeTree({'if': thresholdRow(phase,10),
-                             True: {'if': thresholdRow(phase,15),
-                                    True: approachMatrix(risk,.1,0.),
-                                    False: approachMatrix(risk,.05,0.)},
-                             False: {'if': thresholdRow(phase,5),
-                                     True: approachMatrix(risk,.05,1.),
-                                     False: approachMatrix(risk,.1,1.)}})
-            world.setDynamics(risk,evolution,tree)
-        if config.get('Shelter','neighborhood') != 'none':
-            risk = stateKey(keys.WORLD,'shelterRisk')
-            tree = makeTree({'if': thresholdRow(phase,10),
-                             True: {'if': thresholdRow(phase,15),
-                                    True: approachMatrix(risk,.1,0.),
-                                    False: approachMatrix(risk,.05,0.)},
-                             False: {'if': thresholdRow(phase,5),
-                                     True: approachMatrix(risk,.05,1.),
-                                     False: approachMatrix(risk,.1,1.)}})
-            world.setDynamics(risk,evolution,tree)
+        if config.getboolean('Disaster','dynamic'):
+            for neighborhood in neighborhoods:
+                risk = stateKey(neighborhood,'risk')
+                tree = makeTree({'if': thresholdRow(phase,10),
+                                 True: {'if': thresholdRow(phase,15),
+                                        True: approachMatrix(risk,.1,0.),
+                                        False: approachMatrix(risk,.05,0.)},
+                                 False: {'if': thresholdRow(phase,5),
+                                         True: approachMatrix(risk,.05,1.),
+                                         False: approachMatrix(risk,.1,1.)}})
+                world.setDynamics(risk,evolution,tree)
+            if config.get('Shelter','neighborhood') != 'none':
+                risk = stateKey(keys.WORLD,'shelterRisk')
+                tree = makeTree({'if': thresholdRow(phase,10),
+                                 True: {'if': thresholdRow(phase,15),
+                                        True: approachMatrix(risk,.1,0.),
+                                        False: approachMatrix(risk,.05,0.)},
+                                 False: {'if': thresholdRow(phase,5),
+                                         True: approachMatrix(risk,.05,1.),
+                                         False: approachMatrix(risk,.1,1.)}})
+                world.setDynamics(risk,evolution,tree)
         self.setAttribute('static',True)
+
+        # Advance calendar after Nature moves
+        tree = makeTree(incrementMatrix(stateKey(WORLD,'day'),1))
+        world.setDynamics(stateKey(WORLD,'day'),evolution,tree)
         
 class System(Agent):
     def __init__(self,world):
@@ -400,15 +408,14 @@ if __name__ == '__main__':
 
     neighborhoods = {}
     for neighborhood in range(config.getint('City','neighborhoods')):
-        n = Neighborhood('Neighborhood%02d' % (neighborhood),world)
+        n = Neighborhood('N%02d' % (neighborhood+1),world)
         neighborhoods[n.name] = {'agent': n, 'inhabitants': []}
 
-    if args['nature']:
-        nature = Nature(world,config)
+    nature = Nature(world,config)
 
     population = []
     for i in range(config.getint('Actors','population')):
-        agent = Person('%02d' % (i),world,config)
+        agent = Person('%02d' % (i+1),world,config)
         population.append(agent)
         neighborhood = agent.getState('neighborhood').first()
         neighborhoods[neighborhood]['inhabitants'].append(agent)
@@ -424,8 +431,7 @@ if __name__ == '__main__':
                 if world.getState(other.name,'neighborhood').first() == myHome:
                     agent.setReward(maximizeFeature(stateKey(other.name,'health'),agent.name),1.)
     order = [{agent.name for agent in population}]
-    if args['nature']:
-        order.append({'Nature'})
+    order.append({'Nature'})
     world.setOrder(order)
 
     for agent in population:
@@ -436,29 +442,30 @@ if __name__ == '__main__':
 
     logs = {'health': [],'wealth': [], 'grievance': []}
     world.printState()
-    for day in range(args['number']):
+    while int(world.getState(WORLD,'day').expectation()) <= args['number']:
+        day = int(world.getState(WORLD,'day').expectation())
         oldState = world.state
         newState = world.step(select=True)
-        print 'Day %d' % (day+1)
+        print 'Day %d' % (day)
         world.explainAction(newState,level=1)
         newState = world.step(select=True)
         for field in logs:
-            entry = {'day': day + 1}
+            entry = {'day': day}
             values = {}
             for agent in population:
                 value = world.getState(agent.name,field).expectation()
                 entry[int(agent.name[-2:])+1] = value
                 values[agent.name] = value
             logs[field].append(entry)
-            for index in range(config.getint('City','neighborhoods')):
-                inhabitants = neighborhoods['Neighborhood%02d' % (index)]['inhabitants']
+            for neighborhood in neighborhoods:
+                inhabitants = neighborhoods[neighborhood]['inhabitants']
                 if inhabitants:
                     total = float(sum([values[agent.name] for agent in inhabitants]))
-                    entry['N%02d' % (index+1)] = total/float(len(inhabitants))
+                    entry[neighborhood] = total/float(len(inhabitants))
 
     root,ext = os.path.splitext(args['output'])
     for field,log in logs.items():
-        fields = ['day']+['N%02d' % (index+1) for index in range(config.getint('City','neighborhoods'))]+\
+        fields = ['day']+sorted(neighborhoods.keys())+\
                  range(1,config.getint('Actors','population')+1)
         with open('%s-%s%s' % (root,field,ext),'w') as csvfile:
             writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
@@ -475,6 +482,6 @@ if __name__ == '__main__':
 
     #    world.toCDF(world,'/tmp/testing')
 
-    if args['init']:
-        with open(args['init'],'wb') as configfile:
-            config.write(configfile)
+#    if args['init']:
+#        with open(args['init'],'wb') as configfile:
+#            config.write(configfile)
