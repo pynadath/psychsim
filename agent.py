@@ -31,8 +31,8 @@ class Agent:
     @type color: str
     """
 
-    def __init__(self,name):
-        self.world = None
+    def __init__(self,name,world=None):
+        self.world = world
         self.actions = set()
         self.legal = {}
         self.omega = set()
@@ -1323,7 +1323,10 @@ class Agent:
                                             tree = KeyedTree(subchild)
                                             if not key in kwargs:
                                                 kwargs[key] = {}
-                                            kwargs[key][tree] = float(subnode.getAttribute('weight'))
+                                            if subnode.getAttribute('weight'):
+                                                kwargs[key][tree] = float(subnode.getAttribute('weight'))
+                                            else:
+                                                kwargs[key] = tree
                                         elif key == 'policy':
                                             kwargs[key] = KeyedTree(subchild)
                                         elif key == 'beliefs':
