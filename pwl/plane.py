@@ -267,6 +267,7 @@ class KeyedPlane:
                 except ValueError:
                     comparison = str(node.getAttribute('comparison'))
                 self.planes.append((vector,threshold,comparison))
+            node = node.nextSibling
 
 def thresholdRow(key,threshold):
     """
