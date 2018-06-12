@@ -529,6 +529,8 @@ class KeyedTree:
                     else:
                         # Branch
                         plane = KeyedPlane(node)
+                elif node.tagName == 'plane':
+                    plane = KeyedPlane(node)
                 elif node.tagName == 'matrix':
                     key = eval(node.getAttribute('key'))
                     children[key] = KeyedMatrix(node)
