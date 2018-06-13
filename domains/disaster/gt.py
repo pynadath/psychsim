@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 from ConfigParser import SafeConfigParser
+from cStringIO import StringIO
 import csv
 import logging
 import os
@@ -168,6 +169,8 @@ class Person(Agent):
         locationSet.append('shelter')
         location = world.defineState(self.name,'location',list,locationSet)
         world.setFeature(location,home)
+        alive = world.defineState(self.name,'alive',bool)
+        world.setFeature(alive,True)
         health = world.defineState(self.name,'health',float)
         world.setFeature(health,random.random()/2.+.5)
         wealth = world.defineState(self.name,'wealth',float)
@@ -184,23 +187,28 @@ class Person(Agent):
         nop = self.addAction({'verb': 'doNothing'})
         if config.get('Shelter','neighborhood') != 'none':
             # Go to shelter
-            tree = makeTree({'if': equalFeatureRow(location,stateKey(keys.WORLD,'shelterNeighborhood')),
-                             True: True, False: False})
+            tree = makeTree({'if': equalFeatureRow(location,stateKey(keys.WORLD,
+                                                                     'shelterNeighborhood')),
+                             True: {'if': trueRow(alive), True: True, False: False},
+                             False: False})
             actShelter = self.addAction({'verb':'gotoShelter'},tree.desymbolize(world.symbols))
         if config.getboolean('Actors','evacuation'):
             # Evacuate city altogether
             tree = makeTree({'if': equalRow(location,['Neighborhood00','evacuated']),
-                             True: True, False: False})
+                             True: {'if': trueRow(alive),
+                                    True: True, False: False}, False: False})
             actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols))
         if config.getboolean('Actors','prosocial'):
             # Prosocial behavior
             tree = makeTree({'if': equalRow(location,['shelter','evacuated']),
-                             True: False, False: True})
+                             True: False, False: {'if': trueRow(alive),
+                                                  True: True, False: False}})
             actGood = self.addAction({'verb': 'doGood'},tree.desymbolize(world.symbols))
         if config.getboolean('Actors','antisocial'):
             # Antisocial behavior
             tree = makeTree({'if': equalRow(location,['shelter','evacuated']),
-                             True: False, False: True})
+                             True: False, False: {'if': trueRow(alive),
+                                                  True: True, False: False}})
             actBad = self.addAction({'verb': 'doBad'},tree.desymbolize(world.symbols))
         neighborhoods = [n for n in self.world.agents.values()
                          if isinstance(n,Neighborhood)]
@@ -208,8 +216,10 @@ class Person(Agent):
             actMove = {}
             for neighborhood in neighborhoods:
                 tree = makeTree({'if': equalRow(location,'evacuated'),
-                                 True: False, False: True})
-                actMove[neighborhood.name] = self.addAction({'verb': 'moveTo','object': neighborhood.name},
+                                 True: False, False: {'if': trueRow(alive),
+                                                      True: True, False: False}})
+                actMove[neighborhood.name] = self.addAction({'verb': 'moveTo',
+                                                            'object': neighborhood.name},
                                                             tree.desymbolize(world.symbols))
 
         # Effect on location
@@ -226,7 +236,9 @@ class Person(Agent):
 
         # Effect on my risk
         tree = {'if': equalRow(makeFuture(location),'evacuated'),
-                True: approachMatrix(risk,0.9,0.),
+                True: {'if': trueRow(alive),
+                       True: approachMatrix(risk,0.9,0.),
+                       False: noChangeMatrix(risk)},
                 False:  noChangeMatrix(risk)}
         if config.get('Shelter','neighborhood') != 'none':
             tree = {'if': equalRow(makeFuture(location),'shelter'),
@@ -239,16 +251,18 @@ class Person(Agent):
         world.setDynamics(risk,True,makeTree(tree))
         
         # Effect on my health
-        tree = makeTree({'if': thresholdRow(makeFuture(risk),0.75),
-                         True: {'distribution': [(approachMatrix(health,0.75,0.),0.75),
-                                                 (noChangeMatrix(health),0.25)]},
-                         False: {'if': thresholdRow(makeFuture(risk),0.5),
-                                 True: {'distribution': [(approachMatrix(health,0.8,0.),0.5),
-                                                         (noChangeMatrix(health),0.5)]},
-                                 False: {'if': thresholdRow(makeFuture(risk),0.25),
-                                         True: {'distribution':  [(approachMatrix(health,0.85,0),0.25),
-                                                                  (noChangeMatrix(health),0.75)]},
-                                         False: noChangeMatrix(health)}}})
+        tree = makeTree({'if': trueRow(alive),
+                         True: {'if': thresholdRow(makeFuture(risk),0.75),
+                                True: {'distribution': [(approachMatrix(health,0.75,0.),0.75),
+                                                        (noChangeMatrix(health),0.25)]},
+                                False: {'if': thresholdRow(makeFuture(risk),0.5),
+                                        True: {'distribution': [(approachMatrix(health,0.8,0.),0.5),
+                                                                (noChangeMatrix(health),0.5)]},
+                                        False: {'if': thresholdRow(makeFuture(risk),0.25),
+                                                True: {'distribution':  [(approachMatrix(health,0.85,0),0.25),
+                                                                         (noChangeMatrix(health),0.75)]},
+                                                False: noChangeMatrix(health)}}},
+                         False: noChangeMatrix(health)})
         world.setDynamics(health,True,tree)
 
         # Effect on kids' health
@@ -264,6 +278,14 @@ class Person(Agent):
                                          False: noChangeMatrix(kids)}}})
         world.setDynamics(kids,True,tree)
 
+        # Effect on life
+        tree = makeTree({'if': trueRow(alive),
+                         True: {'if': thresholdRow(makeFuture(health),0.01),
+                                True: setTrueMatrix(alive),
+                                False: setFalseMatrix(alive)},
+                         False: noChangeMatrix(alive)})
+        world.setDynamics(alive,True,tree)
+        
         # Effect on wealth
         if config.getboolean('Actors','evacuation'):
             tree = makeTree({'if': thresholdRow(wealth,0.1),
@@ -376,112 +398,127 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR)
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
-    parser.add_argument('-p','--population',default=2,type=int,help='Number of actors (ignored if init file provided)')
-    parser.add_argument('-a','--area',default=4,type=int,help='Number of neighborhoods (ignored if init file provided)')
     parser.add_argument('-n','--number',default=1,type=int,help='Number of days to run')
-    parser.add_argument('-o','--output',default='output.csv',type=str,help='Output filename')
-    parser.add_argument('-i','--init',default=None,type=str,help='Initialization file')
-    parser.add_argument('--nature',action='store_true',help='Include a "nature" actor')
+    parser.add_argument('-r','--runs',default=1,type=int,help='Number of runs to run')
+    parser.add_argument('-i','--instance',default=1,type=int,help='Instance number')
     args = vars(parser.parse_args())
-    if args['init']:
-        # Extract configuration
-        config = SafeConfigParser()
-        try:
-            os.stat(args['init'])
-            config.read(args['init'])
-        except OSError:
-            config.add_section('City')
-            config.set('City','shelter','yes')
-            config.set('City','neighborhoods','%d' % (args['area']))
-            config.add_section('Actors')
-            config.set('Actors','population','%d' % (args['population']))
+    # Extract configuration
+    config = SafeConfigParser()
+    config.read(os.path.join('config','%06d.ini' % (args['instance'])))
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
     if not isinstance(level, int):
         raise ValueError('Invalid debug level: %s' % args['debug'])
     logging.getLogger().setLevel(level)
 
-    world = World()
-    world.diagram = Diagram()
+    for run in range(args['runs']):
+        world = World()
+        world.diagram = Diagram()
 
-    city = City(world,config)
+        city = City(world,config)
 
-    neighborhoods = {}
-    for neighborhood in range(config.getint('City','neighborhoods')):
-        n = Neighborhood('N%02d' % (neighborhood+1),world)
-        neighborhoods[n.name] = {'agent': n, 'inhabitants': []}
+        neighborhoods = {}
+        for neighborhood in range(config.getint('City','neighborhoods')):
+            n = Neighborhood('N%02d' % (neighborhood+1),world)
+            neighborhoods[n.name] = {'agent': n, 'inhabitants': []}
 
-    nature = Nature(world,config)
+        nature = Nature(world,config)
 
-    population = []
-    for i in range(config.getint('Actors','population')):
-        agent = Person('%02d' % (i+1),world,config)
-        population.append(agent)
-        neighborhood = agent.getState('neighborhood').first()
-        neighborhoods[neighborhood]['inhabitants'].append(agent)
+        population = []
+        for i in range(config.getint('Actors','population')):
+            agent = Person('%02d' % (i+1),world,config)
+            population.append(agent)
+            neighborhood = agent.getState('neighborhood').first()
+            neighborhoods[neighborhood]['inhabitants'].append(agent)
 
-#    for neighborhood,info in neighborhoods.items():
-#        group = Group('Group%s' % (neighborhood[-2:]),world)
-#        group.potentialMembers([a.name for a in info['inhabitants']])
-        
-    for agent in population:
-        myHome = world.getState(agent.name,'neighborhood').first()
-        for other in population:
-            if other.name != agent.name:
-                if world.getState(other.name,'neighborhood').first() == myHome:
-                    agent.setReward(maximizeFeature(stateKey(other.name,'health'),agent.name),1.)
-    order = [{agent.name for agent in population}]
-    order.append({'Nature'})
-    world.setOrder(order)
+        groups = []
+            #    for neighborhood,info in neighborhoods.items():
+            #        group = Group('Group%s' % (neighborhood[-2:]),world)
+            #        group.potentialMembers([a.name for a in info['inhabitants']])
 
-    for agent in population:
-        beliefs = agent.resetBelief()
-        for other in population:
-            if other.name != agent.name:
-                    agent.ignore(other.name,'%s0' % (agent.name))
-
-    logs = {'health': [],'wealth': [], 'grievance': []}
-    world.printState()
-    while int(world.getState(WORLD,'day').expectation()) <= args['number']:
-        day = int(world.getState(WORLD,'day').expectation())
-        oldState = world.state
-        newState = world.step(select=True)
-        print 'Day %d' % (day)
-        world.explainAction(newState,level=1)
-        newState = world.step(select=True)
-        for field in logs:
-            entry = {'day': day}
-            values = {}
+        if config.get('Actors','altruism') == 'neighbors':
             for agent in population:
-                value = world.getState(agent.name,field).expectation()
-                entry[int(agent.name[-2:])+1] = value
-                values[agent.name] = value
-            logs[field].append(entry)
-            for neighborhood in neighborhoods:
-                inhabitants = neighborhoods[neighborhood]['inhabitants']
-                if inhabitants:
-                    total = float(sum([values[agent.name] for agent in inhabitants]))
-                    entry[neighborhood] = total/float(len(inhabitants))
+                myHome = world.getState(agent.name,'neighborhood').first()
+                for other in population:
+                    if other.name != agent.name:
+                        if world.getState(other.name,'neighborhood').first() == myHome:
+                            agent.setReward(maximizeFeature(stateKey(other.name,'health'),agent.name),1.)
 
-    root,ext = os.path.splitext(args['output'])
-    for field,log in logs.items():
-        fields = ['day']+sorted(neighborhoods.keys())+\
-                 range(1,config.getint('Actors','population')+1)
-        with open('%s-%s%s' % (root,field,ext),'w') as csvfile:
-            writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
-            writer.writeheader()
-            entry = {'day': 'neighborhood'}
+        order = [{agent.name for agent in population}]
+        order.append({'Nature'})
+        world.setOrder(order)
+
+        if config.get('Actors','theory_of_mind') == 'none':
             for agent in population:
-                neighborhood = agent.getState('neighborhood').first()
-                entry[int(agent.name[-2:])+1] = 'N%02d' % (int(neighborhood[-2:])+1)
-            writer.writerow(entry)
-            for entry in log:
-                writer.writerow(entry)
+                beliefs = agent.resetBelief()
+                for other in population:
+                    if other.name != agent.name:
+                            agent.ignore(other.name,'%s0' % (agent.name))
 
-    world.save('scenario.psy')
+        allTables = {'Population': {'fields': [('alive','casualties','invert')],
+                                    'population': City,
+                                    'log': []},
+                     'Neighborhood': {'fields': [('alive','casualties','invert')],
+                                      'population': Neighborhood,
+                                      'log': []},
+        }
+        tables = {name: allTables[name] for name in allTables
+                  if config.getboolean('Data',name.lower())}
+        while int(world.getState(WORLD,'day').expectation()) <= args['number']:
+            day = int(world.getState(WORLD,'day').expectation())
+            oldState = world.state
+            newState = world.step(select=True)
+            logging.info('Day %d' % (day))
+            buf = StringIO()
+            world.explainAction(newState,level=1,buf=buf)
+            logging.debug(buf.getvalue())
+            buf.close()
+            newState = world.step(select=True)
+            # Grab all of the relevant fields, but only once
+            values = {agent.name: {} for agent in population}
+            for agent in population:
+                for table in tables.values():
+                    for feature,label,function in table['fields']:
+                        if not feature in values[agent.name]:
+                            value = world.getState(agent.name,feature)
+                            assert len(value) == 1
+                            values[agent.name][feature] = value.first()
+            # Create tables
+            for table in tables.values():
+                if table['population'] is City:
+                    entry = {'day': day}
+                    for feature,label,function in table['fields']:
+                        if world.variables[stateKey(population[0].name,feature)]['domain'] is bool:
+                            entry[label] = len([a for a in population if values[a.name][feature]])
+                        if function == 'invert':
+                            entry[label] = len(population) - entry[label]
+                    table['log'].append(entry)
+                elif table['population'] is Neighborhood:
+                    for neighborhood in neighborhoods:
+                        inhabitants = neighborhoods[neighborhood]['inhabitants']
+                        if inhabitants:
+                            entry = {'day': day,
+                                     'neighborhood': neighborhood}
+                            for feature,label,function in table['fields']:
+                                if world.variables[stateKey(population[0].name,feature)]['domain'] is bool:
+                                    entry[label] = len([a for a in inhabitants if values[a.name][feature]])
+                                if function == 'invert':
+                                    entry[label] = len(inhabitants) - entry[label]
+                            table['log'].append(entry)
+        # Verify directory structure
+        dirName = os.path.join('Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (run))
+        try:
+            os.stat(dirName)
+        except OSError:
+            os.mkdir(dirName)
+        for name,table in tables.items():
+            fields = ['day']+[field[1] for field in table['fields']]
+            if table['population'] is Neighborhood:
+                fields.insert(1,'neighborhood')
+            with open(os.path.join(dirName,'%sTable' % (name)),'w') as csvfile:
+                writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+                writer.writeheader()
+                for entry in table['log']:
+                    writer.writerow(entry)
 
-    #    world.toCDF(world,'/tmp/testing')
-
-#    if args['init']:
-#        with open(args['init'],'wb') as configfile:
-#            config.write(configfile)
+        world.save('scenario.psy')
