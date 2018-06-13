@@ -447,9 +447,9 @@ class VectorDistributionSet:
                     else:
                         self *= other.children[False]
                 else:
-                    for vector in self.distributions[valSub].domain():
-                        print other.branch.evaluate(vector)
-                    print other.branch.planes[0][0]
+#                    for vector in self.distributions[valSub].domain():
+#                        print other.branch.evaluate(vector)
+#                    print other.branch.planes[0][0]
                     self *= other.branch.planes[0][0]
                     valSub = self.keyMap[keys.VALUE]
                     falseState = copy.deepcopy(self)
