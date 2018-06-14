@@ -806,7 +806,8 @@ class World:
         for agent in self.agents.values():
             for model in agent.models.values():
                 if 'beliefs' in model and not model['beliefs'] is True:
-                    raise RuntimeError('Define all variables before setting beliefs')
+                    raise RuntimeError('Define all variables before setting beliefs (%s:%s)' \
+                                       % (agent.name,model['name']))
         if key in self.variables:
             raise NameError('Variable %s already defined' % (key))
         if key[-1] == "'":
@@ -1708,14 +1709,11 @@ class World:
             self.maxTurn = None
         node = element.firstChild
         order = {}
+        agents = []
         while node:
             if node.nodeType == node.ELEMENT_NODE:
                 if node.tagName == 'agent':
-                    if agentClass.isXML(node):
-                        self.addAgent(agentClass(node,self),False)
-                    else:
-                        assert Agent.isXML(node)
-                        self.addAgent(Agent(node),False)
+                    agents.append(node)
                 elif node.tagName == 'state':
                     label = str(node.getAttribute('label'))
                     if label:
@@ -1845,6 +1843,12 @@ class World:
         self.symbolList = self.symbolList[len(self.symbolList)/2:]
         for index in range(len(self.symbolList)):
             self.symbols[self.symbolList[index]] = index
+        for node in agents:
+            if agentClass.isXML(node):
+                self.addAgent(agentClass(node,self),False)
+            else:
+                assert Agent.isXML(node)
+                self.addAgent(Agent(node),False)
         
     def save(self,filename,compressed=True):
         """

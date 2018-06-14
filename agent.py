@@ -671,8 +671,8 @@ class Agent:
         if name in self.models:
             raise NameError('Model %s already exists for agent %s' % \
                 (name,self.name))
-        if name in self.world.symbols:
-            raise NameError('Model %s conflicts with existing symbol' % (name))
+#        if name in self.world.symbols:
+#            raise NameError('Model %s conflicts with existing symbol' % (name))
         model = {'name': name,'index': 0,'parent': None,'SE': {},
                  'V': ValueFunction(),'policy': {},'ignore': []}
         model.update(kwargs)
