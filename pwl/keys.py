@@ -1,7 +1,6 @@
 
 # Special keys
 CONSTANT = ''
-TERMINATED = '__END__'
 VALUE = '__VALUE__'
 WORLD = '__WORLD__'
 ACTION = '__ACTION__'
@@ -20,6 +19,7 @@ def stateKey(name,feature,future=False):
         return feature
     else:
         return '%s\'s %s' % (name,feature)
+TERMINATED = stateKey(WORLD,'__END__')
 
 def isStateKey(key):
     """
