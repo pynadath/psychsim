@@ -21,6 +21,8 @@ class City:
     def __init__(self,world,config):
         world.defineState(WORLD,'day',int,lo=1)
         world.setState(WORLD,'day',1)
+        neighborhoods = [name for name in world.agents
+                         if isinstance(world.agents[name],Neighborhood)]
         if config.get('Shelter','neighborhood') != 'none':
             # Shelter
             self.shelter = Agent('shelter')
@@ -29,10 +31,10 @@ class City:
             
             world.defineState(self.shelter.name,'risk',float)
             self.shelter.setState('risk',config.getfloat('Shelter','risk'))
-            world.defineState('shelter','neighborhood',list,neighborhoods.keys())
+            world.defineState('shelter','neighborhood',list,neighborhoods)
             self.shelter.setState('neighborhood',config.get('Shelter','neighborhood'))
             world.defineState(self.shelter.name,'allowPets',bool)
-            self.shelter.setstate('allowPets',config.getboolean('Shelter','pets'))
+            self.shelter.setState('allowPets',config.getboolean('Shelter','pets'))
 
 class Neighborhood(Agent):
     def __init__(self,name,world):
@@ -78,7 +80,7 @@ class Nature(Agent):
                                          False: approachMatrix(risk,.1,1.)}})
                 world.setDynamics(risk,evolution,tree)
             if config.get('Shelter','neighborhood') != 'none':
-                risk = stateKey(keys.WORLD,'shelterRisk')
+                risk = stateKey('shelter','risk')
                 tree = makeTree({'if': thresholdRow(phase,10),
                                  True: {'if': thresholdRow(phase,15),
                                         True: approachMatrix(risk,.1,0.),
@@ -151,8 +153,8 @@ class Person(Agent):
         attachment = world.defineState(self.name,'attachment',list,attachmentStyles)
         world.setFeature(attachment,random.choice(attachmentStyles))
 
-        neighborhoods = [name for name in self.world.agents
-                         if isinstance(self.world.agents[name],Neighborhood)]
+        neighborhoods = sorted([name for name in self.world.agents
+                                if isinstance(self.world.agents[name],Neighborhood)])
         neighborhood = world.defineState(self.name,'neighborhood',list,neighborhoods)
         home = random.choice(neighborhoods)
         world.setFeature(neighborhood,home)
@@ -187,14 +189,13 @@ class Person(Agent):
         nop = self.addAction({'verb': 'doNothing'})
         if config.get('Shelter','neighborhood') != 'none':
             # Go to shelter
-            tree = makeTree({'if': equalFeatureRow(location,stateKey(keys.WORLD,
-                                                                     'shelterNeighborhood')),
+            tree = makeTree({'if': equalFeatureRow(location,stateKey('shelter','neighborhood')),
                              True: {'if': trueRow(alive), True: True, False: False},
                              False: False})
             actShelter = self.addAction({'verb':'gotoShelter'},tree.desymbolize(world.symbols))
         if config.getboolean('Actors','evacuation'):
             # Evacuate city altogether
-            tree = makeTree({'if': equalRow(location,['Neighborhood00','evacuated']),
+            tree = makeTree({'if': equalRow(location,[neighborhoods[0],'evacuated']),
                              True: {'if': trueRow(alive),
                                     True: True, False: False}, False: False})
             actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols))
@@ -242,7 +243,7 @@ class Person(Agent):
                 False:  noChangeMatrix(risk)}
         if config.get('Shelter','neighborhood') != 'none':
             tree = {'if': equalRow(makeFuture(location),'shelter'),
-                    True: setToFeatureMatrix(risk,stateKey(keys.WORLD,'shelterRisk')),
+                    True: setToFeatureMatrix(risk,stateKey('shelter','risk')),
                     False: tree}
         for neighborhood in neighborhoods:
             tree = {'if': equalRow(makeFuture(location),neighborhood.name),
@@ -415,12 +416,12 @@ if __name__ == '__main__':
         world = World()
         world.diagram = Diagram()
 
-        city = City(world,config)
-
         neighborhoods = {}
         for neighborhood in range(config.getint('City','neighborhoods')):
             n = Neighborhood('N%02d' % (neighborhood+1),world)
             neighborhoods[n.name] = {'agent': n, 'inhabitants': []}
+
+        city = City(world,config)
 
         nature = Nature(world,config)
 
