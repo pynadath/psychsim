@@ -52,12 +52,12 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>30</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
     <property name="title">
-     <string>File</string>
+     <string>Fi&amp;le</string>
     </property>
     <addaction name="actionNew"/>
     <addaction name="actionOpen"/>
@@ -83,7 +83,7 @@
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
-     <string>View</string>
+     <string>&amp;View</string>
     </property>
     <addaction name="actionAgent"/>
     <addaction name="actionLikelihood"/>
@@ -94,6 +94,7 @@
      <string>Tools</string>
     </property>
     <addaction name="actionStep"/>
+    <addaction name="actionScreenshot"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -125,7 +126,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Recent Files</string>
+    <string>&amp;Recent Files</string>
    </property>
   </action>
   <action name="actionUndo">
@@ -133,7 +134,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Undo</string>
+    <string>&amp;Undo</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Z</string>
@@ -144,7 +145,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Redo</string>
+    <string>&amp;Redo</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Y</string>
@@ -155,7 +156,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Cut</string>
+    <string>&amp;Cut</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+X</string>
@@ -166,7 +167,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Copy</string>
+    <string>C&amp;opy</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
@@ -177,7 +178,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Paste</string>
+    <string>&amp;Paste</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+V</string>
@@ -199,7 +200,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Save As</string>
+    <string>Sa&amp;ve As</string>
    </property>
   </action>
   <action name="actionClose">
@@ -207,7 +208,7 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>Close</string>
+    <string>&amp;Close</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+W</string>
@@ -215,7 +216,7 @@
   </action>
   <action name="actionQuit">
    <property name="text">
-    <string>Quit</string>
+    <string>&amp;Quit</string>
    </property>
    <property name="toolTip">
     <string>&amp;Quit</string>
@@ -226,7 +227,7 @@
   </action>
   <action name="actionAgent">
    <property name="text">
-    <string>Agent</string>
+    <string>&amp;Agent</string>
    </property>
    <property name="toolTip">
     <string>Color code nodes by agent correspondence</string>
@@ -234,7 +235,7 @@
   </action>
   <action name="actionLikelihood">
    <property name="text">
-    <string>Likelihood</string>
+    <string>&amp;Likelihood</string>
    </property>
    <property name="toolTip">
     <string>Color code nodes by relative likelihood</string>
@@ -242,15 +243,20 @@
   </action>
   <action name="actionStep">
    <property name="text">
-    <string>Step</string>
+    <string>&amp;Step</string>
    </property>
   </action>
   <action name="actionMap">
    <property name="text">
-    <string>Map</string>
+    <string>&amp;Map</string>
    </property>
    <property name="toolTip">
     <string>Show map view of scenario</string>
+   </property>
+  </action>
+  <action name="actionScreenshot">
+   <property name="text">
+    <string>Screenshot</string>
    </property>
   </action>
  </widget>

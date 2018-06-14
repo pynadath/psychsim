@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'mainwindow.ui'
+# Form implementation generated from reading ui file '../../ui/mainwindow.ui'
 #
-# Created by: PyQt5 UI code generator 5.7
+# Created by: PyQt5 UI code generator 5.10.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -37,7 +37,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.graphicsView)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 30))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 25))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -93,6 +93,8 @@ class Ui_MainWindow(object):
         self.actionStep.setObjectName("actionStep")
         self.actionMap = QtWidgets.QAction(MainWindow)
         self.actionMap.setObjectName("actionMap")
+        self.actionScreenshot = QtWidgets.QAction(MainWindow)
+        self.actionScreenshot.setObjectName("actionScreenshot")
         self.menuFile.addAction(self.actionNew)
         self.menuFile.addAction(self.actionOpen)
         self.menuFile.addAction(self.actionRecent_Files)
@@ -113,6 +115,7 @@ class Ui_MainWindow(object):
         self.menuView.addAction(self.actionLikelihood)
         self.menuView.addAction(self.actionMap)
         self.menuTools.addAction(self.actionStep)
+        self.menuTools.addAction(self.actionScreenshot)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuEdit.menuAction())
         self.menubar.addAction(self.menuView.menuAction())
@@ -124,39 +127,40 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "PsychSim"))
-        self.menuFile.setTitle(_translate("MainWindow", "File"))
+        self.menuFile.setTitle(_translate("MainWindow", "Fi&le"))
         self.menuEdit.setTitle(_translate("MainWindow", "Edit"))
-        self.menuView.setTitle(_translate("MainWindow", "View"))
+        self.menuView.setTitle(_translate("MainWindow", "&View"))
         self.menuTools.setTitle(_translate("MainWindow", "Tools"))
         self.actionNew.setText(_translate("MainWindow", "&New"))
         self.actionNew.setShortcut(_translate("MainWindow", "Ctrl+N"))
         self.actionOpen.setText(_translate("MainWindow", "&Open"))
         self.actionOpen.setShortcut(_translate("MainWindow", "Ctrl+O"))
-        self.actionRecent_Files.setText(_translate("MainWindow", "Recent Files"))
-        self.actionUndo.setText(_translate("MainWindow", "Undo"))
+        self.actionRecent_Files.setText(_translate("MainWindow", "&Recent Files"))
+        self.actionUndo.setText(_translate("MainWindow", "&Undo"))
         self.actionUndo.setShortcut(_translate("MainWindow", "Ctrl+Z"))
-        self.actionRedo.setText(_translate("MainWindow", "Redo"))
+        self.actionRedo.setText(_translate("MainWindow", "&Redo"))
         self.actionRedo.setShortcut(_translate("MainWindow", "Ctrl+Y"))
-        self.actionCut.setText(_translate("MainWindow", "Cut"))
+        self.actionCut.setText(_translate("MainWindow", "&Cut"))
         self.actionCut.setShortcut(_translate("MainWindow", "Ctrl+X"))
-        self.actionCopy.setText(_translate("MainWindow", "Copy"))
+        self.actionCopy.setText(_translate("MainWindow", "C&opy"))
         self.actionCopy.setShortcut(_translate("MainWindow", "Ctrl+C"))
-        self.actionPaste.setText(_translate("MainWindow", "Paste"))
+        self.actionPaste.setText(_translate("MainWindow", "&Paste"))
         self.actionPaste.setShortcut(_translate("MainWindow", "Ctrl+V"))
         self.actionSave.setText(_translate("MainWindow", "&Save"))
         self.actionSave.setShortcut(_translate("MainWindow", "Ctrl+S"))
-        self.actionSave_As.setText(_translate("MainWindow", "Save As"))
-        self.actionClose.setText(_translate("MainWindow", "Close"))
+        self.actionSave_As.setText(_translate("MainWindow", "Sa&ve As"))
+        self.actionClose.setText(_translate("MainWindow", "&Close"))
         self.actionClose.setShortcut(_translate("MainWindow", "Ctrl+W"))
-        self.actionQuit.setText(_translate("MainWindow", "Quit"))
+        self.actionQuit.setText(_translate("MainWindow", "&Quit"))
         self.actionQuit.setToolTip(_translate("MainWindow", "&Quit"))
         self.actionQuit.setShortcut(_translate("MainWindow", "Ctrl+Q"))
-        self.actionAgent.setText(_translate("MainWindow", "Agent"))
+        self.actionAgent.setText(_translate("MainWindow", "&Agent"))
         self.actionAgent.setToolTip(_translate("MainWindow", "Color code nodes by agent correspondence"))
-        self.actionLikelihood.setText(_translate("MainWindow", "Likelihood"))
+        self.actionLikelihood.setText(_translate("MainWindow", "&Likelihood"))
         self.actionLikelihood.setToolTip(_translate("MainWindow", "Color code nodes by relative likelihood"))
-        self.actionStep.setText(_translate("MainWindow", "Step"))
-        self.actionMap.setText(_translate("MainWindow", "Map"))
+        self.actionStep.setText(_translate("MainWindow", "&Step"))
+        self.actionMap.setText(_translate("MainWindow", "&Map"))
         self.actionMap.setToolTip(_translate("MainWindow", "Show map view of scenario"))
+        self.actionScreenshot.setText(_translate("MainWindow", "Screenshot"))
 
 import psychsim_rc
