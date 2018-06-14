@@ -39,9 +39,12 @@ class DependencyGraph(dict):
             self.computeGraph()
         return dict.__getitem__(self,key)
 
-    def computeGraph(self):
+    def computeGraph(self,agents=None):
         # Process the unary state features
-        for agent,variables in self.world.locals.items():
+        if agents is None:
+            agents = sorted(self.world.agents.keys())
+        for agent in [WORLD]+agents:
+            variables = self.world.locals[agent]
             for feature in variables.keys():
                 self[stateKey(agent,feature)] = {'agent': agent,
                                                  'type': 'state pre',
@@ -62,8 +65,9 @@ class DependencyGraph(dict):
                                          'type': 'state post',
                                          'children': set(),
                                          'parents': set()}
-        for name,agent in self.world.agents.items():
+        for name in agents:
             # Create the agent reward node
+            agent = self.world.agents[name]
             if agent.getAttribute('R','%s0' % (name)):
                 self[name] = {'agent': name,
                               'type': 'utility',
@@ -81,20 +85,24 @@ class DependencyGraph(dict):
         for key,dynamics in self.world.dynamics.items():
             if isTurnKey(key):
                 continue
+            if state2agent(key) != WORLD and not state2agent(key) in agents:
+                continue
             assert self.has_key(key),'Graph has not accounted for key: %s' % (key)
             if isinstance(dynamics,bool):
                 continue
             for action,tree in dynamics.items():
-                if not action is True:
+                if not action is True and action['subject'] in agents:
                     # Link between action to this feature
                     assert self.has_key(action),'Graph has not accounted for action: %s' % (action)
                     dict.__getitem__(self,makeFuture(key))['parents'].add(action)
                     dict.__getitem__(self,action)['children'].add(makeFuture(key))
                 # Link between dynamics variables and this feature
                 for parent in tree.getKeysIn() - set([CONSTANT]):
-                    dict.__getitem__(self,makeFuture(key))['parents'].add(parent)
-                    dict.__getitem__(self,parent)['children'].add(makeFuture(key))
-        for name,agent in self.world.agents.items():
+                    if state2agent(parent) == WORLD or state2agent(parent) in agents:
+                        dict.__getitem__(self,makeFuture(key))['parents'].add(parent)
+                        dict.__getitem__(self,parent)['children'].add(makeFuture(key))
+        for name in agents:
+            agent = self.world.agents[name]
             # Create links from reward
             model = '%s0' % (agent.name)
             R = agent.getReward(model)

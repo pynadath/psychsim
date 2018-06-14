@@ -88,6 +88,7 @@
     <addaction name="actionAgent"/>
     <addaction name="actionLikelihood"/>
     <addaction name="actionMap"/>
+    <addaction name="actionGround_Truth"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -256,7 +257,12 @@
   </action>
   <action name="actionScreenshot">
    <property name="text">
-    <string>Screenshot</string>
+    <string>S&amp;creenshot</string>
+   </property>
+  </action>
+  <action name="actionGround_Truth">
+   <property name="text">
+    <string>Ground Truth</string>
    </property>
   </action>
  </widget>

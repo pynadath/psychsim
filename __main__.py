@@ -2,6 +2,7 @@ import os.path
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from pwl.keys import WORLD
 from ui.mainwindow import Ui_MainWindow
 from ui.worldview import WorldView
 from ui.mapview import MapView
@@ -50,6 +51,11 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
     @pyqtSlot() # signal with no arguments
     def on_actionMap_triggered(self):
         self.graphicsView.setScene(self.map)
+
+    @pyqtSlot() # signal with no arguments
+    def on_actionGround_Truth_triggered(self):
+        agents = ['Actor0001','Actor0002','Nature','N01','shelter']
+        self.scene.displayWorld(self.world,agents)
 
     @pyqtSlot() # signal with no arguments
     def on_actionStep_triggered(self):

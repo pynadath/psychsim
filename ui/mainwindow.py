@@ -95,6 +95,8 @@ class Ui_MainWindow(object):
         self.actionMap.setObjectName("actionMap")
         self.actionScreenshot = QtWidgets.QAction(MainWindow)
         self.actionScreenshot.setObjectName("actionScreenshot")
+        self.actionGround_Truth = QtWidgets.QAction(MainWindow)
+        self.actionGround_Truth.setObjectName("actionGround_Truth")
         self.menuFile.addAction(self.actionNew)
         self.menuFile.addAction(self.actionOpen)
         self.menuFile.addAction(self.actionRecent_Files)
@@ -114,6 +116,7 @@ class Ui_MainWindow(object):
         self.menuView.addAction(self.actionAgent)
         self.menuView.addAction(self.actionLikelihood)
         self.menuView.addAction(self.actionMap)
+        self.menuView.addAction(self.actionGround_Truth)
         self.menuTools.addAction(self.actionStep)
         self.menuTools.addAction(self.actionScreenshot)
         self.menubar.addAction(self.menuFile.menuAction())
@@ -161,6 +164,7 @@ class Ui_MainWindow(object):
         self.actionStep.setText(_translate("MainWindow", "&Step"))
         self.actionMap.setText(_translate("MainWindow", "&Map"))
         self.actionMap.setToolTip(_translate("MainWindow", "Show map view of scenario"))
-        self.actionScreenshot.setText(_translate("MainWindow", "Screenshot"))
+        self.actionScreenshot.setText(_translate("MainWindow", "S&creenshot"))
+        self.actionGround_Truth.setText(_translate("MainWindow", "Ground Truth"))
 
 import psychsim_rc

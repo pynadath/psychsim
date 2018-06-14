@@ -60,7 +60,8 @@ class WorldView(QGraphicsScene):
         self.graph = None
         self.dirty = False
 
-    def displayWorld(self,world):
+    def displayWorld(self,world,agents=None):
+        self.clear()
         for table in self.nodes.values():
             table.clear()
         self.edgesOut.clear()
@@ -73,7 +74,7 @@ class WorldView(QGraphicsScene):
         self.world = world
 
         self.graph = graph.DependencyGraph(self.world)
-        self.graph.computeGraph()
+        self.graph.computeGraph(agents)
         layout = getLayout(self.graph)
 
         # Lay out the pre variable nodes
@@ -111,8 +112,8 @@ class WorldView(QGraphicsScene):
                                         100,50,scene=self)
                 self.nodes[self.graph[key]['type']][key] = node
             x += self.colWidth
-        assert len(self.nodes['state pre']) == sum(map(len,self.world.locals.values()))+\
-            sum(map(len,self.world.relations.values()))
+#        assert len(self.nodes['state pre']) == sum(map(len,self.world.locals.values()))+\
+#            sum(map(len,self.world.relations.values()))
         # Lay out the action nodes
         y = 0
         for action in sorted(layout['action']):
