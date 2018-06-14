@@ -60,7 +60,7 @@ class World:
         self.dependency = psychsim.graph.DependencyGraph(self)
 
         # Termination state info
-        self.defineState(None,TERMINATED,bool)
+        key = self.defineVariable(TERMINATED,bool)
         self.setFeature(TERMINATED,False)
 
         self.history = []
@@ -1570,9 +1570,9 @@ class World:
                     # Notable change
                     delta[key] = vector[key]
             if self.terminated(vector):
-                delta['__END__'] = 1.
+                delta[TERMINATED] = 1.
             else:
-                delta['__END__'] = -1.
+                delta[TERMINATED] = -1.
             try:
                 deltaDist[delta] += new[vector]
             except KeyError:
@@ -1740,6 +1740,8 @@ class World:
                                     substate = self.state.keyMap[key]
                                 except KeyError:
                                     substate = None
+                                if state2feature(key) is None:
+                                    key = stateKey(WORLD,key)
                                 self.defineVariable(key,domain,lo,hi,description,combinator,substate)
                                 try:
                                     for coord in ['xpre','ypre','xpost','ypost']:
@@ -1749,7 +1751,7 @@ class World:
                             elif subnode.tagName == 'local':
                                 entity = str(subnode.getAttribute('entity'))
                                 if not entity:
-                                    entity = None
+                                    entity = WORLD
                                 feature = str(subnode.firstChild.data).strip()
                                 self.defineState(entity,feature,None)
                         subnode = subnode.nextSibling
