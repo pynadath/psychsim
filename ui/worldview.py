@@ -5,6 +5,7 @@ from PyQt5.QtGui import *
 import graph
 import diagram
 from world import *
+from pwl.keys import WORLD
 
 def getLayout(graph):
     layout = {'state pre': [set()],
@@ -94,7 +95,7 @@ class WorldView(QGraphicsScene):
                     self.world.variables[key]['ypre'] = y
                     # Move on to next Y
                     y += self.rowHeight
-                if self.graph[key]['agent']:
+                if self.graph[key]['agent'] != WORLD and self.graph[key]['agent']:
                     agent = self.world.agents[self.graph[key]['agent']]
                     if isBinaryKey(key):
                         node = VariableNode(agent,key[len(agent.name)+1:],key,
@@ -145,7 +146,7 @@ class WorldView(QGraphicsScene):
                     self.world.variables[makePresent(key)]['ypost'] = y
                     # Move on to next Y
                     y += self.rowHeight
-                if self.graph[key]['agent']:
+                if self.graph[key]['agent'] != WORLD and self.graph[key]['agent']:
                     agent = self.world.agents[self.graph[key]['agent']]
                     if isBinaryKey(key):
                         node = VariableNode(agent,key[len(agent.name)+1:],key,

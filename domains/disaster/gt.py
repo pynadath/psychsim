@@ -586,4 +586,4 @@ if __name__ == '__main__':
                 for entry in table['log']:
                     writer.writerow(entry)
 
-        world.save('scenario.psy')
+    world.save('scenario.psy')

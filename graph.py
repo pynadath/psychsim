@@ -44,13 +44,13 @@ class DependencyGraph(dict):
         for agent,variables in self.world.locals.items():
             for feature in variables.keys():
                 self[stateKey(agent,feature)] = {'agent': agent,
-                                                       'type': 'state pre',
-                                                       'children': set(),
-                                                       'parents': set()}
+                                                 'type': 'state pre',
+                                                 'children': set(),
+                                                 'parents': set()}
                 self[stateKey(agent,feature,True)] = {'agent': agent,
-                                                            'type': 'state post',
-                                                            'children': set(),
-                                                            'parents': set()}
+                                                      'type': 'state post',
+                                                      'children': set(),
+                                                      'parents': set()}
         # Process the binary state features
         for relation,table in self.world.relations.items():
             for key,entry in table.items():
