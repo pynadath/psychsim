@@ -100,6 +100,8 @@ class KeyedMatrix(dict):
                             result[col] += other[key]*self[key][col]
                         except KeyError:
                             result[col] = other[key]*self[key][col]
+                else:
+                    result[key] = other[key]
         elif isinstance(other,float):
             result = self.__class__()
             for key,value in self.items():
