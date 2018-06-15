@@ -1,5 +1,6 @@
 from __future__ import print_function
 import copy
+import logging
 import math
 import random
 from cStringIO import StringIO
@@ -139,6 +140,7 @@ class Agent:
         best = None
         for action in actions:
             # Compute value across possible worlds
+            logging.info('Considering %s' % (action))
             V[action] = {'__EV__': 0.,'__ER__': [],'__S__': []}
             if isinstance(keySet,dict):
                 subkeys = keySet[action]
