@@ -202,6 +202,23 @@ class KeyedTree:
                 self[child.ceil(key,hi)] = prob
         return self
 
+    def makeFuture(self,keyList=None):
+        """
+        Transforms this vector to refer to only future versions of its columns
+        @param keyList: If present, only references to these keys are made future
+        """
+        if keyList is None:
+            keyList = self.keys()
+        if self.isProbabilistic():
+            for child in self.children.domain():
+                prob = self.children[child]
+                del self.children[child]
+                child.makeFuture(keyList)
+                self.children[child] = prob
+        else:
+            for value,child in self.children.items():
+                child.makeFuture(keyList)
+            
     def scale(self,table):
         tree = self.__class__()
         if self.isLeaf():
@@ -327,8 +344,8 @@ class KeyedTree:
                     if planeOp is None or not isinstance(other.children[None],KeyedMatrix):
                         plane = self.branch
                     else:
-                        plane = KeyedPlane(planeOp(self.branch.vector,other.children[None]),
-                                           self.branch.threshold,self.branch.comparison)
+                        plane = KeyedPlane([(planeOp(p,other.children[None]),t,c)
+                                            for p,t,c in self.branch.planes])
                     result.makeBranch(plane,trueTree,falseTree)
         elif other.branch is None:
             # Probabilistic branch

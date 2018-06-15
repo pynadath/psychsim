@@ -252,6 +252,7 @@ class World:
                 key = keys.turnKey(name)
                 if key in state.keyMap and 0 in state.domain(key):
                     # This agent might have a turn now
+                    logging.info('%s deciding...' % (name))
                     decision = self.agents[name].decide(state,horizon,actions,
                                                         None,tiebreak)
                     actions[name] = decision['policy']
@@ -318,9 +319,8 @@ class World:
                         if cumulative is None:
                             cumulative = tree
                         else:
-                            assert cumulative.isLeaf(),'Combining non-leaf trees not yet implemented'
                             cumulative = copy.deepcopy(cumulative)
-                            cumulative.children[None].makeFuture([key])
+                            cumulative.makeFuture([key])
                             cumulative *= tree
                     result['new'] *= cumulative
         if updateBeliefs:
