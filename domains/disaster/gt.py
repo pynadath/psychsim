@@ -74,10 +74,13 @@ class Nature(Agent):
         # Phase dynamics
         tree = makeTree({'if': thresholdRow(days,10),
                          True: {'if': equalRow(phase,'increasing'),
-                                True: {'distribution': []},
+                                True: {'distribution': [(setToConstantMatrix(phase,'decreasing'),0.2),
+                                                        (noChangeMatrix(phase),0.8)]},
                                 False: {'if': equalRow(phase,'decreasing'),
-                                        True: {'distribution': []},
-                                        False: {'distribution': []}}},
+                                        True: {'distribution': [(setToConstantMatrix(phase,'none'),0.2),
+                                                                (noChangeMatrix(phase),0.8)]},
+                                        False: {'distribution': [(setToConstantMatrix(phase,'increasing'),0.2),
+                                                                 (noChangeMatrix(phase),0.8)]}}},
                          False: noChangeMatrix(phase)})
         world.setDynamics(phase,evolution,tree)
         tree = makeTree(noChangeMatrix(days))
@@ -133,6 +136,7 @@ class Group(Agent):
         world.addAgent(self)
         actGood = self.addAction({'verb': 'doGood'})
         actBad = self.addAction({'verb': 'doBad'})
+        doNothing = self.addAction({'verb': 'doNothing'})
 
     def potentialMembers(self,agents,weights=None):
         assert len(self.models) == 1,'Define potential members before adding multiple models of group %s' % (self.name)
@@ -163,11 +167,13 @@ class Actor(Agent):
             world.setFeature(gender,'male')
         else:
             world.setFeature(gender,'female')
-        kids = world.defineState(self.name,'children',float)
-        world.setFeature(kids,random.random()/2.+0.25)
+        age = world.defineState(self.name,'age',int)
+        world.setFeature(age,int(random.random()*50.)+20)
+        kids = world.defineState(self.name,'children',int,lo=0,hi=2)
+        world.setFeature(kids,int(random.random()*3.))
 
         # Psychological
-        attachmentStyles = ['secure','insecure']
+        attachmentStyles = ['secure','anxious','avoidant']
         attachment = world.defineState(self.name,'attachment',list,attachmentStyles)
         world.setFeature(attachment,random.choice(attachmentStyles))
 
@@ -210,7 +216,8 @@ class Actor(Agent):
             tree = makeTree({'if': equalFeatureRow(location,stateKey('shelter','neighborhood')),
                              True: {'if': trueRow(alive), True: True, False: False},
                              False: False})
-            actShelter = self.addAction({'verb':'gotoShelter'},tree.desymbolize(world.symbols))
+            actShelter = self.addAction({'verb':'moveTo','object': 'shelter'},
+                                        tree.desymbolize(world.symbols))
         if config.getboolean('Actors','evacuation'):
             # Evacuate city altogether
             tree = makeTree({'if': equalRow(location,[neighborhoods[0],'evacuated']),
