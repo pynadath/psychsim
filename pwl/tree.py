@@ -243,7 +243,7 @@ class KeyedTree:
             if isinstance(other.children,Distribution):
                 return self.children == other.children
             else:
-                return false
+                return False
         else:
             if self.branch == other.branch:
                 return self.children == other.children
