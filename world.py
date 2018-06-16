@@ -571,6 +571,8 @@ class World:
         self.dynamics[key][action] = tree
 
     def getDynamics(self,key,action,state=None):
+        if not state is None:
+            return DeprecationWarning,'There are no longer different dynamics functions depending on the state'
         if not key in self.dynamics:
             return []
         if isinstance(action,Action):
