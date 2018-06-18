@@ -49,9 +49,12 @@ class City:
             self.shelter.setState('allowPets',config.getboolean('Shelter','pets'))
 
 class Neighborhood(Agent):
-    def __init__(self,name,world):
-        Agent.__init__(self,name)
+    def __init__(self,number,world):
+        Agent.__init__(self,'N%02d' % (number))
         world.addAgent(self)
+
+        if number == 1:
+            world.diagram.setColor(self.name,'khaki')
 
         self.setAttribute('static',True)
         
@@ -65,6 +68,9 @@ class Nature(Agent):
     def __init__(self,world,config):
         Agent.__init__(self,'Nature')
         world.addAgent(self)
+
+        world.diagram.setColor(self.name,'red')
+
         evolution = self.addAction({'verb': 'evolve'})
 
         phase = world.defineState(self.name,'phase',list,['none','increasing','decreasing'])
@@ -155,6 +161,11 @@ class Actor(Agent):
         Agent.__init__(self,'Actor%04d' % (number))
         world.addAgent(self)
 
+        if number == 1:
+            world.diagram.setColor(self.name,'gold')
+        elif number == 2:
+            world.diagram.setColor(self.name,'yellow')
+
         # States
 
         # Demographic info
@@ -186,10 +197,10 @@ class Actor(Agent):
         world.setFeature(neighborhood,home)
 
         # For display use only
-        x = world.defineState(self.name,'x',float)
-        world.setFeature(x,random.random())
-        y = world.defineState(self.name,'y',float)
-        world.setFeature(y,random.random())
+#        x = world.defineState(self.name,'x',float)
+#        world.setFeature(x,random.random())
+#        y = world.defineState(self.name,'y',float)
+#        world.setFeature(y,random.random())
 
         # Dynamic states
         locationSet = neighborhoods[:]
@@ -545,10 +556,11 @@ if __name__ == '__main__':
     for run in range(args['runs']):
         world = World()
         world.diagram = Diagram()
+        world.diagram.setColor(None,'sandybrown')
 
         neighborhoods = {}
         for neighborhood in range(config.getint('City','neighborhoods')):
-            n = Neighborhood('N%02d' % (neighborhood+1),world)
+            n = Neighborhood(neighborhood+1,world)
             neighborhoods[n.name] = {'agent': n, 'inhabitants': []}
 
         city = City(world,config)
