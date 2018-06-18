@@ -34,7 +34,7 @@ class City:
         world.setState(WORLD,'day',1)
         neighborhoods = [name for name in world.agents
                          if isinstance(world.agents[name],Neighborhood)]
-        if config.get('Shelter','neighborhood') != 'none':
+        if config.getboolean('Shelter','exists'):
             # Shelter
             self.shelter = Agent('shelter')
             world.addAgent(self.shelter)
@@ -42,8 +42,9 @@ class City:
             
             world.defineState(self.shelter.name,'risk',float)
             self.shelter.setState('risk',config.getfloat('Shelter','risk'))
-            world.defineState('shelter','neighborhood',list,neighborhoods)
-            self.shelter.setState('neighborhood',config.get('Shelter','neighborhood'))
+            if config.getboolean('Shelter','local'):
+                world.defineState('shelter','neighborhood',list,neighborhoods)
+                self.shelter.setState('neighborhood',config.get('Shelter','neighborhood'))
             world.defineState(self.shelter.name,'allowPets',bool)
             self.shelter.setState('allowPets',config.getboolean('Shelter','pets'))
 
@@ -55,10 +56,10 @@ class Neighborhood(Agent):
         self.setAttribute('static',True)
         
         risk = world.defineState(self.name,'risk',float)
-        world.setFeature(risk,random.random()/2.+0.25)
+        world.setFeature(risk,0.1)
 
         security = world.defineState(self.name,'security',float)
-        world.setFeature(security,random.random()/2+0.25)
+        world.setFeature(security,0.9)
 
 class Nature(Agent):
     def __init__(self,world,config):
@@ -102,7 +103,7 @@ class Nature(Agent):
                                          True: approachMatrix(risk,.1,0.),
                                          False: setToConstantMatrix(risk,0.)}})
                 world.setDynamics(risk,evolution,tree)
-            if config.get('Shelter','neighborhood') != 'none':
+            if config.getboolean('Shelter','exists'):
                 risk = stateKey('shelter','risk')
                 tree = makeTree({'if': equalRow(phase,'increasing'),
                                  True: approachMatrix(risk,.01,1.),
@@ -169,8 +170,9 @@ class Actor(Agent):
             world.setFeature(gender,'female')
         age = world.defineState(self.name,'age',int)
         world.setFeature(age,int(random.random()*50.)+20)
-        kids = world.defineState(self.name,'children',int,lo=0,hi=2)
-        world.setFeature(kids,int(random.random()*3.))
+        if config.getboolean('Actors','children'):
+            kids = world.defineState(self.name,'children',int,lo=0,hi=2)
+            world.setFeature(kids,int(random.random()*3.))
 
         # Psychological
         attachmentStyles = ['secure','anxious','avoidant']
@@ -192,7 +194,8 @@ class Actor(Agent):
         # Dynamic states
         locationSet = neighborhoods[:]
         locationSet.append('evacuated')
-        locationSet.append('shelter')
+        if config.getboolean('Shelter','exists'):
+            locationSet.append('shelter')
         location = world.defineState(self.name,'location',list,locationSet)
         world.setFeature(location,home)
         alive = world.defineState(self.name,'alive',bool)
@@ -211,11 +214,18 @@ class Actor(Agent):
         # Actions and Dynamics
 
         nop = self.addAction({'verb': 'doNothing'})
-        if config.get('Shelter','neighborhood') != 'none':
+        if config.getboolean('Shelter','exists'):
             # Go to shelter
-            tree = makeTree({'if': equalFeatureRow(location,stateKey('shelter','neighborhood')),
-                             True: {'if': trueRow(alive), True: True, False: False},
-                             False: False})
+            tree = {'if': trueRow(alive),
+                    True: {'if': equalRow(location,'shelter'),
+                           True: False, False: True}, False: False}
+            if config.getboolean('Actors','evacuation'):
+                tree = {'if': equalRow(location,'evacuated'),
+                        True: False, False: tree}
+            if config.getboolean('Shelter','local'):
+                tree = {'if': equalFeatureRow(location,stateKey('shelter','neighborhood')),
+                        True: tree, False: False}
+            tree = makeTree(tree)
             actShelter = self.addAction({'verb':'moveTo','object': 'shelter'},
                                         tree.desymbolize(world.symbols))
         if config.getboolean('Actors','evacuation'):
@@ -226,16 +236,27 @@ class Actor(Agent):
             actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols))
         if config.getboolean('Actors','prosocial'):
             # Prosocial behavior
-            tree = makeTree({'if': equalRow(location,['shelter','evacuated']),
-                             True: False, False: {'if': trueRow(alive),
-                                                  True: True, False: False}})
-            actGood = self.addAction({'verb': 'doGood'},tree.desymbolize(world.symbols))
+            actGood = {}
+            for neighborhood in neighborhoods:
+                if config.getboolean('Actors','movement') or neighborhood == home:
+                    tree = makeTree({'if': equalRow(location,neighborhood),
+                                     True: {'if': trueRow(alive),True: True, False: False},
+                                     False: False})
+                    actGood[neighborhood] = self.addAction({'verb': 'doGood','object': neighborhood},
+                                                           tree.desymbolize(world.symbols))
         if config.getboolean('Actors','antisocial'):
             # Antisocial behavior
-            tree = makeTree({'if': equalRow(location,['shelter','evacuated']),
-                             True: False, False: {'if': trueRow(alive),
-                                                  True: True, False: False}})
-            actBad = self.addAction({'verb': 'doBad'},tree.desymbolize(world.symbols))
+            actBad = {}
+            for neighborhood in neighbohoods:
+                if config.getboolean('Actors','movement') or neighborhood == home:
+                    tree = {'if': trueRow(alive),True: True, False: False}
+                    if config.getboolean('Actors','evacuation'):
+                        tree = {'if': equalRow(location,'evacuated'),True: False, False: tree}
+                    if config.getboolean('Shelter','exists'):
+                        tree = {'if': equalRow(location,'shelter'),True: False, False: tree}
+                    tree = makeTree(tree)
+                    actBad[neighborhood] = self.addAction({'verb': 'doBad','object': neighborhood},
+                                                          tree.desymbolize(world.symbols))
         neighborhoods = [n for n in self.world.agents.values()
                          if isinstance(n,Neighborhood)]
         if config.getboolean('Actors','movement'):
@@ -261,7 +282,7 @@ class Actor(Agent):
                                                             tree.desymbolize(world.symbols))
 
         # Effect on location
-        if config.get('Shelter','neighborhood') != 'none':
+        if config.getboolean('Shelter','exists'):
             tree = makeTree(setToConstantMatrix(location,'shelter'))
             world.setDynamics(location,actShelter,tree)
         if config.getboolean('Actors','evacuation'):
@@ -273,19 +294,24 @@ class Actor(Agent):
                 world.setDynamics(location,actMove[neighborhood.name],tree)
 
         # Effect on my risk
-        tree = {'if': equalRow(makeFuture(location),'evacuated'),
-                True: {'if': trueRow(alive),
-                       True: approachMatrix(risk,0.9,0.),
-                       False: noChangeMatrix(risk)},
-                False:  noChangeMatrix(risk)}
-        if config.get('Shelter','neighborhood') != 'none':
+        if config.getboolean('Actors','movement'):
+            tree = noChangeMatrix(risk)
+        else:
+            tree = setToFeatureMatrix(risk,stateKey(home,'risk'))
+        if config.getboolean('Actors','evacuation'):
+            tree = {'if': equalRow(makeFuture(location),'evacuated'),
+                    True: approachMatrix(risk,0.9,0.),
+                    False:  tree}
+        if config.getboolean('Shelter','exists'):
             tree = {'if': equalRow(makeFuture(location),'shelter'),
                     True: setToFeatureMatrix(risk,stateKey('shelter','risk')),
                     False: tree}
-        for neighborhood in neighborhoods:
-            tree = {'if': equalRow(makeFuture(location),neighborhood.name),
-                    True: setToFeatureMatrix(risk,stateKey(neighborhood.name,'risk')),
-                    False: tree}
+        if config.getboolean('Actors','movement'):
+            for neighborhood in neighborhoods:
+                tree = {'if': equalRow(makeFuture(location),neighborhood.name),
+                        True: setToFeatureMatrix(risk,stateKey(neighborhood.name,'risk')),
+                        False: tree}
+        tree = {'if': trueRow(alive),True: tree, False: setToConstantMatrix(risk,0.)}
         world.setDynamics(risk,True,makeTree(tree))
         
         # Effect on my health
@@ -300,21 +326,22 @@ class Actor(Agent):
                                                 True: {'distribution':  [(approachMatrix(health,0.85,0),0.25),
                                                                          (noChangeMatrix(health),0.75)]},
                                                 False: noChangeMatrix(health)}}},
-                         False: noChangeMatrix(health)})
+                         False: setToConstantMatrix(health,0.)})
         world.setDynamics(health,True,tree)
 
-        # Effect on kids' health
-        tree = makeTree({'if': thresholdRow(makeFuture(risk),0.75),
-                         True: {'distribution': [(approachMatrix(kids,0.6,0.),0.75),
-                                                 (noChangeMatrix(kids),0.25)]},
-                         False: {'if': thresholdRow(makeFuture(risk),0.5),
-                                 True: {'distribution': [(approachMatrix(kids,0.7,0.),0.5),
-                                                         (noChangeMatrix(kids),0.5)]},
-                                 False: {'if': thresholdRow(makeFuture(risk),0.25),
-                                         True: {'distribution':  [(approachMatrix(kids,0.8,0),0.25),
-                                                                  (noChangeMatrix(kids),0.75)]},
-                                         False: noChangeMatrix(kids)}}})
-        world.setDynamics(kids,True,tree)
+        if config.getboolean('Actors','children'):
+            # Effect on kids' health
+            tree = makeTree({'if': thresholdRow(makeFuture(risk),0.75),
+                             True: {'distribution': [(approachMatrix(kids,0.6,0.),0.75),
+                                                     (noChangeMatrix(kids),0.25)]},
+                             False: {'if': thresholdRow(makeFuture(risk),0.5),
+                                     True: {'distribution': [(approachMatrix(kids,0.7,0.),0.5),
+                                                             (noChangeMatrix(kids),0.5)]},
+                                     False: {'if': thresholdRow(makeFuture(risk),0.25),
+                                             True: {'distribution':  [(approachMatrix(kids,0.8,0),0.25),
+                                                                      (noChangeMatrix(kids),0.75)]},
+                                             False: noChangeMatrix(kids)}}})
+            world.setDynamics(kids,True,tree)
 
         # Effect on life
         tree = makeTree({'if': trueRow(alive),
@@ -333,16 +360,15 @@ class Actor(Agent):
 
         if config.getboolean('Actors','prosocial'):
             # Effect of doing good
-            for neighborhood in neighborhoods:
-                key = stateKey(neighborhood.name,'risk')
-                tree = makeTree({'if': equalRow(location,neighborhood.name),
-                                 True: approachMatrix(key,.1,0.),
-                                 False: noChangeMatrix(key)})
-                world.setDynamics(key,actGood,tree)
+            for neighborhood,action in actGood.items():
+                key = stateKey(neighborhood,'risk')
+                tree = makeTree(approachMatrix(key,.1,0.))
+                world.setDynamics(key,action,tree)
         # Reward
         self.setReward(maximizeFeature(health,self.name),1.)
         self.setReward(maximizeFeature(wealth,self.name),1.)
-        self.setReward(maximizeFeature(kids,self.name),1.)
+        if config.getboolean('Actors','children'):
+            self.setReward(maximizeFeature(kids,self.name),1.)
         # Decision-making parameters
         self.setAttribute('horizon',config.getint('Actors','horizon'))
         #self.setAttribute('selection','distribution')
@@ -431,6 +457,65 @@ class GroundTruth(World):
             os.chdir('..')
             os.chdir('..')
         
+def addState2tables(world,day,tables,population,neighborhoods):
+    # Grab all of the relevant fields, but only once
+    values = {agent.name: {} for agent in population}
+    for agent in population:
+        for table in tables.values():
+            for feature,label,function in table['fields']:
+                if not feature in values[agent.name]:
+                    value = world.getState(agent.name,feature)
+                    assert len(value) == 1
+                    values[agent.name][feature] = value.first()
+    # Create tables
+    for table in tables.values():
+        if table['population'] is City:
+            entry = {'day': day}
+            for feature,label,function in table['fields']:
+                if world.variables[stateKey(population[0].name,feature)]['domain'] is bool:
+                    entry[label] = len([a for a in population if values[a.name][feature]])
+                if function == 'invert':
+                    entry[label] = len(population) - entry[label]
+            table['log'].append(entry)
+        elif table['population'] is Neighborhood:
+            for neighborhood in neighborhoods:
+                inhabitants = neighborhoods[neighborhood]['inhabitants']
+                if inhabitants:
+                    entry = {'day': day,
+                             'neighborhood': neighborhood}
+                    for feature,label,function in table['fields']:
+                        if world.variables[stateKey(population[0].name,feature)]['domain'] is bool:
+                            entry[label] = len([a for a in inhabitants if values[a.name][feature]])
+                        elif feature == 'risk':
+                            value = world.getState(neighborhood,feature)
+                            assert len(value)
+                            entry[label] = value.first()
+                        else:
+                            value = [values[a.name][feature] for a in inhabitants]
+                            entry[label] = sum(value)/float(len(value))
+                        if function == 'invert':
+                            entry[label] = len(inhabitants) - entry[label]
+                        elif function == 'likert':
+                            entry[label] = toLikert(entry[label])
+                    table['log'].append(entry)
+        elif table['population'] is Actor:
+            for actor in population:
+                entry = {'day': day,'participant': actor.name[-4:]}
+                for feature,label,function in table['fields']:
+                    key = stateKey(actor.name,feature)
+                    if world.variables[key]['domain'] is bool:
+                        if function == 'invert':
+                            entry[label] = not values[actor.name][feature]
+                        else:
+                            entry[label] = values[actor.name][feature]
+                    else:
+                        if function == 'likert':
+                            entry[label] = toLikert(values[actor.name][feature])
+                        elif function and function[0] == '=':
+                            entry[label] = values[actor.name][feature] == function[1:]
+                        else:
+                            entry[label] = values[actor.name][feature]
+                table['log'].append(entry)
     
 if __name__ == '__main__':
     logging.basicConfig(level=logging.ERROR)
@@ -491,15 +576,23 @@ if __name__ == '__main__':
                 beliefs = agent.resetBelief()
                 for other in population:
                     if other.name != agent.name:
-                            agent.ignore(other.name,'%s0' % (agent.name))
+                        agent.ignore(other.name,'%s0' % (agent.name))
+
+        world.dependency.computeEvaluation()
+
+#        for agent in population:
+#            agent.compileV(state=world.state)
+#            sys.exit(0)
 
         allTables = {'Population': {'fields': [('alive','casualties','invert')],
                                     'population': City,
                                     'log': []},
-                     'Neighborhood': {'fields': [('alive','casualties','invert')],
+                     'Neighborhood': {'fields': [('alive','casualties','invert'),
+                                                 ('risk','risk','likert')],
                                       'population': Neighborhood,
                                       'log': []},
-                     'Actors': {'fields': [('alive','alive',None),
+                     'Actors': {'fields': [('neighborhood','neighborhood',None),
+                                           ('alive','alive',None),
                                            ('risk','risk','likert'),
                                            ('health','health','likert'),
                                            ('grievance','grievance','likert'),
@@ -511,69 +604,27 @@ if __name__ == '__main__':
         }
         tables = {name: allTables[name] for name in allTables
                   if config.getboolean('Data',name.lower())}
+        addState2tables(world,0,tables,population,neighborhoods)
         while int(world.getState(WORLD,'day').expectation()) <= args['number']:
             day = int(world.getState(WORLD,'day').expectation())
-            oldState = world.state
-            newState = world.step(select=True)
             logging.info('Day %d' % (day))
+            # People's turn
+            newState = world.step(select=True)
             buf = StringIO()
             world.explainAction(newState,level=1,buf=buf)
-            logging.debug(buf.getvalue())
+            logging.info(buf.getvalue())
             buf.close()
             buf = StringIO()
             world.printState(newState,buf)
             logging.debug(buf.getvalue())
             buf.close()
+            addState2tables(world,day,tables,population,neighborhoods)
+            # Nature's turn
             newState = world.step(select=True)
-            # Grab all of the relevant fields, but only once
-            values = {agent.name: {} for agent in population}
-            for agent in population:
-                for table in tables.values():
-                    for feature,label,function in table['fields']:
-                        if not feature in values[agent.name]:
-                            value = world.getState(agent.name,feature)
-                            assert len(value) == 1
-                            values[agent.name][feature] = value.first()
-            # Create tables
-            for table in tables.values():
-                if table['population'] is City:
-                    entry = {'day': day}
-                    for feature,label,function in table['fields']:
-                        if world.variables[stateKey(population[0].name,feature)]['domain'] is bool:
-                            entry[label] = len([a for a in population if values[a.name][feature]])
-                        if function == 'invert':
-                            entry[label] = len(population) - entry[label]
-                    table['log'].append(entry)
-                elif table['population'] is Neighborhood:
-                    for neighborhood in neighborhoods:
-                        inhabitants = neighborhoods[neighborhood]['inhabitants']
-                        if inhabitants:
-                            entry = {'day': day,
-                                     'neighborhood': neighborhood}
-                            for feature,label,function in table['fields']:
-                                if world.variables[stateKey(population[0].name,feature)]['domain'] is bool:
-                                    entry[label] = len([a for a in inhabitants if values[a.name][feature]])
-                                if function == 'invert':
-                                    entry[label] = len(inhabitants) - entry[label]
-                            table['log'].append(entry)
-                elif table['population'] is Actor:
-                    for actor in population:
-                        entry = {'day': day,'participant': actor.name[-4:]}
-                        for feature,label,function in table['fields']:
-                            key = stateKey(actor.name,feature)
-                            if world.variables[key]['domain'] is bool:
-                                if function == 'invert':
-                                    entry[label] = not values[actor.name][feature]
-                                else:
-                                    entry[label] = values[actor.name][feature]
-                            else:
-                                if function == 'likert':
-                                    entry[label] = toLikert(values[actor.name][feature])
-                                elif function[0] == '=':
-                                    entry[label] = values[actor.name][feature] == function[1:]
-                                else:
-                                    entry[label] = values[actor.name][feature]
-                        table['log'].append(entry)
+            buf = StringIO()
+            world.printState(newState,buf)
+            logging.debug(buf.getvalue())
+            buf.close()
                                     
         # Verify directory structure
         dirName = os.path.join('Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (run))
