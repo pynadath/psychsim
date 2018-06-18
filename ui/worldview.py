@@ -378,7 +378,7 @@ class VariableNode(QGraphicsEllipseItem):
     def itemChange(self,change,value):
         if change == QGraphicsItem.ItemPositionHasChanged:
             rect = self.sceneBoundingRect()
-            key = stateKey(self.agent,self.feature)
+            key = stateKey(self.agent.name,self.feature)
             self.scene().updateEdges(key,rect)
             if isFuture(key):
                 self.scene().world.variables[makePresent(key)]['xpost'] = int(rect.x())
