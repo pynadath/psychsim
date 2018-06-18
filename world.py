@@ -1743,7 +1743,7 @@ class World:
                                     substate = self.state.keyMap[key]
                                 except KeyError:
                                     substate = None
-                                if state2agent(key) is None:
+                                if isStateKey(key) and state2agent(key) is None:
                                     key = stateKey(WORLD,key)
                                 self.defineVariable(key,domain,lo,hi,description,combinator,substate)
                                 try:
