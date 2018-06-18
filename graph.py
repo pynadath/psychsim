@@ -115,6 +115,8 @@ class DependencyGraph(dict):
                 model = '%s0' % (agent.name)
                 R = agent.getReward(model)
                 for parent in R.getKeysIn() - set([CONSTANT]):
+                    if isStateKey(parent) and not state2agent(parent) in agents:
+                        continue
                     # Link between variable and agent utility
                     dict.__getitem__(self,name)['parents'].add(makeFuture(parent))
                     dict.__getitem__(self,makeFuture(parent))['children'].add(name)
@@ -122,6 +124,8 @@ class DependencyGraph(dict):
                 for action,tree in agent.legal.items():
                     action = ActionSet([a.root() for a in action])
                     for parent in tree.getKeysIn() - set([CONSTANT]):
+                        if isStateKey(parent) and not state2agent(parent) in agents:
+                            continue
                         # Link between prerequisite variable and action
                         assert self.has_key(action),'Graph has not accounted for action: %s' % (action)
                         dict.__getitem__(self,action)['parents'].add(parent)
