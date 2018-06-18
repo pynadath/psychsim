@@ -151,8 +151,8 @@ class Group(Agent):
             self.setReward(name,weight,model)
     
 class Actor(Agent):
-    def __init__(self,name,world,config):
-        Agent.__init__(self,'Actor%s' % (name))
+    def __init__(self,number,world,config):
+        Agent.__init__(self,'Actor%04d' % (number))
         world.addAgent(self)
 
         # States
@@ -182,7 +182,7 @@ class Actor(Agent):
         neighborhoods = sorted([name for name in self.world.agents
                                 if isinstance(self.world.agents[name],Neighborhood)])
         neighborhood = world.defineState(self.name,'neighborhood',list,neighborhoods)
-        home = random.choice(neighborhoods)
+        home = neighborhoods[(number-1)/config.getint('City','density')]
         world.setFeature(neighborhood,home)
 
         # For display use only
@@ -360,9 +360,10 @@ class Actor(Agent):
 
         if config.getboolean('Actors','prosocial'):
             # Effect of doing good
+            benefit = config.getfloat('Actors','prosocial_benefit')
             for neighborhood,action in actGood.items():
                 key = stateKey(neighborhood,'risk')
-                tree = makeTree(approachMatrix(key,.1,0.))
+                tree = makeTree(approachMatrix(key,benefit,0.))
                 world.setDynamics(key,action,tree)
             proRisk = config.getfloat('Actors','prosocial_risk')
             if proRisk > 0.:
@@ -556,7 +557,7 @@ if __name__ == '__main__':
 
         population = []
         for i in range(config.getint('Actors','population')):
-            agent = Actor('%04d' % (i+1),world,config)
+            agent = Actor(i+1,world,config)
             population.append(agent)
             neighborhood = agent.getState('neighborhood').first()
             neighborhoods[neighborhood]['inhabitants'].append(agent)
@@ -624,7 +625,7 @@ if __name__ == '__main__':
             newState = world.step(select=True)
             buf = StringIO()
             world.explainAction(newState,level=1,buf=buf)
-            logging.info(buf.getvalue())
+            logging.info('\n'+buf.getvalue())
             buf.close()
             buf = StringIO()
             world.printState(newState,buf)
