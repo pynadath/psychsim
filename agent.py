@@ -54,6 +54,39 @@ class Agent:
     """Policy methods"""
     """------------------"""
 
+    def compileV(self,model=None,state=None):
+        self.world.dependency.getEvaluation()
+        if model is None:
+            model = '%s0' % (self.name)
+        R = self.getReward(model)
+        keys = R.getKeysIn()-{CONSTANT}
+        ancestorList = [self.world.dependency[makeFuture(k)]['ancestors'] for k in keys]
+        ancestors = set.union(*ancestorList)
+        print(sorted(ancestors))
+        if state:
+            actions = self.getActions(state)
+        else:
+            actions = self.actions
+        done = set()
+        for action in actions:
+            print(action)
+            effects = [0]
+            while effects:
+                print('----')
+                effects = set()
+                tree = None
+                for key in sorted(self.world.dynamics.keys()):
+                    dynamics = self.world.getDynamics(key,action)
+                    if dynamics and key in ancestors and not key in done:
+                        print('\t%s' % (key))
+                        effects.add(key)
+                        assert len(dynamics) == 1
+                        if tree is None:
+                            tree = dynamics[0]
+                        else:
+                            tree += dynamics[0]
+                        done.add(key)
+                            
     def decide(self,vector,horizon=None,others=None,model=None,selection=None,actions=None,keySet=None):
         """
         Generate an action choice for this agent in the given state
@@ -140,12 +173,12 @@ class Agent:
         best = None
         for action in actions:
             # Compute value across possible worlds
-            logging.info('Considering %s' % (action))
+            logging.debug('Considering %s' % (action))
             V[action] = {'__EV__': 0.,'__ER__': [],'__S__': []}
             if isinstance(keySet,dict):
                 subkeys = keySet[action]
             else:
-                subkeys = keySet
+                subkeys = belief.keys()
             current = copy.deepcopy(belief)
             start = action
             for t in range(horizon):
@@ -646,8 +679,11 @@ class Agent:
         if beliefs is True:
             beliefs = self.resetBelief(model)
         if isinstance(agents,str):
-            del beliefs[keys.turnKey(agents)]
-            del beliefs[keys.modelKey(agents)]
+            for key in beliefs.keys():
+                if state2agent(key) == agents:
+                    del beliefs[key]
+#            del beliefs[keys.turnKey(agents)]
+#            del beliefs[keys.modelKey(agents)]
         else:
             beliefs.deleteKeys([keys.turnKey(a) for a in agents]+
                                [keys.modelKey(a) for a in agents])
@@ -880,7 +916,8 @@ class Agent:
                                                          if turnKey(action['subject']) in beliefs})
                     if len(relevantActions) == 0:
                         relevantActions = None
-                    self.world.step(relevantActions,beliefs,updateBeliefs=False)
+                    self.world.step(relevantActions,beliefs,updateBeliefs=False,
+                                    keySubset=beliefs.keys())
                     # Condition on actual observations
                     for omega in Omega:
                         beliefs[omega] = vector[keys.makeFuture(omega)]
