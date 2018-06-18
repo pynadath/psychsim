@@ -89,7 +89,10 @@ class DependencyGraph(dict):
         for key,dynamics in self.world.dynamics.items():
             if isTurnKey(key):
                 continue
-            if not state2agent(key) in agents:
+            if isStateKey(key) and not state2agent(key) in agents:
+                continue
+            if isBinaryKey(key) and not key2relation(key)['subject'] in agents and \
+               not key2relation(key)['object'] in agents:
                 continue
             assert self.has_key(key),'Graph has not accounted for key: %s' % (key)
             if isinstance(dynamics,bool):
