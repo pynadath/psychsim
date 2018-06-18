@@ -43,7 +43,8 @@ class DependencyGraph(dict):
         # Process the unary state features
         if agents is None:
             agents = sorted(self.world.agents.keys())
-        for agent in [WORLD]+agents:
+            agents.append(WORLD)
+        for agent in agents:
             if agent in self.world.locals:
                 variables = self.world.locals[agent]
                 for feature in variables.keys():
@@ -67,26 +68,27 @@ class DependencyGraph(dict):
                                          'children': set(),
                                          'parents': set()}
         for name in agents:
-            # Create the agent reward node
-            agent = self.world.agents[name]
-            if agent.getAttribute('R','%s0' % (name)):
-                self[name] = {'agent': name,
-                              'type': 'utility',
-                              'parents': set(),
-                              'children': set()}
-            # Process the agent actions
-            for action in agent.actions:
-                action = ActionSet([a.root() for a in action])
-                if not self.has_key(action):
-                    self[action] = {'agent': name,
-                                    'type': 'action',
-                                    'parents': set(),
-                                    'children': set()}
+            if name != WORLD:
+                # Create the agent reward node
+                agent = self.world.agents[name]
+                if agent.getAttribute('R','%s0' % (name)):
+                    self[name] = {'agent': name,
+                                  'type': 'utility',
+                                  'parents': set(),
+                                  'children': set()}
+                # Process the agent actions
+                for action in agent.actions:
+                    action = ActionSet([a.root() for a in action])
+                    if not self.has_key(action):
+                        self[action] = {'agent': name,
+                                        'type': 'action',
+                                        'parents': set(),
+                                        'children': set()}
         # Create links from dynamics
         for key,dynamics in self.world.dynamics.items():
             if isTurnKey(key):
                 continue
-            if state2agent(key) != WORLD and not state2agent(key) in agents:
+            if not state2agent(key) in agents:
                 continue
             assert self.has_key(key),'Graph has not accounted for key: %s' % (key)
             if isinstance(dynamics,bool):
@@ -103,22 +105,23 @@ class DependencyGraph(dict):
                         dict.__getitem__(self,makeFuture(key))['parents'].add(parent)
                         dict.__getitem__(self,parent)['children'].add(makeFuture(key))
         for name in agents:
-            agent = self.world.agents[name]
-            # Create links from reward
-            model = '%s0' % (agent.name)
-            R = agent.getReward(model)
-            for parent in R.getKeysIn() - set([CONSTANT]):
-                # Link between variable and agent utility
-                dict.__getitem__(self,name)['parents'].add(makeFuture(parent))
-                dict.__getitem__(self,makeFuture(parent))['children'].add(name)
-            # Create links from legality
-            for action,tree in agent.legal.items():
-                action = ActionSet([a.root() for a in action])
-                for parent in tree.getKeysIn() - set([CONSTANT]):
-                    # Link between prerequisite variable and action
-                    assert self.has_key(action),'Graph has not accounted for action: %s' % (action)
-                    dict.__getitem__(self,action)['parents'].add(parent)
-                    dict.__getitem__(self,parent)['children'].add(action)
+            if name != WORLD:
+                agent = self.world.agents[name]
+                # Create links from reward
+                model = '%s0' % (agent.name)
+                R = agent.getReward(model)
+                for parent in R.getKeysIn() - set([CONSTANT]):
+                    # Link between variable and agent utility
+                    dict.__getitem__(self,name)['parents'].add(makeFuture(parent))
+                    dict.__getitem__(self,makeFuture(parent))['children'].add(name)
+                # Create links from legality
+                for action,tree in agent.legal.items():
+                    action = ActionSet([a.root() for a in action])
+                    for parent in tree.getKeysIn() - set([CONSTANT]):
+                        # Link between prerequisite variable and action
+                        assert self.has_key(action),'Graph has not accounted for action: %s' % (action)
+                        dict.__getitem__(self,action)['parents'].add(parent)
+                        dict.__getitem__(self,parent)['children'].add(action)
 
     def items(self):
         if len(self) == 0:
