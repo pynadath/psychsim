@@ -32,8 +32,10 @@ class City:
     def __init__(self,world,config):
         world.defineState(WORLD,'day',int,lo=1)
         world.setState(WORLD,'day',1)
+
         neighborhoods = [name for name in world.agents
                          if isinstance(world.agents[name],Neighborhood)]
+
         if config.getboolean('Shelter','exists'):
             # Shelter
             self.shelter = Agent('shelter')
@@ -127,18 +129,44 @@ class Nature(Agent):
         world.setDynamics(stateKey(WORLD,'day'),evolution,tree)
         
 class System(Agent):
-    def __init__(self,world):
+    def __init__(self,world,config):
         Agent.__init__(self,'System')
         world.addAgent(self)
 
-        world.defineState(self.name,'resources',int,lo=0,hi=100)
+        world.diagram.setColor(self.name,'darkgoldenrod')
+        
+        self.setAttribute('static',True)
+        
+        resources = world.defineState(self.name,'resources',int,lo=0,hi=100)
         self.setState('resources',int(random.random()*25.)+75)
         
         neighborhoods = [name for name in self.world.agents
                         if isinstance(self.world.agents[name],Neighborhood)]
+        population = [name for name in self.world.agents
+                      if isinstance(self.world.agents[name],Actor)]
 
-        for neighborhood in neighborhoods:
-            self.addAction({'verb': 'allocate','object': neighborhood})
+        populated = set()
+        for actor in population:
+            self.setReward(maximizeFeature(stateKey(actor,'health'),self.name),1.)
+            populated.add(world.getState(actor,'neighborhood').first())
+        allocation = config.getint('City','system_allocation')
+        for neighborhood in populated:
+            tree = makeTree({'if': thresholdRow(resources,allocation),True: True,False: False})
+            allocate = self.addAction({'verb': 'allocate','object': neighborhood},
+                                      tree.desymbolize(world.symbols))
+            risk = stateKey(neighborhood,'risk')
+            tree = makeTree(approachMatrix(risk,0.1,0.))
+            world.setDynamics(risk,allocate,tree)
+            tree = makeTree(incrementMatrix(resources,-allocation))
+            world.setDynamics(resources,allocate,tree)
+            delta = config.getfloat('Actors','grievance_delta')
+            if delta > 0.:
+                for actor in population:
+                    grievance = stateKey(actor,'grievance')
+                    tree = makeTree({'if': equalRow(stateKey(actor,'neighborhood'),neighborhood),
+                                     True: approachMatrix(grievance,delta,0.),
+                                     False: approachMatrix(grievance,delta,1.)})
+                    world.setDynamics(grievance,allocate,tree)
         
 class Group(Agent):
     def __init__(self,name,world,config):
@@ -643,7 +671,6 @@ if __name__ == '__main__':
             neighborhoods[n.name] = {'agent': n, 'inhabitants': [], 'number': neighborhood+1}
 
         city = City(world,config)
-
         nature = Nature(world,config)
 
         population = []
@@ -652,6 +679,9 @@ if __name__ == '__main__':
             population.append(agent)
             neighborhood = agent.getState('neighborhood').first()
             neighborhoods[neighborhood]['inhabitants'].append(agent)
+
+        if config.getboolean('City','system'):
+            system = System(world,config)
 
         groups = []
         if config.getboolean('Groups','neighborhood'):
@@ -705,6 +735,7 @@ if __name__ == '__main__':
                     
 
         order = [{agent.name for agent in population}]
+#        order.insert(0,system.name)
         order.append({'Nature'})
         world.setOrder(order)
 
