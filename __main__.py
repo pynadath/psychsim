@@ -54,7 +54,10 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
 
     @pyqtSlot() # signal with no arguments
     def on_actionGround_Truth_triggered(self):
-        agents = ['Actor0001','Actor0002','Nature','N01']
+        neighborhood = 'N01'
+        agents = ['Actor0001','Actor0002','Nature',neighborhood]
+        if 'Group%s' % (neighborhood) in self.world.agents:
+            agents.append('Group%s' % (neighborhood))
         if 'shelter' in self.world.agents:
             agents.append('shelter')
         self.world.diagram.x.clear()
