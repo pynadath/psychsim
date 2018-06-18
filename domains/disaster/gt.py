@@ -38,6 +38,9 @@ class City:
             # Shelter
             self.shelter = Agent('shelter')
             world.addAgent(self.shelter)
+
+            world.diagram.setColor(self.shelter.name,'skyblue')
+            
             self.shelter.setAttribute('static',True)
             
             world.defineState(self.shelter.name,'risk',float)
@@ -287,14 +290,11 @@ class Actor(Agent):
         if config.getboolean('Actors','antisocial'):
             # Antisocial behavior
             actBad = {}
-            for neighborhood in neighbohoods:
+            for neighborhood in neighborhoods:
                 if config.getboolean('Actors','movement') or neighborhood == home:
-                    tree = {'if': trueRow(alive),True: True, False: False}
-                    if config.getboolean('Actors','evacuation'):
-                        tree = {'if': equalRow(location,'evacuated'),True: False, False: tree}
-                    if config.getboolean('Shelter','exists'):
-                        tree = {'if': equalRow(location,'shelter'),True: False, False: tree}
-                    tree = makeTree(tree)
+                    tree = makeTree({'if': equalRow(location,neighborhood),
+                                     True: {'if': trueRow(alive),True: True, False: False},
+                                     False: False})
                     actBad[neighborhood] = self.addAction({'verb': 'doBad','object': neighborhood},
                                                           tree.desymbolize(world.symbols))
         neighborhoods = [n for n in self.world.agents.values()
