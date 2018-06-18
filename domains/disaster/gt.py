@@ -623,10 +623,34 @@ if __name__ == '__main__':
                 groups.append(group)
 
         neighbors = {}
+        friends = {}
         for agent in population:
             myHome = world.getState(agent.name,'neighborhood').first()
             neighbors[agent.name] = {a.name for a in population if a.name != agent.name and \
                                      world.getState(a.name,'neighborhood').first() == myHome}
+
+            # Social network
+            friends[agent.name] = set()
+            for other in population:
+                if other.name != agent.name:
+                    friendship = world.defineRelation(agent.name,other.name,'friendOf',bool)
+                    world.setFeature(friendship,False)
+        friendCount = {agent.name: 0 for agent in population}
+        friendMax = config.getint('Actors','friends')
+        while friendCount:
+            friend1 = random.choice(friendCount.keys())
+            friend2 = random.choice(list(set(friendCount.keys())-{friend1}))
+            world.setFeature(binaryKey(friend1,friend2,'friendOf'),True)
+            if friendCount[friend1] == friendMax - 1:
+                del friendCount[friend1]
+            else:
+                friendCount[friend1] += 1
+            world.setFeature(binaryKey(friend2,friend1,'friendOf'),True)
+            if friendCount[friend2] == friendMax - 1:
+                del friendCount[friend2]
+            else:
+                friendCount[friend2] += 1
+
         if config.get('Actors','altruism') == 'neighbors':
             for agent in population:
                 for other in neighbors[agent.name]:
