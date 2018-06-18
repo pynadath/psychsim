@@ -194,6 +194,19 @@ class Group(Agent):
             world.setDynamics(member,leave,tree)
             tree = makeTree(incrementMatrix(size,-1))
             world.setDynamics(size,leave,tree)
+            if config.getboolean('Actors','attachment'):
+                # Reward associated with being a member
+                attachment = stateKey(name,'attachment')
+                R = rewardKey(name)
+                tree = makeTree({'if': thresholdRow(stateKey(name,'risk'),
+                                                    config.getfloat('Actors','attachment_threshold')),
+                                 True: {'if': equalRow(attachment,'anxious'),
+                                        True: setToFeatureMatrix(R,member,1.),
+                                        False: {'if': equalRow(attachment,'avoidant'),
+                                                True: setToFeatureMatrix(R,member,-1.),
+                                                False: setToConstantMatrix(R,0.)}},
+                                 False: setToConstantMatrix(R,0.)})
+                agent.setReward(tree,config.getfloat('Actors','attachment_r'))
         # Define reward function for this group as weighted sum of members
         if weights is None:
             weights = {a: 1. for a in agents}
@@ -232,7 +245,8 @@ class Actor(Agent):
         # Psychological
         attachmentStyles = ['secure','anxious','avoidant']
         attachment = world.defineState(self.name,'attachment',list,attachmentStyles)
-        world.setFeature(attachment,random.choice(attachmentStyles))
+        attachmentValue = random.choice(attachmentStyles)
+        world.setFeature(attachment,attachmentValue)
 
         neighborhoods = sorted([name for name in self.world.agents
                                 if isinstance(self.world.agents[name],Neighborhood)])
