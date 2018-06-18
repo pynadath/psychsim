@@ -59,7 +59,7 @@ class DependencyGraph(dict):
         # Process the binary state features
         for relation,table in self.world.relations.items():
             for key,entry in table.items():
-                if entry['subject'] in agents:
+                if entry['subject'] in agents and entry['object'] in agents:
                     self[key] = {'agent': entry['subject'],
                                  'type': 'state pre',
                                  'children': set(),
