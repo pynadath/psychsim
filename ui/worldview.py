@@ -373,7 +373,7 @@ class VariableNode(QGraphicsEllipseItem):
         self.setToolTip(str(key))
 
     def mouseDoubleClickEvent(self,event):
-        self.scene().highlightEdges(stateKey(self.agent,self.feature))
+        self.scene().highlightEdges(stateKey(self.agent.name,self.feature))
 
     def itemChange(self,change,value):
         if change == QGraphicsItem.ItemPositionHasChanged:
