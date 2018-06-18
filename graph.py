@@ -59,14 +59,15 @@ class DependencyGraph(dict):
         # Process the binary state features
         for relation,table in self.world.relations.items():
             for key,entry in table.items():
-                self[key] = {'agent': entry['subject'],
-                             'type': 'state pre',
-                             'children': set(),
-                             'parents': set()}
-                self[makeFuture(key)] = {'agent': entry['subject'],
-                                         'type': 'state post',
-                                         'children': set(),
-                                         'parents': set()}
+                if entry['subject'] in agents:
+                    self[key] = {'agent': entry['subject'],
+                                 'type': 'state pre',
+                                 'children': set(),
+                                 'parents': set()}
+                    self[makeFuture(key)] = {'agent': entry['subject'],
+                                             'type': 'state post',
+                                             'children': set(),
+                                             'parents': set()}
         for name in agents:
             if name != WORLD:
                 # Create the agent reward node
