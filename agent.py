@@ -183,7 +183,7 @@ class Agent:
             start = action
             for t in range(horizon):
                 outcome = self.world.step(start,current,keySubset=subkeys,
-                                          horizon=horizon-t)
+                                          horizon=horizon-t-1)
                 V[action]['__ER__'].append(self.reward(current))
                 V[action]['__EV__'] += V[action]['__ER__'][-1]
                 V[action]['__S__'].append(current)
