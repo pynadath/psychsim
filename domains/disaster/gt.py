@@ -54,7 +54,7 @@ class Neighborhood(Agent):
         world.addAgent(self)
 
         if number == 1:
-            world.diagram.setColor(self.name,'khaki')
+            world.diagram.setColor(self.name,'mediumseagreen')
 
         self.setAttribute('static',True)
         
@@ -556,7 +556,7 @@ if __name__ == '__main__':
     for run in range(args['runs']):
         world = World()
         world.diagram = Diagram()
-        world.diagram.setColor(None,'sandybrown')
+        world.diagram.setColor(None,'deepskyblue')
 
         neighborhoods = {}
         for neighborhood in range(config.getint('City','neighborhoods')):
