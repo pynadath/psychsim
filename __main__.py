@@ -56,10 +56,9 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
     def on_actionGround_Truth_triggered(self):
         neighborhood = 'N01'
         agents = ['Actor0001','Actor0002','Nature',neighborhood]
-        if 'Group%s' % (neighborhood) in self.world.agents:
-            agents.append('Group%s' % (neighborhood))
-        if 'shelter' in self.world.agents:
-            agents.append('shelter')
+        for name in ['Group%s' % (neighborhood),'shelter','System']:
+            if name in self.world.agents:
+                agents.append(name)
         self.world.diagram.x.clear()
         self.world.diagram.y.clear()
         for variable in self.world.variables.values():
