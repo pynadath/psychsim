@@ -631,6 +631,8 @@ class Agent:
                              True: R,False: tree}
             tree = makeTree(tree).desymbolize(self.world.symbols)
             vector *= tree
+            if not rewardKey(self.name) in vector:
+                vector.join(rewardKey(self.name),0.)
             vector.rollback()
             total = vector[rewardKey(self.name)].expectation()
         else:
