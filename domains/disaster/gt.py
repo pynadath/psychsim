@@ -364,6 +364,11 @@ class Actor(Agent):
                 key = stateKey(neighborhood,'risk')
                 tree = makeTree(approachMatrix(key,.1,0.))
                 world.setDynamics(key,action,tree)
+            if config.getboolean('Actors','prosocial_risk'):
+                for neighborhood,action in actGood.items():
+                    tree = makeTree(approachMatrix(risk,.2,1.))
+                    world.setDynamics(risk,action,tree)
+                
         # Reward
         self.setReward(maximizeFeature(health,self.name),1.)
         self.setReward(maximizeFeature(wealth,self.name),1.)
@@ -500,6 +505,7 @@ def addState2tables(world,day,tables,population,neighborhoods):
                     table['log'].append(entry)
         elif table['population'] is Actor:
             for actor in population:
+                belief = actor.getBelief().values()[0]
                 entry = {'day': day,'participant': actor.name[-4:]}
                 for feature,label,function in table['fields']:
                     key = stateKey(actor.name,feature)
