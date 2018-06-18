@@ -619,7 +619,7 @@ class VectorDistributionSet:
         for label,distribution in self.distributions.items():
             node = distribution.__xml__().documentElement
             root.appendChild(node)
-            if label:
+            if not label is None:
                 node.setAttribute('label',str(label))
         return doc
 
@@ -635,6 +635,7 @@ class VectorDistributionSet:
                     substate = int(node.getAttribute('label'))
                     for key in distribution.keys():
                         self.keyMap[key] = substate
+                    self.distributions[substate] = distribution
                 except ValueError:
                     substate = str(node.getAttribute('label'))
                     distributions[substate] = distribution
