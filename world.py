@@ -252,9 +252,10 @@ class World:
                 key = keys.turnKey(name)
                 if key in state.keyMap and 0 in state.domain(key):
                     # This agent might have a turn now
-                    logging.info('%s deciding...' % (name))
+                    logging.debug('%s deciding...' % (name))
+                    agent = self.agents[name]
                     decision = self.agents[name].decide(state,horizon,actions,
-                                                        None,tiebreak)
+                                                        None,tiebreak,agent.getActions(state))
                     actions[name] = decision['policy']
         for name,policy in actions.items():
             state *= policy
@@ -352,7 +353,7 @@ class World:
         for keySet in keyOrder:
             dynamics = {}
             for key in keySet:
-                dynamics[key] = self.getDynamics(key,actions,state)
+                dynamics[key] = self.getDynamics(key,actions)
                 if len(dynamics[key]) == 0:
                     # No dynamics, no change
                     dynamics[key] = None
@@ -572,7 +573,7 @@ class World:
 
     def getDynamics(self,key,action,state=None):
         if not state is None:
-            return DeprecationWarning,'There are no longer different dynamics functions depending on the state'
+            raise DeprecationWarning,'There are no longer different dynamics functions depending on the state'
         if not key in self.dynamics:
             return []
         if isinstance(action,Action):
