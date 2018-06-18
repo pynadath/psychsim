@@ -1333,7 +1333,7 @@ class World:
         if state is None:
             state = self.state
         joint = {}
-        for name in self.agents:
+        for name in sorted(self.agents.keys()):
             key = stateKey(name,ACTION)
             if key in state:
                 joint[name] = self.float2value(key,state.marginal(key))
