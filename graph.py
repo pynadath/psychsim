@@ -44,16 +44,17 @@ class DependencyGraph(dict):
         if agents is None:
             agents = sorted(self.world.agents.keys())
         for agent in [WORLD]+agents:
-            variables = self.world.locals[agent]
-            for feature in variables.keys():
-                self[stateKey(agent,feature)] = {'agent': agent,
-                                                 'type': 'state pre',
-                                                 'children': set(),
-                                                 'parents': set()}
-                self[stateKey(agent,feature,True)] = {'agent': agent,
-                                                      'type': 'state post',
-                                                      'children': set(),
-                                                      'parents': set()}
+            if agent in self.world.locals:
+                variables = self.world.locals[agent]
+                for feature in variables.keys():
+                    self[stateKey(agent,feature)] = {'agent': agent,
+                                                     'type': 'state pre',
+                                                     'children': set(),
+                                                     'parents': set()}
+                    self[stateKey(agent,feature,True)] = {'agent': agent,
+                                                          'type': 'state post',
+                                                          'children': set(),
+                                                          'parents': set()}
         # Process the binary state features
         for relation,table in self.world.relations.items():
             for key,entry in table.items():
