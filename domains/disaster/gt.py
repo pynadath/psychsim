@@ -347,6 +347,11 @@ class Actor(Agent):
                                                             'object': neighborhood.name},
                                                             tree.desymbolize(world.symbols))
 
+        # Information-seeking actions
+        if config.getboolean('Actors','infoseek'):
+            tree = makeTree({'if': trueRow(alive), True: True, False: False})
+            self.addAction({'verb': 'infoSeek','object': home},tree.desymbolize(world.symbols))
+                
         # Effect on location
         if config.getboolean('Shelter','exists'):
             tree = makeTree(setToConstantMatrix(location,'shelter'))
@@ -435,6 +440,17 @@ class Actor(Agent):
             if proRisk > 0.:
                 for neighborhood,action in actGood.items():
                     tree = makeTree(approachMatrix(risk,proRisk,1.))
+                    world.setDynamics(risk,action,tree)
+        if config.getboolean('Actors','antisocial'):
+            # Effect of doing good
+            benefit = config.getfloat('Actors','antisocial_benefit')
+            for neighborhood,action in actBad.items():
+                tree = makeTree(incrementMatrix(wealth,benefit))
+                world.setDynamics(wealth,action,tree)
+            antiRisk = config.getfloat('Actors','antisocial_risk')
+            if antiRisk > 0.:
+                for neighborhood,action in actBad.items():
+                    tree = makeTree(approachMatrix(risk,antiRisk,1.))
                     world.setDynamics(risk,action,tree)
                 
         # Reward
