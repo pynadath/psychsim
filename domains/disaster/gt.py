@@ -138,18 +138,47 @@ class System(Agent):
             self.addAction({'verb': 'allocate','object': neighborhood})
         
 class Group(Agent):
-    def __init__(self,name,world):
+    def __init__(self,name,world,config):
         Agent.__init__(self,'Group%s' % (name))
         world.addAgent(self)
-        actGood = self.addAction({'verb': 'doGood'})
-        actBad = self.addAction({'verb': 'doBad'})
+
+        if name == 'N01':
+            world.diagram.setColor(self.name,'yellowgreen')
+            
+        self.setAttribute('static',True)
+        
+        if config.getboolean('Groups','prosocial'):
+            actGood = self.addAction({'verb': 'doGood'})
+        if config.getboolean('Groups','antisocial'):
+            actBad = self.addAction({'verb': 'doBad'})
         doNothing = self.addAction({'verb': 'doNothing'})
 
     def potentialMembers(self,agents,weights=None):
         assert len(self.models) == 1,'Define potential members before adding multiple models of group %s' % (self.name)
         model = self.models.keys()[0]
-        for agent in agents:
-            self.world.defineRelation(agent,self.name,'memberOf',bool)
+        for name in agents:
+            agent = self.world.agents[name]
+            member = self.world.defineRelation(name,self.name,'memberOf',bool)
+            # Join a group
+            self.world.setFeature(member,False)
+            tree = makeTree({'if': trueRow(stateKey(name,'alive')),
+                             True: {'if': trueRow(member),
+                                    True: False, False: True},
+                             False: False})
+            join = agent.addAction({'verb': 'join','object': self.name},
+                                   tree.desymbolize(self.world.symbols))
+            tree = makeTree(setTrueMatrix(member))
+            world.setDynamics(member,join,tree)
+            # Leave a group
+            self.world.setFeature(member,False)
+            tree = makeTree({'if': trueRow(stateKey(name,'alive')),
+                             True: {'if': trueRow(member),
+                                    True: True, False: False},
+                             False: False})
+            leave = agent.addAction({'verb': 'leave','object': self.name},
+                                    tree.desymbolize(self.world.symbols))
+            tree = makeTree(setFalseMatrix(member))
+            world.setDynamics(member,leave,tree)
         # Define reward function for this group as weighted sum of members
         if weights is None:
             weights = {a: 1. for a in agents}
@@ -561,7 +590,7 @@ if __name__ == '__main__':
         neighborhoods = {}
         for neighborhood in range(config.getint('City','neighborhoods')):
             n = Neighborhood(neighborhood+1,world)
-            neighborhoods[n.name] = {'agent': n, 'inhabitants': []}
+            neighborhoods[n.name] = {'agent': n, 'inhabitants': [], 'number': neighborhood+1}
 
         city = City(world,config)
 
@@ -575,9 +604,11 @@ if __name__ == '__main__':
             neighborhoods[neighborhood]['inhabitants'].append(agent)
 
         groups = []
-            #    for neighborhood,info in neighborhoods.items():
-            #        group = Group('Group%s' % (neighborhood[-2:]),world)
-            #        group.potentialMembers([a.name for a in info['inhabitants']])
+        if config.getboolean('Groups','neighborhood'):
+            for neighborhood,info in neighborhoods.items():
+                group = Group(info['agent'].name,world,config)
+                group.potentialMembers([a.name for a in info['inhabitants']])
+                groups.append(group)
 
         neighbors = {}
         for agent in population:
