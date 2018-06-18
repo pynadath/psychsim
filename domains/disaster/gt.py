@@ -433,6 +433,14 @@ class Actor(Agent):
         #self.setAttribute('selection','distribution')
         #self.setAttribute('rationality',1.)
 
+    def makeFriend(self,friend,config):
+        self.world.setFeature(binaryKey(self.name,friend.name,'friendOf'),True)
+        if config.getboolean('Actors','messages'):
+            tree = makeTree({'if': trueRow(stateKey(self.name,'alive')),
+                             True: True, False: False})
+            msg = self.addAction({'verb': 'message','object': friend.name},
+                                 tree.desymbolize(self.world.symbols))
+
 class GroundTruth(World):
     def toCDF(self,dirname):
         os.mkdir(dirname)
@@ -640,21 +648,31 @@ if __name__ == '__main__':
         while friendCount:
             friend1 = random.choice(friendCount.keys())
             friend2 = random.choice(list(set(friendCount.keys())-{friend1}))
-            world.setFeature(binaryKey(friend1,friend2,'friendOf'),True)
+            world.agents[friend1].makeFriend(world.agents[friend2],config)
             if friendCount[friend1] == friendMax - 1:
                 del friendCount[friend1]
             else:
                 friendCount[friend1] += 1
-            world.setFeature(binaryKey(friend2,friend1,'friendOf'),True)
+            world.agents[friend2].makeFriend(world.agents[friend1],config)
             if friendCount[friend2] == friendMax - 1:
                 del friendCount[friend2]
             else:
                 friendCount[friend2] += 1
 
-        if config.get('Actors','altruism') == 'neighbors':
-            for agent in population:
-                for other in neighbors[agent.name]:
-                    agent.setReward(maximizeFeature(stateKey(other,'health'),agent.name),1.)
+        for agent in population:
+            for other in population:
+                if agent.name == other.name:
+                    continue
+                Rneighbors = config.getfloat('Actors','altruism_neighbors')
+                Rfriends = config.getfloat('Actors','altruism_friends')
+                if Rneighbors > 0. and other in neighbors[agent.name]:
+                    agent.setReward(maximizeFeature(stateKey(other.name,'health'),
+                                                    agent.name),Rneighbors)
+                elif Rfriends > 0. and \
+                     world.getFeature(binaryKey(agent.name,other.name,'friendOf')).first():
+                    agent.setReward(maximizeFeature(stateKey(other.name,'health'),
+                                                    agent.name),Rfriends)
+                    
 
         order = [{agent.name for agent in population}]
         order.append({'Nature'})
@@ -664,10 +682,12 @@ if __name__ == '__main__':
             beliefs = agent.resetBelief()
             for other in population:
                 if other.name != agent.name:
-                    if config.get('Actors','altruism') == 'neighbors' and \
+                    if config.getfloat('Actors','altruism_neighbors') > 0. and \
                        other.name in neighbors[agent.name]:
                         # I care about my neighbors, so I can't ignore them
                         continue
+#                    if world.getFeature(binaryKey(agent.name,other.name,'friendOf')).first():
+#                        continue
                     agent.ignore(other.name,'%s0' % (agent.name))
 
         world.dependency.computeEvaluation()
