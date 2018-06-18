@@ -364,9 +364,10 @@ class Actor(Agent):
                 key = stateKey(neighborhood,'risk')
                 tree = makeTree(approachMatrix(key,.1,0.))
                 world.setDynamics(key,action,tree)
-            if config.getboolean('Actors','prosocial_risk'):
+            proRisk = config.getfloat('Actors','prosocial_risk')
+            if proRisk > 0.:
                 for neighborhood,action in actGood.items():
-                    tree = makeTree(approachMatrix(risk,.2,1.))
+                    tree = makeTree(approachMatrix(risk,proRisk,1.))
                     world.setDynamics(risk,action,tree)
                 
         # Reward
@@ -565,24 +566,29 @@ if __name__ == '__main__':
             #        group = Group('Group%s' % (neighborhood[-2:]),world)
             #        group.potentialMembers([a.name for a in info['inhabitants']])
 
+        neighbors = {}
+        for agent in population:
+            myHome = world.getState(agent.name,'neighborhood').first()
+            neighbors[agent.name] = {a.name for a in population if a.name != agent.name and \
+                                     world.getState(a.name,'neighborhood').first() == myHome}
         if config.get('Actors','altruism') == 'neighbors':
             for agent in population:
-                myHome = world.getState(agent.name,'neighborhood').first()
-                for other in population:
-                    if other.name != agent.name:
-                        if world.getState(other.name,'neighborhood').first() == myHome:
-                            agent.setReward(maximizeFeature(stateKey(other.name,'health'),agent.name),1.)
+                for other in neighbors[agent.name]:
+                    agent.setReward(maximizeFeature(stateKey(other,'health'),agent.name),1.)
 
         order = [{agent.name for agent in population}]
         order.append({'Nature'})
         world.setOrder(order)
 
-        if config.get('Actors','theory_of_mind') == 'none':
-            for agent in population:
-                beliefs = agent.resetBelief()
-                for other in population:
-                    if other.name != agent.name:
-                        agent.ignore(other.name,'%s0' % (agent.name))
+        for agent in population:
+            beliefs = agent.resetBelief()
+            for other in population:
+                if other.name != agent.name:
+                    if config.get('Actors','altruism') == 'neighbors' and \
+                       other.name in neighbors[agent.name]:
+                        # I care about my neighbors, so I can't ignore them
+                        continue
+                    agent.ignore(other.name,'%s0' % (agent.name))
 
         world.dependency.computeEvaluation()
 
