@@ -149,16 +149,24 @@ class Group(Agent):
             world.diagram.setColor(self.name,'yellowgreen')
             
         self.setAttribute('static',True)
+
+        size = world.defineState(self.name,'size',int)
+        self.setState('size',0)
         
-        if config.getboolean('Groups','prosocial'):
-            actGood = self.addAction({'verb': 'doGood'})
-        if config.getboolean('Groups','antisocial'):
-            actBad = self.addAction({'verb': 'doBad'})
+        if config.getboolean('Groups','prosocial') and name in world.agents:
+            tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
+            actGood = self.addAction({'verb': 'doGood','object': name},
+                                     tree.desymbolize(world.symbols))
+        if config.getboolean('Groups','antisocial') and name in world.agents:
+            tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
+            actBad = self.addAction({'verb': 'doBad','object': name},
+                                     tree.desymbolize(world.symbols))
         doNothing = self.addAction({'verb': 'doNothing'})
 
     def potentialMembers(self,agents,weights=None):
         assert len(self.models) == 1,'Define potential members before adding multiple models of group %s' % (self.name)
         model = self.models.keys()[0]
+        size = stateKey(self.name,'size')
         for name in agents:
             agent = self.world.agents[name]
             member = self.world.defineRelation(name,self.name,'memberOf',bool)
@@ -172,6 +180,8 @@ class Group(Agent):
                                    tree.desymbolize(self.world.symbols))
             tree = makeTree(setTrueMatrix(member))
             world.setDynamics(member,join,tree)
+            tree = makeTree(incrementMatrix(size,1))
+            world.setDynamics(size,join,tree)
             # Leave a group
             self.world.setFeature(member,False)
             tree = makeTree({'if': trueRow(stateKey(name,'alive')),
@@ -182,6 +192,8 @@ class Group(Agent):
                                     tree.desymbolize(self.world.symbols))
             tree = makeTree(setFalseMatrix(member))
             world.setDynamics(member,leave,tree)
+            tree = makeTree(incrementMatrix(size,-1))
+            world.setDynamics(size,leave,tree)
         # Define reward function for this group as weighted sum of members
         if weights is None:
             weights = {a: 1. for a in agents}
