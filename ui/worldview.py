@@ -49,6 +49,7 @@ class WorldView(QGraphicsScene):
 
     def __init__(self,parent = None):
         super(WorldView,self).__init__(parent)
+        self.setBackgroundBrush(QColor('white'))
         self.nodes = {'state pre': {},
                       'state post': {},
                       'action': {},
