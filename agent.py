@@ -182,6 +182,7 @@ class Agent:
             current = copy.deepcopy(belief)
             start = action
             for t in range(horizon):
+                logging.debug('Time %d/%d' % (t+1,horizon))
                 outcome = self.world.step(start,current,keySubset=subkeys,
                                           horizon=horizon-t-1)
                 V[action]['__ER__'].append(self.reward(current))
@@ -196,6 +197,7 @@ class Agent:
                 best.append(action)
             elif V[action]['__EV__'] > V[best[0]]['__EV__']:
                 best = [action]
+            logging.debug('Evaluated %s: %f' % (action,V[action]['__EV__']))
         result = {'V*': V[best[0]]['__EV__'],'V': V}
         # Make an action selection based on the value function
         if selection == 'distribution':
@@ -907,11 +909,7 @@ class Agent:
                     SE[oldModel][label] = self.models[newModel]['index']
                 else:
                     # Work to be done. Start by getting old belief state.
-                    beliefs = self.getAttribute('beliefs',oldModel)
-                    if beliefs is True:
-                        beliefs = copy.deepcopy(trueState)
-                    else:
-                        beliefs = copy.deepcopy(self.getAttribute('beliefs',oldModel))
+                    beliefs = self.getBelief(trueState,oldModel)
                     # Project direct effect of the actions, including possible observations
                     assert isinstance(actions,ActionSet)
                     relevantActions = actions.__class__({action for action in actions
