@@ -419,10 +419,10 @@ class Actor(Agent):
                                 True: {'distribution': [(approachMatrix(health,0.75,0.),0.75),
                                                         (noChangeMatrix(health),0.25)]},
                                 False: {'if': thresholdRow(makeFuture(risk),0.5),
-                                        True: {'distribution': [(approachMatrix(health,0.8,0.),0.5),
+                                        True: {'distribution': [(approachMatrix(health,0.75,0.),0.5),
                                                                 (noChangeMatrix(health),0.5)]},
                                         False: {'if': thresholdRow(makeFuture(risk),0.25),
-                                                True: {'distribution':  [(approachMatrix(health,0.85,0),0.25),
+                                                True: {'distribution':  [(approachMatrix(health,0.75,0),0.25),
                                                                          (noChangeMatrix(health),0.75)]},
                                                 False: noChangeMatrix(health)}}},
                          False: setToConstantMatrix(health,0.)})
@@ -431,13 +431,13 @@ class Actor(Agent):
         if config.getboolean('Actors','children'):
             # Effect on kids' health
             tree = makeTree({'if': thresholdRow(makeFuture(risk),0.75),
-                             True: {'distribution': [(approachMatrix(kids,0.6,0.),0.75),
+                             True: {'distribution': [(approachMatrix(kids,0.75,0.),0.75),
                                                      (noChangeMatrix(kids),0.25)]},
                              False: {'if': thresholdRow(makeFuture(risk),0.5),
-                                     True: {'distribution': [(approachMatrix(kids,0.7,0.),0.5),
+                                     True: {'distribution': [(approachMatrix(kids,0.75,0.),0.5),
                                                              (noChangeMatrix(kids),0.5)]},
                                      False: {'if': thresholdRow(makeFuture(risk),0.25),
-                                             True: {'distribution':  [(approachMatrix(kids,0.8,0),0.25),
+                                             True: {'distribution':  [(approachMatrix(kids,0.75,0),0.25),
                                                                       (noChangeMatrix(kids),0.75)]},
                                              False: noChangeMatrix(kids)}}})
             world.setDynamics(kids,True,tree)
@@ -601,6 +601,8 @@ def addState2tables(world,day,tables,population,neighborhoods):
                     entry[label] = len([a for a in population if values[a.name][feature]])
                 if function == 'invert':
                     entry[label] = len(population) - entry[label]
+                elif function and function[0] == '=':
+                    entry[label] = len([a for a in population if values[a.name][feature] == function[1:]])
             table['log'].append(entry)
         elif table['population'] is Neighborhood:
             for neighborhood in neighborhoods:
@@ -615,6 +617,8 @@ def addState2tables(world,day,tables,population,neighborhoods):
                             value = world.getState(neighborhood,feature)
                             assert len(value)
                             entry[label] = value.first()
+                        elif function and function[0] == '=':
+                            entry[label] = len([a for a in inhabitants if values[a.name][feature] == function[1:]])
                         else:
                             value = [values[a.name][feature] for a in inhabitants]
                             entry[label] = sum(value)/float(len(value))
@@ -654,6 +658,11 @@ if __name__ == '__main__':
     # Extract configuration
     config = SafeConfigParser()
     config.read(os.path.join('config','%06d.ini' % (args['instance'])))
+    try:
+        random.seed(config.getint('Simulation','seed'))
+    except ValueError:
+        # Non int, so assume None
+        random.seed()
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
     if not isinstance(level, int):
@@ -692,32 +701,33 @@ if __name__ == '__main__':
 
         neighbors = {}
         friends = {}
+        friendMax = config.getint('Actors','friends')
         for agent in population:
             myHome = world.getState(agent.name,'neighborhood').first()
             neighbors[agent.name] = {a.name for a in population if a.name != agent.name and \
                                      world.getState(a.name,'neighborhood').first() == myHome}
-
-            # Social network
-            friends[agent.name] = set()
-            for other in population:
-                if other.name != agent.name:
-                    friendship = world.defineRelation(agent.name,other.name,'friendOf',bool)
-                    world.setFeature(friendship,False)
-        friendCount = {agent.name: 0 for agent in population}
-        friendMax = config.getint('Actors','friends')
-        while friendCount:
-            friend1 = random.choice(friendCount.keys())
-            friend2 = random.choice(list(set(friendCount.keys())-{friend1}))
-            world.agents[friend1].makeFriend(world.agents[friend2],config)
-            if friendCount[friend1] == friendMax - 1:
-                del friendCount[friend1]
-            else:
-                friendCount[friend1] += 1
-            world.agents[friend2].makeFriend(world.agents[friend1],config)
-            if friendCount[friend2] == friendMax - 1:
-                del friendCount[friend2]
-            else:
-                friendCount[friend2] += 1
+            if friendMax > 0:
+                # Social network
+                friends[agent.name] = set()
+                for other in population:
+                    if other.name != agent.name:
+                        friendship = world.defineRelation(agent.name,other.name,'friendOf',bool)
+                        world.setFeature(friendship,False)
+        if friendMax > 0:
+            friendCount = {agent.name: 0 for agent in population}
+            while friendCount:
+                friend1 = random.choice(friendCount.keys())
+                friend2 = random.choice(list(set(friendCount.keys())-{friend1}))
+                world.agents[friend1].makeFriend(world.agents[friend2],config)
+                if friendCount[friend1] == friendMax - 1:
+                    del friendCount[friend1]
+                else:
+                    friendCount[friend1] += 1
+                world.agents[friend2].makeFriend(world.agents[friend1],config)
+                if friendCount[friend2] == friendMax - 1:
+                    del friendCount[friend2]
+                else:
+                    friendCount[friend2] += 1
 
         for agent in population:
             for other in population:
@@ -757,20 +767,24 @@ if __name__ == '__main__':
 #            agent.compileV(state=world.state)
 #            sys.exit(0)
 
-        allTables = {'Population': {'fields': [('alive','casualties','invert')],
+        allTables = {'Population': {'fields': [('alive','casualties','invert'),
+                                               ('location','evacuated','=evacuated'),
+                                               ('location','shelter','=shelter')],
                                     'population': City,
                                     'log': []},
                      'Neighborhood': {'fields': [('alive','casualties','invert'),
+                                                 ('location','evacuated','=evacuated'),
+                                                 ('location','shelter','=shelter'),
                                                  ('risk','risk','likert')],
                                       'population': Neighborhood,
                                       'log': []},
                      'Actors': {'fields': [('neighborhood','neighborhood',None),
                                            ('alive','alive',None),
+                                           ('location','shelter','=shelter'),
+                                           ('location','evacuated','=evacuated'),
                                            ('risk','risk','likert'),
                                            ('health','health','likert'),
                                            ('grievance','grievance','likert'),
-                                           ('location','shelter','=shelter'),
-                                           ('location','evacuated','=evacuated'),
                      ],
                                 'population': Actor,
                                 'log': []},
