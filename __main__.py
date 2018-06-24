@@ -19,7 +19,7 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
 
     @pyqtSlot() # signal with no arguments
     def on_actionOpen_triggered(self):
-        filename = QFileDialog.getOpenFileName(self,"PsychSim -- Open File")
+        filename,types = QFileDialog.getOpenFileName(self,"PsychSim -- Open File")
         if not filename.isEmpty():
             self.openScenario(str(filename))
 
@@ -59,8 +59,11 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
         for name in ['Group%s' % (neighborhood),'shelter','System']:
             if name in self.world.agents:
                 agents.append(name)
-        self.world.diagram.x.clear()
-        self.world.diagram.y.clear()
+        try:
+            self.world.diagram.x.clear()
+            self.world.diagram.y.clear()
+        except AttributeError:
+            pass
         for variable in self.world.variables.values():
             if 'xpre' in variable:
                 del variable['xpre']
@@ -75,7 +78,7 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
 
     @pyqtSlot() # signal with no arguments
     def on_actionScreenshot_triggered(self):
-        name = QFileDialog.getSaveFileName(self,'Save File')
+        name,types = QFileDialog.getSaveFileName(self,'Save File')
         rect = self.scene.sceneRect()
         pix = QPixmap(rect.width(), rect.height())
         painter = QPainter(pix)
