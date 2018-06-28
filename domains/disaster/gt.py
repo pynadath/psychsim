@@ -135,7 +135,7 @@ class System(Agent):
 
         world.diagram.setColor(self.name,'darkgoldenrod')
         
-        self.setAttribute('static',True)
+#        self.setAttribute('static',True)
         
         resources = world.defineState(self.name,'resources',int,lo=0,hi=100)
         self.setState('resources',int(random.random()*25.)+75)
@@ -499,6 +499,69 @@ class Actor(Agent):
             msg = self.addAction({'verb': 'message','object': friend.name},
                                  tree.desymbolize(self.world.symbols))
 
+    def _initializeRelations(self,config):
+        neighbors = {}
+        friends = set()
+        population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
+        friendMax = config.getint('Actors','friends')
+        myHome = self.world.getState(self.name,'neighborhood').first()
+        neighbors[self.name] = {a.name for a in population if a.name != self.name and \
+                                self.world.getState(a.name,'neighborhood').first() == myHome}
+        if friendMax > 0:
+            # Social network
+            for other in population:
+                if other.name != self.name:
+                    friendship = self.world.defineRelation(self.name,other.name,'friendOf',bool)
+                    self.world.setFeature(friendship,False)
+            friendCount = {a.name: 0 for a in population}
+            while friendCount:
+                friend1 = random.choice(friendCount.keys())
+                friend2 = random.choice(list(set(friendCount.keys())-{friend1}))
+                self.world.agents[friend1].makeFriend(self.world.agents[friend2],config)
+                if friendCount[friend1] == friendMax - 1:
+                    del friendCount[friend1]
+                else:
+                    friendCount[friend1] += 1
+                self.world.agents[friend2].makeFriend(self.world.agents[friend1],config)
+                if friendCount[friend2] == friendMax - 1:
+                    del friendCount[friend2]
+                else:
+                    friendCount[friend2] += 1
+
+        for other in population:
+            if self.name == other.name:
+                continue
+            Rneighbors = config.getfloat('Actors','altruism_neighbors')
+            Rfriends = config.getfloat('Actors','altruism_friends')
+            if Rneighbors > 0. and other in neighbors[self.name]:
+                self.setReward(maximizeFeature(stateKey(other.name,'health'),
+                                                self.name),Rneighbors)
+            elif Rfriends > 0. and \
+                 self.world.getFeature(binaryKey(self.name,other.name,'friendOf')).first():
+                self.setReward(maximizeFeature(stateKey(other.name,'health'),
+                                                self.name),Rfriends)
+        
+    def _initializeBeliefs(self,config):
+        # Beliefs
+        if config.getboolean('Actors','misperception_risk'):
+            home = self.world.getState(self.name,'neighborhood').first()
+            dist = Distribution({'over': config.getfloat('Actors','misperception_risk_over'),
+                                 'under': config.getfloat('Actors','misperception_risk_under')})
+            dist['none'] = 1.-dist['over']-dist['under']
+            mis = dist.sample()
+            prob = config.getfloat('Actors','misperception_risk_prob')
+            err = config.getfloat('Actors','misperception_risk_error')
+            true = self.world.getState(home,'risk').expectation()
+            if mis == 'over':
+                dist = Distribution({true: 1.-prob,
+                                     (1.-err)*true+err: prob})
+            elif mis == 'under':
+                dist = Distribution({true: 1.-prob,
+                                     (1.-err)*true: prob})
+            else:
+                dist = true
+            self.setBelief(stateKey(home,'risk'),dist)
+        
 class GroundTruth(World):
     def toCDF(self,dirname):
         os.mkdir(dirname)
@@ -699,51 +762,9 @@ if __name__ == '__main__':
                 group.potentialMembers([a.name for a in info['inhabitants']])
                 groups.append(group)
 
-        neighbors = {}
-        friends = {}
-        friendMax = config.getint('Actors','friends')
         for agent in population:
-            myHome = world.getState(agent.name,'neighborhood').first()
-            neighbors[agent.name] = {a.name for a in population if a.name != agent.name and \
-                                     world.getState(a.name,'neighborhood').first() == myHome}
-            if friendMax > 0:
-                # Social network
-                friends[agent.name] = set()
-                for other in population:
-                    if other.name != agent.name:
-                        friendship = world.defineRelation(agent.name,other.name,'friendOf',bool)
-                        world.setFeature(friendship,False)
-        if friendMax > 0:
-            friendCount = {agent.name: 0 for agent in population}
-            while friendCount:
-                friend1 = random.choice(friendCount.keys())
-                friend2 = random.choice(list(set(friendCount.keys())-{friend1}))
-                world.agents[friend1].makeFriend(world.agents[friend2],config)
-                if friendCount[friend1] == friendMax - 1:
-                    del friendCount[friend1]
-                else:
-                    friendCount[friend1] += 1
-                world.agents[friend2].makeFriend(world.agents[friend1],config)
-                if friendCount[friend2] == friendMax - 1:
-                    del friendCount[friend2]
-                else:
-                    friendCount[friend2] += 1
-
-        for agent in population:
-            for other in population:
-                if agent.name == other.name:
-                    continue
-                Rneighbors = config.getfloat('Actors','altruism_neighbors')
-                Rfriends = config.getfloat('Actors','altruism_friends')
-                if Rneighbors > 0. and other in neighbors[agent.name]:
-                    agent.setReward(maximizeFeature(stateKey(other.name,'health'),
-                                                    agent.name),Rneighbors)
-                elif Rfriends > 0. and \
-                     world.getFeature(binaryKey(agent.name,other.name,'friendOf')).first():
-                    agent.setReward(maximizeFeature(stateKey(other.name,'health'),
-                                                    agent.name),Rfriends)
-                    
-
+            agent._initializeRelations(config)
+        
         order = [{agent.name for agent in population}]
 #        order.insert(0,system.name)
         order.append({'Nature'})
@@ -760,7 +781,10 @@ if __name__ == '__main__':
 #                    if world.getFeature(binaryKey(agent.name,other.name,'friendOf')).first():
 #                        continue
                     agent.ignore(other.name,'%s0' % (agent.name))
+            agent._initializeBeliefs(config)
 
+        system.resetBelief()
+        
         world.dependency.computeEvaluation()
 
 #        for agent in population:
