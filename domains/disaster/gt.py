@@ -492,7 +492,10 @@ class Actor(Agent):
         #self.setAttribute('rationality',1.)
 
     def makeFriend(self,friend,config):
-        self.world.setFeature(binaryKey(self.name,friend.name,'friendOf'),True)
+        key = binaryKey(self.name,friend.name,'friendOf')
+        if not key in self.world.variables:
+            self.world.defineRelation(self.name,friend.name,'friendOf',bool)
+        self.world.setFeature(key,True)
         if config.getboolean('Actors','messages'):
             tree = makeTree({'if': trueRow(stateKey(self.name,'alive')),
                              True: True, False: False})
@@ -509,24 +512,32 @@ class Actor(Agent):
                                 self.world.getState(a.name,'neighborhood').first() == myHome}
         if friendMax > 0:
             # Social network
+            friendCount = {}
             for other in population:
                 if other.name != self.name:
-                    friendship = self.world.defineRelation(self.name,other.name,'friendOf',bool)
+                    friendship = binaryKey(self.name,other.name,'friendOf')
+                    if not friendship in self.world.variables:
+                        self.world.defineRelation(self.name,other.name,'friendOf',bool)
                     self.world.setFeature(friendship,False)
-            friendCount = {a.name: 0 for a in population}
-            while friendCount:
-                friend1 = random.choice(friendCount.keys())
-                friend2 = random.choice(list(set(friendCount.keys())-{friend1}))
-                self.world.agents[friend1].makeFriend(self.world.agents[friend2],config)
-                if friendCount[friend1] == friendMax - 1:
-                    del friendCount[friend1]
+                    friendCount[other.name] = 0
+                    if other.name in self.world.relations:
+                        for key in self.world.relations[other.name]:
+                            relation = key2relation(key)
+                            if relation['relation'] == 'friendOf':
+                                if self.world.getFeature(key).first():
+                                    # This person has a friend
+                                    friendCount[other.name] += 1
+                                    if friendCount[other.name] == friendMax:
+                                        del friendCount[other.name]
+                                        break
+            for count in range(friendMax):
+                friend = random.choice(list(set(friendCount.keys())))
+                self.makeFriend(self.world.agents[friend],config)
+                self.world.agents[friend].makeFriend(self,config)
+                if friendCount[friend] == friendMax - 1:
+                    del friendCount[friend]
                 else:
-                    friendCount[friend1] += 1
-                self.world.agents[friend2].makeFriend(self.world.agents[friend1],config)
-                if friendCount[friend2] == friendMax - 1:
-                    del friendCount[friend2]
-                else:
-                    friendCount[friend2] += 1
+                    friendCount[friend] += 1
 
         for other in population:
             if self.name == other.name:
@@ -802,7 +813,11 @@ if __name__ == '__main__':
                                                  ('risk','risk','likert')],
                                       'population': Neighborhood,
                                       'log': []},
-                     'Actors': {'fields': [('neighborhood','neighborhood',None),
+                     'Actors': {'fields': [('gender','gender',None),
+                                           ('age','age',None)
+                                           ('ethnicGroup','ethnicity',None),
+                                           ('children','#children',None),
+                                           ('neighborhood','region',None),
                                            ('alive','alive',None),
                                            ('location','shelter','=shelter'),
                                            ('location','evacuated','=evacuated'),
