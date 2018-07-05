@@ -503,13 +503,12 @@ class Actor(Agent):
                                  tree.desymbolize(self.world.symbols))
 
     def _initializeRelations(self,config):
-        neighbors = {}
         friends = set()
         population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
         friendMax = config.getint('Actors','friends')
         myHome = self.world.getState(self.name,'neighborhood').first()
-        neighbors[self.name] = {a.name for a in population if a.name != self.name and \
-                                self.world.getState(a.name,'neighborhood').first() == myHome}
+        neighbors = {a.name for a in population if a.name != self.name and \
+                     self.world.getState(a.name,'neighborhood').first() == myHome}
         if friendMax > 0:
             # Social network
             friendCount = {}
@@ -544,7 +543,7 @@ class Actor(Agent):
                 continue
             Rneighbors = config.getfloat('Actors','altruism_neighbors')
             Rfriends = config.getfloat('Actors','altruism_friends')
-            if Rneighbors > 0. and other in neighbors[self.name]:
+            if Rneighbors > 0. and other in neighbors:
                 self.setReward(maximizeFeature(stateKey(other.name,'health'),
                                                 self.name),Rneighbors)
             elif Rfriends > 0. and \
@@ -554,6 +553,22 @@ class Actor(Agent):
         
     def _initializeBeliefs(self,config):
         # Beliefs
+        friends = set()
+        population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
+        myHome = self.world.getState(self.name,'neighborhood').first()
+        neighbors = {a.name for a in population if a.name != self.name and \
+                     self.world.getState(a.name,'neighborhood').first() == myHome}
+
+        beliefs = agent.resetBelief()
+        for other in population:
+            if other.name != agent.name:
+                if config.getfloat('Actors','altruism_neighbors') > 0. and \
+                   other.name in neighbors:
+                    # I care about my neighbors, so I can't ignore them
+                    continue
+#                 if world.getFeature(binaryKey(agent.name,other.name,'friendOf')).first():
+#                     continue
+                agent.ignore(other.name,'%s0' % (agent.name))
         if config.getboolean('Actors','misperception_risk'):
             home = self.world.getState(self.name,'neighborhood').first()
             dist = Distribution({'over': config.getfloat('Actors','misperception_risk_over'),
@@ -782,16 +797,6 @@ if __name__ == '__main__':
         world.setOrder(order)
 
         for agent in population:
-            beliefs = agent.resetBelief()
-            for other in population:
-                if other.name != agent.name:
-                    if config.getfloat('Actors','altruism_neighbors') > 0. and \
-                       other.name in neighbors[agent.name]:
-                        # I care about my neighbors, so I can't ignore them
-                        continue
-#                    if world.getFeature(binaryKey(agent.name,other.name,'friendOf')).first():
-#                        continue
-                    agent.ignore(other.name,'%s0' % (agent.name))
             agent._initializeBeliefs(config)
 
         system.resetBelief()
