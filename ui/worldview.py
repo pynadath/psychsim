@@ -114,7 +114,12 @@ class WorldView(QGraphicsScene):
                 key = makeFuture(key)
             for child in entry['children']:
                 self.drawEdge(key,child)
-        
+        for name in self.world.agents:
+            if name in self.graph:
+                for action in self.world.agents[name].actions:
+                    if action in self.graph:
+                        self.drawEdge(name,action)
+
     def drawStateNodes(self,nodes,x,xkey,ykey):
         even = True
         for layer in nodes:
