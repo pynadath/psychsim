@@ -97,6 +97,9 @@ class WorldView(QGraphicsScene):
                 self.drawEdge(key,child)
 
     def displayGroundTruth(self):
+        """
+        @warning: Assumes that L{displayWorld} has already been called
+        """
         self.clear()
         layout = getLayout(self.graph)
         # Lay out the action nodes
@@ -106,6 +109,11 @@ class WorldView(QGraphicsScene):
         # Lay out the utility nodes
         x = self.drawUtilityNodes(x)
         self.colorNodes()
+        for key,entry in self.graph.items():
+            if isStateKey(key) and not isFuture(key):
+                key = makeFuture(key)
+            for child in entry['children']:
+                self.drawEdge(key,child)
         
     def drawStateNodes(self,nodes,x,xkey,ykey):
         even = True
@@ -137,7 +145,7 @@ class WorldView(QGraphicsScene):
                                             variable[xkey],variable[ykey],
                                             100,50,scene=self)
                 else:
-                    node = VariableNode(None,key,key,
+                    node = VariableNode(None,state2feature(key),key,
                                         variable[xkey],variable[ykey],
                                         100,50,scene=self)
                 self.nodes[self.graph[key]['type']][key] = node
@@ -368,7 +376,10 @@ class VariableNode(QGraphicsEllipseItem):
     def itemChange(self,change,value):
         if change == QGraphicsItem.ItemPositionHasChanged:
             rect = self.sceneBoundingRect()
-            key = stateKey(self.agent.name,self.feature)
+            if self.agent:
+                key = stateKey(self.agent.name,self.feature)
+            else:
+                key = stateKey(WORLD,self.feature)
             self.scene().updateEdges(key,rect)
             if isFuture(key):
                 self.scene().world.variables[makePresent(key)]['xpost'] = int(rect.x())
