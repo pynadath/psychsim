@@ -266,9 +266,11 @@ class Actor(Agent):
             world.setFeature(gender,'female')
         age = world.defineState(self.name,'age',int)
         world.setFeature(age,int(random.random()*50.)+20)
+        kids = world.defineState(self.name,'children',int,lo=0,hi=2)
         if config.getboolean('Actors','children'):
-            kids = world.defineState(self.name,'children',int,lo=0,hi=2)
             world.setFeature(kids,int(random.random()*3.))
+        else:
+            world.setFeature(kids,0)
 
         # Psychological
         attachmentStyles = ['secure','anxious','avoidant']
@@ -780,6 +782,8 @@ if __name__ == '__main__':
 
         if config.getboolean('City','system'):
             system = System(world,config)
+        else:
+            system = None
 
         groups = []
         if config.getboolean('Groups','neighborhood'):
@@ -799,7 +803,8 @@ if __name__ == '__main__':
         for agent in population:
             agent._initializeBeliefs(config)
 
-        system.resetBelief()
+        if system:
+            system.resetBelief()
         
         world.dependency.computeEvaluation()
 
@@ -819,7 +824,7 @@ if __name__ == '__main__':
                                       'population': Neighborhood,
                                       'log': []},
                      'Actors': {'fields': [('gender','gender',None),
-                                           ('age','age',None)
+                                           ('age','age',None),
                                            ('ethnicGroup','ethnicity',None),
                                            ('children','#children',None),
                                            ('neighborhood','region',None),
