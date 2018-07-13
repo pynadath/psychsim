@@ -61,12 +61,15 @@ class WorldView(QGraphicsScene):
         self.graph = None
         self.dirty = False
 
-    def displayWorld(self,world,agents=None):
-        self.clear()
+    def clear(self):
+        super(WorldView,self).clear()
         for table in self.nodes.values():
             table.clear()
         self.edgesOut.clear()
         self.edgesIn.clear()
+        
+    def displayWorld(self,world,agents=None):
+        self.clear()
         if not isinstance(world.diagram,diagram.Diagram):
             if world.diagram is None:
                 # Creating a diagram for the first time
