@@ -54,20 +54,8 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
 
     @pyqtSlot() # signal with no arguments
     def on_actionGround_Truth_triggered(self):
-        neighborhood = 'N01'
-        agents = ['Actor0001','Actor0002','Nature',neighborhood]
-        for name in ['Group%s' % (neighborhood),'shelter','System']:
-            if name in self.world.agents:
-                agents.append(name)
-        if self.world.diagram:
-            self.world.diagram.clear()
-        for variable in self.world.variables.values():
-            if 'xpre' in variable:
-                del variable['xpre']
-                del variable['ypre']
-                del variable['xpost']
-                del variable['ypost']
-        self.scene.displayWorld(self.world,agents)
+        self.world.clearCoords()
+        self.scene.displayWorld(self.world)
 
     @pyqtSlot() # signal with no arguments
     def on_actionStep_triggered(self):

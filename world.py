@@ -94,6 +94,16 @@ class World:
         del self.termination[:]
         self.state.clear()
 
+    def clearCoords(self):
+        if self.diagram:
+            self.diagram.clear()
+        for variable in self.variables.values():
+            if 'xpre' in variable:
+                del variable['xpre']
+                del variable['ypre']
+                del variable['xpost']
+                del variable['ypost']
+        
     """------------------"""
     """Simulation methods"""
     """------------------"""
