@@ -39,6 +39,10 @@ class Diagram:
             value = QColor(value)
         self.color[key] = value
 
+    def clear(self):
+        self.x.clear()
+        self.y.clear()
+        
     def __xml__(self):
         doc = Document()
         root = doc.createElement('diagram')

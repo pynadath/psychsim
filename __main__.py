@@ -59,11 +59,8 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
         for name in ['Group%s' % (neighborhood),'shelter','System']:
             if name in self.world.agents:
                 agents.append(name)
-        try:
-            self.world.diagram.x.clear()
-            self.world.diagram.y.clear()
-        except AttributeError:
-            pass
+        if self.world.diagram:
+            self.world.diagram.clear()
         for variable in self.world.variables.values():
             if 'xpre' in variable:
                 del variable['xpre']
