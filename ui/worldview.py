@@ -79,13 +79,28 @@ class WorldView(QGraphicsScene):
         layout = getLayout(self.graph)
 
         # Lay out the pre variable nodes
-        x = 0
+        x = self.drawStateNodes(layout['state pre'],0,'xpre','ypre')
+        # Lay out the action nodes
+        x = self.drawActionNodes(layout['action'],x)
+        # Lay out the post variable nodes
+        x = self.drawStateNodes(layout['state post'],x,'xpost','ypost')
+        # Lay out the utility nodes
+        x = self.drawUtilityNodes(x)
+        self.colorNodes()
+        # Lay out edges
+        for key,entry in self.graph.items():
+            node = self.nodes[entry['type']][key]
+            for child in entry['children']:
+                self.drawEdge(key,child)
+
+    def drawStateNodes(self,nodes,x,xkey,ykey):
         even = True
-        for layer in layout['state pre']:
+        for layer in nodes:
             y = 0
             for key in sorted(layer,lambda k0,k1: cmp((self.graph[k0]['agent'],k0),
                                                       (self.graph[k1]['agent'],k1))):
-                if not self.world.variables[key].has_key('xpre'):
+                variable = self.world.variables[makePresent(key)]
+                if not xkey in variable:
                     if y >= 10*self.rowHeight:
                         even = not even
                         if even:
@@ -93,31 +108,31 @@ class WorldView(QGraphicsScene):
                         else:
                             y = 50
                         x += int(0.75*self.colWidth)
-                    self.world.variables[key]['xpre'] = x
-                    self.world.variables[key]['ypre'] = y
+                    variable[xkey] = x
+                    variable[ykey] = y
                     # Move on to next Y
                     y += self.rowHeight
                 if self.graph[key]['agent'] != WORLD and self.graph[key]['agent']:
                     agent = self.world.agents[self.graph[key]['agent']]
                     if isBinaryKey(key):
                         node = VariableNode(agent,key[len(agent.name)+1:],key,
-                                            self.world.variables[key]['xpre'],self.world.variables[key]['ypre'],
+                                            variable[xkey],variable[ykey],
                                             100,50,scene=self)
                     else:
                         node = VariableNode(agent,key[len(agent.name)+3:],key,
-                                            self.world.variables[key]['xpre'],self.world.variables[key]['ypre'],
+                                            variable[xkey],variable[ykey],
                                             100,50,scene=self)
                 else:
                     node = VariableNode(None,key,key,
-                                        self.world.variables[key]['xpre'],self.world.variables[key]['ypre'],
+                                        variable[xkey],variable[ykey],
                                         100,50,scene=self)
                 self.nodes[self.graph[key]['type']][key] = node
             x += self.colWidth
-#        assert len(self.nodes['state pre']) == sum(map(len,self.world.locals.values()))+\
-#            sum(map(len,self.world.relations.values()))
-        # Lay out the action nodes
+        return x
+
+    def drawActionNodes(self,nodes,x):
         y = 0
-        for action in sorted(layout['action']):
+        for action in sorted(nodes):
             if self.world.diagram.getX(action) is None:
                 self.setDirty()
                 self.world.diagram.x[action] = x
@@ -130,44 +145,9 @@ class WorldView(QGraphicsScene):
             node = ActionNode(self.world.agents[self.graph[action]['agent']],action,scene=self)
             self.nodes[self.graph[action]['type']][action] = node
         x += self.colWidth
-        # Lay out the post variable nodes
-        even = True
-        for layer in layout['state post']:
-            y = 0
-            for key in sorted(layer,lambda k0,k1: cmp((self.graph[k0]['agent'],k0),
-                                                      (self.graph[k1]['agent'],k1))):
-                if not self.world.variables[makePresent(key)].has_key('xpost'):
-                    if y >= 10*self.rowHeight:
-                        even = not even
-                        if even:
-                            y = 0
-                        else:
-                            y = 50
-                        x += int(0.75*self.colWidth)
-                    self.world.variables[makePresent(key)]['xpost'] = x
-                    self.world.variables[makePresent(key)]['ypost'] = y
-                    # Move on to next Y
-                    y += self.rowHeight
-                if self.graph[key]['agent'] != WORLD and self.graph[key]['agent']:
-                    agent = self.world.agents[self.graph[key]['agent']]
-                    if isBinaryKey(key):
-                        node = VariableNode(agent,key[len(agent.name)+1:],key,
-                                            self.world.variables[makePresent(key)]['xpost'],
-                                            self.world.variables[makePresent(key)]['ypost'],
-                                            100,50,scene=self)
-                    else:
-                        node = VariableNode(agent,key[len(agent.name)+3:],key,
-                                            self.world.variables[makePresent(key)]['xpost'],
-                                            self.world.variables[makePresent(key)]['ypost'],
-                                            100,50,scene=self)
-                else:
-                    node = VariableNode(None,key,key,
-                                        self.world.variables[makePresent(key)]['xpost'],
-                                        self.world.variables[makePresent(key)]['ypost'],
-                                        100,50,scene=self)
-                self.nodes[self.graph[key]['type']][key] = node
-            x += self.colWidth
-        # Lay out the utility nodes
+        return x
+
+    def drawUtilityNodes(self,x):
         y = -self.rowHeight
         for name in sorted(self.world.agents.keys()):
             if self.graph.has_key(name):
@@ -180,13 +160,8 @@ class WorldView(QGraphicsScene):
                 node = UtilityNode(agent,x,y,scene=self)
                 self.nodes[self.graph[name]['type']][name] = node
         x += self.colWidth
-        self.colorNodes()
-        # Lay out edges
-        for key,entry in self.graph.items():
-            node = self.nodes[entry['type']][key]
-            for child in entry['children']:
-                self.drawEdge(key,child)
-
+        return x
+        
     def drawEdge(self,parent,child):
         node0 = self.nodes[self.graph[parent]['type']][parent]
         node1 = self.nodes[self.graph[child]['type']][child]
