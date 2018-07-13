@@ -55,7 +55,7 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
     @pyqtSlot() # signal with no arguments
     def on_actionGround_Truth_triggered(self):
         self.world.clearCoords()
-        self.scene.displayWorld(self.world)
+        self.scene.displayGroundTruth()
 
     @pyqtSlot() # signal with no arguments
     def on_actionStep_triggered(self):

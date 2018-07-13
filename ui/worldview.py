@@ -96,6 +96,17 @@ class WorldView(QGraphicsScene):
             for child in entry['children']:
                 self.drawEdge(key,child)
 
+    def displayGroundTruth(self):
+        self.clear()
+        layout = getLayout(self.graph)
+        # Lay out the action nodes
+        x = self.drawActionNodes(layout['action'],0)
+        # Lay out the post variable nodes
+        x = self.drawStateNodes(layout['state post'],x,'xpost','ypost')
+        # Lay out the utility nodes
+        x = self.drawUtilityNodes(x)
+        self.colorNodes()
+        
     def drawStateNodes(self,nodes,x,xkey,ykey):
         even = True
         for layer in nodes:
