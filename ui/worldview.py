@@ -109,7 +109,7 @@ class WorldView(QGraphicsScene):
         self.colorNodes()
         # Draw links, reusing post nodes as pre nodes
         for key,entry in self.graph.items():
-            if isStateKey(key) and not isFuture(key):
+            if (isStateKey(key) or isBinaryKey(key)) and not isFuture(key):
                 key = makeFuture(key)
             for child in entry['children']:
                 self.drawEdge(key,child)
@@ -276,7 +276,6 @@ class WorldView(QGraphicsScene):
                     edge.setLine(line)
                     drawArrow(line,arrow=arrow)
                 elif key != subkey:
-                    print subkey
                     edge.scene().removeItem(edge)
                     del self.edgesOut[key][subkey]
                     del self.edgesIn[subkey][key]
