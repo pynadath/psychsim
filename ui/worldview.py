@@ -44,8 +44,6 @@ def getLayout(graph):
 class WorldView(QGraphicsScene):
     rowHeight = 100
     colWidth = 150
-    arrowAngle = math.radians(15.)
-    arrowLength = 15.
 
     def __init__(self,parent = None):
         super(WorldView,self).__init__(parent)
@@ -109,11 +107,13 @@ class WorldView(QGraphicsScene):
         # Lay out the utility nodes
         x = self.drawUtilityNodes(x)
         self.colorNodes()
+        # Draw links, reusing post nodes as pre nodes
         for key,entry in self.graph.items():
             if isStateKey(key) and not isFuture(key):
                 key = makeFuture(key)
             for child in entry['children']:
                 self.drawEdge(key,child)
+        # Draw links from utility back to actions
         for name in self.world.agents:
             if name in self.graph:
                 for action in self.world.agents[name].actions:
@@ -189,38 +189,59 @@ class WorldView(QGraphicsScene):
         x += self.colWidth
         return x
         
-    def drawEdge(self,parent,child):
+    def drawEdge(self,parent,child,rect0=None,rect1=None):
         node0 = self.nodes[self.graph[parent]['type']][parent]
         node1 = self.nodes[self.graph[child]['type']][child]
-        rect0 = node0.boundingRect()
-        rect1 = node1.boundingRect()
-        x0 = rect0.x()+rect0.width()
-        y0 = rect0.y()+rect0.height()/2
-        x1 = rect1.x()
-        y1 = rect1.y()+rect1.height()/2
-        edge = QGraphicsLineItem(x0,y0,x1,y1)
-        node0.scene().addItem(edge)
-        edge.setZValue(0.)
-        # # Draw arrow
-        # line = edge.line()
-        # point0 = QPointF(x1,y1)
-        # sideLength = self.arrowLength/math.cos(math.radians(self.arrowAngle))
-        # point1 = QPointF(x1 - math.sin(math.atan(x1/y1)-self.arrowAngle)*sideLength,
-        #                  y1 - math.cos(math.atan(x1/y1)-self.arrowAngle)*sideLength)
-        # point2 = QPointF(x1 - math.cos(math.atan(y1/x1)-self.arrowAngle)*sideLength,
-        #                  y1 - math.sin(math.atan(y1/x1)-self.arrowAngle)*sideLength)
-        # arrow = QGraphicsPolygonItem(QPolygonF([point0,point1,point2]),edge,edge.scene())
-        # arrow.setBrush(QBrush(QColor('black')))
-        # arrow.setPen(QPen(QColor('black')))
+        if rect0 is None:
+            rect0 = node0.boundingRect()
+        if rect1 is None:
+            rect1 = node1.boundingRect()
+        if parent == child:
+            # Loop back to self
+            x0 = rect0.x()+rect0.width()/15
+            y0 = rect0.y()+2*rect0.height()/3
+            path = QPainterPath(QPointF(x0,y0))
+            path.arcTo(rect0.x(),rect0.y()+rect0.height()/2,rect0.width(),rect0.height(),145,250)
+            edge = QGraphicsPathItem(path,node0)
+            arrow = drawArrow(QLineF(x0-5,y0+25,x0,y0),edge)
+        elif rect0.y() == rect1.y():
+            # Same row, so arc
+            x0 = rect0.x()+rect0.width()/2
+            x1 = rect1.x()+rect1.width()/2
+            path = QPainterPath(QPointF(x1,rect1.y()+rect1.height()/2))
+            path.arcTo(x1,rect1.y()+rect1.height()/2,x0-x1,rect1.height(),180,180)
+            edge = QGraphicsPathItem(path)
+            node0.scene().addItem(edge)
+            if x1 < x0:
+                arrow = drawArrow(QLineF(x1+25,rect1.y()+rect1.height()+15,
+                                         x1-5,rect1.y()+rect1.height()),edge)
+            else:
+                arrow = drawArrow(QLineF(x1-25,rect1.y()+rect1.height()+15,
+                                         x1+5,rect1.y()+rect1.height()),edge)
+        else:
+            # straight-line link
+            if rect0.x() < rect1.x():
+                x0 = rect0.right()
+                x1 = rect1.left()
+            else:
+                x0 = rect0.left()
+                x1 = rect1.right()
+            y0 = rect0.y()+rect0.height()/2
+            y1 = rect1.y()+rect1.height()/2
+            edge = QGraphicsLineItem(x0,y0,x1,y1)
+            node0.scene().addItem(edge)
+            edge.setZValue(0.)
+            arrow = drawArrow(edge.line(),edge)
 
-        try:
-            self.edgesOut[parent][child] = edge
-        except KeyError:
-            self.edgesOut[parent] = {child: edge}
-        try:
-            self.edgesIn[child][parent] = edge
-        except KeyError:
-            self.edgesIn[child] = {parent: edge}
+        if not parent in self.edgesOut:
+            self.edgesOut[parent] = {}
+        if child in self.edgesOut[parent]:
+            node0.scene().removeItem(self.edgesOut[parent][child][0])
+        self.edgesOut[parent][child] = (edge,arrow)
+        if not child in self.edgesIn:
+            self.edgesIn[child] = {}
+        if parent != child:
+            self.edgesIn[child][parent] = (edge,arrow)
         return edge
 
     def highlightEdges(self,center):
@@ -248,15 +269,30 @@ class WorldView(QGraphicsScene):
     def updateEdges(self,key,rect):
         self.setDirty()
         if self.edgesOut.has_key(key):
-            for edge in self.edgesOut[key].values():
-                line = edge.line()
-                line.setP1(QPointF(rect.x()+rect.width(),rect.y()+rect.height()/2))
-                edge.setLine(line)
+            for subkey,(edge,arrow) in self.edgesOut[key].items():
+                if isinstance(edge,QGraphicsLineItem):
+                    line = edge.line()
+                    line.setP1(QPointF(rect.x()+rect.width(),rect.y()+rect.height()/2))
+                    edge.setLine(line)
+                    drawArrow(line,arrow=arrow)
+                elif key != subkey:
+                    print subkey
+                    edge.scene().removeItem(edge)
+                    del self.edgesOut[key][subkey]
+                    del self.edgesIn[subkey][key]
+                    self.drawEdge(key,subkey,rect0=rect)
         if self.edgesIn.has_key(key):
-            for edge in self.edgesIn[key].values():
-                line = edge.line()
-                line.setP2(QPointF(rect.x(),rect.y()+rect.height()/2))
-                edge.setLine(line)
+            for subkey,(edge,arrow) in self.edgesIn[key].items():
+                if isinstance(edge,QGraphicsLineItem):
+                    line = edge.line()
+                    line.setP2(QPointF(rect.x(),rect.y()+rect.height()/2))
+                    edge.setLine(line)
+                    drawArrow(line,arrow=arrow)
+                elif key != subkey:
+                    edge.scene().removeItem(edge)
+                    del self.edgesIn[key][subkey]
+                    del self.edgesOut[subkey][key]
+                    self.drawEdge(subkey,key,rect1=rect)
 
     def step(self):
         self.world.step()
@@ -455,3 +491,23 @@ def dist2color(distribution):
     g = round(distribution.getProb(True)*255.)
     b = 127
     return QColor(r,g,b)
+
+def computeArrow(line):
+    point0 = line.p2()
+    arrowSize = 25.
+    angle = math.atan2(-line.dy(), line.dx())
+    point1 = line.p2() - QPointF(math.sin(angle + math.radians(75.)) * arrowSize,
+                                          math.cos(angle + math.radians(75.)) * arrowSize)
+    point2 = line.p2() - QPointF(math.sin(angle + math.pi - math.radians(75.)) * arrowSize,
+                                          math.cos(angle + math.pi - math.radians(75.)) * arrowSize)
+
+    return QPolygonF([point0,point1,point2])
+    
+def drawArrow(line,parent=None,arrow=None):
+    if arrow:
+        arrow.setPolygon(computeArrow(line))
+    else:
+        arrow = QGraphicsPolygonItem(computeArrow(line),parent)
+        arrow.setBrush(QBrush(QColor('black')))
+        arrow.setPen(QPen(QColor('black')))
+    return arrow
