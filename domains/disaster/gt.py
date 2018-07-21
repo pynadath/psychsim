@@ -17,8 +17,8 @@ from psychsim.world import *
 from psychsim.agent import Agent
 from psychsim.ui.diagram import Diagram
 
-likert = {5: [0.2,0.4,0.6,0.8],
-          7: [0.14,0.28,0.42,0.56,0.70,0.84],
+likert = {5: [0.2,0.4,0.6,0.8,1.],
+          7: [0.14,0.28,0.42,0.56,0.70,0.84,1.],
           }
 
 def toLikert(value,scale=5):
@@ -130,7 +130,7 @@ class System(Agent):
         Agent.__init__(self,'System')
         world.addAgent(self)
 
-        world.diagram.setColor(self.name,'darkgoldenrod')
+        world.diagram.setColor(self.name,'gray')
         
 #        self.setAttribute('static',True)
         
@@ -232,7 +232,7 @@ class Group(Agent):
                 attachment = stateKey(name,'attachment')
                 R = rewardKey(name)
                 tree = makeTree({'if': thresholdRow(stateKey(name,'risk'),
-                                                    config.getfloat('Actors','attachment_threshold')),
+                                                    likert[5][config.getint('Actors','attachment_threshold')]),
                                  True: {'if': equalRow(attachment,'anxious'),
                                         True: setToFeatureMatrix(R,member,1.),
                                         False: {'if': equalRow(attachment,'avoidant'),
@@ -260,35 +260,47 @@ class Actor(Agent):
 
         # Demographic info
         ethnic = world.defineState(self.name,'ethnicGroup',list,['majority','minority'])
-        if random.random() > 0.75:
-            world.setFeature(ethnic,'minority')
+        if random.random() > likert[5][config.getint('Actors','ethnic_majority')]:
+            self.ethnicGroup = 'minority'
         else:
-            world.setFeature(ethnic,'majority')
+            self.ethnicGroup = 'majority'
+        world.setFeature(ethnic,self.ethnicGroup)
+
         religion = world.defineState(self.name,'religion',list,['majority','minority','none'])
-        if random.random() > 0.8:
-            world.setFeature(ethnic,'minority')
-        elif random.random() > 0.5:
-            world.setFeature(ethnic,'none')
+        if random.random() < likert[5][config.getint('Actors','atheists')]:
+            self.religion = 'none'
+        elif random.random() > likert[5][config.getint('Actors','religious_majority')]:
+            self.religion = 'majority'
         else:
-            world.setFeature(ethnic,'majority')
+            self.religion = 'minority'
+        world.setFeature(religion,self.religion)
+
         gender = world.defineState(self.name,'gender',list,['male','female'])
         if random.random() > 0.5:
-            world.setFeature(gender,'male')
+            self.gender = 'male'
         else:
-            world.setFeature(gender,'female')
+            self.gender = 'female'
+        world.setFeature(gender,self.gender)
+        
         age = world.defineState(self.name,'age',int)
-        world.setFeature(age,int(random.random()*50.)+20)
+        ageMin = config.getint('Actors','age_min')
+        ageMax = config.getint('Actors','age_max')
+        self.age = random.randint(ageMin,ageMax)
+        ageInterval = toLikert(float(self.age-ageMin)/float(ageMax-ageMin),5)
+        world.setFeature(age,self.age)
+        
         kids = world.defineState(self.name,'children',int,lo=0,hi=2)
-        if config.getboolean('Actors','children'):
-            world.setFeature(kids,int(random.random()*3.))
-        else:
-            world.setFeature(kids,0)
+        self.kids = random.randint(0,config.getint('Actors','children_max'))
+        world.setFeature(kids,self.kids)
 
         # Psychological
-        attachmentStyles = ['secure','anxious','avoidant']
-        attachment = world.defineState(self.name,'attachment',list,attachmentStyles)
-        attachmentValue = random.choice(attachmentStyles)
-        world.setFeature(attachment,attachmentValue)
+        attachmentStyles = {'secure': likert[5][config.getint('Actors','attachment_secure')],
+                            'anxious': likert[5][config.getint('Actors','attachment_anxious')]}
+        attachmentStyles['avoidant'] = 1.-attachmentStyles['secure']-attachmentStyles['anxious']
+        attachmentStyles = Distribution(attachmentStyles)
+        attachment = world.defineState(self.name,'attachment',list,attachmentStyles.domain())
+        self.attachment = attachmentStyles.sample()
+        world.setFeature(attachment,self.attachment)
 
         regions = sorted([name for name in self.world.agents
                                 if isinstance(self.world.agents[name],Region)])
@@ -312,10 +324,30 @@ class Actor(Agent):
         world.setFeature(location,home)
         alive = world.defineState(self.name,'alive',bool)
         world.setFeature(alive,True)
+
         health = world.defineState(self.name,'health',float)
-        world.setFeature(health,random.random()/2.+.5)
-        wealth = world.defineState(self.name,'wealth',float)
-        world.setFeature(wealth,random.random()/2.+0.25)
+        meanHealth = int(config.get('Actors','health_mean_age').split(',')[ageInterval-1])
+        if self.ethnicGroup == 'minority':
+            meanHealth += config.getint('Actors','health_mean_ethnic_minority')
+        meanHealth = max(1,min(5,meanHealth))
+        self.health = random.gauss(likert[5][meanHealth-1],
+                                   likert[5][config.getint('Actors','health_sigma')])
+        self.health = likert[5][toLikert(self.health,5)-1]
+        world.setFeature(health,self.health)
+
+        wealth = world.defineState(self.name,'resources',float)
+        meanWealth = int(config.get('Actors','wealth_mean_age').split(',')[ageInterval-1])
+        if self.ethnicGroup == 'minority':
+            meanWealth += config.getint('Actors','wealth_mean_ethnic_minority')
+        if self.gender == 'female':
+            meanWealth += config.getint('Actors','wealth_mean_female')
+        if self.religion == 'minority':
+            meanWealth += config.getint('Actors','wealth_mean_religious_minority')
+        meanWealth = max(1,min(5,meanWealth))
+        self.wealth = random.gauss(likert[5][meanWealth-1],
+                                   likert[5][config.getint('Actors','wealth_sigma')])
+        self.wealth = likert[5][toLikert(self.wealth,5)-1]
+        world.setFeature(wealth,self.wealth)
 
         risk = world.defineState(self.name,'risk',float)
         world.setFeature(risk,world.getState(home,'risk').expectation())
@@ -470,7 +502,7 @@ class Actor(Agent):
                          False: setToConstantMatrix(health,0.)})
         world.setDynamics(health,True,tree)
 
-        if config.getboolean('Actors','children'):
+        if config.getint('Actors','children_max') > 0:
             # Effect on kids' health
             tree = makeTree({'if': thresholdRow(makeFuture(risk),0.75),
                              True: {'distribution': [(approachMatrix(kids,0.75,0.),0.75),
@@ -550,7 +582,7 @@ class Actor(Agent):
         # Reward
         self.setReward(maximizeFeature(health,self.name),1.)
         self.setReward(maximizeFeature(wealth,self.name),1.)
-        if config.getboolean('Actors','children'):
+        if config.getint('Actors','children_max') > 0:
             self.setReward(maximizeFeature(kids,self.name),1.)
         # Decision-making parameters
         self.setAttribute('horizon',config.getint('Actors','horizon'))
@@ -607,15 +639,15 @@ class Actor(Agent):
         for other in population:
             if self.name == other.name:
                 continue
-            Rneighbors = config.getfloat('Actors','altruism_neighbors')
-            Rfriends = config.getfloat('Actors','altruism_friends')
-            if Rneighbors > 0. and other in neighbors:
+            Rneighbors = config.getint('Actors','altruism_neighbors')
+            Rfriends = config.getint('Actors','altruism_friends')
+            if Rneighbors >= 0 and other in neighbors:
                 self.setReward(maximizeFeature(stateKey(other.name,'health'),
-                                                self.name),Rneighbors)
-            elif Rfriends > 0. and \
+                                                self.name),likert[5][Rneighbors])
+            elif Rfriends >= 0 and \
                  self.world.getFeature(binaryKey(self.name,other.name,'friendOf')).first():
                 self.setReward(maximizeFeature(stateKey(other.name,'health'),
-                                                self.name),Rfriends)
+                                                self.name),likert[5][Rfriends])
         
     def _initializeBeliefs(self,config):
         # Beliefs
@@ -856,12 +888,37 @@ if __name__ == '__main__':
                 group = Group(info['agent'].name,world,config)
                 group.potentialMembers([a.name for a in info['inhabitants']])
                 groups.append(group)
+        if config.getboolean('Groups','ethnic'):
+            group = Group('EthnicMinority',world,config)
+            group.potentialMembers([a.name for a in population \
+                                    if a.getState('ethnicGroup').first() == 'minority'])
+            world.diagram.setColor(group.name,'mediumpurple')
+            groups.append(group)
+            group = Group('EthnicMajority',world,config)
+            group.potentialMembers([a.name for a in population \
+                                    if a.getState('ethnicGroup').first() == 'majority'])
+            world.diagram.setColor(group.name,'blueviolet')
+            groups.append(group)
+        if config.getboolean('Groups','religion'):
+            group = Group('ReligiousMinority',world,config)
+            group.potentialMembers([a.name for a in population \
+                                    if a.getState('religion').first() == 'minority'])
+            world.diagram.setColor(group.name,'rosybrown')
+            groups.append(group)
+            group = Group('ReligiousMajority',world,config)
+            group.potentialMembers([a.name for a in population \
+                                    if a.getState('religion').first() == 'majority'])
+            world.diagram.setColor(group.name,'darkorange')
+            groups.append(group)
 
         for agent in population:
             agent._initializeRelations(config)
         
         order = [{agent.name for agent in population}]
-#        order.insert(0,system.name)
+        if groups:
+            order.insert(0,{g.name for g in groups})
+        if system:
+            order.append({system.name})
         order.append({'Nature'})
         world.setOrder(order)
 
