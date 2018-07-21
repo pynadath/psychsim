@@ -65,7 +65,7 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
     def on_actionScreenshot_triggered(self):
         name,types = QFileDialog.getSaveFileName(self,'Save File')
         rect = self.scene.sceneRect()
-        pix = QPixmap(rect.width(), rect.height())
+        pix = QImage(rect.width(), rect.height(),QImage.Format_ARGB32)
         painter = QPainter(pix)
         self.scene.render(painter,rect)
         painter.end()
