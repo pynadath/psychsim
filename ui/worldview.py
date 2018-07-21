@@ -252,11 +252,11 @@ class WorldView(QGraphicsScene):
         for key,table in self.edgesOut.items()+self.edgesIn.items():
             if key == center:
                 # All edges are important!
-                for edge in table.values():
+                for edge,arrow in table.values():
                     edge.setPen(QPen(QBrush(QColor('black')),5))
                     edge.setZValue(2.0)
             else:
-                for subkey,edge in table.items():
+                for subkey,(edge,arrow) in table.items():
                     if subkey == center:
                         # This edge is important
                         edge.setPen(QPen(QBrush(QColor('black')),5))
