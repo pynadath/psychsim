@@ -40,29 +40,42 @@ class City:
 class Region(Agent):
     nameString = 'Region%02d'
     
-    def __init__(self,number,world):
+    def __init__(self,number,world,config,shelter=0):
         Agent.__init__(self,self.nameString % (number))
         world.addAgent(self)
 
+        self.number = number
+        self.x = (number-1) % config.getint('Regions','width') + 1
+        self.y = (number-1) / config.getint('Regions','width') + 1
+        self.config = config
+        
         if number == 1:
             world.diagram.setColor(self.name,'mediumseagreen')
 
         self.setAttribute('static',True)
         
         risk = world.defineState(self.name,'risk',float)
-        world.setFeature(risk,0.1)
+        mean = config.getint('Regions','risk_mean')
+        sigma = config.getint('Regions','risk_sigma')
+        self.risk = random.gauss(likert[5][mean-1],likert[5][sigma-1])
+        world.setFeature(risk,likert[5][toLikert(self.risk,5)-1])
 
         security = world.defineState(self.name,'security',float)
-        world.setFeature(security,0.9)
+        mean = config.getint('Regions','security_mean')
+        sigma = config.getint('Regions','security_sigma')
+        self.security = random.gauss(likert[5][mean-1],likert[5][sigma-1])
+        world.setFeature(security,likert[5][toLikert(self.security,5)-1])
 
-        if config.getboolean('Shelter','exists') and \
-           str(number) in config.get('Shelter','region').split(','):
+        if shelter:
             # Shelter in this region
-            
             world.defineState(self.name,'shelterRisk',float)
             self.setState('shelterRisk',likert[5][config.getint('Shelter','risk')])
             world.defineState(self.name,'shelterPets',bool)
             self.setState('shelterPets',config.getboolean('Shelter','pets'))
+            world.defineState(self.name,'shelterCapacity',int)
+            self.setState('shelterCapacity',shelter)
+            world.defineState(self.name,'shelterOccupancy',int)
+            self.setState('shelterOccupancy',0)
 
 class Nature(Agent):
     def __init__(self,world,config):
@@ -73,52 +86,98 @@ class Nature(Agent):
 
         evolution = self.addAction({'verb': 'evolve'})
 
-        phase = world.defineState(self.name,'phase',list,['none','increasing','decreasing'])
-        world.setFeature(phase,'increasing')
+        phase = world.defineState(self.name,'phase',list,['none','approaching','active'])
+        world.setFeature(phase,'none')
         days = world.defineState(self.name,'days',int)
         world.setFeature(days,0)
 
+        regions = sorted([name for name in self.world.agents
+                                if isinstance(self.world.agents[name],Region)])
+        location = world.defineState(self.name,'location',list,regions+['none'])
+        world.setFeature(location,'none')
+        
         # Phase dynamics
-        tree = makeTree({'if': thresholdRow(days,10),
-                         True: {'if': equalRow(phase,'increasing'),
-                                True: {'distribution': [(setToConstantMatrix(phase,'decreasing'),0.2),
-                                                        (noChangeMatrix(phase),0.8)]},
-                                False: {'if': equalRow(phase,'decreasing'),
-                                        True: {'distribution': [(setToConstantMatrix(phase,'none'),0.2),
-                                                                (noChangeMatrix(phase),0.8)]},
-                                        False: {'distribution': [(setToConstantMatrix(phase,'increasing'),0.2),
-                                                                 (noChangeMatrix(phase),0.8)]}}},
-                         False: noChangeMatrix(phase)})
+        prob = likert[5][config.getint('Disaster','phase_change_prob')-1]
+        minDays = config.getint('Disaster','phase_min_days')
+        tree = makeTree({'if': equalRow(phase,'none'),
+                         # When does a hurricane emerge
+                         True: {'if': thresholdRow(days,minDays),
+                                True: {'distribution': [(setToConstantMatrix(phase,'approaching'),
+                                                         prob),
+                                                        (noChangeMatrix(phase),1.-prob)]},
+                                False: noChangeMatrix(phase)},
+                         False: {'if': equalRow(phase,'approaching'),
+                                 # When does hurricane make landfall
+                                 True: {'if': thresholdRow(days,minDays),
+                                        True: {'distribution': [(setToConstantMatrix(phase,'active'),
+                                                                 prob),
+                                                                (noChangeMatrix(phase),1.-prob)]},
+                                        False: noChangeMatrix(phase)},
+                                 # Active hurricane
+                                 False: {'if': equalRow(location,'none'),
+                                         True: setToConstantMatrix(phase,'none'),
+                                         False: noChangeMatrix(phase)}}})
         world.setDynamics(phase,evolution,tree)
-        tree = makeTree(noChangeMatrix(days))
-        world.setDynamics(days,evolution,tree)
+
         tree = makeTree({'if': equalFeatureRow(phase,makeFuture(phase)),
                          True: incrementMatrix(days,1),
                          False: setToConstantMatrix(days,0)})
         world.setDynamics(days,True,tree)
 
+        category = world.defineState(self.name,'category',int)
+        world.setFeature(category,0)
+
+        tree = makeTree({'if': equalRow(makeFuture(phase),'active'),
+                         True: {'if': equalRow(category,0),
+                                # Generate a random cateogry
+                                True: {'distribution': [(setToConstantMatrix(category,1),0.2),
+                                                        (setToConstantMatrix(category,2),0.2),
+                                                        (setToConstantMatrix(category,3),0.2),
+                                                        (setToConstantMatrix(category,4),0.2),
+                                                        (setToConstantMatrix(category,5),0.2)]},
+                                False: noChangeMatrix(category)},
+                         False: setToConstantMatrix(category,0)})
+        world.setDynamics(category,evolution,tree)
+
+        tree = makeTree({'if': equalRow(makeFuture(phase),'approaching'),
+                         True: {'if': equalRow(location,'none'),
+                                # Generate initial location estimate
+                                True: setToConstantMatrix(location,'Region01'),
+                                # No change?
+                                False: noChangeMatrix(location)},
+                         False: {'if': equalRow(phase,'active'),
+                                 # Hurricane moving through regions
+                                 True: setToConstantMatrix(location,'none'),
+                                 # No hurricane
+                                 False: setToConstantMatrix(location,'none')}})
+        world.setDynamics(location,evolution,tree)
+
         # Effect of disaster on risk
-        regions = sorted([name for name in self.world.agents
-                                if isinstance(self.world.agents[name],Region)])
-        if config.getboolean('Disaster','dynamic'):
-            for region in regions:
-                risk = stateKey(region,'risk')
-                tree = makeTree({'if': equalRow(phase,'increasing'),
-                                 True: approachMatrix(risk,.1,1.),
-                                 False: {'if': equalRow(phase,'decreasing'),
-                                         True: approachMatrix(risk,.1,0.),
-                                         False: setToConstantMatrix(risk,0.)}})
+        base_increase = likert[5][config.getint('Disaster','risk_impact')-1]
+        base_decrease = likert[5][config.getint('Disaster','risk_decay')-1]
+        for region in regions:
+            risk = stateKey(region,'risk')
+            tree = noChangeMatrix(risk)
+            for center in regions:
+                distance = abs(world.agents[center].x-world.agents[region].x) + \
+                           abs(world.agents[center].y-world.agents[region].y)
+                effect = base_increase/float(distance+1)
+                tree = {'if': equalRow(makeFuture(location),center),
+                        True: approachMatrix(risk,effect,1.),
+                        False: tree}
+            tree = makeTree({'if': equalRow(makeFuture(phase),'active'),
+                             True: tree, False: approachMatrix(risk,base_decrease,0.)})
+            world.setDynamics(risk,evolution,tree)
+        if config.getboolean('Shelter','exists'):
+            for index in map(int,config.get('Shelter','region').split(',')):
+                region = Region.nameString % (index)
+                risk = stateKey(region,'shelterRisk')
+                tree = makeTree({'if': equalRow(makeFuture(phase),'active'),
+                                 True: {'if': equalRow(makeFuture(location),region),
+                                        True: approachMatrix(risk,base_increase,1.),
+                                        False: noChangeMatrix(risk)},
+                                 False: approachMatrix(risk,base_decrease,0.)})
                 world.setDynamics(risk,evolution,tree)
-            if config.getboolean('Shelter','exists'):
-                for index in map(int,config.get('Shelter','region').split(',')):
-                    region = Region.nameString % (index)
-                    risk = stateKey(region,'shelterRisk')
-                    tree = makeTree({'if': equalRow(phase,'increasing'),
-                                     True: approachMatrix(risk,.01,1.),
-                                     False: {'if': equalRow(phase,'decreasing'),
-                                             True: approachMatrix(risk,.01,0.),
-                                             False: setToConstantMatrix(risk,0.)}})
-                    world.setDynamics(risk,evolution,tree)
         self.setAttribute('static',True)
 
         # Advance calendar after Nature moves
@@ -146,7 +205,7 @@ class System(Agent):
         for actor in population:
             self.setReward(maximizeFeature(stateKey(actor,'health'),self.name),1.)
             populated.add(world.getState(actor,'region').first())
-        allocation = config.getint('City','system_allocation')
+        allocation = config.getint('System','system_allocation')
         for region in populated:
             tree = makeTree({'if': thresholdRow(resources,allocation),True: True,False: False})
             allocate = self.addAction({'verb': 'allocate','object': region},
@@ -305,7 +364,7 @@ class Actor(Agent):
         regions = sorted([name for name in self.world.agents
                                 if isinstance(self.world.agents[name],Region)])
         region = world.defineState(self.name,'region',list,regions)
-        home = regions[(number-1)/config.getint('City','density')]
+        home = regions[(number-1)/config.getint('Regions','density')]
         world.setFeature(region,home)
 
         # For display use only
@@ -863,8 +922,16 @@ if __name__ == '__main__':
         world.diagram.setColor(None,'deepskyblue')
 
         regions = {}
-        for region in range(config.getint('City','regions')):
-            n = Region(region+1,world)
+        for region in range(config.getint('Regions','regions')):
+            capacity = 0
+            if config.getboolean('Shelter','exists'):
+                try:
+                    index = config.get('Shelter','region').split(',').index(str(region+1))
+                    capacity = int(config.get('Shelter','capacity').split(',')[index])
+                except ValueError:
+                    pass
+            
+            n = Region(region+1,world,config,capacity)
             regions[n.name] = {'agent': n, 'inhabitants': [], 'number': region+1}
 
         city = City(world,config)
@@ -877,7 +944,7 @@ if __name__ == '__main__':
             region = agent.getState('region').first()
             regions[region]['inhabitants'].append(agent)
 
-        if config.getboolean('City','system'):
+        if config.getboolean('System','system'):
             system = System(world,config)
         else:
             system = None
