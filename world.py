@@ -492,6 +492,10 @@ class World:
             agent.world = self
             self.turnSubstate = None
             self.turnKeys = set()
+            key = modelKey(agent.name)
+            if not key in self.variables:
+                self.defineVariable(key,list,agent.models.keys())
+            
             if len(agent.models) == 0:
                 # Default model settings
                 agent.addModel('%s0' % (agent.name),R={},horizon=2,level=2,rationality=1.,
@@ -1075,13 +1079,8 @@ class World:
             distribution = {distribution: 1.}
         if not isinstance(distribution,psychsim.probability.Distribution):
             distribution = psychsim.probability.Distribution(distribution)
-        for element in distribution.domain():
-            if not isinstance(element,float):
-                distribution.replace(element,float(self.agents[modelee].model2index(element)))
         distribution.normalize()
         key = modelKey(modelee)
-        if not key in self.variables:
-            self.defineVariable(key)
         if isinstance(state,str):
             # This is the name of the modeling agent (*cough* hack *cough*)
             self.agents[state].setBelief(key,distribution,model)

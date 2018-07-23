@@ -723,6 +723,8 @@ class Agent:
         self.modelList[model['index']] = name
         self.world.symbols[name] = model['index']
         self.world.symbolList.append(name)
+        if not name in self.world.variables[modelKey(self.name)]['elements']:
+            self.world.variables[modelKey(self.name)]['elements'].append(name)
         return model
 
     def deleteModel(self,name):
