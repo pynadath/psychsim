@@ -39,27 +39,27 @@ class DependencyGraph(dict):
             self.computeGraph()
         return dict.__getitem__(self,key)
 
-    def computeGraph(self,agents=None):
+    def computeGraph(self,agents=None,state=None):
         # Process the unary state features
         if agents is None:
             agents = sorted(self.world.agents.keys())
             agents.append(WORLD)
+        if state is None:
+            state = self.world.state
         for agent in agents:
             if agent in self.world.locals:
                 variables = self.world.locals[agent]
                 for feature in variables.keys():
-                    self[stateKey(agent,feature)] = {'agent': agent,
-                                                     'type': 'state pre',
-                                                     'children': set(),
-                                                     'parents': set()}
-                    self[stateKey(agent,feature,True)] = {'agent': agent,
-                                                          'type': 'state post',
-                                                          'children': set(),
-                                                          'parents': set()}
+                    key = stateKey(agent,feature)
+                    if key in state:
+                        self[key] = {'agent': agent,'type': 'state pre',
+                                     'children': set(),'parents': set()}
+                        self[makeFuture(key)] = {'agent': agent,'type': 'state post',
+                                                 'children': set(),'parents': set()}
         # Process the binary state features
         for relation,table in self.world.relations.items():
             for key,entry in table.items():
-                if entry['subject'] in agents and entry['object'] in agents:
+                if key in state and entry['subject'] in agents and entry['object'] in agents:
                     self[key] = {'agent': entry['subject'],
                                  'type': 'state pre',
                                  'children': set(),
@@ -94,18 +94,22 @@ class DependencyGraph(dict):
             if isBinaryKey(key) and not key2relation(key)['subject'] in agents and \
                not key2relation(key)['object'] in agents:
                 continue
-            assert self.has_key(key),'Graph has not accounted for key: %s' % (key)
+            if not key in self:
+                continue
+#            assert self.has_key(key),'Graph has not accounted for key: %s' % (key)
             if isinstance(dynamics,bool):
                 continue
             for action,tree in dynamics.items():
                 if not action is True and action['subject'] in agents:
                     # Link between action to this feature
-                    assert self.has_key(action),'Graph has not accounted for action: %s' % (action)
-                    dict.__getitem__(self,makeFuture(key))['parents'].add(action)
-                    dict.__getitem__(self,action)['children'].add(makeFuture(key))
+                    if action in self:
+                        # assert self.has_key(action),'Graph has not accounted for action: %s' % (action)
+                        dict.__getitem__(self,makeFuture(key))['parents'].add(action)
+                        dict.__getitem__(self,action)['children'].add(makeFuture(key))
                 # Link between dynamics variables and this feature
                 for parent in tree.getKeysIn() - set([CONSTANT]):
-                    if state2agent(parent) == WORLD or state2agent(parent) in agents:
+                    if (state2agent(parent) == WORLD or state2agent(parent) in agents) and \
+                       parent in self:
                         dict.__getitem__(self,makeFuture(key))['parents'].add(parent)
                         dict.__getitem__(self,parent)['children'].add(makeFuture(key))
         for name in agents:
@@ -117,19 +121,20 @@ class DependencyGraph(dict):
                 for parent in R.getKeysIn() - set([CONSTANT]):
                     if isStateKey(parent) and not state2agent(parent) in agents:
                         continue
-                    # Link between variable and agent utility
-                    dict.__getitem__(self,name)['parents'].add(makeFuture(parent))
-                    dict.__getitem__(self,makeFuture(parent))['children'].add(name)
+                    if parent in self:
+                        # Link between variable and agent utility
+                        dict.__getitem__(self,name)['parents'].add(makeFuture(parent))
+                        dict.__getitem__(self,makeFuture(parent))['children'].add(name)
                 # Create links from legality
                 for action,tree in agent.legal.items():
                     action = ActionSet([a.root() for a in action])
                     for parent in tree.getKeysIn() - set([CONSTANT]):
                         if isStateKey(parent) and not state2agent(parent) in agents:
                             continue
-                        # Link between prerequisite variable and action
-                        assert self.has_key(action),'Graph has not accounted for action: %s' % (action)
-                        dict.__getitem__(self,action)['parents'].add(parent)
-                        dict.__getitem__(self,parent)['children'].add(action)
+                        if action in self and parent in self:
+                            # Link between prerequisite variable and action
+                            dict.__getitem__(self,action)['parents'].add(parent)
+                            dict.__getitem__(self,parent)['children'].add(action)
 
     def items(self):
         if len(self) == 0:
