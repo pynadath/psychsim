@@ -153,7 +153,7 @@ class Nature(Agent):
         world.setDynamics(location,evolution,tree)
 
         # Effect of disaster on risk
-        base_increase = likert[5][config.getint('Disaster','risk_impact')-1]
+        base_increase = likert[7][config.getint('Disaster','risk_impact')-1]
         base_decrease = likert[5][config.getint('Disaster','risk_decay')-1]
         for region in regions:
             risk = stateKey(region,'risk')
@@ -161,9 +161,14 @@ class Nature(Agent):
             for center in regions:
                 distance = abs(world.agents[center].x-world.agents[region].x) + \
                            abs(world.agents[center].y-world.agents[region].y)
-                effect = base_increase/float(distance+1)
+                subtree = approachMatrix(risk,base_increase*5,1.)
+                for cat in range(4):
+                    effect = base_increase*float(cat+1)/float(distance+1)
+                    subtree = {'if': equalRow(category,cat+1),
+                            True: approachMatrix(risk,effect,1.),
+                            False: subtree}
                 tree = {'if': equalRow(makeFuture(location),center),
-                        True: approachMatrix(risk,effect,1.),
+                        True: subtree,
                         False: tree}
             tree = makeTree({'if': equalRow(makeFuture(phase),'active'),
                              True: tree, False: approachMatrix(risk,base_decrease,0.)})
@@ -172,9 +177,15 @@ class Nature(Agent):
             for index in map(int,config.get('Shelter','region').split(',')):
                 region = Region.nameString % (index)
                 risk = stateKey(region,'shelterRisk')
+                subtree = noChangeMatrix(risk)
+                for cat in range(5):
+                    effect = base_increase*float(cat+1)/float(distance+1)
+                    subtree = {'if': equalRow(category,cat+1),
+                               True: approachMatrix(risk,effect,1.),
+                               False: subtree}
                 tree = makeTree({'if': equalRow(makeFuture(phase),'active'),
                                  True: {'if': equalRow(makeFuture(location),region),
-                                        True: approachMatrix(risk,base_increase,1.),
+                                        True: subtree,
                                         False: noChangeMatrix(risk)},
                                  False: approachMatrix(risk,base_decrease,0.)})
                 world.setDynamics(risk,evolution,tree)
