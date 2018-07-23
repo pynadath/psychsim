@@ -58,6 +58,7 @@ class WorldView(QGraphicsScene):
         self.world = None
         self.graph = None
         self.dirty = False
+        self.center = None
 
     def clear(self):
         super(WorldView,self).clear()
@@ -65,6 +66,7 @@ class WorldView(QGraphicsScene):
             table.clear()
         self.edgesOut.clear()
         self.edgesIn.clear()
+        self.center = None
         
     def displayWorld(self,world,agents=None):
         self.clear()
@@ -127,18 +129,18 @@ class WorldView(QGraphicsScene):
             for key in sorted(layer,lambda k0,k1: cmp((self.graph[k0]['agent'],k0),
                                                       (self.graph[k1]['agent'],k1))):
                 variable = self.world.variables[makePresent(key)]
+                if y >= 10*self.rowHeight:
+                    even = not even
+                    if even:
+                        y = 0
+                    else:
+                        y = 50
+                    x += int(0.75*self.colWidth)
                 if not xkey in variable:
-                    if y >= 10*self.rowHeight:
-                        even = not even
-                        if even:
-                            y = 0
-                        else:
-                            y = 50
-                        x += int(0.75*self.colWidth)
                     variable[xkey] = x
                     variable[ykey] = y
-                    # Move on to next Y
-                    y += self.rowHeight
+                # Move on to next Y
+                y += self.rowHeight
                 if self.graph[key]['agent'] != WORLD and self.graph[key]['agent']:
                     agent = self.world.agents[self.graph[key]['agent']]
                     if isBinaryKey(key):
@@ -246,6 +248,26 @@ class WorldView(QGraphicsScene):
 
     def highlightEdges(self,center):
         """
+        Hide any edges *not* originating or ending at the named node
+        @type center: str
+        """
+        self.center = center
+        for key,table in self.edgesOut.items()+self.edgesIn.items():
+            if key == center:
+                # All edges are important!
+                for edge,arrow in table.values():
+                    edge.show()
+            else:
+                for subkey,(edge,arrow) in table.items():
+                    if subkey == center:
+                        # This edge is important
+                        edge.show()
+                    else:
+                        # This edge is unimportant
+                        edge.hide()
+                        
+    def boldEdges(self,center):
+        """
         Highlight any edges originating or ending at the named node
         @type center: str
         """
@@ -270,28 +292,30 @@ class WorldView(QGraphicsScene):
         self.setDirty()
         if self.edgesOut.has_key(key):
             for subkey,(edge,arrow) in self.edgesOut[key].items():
-                if isinstance(edge,QGraphicsLineItem):
-                    line = edge.line()
-                    line.setP1(QPointF(rect.x()+rect.width(),rect.y()+rect.height()/2))
-                    edge.setLine(line)
-                    drawArrow(line,arrow=arrow)
-                elif key != subkey:
-                    edge.scene().removeItem(edge)
-                    del self.edgesOut[key][subkey]
-                    del self.edgesIn[subkey][key]
-                    self.drawEdge(key,subkey,rect0=rect)
+                if self.center is None or self.center == key or self.center == subkey:
+                    if isinstance(edge,QGraphicsLineItem):
+                        line = edge.line()
+                        line.setP1(QPointF(rect.x()+rect.width(),rect.y()+rect.height()/2))
+                        edge.setLine(line)
+                        drawArrow(line,arrow=arrow)
+                    elif key != subkey:
+                        edge.scene().removeItem(edge)
+                        del self.edgesOut[key][subkey]
+                        del self.edgesIn[subkey][key]
+                        self.drawEdge(key,subkey,rect0=rect)
         if self.edgesIn.has_key(key):
             for subkey,(edge,arrow) in self.edgesIn[key].items():
-                if isinstance(edge,QGraphicsLineItem):
-                    line = edge.line()
-                    line.setP2(QPointF(rect.x(),rect.y()+rect.height()/2))
-                    edge.setLine(line)
-                    drawArrow(line,arrow=arrow)
-                elif key != subkey:
-                    edge.scene().removeItem(edge)
-                    del self.edgesIn[key][subkey]
-                    del self.edgesOut[subkey][key]
-                    self.drawEdge(subkey,key,rect1=rect)
+                if self.center is None or self.center == key or self.center == subkey:
+                    if isinstance(edge,QGraphicsLineItem):
+                        line = edge.line()
+                        line.setP2(QPointF(rect.x(),rect.y()+rect.height()/2))
+                        edge.setLine(line)
+                        drawArrow(line,arrow=arrow)
+                    elif key != subkey:
+                        edge.scene().removeItem(edge)
+                        del self.edgesIn[key][subkey]
+                        del self.edgesOut[subkey][key]
+                        self.drawEdge(subkey,key,rect1=rect)
 
     def step(self):
         self.world.step()
