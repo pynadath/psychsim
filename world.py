@@ -684,25 +684,14 @@ class World:
         if isinstance(vector,VectorDistributionSet):
             if len(self.turnKeys) == 0:
                 self.turnKeys = {key for key in vector.keyMap.keys() if isTurnKey(key)}
-#            if self.turnSubstate == CONSTANT:
-            substate = {vector.keyMap[key] for key in self.turnKeys}
-            if len(substate) != 1:
-                logging.error('Turns stored in independent substates: %s' % \
-                              (', '.join(substate)))
-            self.turnSubstate = iter(substate).next()
-            distribution = vector.distributions[self.turnSubstate]
-            results = {}
-            for element in distribution.domain():
-                names = self.next(element)
-                label = ','.join(names)
-                if label in results:
-                    results[label]['worlds'][element] = distribution[element]
-                else:
-                    results[label] = {'agents': names,
-                                      'worlds': psychsim.pwl.VectorDistribution({element: distribution[element]})}
-            if len(results) > 1:
-                logging.error('Unable to handle nondeterministic turns')
-            return results.values()[0]['agents']
+            agents = set()
+            for key in self.turnKeys:
+                substate = vector.keyMap[key]
+                subvector = vector.distributions[substate]
+                assert len(subvector) == 1,'World.next() does not operate on uncertain turns'
+                if subvector.first()[key] == 0:
+                    agents.add(turn2name(key))
+            return agents
         else:
             items = filter(lambda i: isTurnKey(i[0]),vector.items())
         if len(items) == 0:
