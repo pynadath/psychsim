@@ -120,3 +120,15 @@ def isLikesKey(key):
 
 def rewardKey(name):
     return stateKey(name,REWARD)
+
+def beliefKey(name,key):
+    return '%s(%s)' % (name,key)
+
+def isBeliefKey(key):
+    return '(' in key
+
+def belief2believer(key):
+    return key[:key.index('(')]
+
+def belief2key(key):
+    return key[key.index('(')+1:-1]
