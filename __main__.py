@@ -99,6 +99,6 @@ if __name__ == '__main__':
 #            win.openScenario(str(filename))
     else:
         win.openScenario(args.scenario)
-    win.show()
+    win.showMaximized()
     app.exec_()
 
