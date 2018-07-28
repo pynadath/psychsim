@@ -895,7 +895,7 @@ def addState2tables(world,day,tables,population,regions):
                     entry[label] = len([a for a in population if values[a.name][feature]])
                 if function == 'invert':
                     entry[label] = len(population) - entry[label]
-                elif function and function[0] == '=':
+                elif function and function[0] == '#':
                     entry[label] = len([a for a in population if values[a.name][feature] == function[1:]])
             table['log'].append(entry)
         elif table['population'] is Region:
@@ -906,13 +906,11 @@ def addState2tables(world,day,tables,population,regions):
                 for feature,label,function in table['fields']:
                     if world.variables[stateKey(population[0].name,feature)]['domain'] is bool:
                         entry[label] = len([a for a in inhabitants if values[a.name][feature]])
-                    elif feature == 'risk':
-                        value = world.getState(region,feature)
-                        assert len(value)
-                        entry[label] = value.first()
-                    elif function and function[0] == '=':
+                        hi = len(inhabitants)
+                    elif function and function[0] == '#':
                         target = function[1:]
                         entry[label] = len([a for a in inhabitants if values[a.name][feature][:len(target)] == target])
+                        hi = len(inhabitants)
                     elif function and function[0] == '%':
                         target = function[1:]
                         count = len([a for a in inhabitants if values[a.name][feature][:len(target)] == target])
@@ -920,11 +918,18 @@ def addState2tables(world,day,tables,population,regions):
                             entry[label] = float(count)/float(len(inhabitants))
                         except ZeroDivisionError:
                             pass
-                    else:
+                        hi = 1.
+                    elif function and function[0] == '/':
                         value = [values[a.name][feature] for a in inhabitants]
                         entry[label] = sum(value)/float(len(value))
+                        hi = 1.
+                    else:
+                        value = world.getState(region,feature)
+                        assert len(value) == 1
+                        entry[label] = value.first()
+                        hi = 1.
                     if function == 'invert':
-                        entry[label] = len(inhabitants) - entry[label]
+                        entry[label] = hi - entry[label]
                     elif function == 'likert':
                         entry[label] = toLikert(entry[label])
                 table['log'].append(entry)
@@ -944,6 +949,8 @@ def addState2tables(world,day,tables,population,regions):
                             entry[label] = toLikert(values[actor.name][feature])
                         elif function and function[0] == '=':
                             entry[label] = values[actor.name][feature] == function[1:]
+                        elif function == 'invert':
+                            entry[label] = 1.-values[actor.name][feature]
                         else:
                             entry[label] = values[actor.name][feature]
                 table['log'].append(entry)
@@ -1065,15 +1072,15 @@ if __name__ == '__main__':
         #            sys.exit(0)
         if population:
             allTables = {'Population': {'fields': [('alive','casualties','invert'),
-                                                   ('location','evacuated','=evacuated'),
-                                                   ('location','shelter','=shelter')],
+                                                   ('location','evacuated','#evacuated'),
+                                                   ('location','shelter','#shelter')],
                                         'series': True,
                                         'population': City,
                                         'log': []},
                          'Region': {'fields': [('alive','casualties','invert'),
-                                               ('location','evacuated','=evacuated'),
-                                               ('location','shelter','=shelter'),
-                                               ('risk','risk',None)],
+                                               ('location','evacuated','#evacuated'),
+                                               ('location','shelter','#shelter'),
+                                               ('risk','safety','invert')],
                                     'series': True,
                                     'population': Region,
                                     'log': []},
