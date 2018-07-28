@@ -45,8 +45,26 @@ class Region(Agent):
         world.addAgent(self)
 
         self.number = number
-        self.x = (number-1) % config.getint('Regions','width') + 1
-        self.y = (number-1) / config.getint('Regions','width') + 1
+        width = config.getint('Regions','width')
+        maxRegion = config.getint('Regions','regions')
+        self.x = (number-1) % width + 1
+        self.y = (number-1) / width + 1
+        if self.y > 1:
+            self.north = self.nameString % ((self.y-2)*width + self.x)
+        else:
+            self.north = 'none'
+        if self.y*width + self.x <= maxRegion:
+            self.south = self.nameString % (self.y*width + self.x)
+        else:
+            self.south = 'none'
+        if self.x > 1:
+            self.west = self.nameString % ((self.y-1)*width + self.x - 1)
+        else:
+            self.west = 'none'
+        if self.x < width:
+            self.east = self.nameString % ((self.y-1)*width + self.x + 1)
+        else:
+            self.east = 'none'
         self.config = config
         
         if number == 1:
@@ -127,7 +145,7 @@ class Nature(Agent):
         category = world.defineState(self.name,'category',int)
         world.setFeature(category,0)
 
-        tree = makeTree({'if': equalRow(makeFuture(phase),'active'),
+        tree = makeTree({'if': equalRow(makeFuture(phase),'approaching'),
                          True: {'if': equalRow(category,0),
                                 # Generate a random cateogry
                                 True: {'distribution': [(setToConstantMatrix(category,1),0.2),
@@ -136,24 +154,38 @@ class Nature(Agent):
                                                         (setToConstantMatrix(category,4),0.2),
                                                         (setToConstantMatrix(category,5),0.2)]},
                                 False: noChangeMatrix(category)},
-                         False: setToConstantMatrix(category,0)})
+                         False: {'if': equalRow(makeFuture(phase),'active'),
+                                 True: noChangeMatrix(category),
+                                 False: setToConstantMatrix(category,0)}})
         world.setDynamics(category,evolution,tree)
 
+        # For computing initial locations
+        coastline = {r for r in regions if world.agents[r].x == 1}
+        prob = 1./float(len(coastline))
+        # For computing hurricane movement
+        subtree = noChangeMatrix(location)
+        for name in regions:
+            region = world.agents[name]
+            subtree = {'if': equalRow(location,name),
+                       True: {'distribution': [(setToConstantMatrix(location,region.north),0.5),
+                                               (setToConstantMatrix(location,region.east),0.5)]},
+                       False: subtree}
         tree = makeTree({'if': equalRow(makeFuture(phase),'approaching'),
                          True: {'if': equalRow(location,'none'),
                                 # Generate initial location estimate
-                                True: setToConstantMatrix(location,'Region01'),
+                                True: {'distribution': [(setToConstantMatrix(location,r),prob) \
+                                                        for r in coastline]},
                                 # No change?
                                 False: noChangeMatrix(location)},
-                         False: {'if': equalRow(phase,'active'),
+                         False: {'if': equalRow(makeFuture(phase),'active'),
                                  # Hurricane moving through regions
-                                 True: setToConstantMatrix(location,'none'),
+                                 True: subtree,
                                  # No hurricane
                                  False: setToConstantMatrix(location,'none')}})
         world.setDynamics(location,evolution,tree)
 
         # Effect of disaster on risk
-        base_increase = likert[7][config.getint('Disaster','risk_impact')-1]
+        base_increase = likert[5][config.getint('Disaster','risk_impact')-1]
         base_decrease = likert[5][config.getint('Disaster','risk_decay')-1]
         for region in regions:
             risk = stateKey(region,'risk')
@@ -163,7 +195,7 @@ class Nature(Agent):
                            abs(world.agents[center].y-world.agents[region].y)
                 subtree = approachMatrix(risk,base_increase*5,1.)
                 for cat in range(4):
-                    effect = base_increase*float(cat+1)/float(distance+1)
+                    effect = base_increase*float(cat+1)/float(distance+2)
                     subtree = {'if': equalRow(category,cat+1),
                             True: approachMatrix(risk,effect,1.),
                             False: subtree}
@@ -179,7 +211,7 @@ class Nature(Agent):
                 risk = stateKey(region,'shelterRisk')
                 subtree = noChangeMatrix(risk)
                 for cat in range(5):
-                    effect = base_increase*float(cat+1)/float(distance+1)
+                    effect = base_increase*float(cat)
                     subtree = {'if': equalRow(category,cat+1),
                                True: approachMatrix(risk,effect,1.),
                                False: subtree}
@@ -201,8 +233,6 @@ class System(Agent):
         world.addAgent(self)
 
         world.diagram.setColor(self.name,'gray')
-        
-#        self.setAttribute('static',True)
         
         resources = world.defineState(self.name,'resources',int,lo=0,hi=100)
         self.setState('resources',int(random.random()*25.)+75)
@@ -379,10 +409,21 @@ class Actor(Agent):
         world.setFeature(region,home)
 
         # For display use only
-#        x = world.defineState(self.name,'x',float)
-#        world.setFeature(x,random.random())
-#        y = world.defineState(self.name,'y',float)
-#        world.setFeature(y,random.random())
+        tooClose = True
+        xKey = world.defineState(self.name,'x',float)
+        yKey = world.defineState(self.name,'y',float)
+        while tooClose:
+            x = random.random()
+            y = random.random()
+            for neighbor in [a for a  in world.agents.values() if isinstance(a,Actor) and \
+                             not a.name == self.name and a.getState('location').first() == home]:
+                if abs(neighbor.getState('x').first()-x)+abs(neighbor.getState('y').first()-y) < 0.1:
+                    break
+            else:
+                tooClose = False
+        world.setFeature(xKey,x)
+        world.setFeature(yKey,y)
+                             
 
         # Dynamic states
         locationSet = regions[:]
@@ -654,6 +695,20 @@ class Actor(Agent):
         self.setReward(maximizeFeature(wealth,self.name),1.)
         if config.getint('Actors','children_max') > 0:
             self.setReward(maximizeFeature(kids,self.name),1.)
+        if config.getboolean('Actors','beliefs'):
+            # Observations
+            omega = self.defineObservation('phase',domain=list,
+                                           lo=self.world.variables['Nature\'s phase']['elements'])
+            self.setO('phase',None,makeTree(setToFeatureMatrix(omega,stateKey('Nature','phase'))))
+            self.setState('phase','none')
+            omega = self.defineObservation('center',domain=list,
+                                           lo=self.world.variables['Nature\'s location']['elements'])
+            self.setO('center',None,makeTree(setToFeatureMatrix(omega,stateKey('Nature','location'))))
+            self.setState('center','none')
+            omega = self.defineObservation('category',domain=int)
+            self.setO('category',None,
+                      makeTree(setToFeatureMatrix(omega,stateKey('Nature','category'))))
+            self.setState('category',0)
         # Decision-making parameters
         self.setAttribute('horizon',config.getint('Actors','horizon'))
         #self.setAttribute('selection','distribution')
@@ -714,7 +769,7 @@ class Actor(Agent):
             if Rneighbors >= 0 and other in neighbors:
                 self.setReward(maximizeFeature(stateKey(other.name,'health'),
                                                 self.name),likert[5][Rneighbors])
-            elif Rfriends >= 0 and \
+            elif config.getint('Actors','friends') > 0 and Rfriends >= 0 and \
                  self.world.getFeature(binaryKey(self.name,other.name,'friendOf')).first():
                 self.setReward(maximizeFeature(stateKey(other.name,'health'),
                                                 self.name),likert[5][Rfriends])
@@ -737,24 +792,6 @@ class Actor(Agent):
 #                 if world.getFeature(binaryKey(agent.name,other.name,'friendOf')).first():
 #                     continue
                 agent.ignore(other.name,'%s0' % (agent.name))
-        if config.getboolean('Actors','misperception_risk'):
-            home = self.world.getState(self.name,'region').first()
-            dist = Distribution({'over': config.getfloat('Actors','misperception_risk_over'),
-                                 'under': config.getfloat('Actors','misperception_risk_under')})
-            dist['none'] = 1.-dist['over']-dist['under']
-            mis = dist.sample()
-            prob = config.getfloat('Actors','misperception_risk_prob')
-            err = config.getfloat('Actors','misperception_risk_error')
-            true = self.world.getState(home,'risk').expectation()
-            if mis == 'over':
-                dist = Distribution({true: 1.-prob,
-                                     (1.-err)*true+err: prob})
-            elif mis == 'under':
-                dist = Distribution({true: 1.-prob,
-                                     (1.-err)*true: prob})
-            else:
-                dist = true
-            self.setBelief(stateKey(home,'risk'),dist)
         
 class GroundTruth(World):
     def toCDF(self,dirname):
@@ -862,29 +899,35 @@ def addState2tables(world,day,tables,population,regions):
                     entry[label] = len([a for a in population if values[a.name][feature] == function[1:]])
             table['log'].append(entry)
         elif table['population'] is Region:
-            for region in regions:
+            for region in sorted(regions):
                 inhabitants = regions[region]['inhabitants']
-                if inhabitants:
-                    entry = {'day': day,
-                             'region': region}
-                    for feature,label,function in table['fields']:
-                        if world.variables[stateKey(population[0].name,feature)]['domain'] is bool:
-                            entry[label] = len([a for a in inhabitants if values[a.name][feature]])
-                        elif feature == 'risk':
-                            value = world.getState(region,feature)
-                            assert len(value)
-                            entry[label] = value.first()
-                        elif function and function[0] == '=':
-                            target = function[1:]
-                            entry[label] = len([a for a in inhabitants if values[a.name][feature][:len(target)] == target])
-                        else:
-                            value = [values[a.name][feature] for a in inhabitants]
-                            entry[label] = sum(value)/float(len(value))
-                        if function == 'invert':
-                            entry[label] = len(inhabitants) - entry[label]
-                        elif function == 'likert':
-                            entry[label] = toLikert(entry[label])
-                    table['log'].append(entry)
+                entry = {'day': day,
+                         'region': region}
+                for feature,label,function in table['fields']:
+                    if world.variables[stateKey(population[0].name,feature)]['domain'] is bool:
+                        entry[label] = len([a for a in inhabitants if values[a.name][feature]])
+                    elif feature == 'risk':
+                        value = world.getState(region,feature)
+                        assert len(value)
+                        entry[label] = value.first()
+                    elif function and function[0] == '=':
+                        target = function[1:]
+                        entry[label] = len([a for a in inhabitants if values[a.name][feature][:len(target)] == target])
+                    elif function and function[0] == '%':
+                        target = function[1:]
+                        count = len([a for a in inhabitants if values[a.name][feature][:len(target)] == target])
+                        try:
+                            entry[label] = float(count)/float(len(inhabitants))
+                        except ZeroDivisionError:
+                            pass
+                    else:
+                        value = [values[a.name][feature] for a in inhabitants]
+                        entry[label] = sum(value)/float(len(value))
+                    if function == 'invert':
+                        entry[label] = len(inhabitants) - entry[label]
+                    elif function == 'likert':
+                        entry[label] = toLikert(entry[label])
+                table['log'].append(entry)
         elif table['population'] is Actor:
             for actor in population:
                 belief = actor.getBelief().values()[0]
@@ -991,93 +1034,117 @@ if __name__ == '__main__':
 
         for agent in population:
             agent._initializeRelations(config)
-        
-        order = [{agent.name for agent in population}]
+
+        order = []
         if groups:
-            order.insert(0,{g.name for g in groups})
+            order.append({g.name for g in groups})
+        if population:
+            order.append({agent.name for agent in population})
         if system:
             order.append({system.name})
         order.append({'Nature'})
+
         world.setOrder(order)
 
         for agent in population:
-            agent._initializeBeliefs(config)
+            if config.getboolean('Actors','beliefs'):
+                agent._initializeBeliefs(config)
+            else:
+                agent.setAttribute('static',True)
 
         if system:
-            system.resetBelief()
-        
+            if config.getboolean('Actors','beliefs'):
+                system.resetBelief()
+            else:
+                system.setAttribute('static',True)
+                
         world.dependency.computeEvaluation()
 
-#        for agent in population:
-#            agent.compileV(state=world.state)
-#            sys.exit(0)
-
-        allTables = {'Population': {'fields': [('alive','casualties','invert'),
+        #        for agent in population:
+        #            agent.compileV(state=world.state)
+        #            sys.exit(0)
+        if population:
+            allTables = {'Population': {'fields': [('alive','casualties','invert'),
+                                                   ('location','evacuated','=evacuated'),
+                                                   ('location','shelter','=shelter')],
+                                        'series': True,
+                                        'population': City,
+                                        'log': []},
+                         'Region': {'fields': [('alive','casualties','invert'),
                                                ('location','evacuated','=evacuated'),
-                                               ('location','shelter','=shelter')],
-                                    'population': City,
+                                               ('location','shelter','=shelter'),
+                                               ('risk','risk',None)],
+                                    'series': True,
+                                    'population': Region,
                                     'log': []},
-                     'Region': {'fields': [('alive','casualties','invert'),
-                                                 ('location','evacuated','=evacuated'),
-                                                 ('location','shelter','=shelter'),
-                                                 ('risk','risk','likert')],
-                                      'population': Region,
-                                      'log': []},
-                     'Actors': {'fields': [('gender','gender',None),
-                                           ('age','age',None),
-                                           ('ethnicGroup','ethnicity',None),
-                                           ('children','#children',None),
-                                           ('region','region',None),
-                                           ('alive','alive',None),
-                                           ('location','shelter','=shelter'),
-                                           ('location','evacuated','=evacuated'),
-                                           ('risk','risk','likert'),
-                                           ('health','health','likert'),
-                                           ('grievance','grievance','likert'),
-                     ],
-                                'population': Actor,
-                                'log': []},
-        }
-        tables = {name: allTables[name] for name in allTables
-                  if config.getboolean('Data',name.lower())}
-        addState2tables(world,0,tables,population,regions)
-        while int(world.getState(WORLD,'day').expectation()) <= args['number']:
-            day = int(world.getState(WORLD,'day').expectation())
-            logging.info('Day %d' % (day))
-            # People's turn
-            newState = world.step(select=True)
-            buf = StringIO()
-            world.explainAction(newState,level=1,buf=buf)
-            logging.info('\n'+buf.getvalue())
-            buf.close()
-            buf = StringIO()
-            world.printState(newState,buf)
-            logging.debug(buf.getvalue())
-            buf.close()
-            addState2tables(world,day,tables,population,regions)
-            # Nature's turn
-            newState = world.step(select=True)
-            buf = StringIO()
-            world.printState(newState,buf)
-            logging.debug(buf.getvalue())
-            buf.close()
-                                    
-        # Verify directory structure
-        dirName = os.path.join('Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (run))
-        try:
-            os.stat(dirName)
-        except OSError:
-            os.mkdir(dirName)
-        for name,table in tables.items():
-            fields = ['day']+[field[1] for field in table['fields']]
-            if table['population'] is Region:
-                fields.insert(1,'region')
-            elif table['population'] is Actor:
-                fields.insert(1,'participant')
-            with open(os.path.join(dirName,'%sTable' % (name)),'w') as csvfile:
-                writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
-                writer.writeheader()
-                for entry in table['log']:
-                    writer.writerow(entry)
+                         'Actors': {'fields': [('gender','gender',None),
+                                               ('age','age',None),
+                                               ('ethnicGroup','ethnicity',None),
+                                               ('children','#children',None),
+                                               ('region','region',None),
+                                               ('alive','alive',None),
+                                               ('location','shelter','=shelter'),
+                                               ('location','evacuated','=evacuated'),
+                                               ('risk','risk','likert'),
+                                               ('health','health','likert'),
+                                               ('grievance','grievance','likert'),
+                         ],
+                                    'series': True,
+                                    'population': Actor,
+                                    'log': []},
+                         'Census': {'fields': [('ethnicGroup','ethnicMajority','%majority'),
+                                               ('religion','religiousMajority','%majority')],
+                                    'population': Region,
+                                    'log': [],
+                                    'series': False}
+            }
+            tables = {name: allTables[name] for name in allTables
+                      if config.getboolean('Data',name.lower())}
+            addState2tables(world,0,tables,population,regions)
+            hurricanes = 0
+            oldPhase = world.getState('Nature','phase').first()
+            while hurricanes < args['number']:
+                today = int(world.getState(WORLD,'day').expectation())
+                logging.info('Day %d' % (today))
+                day = today
+                while day == today:
+                    agents = world.next()
+                    newState = world.step(select=True)
+                    buf = StringIO()
+                    world.explainAction(newState,level=1,buf=buf)
+                    logging.debug('\n'+buf.getvalue())
+                    buf.close()
+                    buf = StringIO()
+                    world.printState(newState,buf)
+                    logging.debug(buf.getvalue())
+                    buf.close()
+                    day = int(world.getState(WORLD,'day').expectation())
+                    phase = world.getState('Nature','phase').first()
+                    if phase == 'none':
+                        if oldPhase == 'active':
+                            hurricanes += 1
+                    belief = world.agents['Actor0001'].getBelief().values()[0]
+                    print world.getState('Nature','phase',belief)
+                    print world.getState('Nature','category',belief)
+                    print world.getState('Nature','location',belief)
+                    oldPhase = phase
+                addState2tables(world,today,tables,population,regions)
 
+            # Verify directory structure
+            dirName = os.path.join('Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (run))
+            try:
+                os.stat(dirName)
+            except OSError:
+                os.mkdir(dirName)
+            for name,table in tables.items():
+                fields = ['day']+[field[1] for field in table['fields']]
+                if table['population'] is Region:
+                    fields.insert(1,'region')
+                elif table['population'] is Actor:
+                    fields.insert(1,'participant')
+                with open(os.path.join(dirName,'%sTable' % (name)),'w') as csvfile:
+                    writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+                    writer.writeheader()
+                    for entry in table['log']:
+                        writer.writerow(entry)
     world.save('scenario.psy')
