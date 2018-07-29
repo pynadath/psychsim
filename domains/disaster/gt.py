@@ -75,13 +75,19 @@ class Region(Agent):
         risk = world.defineState(self.name,'risk',float)
         mean = config.getint('Regions','risk_mean')
         sigma = config.getint('Regions','risk_sigma')
-        self.risk = random.gauss(likert[5][mean-1],likert[5][sigma-1])
+        if sigma > 0:
+            self.risk = random.gauss(likert[5][mean-1],likert[5][sigma-1])
+        else:
+            self.risk = likert[5][mean-1]
         world.setFeature(risk,likert[5][toLikert(self.risk,5)-1])
 
         security = world.defineState(self.name,'security',float)
         mean = config.getint('Regions','security_mean')
         sigma = config.getint('Regions','security_sigma')
-        self.security = random.gauss(likert[5][mean-1],likert[5][sigma-1])
+        if sigma > 0:
+            self.security = random.gauss(likert[5][mean-1],likert[5][sigma-1])
+        else:
+            self.security = likert[5][mean-1]
         world.setFeature(security,likert[5][toLikert(self.security,5)-1])
 
         if shelter:
@@ -441,9 +447,12 @@ class Actor(Agent):
         if self.ethnicGroup == 'minority':
             meanHealth += config.getint('Actors','health_mean_ethnic_minority')
         meanHealth = max(1,min(5,meanHealth))
-        self.health = random.gauss(likert[5][meanHealth-1],
-                                   likert[5][config.getint('Actors','health_sigma')])
-        self.health = likert[5][toLikert(self.health,5)-1]
+        sigma = config.getint('Actors','health_sigma')
+        if sigma > 0:
+            self.health = random.gauss(likert[5][meanHealth-1],likert[5][sigma])
+            self.health = likert[5][toLikert(self.health,5)-1]
+        else:
+            self.health = likert[5][meanHealth-1]
         world.setFeature(health,self.health)
 
         wealth = world.defineState(self.name,'resources',float)
@@ -455,16 +464,33 @@ class Actor(Agent):
         if self.religion == 'minority':
             meanWealth += config.getint('Actors','wealth_mean_religious_minority')
         meanWealth = max(1,min(5,meanWealth))
-        self.wealth = random.gauss(likert[5][meanWealth-1],
-                                   likert[5][config.getint('Actors','wealth_sigma')])
-        self.wealth = likert[5][toLikert(self.wealth,5)-1]
+        sigma = config.getint('Actors','wealth_sigma')
+        if sigma > 0:
+            self.wealth = random.gauss(likert[5][meanWealth-1],likert[5][sigma])
+            self.wealth = likert[5][toLikert(self.wealth,5)-1]
+        else:
+            self.wealth = likert[5][meanWealth-1]
         world.setFeature(wealth,self.wealth)
 
         risk = world.defineState(self.name,'risk',float)
         world.setFeature(risk,world.getState(home,'risk').expectation())
 
+        mean = config.getint('Actors','grievance_ethnic_%s' % (self.ethnicGroup))
+        mean += config.getint('Actors','grievance_religious_%s' % (self.religion))
+        mean += config.getint('Actors','grievance_%s' % (self.gender))
+        if self.wealth > 0.75:
+            mean += config.getint('Actors','grievance_wealth_yes')
+        else:
+            mean += config.getint('Actors','grievance_wealth_no')
+        mean = min(max(1,mean),5)
+        sigma = config.getint('Actors','grievance_sigma')
         grievance = world.defineState(self.name,'grievance',float)
-        world.setFeature(grievance,random.random()/2.)
+        if sigma > 0:
+            self.grievance = random.gauss(likert[5][mean-1],likert[5][sigma])
+            self.grievance = likert[5][toLikert(self.grievance,5)-1]
+        else:
+            self.grievance = likert[5][mean-1]
+        world.setFeature(grievance,self.grievance)
 
         # Actions and Dynamics
 
