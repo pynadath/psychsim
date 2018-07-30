@@ -373,12 +373,14 @@ class Actor(Agent):
         world.setFeature(ethnic,self.ethnicGroup)
 
         religion = world.defineState(self.name,'religion',list,['majority','minority','none'])
-        if random.random() < likert[5][config.getint('Actors','atheists')]:
-            self.religion = 'none'
-        elif random.random() > likert[5][config.getint('Actors','religious_majority')]:
+        if random.random() < likert[5][config.getint('Actors','religious_majority')]:
             self.religion = 'majority'
         else:
-            self.religion = 'minority'
+            atheistPct = config.getint('Actors','atheists')
+            if atheistPct and random.random() < likert[5][atheistPct]:
+                self.religion = 'none'
+            else:
+                self.religion = 'minority'
         world.setFeature(religion,self.religion)
 
         gender = world.defineState(self.name,'gender',list,['male','female'])
@@ -399,6 +401,11 @@ class Actor(Agent):
         self.kids = random.randint(0,config.getint('Actors','children_max'))
         world.setFeature(kids,self.kids)
 
+        job = world.defineState(self.name,'employed',bool)
+        threshold = likert[5][config.getint('Actors','job_%s' % (self.ethnicGroup))-1]
+        self.job = random.random() > threshold
+        world.setFeature(job,self.job)
+        
         # Psychological
         attachmentStyles = {'secure': likert[5][config.getint('Actors','attachment_secure')],
                             'anxious': likert[5][config.getint('Actors','attachment_anxious')]}
@@ -409,9 +416,10 @@ class Actor(Agent):
         world.setFeature(attachment,self.attachment)
 
         regions = sorted([name for name in self.world.agents
-                                if isinstance(self.world.agents[name],Region)])
+                          if isinstance(self.world.agents[name],Region)])
         region = world.defineState(self.name,'region',list,regions)
-        home = regions[(number-1)/config.getint('Regions','density')]
+        home = regions[(number-1)*config.getint('Regions','regions')/
+                       config.getint('Actors','population')]
         world.setFeature(region,home)
 
         # For display use only
@@ -495,28 +503,38 @@ class Actor(Agent):
         # Actions and Dynamics
 
         nop = self.addAction({'verb': 'doNothing'})
+        goHome = None
         if config.getboolean('Shelter','exists'):
             # Go to shelter
             actShelter = {}
             for index in config.get('Shelter','region').split(','):
                 shelter = 'shelter%s' % (index)
-                tree = {'if': trueRow(alive),
-                        True: {'if': equalRow(location,shelter),
-                               True: False, False: True}, False: False}
+                tree = {'if': equalRow(stateKey('Nature','phase'),'none'),
+                        True: False,
+                        False: {'if': trueRow(alive),
+                                True: {'if': equalRow(location,shelter),
+                                       True: False, False: True}, False: False}}
                 if config.getboolean('Actors','evacuation'):
                     tree = {'if': equalRow(location,'evacuated'),
                             True: False, False: tree}
-                if config.getboolean('Shelter','local'):
+                if config.getboolean('Actors','movement'):
+                    # Actors move from region to region
                     tree = {'if': equalFeatureRow(location,Region.nameString % (int(index))),
                             True: tree, False: False}
                 tree = makeTree(tree)
                 actShelter[index] = self.addAction({'verb':'moveTo','object': shelter},
                                                    tree.desymbolize(world.symbols))
+            # Return from shelter
+            if goHome is None:
+                pass
         if config.getboolean('Actors','evacuation'):
             # Evacuate city altogether
-            tree = makeTree({'if': equalRow(location,[regions[0],'evacuated']),
-                             True: {'if': trueRow(alive),
-                                    True: True, False: False}, False: False})
+            tree = makeTree({'if': equalRow(stateKey('Nature','phase'),'none'),
+                             True: False,
+                             False: {'if': equalRow(location,'evacuated'),
+                                     True: False,
+                                     False: {'if': trueRow(alive),
+                                             True: True, False: False}}})
             actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols))
         if config.getboolean('Actors','prorisk'):
             # Prosocial behavior
@@ -725,16 +743,26 @@ class Actor(Agent):
             # Observations
             omega = self.defineObservation('phase',domain=list,
                                            lo=self.world.variables['Nature\'s phase']['elements'])
-            self.setO('phase',None,makeTree(setToFeatureMatrix(omega,stateKey('Nature','phase'))))
+            self.setO('phase',None,
+                      makeTree(setToFeatureMatrix(omega,makeFuture(stateKey('Nature','phase')))))
             self.setState('phase','none')
             omega = self.defineObservation('center',domain=list,
                                            lo=self.world.variables['Nature\'s location']['elements'])
-            self.setO('center',None,makeTree(setToFeatureMatrix(omega,stateKey('Nature','location'))))
+            self.setO('center',None,
+                      makeTree(setToFeatureMatrix(omega,makeFuture(stateKey('Nature','location')))))
             self.setState('center','none')
             omega = self.defineObservation('category',domain=int)
             self.setO('category',None,
-                      makeTree(setToFeatureMatrix(omega,stateKey('Nature','category'))))
+                      makeTree(setToFeatureMatrix(omega,makeFuture(stateKey('Nature','category')))))
             self.setState('category',0)
+            omega = self.defineObservation('perceivedHealth')
+            self.setO('perceivedHealth',None,
+                      makeTree(setToFeatureMatrix(omega,makeFuture(stateKey(self.name,'health')))))
+            self.setState('perceivedHealth',self.health)
+            omega = self.defineObservation('perceivedKids',domain=int,lo=0,hi=2)
+            self.setO('perceivedKids',None,
+                      makeTree(setToFeatureMatrix(omega,makeFuture(stateKey(self.name,'children')))))
+            self.setState('perceivedKids',self.kids)
         # Decision-making parameters
         self.setAttribute('horizon',config.getint('Actors','horizon'))
         #self.setAttribute('selection','distribution')
@@ -982,7 +1010,6 @@ def addState2tables(world,day,tables,population,regions):
                 table['log'].append(entry)
     
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.ERROR)
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
     parser.add_argument('-n','--number',default=1,type=int,help='Number of days to run')
@@ -1001,9 +1028,17 @@ if __name__ == '__main__':
     level = getattr(logging, args['debug'].upper(), None)
     if not isinstance(level, int):
         raise ValueError('Invalid debug level: %s' % args['debug'])
-    logging.getLogger().setLevel(level)
 
     for run in range(args['runs']):
+        # Verify directory structure
+        dirName = os.path.join('Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (run))
+        logfile = os.path.join(dirName,'psychsim.log')
+        try:
+            os.stat(dirName)
+            os.remove(logfile)
+        except OSError:
+            os.mkdir(dirName)
+        logging.basicConfig(level=level,filename=logfile)
         world = World()
         world.diagram = Diagram()
         world.diagram.setColor(None,'deepskyblue')
@@ -1080,9 +1115,8 @@ if __name__ == '__main__':
         world.setOrder(order)
 
         for agent in population:
-            if config.getboolean('Actors','beliefs'):
-                agent._initializeBeliefs(config)
-            else:
+            agent._initializeBeliefs(config)
+            if not config.getboolean('Actors','beliefs'):
                 agent.setAttribute('static',True)
 
         if system:
@@ -1100,15 +1134,15 @@ if __name__ == '__main__':
             allTables = {'Population': {'fields': [('alive','casualties','invert'),
                                                    ('location','evacuated','#evacuated'),
                                                    ('location','shelter','#shelter')],
-                                        'series': True,
                                         'population': City,
+                                        'series': True,
                                         'log': []},
                          'Region': {'fields': [('alive','casualties','invert'),
                                                ('location','evacuated','#evacuated'),
                                                ('location','shelter','#shelter'),
                                                ('risk','safety','invert')],
-                                    'series': True,
                                     'population': Region,
+                                    'series': True,
                                     'log': []},
                          'Actors': {'fields': [('gender','gender',None),
                                                ('age','age',None),
@@ -1122,14 +1156,19 @@ if __name__ == '__main__':
                                                ('health','health','likert'),
                                                ('grievance','grievance','likert'),
                          ],
-                                    'series': True,
                                     'population': Actor,
+                                    'series': True,
                                     'log': []},
                          'Census': {'fields': [('ethnicGroup','ethnicMajority','%majority'),
                                                ('religion','religiousMajority','%majority')],
                                     'population': Region,
-                                    'log': [],
-                                    'series': False}
+                                    'series': False,
+                                    'log': []},
+                         'Display': {'fields': [('x','x',None),
+                                                ('y','y',None)],
+                                     'population': Actor,
+                                     'series': False,
+                                     'log': []}
             }
             tables = {name: allTables[name] for name in allTables
                       if config.getboolean('Data',name.lower())}
@@ -1142,6 +1181,7 @@ if __name__ == '__main__':
                 day = today
                 while day == today:
                     agents = world.next()
+                    print ','.join(sorted(agents))
                     newState = world.step(select=True)
                     buf = StringIO()
                     world.explainAction(newState,level=1,buf=buf)
@@ -1156,19 +1196,23 @@ if __name__ == '__main__':
                     if phase == 'none':
                         if oldPhase == 'active':
                             hurricanes += 1
-                    belief = world.agents['Actor0001'].getBelief().values()[0]
-                    print world.getState('Nature','phase',belief)
-                    print world.getState('Nature','category',belief)
-                    print world.getState('Nature','location',belief)
+                            logging.info('Completed Hurricane #%d' % (hurricanes))
+                    if config.getboolean('Actors','beliefs'):
+                        for actor in population:
+                            model = world.getModel(actor.name)
+                            assert len(model) == 1
+                            belief = actor.getBelief(world.state,model.first())
+                            if len(belief) > 1:
+                                world.printState(belief)
+                            assert len(belief) == 1
+                            for omega in actor.omega:
+                                true = actor.getState(omega)
+                                believed = actor.getState(omega,belief)
+                                print actor.name,omega,believed
                     oldPhase = phase
-                addState2tables(world,today,tables,population,regions)
+                addState2tables(world,today,{name: table for name,table in tables.items()
+                                             if table['series']},population,regions)
 
-            # Verify directory structure
-            dirName = os.path.join('Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (run))
-            try:
-                os.stat(dirName)
-            except OSError:
-                os.mkdir(dirName)
             for name,table in tables.items():
                 fields = ['day']+[field[1] for field in table['fields']]
                 if table['population'] is Region:
