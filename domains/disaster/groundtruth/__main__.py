@@ -1,10 +1,12 @@
 from argparse import ArgumentParser
 from ConfigParser import SafeConfigParser
+import cProfile
 from cStringIO import StringIO
 import csv
 import logging
 import os
 import os.path
+import pstats
 import random
 import sys
 
@@ -118,6 +120,7 @@ if __name__ == '__main__':
     parser.add_argument('-n','--number',default=1,type=int,help='Number of days to run')
     parser.add_argument('-r','--runs',default=1,type=int,help='Number of runs to run')
     parser.add_argument('-i','--instance',default=1,type=int,help='Instance number')
+    parser.add_argument('-p','--profile',action='store_true',help='Profile simulation step')
     args = vars(parser.parse_args())
     # Extract configuration
     config = SafeConfigParser()
@@ -284,7 +287,17 @@ if __name__ == '__main__':
                 day = today
                 while day == today:
                     agents = world.next()
+                    if args['profile']:
+                        prof = cProfile.Profile()
+                        prof.enable()
                     newState = world.step(select=True)
+                    if args['profile']:
+                        prof.disable()
+                        buf = StringIO()
+                        profile = pstats.Stats(prof, stream=buf)
+                        profile.sort_stats('time').print_stats()
+                        logging.critical(buf.getvalue())
+                        buf.close()
                     buf = StringIO()
                     world.explainAction(newState,level=1,buf=buf)
                     logging.debug('\n'+buf.getvalue())
