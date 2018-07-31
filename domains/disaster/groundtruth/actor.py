@@ -152,12 +152,13 @@ class Actor(Agent):
         # Actions and Dynamics
 
         nop = self.addAction({'verb': 'doNothing'})
-        goHome = None
+        goHomeFrom = []
         if config.getboolean('Shelter','exists'):
             # Go to shelter
             actShelter = {}
             for index in config.get('Shelter','region').split(','):
                 shelter = 'shelter%s' % (index)
+                goHomeFrom.append(shelter)
                 tree = {'if': equalRow(stateKey('Nature','phase'),'none'),
                         True: False,
                         False: {'if': trueRow(alive),
@@ -173,9 +174,6 @@ class Actor(Agent):
                 tree = makeTree(tree)
                 actShelter[index] = self.addAction({'verb':'moveTo','object': shelter},
                                                    tree.desymbolize(world.symbols))
-            # Return from shelter
-            if goHome is None:
-                pass
         if config.getboolean('Actors','evacuation'):
             # Evacuate city altogether
             tree = makeTree({'if': equalRow(stateKey('Nature','phase'),'none'),
@@ -185,6 +183,12 @@ class Actor(Agent):
                                      False: {'if': trueRow(alive),
                                              True: True, False: False}}})
             actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols))
+            goHomeFrom.append('evacuated')
+        if goHomeFrom:
+            tree = makeTree({'if': equalRow(location,goHomeFrom),
+                             True: True, False: False})
+            goHome = self.addAction({'verb': 'moveTo','object': home},
+                                    tree.desymbolize(world.symbols))
         if config.getboolean('Actors','prorisk'):
             # Prosocial behavior
             actGoodRisk = {}
@@ -268,6 +272,9 @@ class Actor(Agent):
             for region in regions:
                 tree = makeTree(setToConstantMatrix(location,region.name))
                 world.setDynamics(location,actMove[region.name],tree)
+        if goHomeFrom:
+            tree = makeTree(setToConstantMatrix(location,home))
+            world.setDynamics(location,goHome,tree)
 
         # Effect on my risk
         if config.getboolean('Actors','movement'):
