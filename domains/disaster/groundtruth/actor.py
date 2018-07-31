@@ -299,37 +299,49 @@ class Actor(Agent):
         world.setDynamics(risk,True,makeTree(tree))
         
         # Effect on my health
+        impact = likert[5][config.getint('Actors','health_impact')-1]
+        tree = {'if': thresholdRow(makeFuture(risk),likert[5][0]),
+                True: None,
+                False: approachMatrix(health,impact,self.health)}
+        subtree = tree
+        for level in range(1,4):
+            value = likert[5][level-1]
+            dist = [(approachMatrix(health,impact,0.),value),
+                    (approachMatrix(health,impact,self.health),1.-value)]
+            subtree[True] = {'if': thresholdRow(makeFuture(risk),likert[5][level]),
+                             True: None,
+                             False: {'distribution': dist}}
+            subtree = subtree[True]
+        subtree[True] = {'distribution': [(approachMatrix(health,impact,0.),likert[5][3]),
+                                          (approachMatrix(health,impact,self.health),1.-likert[5][3])]}
         tree = makeTree({'if': trueRow(alive),
-                         True: {'if': thresholdRow(makeFuture(risk),0.75),
-                                True: {'distribution': [(approachMatrix(health,0.75,0.),0.75),
-                                                        (noChangeMatrix(health),0.25)]},
-                                False: {'if': thresholdRow(makeFuture(risk),0.5),
-                                        True: {'distribution': [(approachMatrix(health,0.75,0.),0.5),
-                                                                (noChangeMatrix(health),0.5)]},
-                                        False: {'if': thresholdRow(makeFuture(risk),0.25),
-                                                True: {'distribution':  [(approachMatrix(health,0.75,0),0.25),
-                                                                         (noChangeMatrix(health),0.75)]},
-                                                False: noChangeMatrix(health)}}},
-                         False: setToConstantMatrix(health,0.)})
+                         True: tree, False: setToConstantMatrix(health,0.)})
         world.setDynamics(health,True,tree)
 
         if config.getint('Actors','children_max') > 0:
             # Effect on kids' health
-            tree = makeTree({'if': thresholdRow(makeFuture(risk),0.75),
-                             True: {'distribution': [(approachMatrix(kids,0.75,0.),0.75),
-                                                     (noChangeMatrix(kids),0.25)]},
-                             False: {'if': thresholdRow(makeFuture(risk),0.5),
-                                     True: {'distribution': [(approachMatrix(kids,0.75,0.),0.5),
-                                                             (noChangeMatrix(kids),0.5)]},
-                                     False: {'if': thresholdRow(makeFuture(risk),0.25),
-                                             True: {'distribution':  [(approachMatrix(kids,0.75,0),0.25),
-                                                                      (noChangeMatrix(kids),0.75)]},
-                                             False: noChangeMatrix(kids)}}})
+            tree = {'if': thresholdRow(makeFuture(risk),likert[5][0]),
+                    True: None,
+                    False: approachMatrix(kids,impact,self.health)}
+            subtree = tree
+            for level in range(1,4):
+                value = likert[5][level-1]
+                dist = [(approachMatrix(kids,impact,0.),value),
+                        (approachMatrix(kids,impact,self.health),1.-value)]
+                subtree[True] = {'if': thresholdRow(makeFuture(risk),likert[5][level]),
+                                 True: None,
+                                 False: {'distribution': dist}}
+                subtree = subtree[True]
+            subtree[True] = {'distribution': [(approachMatrix(kids,impact,0.),likert[5][3]),
+                                              (approachMatrix(kids,impact,self.health),1.-likert[5][3])]}
+            tree = makeTree({'if': trueRow(alive),
+                             True: tree, False: setToConstantMatrix(kids,0.)})
             world.setDynamics(kids,True,tree)
 
         # Effect on life
         tree = makeTree({'if': trueRow(alive),
-                         True: {'if': thresholdRow(makeFuture(health),0.01),
+                         True: {'if': thresholdRow(makeFuture(health),
+                                                   config.getfloat('Actors','life_threshold')),
                                 True: setTrueMatrix(alive),
                                 False: setFalseMatrix(alive)},
                          False: noChangeMatrix(alive)})
