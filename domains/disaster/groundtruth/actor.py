@@ -337,10 +337,13 @@ class Actor(Agent):
         
         # Effect on wealth
         if config.getboolean('Actors','evacuation'):
-            tree = makeTree({'if': thresholdRow(wealth,0.1),
-                             True: incrementMatrix(wealth,-0.1),
-                             False: setToConstantMatrix(wealth,0.)})
-            world.setDynamics(wealth,actEvacuate,tree)
+            cost = config.getint('Actors','evacuation_cost')
+            if cost > 0:
+                cost = likert[5][cost]
+                tree = makeTree({'if': thresholdRow(wealth,cost),
+                                 True: incrementMatrix(wealth,-cost),
+                                 False: setToConstantMatrix(wealth,0.)})
+                world.setDynamics(wealth,actEvacuate,tree)
 
         if config.getboolean('Actors','prorisk'):
             # Effect of doing good
