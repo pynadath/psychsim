@@ -382,7 +382,10 @@ class VectorDistributionSet:
                             value = self.distributions[substate].first()[colKey]
                             total += vector[colKey]*value
                     assert not rowKey in self.keyMap,'%s already exists' % (rowKey)
-                    destination = max(self.keyMap.values())+1
+                    destination = len(self.distributions)
+                    while destination in self.distributions:
+                        destination -= 1
+#                    destination = max(self.keyMap.values())+1
                     assert not destination in self.distributions,self.distributions[destination]
                     self.join(rowKey,total,destination)
                 else:
@@ -497,7 +500,10 @@ class VectorDistributionSet:
             self.collapse(substates)
             destination = self.findUncertainty(substates)
             if destination is None:
-                destination = max(self.keyMap.values())+1
+                destination = len(self.distributions)
+                while destination in self.distributions:
+                    destination -= 1
+#                destination = max(self.keyMap.values())+1
             total = 0.
             for key in other:
                 if key != keys.CONSTANT and self.keyMap[key] != destination:
@@ -515,11 +521,11 @@ class VectorDistributionSet:
                 self.distributions[destination][vector] = prob
         else:
             return NotImplemented
-        for s in self.distributions:
-            assert s in self.keyMap.values(),'%d: %s' % (s,';'.join(['%s: %d' % (k,self.keyMap[k]) for k in self.distributions[s].keys() if k != keys.CONSTANT]))
-        for k,s in self.keyMap.items():
-            if k != keys.CONSTANT:
-                assert s in self.distributions,'Substate %s of %s is missing' % (s,k)
+#        for s in self.distributions:
+#            assert s in self.keyMap.values(),'%d: %s' % (s,';'.join(['%s: %d' % (k,self.keyMap[k]) for k in self.distributions[s].keys() if k != keys.CONSTANT]))
+#        for k,s in self.keyMap.items():
+#            if k != keys.CONSTANT:
+#                assert s in self.distributions,'Substate %s of %s is missing' % (s,k)
         return self
 
     def __rmul__(self,other):
@@ -538,11 +544,11 @@ class VectorDistributionSet:
                     distribution[vector] = prob
             if len(distribution) == 0:
                 del self.distributions[substate]
-            for s in self.distributions:
-                assert s in self.keyMap.values(),self.distributions[s]
-            for k,s in self.keyMap.items():
-                if k != keys.CONSTANT:
-                    assert s in self.distributions
+#            for s in self.distributions:
+#                assert s in self.keyMap.values(),self.distributions[s]
+#            for k,s in self.keyMap.items():
+#                if k != keys.CONSTANT:
+#                    assert s in self.distributions
             return total
         else:
             return NotImplemented
