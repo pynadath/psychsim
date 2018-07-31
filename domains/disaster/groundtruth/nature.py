@@ -21,6 +21,9 @@ class Nature(Agent):
                                 if isinstance(self.world.agents[name],Region)])
         location = world.defineState(self.name,'location',list,regions+['none'])
         world.setFeature(location,'none')
+
+        category = world.defineState(self.name,'category',int)
+        world.setFeature(category,0)
         
         # Phase dynamics
         prob = likert[5][config.getint('Disaster','phase_change_prob')-1]
@@ -35,8 +38,7 @@ class Nature(Agent):
                          False: {'if': equalRow(phase,'approaching'),
                                  # When does hurricane make landfall
                                  True: {'if': thresholdRow(days,minDays),
-                                        True: {'distribution': [(setToConstantMatrix(phase,'active'),
-                                                                 prob),
+                                        True: {'distribution': [(setToConstantMatrix(phase,'active'),prob),
                                                                 (noChangeMatrix(phase),1.-prob)]},
                                         False: noChangeMatrix(phase)},
                                  # Active hurricane
@@ -50,9 +52,19 @@ class Nature(Agent):
                          False: setToConstantMatrix(days,0)})
         world.setDynamics(days,True,tree)
 
-        category = world.defineState(self.name,'category',int)
-        world.setFeature(category,0)
-
+        if config.getint('Disaster','category_change') > 0:
+            prob = likert[5][config.getint('Disaster','category_change')-1]
+            subtree = {'if': equalRow(category,1),
+                       True: {'distribution': [(noChangeMatrix(category),1.-prob),
+                                               (setToConstantMatrix(category,2),prob)]},
+                       False: {'if': equalRow(category,5),
+                               True: {'distribution': [(setToConstantMatrix(category,4),prob),
+                                                       (noChangeMatrix(category),1.-prob)]},
+                               False: {'distribution': [(incrementMatrix(category,-1),prob/2.),
+                                                        (noChangeMatrix(category),1.-prob),
+                                                        (incrementMatrix(category,1),prob/2.)]}}}
+        else:
+            subtree = noChangeMatrix(category)
         tree = makeTree({'if': equalRow(makeFuture(phase),'approaching'),
                          True: {'if': equalRow(category,0),
                                 # Generate a random cateogry
@@ -61,7 +73,7 @@ class Nature(Agent):
                                                         (setToConstantMatrix(category,3),0.2),
                                                         (setToConstantMatrix(category,4),0.2),
                                                         (setToConstantMatrix(category,5),0.2)]},
-                                False: noChangeMatrix(category)},
+                                False: subtree},
                          False: {'if': equalRow(makeFuture(phase),'active'),
                                  True: noChangeMatrix(category),
                                  False: setToConstantMatrix(category,0)}})
@@ -74,10 +86,15 @@ class Nature(Agent):
         subtree = noChangeMatrix(location)
         for name in regions:
             region = world.agents[name]
-            subtree = {'if': equalRow(location,name),
-                       True: {'distribution': [(setToConstantMatrix(location,region.north),0.5),
-                                               (setToConstantMatrix(location,region.east),0.5)]},
-                       False: subtree}
+            if config.getint('Disaster','stall_prob') > 0:
+                stall = likert[5][config.getint('Disaster','stall_prob')-1]
+                dist = [(setToConstantMatrix(location,region.name),stall),
+                        (setToConstantMatrix(location,region.north),(1.-stall)/2.),
+                        (setToConstantMatrix(location,region.east),(1.-stall)/2.)]
+            else:
+                dist = [(setToConstantMatrix(location,region.north),0.5),
+                        (setToConstantMatrix(location,region.east),0.5)]
+            subtree = {'if': equalRow(location,name),True: {'distribution': dist},False: subtree}
         tree = makeTree({'if': equalRow(makeFuture(phase),'approaching'),
                          True: {'if': equalRow(location,'none'),
                                 # Generate initial location estimate
