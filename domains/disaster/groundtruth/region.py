@@ -2,7 +2,7 @@ import random
 
 from psychsim.agent import Agent
 
-from data import likert,toLikert
+from data import likert,toLikert,sampleNormal
 
 class Region(Agent):
     nameString = 'Region%02d'
@@ -43,7 +43,7 @@ class Region(Agent):
         mean = config.getint('Regions','risk_mean')
         sigma = config.getint('Regions','risk_sigma')
         if sigma > 0:
-            self.risk = random.gauss(likert[5][mean-1],likert[5][sigma-1])
+            self.risk = sampleNormal(mean,sigma)
         else:
             self.risk = likert[5][mean-1]
         world.setFeature(risk,likert[5][toLikert(self.risk,5)-1])
@@ -52,7 +52,7 @@ class Region(Agent):
         mean = config.getint('Regions','security_mean')
         sigma = config.getint('Regions','security_sigma')
         if sigma > 0:
-            self.security = random.gauss(likert[5][mean-1],likert[5][sigma-1])
+            self.security = sampleNormal(mean,sigma)
         else:
             self.security = likert[5][mean-1]
         world.setFeature(security,likert[5][toLikert(self.security,5)-1])

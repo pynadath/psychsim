@@ -4,7 +4,7 @@ from psychsim.probability import Distribution
 from psychsim.pwl import *
 from psychsim.reward import *
 from psychsim.agent import Agent
-from data import likert,toLikert
+from data import likert,toLikert,sampleNormal
 from region import Region
 
 class Actor(Agent):
@@ -21,17 +21,17 @@ class Actor(Agent):
 
         # Demographic info
         ethnic = world.defineState(self.name,'ethnicGroup',list,['majority','minority'])
-        if random.random() > likert[5][config.getint('Actors','ethnic_majority')]:
+        if random.random() > likert[5][config.getint('Actors','ethnic_majority')-1]:
             self.ethnicGroup = 'minority'
         else:
             self.ethnicGroup = 'majority'
         world.setFeature(ethnic,self.ethnicGroup)
 
         religion = world.defineState(self.name,'religion',list,['majority','minority','none'])
-        if random.random() < likert[5][config.getint('Actors','religious_majority')]:
+        if random.random() < likert[5][config.getint('Actors','religious_majority')-1]:
             self.religion = 'majority'
         else:
-            atheistPct = config.getint('Actors','atheists')
+            atheistPct = config.getint('Actors','atheists') - 1
             if atheistPct and random.random() < likert[5][atheistPct]:
                 self.religion = 'none'
             else:
@@ -62,8 +62,8 @@ class Actor(Agent):
         world.setFeature(job,self.job)
         
         # Psychological
-        attachmentStyles = {'secure': likert[5][config.getint('Actors','attachment_secure')],
-                            'anxious': likert[5][config.getint('Actors','attachment_anxious')]}
+        attachmentStyles = {'secure': likert[5][config.getint('Actors','attachment_secure')-1],
+                            'anxious': likert[5][config.getint('Actors','attachment_anxious')-1]}
         attachmentStyles['avoidant'] = 1.-attachmentStyles['secure']-attachmentStyles['anxious']
         attachmentStyles = Distribution(attachmentStyles)
         attachment = world.defineState(self.name,'attachment',list,attachmentStyles.domain())
@@ -106,31 +106,27 @@ class Actor(Agent):
         world.setFeature(alive,True)
 
         health = world.defineState(self.name,'health',float)
-        meanHealth = int(config.get('Actors','health_mean_age').split(',')[ageInterval-1])
+        mean = int(config.get('Actors','health_mean_age').split(',')[ageInterval-1])
         if self.ethnicGroup == 'minority':
-            meanHealth += config.getint('Actors','health_mean_ethnic_minority')
-        meanHealth = max(1,min(5,meanHealth))
+            mean += config.getint('Actors','health_mean_ethnic_minority')
         sigma = config.getint('Actors','health_sigma')
         if sigma > 0:
-            self.health = random.gauss(likert[5][meanHealth-1],likert[5][sigma])
-            self.health = likert[5][toLikert(self.health,5)-1]
+            self.health = sampleNormal(mean,sigma)
         else:
-            self.health = likert[5][meanHealth-1]
+            self.health = likert[5][mean-1]
         world.setFeature(health,self.health)
 
         wealth = world.defineState(self.name,'resources',float)
-        meanWealth = int(config.get('Actors','wealth_mean_age').split(',')[ageInterval-1])
+        mean = int(config.get('Actors','wealth_mean_age').split(',')[ageInterval-1])
         if self.ethnicGroup == 'minority':
-            meanWealth += config.getint('Actors','wealth_mean_ethnic_minority')
+            mean += config.getint('Actors','wealth_mean_ethnic_minority')
         if self.gender == 'female':
-            meanWealth += config.getint('Actors','wealth_mean_female')
+            mean += config.getint('Actors','wealth_mean_female')
         if self.religion == 'minority':
-            meanWealth += config.getint('Actors','wealth_mean_religious_minority')
-        meanWealth = max(1,min(5,meanWealth))
+            mean += config.getint('Actors','wealth_mean_religious_minority')
         sigma = config.getint('Actors','wealth_sigma')
         if sigma > 0:
-            self.wealth = random.gauss(likert[5][meanWealth-1],likert[5][sigma])
-            self.wealth = likert[5][toLikert(self.wealth,5)-1]
+            self.wealth = sampleNormal(mean,sigma)
         else:
             self.wealth = likert[5][meanWealth-1]
         world.setFeature(wealth,self.wealth)
@@ -145,12 +141,10 @@ class Actor(Agent):
             mean += config.getint('Actors','grievance_wealth_yes')
         else:
             mean += config.getint('Actors','grievance_wealth_no')
-        mean = min(max(1,mean),5)
         sigma = config.getint('Actors','grievance_sigma')
         grievance = world.defineState(self.name,'grievance',float)
         if sigma > 0:
-            self.grievance = random.gauss(likert[5][mean-1],likert[5][sigma])
-            self.grievance = likert[5][toLikert(self.grievance,5)-1]
+            self.grievance = sampleNormal(mean,sigma)
         else:
             self.grievance = likert[5][mean-1]
         world.setFeature(grievance,self.grievance)
@@ -343,47 +337,47 @@ class Actor(Agent):
 
         if config.getboolean('Actors','prorisk'):
             # Effect of doing good
-            benefit = likert[5][config.getint('Actors','prorisk_benefit')]
+            benefit = likert[5][config.getint('Actors','prorisk_benefit')-1]
             for region,action in actGoodRisk.items():
                 key = stateKey(region,'risk')
                 tree = makeTree(approachMatrix(key,benefit,0.))
                 world.setDynamics(key,action,tree)
-            proRisk = likert[5][config.getint('Actors','prorisk_cost_risk')]
+            proRisk = likert[5][config.getint('Actors','prorisk_cost_risk')-1]
             if proRisk > 0.:
                 for region,action in actGoodRisk.items():
                     tree = makeTree(approachMatrix(risk,proRisk,1.))
                     world.setDynamics(risk,action,tree)
         if config.getboolean('Actors','proresources'):
             # Effect of doing good
-            benefit = likert[5][config.getint('Actors','proresources_benefit')]
+            benefit = likert[5][config.getint('Actors','proresources_benefit')-1]
             for region,action in actGoodResources.items():
                 key = stateKey(region,'resources')
                 tree = makeTree(approachMatrix(key,benefit,0.))
                 world.setDynamics(key,action,tree)
-            proRisk = likert[5][config.getint('Actors','proresources_cost_risk')]
+            proRisk = likert[5][config.getint('Actors','proresources_cost_risk')-1]
             if proRisk > 0.:
                 for region,action in actGoodResources.items():
                     tree = makeTree(approachMatrix(risk,proRisk,1.))
                     world.setDynamics(risk,action,tree)
         if config.getboolean('Actors','antiresources'):
             # Effect of doing bad
-            benefit = likert[5][config.getint('Actors','antiresources_benefit')]
+            benefit = likert[5][config.getint('Actors','antiresources_benefit')-1]
             for region,action in actBadResources.items():
                 tree = makeTree(incrementMatrix(wealth,benefit))
                 world.setDynamics(wealth,action,tree)
-            antiRisk = likert[5][config.getint('Actors','antiresources_cost_risk')]
+            antiRisk = likert[5][config.getint('Actors','antiresources_cost_risk')-1]
             if antiRisk > 0.:
                 for region,action in actBadResources.items():
                     tree = makeTree(approachMatrix(risk,antiRisk,1.))
                     world.setDynamics(risk,action,tree)
         if config.getboolean('Actors','antirisk'):
             # Effect of doing bad
-            benefit = likert[5][config.getint('Actors','antirisk_benefit')]
+            benefit = likert[5][config.getint('Actors','antirisk_benefit')-1]
             for region,action in actBadResources.items():
                 key = stateKey(region,'risk')
                 tree = makeTree(approachMatrix(key,benefit,1.))
                 world.setDynamics(key,action,tree)
-            antiRisk = likert[5][config.getint('Actors','antirisk_cost_risk')]
+            antiRisk = likert[5][config.getint('Actors','antirisk_cost_risk')-1]
             if antiRisk > 0.:
                 for region,action in actBadResources.items():
                     tree = makeTree(approachMatrix(risk,antiRisk,1.))
@@ -392,7 +386,7 @@ class Actor(Agent):
         # Reward
         self.setReward(maximizeFeature(health,self.name),1.)
         self.setReward(maximizeFeature(wealth,self.name),1.)
-        if config.getint('Actors','children_max') > 0:
+        if self.kids > 0:
             self.setReward(maximizeFeature(kids,self.name),1.)
         if config.getboolean('Actors','beliefs'):
             # Observations
@@ -475,13 +469,13 @@ class Actor(Agent):
                 continue
             Rneighbors = config.getint('Actors','altruism_neighbors')
             Rfriends = config.getint('Actors','altruism_friends')
-            if Rneighbors >= 0 and other in neighbors:
+            if Rneighbors > 0 and other in neighbors:
                 self.setReward(maximizeFeature(stateKey(other.name,'health'),
-                                                self.name),likert[5][Rneighbors])
-            elif config.getint('Actors','friends') > 0 and Rfriends >= 0 and \
+                                                self.name),likert[5][Rneighbors-1])
+            elif config.getint('Actors','friends') > 0 and Rfriends > 0 and \
                  self.world.getFeature(binaryKey(self.name,other.name,'friendOf')).first():
                 self.setReward(maximizeFeature(stateKey(other.name,'health'),
-                                                self.name),likert[5][Rfriends])
+                                                self.name),likert[5][Rfriends-1])
         
     def _initializeBeliefs(self,config):
         # Beliefs
@@ -494,7 +488,7 @@ class Actor(Agent):
         beliefs = self.resetBelief()
         for other in population:
             if other.name != self.name:
-                if config.getfloat('Actors','altruism_neighbors') > 0. and \
+                if config.getint('Actors','altruism_neighbors') > 0 and \
                    other.name in neighbors:
                     # I care about my neighbors, so I can't ignore them
                     continue
