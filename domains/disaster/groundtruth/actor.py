@@ -197,7 +197,7 @@ class Actor(Agent):
                     tree = makeTree({'if': equalRow(location,region),
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
-                    actGoodRisk[region] = self.addAction({'verb': 'doGoodRisk','object': region},
+                    actGoodRisk[region] = self.addAction({'verb': 'decreaseRisk','object': region},
                                                          tree.desymbolize(world.symbols))
         if config.getboolean('Actors','proresources'):
             # Prosocial behavior
@@ -207,7 +207,7 @@ class Actor(Agent):
                     tree = makeTree({'if': equalRow(location,region),
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
-                    actGoodResources[region] = self.addAction({'verb': 'doGoodResources',
+                    actGoodResources[region] = self.addAction({'verb': 'giveResources',
                                                                'object': region},
                                                               tree.desymbolize(world.symbols))
         if config.getboolean('Actors','antirisk'):
@@ -218,7 +218,7 @@ class Actor(Agent):
                     tree = makeTree({'if': equalRow(location,region),
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
-                    actBadRisk[region] = self.addAction({'verb': 'doBadRisk','object': region},
+                    actBadRisk[region] = self.addAction({'verb': 'increaseRisk','object': region},
                                                         tree.desymbolize(world.symbols))
         if config.getboolean('Actors','antiresources'):
             # Antisocial behavior
@@ -228,7 +228,7 @@ class Actor(Agent):
                     tree = makeTree({'if': equalRow(location,region),
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
-                    actBadResources[region] = self.addAction({'verb': 'doBadResources',
+                    actBadResources[region] = self.addAction({'verb': 'takeResources',
                                                               'object': region},
                                                         tree.desymbolize(world.symbols))
         regions = [n for n in self.world.agents.values()
@@ -364,10 +364,10 @@ class Actor(Agent):
                 key = stateKey(region,'risk')
                 tree = makeTree(approachMatrix(key,benefit,0.))
                 world.setDynamics(key,action,tree)
-            proRisk = likert[5][config.getint('Actors','prorisk_cost_risk')-1]
-            if proRisk > 0.:
+            cost = config.getint('Actors','prorisk_cost_risk')
+            if cost > 0:
                 for region,action in actGoodRisk.items():
-                    tree = makeTree(approachMatrix(risk,proRisk,1.))
+                    tree = makeTree(approachMatrix(risk,likert[5][cost-1],1.))
                     world.setDynamics(risk,action,tree)
         if config.getboolean('Actors','proresources'):
             # Effect of doing good
@@ -376,10 +376,10 @@ class Actor(Agent):
                 key = stateKey(region,'resources')
                 tree = makeTree(approachMatrix(key,benefit,0.))
                 world.setDynamics(key,action,tree)
-            proRisk = likert[5][config.getint('Actors','proresources_cost_risk')-1]
-            if proRisk > 0.:
+            cost = config.getint('Actors','proresources_cost_risk')
+            if cost > 0:
                 for region,action in actGoodResources.items():
-                    tree = makeTree(approachMatrix(risk,proRisk,1.))
+                    tree = makeTree(approachMatrix(risk,likert[5][cost-1],1.))
                     world.setDynamics(risk,action,tree)
         if config.getboolean('Actors','antiresources'):
             # Effect of doing bad
@@ -387,29 +387,39 @@ class Actor(Agent):
             for region,action in actBadResources.items():
                 tree = makeTree(incrementMatrix(wealth,benefit))
                 world.setDynamics(wealth,action,tree)
-            antiRisk = likert[5][config.getint('Actors','antiresources_cost_risk')-1]
-            if antiRisk > 0.:
+            cost = config.getint('Actors','antiresources_cost_risk')
+            if cost > 0:
                 for region,action in actBadResources.items():
-                    tree = makeTree(approachMatrix(risk,antiRisk,1.))
+                    tree = makeTree({'if': equalRow(stateKey('Nature','phase'),'none'),
+                                     True: approachMatrix(risk,likert[5][3],1.),
+                                     False: approachMatrix(risk,likert[5][cost-1],1.)})
                     world.setDynamics(risk,action,tree)
         if config.getboolean('Actors','antirisk'):
             # Effect of doing bad
             benefit = likert[5][config.getint('Actors','antirisk_benefit')-1]
-            for region,action in actBadResources.items():
+            for region,action in actBadRisk.items():
                 key = stateKey(region,'risk')
                 tree = makeTree(approachMatrix(key,benefit,1.))
                 world.setDynamics(key,action,tree)
-            antiRisk = likert[5][config.getint('Actors','antirisk_cost_risk')-1]
-            if antiRisk > 0.:
-                for region,action in actBadResources.items():
-                    tree = makeTree(approachMatrix(risk,antiRisk,1.))
+            cost = config.getint('Actors','antirisk_cost_risk')
+            if cost > 0:
+                for region,action in actBadRisk.items():
+                    tree = makeTree({'if': equalRow(stateKey('Nature','phase'),'none'),
+                                     True: approachMatrix(risk,likert[5][3],1.),
+                                     False: approachMatrix(risk,likert[5][cost-1],1.)})
                     world.setDynamics(risk,action,tree)
                 
         # Reward
-        self.setReward(maximizeFeature(health,self.name),1.)
-        self.setReward(maximizeFeature(wealth,self.name),1.)
+        mean = config.getint('Actors','reward_health')
+        if mean > 0:
+            self.setReward(maximizeFeature(health,self.name),likert[5][mean-1])
+        mean = config.getint('Actors','reward_wealth')
+        if mean > 0:
+            self.setReward(maximizeFeature(wealth,self.name),likert[5][mean-1])
         if self.kids > 0:
-            self.setReward(maximizeFeature(kids,self.name),1.)
+            mean = config.getint('Actors','reward_kids')
+            if mean > 0:
+                self.setReward(maximizeFeature(kids,self.name),likert[5][mean-1])
         if config.getboolean('Actors','beliefs'):
             # Observations
             omega = self.defineObservation('phase',domain=list,
@@ -492,12 +502,12 @@ class Actor(Agent):
             Rneighbors = config.getint('Actors','altruism_neighbors')
             Rfriends = config.getint('Actors','altruism_friends')
             if Rneighbors > 0 and other in neighbors:
-                self.setReward(maximizeFeature(stateKey(other.name,'health'),
-                                                self.name),likert[5][Rneighbors-1])
+                self.setReward(maximizeFeature(stateKey(other.name,'health'),self.name),
+                               likert[5][Rneighbors-1]/float(len(neighbors)))
             elif config.getint('Actors','friends') > 0 and Rfriends > 0 and \
                  self.world.getFeature(binaryKey(self.name,other.name,'friendOf')).first():
-                self.setReward(maximizeFeature(stateKey(other.name,'health'),
-                                                self.name),likert[5][Rfriends-1])
+                self.setReward(maximizeFeature(stateKey(other.name,'health'),self.name),
+                               likert[5][Rfriends-1]/float(friendMax))
         
     def _initializeBeliefs(self,config):
         # Beliefs
