@@ -356,6 +356,15 @@ class Actor(Agent):
                                  True: incrementMatrix(wealth,-cost),
                                  False: setToConstantMatrix(wealth,0.)})
                 world.setDynamics(wealth,actEvacuate,tree)
+            if config.getint('Actors','evacuation_unemployment') > 0:
+                # Might lose job
+                prob = likert[5][config.getint('Actors','evacuation_unemployment')-1]
+                tree = makeTree({'if': trueRow(alive),
+                                 True: {'if': trueRow(job),
+                                        True: {'distribution': [(noChangeMatrix(job),1.-prob),
+                                                                (setFalseMatrix(job),prob)]},
+                                        False: noChangeMatrix(job)},
+                                 False: noChangeMatrix(job)})
 
         if config.getboolean('Actors','prorisk'):
             # Effect of doing good
