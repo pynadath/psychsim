@@ -96,7 +96,7 @@ class WorldView(QGraphicsScene):
             for child in entry['children']:
                 self.drawEdge(key,child)
 
-    def displayGroundTruth(self,agent=WORLD,x0=0,y0=0):
+    def displayGroundTruth(self,agent=WORLD,x0=0,y0=0,maxRows=10):
         """
         @warning: Assumes that L{displayWorld} has already been called
         """
@@ -114,7 +114,7 @@ class WorldView(QGraphicsScene):
         layout = getLayout(g)
         if agent == WORLD:
             # Lay out the action nodes
-            x = self.drawActionNodes(layout['action'],x,y)
+            x = self.drawActionNodes(layout['action'],x,y,maxRows)
             xPostAction = x
             believer = None
             xkey = 'xpost'
@@ -124,7 +124,7 @@ class WorldView(QGraphicsScene):
             xkey = beliefKey(believer,'xpost')
             ykey = beliefKey(believer,'ypost')
         # Lay out the post variable nodes
-        x = self.drawStateNodes(layout['state post'],g,x,y,xkey,ykey,believer)
+        x = self.drawStateNodes(layout['state post'],g,x,y,xkey,ykey,believer,maxRows)
         # Lay out the utility nodes
         if agent == WORLD:
             uNodes = [a.name for a in self.world.agents.values() \
@@ -143,8 +143,8 @@ class WorldView(QGraphicsScene):
                                 if action in g:
                                     self.drawEdge(name,action,g)
                 else:
-                    y += 11 * self.rowHeight
-                    self.displayGroundTruth(name,xPostAction,y)
+                    y += (maxRows+1) * self.rowHeight
+                    self.displayGroundTruth(name,xPostAction,y,maxRows=maxRows)
             self.colorNodes()
         # Draw links, reusing post nodes as pre nodes
         for key,entry in g.items():
@@ -169,7 +169,7 @@ class WorldView(QGraphicsScene):
         if agent == WORLD:
             x += self.colWidth
         self.agents[agent] = {'box': QGraphicsRectItem(QRectF(-self.colWidth/2,y0-self.rowHeight/2,
-                                                              x0+x,10.5*self.rowHeight))}
+                                                              x0+x,(float(maxRows)+.5)*self.rowHeight))}
         self.agents[agent]['box'].setPen(QPen(QBrush(QColor('black')),3))
         self.agents[agent]['box'].setZValue(0.)
         if agent != WORLD:
@@ -186,7 +186,7 @@ class WorldView(QGraphicsScene):
         self.addItem(self.agents[agent]['box'])
                 
 
-    def drawStateNodes(self,nodes,graph,x0,y0,xkey,ykey,believer=None):
+    def drawStateNodes(self,nodes,graph,x0,y0,xkey,ykey,believer=None,maxRows=10):
         x = x0
         even = True
         for layer in nodes:
@@ -198,7 +198,7 @@ class WorldView(QGraphicsScene):
                 else:
                     label = key
                 variable = self.world.variables[makePresent(key)]
-                if y >= y0+10*self.rowHeight:
+                if y >= y0+maxRows*self.rowHeight:
                     even = not even
                     if even:
                         y = y0
@@ -228,7 +228,7 @@ class WorldView(QGraphicsScene):
             x += self.colWidth
         return x
 
-    def drawActionNodes(self,nodes,x0,y0):
+    def drawActionNodes(self,nodes,x0,y0,maxRows=10):
         x = x0
         y = y0
         for action in sorted(nodes):
@@ -238,7 +238,7 @@ class WorldView(QGraphicsScene):
                 self.world.diagram.y[action] = y
                 # Move on to next Y
                 y += self.rowHeight
-                if y >= 10*self.rowHeight:
+                if y >= maxRows*self.rowHeight:
                     y = y0
                     x += self.colWidth
             node = ActionNode(self.world.agents[self.graph[action]['agent']],action,scene=self)
