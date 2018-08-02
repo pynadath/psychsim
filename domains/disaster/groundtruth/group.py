@@ -3,6 +3,8 @@ from psychsim.agent import Agent
         
 from data import likert
 
+from region import Region
+
 class Group(Agent):
     def __init__(self,name,world,config):
         Agent.__init__(self,'Group%s' % (name))
@@ -12,27 +14,43 @@ class Group(Agent):
         if name == 'Region01':
             world.diagram.setColor(self.name,'yellowgreen')
             
+        regions = sorted([name for name in self.world.agents
+                          if isinstance(self.world.agents[name],Region)])
         self.setAttribute('static',True)
 
         size = world.defineState(self.name,'size',int)
         self.setState('size',0)
         
-        if config.getboolean('Groups','prorisk') and name in world.agents:
+        if config.getboolean('Groups','prorisk'):
             tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
-            actGood = self.addAction({'verb': 'doGoodRisk','object': name},
-                                     tree.desymbolize(world.symbols))
-        if config.getboolean('Groups','proresources') and name in world.agents:
+            if name in regions:
+                actGoodRisk = self.addAction({'verb': 'decreaseRisk','object': name},
+                                             tree.desymbolize(world.symbols))
+            else:
+                actGoodRisk = self.addAction({'verb': 'decreaseRisk'},
+                                             tree.desymbolize(world.symbols))
+        if config.getboolean('Groups','proresources'):
             tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
-            actGood = self.addAction({'verb': 'doGoodResources','object': name},
-                                     tree.desymbolize(world.symbols))
-        if config.getboolean('Groups','antirisk') and name in world.agents:
+            if name in regions:
+                actGoodResources = self.addAction({'verb': 'giveResources','object': name},
+                                         tree.desymbolize(world.symbols))
+                actGoodResources = self.addAction({'verb': 'giveResources'},
+                                                  tree.desymbolize(world.symbols))
+        if config.getboolean('Groups','antirisk'):
             tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
-            actBad = self.addAction({'verb': 'doBadRisk','object': name},
-                                     tree.desymbolize(world.symbols))
-        if config.getboolean('Groups','antiresources') and name in world.agents:
+            if name in regions:
+                actBadRisk = self.addAction({'verb': 'increaseRisk','object': name},
+                                            tree.desymbolize(world.symbols))
+            else:
+                actBadRisk = self.addAction({'verb': 'increaseRisk'},
+                                            tree.desymbolize(world.symbols))
+        if config.getboolean('Groups','antiresources'):
             tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
-            actBad = self.addAction({'verb': 'doBadResources','object': name},
-                                     tree.desymbolize(world.symbols))
+            if name in regions:
+                actBadResources = self.addAction({'verb': 'takeResources','object': name},
+                                                 tree.desymbolize(world.symbols))
+                actBadResources = self.addAction({'verb': 'takeResources'},
+                                                 tree.desymbolize(world.symbols))
         doNothing = self.addAction({'verb': 'doNothing'})
 
     def potentialMembers(self,agents,weights=None):
