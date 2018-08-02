@@ -205,6 +205,11 @@ if __name__ == '__main__':
                                     if a.getState('religion').first() == 'majority'])
             world.diagram.setColor(group.name,'darkorange')
             groups.append(group)
+        if config.getboolean('Groups','generic'):
+            group = Group('',world,config)
+            group.potentialMembers([a.name for a in population])
+            world.diagram.setColor(group.name,'mediumpurple')
+            groups.append(group)
 
         for agent in population:
             agent._initializeRelations(config)
@@ -347,4 +352,4 @@ if __name__ == '__main__':
                     writer.writeheader()
                     for entry in table['log']:
                         writer.writerow(entry)
-    world.save('scenario.psy')
+        world.save(os.path.join(dirName,'scenario.psy'))

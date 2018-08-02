@@ -1,11 +1,14 @@
 from psychsim.pwl import *
 from psychsim.agent import Agent
         
+from data import likert
+
 class Group(Agent):
     def __init__(self,name,world,config):
         Agent.__init__(self,'Group%s' % (name))
         world.addAgent(self)
 
+        self.config = config
         if name == 'Region01':
             world.diagram.setColor(self.name,'yellowgreen')
             
@@ -48,9 +51,9 @@ class Group(Agent):
             join = agent.addAction({'verb': 'join','object': self.name},
                                    tree.desymbolize(self.world.symbols))
             tree = makeTree(setTrueMatrix(member))
-            world.setDynamics(member,join,tree)
+            self.world.setDynamics(member,join,tree)
             tree = makeTree(incrementMatrix(size,1))
-            world.setDynamics(size,join,tree)
+            self.world.setDynamics(size,join,tree)
             # Leave a group
             self.world.setFeature(member,False)
             tree = makeTree({'if': trueRow(stateKey(name,'alive')),
@@ -60,22 +63,22 @@ class Group(Agent):
             leave = agent.addAction({'verb': 'leave','object': self.name},
                                     tree.desymbolize(self.world.symbols))
             tree = makeTree(setFalseMatrix(member))
-            world.setDynamics(member,leave,tree)
+            self.world.setDynamics(member,leave,tree)
             tree = makeTree(incrementMatrix(size,-1))
-            world.setDynamics(size,leave,tree)
-            if config.getboolean('Actors','attachment'):
+            self.world.setDynamics(size,leave,tree)
+            if self.config.getboolean('Actors','attachment'):
                 # Reward associated with being a member
                 attachment = stateKey(name,'attachment')
                 R = rewardKey(name)
                 tree = makeTree({'if': thresholdRow(stateKey(name,'risk'),
-                                                    likert[5][config.getint('Actors','attachment_threshold')]),
+                                                    likert[5][self.config.getint('Actors','attachment_threshold')]),
                                  True: {'if': equalRow(attachment,'anxious'),
                                         True: setToFeatureMatrix(R,member,1.),
                                         False: {'if': equalRow(attachment,'avoidant'),
                                                 True: setToFeatureMatrix(R,member,-1.),
                                                 False: setToConstantMatrix(R,0.)}},
                                  False: setToConstantMatrix(R,0.)})
-                agent.setReward(tree,config.getfloat('Actors','attachment_r'))
+                agent.setReward(tree,self.config.getfloat('Actors','attachment_r'))
         # Define reward function for this group as weighted sum of members
         if weights is None:
             weights = {a: 1. for a in agents}

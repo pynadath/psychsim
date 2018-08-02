@@ -1,6 +1,10 @@
+from psychsim.pwl import *
+from psychsim.reward import maximizeFeature
 from psychsim.agent import Agent
 
 from data import likert
+from region import Region
+from actor import Actor
 
 class System(Agent):
     def __init__(self,world,config):
