@@ -40,11 +40,12 @@ def addState2tables(world,day,tables,population,regions):
     values = {agent.name: {} for agent in population}
     for agent in population:
         for table in tables.values():
-            for feature,label,function in table['fields']:
-                if not feature in values[agent.name]:
-                    value = world.getState(agent.name,feature)
-                    assert len(value) == 1
-                    values[agent.name][feature] = value.first()
+            if not table['population'] is Nature:
+                for feature,label,function in table['fields']:
+                    if not feature in values[agent.name]:
+                        value = world.getState(agent.name,feature)
+                        assert len(value) == 1
+                        values[agent.name][feature] = value.first()
     # Create tables
     for table in tables.values():
         if table['population'] is City:
@@ -56,6 +57,14 @@ def addState2tables(world,day,tables,population,regions):
                     entry[label] = len(population) - entry[label]
                 elif function and function[0] == '#':
                     entry[label] = len([a for a in population if values[a.name][feature] == function[1:]])
+            table['log'].append(entry)
+        elif table['population'] is Nature:
+            entry = {'day': day}
+            for feature,label,function in table['fields']:
+                assert function is None
+                entry[label] = world.agents['Nature'].getState(feature)
+                assert len(entry[label]) == 1
+                entry[label] = entry[label].first()
             table['log'].append(entry)
         elif table['population'] is Region:
             for region in sorted(regions):
@@ -141,9 +150,12 @@ if __name__ == '__main__':
         logfile = os.path.join(dirName,'psychsim.log')
         try:
             os.stat(dirName)
-            os.remove(logfile)
         except OSError:
             os.makedirs(dirName)
+        try:
+            os.remove(logfile)
+        except OSError:
+            pass
         logging.basicConfig(level=level,filename=logfile)
         world = World()
         world.diagram = Diagram()
@@ -276,6 +288,12 @@ if __name__ == '__main__':
                                                ('religion','religiousMajority','%majority')],
                                     'population': Region,
                                     'series': False,
+                                    'log': []},
+                         'Nature': {'fields': [('phase','phase',None),
+                                               ('category','category',None),
+                                               ('location','location',None),],
+                                    'population': Nature,
+                                    'series': True,
                                     'log': []},
                          'Display': {'fields': [('x','x',None),
                                                 ('y','y',None),
