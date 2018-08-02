@@ -77,21 +77,22 @@ class Actor(Agent):
                        config.getint('Actors','population')]
         world.setFeature(region,home)
 
-        # For display use only
-        tooClose = True
-        xKey = world.defineState(self.name,'x',float)
-        yKey = world.defineState(self.name,'y',float)
-        while tooClose:
-            x = random.random()
-            y = random.random()
-            for neighbor in [a for a  in world.agents.values() if isinstance(a,Actor) and \
-                             not a.name == self.name and a.getState('location').first() == home]:
-                if abs(neighbor.getState('x').first()-x)+abs(neighbor.getState('y').first()-y) < 0.1:
-                    break
-            else:
-                tooClose = False
-        world.setFeature(xKey,x)
-        world.setFeature(yKey,y)
+        if config.getboolean('Data','display'):
+            # For display use only
+            tooClose = True
+            xKey = world.defineState(self.name,'x',float)
+            yKey = world.defineState(self.name,'y',float)
+            while tooClose:
+                x = random.random()
+                y = random.random()
+                for neighbor in [a for a  in world.agents.values() if isinstance(a,Actor) and \
+                                 not a.name == self.name and a.getState('location').first() == home]:
+                    if abs(neighbor.getState('x').first()-x)+abs(neighbor.getState('y').first()-y) < 0.1:
+                        break
+                else:
+                    tooClose = False
+            world.setFeature(xKey,x)
+            world.setFeature(yKey,y)
                              
 
         # Dynamic states
