@@ -1,5 +1,5 @@
 from psychsim.pwl import *
-from psychsim.reward import maximizeFeature
+from psychsim.reward import *
 from psychsim.agent import Agent
 
 from data import likert
@@ -23,7 +23,10 @@ class System(Agent):
 
         populated = set()
         for actor in population:
-            self.setReward(maximizeFeature(stateKey(actor,'health'),self.name),1.)
+            self.setReward(maximizeFeature(stateKey(actor,'health'),self.name),
+                           likert[5][config.getint('System','reward_health')])
+            self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),
+                           likert[5][config.getint('System','reward_grievance')])
             populated.add(world.getState(actor,'region').first())
         allocation = config.getint('System','system_allocation')
         for region in populated:
