@@ -49,6 +49,7 @@ class Group(Agent):
             if name in regions:
                 actBadResources = self.addAction({'verb': 'takeResources','object': name},
                                                  tree.desymbolize(world.symbols))
+            else:
                 actBadResources = self.addAction({'verb': 'takeResources'},
                                                  tree.desymbolize(world.symbols))
         doNothing = self.addAction({'verb': 'doNothing'})
