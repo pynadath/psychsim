@@ -366,6 +366,9 @@ class Actor(Agent):
                                                                 (setFalseMatrix(job),prob)]},
                                         False: noChangeMatrix(job)},
                                  False: noChangeMatrix(job)})
+            else:
+                tree = makeTree(noChangeMatrix(job))
+                world.setDynamics(job,actEvacuate,tree)
 
         if config.getboolean('Actors','prorisk'):
             # Effect of doing good
