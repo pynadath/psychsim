@@ -143,7 +143,7 @@ if __name__ == '__main__':
             os.stat(dirName)
             os.remove(logfile)
         except OSError:
-            os.mkdir(dirName)
+            os.makedirs(dirName)
         logging.basicConfig(level=level,filename=logfile)
         world = World()
         world.diagram = Diagram()
@@ -253,6 +253,7 @@ if __name__ == '__main__':
                          'Actors': {'fields': [('gender','gender',None),
                                                ('age','age',None),
                                                ('ethnicGroup','ethnicity',None),
+                                               ('religion','religion',None),
                                                ('children','#children',None),
                                                ('region','region',None),
                                                ('alive','alive',None),
@@ -265,13 +266,20 @@ if __name__ == '__main__':
                                     'population': Actor,
                                     'series': True,
                                     'log': []},
-                         'Census': {'fields': [('ethnicGroup','ethnicMajority','%majority'),
+                         'Census': {'fields': [('gender','male','%male'),
+                                               ('ethnicGroup','ethnicMajority','%majority'),
                                                ('religion','religiousMajority','%majority')],
                                     'population': Region,
                                     'series': False,
                                     'log': []},
                          'Display': {'fields': [('x','x',None),
-                                                ('y','y',None)],
+                                                ('y','y',None),
+                                                ('gender','gender',None),
+                                                ('age','age',None),
+                                                ('ethnicGroup','ethnicity',None),
+                                                ('religion','religion',None),
+                                                ('children','#children',None),
+                                                ('region','region',None)],
                                      'population': Actor,
                                      'series': False,
                                      'log': []}
