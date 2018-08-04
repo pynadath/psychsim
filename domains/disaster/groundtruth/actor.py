@@ -39,7 +39,7 @@ class Actor(Agent):
         world.setFeature(religion,self.religion)
 
         gender = world.defineState(self.name,'gender',list,['male','female'])
-        if random.random() > 0.5:
+        if random.random() < config.getfloat('Actors','male_prob'):
             self.gender = 'male'
         else:
             self.gender = 'female'
@@ -60,6 +60,10 @@ class Actor(Agent):
         threshold = likert[5][config.getint('Actors','job_%s' % (self.ethnicGroup))-1]
         self.job = random.random() > threshold
         world.setFeature(job,self.job)
+
+        pet = world.defineState(self.name,'pet',bool)
+        self.pet = random.random() < config.getfloat('Actors','pet_prob')
+        world.setFeature(pet,self.pet)
         
         # Psychological
         attachmentStyles = {'secure': likert[5][config.getint('Actors','attachment_secure')-1],
