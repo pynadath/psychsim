@@ -7,6 +7,8 @@ import diagram
 from world import *
 from pwl.keys import WORLD
 
+from pygraphml import Graph,GraphMLParser
+
 def getLayout(graph):
     layout = {'state pre': [set()],
               'state post': [set()],
@@ -44,7 +46,7 @@ def getLayout(graph):
 class WorldView(QGraphicsScene):
     rowHeight = 100
     colWidth = 150
-
+    
     def __init__(self,parent = None):
         super(WorldView,self).__init__(parent)
         self.setBackgroundBrush(QColor('white'))
@@ -59,6 +61,8 @@ class WorldView(QGraphicsScene):
         self.graph = {}
         self.dirty = False
         self.center = None
+
+        self.xml = None
 
     def clear(self):
         super(WorldView,self).clear()
@@ -96,14 +100,16 @@ class WorldView(QGraphicsScene):
             for child in entry['children']:
                 self.drawEdge(key,child)
 
-    def displayGroundTruth(self,agent=WORLD,x0=0,y0=0,maxRows=10):
-        """
-        @warning: Assumes that L{displayWorld} has already been called
-        """
+    def displayGroundTruth(self,agent=WORLD,x0=0,y0=0,maxRows=10,recursive=False):
+
+        self.xml = Graph()
+        
         x = x0
         y = y0
         if agent == WORLD:
-            self.clear()
+            if not self.graph:
+                self.graph = graph.DependencyGraph(self.world)
+                self.graph.computeGraph()
             g = self.graph
             state = self.world.state
         else:
@@ -127,21 +133,24 @@ class WorldView(QGraphicsScene):
         x = self.drawStateNodes(layout['state post'],g,x,y,xkey,ykey,believer,maxRows)
         # Lay out the utility nodes
         if agent == WORLD:
-            uNodes = [a.name for a in self.world.agents.values() \
-            if a.getAttribute('beliefs','%s0' % (a.name)) is True]
+            if recursive:
+                uNodes = [a.name for a in self.world.agents.values() \
+                          if a.getAttribute('beliefs','%s0' % (a.name)) is True]
+            else:
+                uNodes = self.world.agents.keys()
         else:
             uNodes = [agent]
         x = self.drawUtilityNodes(x,y,g,uNodes)
         if agent == WORLD:
             # Draw links from utility back to actions
             for name in self.world.agents:
-                if self.world.agents[name].getAttribute('beliefs','%s0' % (name)) is True:
+                if not recursive or \
+                   self.world.agents[name].getAttribute('beliefs','%s0' % (name)) is True:
                     if name in g:
                         actions = self.world.agents[name].actions
-                        if len(actions) > 1:
-                            for action in actions:
-                                if action in g:
-                                    self.drawEdge(name,action,g)
+                        for action in actions:
+                            if action in g:
+                                self.drawEdge(name,action,g)
                 else:
                     y += (maxRows+1) * self.rowHeight
                     self.displayGroundTruth(name,xPostAction,y,maxRows=maxRows)
@@ -168,23 +177,26 @@ class WorldView(QGraphicsScene):
                 self.drawEdge(key,child,g)
         if agent == WORLD:
             x += self.colWidth
-        self.agents[agent] = {'box': QGraphicsRectItem(QRectF(-self.colWidth/2,y0-self.rowHeight/2,
-                                                              x0+x,(float(maxRows)+.5)*self.rowHeight))}
-        self.agents[agent]['box'].setPen(QPen(QBrush(QColor('black')),3))
-        self.agents[agent]['box'].setZValue(0.)
-        if agent != WORLD:
-            rect = self.agents[agent]['box'].rect()
-            self.agents[agent]['text'] = QGraphicsTextItem(self.agents[agent]['box'])
-            doc = QTextDocument(agent,self.agents[agent]['text'])
-            self.agents[agent]['text'].setPos(rect.x(),rect.y())
-            self.agents[agent]['text'].setTextWidth(rect.width())
-            self.agents[agent]['text'].setDocument(doc)
-        if agent != WORLD:
-            color = self.world.diagram.getColor(agent)
-            color.setAlpha(128)
-            self.agents[agent]['box'].setBrush(QBrush(QColor(color)))
-        self.addItem(self.agents[agent]['box'])
-                
+        if recursive:
+            self.agents[agent] = {'box': QGraphicsRectItem(QRectF(-self.colWidth/2,y0-self.rowHeight/2,
+                                                                  x0+x,(float(maxRows)+.5)*self.rowHeight))}
+            self.agents[agent]['box'].setPen(QPen(QBrush(QColor('black')),3))
+            self.agents[agent]['box'].setZValue(0.)
+            if agent != WORLD:
+                rect = self.agents[agent]['box'].rect()
+                self.agents[agent]['text'] = QGraphicsTextItem(self.agents[agent]['box'])
+                doc = QTextDocument(agent,self.agents[agent]['text'])
+                self.agents[agent]['text'].setPos(rect.x(),rect.y())
+                self.agents[agent]['text'].setTextWidth(rect.width())
+                self.agents[agent]['text'].setDocument(doc)
+            if agent != WORLD:
+                color = self.world.diagram.getColor(agent)
+                color.setAlpha(128)
+                self.agents[agent]['box'].setBrush(QBrush(QColor(color)))
+            self.addItem(self.agents[agent]['box'])
+
+        parser = GraphMLParser()
+        parser.write(self.xml,'/tmp/psygraph.xml')
 
     def drawStateNodes(self,nodes,graph,x0,y0,xkey,ykey,believer=None,maxRows=10):
         x = x0
@@ -248,7 +260,7 @@ class WorldView(QGraphicsScene):
 
     def drawUtilityNodes(self,x0,y0,graph,agents):
         x = x0
-        y = y0 - self.rowHeight
+        y = y0 - self.rowHeight/2
         for name in agents:
             if graph.has_key(name):
                 agent = self.world.agents[name]
@@ -263,6 +275,18 @@ class WorldView(QGraphicsScene):
         return x
         
     def drawEdge(self,parent,child,graph=None,rect0=None,rect1=None):
+        if self.xml:
+            for nP in self.xml.nodes():
+                if nP['label'] == parent:
+                    break
+            else:
+                nP = self.xml.add_node(parent)
+            for nC in self.xml.nodes():
+                if nC['label'] == child:
+                    break
+            else:
+                nC = self.xml.add_node(child)
+            self.xml.add_edge(nP,nC,True)
         if graph is None:
             graph = self.graph
         if isBeliefKey(parent):

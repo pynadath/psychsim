@@ -8,6 +8,8 @@ from ui.worldview import WorldView
 from ui.mapview import MapView
 from world import World
 
+settings = QSettings('USC ICT','PsychSim')
+
 class PsychSimUI(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         self.world = None
@@ -25,13 +27,16 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
 
     def openScenario(self,filename):
         self.world = World(filename)
-        settings = QSettings()
+        self.scene.world = self.world
+        self.scene.clear()
         settings.setValue('LastFile',os.path.abspath(filename))
-        self.scene.displayWorld(self.world)
+        if settings.value('ViewCyclical') == 'yes':
+            self.on_actionGround_Truth_triggered()
+        else:
+            self.scene.displayWorld(self.world)
 
     @pyqtSlot() # signal with no arguments
     def on_actionSave_triggered(self):
-        settings = QSettings()
         filename = settings.value('LastFile').toString()
         self.scene.world.save(str(filename))
         self.scene.unsetDirty()
@@ -54,8 +59,19 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
 
     @pyqtSlot() # signal with no arguments
     def on_actionGround_Truth_triggered(self):
-        self.world.clearCoords()
+#        self.world.clearCoords()
+        self.scene.world = self.world
+#        self.scene.clear()
         self.scene.displayGroundTruth(maxRows=6)
+        settings.setValue('ViewCyclical','yes')
+
+    @pyqtSlot() # signal with no arguments
+    def on_actionAcyclical_triggered(self):
+        self.world.clearCoords()
+        self.scene.world = self.world
+        self.scene.clear()
+        self.scene.displayWorld(self.world)
+        settings.setValue('ViewCyclical','no')
 
     @pyqtSlot() # signal with no arguments
     def on_actionStep_triggered(self):
@@ -83,6 +99,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('scenario',default=None,nargs='?',
                         help='File containing an exising PsychSim scenario')
+    parser.add_argument('-c','--cyclical',action='store_true',help='Start with cyclical view of graph')
 
     app = QApplication(sys.argv)
     app.setOrganizationName('USC ICT')
@@ -90,13 +107,17 @@ if __name__ == '__main__':
     app.setApplicationName('PsychSim')
 
     args = parser.parse_args(args=[str(el) for el in app.arguments()][1:])
+    if args.cyclical:
+        settings.setValue('ViewCyclic','yes')
+        settings.sync()
+    elif settings.value('ViewCylical') is None:
+        settings.setValue('ViewCyclical','no')
 
     win = PsychSimUI()
     if args.scenario is None:
-        settings = QSettings()
-#        filename = settings.value('LastFile').toString()
-#        if filename and QFile.exists(filename):
-#            win.openScenario(str(filename))
+        filename = settings.value('LastFile').toString()
+        if filename and QFile.exists(filename):
+            win.openScenario(str(filename))
     else:
         win.openScenario(args.scenario)
     win.showMaximized()

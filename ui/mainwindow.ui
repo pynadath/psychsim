@@ -87,8 +87,11 @@
     </property>
     <addaction name="actionAgent"/>
     <addaction name="actionLikelihood"/>
-    <addaction name="actionMap"/>
+    <addaction name="separator"/>
+    <addaction name="actionAcyclical"/>
     <addaction name="actionGround_Truth"/>
+    <addaction name="separator"/>
+    <addaction name="actionBeliefs"/>
    </widget>
    <widget class="QMenu" name="menuTools">
     <property name="title">
@@ -96,6 +99,7 @@
     </property>
     <addaction name="actionStep"/>
     <addaction name="actionScreenshot"/>
+    <addaction name="actionMap"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -227,6 +231,12 @@
    </property>
   </action>
   <action name="actionAgent">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>&amp;Agent</string>
    </property>
@@ -235,6 +245,9 @@
    </property>
   </action>
   <action name="actionLikelihood">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>&amp;Likelihood</string>
    </property>
@@ -248,6 +261,9 @@
    </property>
   </action>
   <action name="actionMap">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>&amp;Map</string>
    </property>
@@ -261,8 +277,36 @@
    </property>
   </action>
   <action name="actionGround_Truth">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
-    <string>Ground Truth</string>
+    <string>Cyclical</string>
+   </property>
+   <property name="iconText">
+    <string>Cyclical</string>
+   </property>
+   <property name="toolTip">
+    <string>Show cyclical view of graph</string>
+   </property>
+  </action>
+  <action name="actionAcyclical">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Acyclical</string>
+   </property>
+  </action>
+  <action name="actionBeliefs">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Beliefs</string>
    </property>
   </action>
  </widget>
