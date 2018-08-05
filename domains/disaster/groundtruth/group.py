@@ -53,6 +53,7 @@ class Group(Agent):
                 actBadResources = self.addAction({'verb': 'takeResources'},
                                                  tree.desymbolize(world.symbols))
         doNothing = self.addAction({'verb': 'doNothing'})
+        self.setAttribute('horizon',config.getint('Groups','horizon'))
 
     def potentialMembers(self,agents,weights=None):
         assert len(self.models) == 1,'Define potential members before adding multiple models of group %s' % (self.name)

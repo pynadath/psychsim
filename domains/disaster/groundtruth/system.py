@@ -46,3 +46,4 @@ class System(Agent):
                                      True: approachMatrix(grievance,delta,0.),
                                      False: approachMatrix(grievance,delta,1.)})
                     world.setDynamics(grievance,allocate,tree)
+        self.setAttribute('horizon',config.getint('System','horizon'))
