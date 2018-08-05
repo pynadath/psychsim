@@ -163,19 +163,26 @@ class Actor(Agent):
             actShelter = {}
             for index in config.get('Shelter','region').split(','):
                 shelter = 'shelter%s' % (index)
+                region = Region.nameString % (int(index))
                 goHomeFrom.append(shelter)
                 tree = {'if': equalRow(stateKey('Nature','phase'),'none'),
                         True: False,
                         False: {'if': trueRow(alive),
                                 True: {'if': equalRow(location,shelter),
-                                       True: False, False: True}, False: False}}
-                if config.getboolean('Actors','evacuation'):
-                    tree = {'if': equalRow(location,'evacuated'),
-                            True: False, False: tree}
+                                       True: False,
+                                       False: True},
+                                False: False}}
+                if world.getState(region,'shelterCapacity').first() > 0:
+                    tree = {'if': greaterThanRow(stateKey(region,'shelterCapacity'),
+                                                 stateKey(region,'shelterOccupancy')),
+                            True: tree, False: False}
                 if config.getboolean('Actors','movement'):
                     # Actors move from region to region
                     tree = {'if': equalFeatureRow(location,Region.nameString % (int(index))),
                             True: tree, False: False}
+                elif config.getboolean('Actors','evacuation'):
+                    tree = {'if': equalRow(location,'evacuated'),
+                            True: False, False: tree}
                 tree = makeTree(tree)
                 actShelter[index] = self.addAction({'verb':'moveTo','object': shelter},
                                                    tree.desymbolize(world.symbols))
@@ -291,10 +298,11 @@ class Actor(Agent):
                     True: approachMatrix(risk,0.9,0.),
                     False:  tree}
         if config.getboolean('Shelter','exists'):
-            for index in config.get('Shelter','region').split(','):
+            for index in actShelter:
+                region = Region.nameString % (int(index))
                 tree = {'if': equalRow(makeFuture(location),'shelter%s' % (index)),
-                    True: setToFeatureMatrix(risk,stateKey(Region.nameString % (int(index)),'risk')),
-                    False: tree}
+                        True: setToFeatureMatrix(risk,stateKey(region,'shelterRisk')),
+                        False: tree}
         if config.getboolean('Actors','movement'):
             for region in regions:
                 tree = {'if': equalRow(makeFuture(location),region.name),
@@ -425,7 +433,31 @@ class Actor(Agent):
                                      True: approachMatrix(risk,likert[5][3],1.),
                                      False: approachMatrix(risk,likert[5][cost-1],1.)})
                     world.setDynamics(risk,action,tree)
-                
+
+        if config.getboolean('Shelter','exists'):
+            # Effect on shelter occupancy
+            for index,action in actShelter.items():
+                region = Region.nameString % (int(index))
+                key = stateKey(region,'shelterOccupancy')
+                tree = makeTree(incrementMatrix(key,1))
+                world.setDynamics(key,action,tree)
+                tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
+                                 True: incrementMatrix(key,-1),
+                                 False: noChangeMatrix(key)})
+                if config.getboolean('Actors','evacuation'):
+                    world.setDynamics(key,actEvacuate,tree)
+                    tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
+                                     True: incrementMatrix(key,-1),
+                                     False: noChangeMatrix(key)})
+                world.setDynamics(key,goHome,tree)
+                for other in actShelter:
+                    if other != index:
+                        tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
+                                         True: incrementMatrix(key,-1),
+                                         False: noChangeMatrix(key)})
+                        world.setDynamics(key,actShelter[other],tree)
+                assert not config.getboolean('Actors','movement')
+                    
         # Reward
         mean = config.getint('Actors','reward_health')
         if mean > 0:
