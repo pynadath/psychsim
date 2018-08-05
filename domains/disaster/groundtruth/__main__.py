@@ -163,7 +163,7 @@ if __name__ == '__main__':
 
         regions = {}
         for region in range(config.getint('Regions','regions')):
-            capacity = 0
+            capacity = None
             if config.getboolean('Shelter','exists'):
                 try:
                     index = config.get('Shelter','region').split(',').index(str(region+1))

@@ -7,7 +7,7 @@ from data import likert,toLikert,sampleNormal
 class Region(Agent):
     nameString = 'Region%02d'
     
-    def __init__(self,number,world,config,shelter=0):
+    def __init__(self,number,world,config,shelter):
         Agent.__init__(self,self.nameString % (number))
         world.addAgent(self)
 
@@ -60,7 +60,11 @@ class Region(Agent):
         if shelter:
             # Shelter in this region
             world.defineState(self.name,'shelterRisk',float)
-            self.setState('shelterRisk',likert[5][config.getint('Shelter','risk')])
+            riskLevel = config.getint('Shelter','risk')
+            if riskLevel > 0:
+                self.setState('shelterRisk',likert[5][riskLevel-1])
+            else:
+                self.setState('shelterRisk',0.)
             world.defineState(self.name,'shelterPets',bool)
             self.setState('shelterPets',config.getboolean('Shelter','pets'))
             world.defineState(self.name,'shelterCapacity',int)
