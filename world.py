@@ -11,6 +11,7 @@ import psychsim.probability
 from psychsim.pwl import *
 from psychsim.agent import Agent
 import psychsim.graph
+from psychsim.ui.diagram import Diagram
 
 class World:
     """
@@ -1841,7 +1842,7 @@ class World:
                         subnode = subnode.nextSibling
                 elif node.tagName == 'diagram':
                     # UI information. Parse later
-                    self.diagram = node
+                    self.diagram = Diagram(node)
             node = node.nextSibling
         self.symbolList = self.symbolList[len(self.symbolList)/2:]
         for index in range(len(self.symbolList)):
