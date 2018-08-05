@@ -30,7 +30,7 @@ class Diagram:
         """
         @warning: if no color exists, assigns a random color
         """
-        if not self.color.has_key(key):
+        if not key in self.color:
             self.color[key] = QColor(random.choice(QColor.colorNames()))
         return self.color[key]
 
