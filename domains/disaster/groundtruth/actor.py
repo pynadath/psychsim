@@ -182,9 +182,9 @@ class Actor(Agent):
                     # Actors move from region to region
                     tree = {'if': equalFeatureRow(location,Region.nameString % (int(index))),
                             True: tree, False: False}
-                elif config.getboolean('Actors','evacuation'):
-                    tree = {'if': equalRow(location,'evacuated'),
-                            True: False, False: tree}
+#                elif config.getboolean('Actors','evacuation'):
+#                    tree = {'if': equalRow(location,'evacuated'),
+#                            True: False, False: tree}
                 tree = makeTree(tree)
                 actShelter[index] = self.addAction({'verb':'moveTo','object': shelter},
                                                    tree.desymbolize(world.symbols))
