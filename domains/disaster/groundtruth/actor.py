@@ -114,6 +114,7 @@ class Actor(Agent):
         mean = int(config.get('Actors','health_mean_age').split(',')[ageInterval-1])
         if self.ethnicGroup == 'minority':
             mean += config.getint('Actors','health_mean_ethnic_minority')
+        mean = max(1,mean)
         sigma = config.getint('Actors','health_sigma')
         if sigma > 0:
             self.health = sampleNormal(mean,sigma)
@@ -129,6 +130,7 @@ class Actor(Agent):
             mean += config.getint('Actors','wealth_mean_female')
         if self.religion == 'minority':
             mean += config.getint('Actors','wealth_mean_religious_minority')
+        mean = max(1,mean)
         sigma = config.getint('Actors','wealth_sigma')
         if sigma > 0:
             self.wealth = sampleNormal(mean,sigma)
