@@ -1694,13 +1694,6 @@ class World:
                 root.appendChild(self.diagram)
             else:
                 root.appendChild(self.diagram.__xml__().documentElement)
-        # UI Diagram
-        if self.diagram:
-            if isinstance(self.diagram,Node):
-                # We never bothered parsing this, so easy
-                root.appendChild(self.diagram)
-            else:
-                root.appendChild(self.diagram.__xml__().documentElement)
         return doc
 
     def parse(self,element,agentClass=Agent):
