@@ -26,15 +26,6 @@ from system import System
 from group import Group
 from actor import Actor
 
-class City:
-    def __init__(self,world,config):
-        world.defineState(WORLD,'day',int,lo=1)
-        world.setState(WORLD,'day',1)
-
-        regions = [name for name in world.agents
-                         if isinstance(world.agents[name],Region)]
-
-        
 def addState2tables(world,day,tables,population,regions):
     # Grab all of the relevant fields, but only once
     values = {agent.name: {} for agent in population}
@@ -48,7 +39,7 @@ def addState2tables(world,day,tables,population,regions):
                         values[agent.name][feature] = value.first()
     # Create tables
     for table in tables.values():
-        if table['population'] is City:
+        if table['population'] is World:
             entry = {'day': day}
             for feature,label,function in table['fields']:
                 if world.variables[stateKey(population[0].name,feature)]['domain'] is bool:
@@ -174,7 +165,9 @@ if __name__ == '__main__':
             n = Region(region+1,world,config,capacity)
             regions[n.name] = {'agent': n, 'inhabitants': [], 'number': region+1}
 
-        city = City(world,config)
+        world.defineState(WORLD,'day',int,lo=1)
+        world.setState(WORLD,'day',1)
+
         nature = Nature(world,config)
 
         population = []
@@ -257,7 +250,7 @@ if __name__ == '__main__':
             allTables = {'Population': {'fields': [('alive','casualties','invert'),
                                                    ('location','evacuated','#evacuated'),
                                                    ('location','shelter','#shelter')],
-                                        'population': City,
+                                        'population': World,
                                         'series': True,
                                         'log': []},
                          'Region': {'fields': [('alive','casualties','invert'),
