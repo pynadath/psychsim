@@ -95,6 +95,7 @@ class WorldView(QGraphicsScene):
                 self.drawEdge(key,child)
 
     def displayGroundTruth(self,agent=WORLD,x0=0,y0=0,maxRows=10,recursive=False):
+        self.clear()
 
         self.xml = Graph()
         
