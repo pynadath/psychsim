@@ -72,14 +72,8 @@ class WorldView(QGraphicsScene):
         self.edgesIn.clear()
         self.center = None
         
-    def displayWorld(self,world,agents=None):
+    def displayWorld(self,agents=None):
         self.clear()
-        if not isinstance(world.diagram,diagram.Diagram):
-            if world.diagram is None:
-                # Creating a diagram for the first time
-                self.setDirty()
-            world.diagram = diagram.Diagram(world.diagram)
-        self.world = world
 
         self.graph = graph.DependencyGraph(self.world)
         self.graph.computeGraph(agents)
@@ -92,7 +86,7 @@ class WorldView(QGraphicsScene):
         # Lay out the post variable nodes
         x = self.drawStateNodes(layout['state post'],self.graph,x,0,'xpost','ypost')
         # Lay out the utility nodes
-        x = self.drawUtilityNodes(x,0,self.graph,sorted(world.agents.keys()))
+        x = self.drawUtilityNodes(x,0,self.graph,sorted(self.world.agents.keys()))
         self.colorNodes()
         # Lay out edges
         for key,entry in self.graph.items():

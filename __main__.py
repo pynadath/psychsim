@@ -33,7 +33,7 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
         if settings.value('ViewCyclical') == 'yes':
             self.on_actionGround_Truth_triggered()
         else:
-            self.scene.displayWorld(self.world)
+            self.scene.displayWorld()
 
     @pyqtSlot() # signal with no arguments
     def on_actionSave_triggered(self):
@@ -70,7 +70,7 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
         self.world.clearCoords()
         self.scene.world = self.world
         self.scene.clear()
-        self.scene.displayWorld(self.world)
+        self.scene.displayWorld()
         settings.setValue('ViewCyclical','no')
 
     @pyqtSlot() # signal with no arguments
