@@ -52,7 +52,14 @@ class Group(Agent):
             else:
                 actBadResources = self.addAction({'verb': 'takeResources'},
                                                  tree.desymbolize(world.symbols))
-        doNothing = self.addAction({'verb': 'doNothing'})
+        if config.getboolean('Groups','evacuate'):
+            # Evacuate city altogether
+            tree = makeTree({'if': equalRow(stateKey('Nature','phase'),'none'),
+                             True: False, False: True})
+            actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols))
+            goHome = self.addAction({'verb': 'returnHome'})
+
+        doNothing = self.addAction({'verb': 'noDecision'})
         self.setAttribute('horizon',config.getint('Groups','horizon'))
 
     def potentialMembers(self,agents,weights=None):
