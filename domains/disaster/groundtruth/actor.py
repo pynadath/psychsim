@@ -9,7 +9,11 @@ from region import Region
 
 class Actor(Agent):
     def __init__(self,number,world,config):
-        Agent.__init__(self,'Actor%04d' % (number))
+        if config.getint('Actors','population') == 1:
+            name = 'Actor'
+        else:
+            name = 'Actor%04d' % (number)
+        Agent.__init__(self,name)
         world.addAgent(self)
 
         if number == 1:
@@ -20,14 +24,16 @@ class Actor(Agent):
         # States
 
         # Demographic info
-        ethnic = world.defineState(self.name,'ethnicGroup',list,['majority','minority'])
+        ethnic = world.defineState(self.name,'ethnicGroup',list,['majority','minority'],
+                                   description='Ethnicity of actor')
         if random.random() > likert[5][config.getint('Actors','ethnic_majority')-1]:
             self.ethnicGroup = 'minority'
         else:
             self.ethnicGroup = 'majority'
         world.setFeature(ethnic,self.ethnicGroup)
 
-        religion = world.defineState(self.name,'religion',list,['majority','minority','none'])
+        religion = world.defineState(self.name,'religion',list,['majority','minority','none'],
+                                     description='Religious affiliation of actor')
         if random.random() < likert[5][config.getint('Actors','religious_majority')-1]:
             self.religion = 'majority'
         else:

@@ -25,6 +25,7 @@ from nature import Nature
 from system import System
 from group import Group
 from actor import Actor
+from cdf import toCDF
 
 def addState2tables(world,day,tables,population,regions):
     # Grab all of the relevant fields, but only once
@@ -243,6 +244,7 @@ if __name__ == '__main__':
                 
         world.dependency.computeEvaluation()
 
+        toCDF(world)
         #        for agent in population:
         #            agent.compileV(state=world.state)
         #            sys.exit(0)
