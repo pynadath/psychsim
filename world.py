@@ -60,10 +60,6 @@ class World:
         self.newDynamics = {True: []}
         self.dependency = psychsim.graph.DependencyGraph(self)
 
-        # Termination state info
-        key = self.defineVariable(TERMINATED,bool)
-        self.setFeature(TERMINATED,False)
-
         self.history = []
 
         self.diagram = None
@@ -249,11 +245,18 @@ class World:
                         if len(turns) == 1:
                             if 0 in turns:
                                 actions[name] = makeTree(setToConstantMatrix(key,policy))
+                            else:
+                                logging.warning('Policy generated for %s out of turn' % (name))
+                                del actions[name]
                         elif 0 in turns:
                             actions[name] = makeTree({'if': equalRow(turnKey(name),0),
                                                       True: setToConstantMatrix(key,policy),
                                                       False: noChangeMatrix(key)})
-                actions[name] = actions[name].desymbolize(self.symbols)
+                        else:
+                            logging.warning('Policy generated for %s out of turn' % (name))
+                            del actions[name]
+            for name,policy in actions.items():
+                actions[name] = policy.desymbolize(self.symbols)
         else:
             assert actions is None
             actions = {}
@@ -440,6 +443,7 @@ class World:
         """
         Adds a possible termination condition to the list
         """
+        
         # Temporary deprecation check (TODO: Remove)
         remaining = [tree]
         while remaining:
@@ -459,6 +463,12 @@ class World:
             dynamics = self.dynamics[TERMINATED] = {}
         if action in dynamics and action is True:
             raise DeprecationWarning('Multiple termination conditions no longer supported. Please merge into single boolean PWL tree.')
+
+        # Termination state info
+        if not TERMINATED in self.variables:
+            self.defineVariable(TERMINATED,bool,description="True if and only if a '\
+            'termination condition for this simulation is satisfied")
+            self.setFeature(TERMINATED,False)
         self.setDynamics(TERMINATED,action,tree)
 
     def terminated(self,state=None):
@@ -471,10 +481,9 @@ class World:
         """
         if state is None:
             state = self.state
-        try:
-            termination = self.getValue(TERMINATED,state)
-        except KeyError:
-            termination = False
+        if not TERMINATED in state:
+            return False
+        termination = self.getValue(TERMINATED,state)
         if isinstance(termination,Distribution):
             termination = termination[True] == 1.
         return termination
@@ -672,7 +681,7 @@ class World:
                 # Insert action key
                 key = stateKey(name,keys.ACTION)
                 if not key in self.variables:
-                    self.defineVariable(key,ActionSet)
+                    self.defineVariable(key,ActionSet,description='Action performed by %s' % (name))
                     self.setFeature(key,next(iter(self.variables[key]['elements'])))
 
     def next(self,vector=None):
@@ -1571,10 +1580,11 @@ class World:
                 if diff > 1e-3:
                     # Notable change
                     delta[key] = vector[key]
-            if self.terminated(vector):
-                delta[TERMINATED] = 1.
-            else:
-                delta[TERMINATED] = -1.
+            if TERMINATED in vector:
+                if self.terminated(vector):
+                    delta[TERMINATED] = 1.
+                else:
+                    delta[TERMINATED] = -1.
             try:
                 deltaDist[delta] += new[vector]
             except KeyError:
