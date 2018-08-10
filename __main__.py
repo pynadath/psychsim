@@ -85,6 +85,13 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
         if name:
             self.scene.saveImage(name)
 
+    @pyqtSlot() # signal with no arguments
+    def on_actionSubgraphs_triggered(self):
+        name = QFileDialog.getExistingDirectory(self,'Destination Directory',
+                                                options=QFileDialog.ShowDirsOnly)
+        if name:
+            self.scene.saveSubgraphs(name)
+
     def wheelEvent(self,event):
 #        factor = 1.41**(-event.delta()/240.)
         factor = 1.41**(-event.pixelDelta().y()/240.)

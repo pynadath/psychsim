@@ -100,6 +100,7 @@
     <addaction name="actionStep"/>
     <addaction name="actionScreenshot"/>
     <addaction name="actionMap"/>
+    <addaction name="actionSubgraphs"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -281,7 +282,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Cyclical</string>
+    <string>&amp;Cyclical</string>
    </property>
    <property name="iconText">
     <string>Cyclical</string>
@@ -298,7 +299,7 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Acyclical</string>
+    <string>Ac&amp;yclical</string>
    </property>
   </action>
   <action name="actionBeliefs">
@@ -306,7 +307,12 @@
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Beliefs</string>
+    <string>&amp;Beliefs</string>
+   </property>
+  </action>
+  <action name="actionSubgraphs">
+   <property name="text">
+    <string>Subgraphs</string>
    </property>
   </action>
  </widget>

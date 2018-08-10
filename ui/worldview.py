@@ -1,7 +1,10 @@
 import math
+import os
+
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
+
 import graph
 import diagram
 from world import *
@@ -508,6 +511,15 @@ class WorldView(QGraphicsScene):
         self.render(painter,rect)
         painter.end()
         pix.save(fname)
+
+    def saveSubgraphs(self,dirName,onlyConnected=True):
+        previous = self.center
+        for nodeType,nodes in self.nodes.items():
+            for key,node in nodes.items():
+                if not onlyConnected or key in self.edgesOut or key in self.edgesIn:
+                    self.highlightEdges(key)
+                    self.saveImage(os.path.join(dirName,'%s.png' % (key)))
+        self.highlightEdges(previous)
         
                     
 def initializeNode(node,label):
