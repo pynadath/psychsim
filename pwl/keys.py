@@ -121,6 +121,9 @@ def isLikesKey(key):
 def rewardKey(name):
     return stateKey(name,REWARD)
 
+def isRewardKey(key):
+    return isStateKey(key) and state2feature == REWARD
+
 def beliefKey(name,key):
     return '%s(%s)' % (name,key)
 
