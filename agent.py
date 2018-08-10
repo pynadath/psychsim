@@ -575,7 +575,8 @@ class Agent:
         self.models[model]['R'][tree] = weight
         key = rewardKey(self.name)
         if not key in self.world.variables:
-            self.world.defineVariable(key,float)
+            self.world.defineVariable(key,float,
+                                      description='Reward for %s in this state' % (self.name))
             self.world.setFeature(key,0.)
 
     def getReward(self,model):
