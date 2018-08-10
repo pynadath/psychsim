@@ -31,8 +31,10 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
         self.scene.clear()
         settings.setValue('LastFile',os.path.abspath(filename))
         if settings.value('ViewCyclical') == 'yes':
+            self.findChild(QAction,'actionGround_Truth').setChecked(True)
             self.on_actionGround_Truth_triggered()
         else:
+            self.findChild(QAction,'actionAcyclical').setChecked(True)
             self.scene.displayWorld()
 
     @pyqtSlot() # signal with no arguments
