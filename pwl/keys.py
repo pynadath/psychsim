@@ -135,3 +135,20 @@ def belief2believer(key):
 
 def belief2key(key):
     return key[key.index('(')+1:-1]
+
+def escapeKey(key):
+    """
+    @return: filename-ready version of the key
+    """
+    future = isFuture(key)
+    if future:
+        key = makePresent(key)
+    if isStateKey(key):
+        agent = state2agent(key)
+        if agent == WORLD:
+            name = state2feature(key)
+        else:
+            name = '%sOf%s' % (state2feature(key),agent)
+    else:
+        name = key
+    return name.replace(' ','')

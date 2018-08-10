@@ -5,10 +5,10 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
+from pwl.keys import *
 import graph
 import diagram
 from world import *
-from pwl.keys import WORLD
 
 from pygraphml import Graph,GraphMLParser
 
@@ -518,7 +518,10 @@ class WorldView(QGraphicsScene):
             for key,node in nodes.items():
                 if not onlyConnected or key in self.edgesOut or key in self.edgesIn:
                     self.highlightEdges(key)
-                    self.saveImage(os.path.join(dirName,'%s.png' % (key)))
+                    if isinstance(key,ActionSet):
+                        self.saveImage(os.path.join(dirName,'%s.png' % (str(key))))
+                    else:
+                        self.saveImage(os.path.join(dirName,'%s.png' % (escapeKey(key))))
         self.highlightEdges(previous)
         
                     
