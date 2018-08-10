@@ -25,7 +25,7 @@ from nature import Nature
 from system import System
 from group import Group
 from actor import Actor
-from cdf import toCDF
+from cdf import *
 
 def addState2tables(world,day,tables,population,regions):
     # Grab all of the relevant fields, but only once
@@ -353,7 +353,7 @@ if __name__ == '__main__':
                     oldPhase = phase
                 addState2tables(world,today,{name: table for name,table in tables.items()
                                              if table['series']},population,regions)
-
+                updateCDF(world)
             for name,table in tables.items():
                 fields = ['day']+[field[1] for field in table['fields']]
                 if table['population'] is Region:
