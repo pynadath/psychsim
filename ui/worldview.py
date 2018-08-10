@@ -488,6 +488,28 @@ class WorldView(QGraphicsScene):
         self.parent().parent().parent().actionSave.setEnabled(False)
         self.dirty = False
 
+    def minRect(self):
+        """
+        @return: a rectangle cropped to show only object space
+        """
+        rect = None
+        for nodes in self.nodes.values():
+            for node in nodes.values():
+                if rect is None:
+                    rect = node.boundingRect()
+                else:
+                    rect = rect.united(node.boundingRect())
+        return rect
+
+    def saveImage(self,fname):
+        rect = self.minRect() #self.sceneRect()
+        pix = QImage(rect.width(), rect.height(),QImage.Format_ARGB32)
+        painter = QPainter(pix)
+        self.render(painter,rect)
+        painter.end()
+        pix.save(fname)
+        
+                    
 def initializeNode(node,label):
     """
     Sets some standard parameters across node types

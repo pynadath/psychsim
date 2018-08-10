@@ -82,12 +82,8 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
     @pyqtSlot() # signal with no arguments
     def on_actionScreenshot_triggered(self):
         name,types = QFileDialog.getSaveFileName(self,'Save File')
-        rect = self.scene.sceneRect()
-        pix = QImage(rect.width(), rect.height(),QImage.Format_ARGB32)
-        painter = QPainter(pix)
-        self.scene.render(painter,rect)
-        painter.end()
-        pix.save(name)
+        if name:
+            self.scene.saveImage(name)
 
     def wheelEvent(self,event):
 #        factor = 1.41**(-event.delta()/240.)
