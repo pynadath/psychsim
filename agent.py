@@ -1077,10 +1077,6 @@ class Agent:
             O = self.O
         if isinstance(actions,ActionSet):
             jointAction = actions
-            if actions:
-                actions = {actions['subject']: jointAction}
-            else:
-                actions = {}
         else:
             # Table of actions across multiple agents
             jointAction = reduce(lambda x,y: x|y,actions.values())

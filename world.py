@@ -289,7 +289,7 @@ class World:
             dynamics.update(self.getTurnDynamics(key,actions))
         return dynamics
 
-    def deltaObservations(self,state,actions):
+    def deltaObservations(self,state,actions,keySubset=None):
         """
         Computes the new observations for each agent in the given state 
         @warning: Does not currently enforce order between observations that have direct dependencies. If you want such a dependency, introduce a state feature to indirectly capture it. 
@@ -299,7 +299,8 @@ class World:
             O = self.agents[name].getO(state,actions)
             if O:
                 for key,tree in O.items():
-                    Ofuns[key] = [tree]
+                    if keySubset is None or key in keySubset:
+                        Ofuns[key] = [tree]
         return Ofuns
         
     def effect(self,actions,state,updateBeliefs=True,keySubset=None):
@@ -311,7 +312,7 @@ class World:
         # Update turn order
         result['effect'].append(self.deltaTurn(result['new'],actions))
         # Generate observations
-        result['effect'].append(self.deltaObservations(result['new'],actions))
+        result['effect'].append(self.deltaObservations(result['new'],actions,keySubset))
         # Apply all of these update functions
         for stage in result['effect']:
             for key,dynamics in stage.items():
@@ -327,7 +328,8 @@ class World:
                         vector[newKey] = vector[key]
                         dist[vector] = prob
                 elif len(dynamics) == 1:
-                    result['new'] *= dynamics[0]
+                    tree = dynamics[0]
+                    result['new'] *= tree
                 else:
                     cumulative = None
                     for tree in dynamics:
