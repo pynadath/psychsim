@@ -924,6 +924,8 @@ class Agent:
                     # Condition on actual observations
                     for omega in Omega:
                         beliefs[omega] = vector[keys.makeFuture(omega)]
+                        assert len(beliefs) > 0,'Impossible observation %s=%s' % \
+                            (omega,vector[keys.makeFuture(omega)])
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
                     newModel = self.belief2model(oldModel,beliefs)
