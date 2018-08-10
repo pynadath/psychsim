@@ -584,3 +584,8 @@ class Actor(Agent):
 #                 if world.getFeature(binaryKey(self.name,other.name,'friendOf')).first():
 #                     continue
                 self.ignore(other.name,'%s0' % (self.name))
+
+        regions = [n for n in self.world.agents if isinstance(self.world.agents[n],Region)]
+        for region in regions:
+            if region != myHome:
+                self.ignore(region,'%s0' % (self.name))
