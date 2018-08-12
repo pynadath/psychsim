@@ -57,9 +57,10 @@ class Actor(Agent):
         self.age = random.randint(ageMin,ageMax)
         ageInterval = toLikert(float(self.age-ageMin)/float(ageMax-ageMin),5)
         world.setFeature(age,self.age)
-        
-        kids = world.defineState(self.name,'children',int,lo=0,hi=2)
-        self.kids = random.randint(0,config.getint('Actors','children_max'))
+
+        maxKids = config.getint('Actors','children_max')
+        kids = world.defineState(self.name,'children',float,lo=0,hi=float(maxKids))
+        self.kids = random.randint(0,maxKids)
         world.setFeature(kids,self.kids)
 
         job = world.defineState(self.name,'employed',bool)
@@ -497,7 +498,7 @@ class Actor(Agent):
             self.setO('perceivedHealth',None,
                       makeTree(setToFeatureMatrix(omega,makeFuture(stateKey(self.name,'health')))))
             self.setState('perceivedHealth',self.health)
-            omega = self.defineObservation('perceivedKids',domain=int,lo=0,hi=2)
+            omega = self.defineObservation('perceivedKids',domain=float,lo=0,hi=maxKids)
             self.setO('perceivedKids',None,
                       makeTree(setToFeatureMatrix(omega,makeFuture(stateKey(self.name,'children')))))
             self.setState('perceivedKids',self.kids)
@@ -586,6 +587,7 @@ class Actor(Agent):
                 self.ignore(other.name,'%s0' % (self.name))
 
         regions = [n for n in self.world.agents if isinstance(self.world.agents[n],Region)]
+        shelters = map(int,config.get('Shelter','region').split(','))
         for region in regions:
-            if region != myHome:
+            if region != myHome and not self.world.agents[region].number in shelters:
                 self.ignore(region,'%s0' % (self.name))
