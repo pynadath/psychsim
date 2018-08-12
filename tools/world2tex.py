@@ -87,4 +87,4 @@ if __name__ == '__main__':
                                 break
                             
 
-    doc.generate_pdf('groundTruth',clean_tex=False)
+    doc.generate_pdf(sys.argv[2],clean_tex=False)
