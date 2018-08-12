@@ -343,13 +343,10 @@ if __name__ == '__main__':
                             model = world.getModel(actor.name)
                             assert len(model) == 1
                             belief = actor.getBelief(world.state,model.first())
-                            if len(belief) > 1:
-                                world.printState(belief)
                             assert len(belief) == 1
                             for omega in actor.omega:
                                 true = actor.getState(omega)
                                 believed = actor.getState(omega,belief)
-                                print actor.name,omega,believed
                     oldPhase = phase
                 addState2tables(world,today,{name: table for name,table in tables.items()
                                              if table['series']},population,regions)
