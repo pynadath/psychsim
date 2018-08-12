@@ -63,10 +63,7 @@ class VectorDistributionSet:
         return reduce(operator.mul,[len(d) for d in self.distributions.values()],1)
 
     def __getitem__(self,key):
-        if key == 0:
-            raise DeprecationWarning('step no longer returns a list of outcomes, but rather a single VectorDistributionSet')
-        else:
-            return self.marginal(key)
+        return self.marginal(key)
         
     def __setitem__(self,key,value):
         """
@@ -97,12 +94,12 @@ class VectorDistributionSet:
                 del vector[key]
                 dist.addProb(vector,prob)
 
-    def deleteKeys(self,keys):
+    def deleteKeys(self,toDelete):
         """
         Removes multiple columns at once
         """
         distributions = {}
-        for key in keys:
+        for key in toDelete:
             substate = self.keyMap[key]
             del self.keyMap[key]
             if substate in distributions:
@@ -119,8 +116,8 @@ class VectorDistributionSet:
                     del vector[key]
                     distributions[substate].append((vector,prob))
         for substate,dist in distributions.items():
-            if len(dist[0]) == 1:
-                assert dist[0].keys()[0] == keys.CONSTANT
+            if len(dist[0][0]) == 1:
+                assert dist[0][0].keys()[0] == keys.CONSTANT
                 del self.distributions[substate]
             else:
                 self.distributions[substate].clear()
@@ -283,9 +280,9 @@ class VectorDistributionSet:
                     substates[loc] = [subkey]
             # Determine the domain of each feature across distributions
             domains = []
-            for loc,keys in substates.items():
+            for loc,subkeys in substates.items():
                 dist = self.distributions[loc]
-                domains.append([[vector[k] for k in keys] for vector in dist.domain()])
+                domains.append([[vector[k] for k in subkeys] for vector in dist.domain()])
             return [sum(combo,[]) for combo in itertools.product(*domains)]
         else:
             return NotImplemented
@@ -594,7 +591,7 @@ class VectorDistributionSet:
             assert now in self.keyMap
             assert self.keyMap[now] in self.distributions,now
         for s in self.distributions:
-            assert s in self.keyMap.values(),self.distributions[s]
+            assert s in self.keyMap.values(),'Distribution %s is missing\n%s' % (s,self.distributions[s])
             for k in self.distributions[s].keys():
                 assert not keys.isFuture(k),'Future key %s persists after rollback' \
                     % (k)
