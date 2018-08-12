@@ -185,7 +185,7 @@ class Agent:
                 logging.debug('Time %d/%d' % (t+1,horizon))
                 outcome = self.world.step(start,current,keySubset=subkeys,
                                           horizon=horizon-t-1)
-                V[action]['__ER__'].append(self.reward(current))
+                V[action]['__ER__'].append(self.reward(current,model))
                 V[action]['__EV__'] += V[action]['__ER__'][-1]
                 V[action]['__S__'].append(current)
                 start = None
@@ -622,17 +622,20 @@ class Agent:
             for element in vector.domain():
                 total += vector[element]*self.reward(element,model,recurse)
         elif isinstance(vector,VectorDistributionSet):
-            modelK = modelKey(self.name)
-            models = self.world.float2value(modelK,vector.domain(modelK))
-            tree = None
-            for submodel in models:
-                R = self.getReward(submodel)
-                if tree is None:
-                    tree = R
-                else:
-                    tree = {'if': equalRow(modelK,submodel),
-                             True: R,False: tree}
-            tree = makeTree(tree).desymbolize(self.world.symbols)
+            if model is None:
+                modelK = modelKey(self.name)
+                models = self.world.float2value(modelK,vector.domain(modelK))
+                tree = None
+                for submodel in models:
+                    R = self.getReward(submodel)
+                    if tree is None:
+                        tree = R
+                    else:
+                        tree = {'if': equalRow(modelK,submodel),
+                                 True: R,False: tree}
+                tree = makeTree(tree).desymbolize(self.world.symbols)
+            else:
+                tree = self.getAttribute('R',model)
             vector *= tree
             if not rewardKey(self.name) in vector:
                 vector.join(rewardKey(self.name),0.)
@@ -837,6 +840,7 @@ class Agent:
             assert len(self.models) == 1
             model = list(self.models.keys())[0]
         beliefs = copy.deepcopy(self.world.state)
+        beliefs.deleteKeys([keys.modelKey(a) for a in self.world.agents])
         self.models[model]['beliefs'] = beliefs
         return beliefs
         
@@ -894,7 +898,7 @@ class Agent:
         if self.O is True:
             Omega = []
         else:
-            Omega = self.O.keys()
+            Omega = sorted(self.O.keys())
         assert isinstance(Omega,list)
         for vector in distribution.domain():
             prob = distribution[vector]
@@ -919,7 +923,7 @@ class Agent:
                                                          if turnKey(action['subject']) in beliefs})
                     if len(relevantActions) == 0:
                         relevantActions = None
-                    self.world.step(relevantActions,beliefs,updateBeliefs=False,
+                    self.world.step(relevantActions,beliefs,updateBeliefs=True,
                                     keySubset=beliefs.keys())
                     # Condition on actual observations
                     for omega in Omega:
