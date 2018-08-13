@@ -16,6 +16,10 @@ def key2tex(key):
     elif isBinaryKey(key):
         relation = key2relation(key)
         key = '%s %s %s' % (relation['subject'],relation['relation'],relation['object'])
+    elif isRewardKey(key):
+        key = '%s\'s Reward' % (state2agent(key))
+    elif isRewardKey(makePresent(key)):
+        key = makeFuture('%s\'s Reward') % (state2agent(key))
     if isFuture(key):
         return Math(data=[Command('mbox',bold(makePresent(key))),"'"],inline=True)
     else:
@@ -41,7 +45,10 @@ def addTree(doc,tree,world,indent=0,prefix=None):
         else:
             assert len(matrix) == 1
             key,row = matrix.items()[0]
-            variable = world.variables[makePresent(key)]
+            if isRewardKey(makePresent(key)):
+                variable = {'domain': float}
+            else:
+                variable = world.variables[makePresent(key)]
             doc.append(key2tex(key))
             doc.append(Math(data=Command('leftarrow'),inline=True))
             if variable['domain'] is bool:
@@ -72,7 +79,7 @@ def addTree(doc,tree,world,indent=0,prefix=None):
                     value = elements[key]
                     if key != CONSTANT:
                         if first:
-                            first = True
+                            first = False
                         else:
                             doc.append('+')
                         if value != 1.:
@@ -273,6 +280,15 @@ def addActions(doc,world):
                                         addTree(doc,tree,world)
                                 break
 
+def addReward(doc,world):
+    with doc.create(Section('Expected Reward')):
+        for name,agent in world.agents.items():
+            if os.access(os.path.join('images','%s.png' % (name)),os.R_OK) and len(agent.actions) > 1:
+                with doc.create(Subsection('%s\'s Reward' % (name))):
+                    addGraph(doc,name,name)
+                    with doc.create(FlushLeft()):
+                        addTree(doc,agent.getReward('%s0' % (name)),world)
+                        
 def background(doc):
     filename = inspect.getframeinfo(inspect.currentframe()).filename
     path = os.path.dirname(os.path.abspath(filename))
@@ -312,6 +328,6 @@ if __name__ == '__main__':
     addState(doc,world)
     addRelations(doc,world)
     addActions(doc,world)
-    
+    addReward(doc,world)
 
     doc.generate_pdf(sys.argv[2],clean_tex=False)
