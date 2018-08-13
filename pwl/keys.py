@@ -122,7 +122,7 @@ def rewardKey(name):
     return stateKey(name,REWARD)
 
 def isRewardKey(key):
-    return isStateKey(key) and state2feature == REWARD
+    return isStateKey(key) and state2feature(key) == REWARD
 
 def beliefKey(name,key):
     return '%s(%s)' % (name,key)
