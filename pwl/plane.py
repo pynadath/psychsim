@@ -40,7 +40,7 @@ class KeyedPlane:
                 elif len(plane) == 1:
                     self.planes.append((plane[0],self.DEFAULT_THRESHOLD,self.DEFAULT_COMPARISON))
                 else:
-                    raise ValueError,'Empty plane passed into constructor'
+                    raise ValueError('Empty plane passed into constructor')
         self._string = None
         self._keys = None
         self.isConjunction = True
@@ -112,7 +112,7 @@ class KeyedPlane:
                         return False
             else:
                 # Return raw value, to be used in unspeakable ways
-                raise ValueError,'Invalid comparison %s' % (comparison)
+                raise ValueError('Invalid comparison %s' % (comparison))
         else:
             # No planes matched
             if self.isConjunction:

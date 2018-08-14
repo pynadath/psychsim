@@ -1,7 +1,13 @@
 from argparse import ArgumentParser
-from ConfigParser import SafeConfigParser
+try:
+    from ConfigParser import SafeConfigParser as ConfigParser
+except ImportError:
+    from configparser import ConfigParser
 import cProfile
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 import csv
 import logging
 import os
@@ -124,7 +130,7 @@ if __name__ == '__main__':
     parser.add_argument('-p','--profile',action='store_true',help='Profile simulation step')
     args = vars(parser.parse_args())
     # Extract configuration
-    config = SafeConfigParser()
+    config = ConfigParser()
     config.read(os.path.join('config','%06d.ini' % (args['instance'])))
     try:
         random.seed(config.getint('Simulation','seed'))

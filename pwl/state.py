@@ -158,7 +158,7 @@ class VectorDistributionSet:
             result = self.merge(substates)
             return result
         else:
-            raise ValueError,'No substates to collapse'
+            raise ValueError('No substates to collapse')
         
     def uncertain(self):
         """

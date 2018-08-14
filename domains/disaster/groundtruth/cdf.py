@@ -45,8 +45,8 @@ def toCDF(world,unobservable=set()):
             elif variable['domain'] is int:
                 record['Values'] = '[%d-%d]' % (variable['lo'],variable['hi'])
             else:
-                raise TypeError,'Unable to write values for variables of type %s' \
-                    % (variable['domain'].__name__)
+                raise TypeError('Unable to write values for variables of type %s' \
+                                % (variable['domain'].__name__))
             if name in world.dynamics and not isRewardKey(name):
                 record['VarType'] = 'dynamic'
             else:
@@ -89,8 +89,8 @@ def toCDF(world,unobservable=set()):
                 elif variable['domain'] is int:
                     record['Values'] = '[%d-%d]' % (variable['lo'],variable['hi'])
                 else:
-                    raise TypeError,'Unable to write values for variables of type %s' \
-                        % (variable['domain'].__name__)
+                    raise TypeError('Unable to write values for variables of type %s' \
+                                    % (variable['domain'].__name__))
                 if name in world.dynamics:
                     record['VarType'] = 'dynamic'
                 else:
