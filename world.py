@@ -506,7 +506,7 @@ class World:
             self.turnKeys = set()
             key = modelKey(agent.name)
             if not key in self.variables:
-                self.defineVariable(key,list,agent.models.keys())
+                self.defineVariable(key,list,list(agent.models.keys()))
             
             if len(agent.models) == 0:
                 # Default model settings
@@ -599,7 +599,7 @@ class World:
 
     def getDynamics(self,key,action,state=None):
         if not state is None:
-            raise DeprecationWarning,'There are no longer different dynamics functions depending on the state'
+            raise DeprecationWarning('There are no longer different dynamics functions depending on the state')
         if not key in self.dynamics:
             return []
         if isinstance(action,Action):
@@ -1523,7 +1523,7 @@ class World:
                 if key in vector:
                     if csv:
                         elements.append(label)
-                        elements.append('__model__')
+                        elements.append(MODEL)
                         elements.append(self.agents[entity].index2model(vector[key]))
                     elif not beliefs:
                         if first:

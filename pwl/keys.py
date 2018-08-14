@@ -5,6 +5,8 @@ VALUE = '__VALUE__'
 WORLD = '__WORLD__'
 ACTION = '__ACTION__'
 REWARD = '__REWARD__'
+MODEL = '__MODEL__'
+TURN = '__TURN__'
 
 def stateKey(name,feature,future=False):
     """
@@ -76,10 +78,10 @@ def isFuture(key):
     return len(key) > 0 and key[-1] == "'"
 
 def turnKey(name):
-    return stateKey(name,'_turn')
+    return stateKey(name,TURN)
 
 def isTurnKey(key):
-    return key[-8:] == '\'s _turn'
+    return key[-8:] == '\'s %s' % (TURN)
 
 def turn2name(key):
     return key[:-8]
@@ -91,10 +93,10 @@ def isActionKey(key):
     return isStateKey(key) and state2feature(key) == ACTION
 
 def modelKey(name):
-    return stateKey(name,'_model')
+    return stateKey(name,MODEL)
 
 def isModelKey(key):
-    return key[-9:] == '\'s _model'
+    return key[-9:] == '\'s %s' % (MODEL)
 
 def model2name(key):
     return key[:-9]

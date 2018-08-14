@@ -3,7 +3,10 @@ import copy
 import logging
 import math
 import random
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 from xml.dom.minidom import Document,Node
 
 from psychsim.action import Action,ActionSet
@@ -596,7 +599,7 @@ class Agent:
                         otherModel = dist.first()
                         tree = agent.getReward(otherModel)
                     else:
-                        raise NotImplementedError,'Simple fix needed to support agents having rewards tied to other agents about whom they have uncertain beliefs'
+                        raise NotImplementedError('Simple fix needed to support agents having rewards tied to other agents about whom they have uncertain beliefs')
                 if Rsum is None:
                     Rsum = weight*tree
                 else:
@@ -818,12 +821,12 @@ class Agent:
             model = self.index2model(index)
         if model is None:
             print('%s\t%-12s\t%-12s' % \
-                  (prefix,'__model__','__unknown(%s)__' % (index)),file=buf)
+                  (prefix,MODEL,'__unknown(%s)__' % (index)),file=buf)
             return
         if not isinstance(model,dict):
             model = self.models[model]
         print('%s\t%-12s\t%-12s' % \
-              (prefix,'__model__',model['name']),file=buf)
+              (prefix,MODEL,model['name']),file=buf)
         if 'R' in model and not model['R'] is True:
             self.printReward(model['name'],buf,'%s\t\t' % (prefix))
         if 'beliefs' in model and not model['beliefs'] is True:
