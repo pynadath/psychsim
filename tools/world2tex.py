@@ -63,7 +63,7 @@ def addTree(doc,tree,world,indent=0,prefix=None):
                 doc.append(bold('false'))
         else:
             assert len(matrix) == 1
-            key,row = matrix.items()[0]
+            key,row = next(iter(matrix.items()))
             if isRewardKey(makePresent(key)):
                 variable = {'domain': float}
                 label = Math(data='R',inline=True)
@@ -80,14 +80,14 @@ def addTree(doc,tree,world,indent=0,prefix=None):
                     else:
                         doc.append(bold('false'))
                 else:
-                    subkey = row.keys()[0]
+                    subkey = next(iter(row))
                     assert subkey == makePresent(key) in row
                     if row[subkey] < 0.:
                         doc.append(Math(data=Command('lnot'),inline=True))
                     doc.append(key2tex(subkey))
             elif variable['domain'] is set or variable['domain'] is list:
                 assert len(row) == 1
-                subkey = row.keys()[0]
+                subkey = next(iter(row.keys()))
                 if subkey == CONSTANT:
                     doc.append(bold(world.float2value(makePresent(key),row[CONSTANT])))
                 else:
@@ -178,8 +178,8 @@ def addTree(doc,tree,world,indent=0,prefix=None):
                         doc.append(Math(data=Command('cdot'),inline=True))
                     doc.append(key2tex(key))
                 else:
-                    print tree.branch
-                    raise RuntimeError,variable['domain']
+                    print(tree.branch)
+                    raise RuntimeError(variable['domain'])
             if not done:
                 if comparison == 0:
                     doc.append(Math(data='=',inline=True))

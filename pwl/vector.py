@@ -226,7 +226,7 @@ class VectorDistribution(Distribution):
         NOT the keys of the domain itself
         """
         if len(self) > 0:
-            return iter(self.domain()).next().keys()
+            return self.first().keys()
         else:
             return {}
     

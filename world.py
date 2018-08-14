@@ -1849,7 +1849,7 @@ class World:
                     # UI information. Parse later
                     self.diagram = Diagram(node)
             node = node.nextSibling
-        self.symbolList = self.symbolList[len(self.symbolList)/2:]
+        self.symbolList = self.symbolList[int(len(self.symbolList)/2):]
         for index in range(len(self.symbolList)):
             self.symbols[self.symbolList[index]] = index
         for node in agents:
