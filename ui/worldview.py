@@ -98,9 +98,9 @@ class WorldView(QGraphicsScene):
                 self.drawEdge(key,child)
 
     def displayGroundTruth(self,agent=WORLD,x0=0,y0=0,maxRows=10,recursive=False):
-        self.clear()
-
-        self.xml = Graph()
+        if agent == WORLD:
+            self.clear()
+            self.xml = Graph()
         
         x = x0
         y = y0
@@ -151,7 +151,7 @@ class WorldView(QGraphicsScene):
                                 self.drawEdge(name,action,g)
                 else:
                     y += (maxRows+1) * self.rowHeight
-                    self.displayGroundTruth(name,xPostAction,y,maxRows=maxRows)
+                    self.displayGroundTruth(name,xPostAction,y,maxRows=maxRows,recursive=recursive)
             self.colorNodes()
         # Draw links, reusing post nodes as pre nodes
         for key,entry in g.items():
@@ -173,15 +173,14 @@ class WorldView(QGraphicsScene):
                 if child in self.world.agents and not child in uNodes:
                     continue
                 self.drawEdge(key,child,g)
-        if agent == WORLD:
-            x += self.colWidth
+        x += self.colWidth
         if recursive:
-            self.agents[agent] = {'box': QGraphicsRectItem(QRectF(-self.colWidth/2,y0-self.rowHeight/2,
-                                                                  x0+x,(float(maxRows)+.5)*self.rowHeight))}
+            rect = QRectF(-self.colWidth/2,y0-self.rowHeight/2,
+                          x,(float(maxRows)+.5)*self.rowHeight)
+            self.agents[agent] = {'box': QGraphicsRectItem(rect)}
             self.agents[agent]['box'].setPen(QPen(QBrush(QColor('black')),3))
             self.agents[agent]['box'].setZValue(0.)
             if agent != WORLD:
-                rect = self.agents[agent]['box'].rect()
                 self.agents[agent]['text'] = QGraphicsTextItem(self.agents[agent]['box'])
                 doc = QTextDocument(agent,self.agents[agent]['text'])
                 self.agents[agent]['text'].setPos(rect.x(),rect.y())
@@ -251,6 +250,9 @@ class WorldView(QGraphicsScene):
                 if y >= maxRows*self.rowHeight:
                     y = y0
                     x += self.colWidth
+            else:
+                x = max(x,self.world.diagram.getX(action))
+                y = max(y,self.world.diagram.getY(action))
             node = ActionNode(self.world.agents[self.graph[action]['agent']],action,scene=self)
             self.nodes[self.graph[action]['type']][action] = node
         x += self.colWidth

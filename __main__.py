@@ -76,6 +76,14 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
         settings.setValue('ViewCyclical','no')
 
     @pyqtSlot() # signal with no arguments
+    def on_actionBeliefs_triggered(self):
+        button = self.findChild(QAction,'actionBeliefs')
+        if self.findChild(QAction,'actionAcyclical').isChecked():
+            pass
+        else:
+            self.scene.displayGroundTruth(maxRows=6,recursive=button.isChecked())
+
+    @pyqtSlot() # signal with no arguments
     def on_actionStep_triggered(self):
         self.scene.step()
 
