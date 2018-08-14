@@ -24,11 +24,30 @@ def key2tex(key):
         return Math(data=[Command('mbox',bold(makePresent(key))),"'"],inline=True)
     else:
         return bold(key)
-    
+
+def describeVar(doc,variable):
+    if variable['description']:
+        doc.append(variable['description'])
+    with doc.create(Description()) as description:
+        if variable['domain'] is bool:
+            description.add_item('Type:','Boolean')
+        elif variable['domain'] is int:
+            description.add_item('Type:','Integer')
+        elif variable['domain'] is float:
+            description.add_item('Type:','Real')
+        else:
+            values = [[bold(value),', '] for value in sorted(variable['elements'])]
+            values = sum(values,[])[:-1]
+            description.add_item('Type:','String')
+            description.add_item('Values:',dumps_list(values))
+                
 def addGraph(doc,key,fname):
     with doc.create(Figure(position='ht')) as gtGraph:
         gtGraph.add_image('%s' % (os.path.join('images','%s.png' % (fname))))
-        gtGraph.add_caption('Ground Truth subgraph for %s' % (key))
+        if isStateKey(key) and state2agent(key) == WORLD:
+            gtGraph.add_caption('Ground Truth subgraph for %s' % (state2feature(key)))
+        else:
+            gtGraph.add_caption('Ground Truth subgraph for %s' % (key))
     
 def addTree(doc,tree,world,indent=0,prefix=None):
     if indent:
@@ -47,9 +66,11 @@ def addTree(doc,tree,world,indent=0,prefix=None):
             key,row = matrix.items()[0]
             if isRewardKey(makePresent(key)):
                 variable = {'domain': float}
+                label = Math(data='R',inline=True)
             else:
                 variable = world.variables[makePresent(key)]
-            doc.append(key2tex(key))
+                label = key2tex(key)
+            doc.append(label)
             doc.append(Math(data=Command('leftarrow'),inline=True))
             if variable['domain'] is bool:
                 assert len(row) == 1
@@ -190,30 +211,21 @@ def addState(doc,world):
     with doc.create(Section('State')):
         for name,variable in sorted(world.variables.items()):
             if isStateKey(name):
-                if name in world.dynamics:
-                    if state2agent(name) == WORLD:
-                        label = state2feature(name)
-                    else:
-                        label = name
-                    with doc.create(Subsection(label)):
-                        if variable['domain'] is bool:
-                            doc.append('Boolean')
-                        elif variable['domain'] is int:
-                            doc.append('Integer')
-                        elif variable['domain'] is float:
-                            doc.append('Real')
-                        else:
-                            doc.append('String: ')
-                            for value in sorted(variable['elements']):
-                                if value == sorted(variable['elements'])[0]:
-                                    doc.append(bold(value))
-                                else:
-                                    doc.append(', ')
-                                    doc.append(bold(value))
-                        addGraph(doc,name,escapeKey(name))
+                if state2feature(name) in [ACTION,REWARD,MODEL,TURN]:
+                    continue
+                if state2agent(name) == WORLD:
+                    label = state2feature(name)
+                else:
+                    label = name
+                with doc.create(Subsection(label)):
+                    describeVar(doc,variable)
+                    fname = escapeKey(name)
+                    if os.access(os.path.join('images','%s.png' % (fname)),os.R_OK):
+                        addGraph(doc,name,fname)
+                    if name in world.dynamics:
                         for action,tree in sorted(world.dynamics[name].items()):
                             if action is True:
-                                heading = 'Default Change in %s' % (label)
+                                heading = 'Default change in %s' % (label)
                             else:
                                 heading = 'Effect of %s on %s' % (str(action),label)
                             with doc.create(Subsubsection(heading)):
@@ -224,28 +236,17 @@ def addRelations(doc,world):
     with doc.create(Section('Relations')):
         for name,variable in sorted(world.variables.items()):
             if isBinaryKey(name):
-                if name in world.dynamics:
-                    relation = key2relation(name)
-                    label = '%s %s %s' % (relation['subject'],relation['relation'],relation['object'])
-                    with doc.create(Subsection(label)):
-                        if variable['domain'] is bool:
-                            doc.append('Boolean')
-                        elif variable['domain'] is int:
-                            doc.append('Integer')
-                        elif variable['domain'] is float:
-                            doc.append('Real')
-                        else:
-                            doc.append('String: ')
-                            for value in sorted(variable['elements']):
-                                if value == sorted(variable['elements'])[0]:
-                                    doc.append(bold(value))
-                                else:
-                                    doc.append(', ')
-                                    doc.append(bold(value))
+                relation = key2relation(name)
+                label = '%s %s %s' % (relation['subject'],relation['relation'],relation['object'])
+                with doc.create(Subsection(label)):
+                    describeVar(doc,variable)
+                    fname = escapeKey(name)
+                    if os.access(os.path.join('images','%s.png' % (fname)),os.R_OK):
                         addGraph(doc,name,escapeKey(name))
+                    if name in world.dynamics:
                         for action,tree in sorted(world.dynamics[name].items()):
                             if action is True:
-                                heading = 'Default Change in %s' % (label)
+                                heading = 'Default change in %s' % (label)
                             else:
                                 heading = 'Effect of %s on %s' % (str(action),label)
                             with doc.create(Subsubsection(heading)):
@@ -263,7 +264,7 @@ def addActions(doc,world):
                 with doc.create(Subsection(label)):
                     addGraph(doc,action,str(action))
                     if action in agent.legal:
-                        with doc.create(Subsubsection('Applicability Conditions')):
+                        with doc.create(Subsubsection('Applicability of %s' % (label))):
                             with doc.create(FlushLeft()):
                                 addTree(doc,agent.legal[action],world)
                     for key,table in sorted(world.dynamics.items()):
