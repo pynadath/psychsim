@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 import inspect
 import os
 import sys
@@ -309,26 +310,43 @@ def background(doc):
             itemize.add_item('Therefore, in the above simple ground truth, whether or not ``Actor1\'\' chooses to do ``action\'\' to ``Actor2\'\' influences the subsequent value of the variable ``state\'\' (link from rectangle to oval). The subsequent value of ``state\'\' also depends on its prior value (link from oval to itself). ``Actor1\'\'\'s expected value of doing ``action\'\' to ``Actor2\'\' is a function of the value of ``state\'\' (link from oval to hexagon), and this expected value influences whether or not ``Actor1\'\' chooses to do so (link from hexagon to rectangle).')
         doc.append('Any real values (e.g., initial values of variables, conditional probability table values, reward weights) will be drawn from either a set {0, 0.5, 1} or {0, 0.2, 0.4, 0.6, 0.8, 1}, depending on the appropriate granularity needed.')
     
-def createDoc():
+def createDoc(title):
     doc = Document(geometry_options={'tmargin': '1in', 
                                      'lmargin': '1in',
                                      'textwidth': '6.5in',
                                      'textheight': '9in'})
 
+    # Packages
+    doc.preamble.append(Command('usepackage','times'))
     doc.preamble.append(Command('usepackage','hyperref'))
     doc.preamble.append(Command('hypersetup','colorlinks'))
-    doc.append(NoEscape(r'\tableofcontents'))
-    doc.append(NoEscape(r'\clearpage'))
+    if title:
+        # Title
+        doc.preamble.append(Command('title',title))
+        doc.preamble.append(Command('date',Command('today')))
+        doc.append(Command('maketitle'))
+        doc.append(Command('clearpage'))
+    # TOC
+    doc.append(Command('tableofcontents'))
+    doc.append(Command('clearpage'))
     background(doc)
     return doc
     
 if __name__ == '__main__':
-    world = World(sys.argv[1])
+    parser = ArgumentParser()
+    parser.add_argument('scenario',default=None,nargs=1,
+                        help='File containing an exising PsychSim scenario')
+    parser.add_argument('output',default=None,nargs=1,
+                        help='Output root file')
+    parser.add_argument('-t','--title',default=None,help='Document title')
+    args = vars(parser.parse_args())
+    
+    world = World(args['scenario'][0])
 
-    doc = createDoc()
+    doc = createDoc(args['title'])
     addState(doc,world)
     addRelations(doc,world)
     addActions(doc,world)
     addReward(doc,world)
 
-    doc.generate_pdf(sys.argv[2],clean_tex=False)
+    doc.generate_pdf(args['output'][0],clean_tex=False)
