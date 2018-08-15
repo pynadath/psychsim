@@ -1,3 +1,4 @@
+import logging
 import random
 
 from psychsim.agent import Agent
@@ -8,7 +9,9 @@ class Region(Agent):
     nameString = 'Region%02d'
     
     def __init__(self,number,world,config,shelter):
-        Agent.__init__(self,self.nameString % (number))
+        name = self.nameString % (number)
+        logging.debug('Creating %s' % (name))
+        Agent.__init__(self,name)
         world.addAgent(self)
 
         self.number = number

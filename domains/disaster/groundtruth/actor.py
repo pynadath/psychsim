@@ -1,3 +1,4 @@
+import logging
 import random
 
 from psychsim.probability import Distribution
@@ -13,6 +14,7 @@ class Actor(Agent):
             name = 'Actor'
         else:
             name = 'Actor%04d' % (number)
+        logging.debug('Creating %s' % (name))
         Agent.__init__(self,name)
         world.addAgent(self)
 
@@ -86,8 +88,8 @@ class Actor(Agent):
         regions = sorted([name for name in self.world.agents
                           if isinstance(self.world.agents[name],Region)])
         region = world.defineState(self.name,'region',list,regions,description='Region of residence')
-        home = regions[(number-1)*int(config.getint('Regions','regions')/
-                                      config.getint('Actors','population'))]
+        index = (number-1)*config.getint('Regions','regions')/config.getint('Actors','population')
+        home = regions[index]
         world.setFeature(region,home)
 
         if config.getboolean('Data','display'):
@@ -100,8 +102,9 @@ class Actor(Agent):
             while tooClose:
                 x = random.random()
                 y = random.random()
-                for neighbor in [a for a  in world.agents.values() if isinstance(a,Actor) and \
-                                 not a.name == self.name and a.getState('location').first() == home]:
+                neighbors = [a for a  in world.agents.values() if isinstance(a,Actor) and \
+                             not a.name == self.name and a.getState('location').first() == home]
+                for neighbor in neighbors:
                     if abs(neighbor.getState('x').first()-x)+abs(neighbor.getState('y').first()-y) < 0.1:
                         break
                 else:
@@ -533,6 +536,7 @@ class Actor(Agent):
                                  tree.desymbolize(self.world.symbols))
 
     def _initializeRelations(self,config):
+        logging.debug('Initializing relationships of %s' % (self.name))
         friends = set()
         population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
         friendMax = config.getint('Actors','friends')
@@ -582,6 +586,7 @@ class Actor(Agent):
                                likert[5][Rfriends-1]/float(friendMax))
         
     def _initializeBeliefs(self,config):
+        logging.debug('Initializing beliefs of %s' % (self.name))
         # Beliefs
         friends = set()
         population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
