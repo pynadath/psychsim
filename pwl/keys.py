@@ -142,6 +142,8 @@ def escapeKey(key):
     """
     @return: filename-ready version of the key
     """
+    if not isinstance(key,str):
+        key = str(key)
     future = isFuture(key)
     if future:
         key = makePresent(key)
