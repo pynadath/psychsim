@@ -39,8 +39,8 @@ class Actor(Agent):
         if random.random() < likert[5][config.getint('Actors','religious_majority')-1]:
             self.religion = 'majority'
         else:
-            atheistPct = config.getint('Actors','atheists') - 1
-            if atheistPct and random.random() < likert[5][atheistPct]:
+            atheistPct = config.getint('Actors','atheists')
+            if atheistPct and random.random() < likert[5][atheistPct-1]:
                 self.religion = 'none'
             else:
                 self.religion = 'minority'
@@ -68,11 +68,12 @@ class Actor(Agent):
 
         job = world.defineState(self.name,'employed',bool,description='Has a full-time job')
         threshold = likert[5][config.getint('Actors','job_%s' % (self.ethnicGroup))-1]
-        self.job = random.random() > threshold
+        self.job = random.random() < threshold
         world.setFeature(job,self.job)
 
         pet = world.defineState(self.name,'pet',bool,description='Owns a pet')
-        self.pet = random.random() < config.getfloat('Actors','pet_prob')
+        threshold = likert[5][config.getint('Actors','pet_prob')-1]
+        self.pet = random.random() < threshold
         world.setFeature(pet,self.pet)
         
         # Psychological
@@ -184,10 +185,11 @@ class Actor(Agent):
 
         nop = self.addAction({'verb': 'doNothing'})
         goHomeFrom = []
+        shelters = config.get('Shelter','region').split(',')
         if config.getboolean('Shelter','exists'):
             # Go to shelter
             actShelter = {}
-            for index in config.get('Shelter','region').split(','):
+            for index in shelters:
                 shelter = 'shelter%s' % (index)
                 region = Region.nameString % (int(index))
                 goHomeFrom.append(shelter)
@@ -390,7 +392,7 @@ class Actor(Agent):
         if config.getboolean('Actors','evacuation'):
             cost = config.getint('Actors','evacuation_cost')
             if cost > 0:
-                cost = likert[5][cost]
+                cost = likert[5][cost-1]
                 tree = makeTree({'if': thresholdRow(wealth,cost),
                                  True: incrementMatrix(wealth,-cost),
                                  False: setToConstantMatrix(wealth,0.)})
@@ -483,7 +485,18 @@ class Actor(Agent):
                                          False: noChangeMatrix(key)})
                         world.setDynamics(key,actShelter[other],tree)
                 assert not config.getboolean('Actors','movement')
-                    
+
+        if self.pet and config.getboolean('Shelter','exists'):
+            # Process shelters' pet policy
+            petPolicy = config.get('Shelter','pets').split(',')
+            for index,action in actShelter.items():
+                if petPolicy[shelters.index(index)] == 'no':
+                    region = Region.nameString % (int(index))
+                    tree = makeTree({'if': equalRow(makeFuture(location),'shelter%s' % (index)),
+                                     True: setFalseMatrix(pet),
+                                     False: noChangeMatrix(pet)})
+                    world.setDynamics(pet,action,tree)
+
         # Reward
         mean = config.getint('Actors','reward_health')
         if mean > 0:
@@ -495,6 +508,10 @@ class Actor(Agent):
             mean = config.getint('Actors','reward_kids')
             if mean > 0:
                 self.setReward(maximizeFeature(kidHealth,self.name),likert[5][mean-1])
+        if self.pet > 0:
+            mean = config.getint('Actors','reward_pets')
+            if mean > 0:
+                self.setReward(maximizeFeature(pet,self.name),likert[5][mean-1])
         if config.getboolean('Actors','beliefs'):
             # Observations
             omega = self.defineObservation('phase',domain=list,
