@@ -183,7 +183,8 @@ class Actor(Agent):
 
         # Actions and Dynamics
 
-        nop = self.addAction({'verb': 'doNothing'})
+        nop = self.addAction({'verb': 'stayInLocation'},
+                             description='Actor does not move from current location, nor perform any pro/antisocial behaviors')
         goHomeFrom = []
         shelters = config.get('Shelter','region').split(',')
         if config.getboolean('Shelter','exists'):
@@ -213,7 +214,9 @@ class Actor(Agent):
 #                            True: False, False: tree}
                 tree = makeTree(tree)
                 actShelter[index] = self.addAction({'verb':'moveTo','object': shelter},
-                                                   tree.desymbolize(world.symbols))
+                                                   tree.desymbolize(world.symbols),
+                                                   'Move myself and family to the shelter in %s' \
+                                                   % (region))
         if config.getboolean('Actors','evacuation'):
             # Evacuate city altogether
             tree = makeTree({'if': equalRow(stateKey('Nature','phase'),'none'),
@@ -222,13 +225,15 @@ class Actor(Agent):
                                      True: False,
                                      False: {'if': trueRow(alive),
                                              True: True, False: False}}})
-            actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols))
+            actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols),
+                                         'Evacuate the city at least temporarily')
             goHomeFrom.append('evacuated')
         if goHomeFrom:
             tree = makeTree({'if': equalRow(location,goHomeFrom),
                              True: True, False: False})
             goHome = self.addAction({'verb': 'moveTo','object': home},
-                                    tree.desymbolize(world.symbols))
+                                    tree.desymbolize(world.symbols),
+                                    'Return home')
         if config.getboolean('Actors','prorisk'):
             # Prosocial behavior
             actGoodRisk = {}
@@ -238,7 +243,8 @@ class Actor(Agent):
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
                     actGoodRisk[region] = self.addAction({'verb': 'decreaseRisk','object': region},
-                                                         tree.desymbolize(world.symbols))
+                                                         tree.desymbolize(world.symbols),
+                                                         'Perform prosocial behaviors to reduce the danger posed by the hurricane in %s' % (region))
         if config.getboolean('Actors','proresources'):
             # Prosocial behavior
             actGoodResources = {}
@@ -249,7 +255,8 @@ class Actor(Agent):
                                      False: False})
                     actGoodResources[region] = self.addAction({'verb': 'giveResources',
                                                                'object': region},
-                                                              tree.desymbolize(world.symbols))
+                                                              tree.desymbolize(world.symbols),
+                                                              'Perform prosocial behaviors to gather and donate resources to the people of %s' % (region))
         if config.getboolean('Actors','antirisk'):
             # Antisocial behavior
             actBadRisk = {}
@@ -259,7 +266,8 @@ class Actor(Agent):
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
                     actBadRisk[region] = self.addAction({'verb': 'increaseRisk','object': region},
-                                                        tree.desymbolize(world.symbols))
+                                                        tree.desymbolize(world.symbols),
+                                                        'Perform antisocial behaviors that increase the danger faced by people in %s' % (region))
         if config.getboolean('Actors','antiresources'):
             # Antisocial behavior
             actBadResources = {}
@@ -270,7 +278,8 @@ class Actor(Agent):
                                      False: False})
                     actBadResources[region] = self.addAction({'verb': 'takeResources',
                                                               'object': region},
-                                                        tree.desymbolize(world.symbols))
+                                                             tree.desymbolize(world.symbols),
+                                                             'Perform antisocial behaviors that gain resources personally at the expense of people in %s' % (region))
         regions = [n for n in self.world.agents.values()
                          if isinstance(n,Region)]
         if config.getboolean('Actors','movement'):
@@ -292,13 +301,15 @@ class Actor(Agent):
                                  True: {'if': trueRow(alive),
                                         True: True, False: False}, False: False})
                 actMove[region.name] = self.addAction({'verb': 'moveTo',
-                                                            'object': region.name},
-                                                            tree.desymbolize(world.symbols))
+                                                       'object': region.name},
+                                                      tree.desymbolize(world.symbols))
 
         # Information-seeking actions
         if config.getboolean('Actors','infoseek'):
             tree = makeTree({'if': trueRow(alive), True: True, False: False})
-            self.addAction({'verb': 'infoSeek','object': home},tree.desymbolize(world.symbols))
+            self.addAction({'verb': 'seekInfoReHurricane','object': home},
+                           tree.desymbolize(world.symbols),
+                           'Seek out additional information about the hurricane and its impact')
                 
         # Effect on location
         if config.getboolean('Shelter','exists'):
@@ -549,8 +560,9 @@ class Actor(Agent):
         if config.getboolean('Actors','messages'):
             tree = makeTree({'if': trueRow(stateKey(self.name,'alive')),
                              True: True, False: False})
-            msg = self.addAction({'verb': 'message','object': friend.name},
-                                 tree.desymbolize(self.world.symbols))
+            msg = self.addAction({'verb': 'msgReHurricane','object': friend.name},
+                                 tree.desymbolize(self.world.symbols),
+                                 'Send message communicating my current perceptions about the hurricane and its impact')
 
     def _initializeRelations(self,config):
         logging.debug('Initializing relationships of %s' % (self.name))

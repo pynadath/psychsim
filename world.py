@@ -861,7 +861,10 @@ class World:
                     lo = self.agents[key].actions
                 else:
                     lo = self.agents[keys.state2agent(key)].actions
-            self.variables[key].update({'elements': lo,'lo': None,'hi': None})
+                description = '; '.join([', '.join(['%s: %s' % (act,act.description) \
+                                                    for act in actSet]) for actSet in lo])
+            self.variables[key].update({'elements': lo,'lo': None,'hi': None,
+                                        'description': description})
             for action in lo:
                 self.symbols[action] = len(self.symbols)
                 self.symbolList.append(action)

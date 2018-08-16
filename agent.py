@@ -474,7 +474,7 @@ class Agent:
     """Action methods"""
     """------------------"""
 
-    def addAction(self,action,condition=None):
+    def addAction(self,action,condition=None,description=None):
         """
         @param condition: optional legality condition
         @type condition: L{KeyedPlane}
@@ -492,7 +492,7 @@ class Agent:
             actions.append(action)
         else:
             assert isinstance(action,dict),'Argument to addAction must be at least a dictionary'
-            actions.append(Action(action))
+            actions.append(Action(action,description))
         for atom in actions:
             if not 'subject' in  atom:
                 # Make me the subject of these actions

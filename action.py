@@ -8,13 +8,14 @@ class Action(dict):
     """
     special = ['subject','verb','object']
 
-    def __init__(self,arg={}):
+    def __init__(self,arg={},description=None):
         if isinstance(arg,Node):
             dict.__init__(self)
             self.parse(arg)
         else:
             dict.__init__(self,arg)
         self._string = None
+        self.description = description
         
     def agentLess(self):
         """
@@ -79,6 +80,10 @@ class Action(dict):
             node.setAttribute('key',key)
             node.appendChild(doc.createTextNode(str(value)))
             root.appendChild(node)
+        node = doc.createElement('description')
+        if self.description:
+            node.appendChild(doc.createTextNode(self.description))
+        root.appendChild(node)
         return doc
 
     def parse(self,element):
@@ -87,18 +92,22 @@ class Action(dict):
         child = element.firstChild
         while child:
             if child.nodeType == child.ELEMENT_NODE:
-                assert child.tagName == 'entry'
-                key = str(child.getAttribute('key'))
-                subchild = child.firstChild
-                while subchild.nodeType != subchild.TEXT_NODE:
-                    subchild = subchild.nextSibling
-                value = str(subchild.data).strip()
-                if not key in self.special:
-                    if '.' in value:
-                        value = float(value)
-                    else:
-                        value = int(value)
-                self[key] = value
+                if child.tagName == 'entry':
+                    key = str(child.getAttribute('key'))
+                    subchild = child.firstChild
+                    while subchild.nodeType != subchild.TEXT_NODE:
+                        subchild = subchild.nextSibling
+                    value = str(subchild.data).strip()
+                    if not key in self.special:
+                        if '.' in value:
+                            value = float(value)
+                        else:
+                            value = int(value)
+                    self[key] = value
+                elif child.tagName == 'description':
+                    while subchild.nodeType != subchild.TEXT_NODE:
+                        subchild = subchild.nextSibling
+                    self.description = str(subchild.data).strip()
             child = child.nextSibling
     
 class ActionSet(frozenset):
