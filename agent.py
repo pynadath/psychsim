@@ -838,12 +838,15 @@ class Agent:
     """Belief update methods"""
     """---------------------"""
 
-    def resetBelief(self,model=None):
+    def resetBelief(self,model=None,include=None,ignore=None):
         if model is None:
             assert len(self.models) == 1
             model = list(self.models.keys())[0]
-        beliefs = copy.deepcopy(self.world.state)
-        beliefs.deleteKeys([keys.modelKey(a) for a in self.world.agents])
+        if keys is None:
+            beliefs = copy.deepcopy(self.world.state)
+            beliefs.deleteKeys([keys.modelKey(a) for a in self.world.agents])
+        else:
+            beliefs = self.world.state.copySubset(ignore,include)
         self.models[model]['beliefs'] = beliefs
         return beliefs
         
