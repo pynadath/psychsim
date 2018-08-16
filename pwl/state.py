@@ -665,3 +665,29 @@ class VectorDistributionSet:
     
     def __str__(self):
         return '\n'.join(['%s:\n%s' % (sub,dist) for sub,dist in self.items()])
+
+    def copySubset(self,ignore=None,include=None):
+        result = self.__class__()
+        if include is None:
+            if ignore is None:
+                return self.__deepcopy__({})
+            else:
+                keySubset = {k for k in self.keys() if not k in ignore}
+        elif ignore is None:
+            keySubset = include
+        else:
+            raise RuntimeError,'Use either ignore or include sets, but not both'
+        for key in keySubset:
+            if not key in result:
+                distribution = self.distributions[self.keyMap[key]]
+                substate = len(result.distributions)
+                result.distributions[substate] = distribution.__class__()
+                intersection = [k for k in distribution.keys() if k in keySubset]
+                for subkey in intersection:
+                    result.keyMap[subkey] = substate
+                for vector in distribution.domain():
+                    newValues = {subkey: vector[subkey] for subkey in intersection}
+                    newVector = vector.__class__(newValues)
+                    result.distributions[substate].addProb(newVector,distribution[vector])
+        return result
+                    
