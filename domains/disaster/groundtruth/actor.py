@@ -593,20 +593,29 @@ class Actor(Agent):
         myHome = self.world.getState(self.name,'region').first()
         neighbors = {a.name for a in population if a.name != self.name and \
                      self.world.getState(a.name,'region').first() == myHome}
-
-        beliefs = self.resetBelief()
-        for other in population:
-            if other.name != self.name:
-                if config.getint('Actors','altruism_neighbors') > 0 and \
-                   other.name in neighbors:
-                    # I care about my neighbors, so I can't ignore them
-                    continue
-#                 if world.getFeature(binaryKey(self.name,other.name,'friendOf')).first():
-#                     continue
-                self.ignore(other.name,'%s0' % (self.name))
-
         regions = [n for n in self.world.agents if isinstance(self.world.agents[n],Region)]
         shelters = map(int,config.get('Shelter','region').split(','))
-        for region in regions:
-            if region != myHome and not self.world.agents[region].number in shelters:
-                self.ignore(region,'%s0' % (self.name))
+
+        include = set()
+        for key in self.world.state.keys():
+            agent = state2agent(key)
+            if agent == self.name:
+                include.add(key)
+            elif agent == 'Nature':
+                include.add(key)
+            elif agent == WORLD:
+                include.add(key)
+            elif isinstance(self.world.agents[agent],Actor):
+                if config.getint('Actors','altruism_neighbors') > 0 and agent in neighbors:
+                    # I care about my neighbors' health
+                    if state2feature == 'health':
+                        include.add(key)
+                elif config.getint('Actors','altruism_neighbors') > 0 and \
+                     self.world.getFeature(binaryKey(self.name,agent,'friendOf')).first():
+                    # I care about my friends' health
+                    if state2feature == 'health':
+                        include.add(key)
+            elif isinstance(self.world.agents[agent],Region):
+                if agent == myHome or self.world.agents[agent].number in shelters:
+                    include.add(key)
+        beliefs = self.resetBelief(include=include)
