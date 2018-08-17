@@ -688,6 +688,7 @@ class VectorDistributionSet:
                 newDist = {}
                 for vector in distribution.domain():
                     newValues = {subkey: vector[subkey] for subkey in intersection}
+                    newValues[keys.CONSTANT] = 1.
                     newVector = vector.__class__(newValues)
                     newDist[newVector] = distribution[vector]+newDist.get(newVector,0.)
                 result.distributions[substate] = VectorDistribution(newDist)
