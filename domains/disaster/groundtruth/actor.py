@@ -525,6 +525,7 @@ class Actor(Agent):
                 self.setReward(maximizeFeature(pet,self.name),likert[5][mean-1])
         if config.getboolean('Actors','beliefs'):
             # Observations
+            
             omega = self.defineObservation('phase',domain=list,
                                            lo=self.world.variables['Nature\'s phase']['elements'])
             self.setO('phase',None,
@@ -535,10 +536,32 @@ class Actor(Agent):
             self.setO('center',None,
                       makeTree(setToFeatureMatrix(omega,makeFuture(stateKey('Nature','location')))))
             self.setState('center','none')
+
             omega = self.defineObservation('category',domain=int)
-            self.setO('category',None,
-                      makeTree(setToFeatureMatrix(omega,makeFuture(stateKey('Nature','category')))))
+            distortion = Distribution({'over': likert[5][config.getint('Actors','category_over')-1],
+                                       'under': likert[5][config.getint('Actors','category_under')-1]})
+            distortion['none'] = 1.-distortion['over']-distortion['under']
+            self.distortion = distortion.sample()
+            distortionProb = likert[5][config.getint('Actors','category_distortion')]
+            real = makeFuture(stateKey('Nature','category'))
+            if self.distortion == 'none':
+                tree = setToFeatureMatrix(omega,real)
+            elif self.distortion == 'over':
+                tree = {'if': equalRow(real,[0,1]),
+                        True: setToFeatureMatrix(omega,real),
+                        False: {'distribution': [(setToFeatureMatrix(omega,real),1.-distortionProb),
+                                                 (setToFeatureMatrix(omega,real,shift=-1),
+                                                  distortionProb)]}}
+            else:
+                assert self.distortion == 'under'
+                tree = {'if': equalRow(real,[0,5]),
+                        True: setToFeatureMatrix(omega,real),
+                        False: {'distribution': [(setToFeatureMatrix(omega,real),1.-distortionProb),
+                                                 (setToFeatureMatrix(omega,real,shift=1),
+                                                  distortionProb)]}}
+            self.setO('category',None,makeTree(tree))
             self.setState('category',0)
+            
             omega = self.defineObservation('perceivedHealth')
             self.setO('perceivedHealth',None,
                       makeTree(setToFeatureMatrix(omega,makeFuture(stateKey(self.name,'health')))))
@@ -629,9 +652,11 @@ class Actor(Agent):
         for key in self.world.state.keys():
             agent = state2agent(key)
             if agent == self.name:
-                include.add(key)
+                if not isModelKey(key):
+                    include.add(key)
             elif agent == 'Nature':
-                include.add(key)
+                if not isModelKey(key):
+                    include.add(key)
             elif agent == WORLD:
                 include.add(key)
             elif isinstance(self.world.agents[agent],Actor):
@@ -646,5 +671,6 @@ class Actor(Agent):
                         include.add(key)
             elif isinstance(self.world.agents[agent],Region):
                 if agent == myHome or self.world.agents[agent].number in shelters:
-                    include.add(key)
+                    if not isModelKey(key):
+                        include.add(key)
         beliefs = self.resetBelief(include=include)
