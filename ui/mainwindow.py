@@ -197,4 +197,4 @@ class Ui_MainWindow(object):
         self.actionBeliefs.setText(_translate("MainWindow", "&Beliefs"))
         self.actionSubgraphs.setText(_translate("MainWindow", "Subgraphs"))
 
-import psychsim_rc
+import psychsim.ui.psychsim_rc

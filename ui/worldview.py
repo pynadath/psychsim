@@ -463,7 +463,7 @@ class WorldView(QGraphicsScene):
                         if variable['domain'] is bool:
                             color = dist2color(marginal)
                         else:
-                            print key,variable['domain']
+                            raise RuntimeError('Unable to display color of %s over domain %s' % (key,variable['domain']))
                     elif category == 'action':
                         uniform = 1./float(len(cache[node.agent.name]))
                         prob = cache[node.agent.name].getProb(node.action)

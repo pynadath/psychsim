@@ -22,7 +22,7 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
     @pyqtSlot() # signal with no arguments
     def on_actionOpen_triggered(self):
         filename,types = QFileDialog.getOpenFileName(self,"PsychSim -- Open File")
-        if not filename.isEmpty():
+        if filename:
             self.openScenario(str(filename))
 
     def openScenario(self,filename):
@@ -128,9 +128,9 @@ if __name__ == '__main__':
 
     win = PsychSimUI()
     if args.scenario is None:
-        filename = settings.value('LastFile').toString()
+        filename = settings.value('LastFile')
         if filename and QFile.exists(filename):
-            win.openScenario(str(filename))
+                win.openScenario(filename)
     else:
         win.openScenario(args.scenario)
     win.showMaximized()

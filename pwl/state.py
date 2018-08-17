@@ -676,7 +676,7 @@ class VectorDistributionSet:
         elif ignore is None:
             keySubset = include
         else:
-            raise RuntimeError,'Use either ignore or include sets, but not both'
+            raise RuntimeError('Use either ignore or include sets, but not both')
         for key in keySubset:
             if not key in result:
                 distribution = self.distributions[self.keyMap[key]]
