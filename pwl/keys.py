@@ -81,10 +81,10 @@ def turnKey(name):
     return stateKey(name,TURN)
 
 def isTurnKey(key):
-    return key[-8:] == '\'s %s' % (TURN)
+    return key[-(len(TURN)+3):] == '\'s %s' % (TURN)
 
 def turn2name(key):
-    return key[:-8]
+    return key[:-(len(TURN)+3)]
 
 def actionKey(feature):    
     return '__action__%s__' % (feature)
@@ -96,10 +96,10 @@ def modelKey(name):
     return stateKey(name,MODEL)
 
 def isModelKey(key):
-    return key[-9:] == '\'s %s' % (MODEL)
+    return key[-(len(MODEL)+3):] == '\'s %s' % (MODEL)
 
 def model2name(key):
-    return key[:-9]
+    return key[:-(len(MODEL)+3)]
 
 def binaryKey(subj,obj,relation):
     return '%s %s -> %s' % (subj,relation,obj)
