@@ -685,9 +685,11 @@ class VectorDistributionSet:
                 intersection = [k for k in distribution.keys() if k in keySubset]
                 for subkey in intersection:
                     result.keyMap[subkey] = substate
+                newDist = {}
                 for vector in distribution.domain():
                     newValues = {subkey: vector[subkey] for subkey in intersection}
                     newVector = vector.__class__(newValues)
-                    result.distributions[substate].addProb(newVector,distribution[vector])
+                    newDist[newVector] = distribution[vector]+newDist.get(newVector,0.)
+                result.distributions[substate] = VectorDistribution(newDist)
         return result
                     
