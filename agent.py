@@ -57,38 +57,51 @@ class Agent:
     """Policy methods"""
     """------------------"""
 
+        
     def compileV(self,model=None,state=None):
         self.world.dependency.getEvaluation()
         if model is None:
             model = '%s0' % (self.name)
+        belief = self.getBelief(self.world.state,model)
+        horizon = self.getAttribute('horizon',model)
         R = self.getReward(model)
-        keys = R.getKeysIn()-{CONSTANT}
-        ancestorList = [self.world.dependency[makeFuture(k)]['ancestors'] for k in keys]
-        ancestors = set.union(*ancestorList)
-        print(sorted(ancestors))
+        Rkey = rewardKey(self.name,True)
         if state:
             actions = self.getActions(state)
         else:
             actions = self.actions
-        done = set()
+        V = {}
         for action in actions:
             print(action)
-            effects = [0]
-            while effects:
-                print('----')
-                effects = set()
-                tree = None
-                for key in sorted(self.world.dynamics.keys()):
-                    dynamics = self.world.getDynamics(key,action)
-                    if dynamics and key in ancestors and not key in done:
-                        print('\t%s' % (key))
-                        effects.add(key)
+            effects = self.world.deltaState(action,belief)
+            effects.reverse()
+            V[action] = copy.deepcopy(R)
+            keyList = V[action].getKeysIn()
+            V[action].makeFuture(keyList)
+            for stage in effects:
+                subtree = None
+                for key,dynamics in stage.items():
+                    if dynamics and makeFuture(key) in V[action].getKeysIn():
                         assert len(dynamics) == 1
-                        if tree is None:
-                            tree = dynamics[0]
+                        if subtree is None:
+                            subtree = dynamics[0]
                         else:
-                            tree += dynamics[0]
-                        done.add(key)
+                            subtree += dynamics[0]
+                if subtree:
+                    for key in V[action].getKeysIn():
+                        if not key in subtree.getKeysOut():
+                            fun = lambda m: KeyedMatrix(m.items()+[(key,KeyedVector({key: 1.}))])
+                            subtree = subtree.map(fun)
+                    V[action] = V[action]*subtree
+            keyList = [key for key in V[action].getKeysIn() if isFuture(key)]
+            if keyList:
+                V[action].makePresent(keyList)
+#            print(V[action])
+            state = copy.deepcopy(belief)
+            state.join(CONSTANT,1.)
+            state *= V[action]
+            ER = state[Rkey]
+        return V
                             
     def decide(self,vector,horizon=None,others=None,model=None,selection=None,actions=None,keySet=None):
         """
