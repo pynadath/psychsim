@@ -259,7 +259,7 @@ class VectorDistributionSet:
         else:
             self.keyMap[key] = substate
         if not substate in self.distributions:
-            self.distributions[substate] = VectorDistribution()
+            self.distributions[substate] = VectorDistribution({KeyedVector({keys.CONSTANT:1.}):1.})
         return self.distributions[substate].join(key,value)
 
     def marginal(self,key):
@@ -336,7 +336,7 @@ class VectorDistributionSet:
             result = self.__class__()
             result.keyMap.update(self.keyMap)
             for substate,value in self.distributions.items():
-                result[substate] = value + other.distributions[substate]
+                result.distributions[substate] = value + other.distributions[substate]
             return result
         else:
             return NotImplemented
@@ -414,26 +414,40 @@ class VectorDistributionSet:
                 # Multiply out children, other than first-born
                 newKids = []
                 for child in oldKids[1:]:
-                    assert child.isLeaf(),'Move probabilistic branches to bottom of your trees; otherwise, I haven\'t figured out the easiest math yet.'
                     myChild = copy.deepcopy(self)
                     myChild *= child
                     newKids.append(myChild)
-                # Compute first-born child
                 self *= oldKids[0]
-                # Scale by probability of this child
-                prob = other.children[oldKids[0]]
-                subkeys = oldKids[0].getKeysOut()
-                substates = self.substate(subkeys)
-                substate = self.keyMap[iter(subkeys).next()]
-                distribution = self.distributions[substate]
-                for vector in distribution.domain():
-                    distribution[vector] *= prob
-                if len(substates) > 1:
-                    raise RuntimeError('Somebody got greedy and independent-ified variables that are dependent')
-                # Merge products into first-born
-                for index in range(len(newKids)):
-                    self.update(newKids[index],oldKids[index+1].getKeysOut(),
-                                other.children[oldKids[index+1]])
+                # Compute first-born child
+                newKids.insert(0,self)
+                for index in range(len(oldKids)):
+                    # Scale by probability of this child
+                    prob = other.children[oldKids[index]]
+                    subkeys = oldKids[index].getKeysOut()
+                    substates = newKids[index].substate(subkeys)
+                    assert len(substates) == 1
+                    substate = newKids[index].keyMap[iter(subkeys).next()]
+#                    print index,prob
+#                    print newKids[index].distributions[substate]
+#                    assert substate in substates
+#                    assert substates == self.substate(subkeys)
+                    if index == 0:
+                        for vector in self.distributions[substate].domain():
+                            self.distributions[substate][vector] *= prob
+                    else:
+                        distribution = newKids[index].distributions[substate]
+                        for vector in distribution.domain():
+                            self.distributions[substate].addProb(vector,distribution[vector]*prob)
+#                        distribution[vector] *= prob
+#                    if len(substates) > 1:
+#                        raise RuntimeError('Somebody got greedy and independent-ified variables that are dependent')
+                    # if index > 0:
+                    #     if newKids[index].isLeaf():
+                    #         self.update(newKids[index],oldKids[index].getKeysOut(),
+                    #                     other.children[oldKids[index]])
+                    #     else:
+#                    print substate
+#                    self += newKids[index]
             else:
                 # Evaluate the hyperplane and split the state
                 branchKeys = set(other.branch.keys())
@@ -694,3 +708,13 @@ class VectorDistributionSet:
                 result.distributions[substate] = VectorDistribution(newDist)
         return result
                     
+    def verifyIntegrity(self):
+        for key in self.keys():
+            assert self.keyMap[key] in self.distributions,'Distribution %s missing for key %s' % \
+                (self.keyMap[key],key)
+            distribution = self.distributions[self.keyMap[key]]
+            for vector in distribution.domain():
+                assert key in vector,'Key %s is missing from vector\n%s\nProb: %d%%' % \
+                    (key,vector,distribution[vector]*100)
+                
+            
