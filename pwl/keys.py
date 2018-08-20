@@ -120,8 +120,8 @@ def likesKey(subj,obj):
 def isLikesKey(key):
     return ' likes -> ' in key
 
-def rewardKey(name):
-    return stateKey(name,REWARD)
+def rewardKey(name,future=False):
+    return stateKey(name,REWARD,future)
 
 def isRewardKey(key):
     return isStateKey(key) and state2feature(key) == REWARD
