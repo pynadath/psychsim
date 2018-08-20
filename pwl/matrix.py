@@ -145,9 +145,20 @@ class KeyedMatrix(dict):
         Transforms matrix so that each row refers to only future keys
         @param keyList: If present, only references to these keys (within each row) are made future
         """
+        return self.changeTense(True,keyList)
+
+    def makePresent(self,keyList=None):
+        return self.changeTense(False,keyList)
+    
+    def changeTense(self,future=True,keyList=None):
+        """
+        Transforms matrix so that each row refers to only future keys
+        @param keyList: If present, only references to these keys (within each row) are made future
+        """
         self._string = None
+        self._keysIn = None
         for key,vector in self.items():
-            vector.makeFuture(keyList)
+            vector.changeTense(future,keyList)
             
     def scale(self,table):
         result = self.__class__()

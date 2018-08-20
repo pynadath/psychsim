@@ -203,6 +203,12 @@ class KeyedTree:
         return self
 
     def makeFuture(self,keyList=None):
+        self.changeTense(True,keyList)
+
+    def makePresent(self,keyList=None):
+        self.changeTense(False,keyList)
+        
+    def changeTense(self,future=True,keyList=None):
         """
         Transforms this vector to refer to only future versions of its columns
         @param keyList: If present, only references to these keys are made future
@@ -213,11 +219,15 @@ class KeyedTree:
             for child in self.children.domain():
                 prob = self.children[child]
                 del self.children[child]
-                child.makeFuture(keyList)
+                child.changeTense(future,keyList)
                 self.children[child] = prob
         else:
+            if not self.isLeaf():
+                self.branch.changeTense(future,keyList)
             for value,child in self.children.items():
-                child.makeFuture(keyList)
+                child.changeTense(future,keyList)
+        self._string = None
+        self._keysIn = None
             
     def scale(self,table):
         tree = self.__class__()
@@ -477,7 +487,7 @@ class KeyedTree:
                 result.makeBranch(self.branch,self.children[True].prune(path+[(self.branch,True)]),
                                   self.children[False].prune(path+[(self.branch,False)]))
         return result
-
+                
     def minimizePlanes(self):
         """
         Modifies tree in place so that there are no constant factors in branch weights
@@ -489,7 +499,18 @@ class KeyedTree:
             self.branch = self.branch.minimize()
             self.children[True].minimizePlanes()
             self.children[False].minimizePlanes()
-            
+
+    def leaves(self):
+        """
+        @warning: May return a list containing duplicates
+        """
+        if self.isLeaf():
+            return [self.children[None]]
+        elif self.isProbabilistic():
+            return sum([child.leaves() for child in self.children.domain()],[])
+        else:
+            return sum([child.leaves() for child in self.children.values()],[])
+    
     def __hash__(self):
         return hash(str(self))
 

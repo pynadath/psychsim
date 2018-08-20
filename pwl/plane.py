@@ -142,12 +142,24 @@ class KeyedPlane:
         Transforms this plane to refer to only future versions of its columns
         @param keyList: If present, only references to these keys are made future
         """
+        self.changeTense(True,keyList)
+
+    def makePresent(self,keyList=None):
+        """
+        Transforms this plane to refer to only current versions of its columns
+        @param keyList: If present, only references to these keys are made present
+        """
+        self.changeTense(False,keyList)
+
+    def changeTense(self,future=True,keyList=None):
         if keyList is None:
             keyList = self.keys()
         planes = []
         for plane,threshold,comparison in self.planes:
-            plane.makeFuture(keyList)
-        return self.__class__(planes)
+            plane.changeTense(future,keyList)
+        self._keys = None
+        self._string = None
+#        return self.__class__(planes)
 
     def scale(self,table):
         vector = self.vector.__class__(self.vector)
