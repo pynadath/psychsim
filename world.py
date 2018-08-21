@@ -981,7 +981,7 @@ class World:
         else:
             marginal = self.getFeature(key,state)
             assert len(marginal) == 1,'getValue operates on only singleton distributions'
-            return marginal.domain()[0]
+            return marginal.first()
 
     def decodeVariable(self,key,distribution):
         raise DeprecationWarning('Use float2value method instead')

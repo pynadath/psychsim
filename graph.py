@@ -80,7 +80,7 @@ class DependencyGraph(dict):
                 # Process the agent actions
                 for action in agent.actions:
                     action = ActionSet([a.root() for a in action])
-                    if not self.has_key(action):
+                    if not action in self:
                         self[action] = {'agent': name,
                                         'type': 'action',
                                         'parents': set(),
@@ -174,7 +174,7 @@ class DependencyGraph(dict):
                     if not child in layer:
                         # Check whether eligible for the new layer
                         for parent in self[child]['parents']:
-                            if not self[parent].has_key('level') or self[parent]['level'] > level:
+                            if not 'level' in self[parent] or self[parent]['level'] > level:
                                 # Ineligible to be in this layer
                                 break
                         else:

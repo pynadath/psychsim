@@ -60,7 +60,10 @@ class VectorDistributionSet:
         @return: the number of elements in the implied joint distribution
         @rtype: int
         """
-        return reduce(operator.mul,[len(d) for d in self.distributions.values()],1)
+        prod = 1
+        for dist in self.distributions.values():
+            prod *= len(dist)
+        return prod
 
     def __getitem__(self,key):
         return self.marginal(key)
@@ -149,7 +152,7 @@ class VectorDistributionSet:
         Collapses (in place) the given substates into a single joint L{VectorDistribution}
         """
         if len(substates) > 0:
-            if isinstance(iter(substates).next(),str):
+            if isinstance(next(iter(substates)),str):
                 # Why not handle keys, too?
                 substates = self.substate(substates)
             if preserveCertainty:
@@ -218,17 +221,17 @@ class VectorDistributionSet:
         elif isinstance(obj,bool):
             return set()
         else:
-            return self.substate(obj.keys())
+            return self.substate(list(obj.keys()))
 
     def merge(self,substates):
         """
         @return: the substate into which they've all been merged
         """
         try:
-            destination = iter(substates).next()
+            destination = next(iter(substates))
         except StopIteration:
             return None
-        for substate,distribution in self.distributions.items():
+        for substate,distribution in list(self.distributions.items()):
             if substate == destination:
                 pass
                 # if not inPlace:
@@ -428,7 +431,7 @@ class VectorDistributionSet:
                     if len(substates) > 1:
                         substate = newKids[index].collapse(substates)
                     else:
-                        substate = iter(substates).next()
+                        substate = next(iter(substates))
                     if index == 0:
                         for vector in self.distributions[substate].domain():
                             self.distributions[substate][vector] *= prob
@@ -441,12 +444,12 @@ class VectorDistributionSet:
                             if len(mySubstates) > 1:
                                 mySubstate = self.collapse(mySubstates,False)
                             else:
-                                mySubstate = iter(mySubstates).next()
+                                mySubstate = next(iter(mySubstates))
                             substates = newKids[index].substate(toCollapse[0]|set(newKids[index].distributions[substate].keys()))
                             if len(substates) > 1:
                                 substate = newWKids[index].collapse(substates,False)
                             else:
-                                substate = iter(substates).next()
+                                substate = next(iter(substates))
                             toCollapse = ({k for k in self.distributions[mySubstate].keys() \
                                            if k != keys.CONSTANT and \
                                            not k in newKids[index].distributions[substate].keys()},
@@ -525,7 +528,7 @@ class VectorDistributionSet:
                 if key != keys.CONSTANT and self.keyMap[key] != destination:
                     # Certain value for this key
                     marginal = self.marginal(key)
-                    total += other[key]*iter(marginal.domain()).next()
+                    total += other[key]*next(iter(marginal.domain()))
             self.join(keys.VALUE,total,destination)
             for vector in self.distributions[destination].domain():
                 prob = self.distributions[destination][vector]
@@ -725,7 +728,7 @@ class VectorDistributionSet:
                     assert other == keys.CONSTANT or self.keyMap[other] == self.keyMap[key] ,\
                         'Unmapped key %s is in vector\n\%s' % (other,vector)
             if sumToOne:
-                assert (sum(distribution.values())-1.)<000001,'Distribution sums to %4.2f' % \
+                assert (sum(distribution.values())-1.)<.000001,'Distribution sums to %4.2f' % \
                     (sum(distribution.values()))
             else:
                 assert sum(distribution.values())<1.000001,'Distribution sums to %4.2f' % \

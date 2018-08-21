@@ -258,6 +258,7 @@ class VectorDistribution(Distribution):
                 row[key] = value
                 self[row] = prob
 
+
     def merge(self,other,inPlace=False):
         """
         Merge two distributions (the passed-in distribution takes precedence over this one in case of conflict)

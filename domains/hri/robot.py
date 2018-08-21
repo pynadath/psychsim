@@ -9,6 +9,8 @@ from __future__ import print_function
 import datetime
 import fileinput
 import os
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
 import random
 from string import Template
 import sys
@@ -93,8 +95,8 @@ CODES = {'ability': {'s': 'badSensor','g': 'good','m': 'badModel'},
          }
 
 def createWorld(username='anonymous',level=0,ability='good',explanation='none',
-                embodiment='robot',acknowledgment='no',sequence=False,
-                root='.',ext='xml'):
+                embodiment='robot',acknowledgment='no',learning='no',fnProb=0.01,
+                sequence=False,root='.',ext='xml'):
     """
     Creates the initial PsychSim scenario and saves it
     @param username: name of user ID to use in filenames
@@ -116,6 +118,9 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     @param acknowledgment: the robot's behavior regarding the acknowledgment of errors
       - no: The robot does not acknowledge its errors
       - yes: The robot acknowledges its errors
+    @param learning: the robot performs model-based RL
+      - no: The robot does not perform RL
+      - yes: The robot performs RL
     @type acknowledgment: str
     @param root: the root directory to use for files (default is current working directory)
     @param ext: the file extension for the PsychSim scenario file
@@ -126,8 +131,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 
     print("**************************createWorld***********************")
     print('Username:\t%s\nLevel:\t\t%s' % (username,level+1))
-    print('Ability\t\t%s\nExplanation:\t%s\nEmbodiment:\t%s\nAcknowledge:\t%s' % \
-          (ability,explanation,embodiment,acknowledgment))
+    print('Ability\t\t%s\nExplanation:\t%s\nEmbodiment:\t%s\nAcknowledge:\t%s\nLearning:\t%s' % (ability,explanation,embodiment,acknowledgment,learning))
 
     # Pre-compute symbols for this level's waypoints
     for point in WAYPOINTS[level]:
@@ -136,16 +140,16 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 
     world = World()
 
-    world.defineState(None,'level',int,lo=0,hi=len(WAYPOINTS)-1,
+    world.defineState(WORLD,'level',int,lo=0,hi=len(WAYPOINTS)-1,
                       description='Static variable indicating what mission level')
-    world.setState(None,'level',level)
+    world.setState(WORLD,'level',level)
 
-    world.defineState(None,'time',float)
-    world.setState(None,'time',0.)
+    world.defineState(WORLD,'time',float)
+    world.setState(WORLD,'time',0.)
 
-    key = world.defineState(None,'phase',set,lo={'scan','move'},
+    key = world.defineState(WORLD,'phase',set,lo={'scan','move'},
                             description='What phase of the turn is it')
-    world.setState(None,'phase','move')
+    world.setState(WORLD,'phase','move')
     # Alternate between phases
     tree = makeTree({'if': equalRow(key,'scan'),
                      True: setToConstantMatrix(key,'move'),
@@ -157,7 +161,8 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     for waypoint in WAYPOINTS[level]:
         if not 'symbol' in waypoint:
             waypoint['symbol'] = waypoint['name'].replace(' ','')
-        world.addAgent(waypoint['symbol'])
+        building = world.addAgent(waypoint['symbol'])
+        building.setAttribute('static',True)
         # Has the robot scanned this waypoint?
         key = world.defineState(waypoint['symbol'],'scanned',bool)
         world.setFeature(key,False)
@@ -184,6 +189,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                                    False: setFalseMatrix(TERMINATED)}))
     # Human
     human = world.addAgent('human')
+    human.setAttribute('static',True)
 
     world.defineState(human.name,'alive',bool)
     human.setState('alive',True)
@@ -206,6 +212,12 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     world.defineState(robot.name,'acknowledgment',list,['no','yes'])
     robot.setState('acknowledgment',acknowledgment)
 
+    world.defineState(robot.name,'learning',list,['no','yes'])
+    robot.setState('learning',learning)
+    world.defineState(robot.name,'cameraFNProb',
+                      description='Probability of false negative from camera')
+    robot.setState('cameraFNProb',fnProb)
+
     world.defineState(robot.name,'ability',list,['badSensor','badModel','good'])
     if ability is True:
         # Backward compatibility with boolean ability
@@ -214,10 +226,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         ability = 'badSensor'
     robot.setState('ability',ability)
 
-    # State of the robot's sensors
-    world.defineState(robot.name,'sensorModel',list,['good','bad'])
-    robot.setState('sensorModel','good')
-    
+    # Commands from teammate
     world.defineState(robot.name,'command',list,['none']+[point['symbol'] for point in WAYPOINTS[level]])
     robot.setState('command','none')
 
@@ -239,7 +248,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         # Robot movement
         action = robot.addAction({'verb': 'moveto','object': symbol})
         # Legal if no contradictory command
-        tree = makeTree({'if': equalRow('phase','move'),
+        tree = makeTree({'if': equalRow(stateKey(WORLD,'phase'),'move'),
                          True: {'if': equalRow(stateKey(robot.name,'command'),'none'),
                                 True: {'if': trueRow(stateKey(symbol,'scanned')),
                                                      True: False, False: True},
@@ -261,7 +270,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         tree = makeTree(setTrueMatrix(key))
         world.setDynamics(key,action,tree)
         # Dynamics of time
-        key = stateKey(None,'time')
+        key = stateKey(WORLD,'time')
         tree = setToConstantMatrix(key,0.)
         for start in range(len(WAYPOINTS[level])):
             if start != end:
@@ -287,9 +296,10 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         omega = stateKey(robot.name,'microphone')
         robot.setO('microphone',action,makeTree(generateMicO(world,key)))
         omega = stateKey(robot.name,'NBCsensor')
-        robot.setO('NBCsensor',action,makeTree(generateNBCO(world,key)))
+        tree = makeTree(generateNBCO(world,key))
+        robot.setO('NBCsensor',action,tree)
         omega = stateKey(robot.name,'camera')
-        robot.setO('camera',action,makeTree(generateCameraO(world,key)))
+        robot.setO('camera',action,makeTree(generateCameraO(world,key,falseNeg=fnProb)))
 
         # Human entry: Dead or alive if unprotected?
         key = stateKey(human.name,'alive')
@@ -301,10 +311,11 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 #        tree = makeTree({'if': equalRow(stateKey(symbol,'danger'),'none'),
 #                         True: noChangeMatrix(key), False: incrementMatrix(key,1.)})
 #        world.setDynamics(key,action,tree)
+
         # Going in without protection takes no time
-        key = stateKey(None,'time')
+        key = stateKey(WORLD,'time')
         world.setDynamics(key,action,makeTree(setToConstantMatrix(key,0.)))
-        tree = makeTree({'if': equalRow('phase','scan'),
+        tree = makeTree({'if': equalRow(stateKey(WORLD,'phase'),'scan'),
                          True: {'if': equalRow(stateKey(action['subject'],'waypoint'),
                                                symbol),
                                 True: True,
@@ -334,9 +345,9 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                              False: setFalseMatrix(omega)}))
         # Human entry: How much "time" if protected?
         action = robot.addAction({'verb': 'recommend protected','object': symbol})
-        key = stateKey(None,'time')
+        key = stateKey(WORLD,'time')
         world.setDynamics(key,action,makeTree(setToConstantMatrix(key,0.25)))
-        tree = makeTree({'if': equalRow('phase','scan'),
+        tree = makeTree({'if': equalRow(stateKey(WORLD,'phase'),'scan'),
                          True: {'if': equalRow(stateKey(action['subject'],'waypoint'),
                                                symbol),
                                 True: True,
@@ -366,20 +377,25 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                              False: setFalseMatrix(omega)}))
 
     # Robot goals
-    goal = minimizeFeature(stateKey(None,'time'))
-    robot.setReward(goal,100.)
+    goal = makeTree(setToFeatureMatrix(stateKey(robot.name,REWARD),
+                                       stateKey(WORLD,'time'),-1.))
+#    goal = minimizeFeature(stateKey(WORLD,'time'))
+    robot.setReward(goal,60.)
 
-    goal = achieveGoal(stateKey(human.name,'alive'))
+    goal = makeTree(setToFeatureMatrix(stateKey(robot.name,REWARD),
+                                       stateKey(human.name,'alive')))
+#    goal = achieveGoal(stateKey(human.name,'alive'))
     robot.setReward(goal,20.)
 
-    for point in WAYPOINTS[level]:
-        robot.setReward(maximizeFeature(stateKey(point['symbol'],'scanned')),2.)
+#    for point in WAYPOINTS[level]:
+#        robot.setReward(maximizeFeature(stateKey(point['symbol'],'scanned')),2.)
 
     world.setOrder([robot.name])
 
     # Robot beliefs
+    robot.resetBelief(ignore=[modelKey(robot.name)])
     model = '%s0' % (robot.name)
-    world.setModel(robot.name,model)
+#    world.setModel(robot.name,model)
     value = 10./float(len(WAYPOINTS[level]))
     for index in range(len(WAYPOINTS[level])):
         waypoint = WAYPOINTS[level][index]
@@ -425,7 +441,7 @@ def generateNBCO(world,key):
                     (setTrueMatrix(omega),0.05)]},
             }
     
-def generateCameraO(world,key,belief=False):
+def generateCameraO(world,key,belief=False,falseNeg=0.05):
     """
     @return: a observation function specification for use in a PWL function
     @rtype: dict
@@ -443,8 +459,8 @@ def generateCameraO(world,key,belief=False):
                    },
             False: {'if': equalRow(key,'armed'),
                     True: {'distribution':
-                           [(setToConstantMatrix(omega,False),0.05),
-                            (setToConstantMatrix(omega,True),0.95)]},
+                           [(setToConstantMatrix(omega,False),falseNeg),
+                            (setToConstantMatrix(omega,True),1.-falseNeg)]},
                     False: {'distribution':
                             [(setToConstantMatrix(omega,False),0.95),
                              (setToConstantMatrix(omega,True),0.05)]},
@@ -499,7 +515,8 @@ def maxLevels():
     """
     return len(WAYPOINTS)
 
-def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=None):
+def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=None,
+                autonomous=False):
     """
     @param parameters: ignored if request is provided
     """ 
@@ -545,15 +562,21 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
         world.setState(robot.name,'command','none')
     WriteLogData('Received command: %s' % (command),username,level,root=root)
 
-    # Find the best action
-    values = []
-    model = world.getModel(robot.name).first()
-    result = robot.decide(oldVector,horizon=1,model=model)
-    destination = result['action']['object']
-    WriteLogData('%s %s' % (LOCATION_TAG,destination),username,level,root=root)
-    index = symbol2index(destination,level)
-    destination = WAYPOINTS[level][index]
-
+    if autonomous:
+        # Find the best action
+        values = []
+        model = world.getModel(robot.name).first()
+        result = robot.decide(oldVector,horizon=1,model=model)
+        destination = result['action']['object']
+        WriteLogData('%s %s' % (LOCATION_TAG,destination),username,level,root=root)
+        index = symbol2index(destination,level)
+        destination = WAYPOINTS[level][index]
+    elif command is None:
+        # Move to next building in sequence
+        index = robotIndex + 1
+    else:
+        # Commanded to move to specific building
+        index = int(command)
     return index
 
 def GetAcknowledgment(user,recommendation,location,danger,username,level,parameters,
@@ -579,14 +602,36 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     else:
         # Robot didn't say anything, so not it's problem
         error = None
+    if world.getFeature('robot\'s learning').get('yes') > 0.5:
+        # Let's learn!
+        if world.getFeature('%s\'s danger' % (location),oldVector).get('armed') > 0.5:
+            # Armed gunman was there
+            fnProb = world.getFeature('robot\'s cameraFNProb',oldVector)
+            assert len(fnProb) == 1
+            fnProb = fnProb.first()
+            alpha = 0.1
+            if world.getFeature('robot\'s camera',oldVector).get(False) > 0.5:
+                # False negative!
+                fnProb = (1.-alpha)*fnProb + alpha
+            else:
+                fnProb = (1.-alpha)*fnProb
+            world.setFeature('robot\'s cameraFNProb',fnProb)
+            for waypoint in WAYPOINTS[level][robotIndex+1:]:
+                symbol = waypoint['symbol']
+                action = ActionSet(Action({'subject': 'robot','verb': 'moveto',
+                                           'object': symbol}))
+                tree = makeTree(generateCameraO(world,stateKey(symbol,'danger'),
+                                                falseNeg=fnProb))
+                world.agents['robot'].setO('camera',action,tree)
     action = Action({'subject': 'robot',
                      'verb': 'recommend %s' % (recommendation),
                      'object': location})
     assert len(world.getModel('robot')) == 1
     world.step(action)
     assert len(world.getModel('robot')) == 1
-    belief = world.getState(location,'danger',
-                            world.agents['robot'].getBelief().values()[0])
+    beliefState = list(world.agents['robot'].getBelief().values())[0]
+    belief = world.getState(location,'danger',beliefState)
+                            
     real = world.getState(location,'danger')
     assert len(real) == 1
     assert len(belief) == 1
@@ -640,12 +685,11 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         robotWaypoint = WAYPOINTS[level][robotIndex]
         if not 'symbol'in robotWaypoint:
             robotWaypoint['symbol'] = robotWaypoint['name'].replace(' ','')
-
-    action = Action({'subject': robot.name,
+    
+    move = Action({'subject': robot.name,
                      'verb': 'moveto',
                      'object': robotWaypoint['symbol']})
-    world.step(action)
-
+    world.step(move)
     # Process scripted observations 
     key = stateKey(robotWaypoint['symbol'],'danger')
     ability = robot.getState('ability').domain()[0]
@@ -681,21 +725,59 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     model = world.getModel(robot.name)
     assert len(model) == 1
     model = model.first()
+
     assessment = world.getFeature(key,beliefs[model])
     for danger in assessment.domain():
         WriteLogData('Posterior belief in %s: %d%%' % (danger,assessment[danger]*100.),
                      username,level,root=root)
     # Which recommendation is better?
     decision = robot.decide(world.state,model=model)
-    for action in decision['V']:
+    # R = robot.getReward(model)
+    # subset = set(R.getKeysIn()) - {CONSTANT}
+    # R.children[None].makeFuture()
+    projection = {}
+    for action in sorted(decision['V']):
+    #     effect = world.deltaState(action,beliefs[model],subset)
+    #     assert len(effect) == 1,'Unable to multiply trees right now'
+    #     for dynamics in effect:
+    #         total = None
+    #         remaining = set(subset)
+    #         for key,tree in dynamics.items():
+    #             if tree:
+    #                 assert len(tree) == 1
+    #                 remaining.remove(key)
+    #                 if total is None:
+    #                     total = tree[0]
+    #                 else:
+    #                     total += tree[0]
+    #         for key in remaining:
+    #             tree = makeTree(noChangeMatrix(key))
+    #             total += tree
+    #         cumulative = total
+    #     projection[action] =  R*cumulative
         WriteLogData('%s of %s: %4.2f' % (VALUE_TAG,action['verb'],
                                           decision['V'][action]['__EV__']),
                      username,level,root=root)
+#    action1,action2 = projection.keys()
+#    difference = projection[action1]+(projection[action2]*-1.)
     # Package up the separate components of my current model
     POMDP = {}
     # Add Omega_t, my latest observation
-    for key,observation in omega.items():
-        POMDP['omega_%s' % (key)] = observation
+    for Omega,observation in omega.items():
+        POMDP['omega_%s' % (Omega)] = observation
+        O = robot.O[stateKey(robot.name,Omega)][ActionSet(move)]
+        omegaKey = stateKey(robot.name,Omega)
+        for danger in assessment.domain():
+            hypothetical = KeyedVector({key: world.value2float(key,danger),
+                                        CONSTANT: 1.})
+            distribution = O[hypothetical]*hypothetical
+            for vector in distribution.domain():
+                if vector[makeFuture(omegaKey)] == world.value2float(omegaKey,observation):
+                    prob = distribution[vector]
+                    break
+            else:
+                prob = 0.
+            POMDP['O_%s_%s_%s' % (Omega,observation,danger)] = prob
     # Add A_t, my chosen action
     if decision['action']['verb'] == 'recommend unprotected':
         POMDP['A'] = 'recommend unprotected'
@@ -703,22 +785,11 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         world.setState(robotWaypoint['symbol'],'recommendation','unprotected')
         WriteLogData('%s: no' % (RECOMMEND_TAG),username,level,root=root)
     else:
-        if assessment['none'] > 0.5:
-            print(assessment)
-            print(value)
-            for a,V in decision['V'].items():
-                print(a)
-            for action,bel in subBeliefs.items():
-                for key in ['human\'s alive','time']:
-                    print(action,key)
-                    print(world.float2value(key,bel.marginal(key)))
-        assert assessment['none'] < 0.5
         POMDP['A'] = 'recommend protected'
         safety = False
         world.setState(robotWaypoint['symbol'],'recommendation','protected')
         WriteLogData('%s: yes' % (RECOMMEND_TAG),username,level,root=root)
     # Add B_t, my current beliefs
-#    world.printState(beliefs[model])
     for key in beliefs[model].keys():
         if key != keys.CONSTANT:
             entity = state2agent(key)
@@ -743,7 +814,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     if mode == 'none':
         mode = ''
     explanation = ' '.join(explainDecision(safety,POMDP,mode))
-
+#    pp.pprint(POMDP)
     WriteLogData('%s %s' % (MESSAGE_TAG,explanation),username,level,root=root)
 
     # Save file in as synchronized a fashion as we can
@@ -824,7 +895,7 @@ def readLogData(username,level,root='.'):
             elif elements[5] == 'protected:':
                 recommendation = 'yes'
             else:
-                raise ValueError,'Unknown recommendation: %s' % (elements[5])
+                raise ValueError('Unknown recommendation: %s' % (elements[5]))
             if log[0]['type'] == 'message':
                 if value > log[0]['value']:
                     log[0]['value'] = value
@@ -880,7 +951,7 @@ def allVisited(world,level):
         return True
 
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
-               acknowledgment='no'):
+               acknowledgment='no',learning='no'):
     # Remove any existing log file
     try:
         os.remove(getFilename(username,level,extension='log'))
@@ -888,7 +959,8 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
         # Probably didn't exist to begin with
         pass
     # Create initial scenario
-    world = createWorld(username,level,ability,explanation,embodiment,acknowledgment)
+    world = createWorld(username,level,ability,explanation,embodiment,
+                        acknowledgment,learning)
     location = world.getState('robot','waypoint').first()
     waypoint = symbol2index(location,level)
     # Go through all the waypoints
@@ -912,20 +984,40 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-s','--seed',action='store_true',
-                      help='reuse seed for random number generator [default: %(default)s]')
+                        help='reuse seed for random numbers [default: %(default)s]')
+    parser.add_argument('--all',action='store_true',
+                        help='run all conditions [default: %(default)s]')
+    parser.add_argument('-k','--acknowledgment',action='store_const',
+                        const='yes',default='no',
+                        help='robot acknowledges mistakes [default: %(default)s]')
+    parser.add_argument('-l','--learning',action='store_const',
+                        const='yes',default='no',
+                        help='robot learns from mistakes [default: %(default)s]')
+    parser.add_argument('-a','--ability',choices=['badSensor','good','badModel'],
+                        default='badSensor',
+                        help='robot ability [default: %(default)s]')
+    parser.add_argument('-b','--embodiment',choices=['robot','dog'],default='robot',
+                      help='robot embodiment [default: %(default)s]')
+    parser.add_argument('-x','--explanation',choices=['none','ability','confidence'],
+                        default='confidence',
+                        help='robot explanation [default: %(default)s]')
     args = vars(parser.parse_args())
 
     username = 'autotest'
-    sequence = ['scrn','snrn','snry','scry','scdn','sndn','sndy','scdy']
-    if args['seed']:
-        random.seed(0)
-    random.shuffle(sequence)
-    start = time.time()
-    for level in range(len(sequence)):
-        config = sequence[level]
-        ability = CODES['ability'][config[0]]
-        explanation = CODES['explanation'][config[1]]
-        embodiment = CODES['embodiment'][config[2]]
-        acknowledgment = CODES['acknowledgment'][config[3]]
-        runMission(username,level,ability,explanation,embodiment,acknowledgment)
-    print(time.time()-start)
+    if args['all']:
+        sequence = ['scrn','snrn','snry','scry','scdn','sndn','sndy','scdy']
+        if args['seed']:
+            random.seed(0)
+        random.shuffle(sequence)
+        for level in range(len(sequence)):
+            config = sequence[level]
+            ability = CODES['ability'][config[0]]
+            explanation = CODES['explanation'][config[1]]
+            embodiment = CODES['embodiment'][config[2]]
+            acknowledgment = CODES['acknowledgment'][config[3]]
+            runMission(username,level,ability,explanation,embodiment,acknowledgment)
+    else:
+        for level in range(len(WAYPOINTS)):
+            runMission(username,level,args['ability'],args['explanation'],
+                       args['embodiment'],args['acknowledgment'],args['learning'])
+            break
