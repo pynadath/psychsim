@@ -101,7 +101,7 @@ def addState2tables(world,day,tables,population,regions):
                 table['log'].append(entry)
         elif table['population'] is Actor:
             for actor in population:
-                belief = actor.getBelief().values()[0]
+                belief = next(iter(actor.getBelief().values()))
                 entry = {'day': day,'participant': actor.name[-4:]}
                 for feature,label,function in table['fields']:
                     key = stateKey(actor.name,feature)

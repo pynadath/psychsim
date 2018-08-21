@@ -18,7 +18,7 @@ class Region(Agent):
         width = config.getint('Regions','width')
         maxRegion = config.getint('Regions','regions')
         self.x = (number-1) % width + 1
-        self.y = (number-1) / width + 1
+        self.y = int((number-1) / width) + 1
         if self.y > 1:
             self.north = self.nameString % ((self.y-2)*width + self.x)
         else:

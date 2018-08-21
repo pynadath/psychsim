@@ -89,7 +89,7 @@ class Actor(Agent):
         regions = sorted([name for name in self.world.agents
                           if isinstance(self.world.agents[name],Region)])
         region = world.defineState(self.name,'region',list,regions,description='Region of residence')
-        index = (number-1)*config.getint('Regions','regions')/config.getint('Actors','population')
+        index = int((number-1)*config.getint('Regions','regions')/config.getint('Actors','population'))
         home = regions[index]
         world.setFeature(region,home)
 
