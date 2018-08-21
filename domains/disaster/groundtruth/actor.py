@@ -646,7 +646,7 @@ class Actor(Agent):
         neighbors = {a.name for a in population if a.name != self.name and \
                      self.world.getState(a.name,'region').first() == myHome}
         regions = [n for n in self.world.agents if isinstance(self.world.agents[n],Region)]
-        shelters = map(int,config.get('Shelter','region').split(','))
+        shelters = {int(region) for region in config.get('Shelter','region').split(',')}
 
         include = set()
         for key in self.world.state.keys():
