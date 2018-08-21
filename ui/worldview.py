@@ -6,11 +6,15 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
 from pwl.keys import *
-import graph
-import diagram
-from world import *
+import psychsim.graph as graph
+import psychsim.ui.diagram as diagram
+from psychsim.world import *
 
-from pygraphml import Graph,GraphMLParser
+try:
+    from pygraphml import Graph,GraphMLParser
+    __graph__ = True
+except:
+    __graph__ = False
 
 def getLayout(graph):
     layout = {'state pre': [set()],
@@ -100,7 +104,10 @@ class WorldView(QGraphicsScene):
     def displayGroundTruth(self,agent=WORLD,x0=0,y0=0,maxRows=10,recursive=False):
         if agent == WORLD:
             self.clear()
-            self.xml = Graph()
+            if __graph__:
+                self.xml = Graph()
+            else:
+                self.xml = None
         
         x = x0
         y = y0
@@ -192,8 +199,9 @@ class WorldView(QGraphicsScene):
                 self.agents[agent]['box'].setBrush(QBrush(QColor(color)))
             self.addItem(self.agents[agent]['box'])
 
-        parser = GraphMLParser()
-        parser.write(self.xml,'/tmp/psygraph.xml')
+        if self.xml:
+            parser = GraphMLParser()
+            parser.write(self.xml,'/tmp/psygraph.xml')
 
     def drawStateNodes(self,nodes,graph,x0,y0,xkey,ykey,believer=None,maxRows=10):
         x = x0
