@@ -140,16 +140,16 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 
     world = World()
 
-    world.defineState(None,'level',int,lo=0,hi=len(WAYPOINTS)-1,
+    world.defineState(WORLD,'level',int,lo=0,hi=len(WAYPOINTS)-1,
                       description='Static variable indicating what mission level')
-    world.setState(None,'level',level)
+    world.setState(WORLD,'level',level)
 
-    world.defineState(None,'time',float)
-    world.setState(None,'time',0.)
+    world.defineState(WORLD,'time',float)
+    world.setState(WORLD,'time',0.)
 
-    key = world.defineState(None,'phase',set,lo={'scan','move'},
+    key = world.defineState(WORLD,'phase',set,lo={'scan','move'},
                             description='What phase of the turn is it')
-    world.setState(None,'phase','move')
+    world.setState(WORLD,'phase','move')
     # Alternate between phases
     tree = makeTree({'if': equalRow(key,'scan'),
                      True: setToConstantMatrix(key,'move'),
@@ -161,7 +161,8 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     for waypoint in WAYPOINTS[level]:
         if not 'symbol' in waypoint:
             waypoint['symbol'] = waypoint['name'].replace(' ','')
-        world.addAgent(waypoint['symbol'])
+        building = world.addAgent(waypoint['symbol'])
+        building.setAttribute('static',True)
         # Has the robot scanned this waypoint?
         key = world.defineState(waypoint['symbol'],'scanned',bool)
         world.setFeature(key,False)
@@ -188,6 +189,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                                    False: setFalseMatrix(TERMINATED)}))
     # Human
     human = world.addAgent('human')
+    human.setAttribute('static',True)
 
     world.defineState(human.name,'alive',bool)
     human.setState('alive',True)
@@ -246,7 +248,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         # Robot movement
         action = robot.addAction({'verb': 'moveto','object': symbol})
         # Legal if no contradictory command
-        tree = makeTree({'if': equalRow('phase','move'),
+        tree = makeTree({'if': equalRow(stateKey(WORLD,'phase'),'move'),
                          True: {'if': equalRow(stateKey(robot.name,'command'),'none'),
                                 True: {'if': trueRow(stateKey(symbol,'scanned')),
                                                      True: False, False: True},
@@ -268,7 +270,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         tree = makeTree(setTrueMatrix(key))
         world.setDynamics(key,action,tree)
         # Dynamics of time
-        key = stateKey(None,'time')
+        key = stateKey(WORLD,'time')
         tree = setToConstantMatrix(key,0.)
         for start in range(len(WAYPOINTS[level])):
             if start != end:
@@ -311,9 +313,9 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 #        world.setDynamics(key,action,tree)
 
         # Going in without protection takes no time
-        key = stateKey(None,'time')
+        key = stateKey(WORLD,'time')
         world.setDynamics(key,action,makeTree(setToConstantMatrix(key,0.)))
-        tree = makeTree({'if': equalRow('phase','scan'),
+        tree = makeTree({'if': equalRow(stateKey(WORLD,'phase'),'scan'),
                          True: {'if': equalRow(stateKey(action['subject'],'waypoint'),
                                                symbol),
                                 True: True,
@@ -343,9 +345,9 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                              False: setFalseMatrix(omega)}))
         # Human entry: How much "time" if protected?
         action = robot.addAction({'verb': 'recommend protected','object': symbol})
-        key = stateKey(None,'time')
+        key = stateKey(WORLD,'time')
         world.setDynamics(key,action,makeTree(setToConstantMatrix(key,0.25)))
-        tree = makeTree({'if': equalRow('phase','scan'),
+        tree = makeTree({'if': equalRow(stateKey(WORLD,'phase'),'scan'),
                          True: {'if': equalRow(stateKey(action['subject'],'waypoint'),
                                                symbol),
                                 True: True,
@@ -376,8 +378,8 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 
     # Robot goals
     goal = makeTree(setToFeatureMatrix(stateKey(robot.name,REWARD),
-                                       stateKey(None,'time'),-1.))
-#    goal = minimizeFeature(stateKey(None,'time'))
+                                       stateKey(WORLD,'time'),-1.))
+#    goal = minimizeFeature(stateKey(WORLD,'time'))
     robot.setReward(goal,60.)
 
     goal = makeTree(setToFeatureMatrix(stateKey(robot.name,REWARD),
@@ -391,8 +393,9 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     world.setOrder([robot.name])
 
     # Robot beliefs
+    robot.resetBelief(ignore=[modelKey(robot.name)])
     model = '%s0' % (robot.name)
-    world.setModel(robot.name,model)
+#    world.setModel(robot.name,model)
     value = 10./float(len(WAYPOINTS[level]))
     for index in range(len(WAYPOINTS[level])):
         waypoint = WAYPOINTS[level][index]
@@ -626,8 +629,9 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     assert len(world.getModel('robot')) == 1
     world.step(action)
     assert len(world.getModel('robot')) == 1
-    belief = world.getState(location,'danger',
-                            world.agents['robot'].getBelief().values()[0])
+    beliefState = list(world.agents['robot'].getBelief().values())[0]
+    belief = world.getState(location,'danger',beliefState)
+                            
     real = world.getState(location,'danger')
     assert len(real) == 1
     assert len(belief) == 1
@@ -891,7 +895,7 @@ def readLogData(username,level,root='.'):
             elif elements[5] == 'protected:':
                 recommendation = 'yes'
             else:
-                raise ValueError,'Unknown recommendation: %s' % (elements[5])
+                raise ValueError('Unknown recommendation: %s' % (elements[5]))
             if log[0]['type'] == 'message':
                 if value > log[0]['value']:
                     log[0]['value'] = value

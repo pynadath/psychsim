@@ -1,10 +1,16 @@
 import math
+import os
+
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
+
+from pwl.keys import *
 import graph
 import diagram
 from world import *
+
+from pygraphml import Graph,GraphMLParser
 
 def getLayout(graph):
     layout = {'state pre': [set()],
@@ -43,140 +49,47 @@ def getLayout(graph):
 class WorldView(QGraphicsScene):
     rowHeight = 100
     colWidth = 150
-    arrowAngle = math.radians(15.)
-    arrowLength = 15.
-
+    
     def __init__(self,parent = None):
         super(WorldView,self).__init__(parent)
+        self.setBackgroundBrush(QColor('white'))
         self.nodes = {'state pre': {},
                       'state post': {},
                       'action': {},
                       'utility': {}}
         self.edgesOut = {}
         self.edgesIn = {}
-        self.agentColors = {}
+        self.agents = {}
         self.world = None
-        self.graph = None
+        self.graph = {}
         self.dirty = False
+        self.center = None
 
-    def displayWorld(self,world):
+        self.xml = None
+
+    def clear(self):
+        super(WorldView,self).clear()
         for table in self.nodes.values():
             table.clear()
         self.edgesOut.clear()
         self.edgesIn.clear()
-        if not isinstance(world.diagram,diagram.Diagram):
-            if world.diagram is None:
-                # Creating a diagram for the first time
-                self.setDirty()
-            world.diagram = diagram.Diagram(world.diagram)
-        self.world = world
+        self.center = None
+        
+    def displayWorld(self,agents=None):
+        self.clear()
 
         self.graph = graph.DependencyGraph(self.world)
-        self.graph.computeGraph()
+        self.graph.computeGraph(agents)
         layout = getLayout(self.graph)
 
         # Lay out the pre variable nodes
-        x = 0
-        even = True
-        for layer in layout['state pre']:
-            y = 0
-            for key in sorted(layer,lambda k0,k1: cmp((self.graph[k0]['agent'],k0),
-                                                      (self.graph[k1]['agent'],k1))):
-                if not self.world.variables[key].has_key('xpre'):
-                    if y >= 10*self.rowHeight:
-                        even = not even
-                        if even:
-                            y = 0
-                        else:
-                            y = 50
-                        x += int(0.75*self.colWidth)
-                    self.world.variables[key]['xpre'] = x
-                    self.world.variables[key]['ypre'] = y
-                    # Move on to next Y
-                    y += self.rowHeight
-                if self.graph[key]['agent']:
-                    agent = self.world.agents[self.graph[key]['agent']]
-                    if isBinaryKey(key):
-                        node = VariableNode(agent,key[len(agent.name)+1:],key,
-                                            self.world.variables[key]['xpre'],self.world.variables[key]['ypre'],
-                                            100,50,scene=self)
-                    else:
-                        node = VariableNode(agent,key[len(agent.name)+3:],key,
-                                            self.world.variables[key]['xpre'],self.world.variables[key]['ypre'],
-                                            100,50,scene=self)
-                else:
-                    node = VariableNode(None,key,key,
-                                        self.world.variables[key]['xpre'],self.world.variables[key]['ypre'],
-                                        100,50,scene=self)
-                self.nodes[self.graph[key]['type']][key] = node
-            x += self.colWidth
-        assert len(self.nodes['state pre']) == sum(map(len,self.world.locals.values()))+\
-            sum(map(len,self.world.relations.values()))
+        x = self.drawStateNodes(layout['state pre'],self.graph,0,0,'xpre','ypre')
         # Lay out the action nodes
-        y = 0
-        for action in sorted(layout['action']):
-            if self.world.diagram.getX(action) is None:
-                self.setDirty()
-                self.world.diagram.x[action] = x
-                self.world.diagram.y[action] = y
-                # Move on to next Y
-                y += self.rowHeight
-                if y >= 10*self.rowHeight:
-                    y = 0
-                    x += self.colWidth
-            node = ActionNode(self.world.agents[self.graph[action]['agent']],action,scene=self)
-            self.nodes[self.graph[action]['type']][action] = node
-        x += self.colWidth
+        x = self.drawActionNodes(layout['action'],x,0)
         # Lay out the post variable nodes
-        even = True
-        for layer in layout['state post']:
-            y = 0
-            for key in sorted(layer,lambda k0,k1: cmp((self.graph[k0]['agent'],k0),
-                                                      (self.graph[k1]['agent'],k1))):
-                if not self.world.variables[makePresent(key)].has_key('xpost'):
-                    if y >= 10*self.rowHeight:
-                        even = not even
-                        if even:
-                            y = 0
-                        else:
-                            y = 50
-                        x += int(0.75*self.colWidth)
-                    self.world.variables[makePresent(key)]['xpost'] = x
-                    self.world.variables[makePresent(key)]['ypost'] = y
-                    # Move on to next Y
-                    y += self.rowHeight
-                if self.graph[key]['agent']:
-                    agent = self.world.agents[self.graph[key]['agent']]
-                    if isBinaryKey(key):
-                        node = VariableNode(agent,key[len(agent.name)+1:],key,
-                                            self.world.variables[makePresent(key)]['xpost'],
-                                            self.world.variables[makePresent(key)]['ypost'],
-                                            100,50,scene=self)
-                    else:
-                        node = VariableNode(agent,key[len(agent.name)+3:],key,
-                                            self.world.variables[makePresent(key)]['xpost'],
-                                            self.world.variables[makePresent(key)]['ypost'],
-                                            100,50,scene=self)
-                else:
-                    node = VariableNode(None,key,key,
-                                        self.world.variables[makePresent(key)]['xpost'],
-                                        self.world.variables[makePresent(key)]['ypost'],
-                                        100,50,scene=self)
-                self.nodes[self.graph[key]['type']][key] = node
-            x += self.colWidth
+        x = self.drawStateNodes(layout['state post'],self.graph,x,0,'xpost','ypost')
         # Lay out the utility nodes
-        y = -self.rowHeight
-        for name in sorted(self.world.agents.keys()):
-            if self.graph.has_key(name):
-                agent = self.world.agents[name]
-                if self.world.diagram.getX(agent.name) is None:
-                    self.setDirty()
-                    y += self.rowHeight
-                    self.world.diagram.x[agent.name] = x
-                    self.world.diagram.y[agent.name] = y
-                node = UtilityNode(agent,x,y,scene=self)
-                self.nodes[self.graph[name]['type']][name] = node
-        x += self.colWidth
+        x = self.drawUtilityNodes(x,0,self.graph,sorted(self.world.agents.keys()))
         self.colorNodes()
         # Lay out edges
         for key,entry in self.graph.items():
@@ -184,41 +97,279 @@ class WorldView(QGraphicsScene):
             for child in entry['children']:
                 self.drawEdge(key,child)
 
-    def drawEdge(self,parent,child):
-        node0 = self.nodes[self.graph[parent]['type']][parent]
-        node1 = self.nodes[self.graph[child]['type']][child]
-        rect0 = node0.boundingRect()
-        rect1 = node1.boundingRect()
-        x0 = rect0.x()+rect0.width()
-        y0 = rect0.y()+rect0.height()/2
-        x1 = rect1.x()
-        y1 = rect1.y()+rect1.height()/2
-        edge = QGraphicsLineItem(x0,y0,x1,y1)
-        node0.scene().addItem(edge)
-        edge.setZValue(0.)
-        # # Draw arrow
-        # line = edge.line()
-        # point0 = QPointF(x1,y1)
-        # sideLength = self.arrowLength/math.cos(math.radians(self.arrowAngle))
-        # point1 = QPointF(x1 - math.sin(math.atan(x1/y1)-self.arrowAngle)*sideLength,
-        #                  y1 - math.cos(math.atan(x1/y1)-self.arrowAngle)*sideLength)
-        # point2 = QPointF(x1 - math.cos(math.atan(y1/x1)-self.arrowAngle)*sideLength,
-        #                  y1 - math.sin(math.atan(y1/x1)-self.arrowAngle)*sideLength)
-        # arrow = QGraphicsPolygonItem(QPolygonF([point0,point1,point2]),edge,edge.scene())
-        # arrow.setBrush(QBrush(QColor('black')))
-        # arrow.setPen(QPen(QColor('black')))
+    def displayGroundTruth(self,agent=WORLD,x0=0,y0=0,maxRows=10,recursive=False):
+        if agent == WORLD:
+            self.clear()
+            self.xml = Graph()
+        
+        x = x0
+        y = y0
+        if agent == WORLD:
+            if not self.graph:
+                self.graph = graph.DependencyGraph(self.world)
+                self.graph.computeGraph()
+            g = self.graph
+            state = self.world.state
+        else:
+            g = graph.DependencyGraph(self.world)
+            state = self.world.agents[agent].getBelief()
+            assert len(state) == 1
+            g.computeGraph(state=state['%s0' % (agent)])
+        layout = getLayout(g)
+        if agent == WORLD:
+            # Lay out the action nodes
+            x = self.drawActionNodes(layout['action'],x,y,maxRows)
+            xPostAction = x
+            believer = None
+            xkey = 'xpost'
+            ykey = 'ypost'
+        else:
+            believer = agent
+            xkey = beliefKey(believer,'xpost')
+            ykey = beliefKey(believer,'ypost')
+        # Lay out the post variable nodes
+        x = self.drawStateNodes(layout['state post'],g,x,y,xkey,ykey,believer,maxRows)
+        # Lay out the utility nodes
+        if agent == WORLD:
+            if recursive:
+                uNodes = [a.name for a in self.world.agents.values() \
+                          if a.getAttribute('beliefs','%s0' % (a.name)) is True]
+            else:
+                uNodes = self.world.agents.keys()
+        else:
+            uNodes = [agent]
+        x = self.drawUtilityNodes(x,y,g,uNodes)
+        if agent == WORLD:
+            # Draw links from utility back to actions
+            for name in self.world.agents:
+                if not recursive or \
+                   self.world.agents[name].getAttribute('beliefs','%s0' % (name)) is True:
+                    if name in g:
+                        actions = self.world.agents[name].actions
+                        for action in actions:
+                            if action in g:
+                                self.drawEdge(name,action,g)
+                else:
+                    y += (maxRows+1) * self.rowHeight
+                    self.displayGroundTruth(name,xPostAction,y,maxRows=maxRows,recursive=recursive)
+            self.colorNodes()
+        # Draw links, reusing post nodes as pre nodes
+        for key,entry in g.items():
+            if isStateKey(key) or isBinaryKey(key):
+                if not isFuture(key):
+                    key = makeFuture(key)
+                if agent != WORLD:
+                    key = beliefKey(agent,key)
+            elif agent != WORLD:
+                continue
+            for child in entry['children']:
+                if agent != WORLD and child in self.world.agents and not child in uNodes:
+                    continue
+                if isStateKey(child) or isBinaryKey(child):
+                    if agent != WORLD:
+                        child = beliefKey(agent,child)
+                elif agent != WORLD and not child in uNodes:
+                    continue
+                if child in self.world.agents and not child in uNodes:
+                    continue
+                self.drawEdge(key,child,g)
+        x += self.colWidth
+        if recursive:
+            rect = QRectF(-self.colWidth/2,y0-self.rowHeight/2,
+                          x,(float(maxRows)+.5)*self.rowHeight)
+            self.agents[agent] = {'box': QGraphicsRectItem(rect)}
+            self.agents[agent]['box'].setPen(QPen(QBrush(QColor('black')),3))
+            self.agents[agent]['box'].setZValue(0.)
+            if agent != WORLD:
+                self.agents[agent]['text'] = QGraphicsTextItem(self.agents[agent]['box'])
+                doc = QTextDocument(agent,self.agents[agent]['text'])
+                self.agents[agent]['text'].setPos(rect.x(),rect.y())
+                self.agents[agent]['text'].setTextWidth(rect.width())
+                self.agents[agent]['text'].setDocument(doc)
+            if agent != WORLD:
+                color = self.world.diagram.getColor(agent)
+                color.setAlpha(128)
+                self.agents[agent]['box'].setBrush(QBrush(QColor(color)))
+            self.addItem(self.agents[agent]['box'])
 
-        try:
-            self.edgesOut[parent][child] = edge
-        except KeyError:
-            self.edgesOut[parent] = {child: edge}
-        try:
-            self.edgesIn[child][parent] = edge
-        except KeyError:
-            self.edgesIn[child] = {parent: edge}
+        parser = GraphMLParser()
+        parser.write(self.xml,'/tmp/psygraph.xml')
+
+    def drawStateNodes(self,nodes,graph,x0,y0,xkey,ykey,believer=None,maxRows=10):
+        x = x0
+        even = True
+        for layer in nodes:
+            y = y0
+            for key in sorted(layer,lambda k0,k1: cmp((graph[k0]['agent'],k0),
+                                                      (graph[k1]['agent'],k1))):
+                if believer:
+                    label = beliefKey(believer,key)
+                else:
+                    label = key
+                variable = self.world.variables[makePresent(key)]
+                if y >= y0+maxRows*self.rowHeight:
+                    even = not even
+                    if even:
+                        y = y0
+                    else:
+                        y = y0+50
+                    x += int(0.75*self.colWidth)
+                if not xkey in variable:
+                    variable[xkey] = x
+                    variable[ykey] = y
+                # Move on to next Y
+                y += self.rowHeight
+                if graph[key]['agent'] != WORLD and graph[key]['agent']:
+                    agent = self.world.agents[graph[key]['agent']]
+                    if isBinaryKey(key):
+                        node = VariableNode(agent,key[len(agent.name)+1:],key,
+                                            variable[xkey],variable[ykey],
+                                            100,50,scene=self)
+                    else:
+                        node = VariableNode(agent,key[len(agent.name)+3:],key,
+                                            variable[xkey],variable[ykey],
+                                            100,50,scene=self)
+                else:
+                    node = VariableNode(None,state2feature(key),key,
+                                        variable[xkey],variable[ykey],
+                                        100,50,scene=self)
+                self.nodes[graph[key]['type']][label] = node
+            x += self.colWidth
+        return x
+
+    def drawActionNodes(self,nodes,x0,y0,maxRows=10):
+        x = x0
+        y = y0
+        for action in sorted(nodes):
+            if self.world.diagram.getX(action) is None:
+                self.setDirty()
+                self.world.diagram.x[action] = x
+                self.world.diagram.y[action] = y
+                # Move on to next Y
+                y += self.rowHeight
+                if y >= maxRows*self.rowHeight:
+                    y = y0
+                    x += self.colWidth
+            else:
+                x = max(x,self.world.diagram.getX(action))
+                y = max(y,self.world.diagram.getY(action))
+            node = ActionNode(self.world.agents[self.graph[action]['agent']],action,scene=self)
+            self.nodes[self.graph[action]['type']][action] = node
+        x += self.colWidth
+        return x
+
+    def drawUtilityNodes(self,x0,y0,graph,agents):
+        x = x0
+        y = y0 - self.rowHeight/2
+        for name in agents:
+            if graph.has_key(name):
+                agent = self.world.agents[name]
+                if self.world.diagram.getX(agent.name) is None:
+                    self.setDirty()
+                    y += self.rowHeight
+                    self.world.diagram.x[agent.name] = x
+                    self.world.diagram.y[agent.name] = y
+                node = UtilityNode(agent,x,y,scene=self)
+                self.nodes[graph[name]['type']][name] = node
+        x += self.colWidth
+        return x
+        
+    def drawEdge(self,parent,child,graph=None,rect0=None,rect1=None):
+        if self.xml:
+            for nP in self.xml.nodes():
+                if nP['label'] == parent:
+                    break
+            else:
+                nP = self.xml.add_node(parent)
+            for nC in self.xml.nodes():
+                if nC['label'] == child:
+                    break
+            else:
+                nC = self.xml.add_node(child)
+            self.xml.add_edge(nP,nC,True)
+        if graph is None:
+            graph = self.graph
+        if isBeliefKey(parent):
+            node0 = self.nodes[graph[belief2key(parent)]['type']][parent]
+        else:
+            node0 = self.nodes[graph[parent]['type']][parent]
+        if isBeliefKey(child):
+            node1 = self.nodes[graph[belief2key(child)]['type']][child]
+        else:
+            node1 = self.nodes[graph[child]['type']][child]
+        if rect0 is None:
+            rect0 = node0.boundingRect()
+        if rect1 is None:
+            rect1 = node1.boundingRect()
+        if parent == child:
+            # Loop back to self
+            x0 = rect0.x()+rect0.width()/15
+            y0 = rect0.y()+2*rect0.height()/3
+            path = QPainterPath(QPointF(x0,y0))
+            path.arcTo(rect0.x(),rect0.y()+rect0.height()/2,rect0.width(),rect0.height(),145,250)
+            edge = QGraphicsPathItem(path,node0)
+            arrow = drawArrow(QLineF(x0-5,y0+25,x0,y0),edge)
+        elif rect0.y() == rect1.y():
+            # Same row, so arc
+            x0 = rect0.x()+rect0.width()/2
+            x1 = rect1.x()+rect1.width()/2
+            path = QPainterPath(QPointF(x1,rect1.y()+rect1.height()/2))
+            path.arcTo(x1,rect1.y()+rect1.height()/2,x0-x1,rect1.height(),180,180)
+            edge = QGraphicsPathItem(path)
+            node0.scene().addItem(edge)
+            if x1 < x0:
+                arrow = drawArrow(QLineF(x1+25,rect1.y()+rect1.height()+15,
+                                         x1-5,rect1.y()+rect1.height()),edge)
+            else:
+                arrow = drawArrow(QLineF(x1-25,rect1.y()+rect1.height()+15,
+                                         x1+5,rect1.y()+rect1.height()),edge)
+        else:
+            # straight-line link
+            if rect0.x() < rect1.x():
+                x0 = rect0.right()
+                x1 = rect1.left()
+            else:
+                x0 = rect0.left()
+                x1 = rect1.right()
+            y0 = rect0.y()+rect0.height()/2
+            y1 = rect1.y()+rect1.height()/2
+            edge = QGraphicsLineItem(x0,y0,x1,y1)
+            node0.scene().addItem(edge)
+            arrow = drawArrow(edge.line(),edge)
+
+        edge.setZValue(1.)
+        if not parent in self.edgesOut:
+            self.edgesOut[parent] = {}
+        if child in self.edgesOut[parent]:
+            node0.scene().removeItem(self.edgesOut[parent][child][0])
+        self.edgesOut[parent][child] = (edge,arrow)
+        if not child in self.edgesIn:
+            self.edgesIn[child] = {}
+        if parent != child:
+            self.edgesIn[child][parent] = (edge,arrow)
         return edge
 
     def highlightEdges(self,center):
+        """
+        Hide any edges *not* originating or ending at the named node
+        @type center: str
+        """
+        self.center = center
+        for key,table in self.edgesOut.items()+self.edgesIn.items():
+            if key == center:
+                # All edges are important!
+                for edge,arrow in table.values():
+                    edge.show()
+            else:
+                for subkey,(edge,arrow) in table.items():
+                    if subkey == center:
+                        # This edge is important
+                        edge.show()
+                    else:
+                        # This edge is unimportant
+                        edge.hide()
+                        
+    def boldEdges(self,center):
         """
         Highlight any edges originating or ending at the named node
         @type center: str
@@ -226,11 +377,11 @@ class WorldView(QGraphicsScene):
         for key,table in self.edgesOut.items()+self.edgesIn.items():
             if key == center:
                 # All edges are important!
-                for edge in table.values():
+                for edge,arrow in table.values():
                     edge.setPen(QPen(QBrush(QColor('black')),5))
                     edge.setZValue(2.0)
             else:
-                for subkey,edge in table.items():
+                for subkey,(edge,arrow) in table.items():
                     if subkey == center:
                         # This edge is important
                         edge.setPen(QPen(QBrush(QColor('black')),5))
@@ -238,20 +389,36 @@ class WorldView(QGraphicsScene):
                     else:
                         # This edge is unimportant
                         edge.setPen(QPen(QColor('black')))
-                        edge.setZValue(0.0)
+                        edge.setZValue(1.0)
 
     def updateEdges(self,key,rect):
         self.setDirty()
         if self.edgesOut.has_key(key):
-            for edge in self.edgesOut[key].values():
-                line = edge.line()
-                line.setP1(QPointF(rect.x()+rect.width(),rect.y()+rect.height()/2))
-                edge.setLine(line)
+            for subkey,(edge,arrow) in self.edgesOut[key].items():
+                if self.center is None or self.center == key or self.center == subkey:
+                    if isinstance(edge,QGraphicsLineItem):
+                        line = edge.line()
+                        line.setP1(QPointF(rect.x()+rect.width(),rect.y()+rect.height()/2))
+                        edge.setLine(line)
+                        drawArrow(line,arrow=arrow)
+                    elif key != subkey:
+                        edge.scene().removeItem(edge)
+                        del self.edgesOut[key][subkey]
+                        del self.edgesIn[subkey][key]
+                        self.drawEdge(key,subkey,rect0=rect)
         if self.edgesIn.has_key(key):
-            for edge in self.edgesIn[key].values():
-                line = edge.line()
-                line.setP2(QPointF(rect.x(),rect.y()+rect.height()/2))
-                edge.setLine(line)
+            for subkey,(edge,arrow) in self.edgesIn[key].items():
+                if self.center is None or self.center == key or self.center == subkey:
+                    if isinstance(edge,QGraphicsLineItem):
+                        line = edge.line()
+                        line.setP2(QPointF(rect.x(),rect.y()+rect.height()/2))
+                        edge.setLine(line)
+                        drawArrow(line,arrow=arrow)
+                    elif key != subkey:
+                        edge.scene().removeItem(edge)
+                        del self.edgesIn[key][subkey]
+                        del self.edgesOut[subkey][key]
+                        self.drawEdge(subkey,key,rect1=rect)
 
     def step(self):
         self.world.step()
@@ -296,7 +463,7 @@ class WorldView(QGraphicsScene):
                         if variable['domain'] is bool:
                             color = dist2color(marginal)
                         else:
-                            print key,variable['domain']
+                            raise RuntimeError('Unable to display color of %s over domain %s' % (key,variable['domain']))
                     elif category == 'action':
                         uniform = 1./float(len(cache[node.agent.name]))
                         prob = cache[node.agent.name].getProb(node.action)
@@ -326,6 +493,40 @@ class WorldView(QGraphicsScene):
         self.parent().parent().parent().actionSave.setEnabled(False)
         self.dirty = False
 
+    def minRect(self):
+        """
+        @return: a rectangle cropped to show only object space
+        """
+        rect = None
+        for nodes in self.nodes.values():
+            for node in nodes.values():
+                if rect is None:
+                    rect = node.boundingRect()
+                else:
+                    rect = rect.united(node.boundingRect())
+        return rect
+
+    def saveImage(self,fname):
+        rect = self.minRect() #self.sceneRect()
+        pix = QImage(rect.width(), rect.height(),QImage.Format_ARGB32)
+        painter = QPainter(pix)
+        self.render(painter,rect)
+        painter.end()
+        pix.save(fname)
+
+    def saveSubgraphs(self,dirName,onlyConnected=True):
+        previous = self.center
+        for nodeType,nodes in self.nodes.items():
+            for key,node in nodes.items():
+                if not onlyConnected or key in self.edgesOut or key in self.edgesIn:
+                    self.highlightEdges(key)
+                    if isinstance(key,ActionSet):
+                        self.saveImage(os.path.join(dirName,'%s.png' % (str(key))))
+                    else:
+                        self.saveImage(os.path.join(dirName,'%s.png' % (escapeKey(key))))
+        self.highlightEdges(previous)
+        
+                    
 def initializeNode(node,label):
     """
     Sets some standard parameters across node types
@@ -343,7 +544,7 @@ def initializeNode(node,label):
     node.text.setDocument(doc)
     node.text.setPos(rect.x(),rect.y())
     node.text.setTextWidth(rect.width())
-    node.setZValue(1.0)
+    node.setZValue(3.0)
     myRect = node.text.boundingRect()
     if myRect.height() > rect.height():
         rect.setHeight(myRect.height())
@@ -371,12 +572,19 @@ class VariableNode(QGraphicsEllipseItem):
         self.setToolTip(str(key))
 
     def mouseDoubleClickEvent(self,event):
-        self.scene().highlightEdges(stateKey(self.agent,self.feature))
+        if self.agent:
+            key = stateKey(self.agent.name,self.feature)
+        else:
+            key = stateKey(WORLD,self.feature)
+        self.scene().highlightEdges(key)
 
     def itemChange(self,change,value):
         if change == QGraphicsItem.ItemPositionHasChanged:
             rect = self.sceneBoundingRect()
-            key = stateKey(self.agent,self.feature)
+            if self.agent:
+                key = stateKey(self.agent.name,self.feature)
+            else:
+                key = stateKey(WORLD,self.feature)
             self.scene().updateEdges(key,rect)
             if isFuture(key):
                 self.scene().world.variables[makePresent(key)]['xpost'] = int(rect.x())
@@ -447,3 +655,23 @@ def dist2color(distribution):
     g = round(distribution.getProb(True)*255.)
     b = 127
     return QColor(r,g,b)
+
+def computeArrow(line):
+    point0 = line.p2()
+    arrowSize = 25.
+    angle = math.atan2(-line.dy(), line.dx())
+    point1 = line.p2() - QPointF(math.sin(angle + math.radians(75.)) * arrowSize,
+                                          math.cos(angle + math.radians(75.)) * arrowSize)
+    point2 = line.p2() - QPointF(math.sin(angle + math.pi - math.radians(75.)) * arrowSize,
+                                          math.cos(angle + math.pi - math.radians(75.)) * arrowSize)
+
+    return QPolygonF([point0,point1,point2])
+    
+def drawArrow(line,parent=None,arrow=None):
+    if arrow:
+        arrow.setPolygon(computeArrow(line))
+    else:
+        arrow = QGraphicsPolygonItem(computeArrow(line),parent)
+        arrow.setBrush(QBrush(QColor('black')))
+        arrow.setPen(QPen(QColor('black')))
+    return arrow

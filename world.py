@@ -3,6 +3,7 @@ import bz2
 import copy
 import logging
 import io
+import pprint
 from xml.dom.minidom import Document,Node,parseString
 
 from psychsim.action import ActionSet,Action
@@ -10,6 +11,7 @@ import psychsim.probability
 from psychsim.pwl import *
 from psychsim.agent import Agent
 import psychsim.graph
+from psychsim.ui.diagram import Diagram
 
 class World:
     """
@@ -58,10 +60,6 @@ class World:
         self.newDynamics = {True: []}
         self.dependency = psychsim.graph.DependencyGraph(self)
 
-        # Termination state info
-        self.defineState(None,TERMINATED,bool)
-        self.setFeature(TERMINATED,False)
-
         self.history = []
 
         self.diagram = None
@@ -93,6 +91,16 @@ class World:
         del self.termination[:]
         self.state.clear()
 
+    def clearCoords(self):
+        if self.diagram:
+            self.diagram.clear()
+        for variable in self.variables.values():
+            if 'xpre' in variable:
+                del variable['xpre']
+                del variable['ypre']
+                del variable['xpost']
+                del variable['ypost']
+        
     """------------------"""
     """Simulation methods"""
     """------------------"""
@@ -121,22 +129,21 @@ class World:
             return state
         # Determine the actions taken by the agents in this world
         outcome['actions'] = self.stepPolicy(state,actions,horizon,tiebreak)
-        for actor in outcome['actions']:
+        joint = None
+        for actor,policy in outcome['actions'].items():
+            assert policy.isLeaf(),'Currently unable to project stochastic decisions'
             key = stateKey(actor,ACTION)
-            values = [e for e in state.domain(makeFuture(key))]
-            choices = [self.float2value(key,e) for e in values]
-            if len(choices) == 1:
-                effect = self.effect(choices[0],state,updateBeliefs,keySubset)
-                outcome['effect'].update(effect)
+            action = self.float2value(key,policy.children[None][makeFuture(key)][CONSTANT])
+            if joint is None:
+                joint = action
             else:
-                print(choices)
-                raise ValueError
+                joint |= action
+        effect = self.effect(joint,state,updateBeliefs,keySubset)
+        outcome['effect'].update(effect)
         # The future becomes the present
         state.rollback()
         if select:
-            newState = outcomes[0]['new']
-            for dist in newState.distributions.values():
-                dist.select()
+            prob = state.select()
         if self.memory:
             self.history.append(copy.deepcopy(state))
            # self.modelGC(False)
@@ -209,7 +216,6 @@ class World:
                 # Apply effects
                 outcome['new'] = outcome['effect']*outcome['old']
             if not 'delta' in outcome:
-                print(outcome['new'].__class__,outcome['old'].__class__)
                 outcome['delta'] = outcome['new'] - outcome['old']
         else:
             # No consistent effect
@@ -222,16 +228,35 @@ class World:
         if isinstance(actions,Action):
             actions = {actions['subject']: ActionSet({actions})}
         elif isinstance(actions,ActionSet):
-            actions = {actions['subject']: actions}
+            actionDict = {}
+            for action in actions:
+                actionDict[action['subject']] = actionDict.get(action['subject'],[])+[action]
+            actions = {}
+            for name,policy in actionDict.items():
+                actions[name] = ActionSet(policy)
         if isinstance(actions,dict):
             for name,policy in actions.items():
                 if isinstance(policy,ActionSet):
                     # Transfer fixed action into policy
                     key = keys.stateKey(name,keys.ACTION)
-                    actions[name] = makeTree({'if': equalRow(turnKey(name),0),
-                                              True: setToConstantMatrix(key,policy),
-                                              False: noChangeMatrix(key)})
-                actions[name] = actions[name].desymbolize(self.symbols)
+                    turn = turnKey(name)
+                    if turn in state.keyMap:
+                        turns = state.domain(turn)
+                        if len(turns) == 1:
+                            if 0 in turns:
+                                actions[name] = makeTree(setToConstantMatrix(key,policy))
+                            else:
+                                logging.warning('Policy generated for %s out of turn' % (name))
+                                del actions[name]
+                        elif 0 in turns:
+                            actions[name] = makeTree({'if': equalRow(turnKey(name),0),
+                                                      True: setToConstantMatrix(key,policy),
+                                                      False: noChangeMatrix(key)})
+                        else:
+                            logging.warning('Policy generated for %s out of turn' % (name))
+                            del actions[name]
+            for name,policy in actions.items():
+                actions[name] = policy.desymbolize(self.symbols)
         else:
             assert actions is None
             actions = {}
@@ -241,8 +266,10 @@ class World:
                 key = keys.turnKey(name)
                 if key in state.keyMap and 0 in state.domain(key):
                     # This agent might have a turn now
+                    logging.debug('%s deciding...' % (name))
+                    agent = self.agents[name]
                     decision = self.agents[name].decide(state,horizon,actions,
-                                                        None,tiebreak)
+                                                        None,tiebreak,agent.getActions(state))
                     actions[name] = decision['policy']
         for name,policy in actions.items():
             state *= policy
@@ -262,7 +289,7 @@ class World:
             dynamics.update(self.getTurnDynamics(key,actions))
         return dynamics
 
-    def deltaObservations(self,state,actions):
+    def deltaObservations(self,state,actions,keySubset=None):
         """
         Computes the new observations for each agent in the given state 
         @warning: Does not currently enforce order between observations that have direct dependencies. If you want such a dependency, introduce a state feature to indirectly capture it. 
@@ -272,7 +299,8 @@ class World:
             O = self.agents[name].getO(state,actions)
             if O:
                 for key,tree in O.items():
-                    Ofuns[key] = [tree]
+                    if keySubset is None or key in keySubset:
+                        Ofuns[key] = [tree]
         return Ofuns
         
     def effect(self,actions,state,updateBeliefs=True,keySubset=None):
@@ -284,7 +312,7 @@ class World:
         # Update turn order
         result['effect'].append(self.deltaTurn(result['new'],actions))
         # Generate observations
-        result['effect'].append(self.deltaObservations(result['new'],actions))
+        result['effect'].append(self.deltaObservations(result['new'],actions,keySubset))
         # Apply all of these update functions
         for stage in result['effect']:
             for key,dynamics in stage.items():
@@ -299,9 +327,19 @@ class World:
                         del dist[vector]
                         vector[newKey] = vector[key]
                         dist[vector] = prob
+                elif len(dynamics) == 1:
+                    tree = dynamics[0]
+                    result['new'] *= tree
                 else:
+                    cumulative = None
                     for tree in dynamics:
-                        result['new'] *= tree
+                        if cumulative is None:
+                            cumulative = tree
+                        else:
+                            cumulative = copy.deepcopy(cumulative)
+                            cumulative.makeFuture([key])
+                            cumulative *= tree
+                    result['new'] *= cumulative
         if updateBeliefs:
             # Update agent models included in the original world
             # (after finding out possible new worlds)
@@ -331,7 +369,7 @@ class World:
         for keySet in keyOrder:
             dynamics = {}
             for key in keySet:
-                dynamics[key] = self.getDynamics(key,actions,state)
+                dynamics[key] = self.getDynamics(key,actions)
                 if len(dynamics[key]) == 0:
                     # No dynamics, no change
                     dynamics[key] = None
@@ -407,6 +445,7 @@ class World:
         """
         Adds a possible termination condition to the list
         """
+        
         # Temporary deprecation check (TODO: Remove)
         remaining = [tree]
         while remaining:
@@ -426,6 +465,12 @@ class World:
             dynamics = self.dynamics[TERMINATED] = {}
         if action in dynamics and action is True:
             raise DeprecationWarning('Multiple termination conditions no longer supported. Please merge into single boolean PWL tree.')
+
+        # Termination state info
+        if not TERMINATED in self.variables:
+            self.defineVariable(TERMINATED,bool,description="True if and only if a '\
+            'termination condition for this simulation is satisfied")
+            self.setFeature(TERMINATED,False)
         self.setDynamics(TERMINATED,action,tree)
 
     def terminated(self,state=None):
@@ -438,10 +483,9 @@ class World:
         """
         if state is None:
             state = self.state
-        try:
-            termination = self.getValue(TERMINATED,state)
-        except KeyError:
-            termination = False
+        if not TERMINATED in state:
+            return False
+        termination = self.getValue(TERMINATED,state)
         if isinstance(termination,Distribution):
             termination = termination[True] == 1.
         return termination
@@ -450,9 +494,9 @@ class World:
     """Authoring methods"""
     """-----------------"""
 
-    def addAgent(self,agent):
+    def addAgent(self,agent,setModel=True):
         if isinstance(agent,str):
-            agent = Agent(agent,self)
+            agent = Agent(agent)
         if self.has_agent(agent):
             raise NameError('Agent %s already exists in this world' % (agent.name))
         else:
@@ -460,6 +504,20 @@ class World:
             agent.world = self
             self.turnSubstate = None
             self.turnKeys = set()
+            key = modelKey(agent.name)
+            if not key in self.variables:
+                self.defineVariable(key,list,list(agent.models.keys()))
+            
+            if len(agent.models) == 0:
+                # Default model settings
+                agent.addModel('%s0' % (agent.name),R={},horizon=2,level=2,rationality=1.,
+                              discount=1.,selection='consistent',
+                              beliefs=True,parent=None,projector=Distribution.expectation)
+            if setModel:
+                # Initialize model of this agent to be uniform distribution (got a better idea?)
+                prob = 1./float(len(agent.models))
+                dist = {model: prob for model in agent.models}
+                self.setModel(agent.name,dist)
         return agent
 
     def has_agent(self,agent):
@@ -540,6 +598,8 @@ class World:
         self.dynamics[key][action] = tree
 
     def getDynamics(self,key,action,state=None):
+        if not state is None:
+            raise DeprecationWarning('There are no longer different dynamics functions depending on the state')
         if not key in self.dynamics:
             return []
         if isinstance(action,Action):
@@ -623,7 +683,7 @@ class World:
                 # Insert action key
                 key = stateKey(name,keys.ACTION)
                 if not key in self.variables:
-                    self.defineVariable(key,ActionSet)
+                    self.defineVariable(key,ActionSet,description='Action performed by %s' % (name))
                     self.setFeature(key,next(iter(self.variables[key]['elements'])))
 
     def next(self,vector=None):
@@ -636,25 +696,14 @@ class World:
         if isinstance(vector,VectorDistributionSet):
             if len(self.turnKeys) == 0:
                 self.turnKeys = {key for key in vector.keyMap.keys() if isTurnKey(key)}
-#            if self.turnSubstate == CONSTANT:
-            substate = {vector.keyMap[key] for key in self.turnKeys}
-            if len(substate) != 1:
-                logging.error('Turns stored in independent substates: %s' % \
-                              (', '.join(substate)))
-            self.turnSubstate = iter(substate).next()
-            distribution = vector.distributions[self.turnSubstate]
-            results = {}
-            for element in distribution.domain():
-                names = self.next(element)
-                label = ','.join(names)
-                if label in results:
-                    results[label]['worlds'][element] = distribution[element]
-                else:
-                    results[label] = {'agents': names,
-                                      'worlds': psychsim.pwl.VectorDistribution({element: distribution[element]})}
-            if len(results) > 1:
-                logging.error('Unable to handle nondeterministic turns')
-            return results.values()[0]['agents']
+            agents = set()
+            for key in self.turnKeys:
+                substate = vector.keyMap[key]
+                subvector = vector.distributions[substate]
+                assert len(subvector) == 1,'World.next() does not operate on uncertain turns'
+                if subvector.first()[key] == 0:
+                    agents.add(turn2name(key))
+            return agents
         else:
             items = filter(lambda i: isTurnKey(i[0]),vector.items())
         if len(items) == 0:
@@ -775,13 +824,17 @@ class World:
         for agent in self.agents.values():
             for model in agent.models.values():
                 if 'beliefs' in model and not model['beliefs'] is True:
-                    raise RuntimeError('Define all variables before setting beliefs')
+                    raise RuntimeError('Define all variables before setting beliefs (%s:%s)' \
+                                       % (agent.name,model['name']))
         if key in self.variables:
             raise NameError('Variable %s already defined' % (key))
         if key[-1] == "'":
             raise ValueError('Ending single-quote reserved for indicating future state')
         if substate is None:
-            substate = max(self.state.distributions.keys())+1
+            try:
+                substate = max(self.state.distributions.keys())+1
+            except ValueError:
+                substate = 0
         self.variables[key] = {'domain': domain,
                                'description': description,
                                'substate': substate,
@@ -808,7 +861,10 @@ class World:
                     lo = self.agents[key].actions
                 else:
                     lo = self.agents[keys.state2agent(key)].actions
-            self.variables[key].update({'elements': lo,'lo': None,'hi': None})
+                description = '; '.join([', '.join(['%s: %s' % (act,act.description) \
+                                                    for act in actSet]) for actSet in lo])
+            self.variables[key].update({'elements': lo,'lo': None,'hi': None,
+                                        'description': description})
             for action in lo:
                 self.symbols[action] = len(self.symbols)
                 self.symbolList.append(action)
@@ -925,7 +981,7 @@ class World:
         else:
             marginal = self.getFeature(key,state)
             assert len(marginal) == 1,'getValue operates on only singleton distributions'
-            return marginal.domain()[0]
+            return marginal.first()
 
     def decodeVariable(self,key,distribution):
         raise DeprecationWarning('Use float2value method instead')
@@ -1009,7 +1065,8 @@ class World:
             if key in self.variables:
                 model = self.getFeature(key,vector)
             else:
-                model = True
+                assert len(agent.models) == 1,'Ambiguous model of %s' % (modelee)
+                model = agent.models.keys()[0]
         else:
             try:
                 model = agent.index2model(vector[modelKey(modelee)])
@@ -1020,19 +1077,14 @@ class World:
     def getMentalModel(self,modelee,vector):
         raise DeprecationWarning('Substitute getModel instead (sorry for pedanticism, but a "model" may be real, not "mental")')
 
-    def setModel(self,modelee,distribution,state=None,model=True):
+    def setModel(self,modelee,distribution,state=None,model=None):
         # Make sure distribution is probability distribution over floats
         if not isinstance(distribution,dict):
             distribution = {distribution: 1.}
         if not isinstance(distribution,psychsim.probability.Distribution):
             distribution = psychsim.probability.Distribution(distribution)
-        for element in distribution.domain():
-            if not isinstance(element,float):
-                distribution.replace(element,float(self.agents[modelee].model2index(element)))
         distribution.normalize()
         key = modelKey(modelee)
-        if not key in self.variables:
-            self.defineVariable(key)
         if isinstance(state,str):
             # This is the name of the modeling agent (*cough* hack *cough*)
             self.agents[state].setBelief(key,distribution,model)
@@ -1290,11 +1342,17 @@ class World:
                         # Explain decision
                         self.explainDecision(outcome['decisions'][name],buf,level)
 
-    def explainAction(self,outcome,buf=None,level=0):
-        if level > 0:
-            for name,action in outcome['actions'].items():
-                print(action,file=buf)
-        return set(outcome['actions'].values())
+    def explainAction(self,state=None,buf=None,level=0):
+        if state is None:
+            state = self.state
+        joint = {}
+        for name in sorted(self.agents.keys()):
+            key = stateKey(name,ACTION)
+            if key in state:
+                joint[name] = self.float2value(key,state.marginal(key))
+                if level > 0:
+                    print(joint[name],file=buf)
+        return joint
         
 
     def explainDecision(self,decision,buf=None,level=2,prefix=''):
@@ -1395,7 +1453,7 @@ class World:
             else:
                 elements = []
         entities = sorted(self.agents.keys())
-        entities.insert(0,None)
+        entities.insert(0,keys.WORLD)
         change = False
         # Sort relations
         relations = {}
@@ -1468,7 +1526,7 @@ class World:
                 if key in vector:
                     if csv:
                         elements.append(label)
-                        elements.append('__model__')
+                        elements.append(MODEL)
                         elements.append(self.agents[entity].index2model(vector[key]))
                     elif not beliefs:
                         if first:
@@ -1527,10 +1585,11 @@ class World:
                 if diff > 1e-3:
                     # Notable change
                     delta[key] = vector[key]
-            if self.terminated(vector):
-                delta['__END__'] = 1.
-            else:
-                delta['__END__'] = -1.
+            if TERMINATED in vector:
+                if self.terminated(vector):
+                    delta[TERMINATED] = 1.
+                else:
+                    delta[TERMINATED] = -1.
             try:
                 deltaDist[delta] += new[vector]
             except KeyError:
@@ -1650,13 +1709,6 @@ class World:
                 root.appendChild(self.diagram)
             else:
                 root.appendChild(self.diagram.__xml__().documentElement)
-        # UI Diagram
-        if self.diagram:
-            if isinstance(self.diagram,Node):
-                # We never bothered parsing this, so easy
-                root.appendChild(self.diagram)
-            else:
-                root.appendChild(self.diagram.__xml__().documentElement)
         return doc
 
     def parse(self,element,agentClass=Agent):
@@ -1667,14 +1719,11 @@ class World:
             self.maxTurn = None
         node = element.firstChild
         order = {}
+        agents = []
         while node:
             if node.nodeType == node.ELEMENT_NODE:
                 if node.tagName == 'agent':
-                    if agentClass.isXML(node):
-                        self.addAgent(agentClass(node))
-                    else:
-                        assert Agent.isXML(node)
-                        self.addAgent(Agent(node))
+                    agents.append(node)
                 elif node.tagName == 'state':
                     label = str(node.getAttribute('label'))
                     if label:
@@ -1701,6 +1750,8 @@ class World:
                                     substate = self.state.keyMap[key]
                                 except KeyError:
                                     substate = None
+                                if isStateKey(key) and state2agent(key) is None:
+                                    key = stateKey(WORLD,key)
                                 self.defineVariable(key,domain,lo,hi,description,combinator,substate)
                                 try:
                                     for coord in ['xpre','ypre','xpost','ypost']:
@@ -1710,7 +1761,7 @@ class World:
                             elif subnode.tagName == 'local':
                                 entity = str(subnode.getAttribute('entity'))
                                 if not entity:
-                                    entity = None
+                                    entity = WORLD
                                 feature = str(subnode.firstChild.data).strip()
                                 self.defineState(entity,feature,None)
                         subnode = subnode.nextSibling
@@ -1799,11 +1850,17 @@ class World:
                         subnode = subnode.nextSibling
                 elif node.tagName == 'diagram':
                     # UI information. Parse later
-                    self.diagram = node
+                    self.diagram = Diagram(node)
             node = node.nextSibling
-        self.symbolList = self.symbolList[len(self.symbolList)/2:]
+        self.symbolList = self.symbolList[int(len(self.symbolList)/2):]
         for index in range(len(self.symbolList)):
             self.symbols[self.symbolList[index]] = index
+        for node in agents:
+            if agentClass.isXML(node):
+                self.addAgent(agentClass(node,self),False)
+            else:
+                assert Agent.isXML(node)
+                self.addAgent(Agent(node),False)
         
     def save(self,filename,compressed=True):
         """

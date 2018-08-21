@@ -46,10 +46,7 @@ class KeyedVector(collections.MutableMapping):
     def __add__(self,other):
         result = KeyedVector(self)
         for key,value in other.items():
-            try:
-                result[key] += value
-            except KeyError:
-                result[key] = value
+            result[key] = value + result.get(key,0.)
         return result
 
     def __neg__(self):
@@ -120,16 +117,29 @@ class KeyedVector(collections.MutableMapping):
 #                result[key] = value
         return result
 
-    def makeFuture(self):
+    def makeFuture(self,keyList=None):
         """
         Transforms this vector to refer to only future versions of its columns
+        @param keyList: If present, only references to these keys are made future
         """
-        for key in self.keys():
-            if not key == keys.CONSTANT:
-                assert not keys.isFuture(key)
+        return self.changeTense(True,keyList)
+        
+    def makePresent(self,keyList=None):
+        return self.changeTense(False,keyList)
+
+    def changeTense(self,future=True,keyList=None):
+        if keyList is None:
+            keyList = self.keys()
+        for key in keyList:
+            if key in self and not key == keys.CONSTANT:
+                if future:
+                    assert not keys.isFuture(key)
                 value = self[key]
                 del self[key]
-                self[keys.makeFuture(key)] = value
+                if future:
+                    self[keys.makeFuture(key)] = value
+                else:
+                    self[keys.makePresent(key)] = value
         
     def filter(self,ignore):
         """
@@ -212,10 +222,10 @@ class VectorDistribution(Distribution):
     A class representing a L{Distribution} over L{KeyedVector} instances
     """
 
-    def __init__(self,args=None):
-        if args is None:
-            args = {KeyedVector({keys.CONSTANT:1.}):1.}
-        Distribution.__init__(self,args)
+#    def __init__(self,args=None):
+#        if args is None:
+#            args = {KeyedVector({keys.CONSTANT:1.}):1.}
+#        Distribution.__init__(self,args)
 
     def keys(self):
         """
@@ -223,7 +233,7 @@ class VectorDistribution(Distribution):
         NOT the keys of the domain itself
         """
         if len(self) > 0:
-            return iter(self.domain()).next().keys()
+            return self.first().keys()
         else:
             return {}
     
@@ -247,6 +257,7 @@ class VectorDistribution(Distribution):
             else:
                 row[key] = value
                 self[row] = prob
+
 
     def merge(self,other,inPlace=False):
         """
@@ -316,7 +327,7 @@ class VectorDistribution(Distribution):
                 index += 1
             return sample
         else:
-            Distribution.select(self)
+            return Distribution.select(self)
             
     def hasColumn(self,key):
         """
@@ -324,7 +335,7 @@ class VectorDistribution(Distribution):
         @rtype: bool
         """
         for vector in self.domain():
-            if not vector.has_key(key):
+            if not key in vector:
                 return False
         return True
 

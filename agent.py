@@ -1,8 +1,12 @@
 from __future__ import print_function
 import copy
+import logging
 import math
 import random
-from io import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 from xml.dom.minidom import Document,Node
 
 from psychsim.action import Action,ActionSet
@@ -48,15 +52,57 @@ class Agent:
             self.parse(name)
         else:
             self.name = name
-            # Default model settings
-            self.addModel('%s0' % (self.name),R={},horizon=2,level=2,rationality=1.,
-                          discount=1.,selection='consistent',
-                          beliefs=True,parent=None,projector=Distribution.expectation)
 
     """------------------"""
     """Policy methods"""
     """------------------"""
 
+        
+    def compileV(self,model=None,state=None):
+        self.world.dependency.getEvaluation()
+        if model is None:
+            model = '%s0' % (self.name)
+        belief = self.getBelief(self.world.state,model)
+        horizon = self.getAttribute('horizon',model)
+        R = self.getReward(model)
+        Rkey = rewardKey(self.name,True)
+        if state:
+            actions = self.getActions(state)
+        else:
+            actions = self.actions
+        V = {}
+        for action in actions:
+            print(action)
+            effects = self.world.deltaState(action,belief)
+            effects.reverse()
+            V[action] = copy.deepcopy(R)
+            keyList = V[action].getKeysIn()
+            V[action].makeFuture(keyList)
+            for stage in effects:
+                subtree = None
+                for key,dynamics in stage.items():
+                    if dynamics and makeFuture(key) in V[action].getKeysIn():
+                        assert len(dynamics) == 1
+                        if subtree is None:
+                            subtree = dynamics[0]
+                        else:
+                            subtree += dynamics[0]
+                if subtree:
+                    for key in V[action].getKeysIn():
+                        if not key in subtree.getKeysOut():
+                            fun = lambda m: KeyedMatrix(m.items()+[(key,KeyedVector({key: 1.}))])
+                            subtree = subtree.map(fun)
+                    V[action] = V[action]*subtree
+            keyList = [key for key in V[action].getKeysIn() if isFuture(key)]
+            if keyList:
+                V[action].makePresent(keyList)
+#            print(V[action])
+            state = copy.deepcopy(belief)
+            state.join(CONSTANT,1.)
+            state *= V[action]
+            ER = state[Rkey]
+        return V
+                            
     def decide(self,vector,horizon=None,others=None,model=None,selection=None,actions=None,keySet=None):
         """
         Generate an action choice for this agent in the given state
@@ -118,7 +164,7 @@ class Agent:
             actions = self.getActions(belief) 
         if len(actions) == 0:
             # Someone made a boo-boo because there is no legal action for this agent right now
-            buf = StringIO.StringIO()
+            buf = StringIO()
             if len(self.getActions(vector)) == 0:
                 print('%s has no legal actions in:' % (self.name),file=buf)
                 self.world.printState(vector,buf)
@@ -143,17 +189,19 @@ class Agent:
         best = None
         for action in actions:
             # Compute value across possible worlds
+            logging.debug('Considering %s' % (action))
             V[action] = {'__EV__': 0.,'__ER__': [],'__S__': []}
             if isinstance(keySet,dict):
                 subkeys = keySet[action]
             else:
-                subkeys = keySet
+                subkeys = belief.keys()
             current = copy.deepcopy(belief)
             start = action
             for t in range(horizon):
+                logging.debug('Time %d/%d' % (t+1,horizon))
                 outcome = self.world.step(start,current,keySubset=subkeys,
-                                          horizon=horizon-t)
-                V[action]['__ER__'].append(self.reward(current))
+                                          horizon=horizon-t-1)
+                V[action]['__ER__'].append(self.reward(current,model))
                 V[action]['__EV__'] += V[action]['__ER__'][-1]
                 V[action]['__S__'].append(current)
                 start = None
@@ -165,6 +213,7 @@ class Agent:
                 best.append(action)
             elif V[action]['__EV__'] > V[best[0]]['__EV__']:
                 best = [action]
+            logging.debug('Evaluated %s: %f' % (action,V[action]['__EV__']))
         result = {'V*': V[best[0]]['__EV__'],'V': V}
         # Make an action selection based on the value function
         if selection == 'distribution':
@@ -438,7 +487,7 @@ class Agent:
     """Action methods"""
     """------------------"""
 
-    def addAction(self,action,condition=None):
+    def addAction(self,action,condition=None,description=None):
         """
         @param condition: optional legality condition
         @type condition: L{KeyedPlane}
@@ -456,7 +505,7 @@ class Agent:
             actions.append(action)
         else:
             assert isinstance(action,dict),'Argument to addAction must be at least a dictionary'
-            actions.append(Action(action))
+            actions.append(Action(action,description))
         for atom in actions:
             if not 'subject' in  atom:
                 # Make me the subject of these actions
@@ -542,28 +591,34 @@ class Agent:
         self.models[model]['R'][tree] = weight
         key = rewardKey(self.name)
         if not key in self.world.variables:
-            self.world.defineVariable(key,float)
+            self.world.defineVariable(key,float,
+                                      description='Reward for %s in this state' % (self.name))
             self.world.setFeature(key,0.)
 
     def getReward(self,model):
         R = self.getAttribute('R',model)
         if R is None:
             # No reward components
-            R = KeyedTree(KeyedVector())
+            R = KeyedTree(setToConstantMatrix(rewardKey(self.name),0.))
             self.setAttribute('R',R,model)
             return R
         elif isinstance(R,dict):
             Rsum = None
             for tree,weight in R.items():
                 if isinstance(tree,str):
-                    raise NotImplementedError
-                else:
-                    if Rsum is None:
-                        Rsum = weight*tree
+                    agent = self.world.agents[tree]
+                    dist = self.world.getModel(agent.name,self.getBelief(model=model))
+                    if len(dist) == 1:
+                        otherModel = dist.first()
+                        tree = agent.getReward(otherModel)
                     else:
-                        Rsum += weight*tree
+                        raise NotImplementedError('Simple fix needed to support agents having rewards tied to other agents about whom they have uncertain beliefs')
+                if Rsum is None:
+                    Rsum = weight*tree
+                else:
+                    Rsum += weight*tree
             if Rsum is None:
-                Rsum = KeyedTree(KeyedVector())
+                Rsum = KeyedTree(setToConstantMatrix(rewardKey(self.name),0.))
             self.setAttribute('R',Rsum,model)
             return Rsum
         else:
@@ -583,18 +638,23 @@ class Agent:
             for element in vector.domain():
                 total += vector[element]*self.reward(element,model,recurse)
         elif isinstance(vector,VectorDistributionSet):
-            modelK = modelKey(self.name)
-            models = self.world.float2value(modelK,vector.domain(modelK))
-            tree = None
-            for submodel in models:
-                R = self.getReward(submodel)
-                if tree is None:
-                    tree = R
-                else:
-                    tree = {'if': equalRow(modelK,submodel),
-                             True: R,False: tree}
-            tree = makeTree(tree).desymbolize(self.world.symbols)
+            if model is None:
+                modelK = modelKey(self.name)
+                models = self.world.float2value(modelK,vector.domain(modelK))
+                tree = None
+                for submodel in models:
+                    R = self.getReward(submodel)
+                    if tree is None:
+                        tree = R
+                    else:
+                        tree = {'if': equalRow(modelK,submodel),
+                                 True: R,False: tree}
+                tree = makeTree(tree).desymbolize(self.world.symbols)
+            else:
+                tree = self.getAttribute('R',model)
             vector *= tree
+            if not rewardKey(self.name) in vector:
+                vector.join(rewardKey(self.name),0.)
             vector.rollback()
             total = vector[rewardKey(self.name)].expectation()
         else:
@@ -643,8 +703,11 @@ class Agent:
         if beliefs is True:
             beliefs = self.resetBelief(model)
         if isinstance(agents,str):
-            del beliefs[keys.turnKey(agents)]
-            del beliefs[keys.modelKey(agents)]
+            for key in beliefs.keys():
+                if state2agent(key) == agents:
+                    del beliefs[key]
+#            del beliefs[keys.turnKey(agents)]
+#            del beliefs[keys.modelKey(agents)]
         else:
             beliefs.deleteKeys([keys.turnKey(a) for a in agents]+
                                [keys.modelKey(a) for a in agents])
@@ -670,8 +733,8 @@ class Agent:
         if name in self.models:
             raise NameError('Model %s already exists for agent %s' % \
                 (name,self.name))
-        if name in self.world.symbols:
-            raise NameError('Model %s conflicts with existing symbol' % (name))
+#        if name in self.world.symbols:
+#            raise NameError('Model %s conflicts with existing symbol' % (name))
         model = {'name': name,'index': 0,'parent': None,'SE': {},
                  'V': ValueFunction(),'policy': {},'ignore': []}
         model.update(kwargs)
@@ -680,6 +743,8 @@ class Agent:
         self.modelList[model['index']] = name
         self.world.symbols[name] = model['index']
         self.world.symbolList.append(name)
+        if not name in self.world.variables[modelKey(self.name)]['elements']:
+            self.world.variables[modelKey(self.name)]['elements'].append(name)
         return model
 
     def deleteModel(self,name):
@@ -769,12 +834,12 @@ class Agent:
             model = self.index2model(index)
         if model is None:
             print('%s\t%-12s\t%-12s' % \
-                  (prefix,'__model__','__unknown(%s)__' % (index)),file=buf)
+                  (prefix,MODEL,'__unknown(%s)__' % (index)),file=buf)
             return
         if not isinstance(model,dict):
             model = self.models[model]
         print('%s\t%-12s\t%-12s' % \
-              (prefix,'__model__',model['name']),file=buf)
+              (prefix,MODEL,model['name']),file=buf)
         if 'R' in model and not model['R'] is True:
             self.printReward(model['name'],buf,'%s\t\t' % (prefix))
         if 'beliefs' in model and not model['beliefs'] is True:
@@ -786,8 +851,15 @@ class Agent:
     """Belief update methods"""
     """---------------------"""
 
-    def resetBelief(self,model=None):
-        beliefs = copy.deepcopy(self.world.state)
+    def resetBelief(self,model=None,include=None,ignore=None):
+        if model is None:
+            assert len(self.models) == 1
+            model = list(self.models.keys())[0]
+        if keys is None:
+            beliefs = copy.deepcopy(self.world.state)
+            beliefs.deleteKeys([keys.modelKey(a) for a in self.world.agents])
+        else:
+            beliefs = self.world.state.copySubset(ignore,include)
         self.models[model]['beliefs'] = beliefs
         return beliefs
         
@@ -845,7 +917,7 @@ class Agent:
         if self.O is True:
             Omega = []
         else:
-            Omega = self.O.keys()
+            Omega = sorted(self.O.keys())
         assert isinstance(Omega,list)
         for vector in distribution.domain():
             prob = distribution[vector]
@@ -863,16 +935,20 @@ class Agent:
                     SE[oldModel][label] = self.models[newModel]['index']
                 else:
                     # Work to be done. Start by getting old belief state.
-                    beliefs = self.getAttribute('beliefs',oldModel)
-                    if beliefs is True:
-                        beliefs = copy.deepcopy(trueState)
-                    else:
-                        beliefs = copy.deepcopy(self.getAttribute('beliefs',oldModel))
+                    beliefs = self.getBelief(trueState,oldModel)
                     # Project direct effect of the actions, including possible observations
-                    self.world.step(actions,beliefs,updateBeliefs=False)
+                    assert isinstance(actions,ActionSet)
+                    relevantActions = actions.__class__({action for action in actions
+                                                         if turnKey(action['subject']) in beliefs})
+                    if len(relevantActions) == 0:
+                        relevantActions = None
+                    self.world.step(relevantActions,beliefs,updateBeliefs=True,
+                                    keySubset=beliefs.keys())
                     # Condition on actual observations
                     for omega in Omega:
                         beliefs[omega] = vector[keys.makeFuture(omega)]
+                        assert len(beliefs) > 0,'Impossible observation %s=%s' % \
+                            (omega,vector[keys.makeFuture(omega)])
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
                     newModel = self.belief2model(oldModel,beliefs)
@@ -1026,10 +1102,6 @@ class Agent:
             O = self.O
         if isinstance(actions,ActionSet):
             jointAction = actions
-            if actions:
-                actions = {actions['subject']: jointAction}
-            else:
-                actions = {}
         else:
             # Table of actions across multiple agents
             jointAction = reduce(lambda x,y: x|y,actions.values())
@@ -1314,7 +1386,10 @@ class Agent:
                                             tree = KeyedTree(subchild)
                                             if not key in kwargs:
                                                 kwargs[key] = {}
-                                            kwargs[key][tree] = float(subnode.getAttribute('weight'))
+                                            if subnode.getAttribute('weight'):
+                                                kwargs[key][tree] = float(subnode.getAttribute('weight'))
+                                            else:
+                                                kwargs[key] = tree
                                         elif key == 'policy':
                                             kwargs[key] = KeyedTree(subchild)
                                         elif key == 'beliefs':

@@ -4,7 +4,7 @@ from psychsim.probability import Distribution
 from psychsim.action import Action
 
 from psychsim.pwl.vector import KeyedVector
-from psychsim.pwl.matrix import KeyedMatrix
+from psychsim.pwl.matrix import KeyedMatrix,setToConstantMatrix
 from psychsim.pwl.plane import KeyedPlane,equalRow
 
 class KeyedTree:
@@ -202,6 +202,33 @@ class KeyedTree:
                 self[child.ceil(key,hi)] = prob
         return self
 
+    def makeFuture(self,keyList=None):
+        self.changeTense(True,keyList)
+
+    def makePresent(self,keyList=None):
+        self.changeTense(False,keyList)
+        
+    def changeTense(self,future=True,keyList=None):
+        """
+        Transforms this vector to refer to only future versions of its columns
+        @param keyList: If present, only references to these keys are made future
+        """
+        if keyList is None:
+            keyList = self.keys()
+        if self.isProbabilistic():
+            for child in self.children.domain():
+                prob = self.children[child]
+                del self.children[child]
+                child.changeTense(future,keyList)
+                self.children[child] = prob
+        else:
+            if not self.isLeaf():
+                self.branch.changeTense(future,keyList)
+            for value,child in self.children.items():
+                child.changeTense(future,keyList)
+        self._string = None
+        self._keysIn = None
+            
     def scale(self,table):
         tree = self.__class__()
         if self.isLeaf():
@@ -226,7 +253,7 @@ class KeyedTree:
             if isinstance(other.children,Distribution):
                 return self.children == other.children
             else:
-                return false
+                return False
         else:
             if self.branch == other.branch:
                 return self.children == other.children
@@ -327,8 +354,8 @@ class KeyedTree:
                     if planeOp is None or not isinstance(other.children[None],KeyedMatrix):
                         plane = self.branch
                     else:
-                        plane = KeyedPlane(planeOp(self.branch.vector,other.children[None]),
-                                           self.branch.threshold,self.branch.comparison)
+                        plane = KeyedPlane([(planeOp(p,other.children[None]),t,c)
+                                            for p,t,c in self.branch.planes])
                     result.makeBranch(plane,trueTree,falseTree)
         elif other.branch is None:
             # Probabilistic branch
@@ -460,7 +487,7 @@ class KeyedTree:
                 result.makeBranch(self.branch,self.children[True].prune(path+[(self.branch,True)]),
                                   self.children[False].prune(path+[(self.branch,False)]))
         return result
-
+                
     def minimizePlanes(self):
         """
         Modifies tree in place so that there are no constant factors in branch weights
@@ -472,7 +499,18 @@ class KeyedTree:
             self.branch = self.branch.minimize()
             self.children[True].minimizePlanes()
             self.children[False].minimizePlanes()
-            
+
+    def leaves(self):
+        """
+        @warning: May return a list containing duplicates
+        """
+        if self.isLeaf():
+            return [self.children[None]]
+        elif self.isProbabilistic():
+            return sum([child.leaves() for child in self.children.domain()],[])
+        else:
+            return sum([child.leaves() for child in self.children.values()],[])
+    
     def __hash__(self):
         return hash(str(self))
 
@@ -529,6 +567,8 @@ class KeyedTree:
                     else:
                         # Branch
                         plane = KeyedPlane(node)
+                elif node.tagName == 'plane':
+                    plane = KeyedPlane(node)
                 elif node.tagName == 'matrix':
                     key = eval(node.getAttribute('key'))
                     children[key] = KeyedMatrix(node)

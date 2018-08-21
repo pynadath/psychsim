@@ -1,11 +1,12 @@
 
 # Special keys
 CONSTANT = ''
-TERMINATED = '__END__'
 VALUE = '__VALUE__'
 WORLD = '__WORLD__'
 ACTION = '__ACTION__'
 REWARD = '__REWARD__'
+MODEL = '__MODEL__'
+TURN = '__TURN__'
 
 def stateKey(name,feature,future=False):
     """
@@ -20,6 +21,7 @@ def stateKey(name,feature,future=False):
         return feature
     else:
         return '%s\'s %s' % (name,feature)
+TERMINATED = stateKey(WORLD,'__END__')
 
 def isStateKey(key):
     """
@@ -76,13 +78,13 @@ def isFuture(key):
     return len(key) > 0 and key[-1] == "'"
 
 def turnKey(name):
-    return stateKey(name,'_turn')
+    return stateKey(name,TURN)
 
 def isTurnKey(key):
-    return key[-8:] == '\'s _turn'
+    return key[-(len(TURN)+3):] == '\'s %s' % (TURN)
 
 def turn2name(key):
-    return key[:-8]
+    return key[:-(len(TURN)+3)]
 
 def actionKey(feature):    
     return '__action__%s__' % (feature)
@@ -91,13 +93,13 @@ def isActionKey(key):
     return isStateKey(key) and state2feature(key) == ACTION
 
 def modelKey(name):
-    return stateKey(name,'_model')
+    return stateKey(name,MODEL)
 
 def isModelKey(key):
-    return key[-9:] == '\'s _model'
+    return key[-(len(MODEL)+3):] == '\'s %s' % (MODEL)
 
 def model2name(key):
-    return key[:-9]
+    return key[:-(len(MODEL)+3)]
 
 def binaryKey(subj,obj,relation):
     return '%s %s -> %s' % (subj,relation,obj)
@@ -118,5 +120,39 @@ def likesKey(subj,obj):
 def isLikesKey(key):
     return ' likes -> ' in key
 
-def rewardKey(name):
-    return stateKey(name,REWARD)
+def rewardKey(name,future=False):
+    return stateKey(name,REWARD,future)
+
+def isRewardKey(key):
+    return isStateKey(key) and state2feature(key) == REWARD
+
+def beliefKey(name,key):
+    return '%s(%s)' % (name,key)
+
+def isBeliefKey(key):
+    return '(' in key
+
+def belief2believer(key):
+    return key[:key.index('(')]
+
+def belief2key(key):
+    return key[key.index('(')+1:-1]
+
+def escapeKey(key):
+    """
+    @return: filename-ready version of the key
+    """
+    if not isinstance(key,str):
+        key = str(key)
+    future = isFuture(key)
+    if future:
+        key = makePresent(key)
+    if isStateKey(key):
+        agent = state2agent(key)
+        if agent == WORLD:
+            name = state2feature(key)
+        else:
+            name = '%sOf%s' % (state2feature(key),agent)
+    else:
+        name = key
+    return name.replace(' ','')

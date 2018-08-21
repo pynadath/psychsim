@@ -2,10 +2,13 @@ import os.path
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+from pwl.keys import WORLD
 from ui.mainwindow import Ui_MainWindow
 from ui.worldview import WorldView
 from ui.mapview import MapView
 from world import World
+
+settings = QSettings('USC ICT','PsychSim')
 
 class PsychSimUI(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
@@ -18,19 +21,24 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
 
     @pyqtSlot() # signal with no arguments
     def on_actionOpen_triggered(self):
-        filename = QFileDialog.getOpenFileName(self,"PsychSim -- Open File")
-        if not filename.isEmpty():
+        filename,types = QFileDialog.getOpenFileName(self,"PsychSim -- Open File")
+        if filename:
             self.openScenario(str(filename))
 
     def openScenario(self,filename):
         self.world = World(filename)
-        settings = QSettings()
+        self.scene.world = self.world
+        self.scene.clear()
         settings.setValue('LastFile',os.path.abspath(filename))
-        self.scene.displayWorld(self.world)
+        if settings.value('ViewCyclical') == 'yes':
+            self.findChild(QAction,'actionGround_Truth').setChecked(True)
+            self.on_actionGround_Truth_triggered()
+        else:
+            self.findChild(QAction,'actionAcyclical').setChecked(True)
+            self.scene.displayWorld()
 
     @pyqtSlot() # signal with no arguments
     def on_actionSave_triggered(self):
-        settings = QSettings()
         filename = settings.value('LastFile').toString()
         self.scene.world.save(str(filename))
         self.scene.unsetDirty()
@@ -52,8 +60,45 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
         self.graphicsView.setScene(self.map)
 
     @pyqtSlot() # signal with no arguments
+    def on_actionGround_Truth_triggered(self):
+#        self.world.clearCoords()
+        self.scene.world = self.world
+#        self.scene.clear()
+        self.scene.displayGroundTruth(maxRows=6)
+        settings.setValue('ViewCyclical','yes')
+
+    @pyqtSlot() # signal with no arguments
+    def on_actionAcyclical_triggered(self):
+        self.world.clearCoords()
+        self.scene.world = self.world
+        self.scene.clear()
+        self.scene.displayWorld()
+        settings.setValue('ViewCyclical','no')
+
+    @pyqtSlot() # signal with no arguments
+    def on_actionBeliefs_triggered(self):
+        button = self.findChild(QAction,'actionBeliefs')
+        if self.findChild(QAction,'actionAcyclical').isChecked():
+            pass
+        else:
+            self.scene.displayGroundTruth(maxRows=6,recursive=button.isChecked())
+
+    @pyqtSlot() # signal with no arguments
     def on_actionStep_triggered(self):
         self.scene.step()
+
+    @pyqtSlot() # signal with no arguments
+    def on_actionScreenshot_triggered(self):
+        name,types = QFileDialog.getSaveFileName(self,'Save File')
+        if name:
+            self.scene.saveImage(name)
+
+    @pyqtSlot() # signal with no arguments
+    def on_actionSubgraphs_triggered(self):
+        name = QFileDialog.getExistingDirectory(self,'Destination Directory',
+                                                options=QFileDialog.ShowDirsOnly)
+        if name:
+            self.scene.saveSubgraphs(name)
 
     def wheelEvent(self,event):
 #        factor = 1.41**(-event.delta()/240.)
@@ -67,6 +112,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('scenario',default=None,nargs='?',
                         help='File containing an exising PsychSim scenario')
+    parser.add_argument('-c','--cyclical',action='store_true',help='Start with cyclical view of graph')
 
     app = QApplication(sys.argv)
     app.setOrganizationName('USC ICT')
@@ -74,15 +120,19 @@ if __name__ == '__main__':
     app.setApplicationName('PsychSim')
 
     args = parser.parse_args(args=[str(el) for el in app.arguments()][1:])
+    if args.cyclical:
+        settings.setValue('ViewCyclic','yes')
+        settings.sync()
+    elif settings.value('ViewCylical') is None:
+        settings.setValue('ViewCyclical','no')
 
     win = PsychSimUI()
     if args.scenario is None:
-        settings = QSettings()
-#        filename = settings.value('LastFile').toString()
-#        if filename and QFile.exists(filename):
-#            win.openScenario(str(filename))
+        filename = settings.value('LastFile')
+        if filename and QFile.exists(filename):
+                win.openScenario(filename)
     else:
         win.openScenario(args.scenario)
-    win.show()
+    win.showMaximized()
     app.exec_()
 

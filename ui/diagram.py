@@ -30,7 +30,7 @@ class Diagram:
         """
         @warning: if no color exists, assigns a random color
         """
-        if not self.color.has_key(key):
+        if not key in self.color:
             self.color[key] = QColor(random.choice(QColor.colorNames()))
         return self.color[key]
 
@@ -39,6 +39,10 @@ class Diagram:
             value = QColor(value)
         self.color[key] = value
 
+    def clear(self):
+        self.x.clear()
+        self.y.clear()
+        
     def __xml__(self):
         doc = Document()
         root = doc.createElement('diagram')
@@ -76,6 +80,6 @@ class Diagram:
                 elif node.tagName == 'color':
                     self.setColor(key,str(node.firstChild.data).strip())
                 else:
-                    raise NameError,'Unknown element %s when parsing %s' % \
-                        (node.tagName,self.__class__.__name__)
+                    raise NameError('Unknown element %s when parsing %s' % \
+                        (node.tagName,self.__class__.__name__))
             node = node.nextSibling

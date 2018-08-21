@@ -100,6 +100,8 @@ class KeyedMatrix(dict):
                             result[col] += other[key]*self[key][col]
                         except KeyError:
                             result[col] = other[key]*self[key][col]
+                else:
+                    result[key] = other[key]
         elif isinstance(other,float):
             result = self.__class__()
             for key,value in self.items():
@@ -138,13 +140,25 @@ class KeyedMatrix(dict):
             result[key] = row.desymbolize(table)
         return result
 
-    def makeFuture(self):
+    def makeFuture(self,keyList=None):
         """
         Transforms matrix so that each row refers to only future keys
+        @param keyList: If present, only references to these keys (within each row) are made future
+        """
+        return self.changeTense(True,keyList)
+
+    def makePresent(self,keyList=None):
+        return self.changeTense(False,keyList)
+    
+    def changeTense(self,future=True,keyList=None):
+        """
+        Transforms matrix so that each row refers to only future keys
+        @param keyList: If present, only references to these keys (within each row) are made future
         """
         self._string = None
+        self._keysIn = None
         for key,vector in self.items():
-            vector.makeFuture()
+            vector.changeTense(future,keyList)
             
     def scale(self,table):
         result = self.__class__()
@@ -216,6 +230,12 @@ class KeyedMatrix(dict):
                 dict.__setitem__(self,key,value)
             node = node.nextSibling
 
+def dynamicsMatrix(key,vector):
+    """
+    @return: a dynamics matrix setting the given key to be equal to the given weighted sum
+    @rtype: L{KeyedMatrix}
+    """
+    return KeyedMatrix({makeFuture(key): KeyedVector(vector)})
 def scaleMatrix(key,weight):
     """
     @return: a dynamics matrix modifying the given keyed value by scaling it by the given weight

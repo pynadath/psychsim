@@ -1,5 +1,5 @@
 import operator
-from xml.dom.minidom import Node
+from xml.dom.minidom import Node,Document
 
 from psychsim.pwl.vector import KeyedVector
 from psychsim.probability import Distribution
@@ -14,48 +14,116 @@ class KeyedPlane:
     @ivar comparison: if 1, value must be above hyperplane; if -1, below; if 0, equal (default is 1)
     @type comparison: int
     """
+    DEFAULT_THRESHOLD = 0.
+    DEFAULT_COMPARISON = 1
 
-    def __init__(self,vector,threshold=None,comparison=1):
-        self._string = None
-        if isinstance(vector,Node):
-            self.parse(vector)
+    def __init__(self,planes,threshold=None,comparison=None):
+        """
+        @warning: if S{planes} is a list, then S{threshold} and S{comparison} are ignored
+        """
+        if isinstance(planes,Node):
+            self.parse(planes)
+        elif isinstance(planes,KeyedVector):
+            # Only a single branch passed
+            if threshold is None:
+                threshold = self.DEFAULT_THRESHOLD
+            if comparison is None:
+                comparison = self.DEFAULT_COMPARISON
+            self.planes = [(planes,threshold,comparison)]
         else:
-            self.vector = vector
-            self.threshold = threshold
-            self.comparison = comparison
+            self.planes = []
+            for plane in planes:
+                if len(plane) == 3:
+                    self.planes.append(plane)
+                elif len(plane) == 2:
+                    self.planes.append((plane[0],plane[1],self.DEFAULT_COMPARISON))
+                elif len(plane) == 1:
+                    self.planes.append((plane[0],self.DEFAULT_THRESHOLD,self.DEFAULT_COMPARISON))
+                else:
+                    raise ValueError('Empty plane passed into constructor')
+        self._string = None
+        self._keys = None
+        self.isConjunction = True
 
+    def __add__(self,other):
+        """
+        @warning: Does not check for duplicate planes
+        """
+        assert self.isConjunction == other.isConjunction,'Planes must be both disjunctive or both conjunctive to be combined'
+        result = self.__class__(self.planes+other.planes)
+        result.isConjunction = self.isConjunction
+        return result
+    
     def keys(self):
-        return self.vector.keys()
+        if self._keys is None:
+            self._keys = set()
+            for vector,threshold,comparison in self.planes:
+                self._keys |= set(vector.keys())
+        return self._keys
     
     def evaluate(self,vector):
         """
         Tests whether the given vector passes or fails this test.
         Also accepts a numeric value, in lieu of doing a dot product.
         @rtype: bool
+        @warning: If multiple planes are present, an AND over their results is assumed
         """
-        if isinstance(vector,float):
-            total = vector
-        else:
-            total = self.vector * vector
-        if isinstance(total,Distribution):
-            assert len(total) == 1,'Unable to handle uncertain test results'
-            total = iter(total.domain()).next()
-        if self.comparison > 0:
-            return total+self.vector.epsilon > self.threshold
-        elif self.comparison < 0:
-            return total-self.vector.epsilon < self.threshold
-        elif self.comparison == 0:
-            if isinstance(self.threshold,list):
-                return reduce(operator.or_,[abs(total-t) < self.vector.epsilon for t in self.threshold])
+        result = None
+        for plane,threshold,comparison in self.planes:
+            if isinstance(vector,float):
+                total = vector
             else:
-                return abs(total-self.threshold) < self.vector.epsilon
+                total = plane * vector
+            if isinstance(total,Distribution):
+                assert len(total) == 1,'Unable to handle uncertain test results'
+                total = total.first()
+            if comparison > 0:
+                if total+plane.epsilon > threshold:
+                    if not self.isConjunction:
+                        # Disjunction, so any positive result is sufficient
+                        return True
+                elif self.isConjunction:
+                    # Conjunction, so any negative result is sufficient
+                    return False
+            elif comparison < 0:
+                if total-plane.epsilon < threshold:
+                    if not self.isConjunction:
+                        # Disjunction, so any positive result is sufficient
+                        return True
+                elif self.isConjunction:
+                    # Conjunction, so any negative result is sufficient
+                    return False
+            elif comparison == 0:
+                if isinstance(threshold,list):
+                    if reduce(operator.or_,[abs(total-t) < plane.epsilon for t in threshold]):
+                        if not self.isConjunction:
+                            # Disjunction, so any positive result is sufficient
+                            return True
+                    elif self.isConjunction:
+                        # Conjunction, so any negative result is sufficient
+                        return False
+                else:
+                    if abs(total-threshold) < plane.epsilon:
+                        if not self.isConjunction:
+                            # Disjunction, so any positive result is sufficient
+                            return True
+                    elif self.isConjunction:
+                        # Conjunction, so any negative result is sufficient
+                        return False
+            else:
+                # Return raw value, to be used in unspeakable ways
+                raise ValueError('Invalid comparison %s' % (comparison))
         else:
-            # Return raw value, to be used in unspeakable ways
-            return total
+            # No planes matched
+            if self.isConjunction:
+                return True
+            else:
+                return False
 
     def desymbolize(self,table,debug=False):
-        threshold = self.desymbolizeThreshold(self.threshold,table)
-        return self.__class__(self.vector.desymbolize(table),threshold,self.comparison)
+        planes = [(p[0].desymbolize(table),self.desymbolizeThreshold(p[1],table),p[2])
+                  for p in self.planes]
+        return self.__class__(planes)
 
     def desymbolizeThreshold(self,threshold,table):
         if isinstance(threshold,str):
@@ -68,6 +136,30 @@ class KeyedPlane:
             return [self.desymbolizeThreshold(t,table) for t in threshold]
         else:
             return threshold
+
+    def makeFuture(self,keyList=None):
+        """
+        Transforms this plane to refer to only future versions of its columns
+        @param keyList: If present, only references to these keys are made future
+        """
+        self.changeTense(True,keyList)
+
+    def makePresent(self,keyList=None):
+        """
+        Transforms this plane to refer to only current versions of its columns
+        @param keyList: If present, only references to these keys are made present
+        """
+        self.changeTense(False,keyList)
+
+    def changeTense(self,future=True,keyList=None):
+        if keyList is None:
+            keyList = self.keys()
+        planes = []
+        for plane,threshold,comparison in self.planes:
+            plane.changeTense(future,keyList)
+        self._keys = None
+        self._string = None
+#        return self.__class__(planes)
 
     def scale(self,table):
         vector = self.vector.__class__(self.vector)
@@ -89,15 +181,15 @@ class KeyedPlane:
                 symbolic = True
         return self.__class__(vector,threshold)
 
-    def __eq__(self,other):
-        if not isinstance(other,KeyedVector):
-            return False
-        elif self.vector == other.vector and \
-                self.threshold == other.threshold and \
-                self.comparison == other.comparison:
-            return True
-        else:
-            return False
+#    def __eq__(self,other):
+#        if not isinstance(other,KeyedVector):
+#            return False
+#        elif self.vector == other.vector and \
+#                self.threshold == other.threshold and \
+#                self.comparison == other.comparison:
+#            return True
+#        else:
+#            return False
 
     def compare(self,other,value):
         """
@@ -161,28 +253,45 @@ class KeyedPlane:
 
     def __str__(self):
         if self._string is None:
-            operator = ['==','>','<'][self.comparison]
-            self._string = '%s %s %s' % (' + '.join(['%5.3f*%s' % (v,k)
-                                                     for k,v in self.vector.items()]),
-                                         operator,self.threshold)
+            if self.isConjunction:
+                operator = '\nAND '
+            else:
+                operator = '\nOR '
+            self._string = operator.join(['%s %s %s' % (' + '.join(['%5.3f*%s' % (v,k)
+                                                                    for k,v in vector.items()]),
+                                                        ['==','>','<'][comparison],threshold)
+                                          for vector,threshold,comparison in self.planes])
         return self._string
 
     def __xml__(self):
-        doc = self.vector.__xml__()
-        doc.documentElement.setAttribute('threshold',str(self.threshold))
-        doc.documentElement.setAttribute('comparison',str(self.comparison))
+        doc = Document()
+        root = doc.createElement('plane')
+        for vector,threshold,comparison in self.planes:
+            node = vector.__xml__().documentElement
+            node.setAttribute('threshold',str(threshold))
+            node.setAttribute('comparison',str(comparison))
+            root.appendChild(node)
+        doc.appendChild(root)
         return doc
 
     def parse(self,element):
-        try:
-            self.threshold = float(element.getAttribute('threshold'))
-        except ValueError:
-            self.threshold = eval(str(element.getAttribute('threshold')))
-        try:
-            self.comparison = int(element.getAttribute('comparison'))
-        except ValueError:
-            self.comparison = str(element.getAttribute('comparison'))
-        self.vector = KeyedVector(element)
+        assert element.tagName == 'plane'
+        node = element.firstChild
+        self.planes = []
+        while node:
+            if node.nodeType == node.ELEMENT_NODE:
+                assert node.tagName == 'vector'
+                vector = KeyedVector(node)
+                try:
+                    threshold = float(node.getAttribute('threshold'))
+                except ValueError:
+                    threshold = eval(str(node.getAttribute('threshold')))
+                try:
+                    comparison = int(node.getAttribute('comparison'))
+                except ValueError:
+                    comparison = str(node.getAttribute('comparison'))
+                self.planes.append((vector,threshold,comparison))
+            node = node.nextSibling
 
 def thresholdRow(key,threshold):
     """
@@ -241,9 +350,3 @@ def caseRow(key):
     @rtype: L{KeyedPlane}
     """
     return KeyedPlane(KeyedVector({key: 1.}),0,'switch')
-
-class KeyedBranch:
-    """
-    Disjuction/conjunction of individual planes
-    """
-    pass

@@ -46,7 +46,7 @@ class Distribution(dict):
         """
         @return: the first element in this distribution's domain (most useful if there's only one element)
         """
-        return iter(self.domain()).next()
+        return next(iter(self.domain()))
 
     def get(self,element):
         key = str(element)
@@ -105,7 +105,7 @@ class Distribution(dict):
         @return: the sample space of this probability distribution
         @rtype: C{list}
         """
-        return self._domain.values()
+        return list(self._domain.values())
 
     def normalize(self):
         """Normalizes the distribution so that the sum of values = 1
