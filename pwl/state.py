@@ -414,40 +414,48 @@ class VectorDistributionSet:
                 # Multiply out children, other than first-born
                 newKids = []
                 for child in oldKids[1:]:
+                    assert child.getKeysOut() == oldKids[0].getKeysOut()
                     myChild = copy.deepcopy(self)
                     myChild *= child
                     newKids.append(myChild)
                 self *= oldKids[0]
+                subkeys = oldKids[0].getKeysOut()
                 # Compute first-born child
                 newKids.insert(0,self)
                 for index in range(len(oldKids)):
-                    # Scale by probability of this child
                     prob = other.children[oldKids[index]]
-                    subkeys = oldKids[index].getKeysOut()
                     substates = newKids[index].substate(subkeys)
-                    assert len(substates) == 1
-                    substate = newKids[index].keyMap[iter(subkeys).next()]
-#                    print index,prob
-#                    print newKids[index].distributions[substate]
-#                    assert substate in substates
-#                    assert substates == self.substate(subkeys)
+                    if len(substates) > 1:
+                        substate = newKids[index].collapse(substates)
+                    else:
+                        substate = iter(substates).next()
                     if index == 0:
                         for vector in self.distributions[substate].domain():
                             self.distributions[substate][vector] *= prob
+                        mySubstate = substate
                     else:
+                        toCollapse = (subkeys,set())
+                        while len(toCollapse[0]) + len(toCollapse[1]) > 0:
+                            mySubstates = self.substate(toCollapse[1]|\
+                                                        set(self.distributions[mySubstate].keys()))
+                            if len(mySubstates) > 1:
+                                mySubstate = self.collapse(mySubstates,False)
+                            else:
+                                mySubstate = iter(mySubstates).next()
+                            substates = newKids[index].substate(toCollapse[0]|set(newKids[index].distributions[substate].keys()))
+                            if len(substates) > 1:
+                                substate = newWKids[index].collapse(substates,False)
+                            else:
+                                substate = iter(substates).next()
+                            toCollapse = ({k for k in self.distributions[mySubstate].keys() \
+                                           if k != keys.CONSTANT and \
+                                           not k in newKids[index].distributions[substate].keys()},
+                                          {k for k in newKids[index].distributions[substate].keys() \
+                                           if k != keys.CONSTANT and \
+                                           not k in self.distributions[mySubstate].keys()})
                         distribution = newKids[index].distributions[substate]
                         for vector in distribution.domain():
-                            self.distributions[substate].addProb(vector,distribution[vector]*prob)
-#                        distribution[vector] *= prob
-#                    if len(substates) > 1:
-#                        raise RuntimeError('Somebody got greedy and independent-ified variables that are dependent')
-                    # if index > 0:
-                    #     if newKids[index].isLeaf():
-                    #         self.update(newKids[index],oldKids[index].getKeysOut(),
-                    #                     other.children[oldKids[index]])
-                    #     else:
-#                    print substate
-#                    self += newKids[index]
+                            self.distributions[mySubstate].addProb(vector,distribution[vector]*prob)
             else:
                 # Evaluate the hyperplane and split the state
                 branchKeys = set(other.branch.keys())
@@ -461,9 +469,6 @@ class VectorDistributionSet:
                     else:
                         self *= other.children[False]
                 else:
-#                    for vector in self.distributions[valSub].domain():
-#                        print other.branch.evaluate(vector)
-#                    print other.branch.planes[0][0]
                     self *= other.branch.planes[0][0]
                     valSub = self.keyMap[keys.VALUE]
                     falseState = copy.deepcopy(self)
@@ -708,7 +713,7 @@ class VectorDistributionSet:
                 result.distributions[substate] = VectorDistribution(newDist)
         return result
                     
-    def verifyIntegrity(self):
+    def verifyIntegrity(self,sumToOne=False):
         for key in self.keys():
             assert self.keyMap[key] in self.distributions,'Distribution %s missing for key %s' % \
                 (self.keyMap[key],key)
@@ -716,5 +721,12 @@ class VectorDistributionSet:
             for vector in distribution.domain():
                 assert key in vector,'Key %s is missing from vector\n%s\nProb: %d%%' % \
                     (key,vector,distribution[vector]*100)
-                
-            
+                for other in vector:
+                    assert other == keys.CONSTANT or self.keyMap[other] == self.keyMap[key] ,\
+                        'Unmapped key %s is in vector\n\%s' % (other,vector)
+            if sumToOne:
+                assert (sum(distribution.values())-1.)<000001,'Distribution sums to %4.2f' % \
+                    (sum(distribution.values()))
+            else:
+                assert sum(distribution.values())<1.000001,'Distribution sums to %4.2f' % \
+                    (sum(distribution.values()))
