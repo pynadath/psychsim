@@ -183,7 +183,7 @@ class Agent:
             raise RuntimeError(msg)
         elif len(actions) == 1:
             # Only one possible action
-            return {'action': iter(actions).next()}
+            return {'action': next(iter(actions))}
         # Keep track of value function
         V = {}
         best = None
