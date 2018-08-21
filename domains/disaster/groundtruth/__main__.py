@@ -128,6 +128,7 @@ if __name__ == '__main__':
     parser.add_argument('-r','--runs',default=1,type=int,help='Number of runs to run')
     parser.add_argument('-i','--instance',default=1,type=int,help='Instance number')
     parser.add_argument('-p','--profile',action='store_true',help='Profile simulation step')
+    parser.add_argument('-c','--compile',action='store_true',help='Pre-compile agent policies')
     args = vars(parser.parse_args())
     # Extract configuration
     config = ConfigParser()
@@ -251,9 +252,9 @@ if __name__ == '__main__':
         world.dependency.computeEvaluation()
 
         toCDF(world)
-        #        for agent in population:
-        #            agent.compileV(state=world.state)
-        #            sys.exit(0)
+        if args['compile']:
+            for agent in population:
+                agent.compileV(state=world.state)
         if population:
             allTables = {'Population': {'fields': [('alive','casualties','invert'),
                                                    ('location','evacuated','#evacuated'),
@@ -344,15 +345,12 @@ if __name__ == '__main__':
                         if oldPhase == 'active':
                             hurricanes += 1
                             logging.info('Completed Hurricane #%d' % (hurricanes))
-                    if config.getboolean('Actors','beliefs'):
-                        for actor in population:
-                            model = world.getModel(actor.name)
-                            assert len(model) == 1
-                            belief = actor.getBelief(world.state,model.first())
-                            assert len(belief) == 1
-                            for omega in actor.omega:
-                                true = actor.getState(omega)
-                                believed = actor.getState(omega,belief)
+                    # elif config.getboolean('Actors','beliefs'):
+                    #     for actor in population:
+                    #         model = world.getModel(actor.name)
+                    #         assert len(model) == 1
+                    #         belief = actor.getBelief(world.state,model.first())
+                    #         world.printState(belief)
                     oldPhase = phase
                 addState2tables(world,today,{name: table for name,table in tables.items()
                                              if table['series']},population,regions)
