@@ -1878,7 +1878,7 @@ class World:
             f = bz2.BZ2File(filename,'w')
         else:
             f = open(filename,'w')
-        f.write(self.__xml__().toprettyxml())
+        f.write(self.__xml__().toprettyxml().encode('utf-8'))
         f.close()
         return filename
 
