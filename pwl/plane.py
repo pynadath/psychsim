@@ -97,15 +97,12 @@ class KeyedPlane:
                 if isinstance(threshold,list):
                     for t in threshold:
                         if abs(total-t) < plane.epsilon:
-                            if not self.isConjunction:
-                                # Disjunction, so any positive result is sufficient
+                            # Disjunction, so any positive result is sufficient
                                 return True
-                        elif self.isConjunction:
-                            # Conjunction, so any negative result is sufficient
-                            # TODO: Does it even make sense to have a conjunction of equality to multiple values? Probably not
-                            return False
                     else:
-                        return self.isConjunction
+                        if self.isConjunction:
+                            # Conjunction, so any negative result is sufficient
+                            return False
                 else:
                     if abs(total-threshold) < plane.epsilon:
                         if not self.isConjunction:
