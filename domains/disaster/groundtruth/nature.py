@@ -50,7 +50,7 @@ class Nature(Agent):
         tree = makeTree({'if': equalFeatureRow(phase,makeFuture(phase)),
                          True: incrementMatrix(days,1),
                          False: setToConstantMatrix(days,0)})
-        world.setDynamics(days,True,tree)
+        world.setDynamics(days,evolution,tree)
 
         if config.getint('Disaster','category_change') > 0:
             prob = likert[5][config.getint('Disaster','category_change')-1]
