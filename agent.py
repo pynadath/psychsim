@@ -61,47 +61,48 @@ class Agent:
     def compileV(self,model=None,state=None):
         self.world.dependency.getEvaluation()
         if model is None:
-            model = '%s0' % (self.name)
-        belief = self.getBelief(self.world.state,model)
-        horizon = self.getAttribute('horizon',model)
-        R = self.getReward(model)
+            model = self.models['%s0' % (self.name)]
+        else:
+            model = self.models[model]
+        belief = self.getBelief(self.world.state,model['name'])
+        horizon = self.getAttribute('horizon',model['name'])
+        R = self.getReward(model['name'])
         Rkey = rewardKey(self.name,True)
         if state:
             actions = self.getActions(state)
         else:
             actions = self.actions
-        V = {}
+        model['V'] = {}
         for action in actions:
-            print(action)
             effects = self.world.deltaState(action,belief)
             effects.reverse()
-            V[action] = copy.deepcopy(R)
-            keyList = V[action].getKeysIn()
-            V[action].makeFuture(keyList)
+            model['V'][action] = copy.deepcopy(R)
+            keyList = model['V'][action].getKeysIn()
+            model['V'][action].makeFuture(keyList)
             for stage in effects:
                 subtree = None
                 for key,dynamics in stage.items():
-                    if dynamics and makeFuture(key) in V[action].getKeysIn():
+                    if dynamics and makeFuture(key) in model['V'][action].getKeysIn():
                         assert len(dynamics) == 1
                         if subtree is None:
                             subtree = dynamics[0]
                         else:
                             subtree += dynamics[0]
                 if subtree:
-                    for key in V[action].getKeysIn():
+                    for key in model['V'][action].getKeysIn():
                         if not key in subtree.getKeysOut():
                             fun = lambda m: KeyedMatrix(m.items()+[(key,KeyedVector({key: 1.}))])
                             subtree = subtree.map(fun)
-                    V[action] = V[action]*subtree
-            keyList = [key for key in V[action].getKeysIn() if isFuture(key)]
+                    model['V'][action] = model['V'][action]*subtree
+            keyList = [key for key in model['V'][action].getKeysIn() if isFuture(key)]
             if keyList:
-                V[action].makePresent(keyList)
-#            print(V[action])
+                model['V'][action].makePresent(keyList)
+#            print(model['V'][action])
             state = copy.deepcopy(belief)
             state.join(CONSTANT,1.)
-            state *= V[action]
+            state *= model['V'][action]
             ER = state[Rkey]
-        return V
+        return model['V']
                             
     def decide(self,vector,horizon=None,others=None,model=None,selection=None,actions=None,keySet=None):
         """
@@ -190,22 +191,32 @@ class Agent:
         for action in actions:
             # Compute value across possible worlds
             logging.debug('Considering %s' % (action))
-            V[action] = {'__EV__': 0.,'__ER__': [],'__S__': []}
-            if isinstance(keySet,dict):
-                subkeys = keySet[action]
+            V_A = self.getAttribute('V',model)
+            if V_A:
+                current = copy.deepcopy(belief)
+                current *= V_A[action]
+                R = current[rewardKey(self.name)]
+                V[action] = {'__beliefs__': current,
+                             '__S__': [current],
+                             '__ER__': [R],
+                             '__EV__': R.expectation()}
             else:
-                subkeys = belief.keys()
-            current = copy.deepcopy(belief)
-            start = action
-            for t in range(horizon):
-                logging.debug('Time %d/%d' % (t+1,horizon))
-                outcome = self.world.step(start,current,keySubset=subkeys,
-                                          horizon=horizon-t-1)
-                V[action]['__ER__'].append(self.reward(current,model))
-                V[action]['__EV__'] += V[action]['__ER__'][-1]
-                V[action]['__S__'].append(current)
-                start = None
-            V[action]['__beliefs__'] = current
+                V[action] = {'__EV__': 0.,'__ER__': [],'__S__': []}
+                if isinstance(keySet,dict):
+                    subkeys = keySet[action]
+                else:
+                    subkeys = belief.keys()
+                current = copy.deepcopy(belief)
+                start = action
+                for t in range(horizon):
+                    logging.debug('Time %d/%d' % (t+1,horizon))
+                    outcome = self.world.step(start,current,keySubset=subkeys,
+                                              horizon=horizon-t-1)
+                    V[action]['__ER__'].append(self.reward(current,model))
+                    V[action]['__EV__'] += V[action]['__ER__'][-1]
+                    V[action]['__S__'].append(current)
+                    start = None
+                V[action]['__beliefs__'] = current
             # Determine whether this action is the best
             if best is None:
                 best = [action]
@@ -736,7 +747,8 @@ class Agent:
 #        if name in self.world.symbols:
 #            raise NameError('Model %s conflicts with existing symbol' % (name))
         model = {'name': name,'index': 0,'parent': None,'SE': {},
-                 'V': ValueFunction(),'policy': {},'ignore': []}
+#                 'V': ValueFunction(),
+                 'policy': {},'ignore': []}
         model.update(kwargs)
         model['index'] = len(self.world.symbolList)
         self.models[name] = model
