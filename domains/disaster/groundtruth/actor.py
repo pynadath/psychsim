@@ -566,10 +566,11 @@ class Actor(Agent):
             self.setO('perceivedHealth',None,
                       makeTree(setToFeatureMatrix(omega,makeFuture(stateKey(self.name,'health')))))
             self.setState('perceivedHealth',self.health)
-            omega = self.defineObservation('perceivedKids',domain=float)
-            self.setO('perceivedKids',None,
-                      makeTree(setToFeatureMatrix(omega,makeFuture(stateKey(self.name,'childrenHealth')))))
-            self.setState('perceivedKids',self.health)
+            if self.kids > 0:
+                omega = self.defineObservation('perceivedKids',domain=float)
+                self.setO('perceivedKids',None,
+                          makeTree(setToFeatureMatrix(omega,makeFuture(stateKey(self.name,'childrenHealth')))))
+                self.setState('perceivedKids',self.health)
         # Decision-making parameters
         self.setAttribute('horizon',config.getint('Actors','horizon'))
         #self.setAttribute('selection','distribution')
