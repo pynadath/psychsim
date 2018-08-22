@@ -1,0 +1,161 @@
+Name	Timestep	Value
+Actor __ACTION__		Actor-moveTo-Region01
+Actor age		40
+Actor attachment		secure
+Actor category		0
+Actor center		none
+Actor children		2
+Actor ethnicGroup		majority
+Actor gender		female
+Actor grievance		0.2
+Actor perceivedHealth		1.0
+Actor perceivedKids		1.0
+Actor pet		False
+Actor phase		none
+Actor region		Region01
+Actor religion		minority
+Actor x		0.5677050704202443
+Actor y		0.9203304391919288
+Nature __ACTION__		Nature-evolve
+Nature __MODEL__		Nature0
+Nature __TURN__		1
+Nature category		0
+Nature days		0
+Nature location		none
+Nature phase		none
+Region01 security		0.8
+Region02 security		1.0
+Region03 security		0.6
+Region04 security		0.8
+Region05 security		0.8
+Region06 security		1.0
+Region07 security		1.0
+Region08 security		0.4
+Region09 security		1.0
+Region10 security		1.0
+Region11 security		1.0
+Region12 security		1.0
+Region13 security		1.0
+Region13 shelterCapacity		100
+Region13 shelterPets		False
+Region14 security		1.0
+Region15 security		1.0
+Region16 security		1.0
+Region17 security		1.0
+Region18 security		0.8
+Region19 security		0.6
+Region20 security		0.4
+Region21 security		0.4
+Region22 security		1.0
+Region23 security		1.0
+Region24 security		0.4
+Region25 security		1.0
+__WORLD__ day		1
+Name	Timestep	Value
+Nature __ACTION__	2	Nature-evolve
+Nature __MODEL__	2	Nature0
+Nature __TURN__	2	1
+Nature category	2	0
+Nature days	2	2
+Nature location	2	none
+Nature phase	2	none
+__WORLD__ day	2	2
+Name	Timestep	Value
+Nature __ACTION__	3	Nature-evolve
+Nature __MODEL__	3	Nature0
+Nature __TURN__	3	1
+Nature category	3	0
+Nature days	3	4
+Nature location	3	none
+Nature phase	3	none
+__WORLD__ day	3	3
+Name	Timestep	Value
+Nature __ACTION__	4	Nature-evolve
+Nature __MODEL__	4	Nature0
+Nature __TURN__	4	1
+Nature category	4	5
+Nature days	4	0
+Nature location	4	Region11
+Nature phase	4	approaching
+__WORLD__ day	4	4
+Name	Timestep	Value
+Nature __ACTION__	5	Nature-evolve
+Nature __MODEL__	5	Nature0
+Nature __TURN__	5	1
+Nature category	5	5
+Nature days	5	2
+Nature location	5	Region11
+Nature phase	5	approaching
+__WORLD__ day	5	5
+Name	Timestep	Value
+Nature __ACTION__	6	Nature-evolve
+Nature __MODEL__	6	Nature0
+Nature __TURN__	6	1
+Nature category	6	4
+Nature days	6	4
+Nature location	6	Region11
+Nature phase	6	approaching
+__WORLD__ day	6	6
+Name	Timestep	Value
+Nature __ACTION__	7	Nature-evolve
+Nature __MODEL__	7	Nature0
+Nature __TURN__	7	1
+Nature category	7	4
+Nature days	7	0
+Nature location	7	Region11
+Nature phase	7	active
+__WORLD__ day	7	7
+Name	Timestep	Value
+Nature __ACTION__	8	Nature-evolve
+Nature __MODEL__	8	Nature0
+Nature __TURN__	8	1
+Nature category	8	4
+Nature days	8	2
+Nature location	8	Region12
+Nature phase	8	active
+__WORLD__ day	8	8
+Name	Timestep	Value
+Nature __ACTION__	9	Nature-evolve
+Nature __MODEL__	9	Nature0
+Nature __TURN__	9	1
+Nature category	9	4
+Nature days	9	4
+Nature location	9	Region07
+Nature phase	9	active
+__WORLD__ day	9	9
+Name	Timestep	Value
+Nature __ACTION__	10	Nature-evolve
+Nature __MODEL__	10	Nature0
+Nature __TURN__	10	1
+Nature category	10	4
+Nature days	10	6
+Nature location	10	Region02
+Nature phase	10	active
+__WORLD__ day	10	10
+Name	Timestep	Value
+Nature __ACTION__	11	Nature-evolve
+Nature __MODEL__	11	Nature0
+Nature __TURN__	11	1
+Nature category	11	4
+Nature days	11	8
+Nature location	11	Region02
+Nature phase	11	active
+__WORLD__ day	11	11
+Name	Timestep	Value
+Nature __ACTION__	12	Nature-evolve
+Nature __MODEL__	12	Nature0
+Nature __TURN__	12	1
+Nature category	12	4
+Nature days	12	10
+Nature location	12	none
+Nature phase	12	active
+__WORLD__ day	12	12
+Name	Timestep	Value
+Nature __ACTION__	13	Nature-evolve
+Nature __MODEL__	13	Nature0
+Nature __TURN__	13	1
+Nature category	13	0
+Nature days	13	0
+Nature location	13	none
+Nature phase	13	none
+__WORLD__ day	13	13
