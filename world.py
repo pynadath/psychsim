@@ -138,12 +138,18 @@ class World:
                 joint = action
             else:
                 joint |= action
-        effect = self.effect(joint,state,updateBeliefs,keySubset)
-        outcome['effect'].update(effect)
+        effect = self.deltaState(joint,state,keySubset)
+        # Update turn order
+        effect.append(self.deltaTurn(state,joint))
+        for stage in effect:
+            self.applyEffect(state,stage)
         # The future becomes the present
         state.rollback()
         if select:
             prob = state.select()
+        effect = self.effect(joint,state,updateBeliefs,keySubset)
+        if select:
+            prob *= state.select()
         if self.memory:
             self.history.append(copy.deepcopy(state))
            # self.modelGC(False)
@@ -302,44 +308,43 @@ class World:
                     if keySubset is None or key in keySubset:
                         Ofuns[key] = [tree]
         return Ofuns
+
+    def applyEffect(self,state,effect):
+        for key,dynamics in effect.items():
+            if dynamics is None:
+                # No dynamics, so status quo
+                substate = state.keyMap[key]
+                newKey = makeFuture(key)
+                state.keyMap[newKey] = substate
+                dist = state.distributions[substate]
+                for vector in dist.domain():
+                    prob = dist[vector]
+                    del dist[vector]
+                    vector[newKey] = vector[key]
+                    dist[vector] = prob
+            elif len(dynamics) == 1:
+                tree = dynamics[0]
+                state *= tree
+            else:
+                cumulative = None
+                for tree in dynamics:
+                    if cumulative is None:
+                        cumulative = tree
+                    else:
+                        cumulative = copy.deepcopy(cumulative)
+                        cumulative.makeFuture([key])
+                        cumulative *= tree
+                state *= cumulative
         
     def effect(self,actions,state,updateBeliefs=True,keySubset=None):
         if not isinstance(state,VectorDistributionSet):
             state = psychsim.pwl.VectorDistributionSet(state)
-        result = {'new': state}
-        # Get effect on state variables
-        result['effect'] = self.deltaState(actions,result['new'],keySubset)
-        # Update turn order
-        result['effect'].append(self.deltaTurn(result['new'],actions))
+        result = {'new': state,'effect': []}
         # Generate observations
         result['effect'].append(self.deltaObservations(result['new'],actions,keySubset))
         # Apply all of these update functions
         for stage in result['effect']:
-            for key,dynamics in stage.items():
-                if dynamics is None:
-                    # No dynamics, so status quo
-                    substate = result['new'].keyMap[key]
-                    newKey = makeFuture(key)
-                    result['new'].keyMap[newKey] = substate
-                    dist = result['new'].distributions[substate]
-                    for vector in dist.domain():
-                        prob = dist[vector]
-                        del dist[vector]
-                        vector[newKey] = vector[key]
-                        dist[vector] = prob
-                elif len(dynamics) == 1:
-                    tree = dynamics[0]
-                    result['new'] *= tree
-                else:
-                    cumulative = None
-                    for tree in dynamics:
-                        if cumulative is None:
-                            cumulative = tree
-                        else:
-                            cumulative = copy.deepcopy(cumulative)
-                            cumulative.makeFuture([key])
-                            cumulative *= tree
-                    result['new'] *= cumulative
+            self.applyEffect(result['new'],stage)
         if updateBeliefs:
             # Update agent models included in the original world
             # (after finding out possible new worlds)
