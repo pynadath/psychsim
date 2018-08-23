@@ -529,12 +529,12 @@ class Actor(Agent):
             omega = self.defineObservation('phase',domain=list,
                                            lo=self.world.variables['Nature\'s phase']['elements'])
             self.setO('phase',None,
-                      makeTree(setToFeatureMatrix(omega,makeFuture(stateKey('Nature','phase')))))
+                      makeTree(setToFeatureMatrix(omega,stateKey('Nature','phase'))))
             self.setState('phase','none')
             omega = self.defineObservation('center',domain=list,
                                            lo=self.world.variables['Nature\'s location']['elements'])
             self.setO('center',None,
-                      makeTree(setToFeatureMatrix(omega,makeFuture(stateKey('Nature','location')))))
+                      makeTree(setToFeatureMatrix(omega,stateKey('Nature','location'))))
             self.setState('center','none')
 
             omega = self.defineObservation('category',domain=int)
@@ -543,7 +543,7 @@ class Actor(Agent):
             distortion['none'] = 1.-distortion['over']-distortion['under']
             self.distortion = distortion.sample()
             distortionProb = likert[5][config.getint('Actors','category_distortion')]
-            real = makeFuture(stateKey('Nature','category'))
+            real = stateKey('Nature','category')
             if self.distortion == 'none':
                 tree = setToFeatureMatrix(omega,real)
             elif self.distortion == 'over':
@@ -564,12 +564,12 @@ class Actor(Agent):
             
             omega = self.defineObservation('perceivedHealth')
             self.setO('perceivedHealth',None,
-                      makeTree(setToFeatureMatrix(omega,makeFuture(stateKey(self.name,'health')))))
+                      makeTree(setToFeatureMatrix(omega,stateKey(self.name,'health'))))
             self.setState('perceivedHealth',self.health)
             if self.kids > 0:
                 omega = self.defineObservation('perceivedKids',domain=float)
                 self.setO('perceivedKids',None,
-                          makeTree(setToFeatureMatrix(omega,makeFuture(stateKey(self.name,'childrenHealth')))))
+                          makeTree(setToFeatureMatrix(omega,stateKey(self.name,'childrenHealth'))))
                 self.setState('perceivedKids',self.health)
         # Decision-making parameters
         self.setAttribute('horizon',config.getint('Actors','horizon'))
