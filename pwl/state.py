@@ -463,7 +463,10 @@ class VectorDistributionSet:
                 # Evaluate the hyperplane and split the state
                 branchKeys = set(other.branch.keys())-{keys.CONSTANT}
                 substates = self.substate(branchKeys)
-                valSub = self.collapse(substates)
+                if substates:
+                    valSub = self.collapse(substates)
+                else:
+                    valSub = None
                 assert len(other.branch.planes) == 1,'Currently unable to process conjunctive branches'
                 if valSub is None:
                     vector = KeyedVector({k: self.distributions[self.keyMap[k]].first()[k] \
