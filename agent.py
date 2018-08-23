@@ -58,7 +58,7 @@ class Agent:
     """------------------"""
 
         
-    def compileV(self,model=None,state=None):
+    def compileV(self,model=None):
         self.world.dependency.getEvaluation()
         if model is None:
             model = self.models['%s0' % (self.name)]
@@ -68,10 +68,7 @@ class Agent:
         horizon = self.getAttribute('horizon',model['name'])
         R = self.getReward(model['name'])
         Rkey = rewardKey(self.name,True)
-        if state:
-            actions = self.getActions(state)
-        else:
-            actions = self.actions
+        actions = self.actions
         model['V'] = {}
         for action in actions:
             effects = self.world.deltaState(action,belief)
@@ -98,10 +95,10 @@ class Agent:
             if keyList:
                 model['V'][action].makePresent(keyList)
 #            print(model['V'][action])
-            state = copy.deepcopy(belief)
-            state.join(CONSTANT,1.)
-            state *= model['V'][action]
-            ER = state[Rkey]
+#            state = copy.deepcopy(belief)
+#            state.join(CONSTANT,1.)
+#            state *= model['V'][action]
+#            ER = state[Rkey]
         return model['V']
                             
     def decide(self,vector,horizon=None,others=None,model=None,selection=None,actions=None,keySet=None):
@@ -195,7 +192,7 @@ class Agent:
             if V_A:
                 current = copy.deepcopy(belief)
                 current *= V_A[action]
-                R = current[rewardKey(self.name)]
+                R = current[makeFuture(rewardKey(self.name))]
                 V[action] = {'__beliefs__': current,
                              '__S__': [current],
                              '__ER__': [R],
@@ -958,7 +955,7 @@ class Agent:
                                     keySubset=beliefs.keys())
                     # Condition on actual observations
                     for omega in Omega:
-                        beliefs[omega] = vector[keys.makeFuture(omega)]
+                        beliefs[makeFuture(omega)] = vector[keys.makeFuture(omega)]
                         assert len(beliefs) > 0,'Impossible observation %s=%s' % \
                             (omega,vector[keys.makeFuture(omega)])
                     # Create model with these new beliefs
@@ -1274,7 +1271,8 @@ class Agent:
                                 subnode.appendChild(tree.__xml__().documentElement)
                             node.appendChild(subnode)
                 elif key == 'V':
-                    node.appendChild(model[key].__xml__().documentElement)
+                    if isinstance(model[key],ValueFunction):
+                        node.appendChild(model[key].__xml__().documentElement)
                 elif key == 'selection':
                     node.setAttribute('selection',str(model[key]))
                 elif key == 'ignore':
