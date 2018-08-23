@@ -64,7 +64,7 @@ class Group(Agent):
 
     def potentialMembers(self,agents,weights=None):
         assert len(self.models) == 1,'Define potential members before adding multiple models of group %s' % (self.name)
-        model = self.models.keys()[0]
+        model = next(iter(self.models.keys()))
         size = stateKey(self.name,'size')
         for name in agents:
             agent = self.world.agents[name]
