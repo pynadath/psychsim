@@ -470,7 +470,7 @@ class Agent:
         else:
             self.models[model][name] = value
 
-    def findAttribute(self,name,model=True):
+    def findAttribute(self,name,model):
         """
         @return: the name of the nearest ancestor model (include the given model itself) that specifies a value for the named feature
         """
@@ -481,7 +481,7 @@ class Agent:
         else:
             return self.findAttribute(name,self.models[model]['parent'])
 
-    def getAttribute(self,name,model=True):
+    def getAttribute(self,name,model):
         """
         @return: the value for the specified parameter of the specified mental model
         """
