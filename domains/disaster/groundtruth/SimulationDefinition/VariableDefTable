@@ -1,87 +1,83 @@
-Name	LongName	Values	Observable	VarType	DataType	Notes
-Actor __ACTION__	Actor's __ACTION__	Actor-moveTo-Region01,Actor-takeResources-Region01,Actor-evacuate,Actor-stayInLocation,Actor-moveTo-shelter13,Actor-decreaseRisk-Region01	1	fixed	String	Actor-moveTo-Region01: Return home; Actor-takeResources-Region01: Perform antisocial behaviors that gain resources personally at the expense of people in Region01; Actor-evacuate: Evacuate the city at least temporarily; Actor-stayInLocation: Actor does not move from current location, nor perform any pro/antisocial behaviors; Actor-moveTo-shelter13: Move myself and family to the shelter in Region13; Actor-decreaseRisk-Region01: Perform prosocial behaviors to reduce the danger posed by the hurricane in Region01
-Actor __REWARD__	Actor's __REWARD__	[-1.00-1.00]	1	fixed	Real	Reward for Actor in this state
-Actor age	Actor's age	[0-1]	1	fixed	Integer	
-Actor alive	Actor's alive	True,False	1	dynamic	Boolean	
-Actor attachment	Actor's attachment	secure,anxious,avoidant	1	fixed	String	Attachment style
-Actor category	Actor's category	[-1-1]	1	fixed	Integer	
-Actor center	Actor's center	Region01,Region02,Region03,Region04,Region05,Region06,Region07,Region08,Region09,Region10,Region11,Region12,Region13,Region14,Region15,Region16,Region17,Region18,Region19,Region20,Region21,Region22,Region23,Region24,Region25,none	1	fixed	String	
-Actor children	Actor's children	[0.00-2.00]	1	fixed	Real	Number of children
-Actor childrenHealth	Actor's childrenHealth	[0.00-1.00]	1	dynamic	Real	Current level of children's physical wellbeing
-Actor employed	Actor's employed	True,False	1	dynamic	Boolean	Has a full-time job
-Actor ethnicGroup	Actor's ethnicGroup	majority,minority	1	fixed	String	Ethnicity of actor
-Actor gender	Actor's gender	male,female	1	fixed	String	
-Actor grievance	Actor's grievance	[0.00-1.00]	1	fixed	Real	Current level of grievance felt toward system
-Actor health	Actor's health	[0.00-1.00]	1	dynamic	Real	Current level of physical wellbeing
-Actor location	Actor's location	Region01,Region02,Region03,Region04,Region05,Region06,Region07,Region08,Region09,Region10,Region11,Region12,Region13,Region14,Region15,Region16,Region17,Region18,Region19,Region20,Region21,Region22,Region23,Region24,Region25,evacuated,shelter13	1	dynamic	String	Current location
-Actor perceivedHealth	Actor's perceivedHealth	[-1.00-1.00]	1	fixed	Real	
-Actor perceivedKids	Actor's perceivedKids	[-1.00-1.00]	1	fixed	Real	
-Actor pet	Actor's pet	True,False	1	fixed	Boolean	Owns a pet
-Actor phase	Actor's phase	none,approaching,active	1	fixed	String	
-Actor region	Actor's region	Region01,Region02,Region03,Region04,Region05,Region06,Region07,Region08,Region09,Region10,Region11,Region12,Region13,Region14,Region15,Region16,Region17,Region18,Region19,Region20,Region21,Region22,Region23,Region24,Region25	1	fixed	String	Region of residence
-Actor religion	Actor's religion	majority,minority,none	1	fixed	String	Religious affiliation of actor
-Actor resources	Actor's resources	[0.00-1.00]	1	dynamic	Real	Material resources (wealth) currently owned
-Actor risk	Actor's risk	[0.00-1.00]	1	dynamic	Real	Current level of risk from hurricane
-Actor x	Actor's x	[0.00-1.00]	1	fixed	Real	Representation of residence's longitude
-Actor y	Actor's y	[0.00-1.00]	1	fixed	Real	Representation of residence's latitude
-Nature __ACTION__	Nature's __ACTION__	Nature-evolve	1	fixed	String	Nature-evolve: None
-Nature category	Nature's category	[0-1]	1	dynamic	Integer	
-Nature days	Nature's days	[0-1]	1	dynamic	Integer	
-Nature location	Nature's location	Region01,Region02,Region03,Region04,Region05,Region06,Region07,Region08,Region09,Region10,Region11,Region12,Region13,Region14,Region15,Region16,Region17,Region18,Region19,Region20,Region21,Region22,Region23,Region24,Region25,none	1	dynamic	String	
-Nature phase	Nature's phase	none,approaching,active	1	dynamic	String	
-Region01 risk	Region01's risk	[0.00-1.00]	1	dynamic	Real	
-Region01 security	Region01's security	[0.00-1.00]	1	fixed	Real	
-Region02 risk	Region02's risk	[0.00-1.00]	1	dynamic	Real	
-Region02 security	Region02's security	[0.00-1.00]	1	fixed	Real	
-Region03 risk	Region03's risk	[0.00-1.00]	1	dynamic	Real	
-Region03 security	Region03's security	[0.00-1.00]	1	fixed	Real	
-Region04 risk	Region04's risk	[0.00-1.00]	1	dynamic	Real	
-Region04 security	Region04's security	[0.00-1.00]	1	fixed	Real	
-Region05 risk	Region05's risk	[0.00-1.00]	1	dynamic	Real	
-Region05 security	Region05's security	[0.00-1.00]	1	fixed	Real	
-Region06 risk	Region06's risk	[0.00-1.00]	1	dynamic	Real	
-Region06 security	Region06's security	[0.00-1.00]	1	fixed	Real	
-Region07 risk	Region07's risk	[0.00-1.00]	1	dynamic	Real	
-Region07 security	Region07's security	[0.00-1.00]	1	fixed	Real	
-Region08 risk	Region08's risk	[0.00-1.00]	1	dynamic	Real	
-Region08 security	Region08's security	[0.00-1.00]	1	fixed	Real	
-Region09 risk	Region09's risk	[0.00-1.00]	1	dynamic	Real	
-Region09 security	Region09's security	[0.00-1.00]	1	fixed	Real	
-Region10 risk	Region10's risk	[0.00-1.00]	1	dynamic	Real	
-Region10 security	Region10's security	[0.00-1.00]	1	fixed	Real	
-Region11 risk	Region11's risk	[0.00-1.00]	1	dynamic	Real	
-Region11 security	Region11's security	[0.00-1.00]	1	fixed	Real	
-Region12 risk	Region12's risk	[0.00-1.00]	1	dynamic	Real	
-Region12 security	Region12's security	[0.00-1.00]	1	fixed	Real	
-Region13 risk	Region13's risk	[0.00-1.00]	1	dynamic	Real	
-Region13 security	Region13's security	[0.00-1.00]	1	fixed	Real	
-Region13 shelterCapacity	Region13's shelterCapacity	[0-1]	1	fixed	Integer	
-Region13 shelterOccupancy	Region13's shelterOccupancy	[0-1]	1	dynamic	Integer	
-Region13 shelterPets	Region13's shelterPets	True,False	1	fixed	Boolean	
-Region13 shelterRisk	Region13's shelterRisk	[0.00-1.00]	1	dynamic	Real	
-Region14 risk	Region14's risk	[0.00-1.00]	1	dynamic	Real	
-Region14 security	Region14's security	[0.00-1.00]	1	fixed	Real	
-Region15 risk	Region15's risk	[0.00-1.00]	1	dynamic	Real	
-Region15 security	Region15's security	[0.00-1.00]	1	fixed	Real	
-Region16 risk	Region16's risk	[0.00-1.00]	1	dynamic	Real	
-Region16 security	Region16's security	[0.00-1.00]	1	fixed	Real	
-Region17 risk	Region17's risk	[0.00-1.00]	1	dynamic	Real	
-Region17 security	Region17's security	[0.00-1.00]	1	fixed	Real	
-Region18 risk	Region18's risk	[0.00-1.00]	1	dynamic	Real	
-Region18 security	Region18's security	[0.00-1.00]	1	fixed	Real	
-Region19 risk	Region19's risk	[0.00-1.00]	1	dynamic	Real	
-Region19 security	Region19's security	[0.00-1.00]	1	fixed	Real	
-Region20 risk	Region20's risk	[0.00-1.00]	1	dynamic	Real	
-Region20 security	Region20's security	[0.00-1.00]	1	fixed	Real	
-Region21 risk	Region21's risk	[0.00-1.00]	1	dynamic	Real	
-Region21 security	Region21's security	[0.00-1.00]	1	fixed	Real	
-Region22 risk	Region22's risk	[0.00-1.00]	1	dynamic	Real	
-Region22 security	Region22's security	[0.00-1.00]	1	fixed	Real	
-Region23 risk	Region23's risk	[0.00-1.00]	1	dynamic	Real	
-Region23 security	Region23's security	[0.00-1.00]	1	fixed	Real	
-Region24 risk	Region24's risk	[0.00-1.00]	1	dynamic	Real	
-Region24 security	Region24's security	[0.00-1.00]	1	fixed	Real	
-Region25 risk	Region25's risk	[0.00-1.00]	1	dynamic	Real	
-Region25 security	Region25's security	[0.00-1.00]	1	fixed	Real	
-__WORLD__ day	__WORLD__'s day	[1-1]	1	dynamic	Integer	
-RewardActor	Actor's Reward	[-1.0-1.0]	0			
+Name	LongName	Values	VarType	DataType	Notes
+Actor __ACTION__	Actor's __ACTION__	Actor-stayInLocation,Actor-msgReHurricane-Actor,Actor-moveTo-shelter1,Actor-takeResources-Region01,Actor-moveTo-Region01,Actor-join-Group,Actor-leave-Group,Actor-evacuate,Actor-seekInfoReHurricane-Region01,Actor-decreaseRisk-Region01	fixed	String	Actor-stayInLocation: Actor does not move from current location, nor perform any pro/antisocial behaviors; Actor-msgReHurricane-Actor: Send message communicating my current perceptions about the hurricane and its impact; Actor-moveTo-shelter1: Move myself and family to the shelter in Region01; Actor-takeResources-Region01: Perform antisocial behaviors that gain resources personally at the expense of people in Region01; Actor-moveTo-Region01: Return home; Actor-join-Group: None; Actor-leave-Group: None; Actor-evacuate: Evacuate the city at least temporarily; Actor-seekInfoReHurricane-Region01: Seek out additional information about the hurricane and its impact; Actor-decreaseRisk-Region01: Perform prosocial behaviors to reduce the danger posed by the hurricane in Region01
+Actor __REWARD__	Actor's __REWARD__	[-1.00-1.00]	fixed	Real	Reward for Actor in this state
+Actor age	Actor's age	[0-1]	fixed	Integer	
+Actor alive	Actor's alive	True,False	dynamic	Boolean	
+Actor attachment	Actor's attachment	secure,anxious,avoidant	fixed	String	Attachment style
+Actor category	Actor's category	[-1-1]	fixed	Integer	
+Actor center	Actor's center	Region01,none	fixed	String	
+Actor children	Actor's children	[0.00-2.00]	fixed	Real	Number of children
+Actor childrenHealth	Actor's childrenHealth	[0.00-1.00]	dynamic	Real	Current level of children's physical wellbeing
+Actor employed	Actor's employed	True,False	dynamic	Boolean	Has a full-time job
+Actor ethnicGroup	Actor's ethnicGroup	majority,minority	fixed	String	Ethnicity of actor
+Actor gender	Actor's gender	male,female	fixed	String	
+Actor grievance	Actor's grievance	[0.00-1.00]	dynamic	Real	Current level of grievance felt toward system
+Actor health	Actor's health	[0.00-1.00]	dynamic	Real	Current level of physical wellbeing
+Actor location	Actor's location	Region01,evacuated,shelter1	dynamic	String	Current location
+Actor perceivedChildrenHealth	Actor's perceivedChildrenHealth	[-1.00-1.00]	fixed	Real	
+Actor perceivedHealth	Actor's perceivedHealth	[-1.00-1.00]	fixed	Real	
+Actor pet	Actor's pet	True,False	fixed	Boolean	Owns a pet
+Actor phase	Actor's phase	none,approaching,active	fixed	String	
+Actor region	Actor's region	Region01	fixed	String	Region of residence
+Actor religion	Actor's religion	majority,minority,none	fixed	String	Religious affiliation of actor
+Actor resources	Actor's resources	[0.00-1.00]	dynamic	Real	Material resources (wealth) currently owned
+Actor risk	Actor's risk	[0.00-1.00]	dynamic	Real	Current level of risk from hurricane
+Group __ACTION__	Group's __ACTION__	Group-noDecision,Group-takeResources,Group-evacuate,Group-decreaseRisk,Group-returnHome	fixed	String	Group-noDecision: None; Group-takeResources: None; Group-evacuate: None; Group-decreaseRisk: None; Group-returnHome: None
+Group __REWARD__	Group's __REWARD__	[-1.00-1.00]	fixed	Real	Reward for Group in this state
+Group size	Group's size	[0-1]	dynamic	Integer	
+Nature __ACTION__	Nature's __ACTION__	Nature-evolve	fixed	String	Nature-evolve: None
+Nature category	Nature's category	[0-1]	dynamic	Integer	
+Nature days	Nature's days	[0-1]	dynamic	Integer	
+Nature location	Nature's location	Region01,none	dynamic	String	
+Nature phase	Nature's phase	none,approaching,active	dynamic	String	
+Region01 risk	Region01's risk	[0.00-1.00]	dynamic	Real	
+Region01 security	Region01's security	[0.00-1.00]	fixed	Real	
+Region01 shelterCapacity	Region01's shelterCapacity	[0-1]	fixed	Integer	
+Region01 shelterOccupancy	Region01's shelterOccupancy	[0-1]	dynamic	Integer	
+Region01 shelterPets	Region01's shelterPets	True,False	fixed	Boolean	
+Region01 shelterRisk	Region01's shelterRisk	[0.00-1.00]	dynamic	Real	
+System __ACTION__	System's __ACTION__	System-allocate-Region01	fixed	String	System-allocate-Region01: None
+System __REWARD__	System's __REWARD__	[-1.00-1.00]	fixed	Real	Reward for System in this state
+System resources	System's resources	[0-100]	dynamic	Integer	
+__WORLD__ day	__WORLD__'s day	[1-1]	dynamic	Integer	
+ActorRewardWeightOfActor childrenHealth	Priority of Actor's childrenHealth to Actor in reward function	[0-1]	fixed	Real	Actor level
+ActorRewardWeightOfActor pet	Priority of Actor's pet to Actor in reward function	[0-1]	fixed	Real	Actor level
+ActorRewardWeightOfhealth	Priority of health to Actor in reward function	[0-1]	fixed	Real	Actor level
+ActorRewardWeightOfresources	Priority of resources to Actor in reward function	[0-1]	fixed	Real	Actor level
+ActorRewardWeightOfchildrenHealth	Priority of childrenHealth to Actor in reward function	[0-1]	fixed	Real	Actor level
+ActorRewardWeightOfneighbors	Priority of neighbors to Actor in reward function	[0-1]	fixed	Real	Actor level
+ActorRewardWeightOffriends	Priority of friends to Actor in reward function	[0-1]	fixed	Real	Actor level
+ActorBeliefOfActor alive	Probabilistic belief that Actor has about Actor's alive	[0-1]	dynamic		Actor level
+ActorBeliefOfActor childrenHealth	Probabilistic belief that Actor has about Actor's childrenHealth	[0-1]	dynamic		Actor level
+ActorBeliefOfActor employed	Probabilistic belief that Actor has about Actor's employed	[0-1]	dynamic		Actor level
+ActorBeliefOfActor grievance	Probabilistic belief that Actor has about Actor's grievance	[0-1]	dynamic		Actor level
+ActorBeliefOfActor health	Probabilistic belief that Actor has about Actor's health	[0-1]	dynamic		Actor level
+ActorBeliefOfActor location	Probabilistic belief that Actor has about Actor's location	[0-1]	dynamic		Actor level
+ActorBeliefOfActor resources	Probabilistic belief that Actor has about Actor's resources	[0-1]	dynamic		Actor level
+ActorBeliefOfActor risk	Probabilistic belief that Actor has about Actor's risk	[0-1]	dynamic		Actor level
+ActorBeliefOfNature category	Probabilistic belief that Actor has about Nature's category	[0-1]	dynamic		Actor level
+ActorBeliefOfNature days	Probabilistic belief that Actor has about Nature's days	[0-1]	dynamic		Actor level
+ActorBeliefOfNature location	Probabilistic belief that Actor has about Nature's location	[0-1]	dynamic		Actor level
+ActorBeliefOfNature phase	Probabilistic belief that Actor has about Nature's phase	[0-1]	dynamic		Actor level
+ActorBeliefOfRegion01 risk	Probabilistic belief that Actor has about Region01's risk	[0-1]	dynamic		Actor level
+ActorBeliefOfRegion01 shelterOccupancy	Probabilistic belief that Actor has about Region01's shelterOccupancy	[0-1]	dynamic		Actor level
+ActorBeliefOfRegion01 shelterRisk	Probabilistic belief that Actor has about Region01's shelterRisk	[0-1]	dynamic		Actor level
+ActorBeliefOf__WORLD__ day	Probabilistic belief that Actor has about __WORLD__'s day	[0-1]	dynamic		Actor level
+SystemBeliefOfActor alive	Probabilistic belief that System has about Actor's alive	[0-1]	dynamic		System level
+SystemBeliefOfActor childrenHealth	Probabilistic belief that System has about Actor's childrenHealth	[0-1]	dynamic		System level
+SystemBeliefOfActor employed	Probabilistic belief that System has about Actor's employed	[0-1]	dynamic		System level
+SystemBeliefOfActor grievance	Probabilistic belief that System has about Actor's grievance	[0-1]	dynamic		System level
+SystemBeliefOfActor health	Probabilistic belief that System has about Actor's health	[0-1]	dynamic		System level
+SystemBeliefOfActor location	Probabilistic belief that System has about Actor's location	[0-1]	dynamic		System level
+SystemBeliefOfActor resources	Probabilistic belief that System has about Actor's resources	[0-1]	dynamic		System level
+SystemBeliefOfActor risk	Probabilistic belief that System has about Actor's risk	[0-1]	dynamic		System level
+SystemBeliefOfGroup size	Probabilistic belief that System has about Group's size	[0-1]	dynamic		System level
+SystemBeliefOfNature category	Probabilistic belief that System has about Nature's category	[0-1]	dynamic		System level
+SystemBeliefOfNature days	Probabilistic belief that System has about Nature's days	[0-1]	dynamic		System level
+SystemBeliefOfNature location	Probabilistic belief that System has about Nature's location	[0-1]	dynamic		System level
+SystemBeliefOfNature phase	Probabilistic belief that System has about Nature's phase	[0-1]	dynamic		System level
+SystemBeliefOfRegion01 risk	Probabilistic belief that System has about Region01's risk	[0-1]	dynamic		System level
+SystemBeliefOfRegion01 shelterOccupancy	Probabilistic belief that System has about Region01's shelterOccupancy	[0-1]	dynamic		System level
+SystemBeliefOfRegion01 shelterRisk	Probabilistic belief that System has about Region01's shelterRisk	[0-1]	dynamic		System level
+SystemBeliefOfSystem resources	Probabilistic belief that System has about System's resources	[0-1]	dynamic		System level
+SystemBeliefOf__WORLD__ day	Probabilistic belief that System has about __WORLD__'s day	[0-1]	dynamic		System level
