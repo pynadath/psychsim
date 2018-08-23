@@ -15,6 +15,7 @@ import os.path
 import pstats
 import random
 import sys
+import time
 
 import psychsim.probability
 from psychsim.keys import *
@@ -133,17 +134,17 @@ if __name__ == '__main__':
     # Extract configuration
     config = ConfigParser()
     config.read(os.path.join('config','%06d.ini' % (args['instance'])))
-    try:
-        random.seed(config.getint('Simulation','seed'))
-    except ValueError:
-        # Non int, so assume None
-        random.seed()
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
     if not isinstance(level, int):
         raise ValueError('Invalid debug level: %s' % args['debug'])
 
     for run in range(args['runs']):
+        try:
+            random.seed(config.getint('Simulation','seedGen'))
+        except ValueError:
+            # Non int, so assume None
+            random.seed()
         # Verify directory structure
         dirName = os.path.join('Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (run))
         logfile = os.path.join(dirName,'psychsim.log')
@@ -161,11 +162,12 @@ if __name__ == '__main__':
         world.diagram.setColor(None,'deepskyblue')
 
         regions = {}
+        shelters = [int(region) for region in config.get('Shelter','region').split(',')]
         for region in range(config.getint('Regions','regions')):
             capacity = None
             if config.getboolean('Shelter','exists'):
                 try:
-                    index = config.get('Shelter','region').split(',').index(str(region+1))
+                    index = shelters.index(region+1)
                     capacity = int(config.get('Shelter','capacity').split(',')[index])
                 except ValueError:
                     pass
@@ -251,74 +253,91 @@ if __name__ == '__main__':
                 
         world.dependency.computeEvaluation()
 
-        toCDF(world)
+        writeDefinition(world,'SimulationDefinition')
+        toCDF(world,dirName)
         if args['compile']:
             for agent in population:
-                agent.compileV(state=world.state)
+                agent.compileV()
         if population:
-            allTables = {'Population': {'fields': [('alive','casualties','invert'),
-                                                   ('location','evacuated','#evacuated'),
-                                                   ('location','shelter','#shelter')],
-                                        'population': World,
-                                        'series': True,
-                                        'log': []},
-                         'Region': {'fields': [('alive','casualties','invert'),
-                                               ('location','evacuated','#evacuated'),
-                                               ('location','shelter','#shelter'),
-                                               ('risk','safety','invert')],
-                                    'population': Region,
-                                    'series': True,
-                                    'log': []},
-                         'Actors': {'fields': [('gender','gender',None),
-                                               ('age','age',None),
-                                               ('ethnicGroup','ethnicity',None),
-                                               ('religion','religion',None),
-                                               ('children','#children',None),
-                                               ('region','region',None),
-                                               ('alive','alive',None),
-                                               ('location','shelter','=shelter'),
-                                               ('location','evacuated','=evacuated'),
-                                               ('risk','risk','likert'),
-                                               ('health','health','likert'),
-                                               ('grievance','grievance','likert'),
-                         ],
-                                    'population': Actor,
-                                    'series': True,
-                                    'log': []},
-                         'Census': {'fields': [('gender','male','%male'),
-                                               ('ethnicGroup','ethnicMajority','%majority'),
-                                               ('religion','religiousMajority','%majority')],
-                                    'population': Region,
-                                    'series': False,
-                                    'log': []},
-                         'Nature': {'fields': [('phase','phase',None),
-                                               ('category','category',None),
-                                               ('location','location',None),],
-                                    'population': Nature,
-                                    'series': True,
-                                    'log': []},
-                         'Display': {'fields': [('x','x',None),
-                                                ('y','y',None),
-                                                ('gender','gender',None),
-                                                ('age','age',None),
-                                                ('ethnicGroup','ethnicity',None),
-                                                ('religion','religion',None),
-                                                ('children','#children',None),
-                                                ('region','region',None)],
-                                     'population': Actor,
-                                     'series': False,
-                                     'log': []}
+            allTables = {
+                'Population': {'fields': [('alive','casualties','invert'),
+                                          ('location','evacuated','#evacuated'),
+                                          ('location','shelter','#shelter')],
+                               'population': World,
+                               'series': True,
+                               'log': []},
+                'Region': {'fields': [('alive','casualties','invert'),
+                                      ('location','evacuated','#evacuated'),
+                                      ('location','shelter','#shelter'),
+                                      ('risk','safety','invert')],
+                           'population': Region,
+                           'series': True,
+                           'log': []},
+                'Actors': {'fields': [('gender','gender',None),
+                                      ('age','age',None),
+                                      ('ethnicGroup','ethnicity',None),
+                                      ('religion','religion',None),
+                                      ('children','#children',None),
+                                      ('region','region',None),
+                                      ('alive','alive',None),
+                                      ('location','shelter','=shelter'),
+                                      ('location','evacuated','=evacuated'),
+                                      ('risk','risk','likert'),
+                                      ('health','health','likert'),
+                                      ('grievance','grievance','likert'),
+                ],
+                           'population': Actor,
+                           'series': True,
+                           'log': []},
+                'Census': {'fields': [('gender','male','%male'),
+                                      ('ethnicGroup','ethnicMajority','%majority'),
+                                      ('religion','religiousMajority','%majority')],
+                           'population': Region,
+                           'series': False,
+                           'log': []},
+                'Nature': {'fields': [('phase','phase',None),
+                                      ('category','category',None),
+                                      ('location','location',None),],
+                           'population': Nature,
+                           'series': True,
+                           'log': []},
+                'Display': {'fields': [('x','x',None),
+                                       ('y','y',None),
+                                       ('gender','gender',None),
+                                       ('age','age',None),
+                                       ('ethnicGroup','ethnicity',None),
+                                       ('religion','religion',None),
+                                       ('children','#children',None),
+                                       ('region','region',None)],
+                            'population': Actor,
+                            'series': False,
+                            'log': []}
             }
+            table = {'fields': [(population,'alive','count=False','casualties'),
+                                (population,'location','count=evacuated','#evacuated'),
+                                ],
+                     }
+            table['fields'] += [(population,'location','count=shelter%d' % (i),'#shelter%d' % (i)) \
+                                for i in shelters]
+            # allTables['SummaryStatisticsData'] = table
+
             tables = {name: allTables[name] for name in allTables
                       if config.getboolean('Data',name.lower())}
             addState2tables(world,0,tables,population,regions)
+            try:
+                random.seed(config.getint('Simulation','seedRun'))
+            except ValueError:
+                # Non int, so assume None
+                random.seed()
             hurricanes = 0
             oldPhase = world.getState('Nature','phase').first()
+            start = time.time()
             while hurricanes < args['number']:
                 today = int(world.getState(WORLD,'day').expectation())
                 logging.info('Day %d' % (today))
                 day = today
                 while day == today:
+                    print(today,time.time()-start)
                     agents = world.next()
                     if args['profile']:
                         prof = cProfile.Profile()
