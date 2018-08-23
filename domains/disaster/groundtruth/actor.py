@@ -288,16 +288,16 @@ class Actor(Agent):
                 cell = int(region.name[-2:])
                 row = (cell-1) / 5
                 col = (cell-1) % 5
-                neighbors = []
+                bordering = []
                 if row > 0:
-                    neighbors.append('Region%02d' % ((row-1)*5+col+1))
+                    bordering.append('Region%02d' % ((row-1)*5+col+1))
                 if row < len(regions)/5-1:
-                    neighbors.append('Region%02d' % ((row+1)*5+col+1))
+                    bordering.append('Region%02d' % ((row+1)*5+col+1))
                 if col > 0:
-                    neighbors.append('Region%02d' % (cell-1))
+                    bordering.append('Region%02d' % (cell-1))
                 if col < 4:
-                    neighbors.append('Region%02d' % (cell+1))
-                tree = makeTree({'if': equalRow(location,neighbors),
+                    bordering.append('Region%02d' % (cell+1))
+                tree = makeTree({'if': equalRow(location,bordering),
                                  True: {'if': trueRow(alive),
                                         True: True, False: False}, False: False})
                 actMove[region.name] = self.addAction({'verb': 'moveTo',
@@ -509,20 +509,42 @@ class Actor(Agent):
                     world.setDynamics(pet,action,tree)
 
         # Reward
+        sigma = config.getint('Actors','reward_sigma')
         mean = config.getint('Actors','reward_health')
+        self.Rweights = {kidHealth: 0.,pet:0.}
         if mean > 0:
-            self.setReward(maximizeFeature(health,self.name),likert[5][mean-1])
+            if sigma > 0:
+                self.Rweights['health'] = sampleNormal(mean,sigma)
+            else:
+                self.Rweights['health'] = likert[5][mean-1]
+            self.setReward(maximizeFeature(health,self.name),self.Rweights['health'])
+        else:
+            self.Rweights['health'] = 0.
         mean = config.getint('Actors','reward_wealth')
         if mean > 0:
-            self.setReward(maximizeFeature(wealth,self.name),likert[5][mean-1])
+            if sigma > 0:
+                self.Rweights['resources'] = sampleNormal(mean,sigma)
+            else:
+                self.Rweights['resources'] = likert[5][mean-1]
+            self.setReward(maximizeFeature(wealth,self.name),self.Rweights['resources'])
+        else:
+            self.Rweights['resources'] = 0.
         if self.kids > 0:
             mean = config.getint('Actors','reward_kids')
             if mean > 0:
-                self.setReward(maximizeFeature(kidHealth,self.name),likert[5][mean-1])
+                if sigma > 0:
+                    self.Rweights['childrenHealth'] = sampleNormal(mean,sigma)
+                else:
+                    self.Rweights['childrenHealth'] = likert[5][mean-1]
+                self.setReward(maximizeFeature(kidHealth,self.name),self.Rweights['childrenHealth'])
         if self.pet > 0:
             mean = config.getint('Actors','reward_pets')
             if mean > 0:
-                self.setReward(maximizeFeature(pet,self.name),likert[5][mean-1])
+                if sigma > 0:
+                    self.Rweights['pet'] = sampleNormal(mean,sigma)
+                else:
+                    self.Rweights['pet'] = likert[5][mean-1]
+                self.setReward(maximizeFeature(pet,self.name),self.Rweights['pet'])
         if config.getboolean('Actors','beliefs'):
             # Observations
             
@@ -567,10 +589,10 @@ class Actor(Agent):
                       makeTree(setToFeatureMatrix(omega,stateKey(self.name,'health'))))
             self.setState('perceivedHealth',self.health)
             if self.kids > 0:
-                omega = self.defineObservation('perceivedKids',domain=float)
-                self.setO('perceivedKids',None,
+                omega = self.defineObservation('perceivedChildrenHealth',domain=float)
+                self.setO('perceivedChildrenHealth',None,
                           makeTree(setToFeatureMatrix(omega,stateKey(self.name,'childrenHealth'))))
-                self.setState('perceivedKids',self.health)
+                self.setState('perceivedChildrenHealth',self.health)
         # Decision-making parameters
         self.setAttribute('horizon',config.getint('Actors','horizon'))
         #self.setAttribute('selection','distribution')
@@ -596,6 +618,7 @@ class Actor(Agent):
         myHome = self.world.getState(self.name,'region').first()
         neighbors = {a.name for a in population if a.name != self.name and \
                      self.world.getState(a.name,'region').first() == myHome}
+        friends = set()
         if friendMax > 0:
             # Social network
             friendCount = {}
@@ -620,23 +643,46 @@ class Actor(Agent):
                 friend = random.choice(list(set(friendCount.keys())))
                 self.makeFriend(self.world.agents[friend],config)
                 self.world.agents[friend].makeFriend(self,config)
+                friends.add(friend)
                 if friendCount[friend] == friendMax - 1:
                     del friendCount[friend]
                 else:
                     friendCount[friend] += 1
 
+        sigma = config.getint('Actors','reward_sigma')
+        mean = config.getint('Actors','altruism_neighbors')
+        if mean > 0:
+            if sigma > 0:
+                self.Rweights['neighbors'] = sampleNormal(mean,sigma)
+            else:
+                self.Rweights['neighbors'] = likert[mean-1]
+            try:
+                self.Rweights['neighbors'] /= float(len(neighbors))
+            except ZeroDivisionError:
+                pass
+        else:
+            self.Rweights['neighbors'] = 0.
+        mean = config.getint('Actors','altruism_friends')
+        if mean > 0:
+            if sigma > 0:
+                self.Rweights['friends'] = sampleNormal(mean,sigma)
+            else:
+                self.Rweights['friends'] = likert[mean-1]
+            try:
+                self.Rweights['friends'] /= float(friendMax)
+            except ZeroDivisionError:
+                pass
+        else:
+            self.Rweights['friends'] = 0.
         for other in population:
-            if self.name == other.name:
-                continue
-            Rneighbors = config.getint('Actors','altruism_neighbors')
-            Rfriends = config.getint('Actors','altruism_friends')
-            if Rneighbors > 0 and other in neighbors:
-                self.setReward(maximizeFeature(stateKey(other.name,'health'),self.name),
-                               likert[5][Rneighbors-1]/float(len(neighbors)))
-            elif config.getint('Actors','friends') > 0 and Rfriends > 0 and \
-                 self.world.getFeature(binaryKey(self.name,other.name,'friendOf')).first():
-                self.setReward(maximizeFeature(stateKey(other.name,'health'),self.name),
-                               likert[5][Rfriends-1]/float(friendMax))
+            if self.name != other.name:
+                R = 0.
+                if other in neighbors:
+                    R += self.Rweights['neighbors']
+                if other in friends:
+                    R += self.Rweights['friends']
+                if R > 1e-8:
+                    self.setReward(maximizeFeature(stateKey(other.name,'health'),self.name),R)
         
     def _initializeBeliefs(self,config):
         logging.debug('Initializing beliefs of %s' % (self.name))
