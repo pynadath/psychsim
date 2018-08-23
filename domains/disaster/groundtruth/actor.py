@@ -651,7 +651,10 @@ class Actor(Agent):
 
         include = set()
         for key in self.world.state.keys():
-            agent = state2agent(key)
+            if isBinaryKey(key):
+                agent = key2relation(key)['subject']
+            else:
+                agent = state2agent(key)
             if agent == self.name:
                 if not isModelKey(key):
                     include.add(key)
