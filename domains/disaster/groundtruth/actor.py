@@ -665,7 +665,7 @@ class Actor(Agent):
                     # I care about my neighbors' health
                     if state2feature == 'health':
                         include.add(key)
-                elif config.getint('Actors','altruism_neighbors') > 0 and \
+                elif config.getint('Actors','altruism_friends') > 0 and \
                      self.world.getFeature(binaryKey(self.name,agent,'friendOf')).first():
                     # I care about my friends' health
                     if state2feature == 'health':
