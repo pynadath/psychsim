@@ -22,19 +22,66 @@ fields = {'VariableDef': ['Name','LongName','Values','VarType','DataType','Notes
                                'ToEntityId','Data','Notes'],
           }
 
-def appendDatum(datum,world,csvfile,fields):
-    entities,feature,fun,label = datum
-    funs = fun.split(',')
+def appendDatum(datum,world,writer,fields):
+    entities,feature,metadata = datum
+    funs = metadata.split(',')
     total = 0.
+    count = 0
     for agent in entities:
-        if isinstance(agent,str):
-            agent = world.agents[agent]
         key = stateKey(agent.name,feature)
         if key in world.variables:
             dist = world.getState(agent.name,feature)
             assert len(dist) == 1
             value = dist.first()
-        
+            for fun in funs:
+                if fun == 'invert':
+                    if isinstance(value,bool):
+                        value = not bool
+                    else:
+                        value = 1.-value
+                elif fun == 'mean':
+                    total += value
+                    count += 1
+                elif fun == 'sum':
+                    total += value
+                elif fun[:5] == 'count':
+                    target = fun[6:]
+                    if isinstance(value,bool):
+                        if target == 'False':
+                            target = False
+                        else:
+                            target = True
+                    elif feature == ACTION:
+                        value = value['verb']
+                    else:
+                        target = value.__class__(target)
+                    if fun[5] == '=':
+                        if value == target:
+                            count += 1
+                    elif fun[5] == '<':
+                        if value < target:
+                            count += 1
+                    else:
+                        raise ValueError('Unknown comparison: %s' % (fun[5]))
+    generic = entities[0].__class__.__name__
+    key = stateKey(generic,feature)
+    entities = sorted([agent.name for agent in entities])
+    first = int(entities[0][len(generic):])
+    last = int(entities[-1][len(generic):])
+    record = {'Timestep': world.getState(WORLD,'day').first(),
+              'VariableName': shorten(key),
+              'EntityIdx': '[%s%d-%d]' % (generic,first,last),
+              'Metadata': metadata,
+              }
+    if funs[-1] == 'mean':
+        record['Value'] = total / float(count)
+    elif funs[-1] == 'sum':
+        record['Value'] = total
+    elif funs[-1][:5] == 'count':
+        record['Value'] = count
+    else:
+        raise ValueError('Unknown functional value: %s' % (funs[-1]))
+    writer.writerow(record)
 
 def shorten(key):
     if isBinaryKey(key):
@@ -42,7 +89,9 @@ def shorten(key):
         return '%s %s %s' % (relation['subject'],relation['relation'],relation['object'])
     elif isStateKey(key):
         if isActionKey(key):
-            return '%sAction' % (state2agent(key))
+            return '%s action' % (state2agent(key))
+        elif state2agent(key) == WORLD:
+            return '%s' % (state2feature(key))
         else:
             return '%s %s' % (state2agent(key),state2feature(key))
     else:
@@ -117,7 +166,7 @@ def writeDefinition(world,dirName):
                 belief = agent.getAttribute('beliefs',model)
                 for key in stateKeys:
                     if key in belief and key in world.dynamics and not isRewardKey(key):
-                        record = {'Name': '%sBeliefOf%s' % (agent.name,shorten(key)),
+                        record = {'Name': '%s\'s Belief Of%s' % (agent.name,shorten(key)),
                                   'LongName': 'Probabilistic belief that %s has about %s' % (name,key),
                                   'Values': '[0-1]',
                                   'VarType': 'dynamic',
@@ -142,10 +191,16 @@ def toCDF(world,dirName,tables,unobservable=set()):
             writer.writeheader()
             if name == 'InstanceVariable':
                 for key,variable in sorted(world.variables.items()):
-                    if (isStateKey(key) and not isTurnKey(key) and not isModelKey(key)) or \
-                       isBinaryKey(key):
+                    if (isStateKey(key) and not isTurnKey(key) and not isModelKey(key) and \
+                        not isRewardKey(key)) or isBinaryKey(key):
                         agent = state2agent(key)
-                        if agent == 'Nature' or (key in world.dynamics and day == 0):
+                        if agent != 'Nature':
+                            if key in world.dynamics:
+                                continue
+                            elif day > 1:
+                                continue
+                            elif isinstance(world.agents[agent].O,dict) and key in world.agents[agent].O:
+                                continue
                             value = world.getFeature(key)
                             assert len(value) == 1
                             record = {'Name': shorten(key),
@@ -159,11 +214,26 @@ def toCDF(world,dirName,tables,unobservable=set()):
                     record = {'Name': '%sHorizon' % (agent.name),
                               'Value': agent.getAttribute('horizon',model.first())}
                     writer.writerow(record)
+            elif name == 'RelationshipData':
+                for key,variable in world.variables.items():
+                    if isBinaryKey(key):
+                        relation = key2relation(key)
+                        value = world.getFeature(key)
+                        assert len(value) == 1
+                        record = {'RelationshipType': relation['relation'],
+                                  'Directed': 'yes',
+                                  'FromEntityId': relation['subject'],
+                                  'ToEntityId': relation['object'],
+                                  'Data': value.first()
+                                  }
+                        if key in world.dynamics:
+                            record['Timestep'] = day
+                        writer.writerow(record)
             elif name == 'RunData':
                 pass
-            else:
-                for datum in table:
-                    appendDatum(datum,world,csvfile,fields[name])
+#            else:
+#                for datum in table:
+#                    appendDatum(datum,world,writer,fields[name])
 
 def updateCDF(world,dirName,tables,unobservable=set()):
     stateKeys = [key for key in sorted(world.variables.keys()) \
@@ -181,6 +251,19 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                         record = {'Name': shorten(key),
                                   'Timestep': day,
                                   'Value': value.first()}
+                        writer.writerow(record)
+            elif name == 'RelationshipData':
+                for key,variable in world.variables.items():
+                    if isBinaryKey(key) and key in world.dynamics:
+                        relation = key2relation(key)
+                        value = world.getFeature(key)
+                        assert len(value) == 1
+                        record = {'Timestep': day,
+                                  'RelationshipType': relation['relation'],
+                                  'Directed': 'yes',
+                                  'FromEntityId': relation['subject'],
+                                  'ToEntityId': relation['object'],
+                                  'Data': value.first()}
                         writer.writerow(record)
             elif name == 'RunData':
                 for key,variable in sorted(world.variables.items()):
@@ -218,8 +301,8 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                                 else:
                                     domain = sorted(value.domain())
                                     record['Notes'] = ','.join(['Prob(=%s)' % (el) for el in domain])
-                                    record['Value'] = ','.join(['%d%%' % (100*value[el]) for el in domain])
+                                    record['Value'] = ','.join(['%6.4f' % (value[el]) for el in domain])
                                 writer.writerow(record)
             else:
                 for datum in table:
-                    appendDatum(datum,world,csvfile,fields[name])
+                    appendDatum(datum,world,writer,fields[name])

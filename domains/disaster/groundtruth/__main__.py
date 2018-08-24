@@ -260,15 +260,15 @@ if __name__ == '__main__':
         cdfTables = {'InstanceVariable': [],
                      'RunData': [],
                      'SummaryStatisticsData':
-                     [(population,'alive','count=False','deaths'),
-                      (population,'health','count<0.2','casualties'),
-                      (population,'location','count=evacuated','#evacuated'),
-                      (regions,'shelterOccupancy','sum','#at shelters'),
-                      (population,'health','mean','mean health'),
-                      (population,'resources','mean','mean wealth'),
-                      (regions,'risk','invert,mean','mean safety'),
-                      (population,ACTION,'count=decreaseRisk','prosocial behavior'),
-                      (population,ACTION,'count=takeResources','antisocial behavior'),
+                     [(population,'alive','count=False'),
+                      (population,'health','count<0.2'),
+                      (population,'location','count=evacuated'),
+                      ([world.agents[r] for r in regions],'shelterOccupancy','sum'),
+                      (population,'health','mean'),
+                      (population,'resources','mean'),
+                      ([world.agents[r] for r in regions],'risk','invert,mean'),
+                      (population,ACTION,'count=decreaseRisk'),
+                      (population,ACTION,'count=takeResources'),
                      ],
                      'QualitativeData': [],
                      'RelationshipData': [],
@@ -349,6 +349,7 @@ if __name__ == '__main__':
                 today = int(world.getState(WORLD,'day').expectation())
                 logging.info('Day %d' % (today))
                 day = today
+                updateCDF(world,dirName,cdfTables)
                 while day == today:
                     print(today,time.time()-start)
                     agents = world.next()
@@ -386,7 +387,6 @@ if __name__ == '__main__':
                     oldPhase = phase
                 addState2tables(world,today,{name: table for name,table in tables.items()
                                              if table['series']},population,regions)
-                updateCDF(world,dirName,cdfTables)
             for name,table in tables.items():
                 fields = ['day']+[field[1] for field in table['fields']]
                 if table['population'] is Region:
