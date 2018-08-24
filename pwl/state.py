@@ -461,12 +461,17 @@ class VectorDistributionSet:
                             self.distributions[mySubstate].addProb(vector,distribution[vector]*prob)
             else:
                 # Evaluate the hyperplane and split the state
-                branchKeys = set(other.branch.keys())
+                branchKeys = set(other.branch.keys())-{keys.CONSTANT}
                 substates = self.substate(branchKeys)
-                valSub = self.collapse(substates)
+                if substates:
+                    valSub = self.collapse(substates)
+                else:
+                    valSub = None
                 assert len(other.branch.planes) == 1,'Currently unable to process conjunctive branches'
                 if valSub is None:
-                    vector = KeyedVector({k: self.distributions[self.keyMap[k]].first()[k] for k in branchKeys})
+                    vector = KeyedVector({k: self.distributions[self.keyMap[k]].first()[k] \
+                                          for k in branchKeys})
+                    vector[keys.CONSTANT] = 1.
                     if other.branch.evaluate(vector):
                         self *= other.children[True]
                     else:
