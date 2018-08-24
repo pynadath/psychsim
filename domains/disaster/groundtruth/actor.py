@@ -400,6 +400,21 @@ class Actor(Agent):
         world.setDynamics(alive,True,tree)
         
         # Effect on wealth
+        impactJob = config.getint('Actors','job_impact')
+        impactNoJob = config.getint('Actors','wealth_spend')
+        if impactJob > 0:
+            tree = {'if': trueRow(alive),
+                    True: {'if': trueRow(job),
+                           True: {'if': equalRow(location,[home,'evacuated']),
+                                  True: approachMatrix(wealth,likert[5][impactJob-1],1.),
+                                  False: noChangeMatrix(wealth)},
+                           False: None},
+                    False: noChangeMatrix(wealth)}
+            if impactNoJob > 0:
+                tree[True][False] = approachMatrix(wealth,likert[5][impactNoJob-1],0.)
+            else:
+                tree[True][False] = noChangeMatrix(wealth)
+            world.setDynamics(wealth,nop,makeTree(tree))
         if config.getboolean('Actors','evacuation'):
             cost = config.getint('Actors','evacuation_cost')
             if cost > 0:
