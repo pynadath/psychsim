@@ -257,7 +257,24 @@ if __name__ == '__main__':
 
         if args['write']:
             writeDefinition(world,'SimulationDefinition')
-        toCDF(world,dirName)
+        cdfTables = {'InstanceVariable': [],
+                     'RunData': [],
+                     'SummaryStatisticsData':
+                     [(population,'alive','count=False','deaths'),
+                      (population,'health','count<0.2','casualties'),
+                      (population,'location','count=evacuated','#evacuated'),
+                      (regions,'shelterOccupancy','sum','#at shelters'),
+                      (population,'health','mean','mean health'),
+                      (population,'resources','mean','mean wealth'),
+                      (regions,'risk','invert,mean','mean safety'),
+                      (population,ACTION,'count=decreaseRisk','prosocial behavior'),
+                      (population,ACTION,'count=takeResources','antisocial behavior'),
+                     ],
+                     'QualitativeData': [],
+                     'RelationshipData': [],
+        }
+
+        toCDF(world,dirName,cdfTables)
         if args['compile']:
             for agent in population:
                 agent.compileV()
@@ -316,13 +333,6 @@ if __name__ == '__main__':
                             'series': False,
                             'log': []}
             }
-            table = {'fields': [(population,'alive','count=False','casualties'),
-                                (population,'location','count=evacuated','#evacuated'),
-                                ],
-                     }
-            table['fields'] += [(population,'location','count=shelter%d' % (i),'#shelter%d' % (i)) \
-                                for i in shelters]
-            # allTables['SummaryStatisticsData'] = table
 
             tables = {name: allTables[name] for name in allTables
                       if config.getboolean('Data',name.lower())}
@@ -376,7 +386,7 @@ if __name__ == '__main__':
                     oldPhase = phase
                 addState2tables(world,today,{name: table for name,table in tables.items()
                                              if table['series']},population,regions)
-                updateCDF(world,dirName)
+                updateCDF(world,dirName,cdfTables)
             for name,table in tables.items():
                 fields = ['day']+[field[1] for field in table['fields']]
                 if table['population'] is Region:
