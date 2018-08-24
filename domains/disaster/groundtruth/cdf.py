@@ -3,6 +3,7 @@ import os.path
 
 from psychsim.pwl.keys import *
 from psychsim.action import ActionSet
+from actor import Actor
 
 dataTypes = {bool: 'Boolean',
              list: 'String',
@@ -46,37 +47,47 @@ def var2def(name,world,base=None):
     else:
         record['VarType'] = 'fixed'
     return record
-
+    
 def writeDefinition(world,dirName):
     with open(os.path.join(dirName,'VariableDefTable'),'w') as csvfile:
         fields = ['Name','LongName','Values','VarType','DataType','Notes']
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',
                                 extrasaction='ignore')
         writer.writeheader()
-        for name in sorted(world.variables.keys()):
-            if isModelKey(name) or isTurnKey(name) or isBinaryKey(name):
-                continue
-            # State variables
+        # State variables
+        stateKeys = [key for key in sorted(world.variables.keys()) \
+                     if not isModelKey(key) and not isTurnKey(key) and not isBinaryKey(key)]
+        for name in stateKeys:
             writer.writerow(var2def(name,world))
         for name,agent in world.agents.items():
+            assert len(agent.models) == 1
+            model = next(iter(agent.models.keys()))
             # Reward variables
-            model = '%s0' % (agent.name)
-            tree = agent.models[model]['R']
-            if tree.isLeaf():
-                vector = tree.children[None][makeFuture(rewardKey(name))]
-                if len(vector) == 1 and abs(vector[CONSTANT]) < 1e-8:
-                    continue
-            record = {'Name': 'Reward%s' % (name),
-                      'LongName': '%s\'s Reward' % (name),
-                      'Values': '[-1.0-1.0]',
-                      'Type': 'dynamic',
-                      }
-            writer.writerow(record)
+            if isinstance(agent,Actor):
+                for key,weight in agent.Rweights.items():
+                    record = {'Name': '%sRewardWeightOf%s' % (agent.name,shorten(key)),
+                              'LongName': 'Priority of %s to %s in reward function' % (key,agent.name),
+                              'Values': '[0-1]',
+                              'VarType': 'fixed',
+                              'DataType': 'Real',
+                              'Notes': 'Actor level'
+                              }
+                    writer.writerow(record)
             # Beliefs
-            belief = agent.getBelief(world.state,model)
-            for name in belief.keys():
-                pass
-    with open(os.path.join('SimulationDefinition','RelationshipDefTable'),'w') as csvfile:
+            if agent.getAttribute('static',model) is None:
+                belief = agent.getAttribute('beliefs',model)
+                for key in stateKeys:
+                    if key in belief and key in world.dynamics and not isRewardKey(key):
+                        record = {'Name': '%sBeliefOf%s' % (agent.name,shorten(key)),
+                                  'LongName': 'Probabilistic belief that %s has about %s' % (name,key),
+                                  'Values': '[0-1]',
+                                  'VarType': 'dynamic',
+                                  'DataTye': 'Real',
+                                  'Notes': '%s level' % (agent.__class__.__name__)
+                                  }
+                        writer.writerow(record)
+                                  
+    with open(os.path.join(dirName,'RelationshipDefTable'),'w') as csvfile:
         fields = ['Name','LongName','Values','Observable','VarType','DataType','Notes']
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',
                                 extrasaction='ignore')
@@ -86,36 +97,66 @@ def writeDefinition(world,dirName):
                 writer.writerow(var2def(name,world))
                 
 def toCDF(world,dirName,unobservable=set()):
+    day = world.getState(WORLD,'day').first()
     with open(os.path.join(dirName,'InstanceVariableTable'),'w') as csvfile:
         fields = ['Name','Timestep','Value']
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
         writer.writeheader()
         for name,variable in sorted(world.variables.items()):
-            if isStateKey(name):
+            if isStateKey(name) or isBinaryKey(name):
                 agent = state2agent(name)
-                if not agent in {WORLD,'Nature'}:
-                    if name in world.dynamics or isRewardKey(name) or isTurnKey(name) or isModelKey(name):
-                        continue
-                value = world.getFeature(name)
-                assert len(value) == 1
-                record = {'Name': shorten(name),
-                          'Value': value.first()}
-                writer.writerow(record)
-
-def updateCDF(world,unobservable=set()):
-    with open(os.path.join('SimulationDefinition','InstanceVariableTable'),'a') as csvfile:
-        fields = ['Name','Timestep','Value']
-        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
-        writer.writeheader()
-        day = world.getState(WORLD,'day').first()
-        for name,variable in sorted(world.variables.items()):
-            if isStateKey(name):
-                agent = state2agent(name)
-                if agent in {WORLD,'Nature'}:
+                if agent == 'Nature' or (name in world.dynamics and day == 0):
                     value = world.getFeature(name)
                     assert len(value) == 1
                     record = {'Name': shorten(name),
-                              'Timestep': day,
                               'Value': value.first()}
+                    if agent == 'Nature':
+                        record['Timestep'] = day
                     writer.writerow(record)
-                        
+    with open(os.path.join(dirName,'RunDataTable'),'w') as csvfile:
+        fields = ['Timestep','VariableName','EntityIdx','Value','Notes']
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+        writer.writeheader()
+    with open(os.path.join(dirName,'SummaryStatisticsDataTable'),'w') as csvfile:
+        fields = ['Timestep','VariableName','EntityIdx','Value','Metadata']
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+        writer.writeheader()
+    with open(os.path.join(dirName,'QualitativeDataTable'),'w') as csvfile:
+        fields = ['Timestep','EntityIdx','QualData','Metadata']
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+        writer.writeheader()
+    with open(os.path.join(dirName,'RelationshipDataTable'),'w') as csvfile:
+        fields = ['Timestep','RelationshipType','Directed','FromEntityId','ToEntityId','Data','Notes']
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+        writer.writeheader()
+
+def updateCDF(world,dirName,unobservable=set()):
+    with open(os.path.join(dirName,'InstanceVariableTable'),'a') as csvfile:
+        fields = ['Name','Timestep','Value']
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+        day = world.getState(WORLD,'day').first()
+        for name,variable in sorted(world.variables.items()):
+            if isStateKey(name) and state2agent(name) == 'Nature' and not isModelKey(name) \
+               and not isTurnKey(name):
+                value = world.getFeature(name)
+                assert len(value) == 1
+                record = {'Name': shorten(name),
+                          'Timestep': day,
+                          'Value': value.first()}
+                writer.writerow(record)
+    with open(os.path.join(dirName,'RunDataTable'),'a') as csvfile:
+        fields = ['Timestep','VariableName','EntityIdx','Value','Notes']
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+
+    with open(os.path.join(dirName,'SummaryStatisticsDataTable'),'a') as csvfile:
+        fields = ['Timestep','VariableName','EntityIdx','Value','Metadata']
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+
+    with open(os.path.join(dirName,'QualitativeDataTable'),'a') as csvfile:
+        fields = ['Timestep','EntityIdx','QualData','Metadata']
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+
+    with open(os.path.join(dirName,'RelationshipDataTable'),'a') as csvfile:
+        fields = ['Timestep','RelationshipType','Directed','FromEntityId','ToEntityId','Data','Notes']
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+        writer.writeheader()
