@@ -12,6 +12,7 @@ class System(Agent):
         world.addAgent(self)
 
         world.diagram.setColor(self.name,'gray')
+        self.setAttribute('static',True)
         
         resources = world.defineState(self.name,'resources',int,lo=0,hi=100)
         self.setState('resources',int(likert[5][config.getint('System','resources')]*100))
