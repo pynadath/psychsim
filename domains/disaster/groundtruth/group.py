@@ -61,16 +61,18 @@ class Group(Agent):
 
         doNothing = self.addAction({'verb': 'noDecision'})
         self.setAttribute('horizon',config.getint('Groups','horizon'))
+        self.potentials = None
 
     def potentialMembers(self,agents,weights=None):
         assert len(self.models) == 1,'Define potential members before adding multiple models of group %s' % (self.name)
+        self.potentials = agents
         model = next(iter(self.models.keys()))
         size = stateKey(self.name,'size')
         for name in agents:
             agent = self.world.agents[name]
             member = self.world.defineRelation(name,self.name,'memberOf',bool)
             # Join a group
-            self.world.setFeature(member,False)
+            self.world.setFeature(member,True)
             tree = makeTree({'if': trueRow(stateKey(name,'alive')),
                              True: {'if': trueRow(member),
                                     True: False, False: True},
@@ -82,7 +84,6 @@ class Group(Agent):
             tree = makeTree(incrementMatrix(size,1))
             self.world.setDynamics(size,join,tree)
             # Leave a group
-            self.world.setFeature(member,False)
             tree = makeTree({'if': trueRow(stateKey(name,'alive')),
                              True: {'if': trueRow(member),
                                     True: True, False: False},
@@ -111,3 +112,55 @@ class Group(Agent):
             weights = {a: 1. for a in agents}
         for name,weight in weights.items():
             self.setReward(name,weight,model)
+
+    def members(self,state=None):
+        if state is None:
+            state = self.world.state
+        return [agent for agent in self.potentials \
+                if self.world.getFeature(binaryKey(agent,self.name,'memberOf')).first()]
+
+    def reward(self,state=None,model=None,recurse=False):
+        if state is None:
+            state = self.world.state
+        if model is None:
+            model = self.world.getModel(self.name,state)
+        total = 0.
+        for name in self.members(state):
+            agent = self.world.agents[name]
+            total += agent.reward(state)
+        return total
+    
+    def getBelief(self,state=None,model=None):
+        if state is None:
+            state = self.world.state
+        if model is None:
+            model = self.world.getModel(self.name,state)
+        belief = None
+        for name in self.members(state):
+            agent = self.world.agents[name]
+            subbelief = agent.getBelief(state)
+            assert len(subbelief) == 1
+            subbelief = next(iter(subbelief.values()))
+            if belief is None:
+                belief = copy.deepcopy(subbelief)
+            else:
+                for dist in subbelief.distributions.values():
+                    existing = [key for key in dist.keys() if key in belief]
+                    if existing:
+                        substates = belief.substate(existing)
+                        if len(substates) == 1:
+                            substate = next(iter(substates))
+                        else:
+                            substate = belief.collapse(substates)
+                        print('Old:',belief.distributions[substate])
+                        print('New:',dist)
+                        for key in dist.keys():
+                            if not key in existing:
+                                print('\t%s' % (key))
+                    else:
+                        substate = max(belief.keyMap.values())+1
+                        belief.distributions[substate] = copy.deepcopy(dist)
+                        for key in dist.keys():
+                            if key != CONSTANT:
+                                belief.keyMap[key] = substate
+        return belief
