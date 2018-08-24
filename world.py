@@ -267,7 +267,7 @@ class World:
             assert actions is None
             actions = {}
         for name in self.agents:
-            if not name in actions:
+            if not name in actions and modelKey(name) in state:
                 # No action pre-specified
                 key = keys.turnKey(name)
                 if key in state.keyMap and 0 in state.domain(key):
