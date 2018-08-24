@@ -18,7 +18,6 @@ import sys
 import time
 
 import psychsim.probability
-from psychsim.keys import *
 from psychsim.pwl import *
 from psychsim.action import powerset
 from psychsim.reward import *
@@ -250,6 +249,8 @@ if __name__ == '__main__':
         if system:
             if config.getboolean('Actors','beliefs'):
                 system.resetBelief()
+#                print(world.agents['GroupRegion01'].getBelief())
+#                sys.exit(0)
             else:
                 system.setAttribute('static',True)
                 
