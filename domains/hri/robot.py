@@ -627,7 +627,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                      'verb': 'recommend %s' % (recommendation),
                      'object': location})
     assert len(world.getModel('robot')) == 1
-    world.step(action)
+    world.step(action,select=True)
     assert len(world.getModel('robot')) == 1
     beliefState = list(world.agents['robot'].getBelief().values())[0]
     belief = world.getState(location,'danger',beliefState)
