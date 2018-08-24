@@ -130,6 +130,8 @@ if __name__ == '__main__':
     parser.add_argument('-i','--instance',default=1,type=int,help='Instance number')
     parser.add_argument('-p','--profile',action='store_true',help='Profile simulation step')
     parser.add_argument('-c','--compile',action='store_true',help='Pre-compile agent policies')
+    parser.add_argument('-w','--write',action='store_true',help='Write simulation definition tables')
+    
     args = vars(parser.parse_args())
     # Extract configuration
     config = ConfigParser()
@@ -253,7 +255,8 @@ if __name__ == '__main__':
                 
         world.dependency.computeEvaluation()
 
-        writeDefinition(world,'SimulationDefinition')
+        if args['write']:
+            writeDefinition(world,'SimulationDefinition')
         toCDF(world,dirName)
         if args['compile']:
             for agent in population:
@@ -373,7 +376,7 @@ if __name__ == '__main__':
                     oldPhase = phase
                 addState2tables(world,today,{name: table for name,table in tables.items()
                                              if table['series']},population,regions)
-                updateCDF(world)
+                updateCDF(world,dirName)
             for name,table in tables.items():
                 fields = ['day']+[field[1] for field in table['fields']]
                 if table['population'] is Region:
