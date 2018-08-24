@@ -511,7 +511,7 @@ class Actor(Agent):
         # Reward
         sigma = config.getint('Actors','reward_sigma')
         mean = config.getint('Actors','reward_health')
-        self.Rweights = {kidHealth: 0.,pet:0.}
+        self.Rweights = {'childrenHealth': 0.,'pet':0.}
         if mean > 0:
             if sigma > 0:
                 self.Rweights['health'] = sampleNormal(mean,sigma)
