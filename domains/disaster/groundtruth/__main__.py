@@ -246,11 +246,8 @@ if __name__ == '__main__':
             if not config.getboolean('Actors','beliefs'):
                 agent.setAttribute('static',True)
 
-        if system:
-            if config.getboolean('Actors','beliefs'):
-                system.resetBelief()
-            else:
-                system.setAttribute('static',True)
+        if system and config.getboolean('System','beliefs'):
+            system.resetBelief()
 
 
         world.dependency.computeEvaluation()
