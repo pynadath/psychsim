@@ -1111,9 +1111,17 @@ class Agent:
             O = self.O
         if isinstance(actions,ActionSet):
             jointAction = actions
-        else:
+        elif actions:
+            assert isinstance(actions,dict)
             # Table of actions across multiple agents
-            jointAction = reduce(lambda x,y: x|y,actions.values())
+            jointAction = None
+            for action in actions.values():
+                if jointAction is None:
+                    jointAction = action
+                else:
+                    jointAction |= action
+        else:
+            jointAction = ActionSet()
         # Generate observations along each dimension
         omega = {}
         for key,table in O.items():
