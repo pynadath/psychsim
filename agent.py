@@ -928,7 +928,7 @@ class Agent:
         else:
             Omega = sorted(self.O.keys())
         assert isinstance(Omega,list)
-        for vector in distribution.domain():
+        for vector in list(distribution.domain()):
             prob = distribution[vector]
             del distribution[vector]
             oldModel = self.world.float2value(oldModelKey,vector[oldModelKey])
@@ -955,7 +955,7 @@ class Agent:
                                     keySubset=beliefs.keys())
                     # Condition on actual observations
                     for omega in Omega:
-                        beliefs[makeFuture(omega)] = vector[keys.makeFuture(omega)]
+                        beliefs[omega] = vector[keys.makeFuture(omega)]
                         assert len(beliefs) > 0,'Impossible observation %s=%s' % \
                             (omega,vector[keys.makeFuture(omega)])
                     # Create model with these new beliefs
@@ -1111,9 +1111,17 @@ class Agent:
             O = self.O
         if isinstance(actions,ActionSet):
             jointAction = actions
-        else:
+        elif actions:
+            assert isinstance(actions,dict)
             # Table of actions across multiple agents
-            jointAction = reduce(lambda x,y: x|y,actions.values())
+            jointAction = None
+            for action in actions.values():
+                if jointAction is None:
+                    jointAction = action
+                else:
+                    jointAction |= action
+        else:
+            jointAction = ActionSet()
         # Generate observations along each dimension
         omega = {}
         for key,table in O.items():
