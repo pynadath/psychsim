@@ -129,15 +129,12 @@ class World:
             return state
         # Determine the actions taken by the agents in this world
         outcome['actions'] = self.stepPolicy(state,actions,horizon,tiebreak)
-        joint = None
+        joint = ActionSet()
         for actor,policy in outcome['actions'].items():
             assert policy.isLeaf(),'Currently unable to project stochastic decisions'
             key = stateKey(actor,ACTION)
             action = self.float2value(key,policy.children[None][makeFuture(key)][CONSTANT])
-            if joint is None:
-                joint = action
-            else:
-                joint |= action
+            joint = ActionSet(joint | action)
         effect = self.deltaState(joint,state,keySubset)
         # Update turn order
         effect.append(self.deltaTurn(state,joint))
