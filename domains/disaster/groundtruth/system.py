@@ -9,6 +9,8 @@ from actor import Actor
 class System(Agent):
     def __init__(self,world,config):
         Agent.__init__(self,'System')
+        self.config = config
+        
         world.addAgent(self)
 
         world.diagram.setColor(self.name,'gray')
@@ -24,10 +26,6 @@ class System(Agent):
 
         populated = set()
         for actor in population:
-            self.setReward(maximizeFeature(stateKey(actor,'health'),self.name),
-                           likert[5][config.getint('System','reward_health')])
-            self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),
-                           likert[5][config.getint('System','reward_grievance')])
             populated.add(world.getState(actor,'region').first())
         allocation = config.getint('System','system_allocation')
         for region in populated:
@@ -48,3 +46,22 @@ class System(Agent):
                                      False: approachMatrix(grievance,delta,1.)})
                     world.setDynamics(grievance,allocate,tree)
         self.setAttribute('horizon',config.getint('System','horizon'))
+
+    def reward(self,state=None,model=None,recurse=True):
+        if state is None:
+            state = self.world.state
+        if model is None:
+            model = self.world.getModel(self.name,state)
+        population = [name for name in self.world.agents
+                      if isinstance(self.world.agents[name],Actor)]
+        weights = {'health': likert[5][self.config.getint('System','reward_health')],
+                   'grievance': -likert[5][self.config.getint('System','reward_grievance')]}
+        ER = 0.
+        for actor in population:
+            for feature in weights:
+                key = stateKey(actor,feature)
+                dist = state.distributions[state.keyMap[key]]
+                for vector in dist.domain():
+                    ER += weights[feature]*dist[vector]*vector[key]
+        return ER
+        
