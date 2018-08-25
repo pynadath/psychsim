@@ -152,15 +152,34 @@ class Group(Agent):
                             substate = next(iter(substates))
                         else:
                             substate = belief.collapse(substates)
-                        print('Old:',belief.distributions[substate])
-                        print('New:',dist)
-                        for key in dist.keys():
-                            if not key in existing:
-                                print('\t%s' % (key))
+                        if dist != belief.distributions[substate]:
+                            newDist = belief.distributions[substate].__class__()
+                            for oldVec in belief.distributions[substate].domain():
+                                prob = belief.distributions[substate][oldVec]
+                                del belief.distributions[substate][oldVec]
+                                for newVec in dist.domain():
+                                    for key in existing:
+                                        if oldVec[key] != newVec[key]:
+                                            break
+                                    else:
+                                        result = oldVec.__class__(oldVec)
+                                        for key in newVec:
+                                            if not key in existing:
+                                                result[key] = newVec[key]
+                                        newDist.addProb(result,prob*dist[newVec])
+                            belief.distributions[substate] = newDist
                     else:
                         substate = max(belief.keyMap.values())+1
                         belief.distributions[substate] = copy.deepcopy(dist)
                         for key in dist.keys():
                             if key != CONSTANT:
                                 belief.keyMap[key] = substate
+            # Insert true models of members into group beliefs
+            key = modelKey(name)
+            submodel = state[key]
+            assert len(submodel) == 1,'Unable to form uncertain beliefs about members'
+            substate = max(belief.keyMap.values())+1
+            belief.keyMap[key] = substate
+            vector = KeyedVector({CONSTANT: 1.,key: submodel.first()})
+            belief.distributions[substate] = VectorDistribution({vector: 1.})
         return belief

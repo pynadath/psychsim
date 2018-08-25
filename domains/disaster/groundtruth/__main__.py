@@ -249,11 +249,10 @@ if __name__ == '__main__':
         if system:
             if config.getboolean('Actors','beliefs'):
                 system.resetBelief()
-#                print(world.agents['GroupRegion01'].getBelief())
-#                sys.exit(0)
             else:
                 system.setAttribute('static',True)
-                
+
+
         world.dependency.computeEvaluation()
 
         if args['write']:

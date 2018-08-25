@@ -722,6 +722,8 @@ class Actor(Agent):
             elif agent == 'Nature':
                 if not isModelKey(key):
                     include.add(key)
+            elif agent[:5] == 'Group' and self.name in self.world.agents[agent].potentials:
+                include.add(key)
             elif agent == WORLD:
                 include.add(key)
             elif isinstance(self.world.agents[agent],Actor):
