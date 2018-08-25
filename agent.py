@@ -928,7 +928,7 @@ class Agent:
         else:
             Omega = sorted(self.O.keys())
         assert isinstance(Omega,list)
-        for vector in distribution.domain():
+        for vector in list(distribution.domain()):
             prob = distribution[vector]
             del distribution[vector]
             oldModel = self.world.float2value(oldModelKey,vector[oldModelKey])
@@ -955,7 +955,7 @@ class Agent:
                                     keySubset=beliefs.keys())
                     # Condition on actual observations
                     for omega in Omega:
-                        beliefs[makeFuture(omega)] = vector[keys.makeFuture(omega)]
+                        beliefs[omega] = vector[keys.makeFuture(omega)]
                         assert len(beliefs) > 0,'Impossible observation %s=%s' % \
                             (omega,vector[keys.makeFuture(omega)])
                     # Create model with these new beliefs
