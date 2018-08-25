@@ -129,15 +129,12 @@ class World:
             return state
         # Determine the actions taken by the agents in this world
         outcome['actions'] = self.stepPolicy(state,actions,horizon,tiebreak)
-        joint = None
+        joint = ActionSet()
         for actor,policy in outcome['actions'].items():
             assert policy.isLeaf(),'Currently unable to project stochastic decisions'
             key = stateKey(actor,ACTION)
             action = self.float2value(key,policy.children[None][makeFuture(key)][CONSTANT])
-            if joint is None:
-                joint = action
-            else:
-                joint |= action
+            joint = ActionSet(joint | action)
         effect = self.deltaState(joint,state,keySubset)
         # Update turn order
         effect.append(self.deltaTurn(state,joint))
@@ -148,6 +145,8 @@ class World:
         if select:
             prob = state.select()
         effect = self.effect(joint,state,updateBeliefs,keySubset)
+        # The future becomes the present
+        state.rollback()
         if select:
             prob *= state.select()
         if self.memory:
@@ -277,6 +276,9 @@ class World:
                     decision = self.agents[name].decide(state,horizon,actions,
                                                         None,tiebreak,agent.getActions(state))
                     actions[name] = decision['policy']
+        if len(actions) == 0:
+            self.printState(state)
+            raise RuntimeError('Nobody has a turn!')
         for name,policy in actions.items():
             state *= policy
         return actions
@@ -341,7 +343,8 @@ class World:
             state = psychsim.pwl.VectorDistributionSet(state)
         result = {'new': state,'effect': []}
         # Generate observations
-        result['effect'].append(self.deltaObservations(result['new'],actions,keySubset))
+        O = self.deltaObservations(result['new'],actions,keySubset)
+        result['effect'].append(O)
         # Apply all of these update functions
         for stage in result['effect']:
             self.applyEffect(result['new'],stage)
@@ -355,7 +358,7 @@ class World:
                 agent = self.agents[name]
                 Omega = {keys.makeFuture(keys.stateKey(agent.name,omega)) \
                          for omega in agent.omega}
-                result['new'].collapse(Omega|{key},False)
+                substate = result['new'].collapse(Omega|{key},False)
                 result['effect'].append(agent.updateBeliefs(result['new'],actions))
         return result
 
@@ -703,11 +706,12 @@ class World:
                 self.turnKeys = {key for key in vector.keyMap.keys() if isTurnKey(key)}
             agents = set()
             for key in self.turnKeys:
-                substate = vector.keyMap[key]
-                subvector = vector.distributions[substate]
-                assert len(subvector) == 1,'World.next() does not operate on uncertain turns'
-                if subvector.first()[key] == 0:
-                    agents.add(turn2name(key))
+                if key in vector.keyMap:
+                    substate = vector.keyMap[key]
+                    subvector = vector.distributions[substate]
+                    assert len(subvector) == 1,'World.next() does not operate on uncertain turns'
+                    if subvector.first()[key] == 0:
+                        agents.add(turn2name(key))
             return agents
         else:
             items = filter(lambda i: isTurnKey(i[0]),vector.items())
