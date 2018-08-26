@@ -372,12 +372,6 @@ if __name__ == '__main__':
             for agent in population:
                 agent.compileV()
         if population:
-            allTables = {
-            }
-
-            tables = {name: allTables[name] for name in allTables
-                      if config.getboolean('Data',name.lower())}
-            addState2tables(world,0,tables,population,regions)
             try:
                 random.seed(config.getint('Simulation','seedRun'))
             except ValueError:
@@ -426,17 +420,4 @@ if __name__ == '__main__':
                     #         belief = actor.getBelief(world.state,model.first())
                     #         world.printState(belief)
                     oldPhase = phase
-                addState2tables(world,today,{name: table for name,table in tables.items()
-                                             if table['series']},population,regions)
-            for name,table in tables.items():
-                fields = ['day']+[field[1] for field in table['fields']]
-                if table['population'] is Region:
-                    fields.insert(1,'region')
-                elif table['population'] is Actor:
-                    fields.insert(1,'participant')
-                with open(os.path.join(dirName,'%sTable' % (name)),'w') as csvfile:
-                    writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
-                    writer.writeheader()
-                    for entry in table['log']:
-                        writer.writerow(entry)
         world.save(os.path.join(dirName,'scenario.psy'))
