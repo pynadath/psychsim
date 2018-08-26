@@ -90,8 +90,8 @@ class Actor(Agent):
                           if isinstance(self.world.agents[name],Region)])
         region = world.defineState(self.name,'region',list,regions,description='Region of residence')
         index = int((number-1)*config.getint('Regions','regions')/config.getint('Actors','population'))
-        home = regions[index]
-        world.setFeature(region,home)
+        self.home = regions[index]
+        world.setFeature(region,self.home)
 
         if config.getboolean('Data','display'):
             # For display use only
@@ -104,7 +104,7 @@ class Actor(Agent):
                 x = random.random()
                 y = random.random()
                 neighbors = [a for a  in world.agents.values() if isinstance(a,Actor) and \
-                             not a.name == self.name and a.getState('location').first() == home]
+                             not a.name == self.name and a.getState('location').first() == self.home]
                 for neighbor in neighbors:
                     if abs(neighbor.getState('x').first()-x)+abs(neighbor.getState('y').first()-y) < 0.1:
                         break
@@ -122,7 +122,7 @@ class Actor(Agent):
                 locationSet.append('shelter%s' % (index))
         location = world.defineState(self.name,'location',list,locationSet,
                                      description='Current location')
-        world.setFeature(location,home)
+        world.setFeature(location,self.home)
         alive = world.defineState(self.name,'alive',bool)
         world.setFeature(alive,True)
 
@@ -163,7 +163,7 @@ class Actor(Agent):
 
         risk = world.defineState(self.name,'risk',float,
                                  description='Current level of risk from hurricane')
-        world.setFeature(risk,world.getState(home,'risk').expectation())
+        world.setFeature(risk,world.getState(self.home,'risk').expectation())
 
         mean = config.getint('Actors','grievance_ethnic_%s' % (self.ethnicGroup))
         mean += config.getint('Actors','grievance_religious_%s' % (self.religion))
@@ -231,14 +231,14 @@ class Actor(Agent):
         if goHomeFrom:
             tree = makeTree({'if': equalRow(location,goHomeFrom),
                              True: True, False: False})
-            goHome = self.addAction({'verb': 'moveTo','object': home},
+            goHome = self.addAction({'verb': 'moveTo','object': self.home},
                                     tree.desymbolize(world.symbols),
                                     'Return home')
         if config.getboolean('Actors','prorisk'):
             # Prosocial behavior
             actGoodRisk = {}
             for region in regions:
-                if config.getboolean('Actors','movement') or region == home:
+                if config.getboolean('Actors','movement') or region == self.home:
                     tree = makeTree({'if': equalRow(location,region),
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
@@ -249,7 +249,7 @@ class Actor(Agent):
             # Prosocial behavior
             actGoodResources = {}
             for region in regions:
-                if config.getboolean('Actors','movement') or region == home:
+                if config.getboolean('Actors','movement') or region == self.home:
                     tree = makeTree({'if': equalRow(location,region),
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
@@ -261,7 +261,7 @@ class Actor(Agent):
             # Antisocial behavior
             actBadRisk = {}
             for region in regions:
-                if config.getboolean('Actors','movement') or region == home:
+                if config.getboolean('Actors','movement') or region == self.home:
                     tree = makeTree({'if': equalRow(location,region),
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
@@ -272,7 +272,7 @@ class Actor(Agent):
             # Antisocial behavior
             actBadResources = {}
             for region in regions:
-                if config.getboolean('Actors','movement') or region == home:
+                if config.getboolean('Actors','movement') or region == self.home:
                     tree = makeTree({'if': equalRow(location,region),
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
@@ -307,7 +307,7 @@ class Actor(Agent):
         # Information-seeking actions
         if config.getboolean('Actors','infoseek'):
             tree = makeTree({'if': trueRow(alive), True: True, False: False})
-            self.addAction({'verb': 'seekInfoReHurricane','object': home},
+            self.addAction({'verb': 'seekInfoReHurricane','object': self.home},
                            tree.desymbolize(world.symbols),
                            'Seek out additional information about the hurricane and its impact')
                 
@@ -324,14 +324,14 @@ class Actor(Agent):
                 tree = makeTree(setToConstantMatrix(location,region.name))
                 world.setDynamics(location,actMove[region.name],tree)
         if goHomeFrom:
-            tree = makeTree(setToConstantMatrix(location,home))
+            tree = makeTree(setToConstantMatrix(location,self.home))
             world.setDynamics(location,goHome,tree)
 
         # Effect on my risk
         if config.getboolean('Actors','movement'):
             tree = noChangeMatrix(risk)
         else:
-            tree = setToFeatureMatrix(risk,stateKey(home,'risk'))
+            tree = setToFeatureMatrix(risk,stateKey(self.home,'risk'))
         if config.getboolean('Actors','evacuation'):
             tree = {'if': equalRow(makeFuture(location),'evacuated'),
                     True: approachMatrix(risk,0.9,0.),
@@ -405,7 +405,7 @@ class Actor(Agent):
         if impactJob > 0:
             tree = {'if': trueRow(alive),
                     True: {'if': trueRow(job),
-                           True: {'if': equalRow(location,[home,'evacuated']),
+                           True: {'if': equalRow(location,[self.home,'evacuated']),
                                   True: approachMatrix(wealth,likert[5][impactJob-1],1.),
                                   False: noChangeMatrix(wealth)},
                            False: None},
@@ -630,9 +630,8 @@ class Actor(Agent):
         friends = set()
         population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
         friendMax = config.getint('Actors','friends')
-        myHome = self.world.getState(self.name,'region').first()
         neighbors = {a.name for a in population if a.name != self.name and \
-                     self.world.getState(a.name,'region').first() == myHome}
+                     self.world.getState(a.name,'region').first() == self.home}
         friends = set()
         if friendMax > 0:
             # Social network
@@ -704,9 +703,8 @@ class Actor(Agent):
         # Beliefs
         friends = set()
         population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
-        myHome = self.world.getState(self.name,'region').first()
         neighbors = {a.name for a in population if a.name != self.name and \
-                     self.world.getState(a.name,'region').first() == myHome}
+                     self.world.getState(a.name,'region').first() == self.home}
         regions = [n for n in self.world.agents if isinstance(self.world.agents[n],Region)]
         shelters = {int(region) for region in config.get('Shelter','region').split(',')}
 
@@ -739,7 +737,7 @@ class Actor(Agent):
                     if state2feature == 'health':
                         include.add(key)
             elif isinstance(self.world.agents[agent],Region):
-                if agent == myHome or self.world.agents[agent].number in shelters:
+                if agent == self.home or self.world.agents[agent].number in shelters:
                     if not isModelKey(key):
                         include.add(key)
         beliefs = self.resetBelief(include=include)
