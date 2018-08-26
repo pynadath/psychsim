@@ -122,6 +122,81 @@ def addState2tables(world,day,tables,population,regions):
                         else:
                             entry[label] = values[actor.name][feature]
                 table['log'].append(entry)
+
+def writeCensus(world,regions,dirName):
+    census = {'Population': None,
+              'Gender': 'gender',
+              'Ethnicity': 'ethnicGroup',
+              'Religion': 'religion',
+              'Age': 'age',
+              'Employment': 'employed',
+    }
+    fields = ['Region','Field','Value','Count']
+    with open(os.path.join(dirName,'CensusTable'),'w') as csvfile:
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+        writer.writeheader()
+        ages = [a.age for a in world.agents.values() if isinstance(a,Actor)]
+        limits = [18]+[i for i in range(25,max(ages),5)]
+        labels = ['<%d' % (limits[0])]
+        labels += ['%d-%d' % (limits[i],limits[i+1]-1) for i in range(len(limits)-1)]
+        labels.append('>%d' % (limits[-1]-1))
+        for field,feature in census.items():
+            if field == 'Population':
+                total = 0
+            else:
+                total = {}
+            for name,table in regions.items():
+                if field == 'Population':
+                    record = {'Region': name,
+                              'Field': field,
+                              'Count': len(table['inhabitants']) + \
+                              sum([a.kids for a in table['inhabitants']])}
+                    writer.writerow(record)
+                    total += record['Count']
+                elif field == 'Age':
+                    histogram = [0 for limit in limits]
+                    histogram.append(0)
+                    for agent in table['inhabitants']:
+                        histogram[0] += agent.kids
+                        for i in range(len(limits)):
+                            if agent.age < limits[i]:
+                                histogram[i] += 1
+                                break
+                    else:
+                        histogram[-1] += 1
+                    for i in range(len(histogram)):
+                        record = {'Region': name,
+                                  'Field': field,
+                                  'Value': labels[i],
+                                  'Count': histogram[i]}
+                        writer.writerow(record)
+                        total[record['Value']] = total.get(record['Value'],0)+record['Count']
+                else:
+                    histogram = {}
+                    for agent in table['inhabitants']:
+                        value = agent.getState(feature).first()
+                        histogram[value] = histogram.get(value,0) + 1
+                    for value,count in histogram.items():
+                        total[value] = total.get(value,0) + count
+                        record = {'Region': name,
+                                  'Field': field,
+                                  'Value': value,
+                                  'Count': count}
+                        writer.writerow(record)
+            if field == 'Population':
+                record = {'Region': 'All',
+                          'Field': field,
+                          'Count': total}
+                writer.writerow(record)
+            else:
+                for value,count in sorted(total.items()):
+                    record = {'Region': 'All',
+                              'Field': field,
+                              'Value': value,
+                              'Count': count}
+                    writer.writerow(record)
+
+
     
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -277,66 +352,27 @@ if __name__ == '__main__':
                      ],
                      'QualitativeData': [],
                      'RelationshipData': [],
+                     'Population': {'Deaths': (population,'alive','count=False'),
+                                    'Casualties': (population,'health','count<0.2'),
+                                    'Evacuees': (population,'location','count=evacuated'),
+                                    'Sheltered': ([world.agents[r] for r in regions],'shelterOccupancy',
+                                                  'sum'),
+                     },
+                     'Regional': {'Deaths': (regions,'alive','count=False'),
+                                  'Casualties': (regions,'health','count<0.2'),
+                                  'Sheltered': ([world.agents[r] for r in regions],'shelterOccupancy',
+                                                None)
+                     },
+                     'Hurricane': {'Category': ([nature],'category',None),
+                     },
         }
-
+        writeCensus(world,regions,dirName)
         toCDF(world,dirName,cdfTables)
         if args['compile']:
             for agent in population:
                 agent.compileV()
         if population:
             allTables = {
-                'Population': {'fields': [('alive','casualties','invert'),
-                                          ('location','evacuated','#evacuated'),
-                                          ('location','shelter','#shelter')],
-                               'population': World,
-                               'series': True,
-                               'log': []},
-                'Region': {'fields': [('alive','casualties','invert'),
-                                      ('location','evacuated','#evacuated'),
-                                      ('location','shelter','#shelter'),
-                                      ('risk','safety','invert')],
-                           'population': Region,
-                           'series': True,
-                           'log': []},
-                'Actors': {'fields': [('gender','gender',None),
-                                      ('age','age',None),
-                                      ('ethnicGroup','ethnicity',None),
-                                      ('religion','religion',None),
-                                      ('children','#children',None),
-                                      ('region','region',None),
-                                      ('alive','alive',None),
-                                      ('location','shelter','=shelter'),
-                                      ('location','evacuated','=evacuated'),
-                                      ('risk','risk','likert'),
-                                      ('health','health','likert'),
-                                      ('grievance','grievance','likert'),
-                ],
-                           'population': Actor,
-                           'series': True,
-                           'log': []},
-                'Census': {'fields': [('gender','male','%male'),
-                                      ('ethnicGroup','ethnicMajority','%majority'),
-                                      ('religion','religiousMajority','%majority')],
-                           'population': Region,
-                           'series': False,
-                           'log': []},
-                'Nature': {'fields': [('phase','phase',None),
-                                      ('category','category',None),
-                                      ('location','location',None),],
-                           'population': Nature,
-                           'series': True,
-                           'log': []},
-                'Display': {'fields': [('x','x',None),
-                                       ('y','y',None),
-                                       ('gender','gender',None),
-                                       ('age','age',None),
-                                       ('ethnicGroup','ethnicity',None),
-                                       ('religion','religion',None),
-                                       ('children','#children',None),
-                                       ('region','region',None)],
-                            'population': Actor,
-                            'series': False,
-                            'log': []}
             }
 
             tables = {name: allTables[name] for name in allTables

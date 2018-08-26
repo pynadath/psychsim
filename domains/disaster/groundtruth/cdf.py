@@ -20,49 +20,55 @@ fields = {'VariableDef': ['Name','LongName','Values','VarType','DataType','Notes
           'QualitativeData': ['Timestep','EntityIdx','QualData','Metadata'],
           'RelationshipData': ['Timestep','RelationshipType','Directed','FromEntityId',
                                'ToEntityId','Data','Notes'],
+          'Population': ['Timestep','Deaths','Casualties','Evacuees','Sheltered'],
+          'Regional': ['Timestep','Region','Deaths','Casualties','Sheltered'],
+          'Hurricane': ['Timestep','Category'],
           }
 
+def processDatum(agent,feature,funs,data):
+    key = stateKey(agent.name,feature)
+    if key in world.variables:
+        dist = world.getState(agent.name,feature)
+        assert len(dist) == 1
+        value = dist.first()
+        for fun in funs:
+            if fun == 'invert':
+                if isinstance(value,bool):
+                    value = not bool
+                else:
+                    value = 1.-value
+            elif fun == 'mean':
+                data['total'] += value
+                data['count'] += 1
+            elif fun == 'sum':
+                data['total'] += value
+            elif fun[:5] == data['count']:
+                target = fun[6:]
+                if isinstance(value,bool):
+                    if target == 'False':
+                        target = False
+                    else:
+                        target = True
+                elif feature == ACTION:
+                    value = value['verb']
+                else:
+                    target = value.__class__(target)
+                if fun[5] == '=':
+                    if value == target:
+                        data['count'] += 1
+                elif fun[5] == '<':
+                    if value < target:
+                        data['count'] += 1
+                else:
+                    raise ValueError('Unknown comparison: %s' % (fun[5]))
+    
 def appendDatum(datum,world,writer,fields):
     entities,feature,metadata = datum
     funs = metadata.split(',')
-    total = 0.
-    count = 0
+    data = {'total': 0.,
+            'count': 0}
     for agent in entities:
-        key = stateKey(agent.name,feature)
-        if key in world.variables:
-            dist = world.getState(agent.name,feature)
-            assert len(dist) == 1
-            value = dist.first()
-            for fun in funs:
-                if fun == 'invert':
-                    if isinstance(value,bool):
-                        value = not bool
-                    else:
-                        value = 1.-value
-                elif fun == 'mean':
-                    total += value
-                    count += 1
-                elif fun == 'sum':
-                    total += value
-                elif fun[:5] == 'count':
-                    target = fun[6:]
-                    if isinstance(value,bool):
-                        if target == 'False':
-                            target = False
-                        else:
-                            target = True
-                    elif feature == ACTION:
-                        value = value['verb']
-                    else:
-                        target = value.__class__(target)
-                    if fun[5] == '=':
-                        if value == target:
-                            count += 1
-                    elif fun[5] == '<':
-                        if value < target:
-                            count += 1
-                    else:
-                        raise ValueError('Unknown comparison: %s' % (fun[5]))
+        processDatum(agent,feature,funs,data)
     generic = entities[0].__class__.__name__
     key = stateKey(generic,feature)
     entities = sorted([agent.name for agent in entities])
@@ -74,11 +80,11 @@ def appendDatum(datum,world,writer,fields):
               'Metadata': metadata,
               }
     if funs[-1] == 'mean':
-        record['Value'] = total / float(count)
+        record['Value'] = data['total'] / float(data['count'])
     elif funs[-1] == 'sum':
-        record['Value'] = total
+        record['Value'] = data['total']
     elif funs[-1][:5] == 'count':
-        record['Value'] = count
+        record['Value'] = data['count']
     else:
         raise ValueError('Unknown functional value: %s' % (funs[-1]))
     writer.writerow(record)
@@ -192,7 +198,7 @@ def toCDF(world,dirName,tables,unobservable=set()):
             if name == 'InstanceVariable':
                 for key,variable in sorted(world.variables.items()):
                     if (isStateKey(key) and not isTurnKey(key) and not isModelKey(key) and \
-                        not isRewardKey(key)) or isBinaryKey(key):
+                        not isActionKey(key)) and not isRewardKey(key)) or isBinaryKey(key):
                         agent = state2agent(key)
                         if agent != 'Nature':
                             if key in world.dynamics:
@@ -229,11 +235,6 @@ def toCDF(world,dirName,tables,unobservable=set()):
                         if key in world.dynamics:
                             record['Timestep'] = day
                         writer.writerow(record)
-            elif name == 'RunData':
-                pass
-#            else:
-#                for datum in table:
-#                    appendDatum(datum,world,writer,fields[name])
 
 def updateCDF(world,dirName,tables,unobservable=set()):
     stateKeys = [key for key in sorted(world.variables.keys()) \
