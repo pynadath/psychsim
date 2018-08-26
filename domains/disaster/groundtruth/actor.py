@@ -93,25 +93,24 @@ class Actor(Agent):
         self.home = regions[index]
         world.setFeature(region,self.home)
 
-        if config.getboolean('Data','display'):
-            # For display use only
-            tooClose = True
-            xKey = world.defineState(self.name,'x',float,
-                                     description='Representation of residence\'s longitude')
-            yKey = world.defineState(self.name,'y',float,
-                                     description='Representation of residence\'s latitude')
-            while tooClose:
-                x = random.random()
-                y = random.random()
-                neighbors = [a for a  in world.agents.values() if isinstance(a,Actor) and \
-                             not a.name == self.name and a.getState('location').first() == self.home]
-                for neighbor in neighbors:
-                    if abs(neighbor.getState('x').first()-x)+abs(neighbor.getState('y').first()-y) < 0.1:
-                        break
-                else:
-                    tooClose = False
-            world.setFeature(xKey,x)
-            world.setFeature(yKey,y)
+        # For display use only
+        tooClose = True
+        xKey = world.defineState(self.name,'x',float,
+                                 description='Representation of residence\'s longitude')
+        yKey = world.defineState(self.name,'y',float,
+                                 description='Representation of residence\'s latitude')
+        while tooClose:
+            x = random.random()
+            y = random.random()
+            neighbors = [a for a  in world.agents.values() if isinstance(a,Actor) and \
+                         not a.name == self.name and a.getState('location').first() == self.home]
+            for neighbor in neighbors:
+                if abs(neighbor.getState('x').first()-x)+abs(neighbor.getState('y').first()-y) < 0.05:
+                    break
+            else:
+                tooClose = False
+        world.setFeature(xKey,x)
+        world.setFeature(yKey,y)
                              
 
         # Dynamic states
