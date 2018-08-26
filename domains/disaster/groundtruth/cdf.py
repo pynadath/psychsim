@@ -4,6 +4,7 @@ import os.path
 from psychsim.pwl.keys import *
 from psychsim.action import ActionSet
 from actor import Actor
+from region import Region
 
 dataTypes = {bool: 'Boolean',
              list: 'String',
@@ -25,7 +26,7 @@ fields = {'VariableDef': ['Name','LongName','Values','VarType','DataType','Notes
           'Hurricane': ['Timestep','Category'],
           }
 
-def processDatum(agent,feature,funs,data):
+def processDatum(agent,feature,funs,world,data):
     key = stateKey(agent.name,feature)
     if key in world.variables:
         dist = world.getState(agent.name,feature)
@@ -61,32 +62,46 @@ def processDatum(agent,feature,funs,data):
                         data['count'] += 1
                 else:
                     raise ValueError('Unknown comparison: %s' % (fun[5]))
+
+def computeValue(data,funs):
+    if funs[-1] == 'mean':
+        return data['total'] / float(data['count'])
+    elif funs[-1] == 'sum':
+        return data['total']
+    elif funs[-1][:5] == 'count':
+        return data['count']
+    else:
+        raise ValueError('Unknown functional value: %s' % (funs[-1]))
     
-def appendDatum(datum,world,writer,fields):
+def appendSummary(datum,world,writer,fields,region=None):
     entities,feature,metadata = datum
     funs = metadata.split(',')
-    data = {'total': 0.,
+    data = {'total': 0,
             'count': 0}
     for agent in entities:
-        processDatum(agent,feature,funs,data)
+        if isinstance(agent,dict):
+            # Region dictionary
+            appendSummary(agent['inhabitants'],world,writer,fields,agent['agent'].name)
+        else:
+            processDatum(agent,feature,funs,world,data)
     generic = entities[0].__class__.__name__
     key = stateKey(generic,feature)
     entities = sorted([agent.name for agent in entities])
     first = int(entities[0][len(generic):])
     last = int(entities[-1][len(generic):])
-    record = {'Timestep': world.getState(WORLD,'day').first(),
-              'VariableName': shorten(key),
-              'EntityIdx': '[%s%d-%d]' % (generic,first,last),
-              'Metadata': metadata,
-              }
-    if funs[-1] == 'mean':
-        record['Value'] = data['total'] / float(data['count'])
-    elif funs[-1] == 'sum':
-        record['Value'] = data['total']
-    elif funs[-1][:5] == 'count':
-        record['Value'] = data['count']
-    else:
-        raise ValueError('Unknown functional value: %s' % (funs[-1]))
+    record = {}
+    for field in fields:
+        if field == 'VariableName':
+            record[field] = shorten(key)
+        elif field == 'EntityIdx':
+            record[field] = '[%s%d-%d]' % (generic,first,last)
+        elif field == 'Metadata':
+            record[field] = metadata
+        elif field == 'Timestep':
+            record[field] = world.getState(WORLD,'day').first()
+        elif field != 'Value':
+            raise RuntimeError('Unknown field: %s' % (field))
+    record['Value'] = computeValue(data,funs)
     writer.writerow(record)
 
 def shorten(key):
@@ -198,7 +213,7 @@ def toCDF(world,dirName,tables,unobservable=set()):
             if name == 'InstanceVariable':
                 for key,variable in sorted(world.variables.items()):
                     if (isStateKey(key) and not isTurnKey(key) and not isModelKey(key) and \
-                        not isActionKey(key)) and not isRewardKey(key)) or isBinaryKey(key):
+                        not isActionKey(key) and not isRewardKey(key)) or isBinaryKey(key):
                         agent = state2agent(key)
                         if agent != 'Nature':
                             if key in world.dynamics:
@@ -305,5 +320,45 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                                     record['Value'] = ','.join(['%6.4f' % (value[el]) for el in domain])
                                 writer.writerow(record)
             else:
-                for datum in table:
-                    appendDatum(datum,world,writer,fields[name])
+                if isinstance(table,dict):
+                    record = {}
+                    regions = {}
+                    for field in fields[name]:
+                        if field == 'Timestep':
+                            record[field] = day
+                        elif field in table:
+                            entities,feature,metadata = table[field]
+                            if metadata:
+                                funs = metadata.split(',')
+                            data = {'total': 0,
+                                    'count': 0}
+                            for agent in entities:
+                                if isinstance(agent,str):
+                                    agent = world.agents[agent]
+                                if isinstance(agent,Region) and metadata != 'sum':
+                                    if not agent.name in regions:
+                                        regions[agent.name] = {'Timestep': day,'Region': agent.name}
+                                    if stateKey(agent.name,feature) in world.variables:
+                                        assert metadata is None
+                                        regions[agent.name][field] = agent.getState(feature).first()
+                                    else:
+                                        residents = [a for a in world.agents.values() \
+                                                     if isinstance(a,Actor) and a.home == agent.name]
+                                        data = {'total': 0,
+                                                'count': 0}
+                                        for actor in residents:
+                                            processDatum(actor,feature,funs,world,data)
+                                        regions[agent.name][field] = computeValue(data,funs)
+                                else:
+                                    processDatum(agent,feature,funs,world,data)
+                            record[field] = computeValue(data,funs)
+                        elif field != 'Region':
+                            raise ValueError('Unknown field: %s' % (field))
+                    if regions:
+                        for name,record in regions.items():
+                            writer.writerow(record)
+                    else:
+                        writer.writerow(record)
+                else:
+                    for datum in table:
+                        appendSummary(datum,world,writer,fields[name])
