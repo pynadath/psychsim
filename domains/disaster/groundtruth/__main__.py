@@ -1,8 +1,4 @@
 from argparse import ArgumentParser
-try:
-    from ConfigParser import SafeConfigParser as ConfigParser
-except ImportError:
-    from configparser import ConfigParser
 import cProfile
 try:
     from cStringIO import StringIO
@@ -16,6 +12,12 @@ import pstats
 import random
 import sys
 import time
+
+
+if (sys.version_info > (3, 0)):
+    from configparser import ConfigParser
+else:
+    from ConfigParser import SafeConfigParser as ConfigParser
 
 import psychsim.probability
 from psychsim.pwl import *
@@ -134,7 +136,7 @@ if __name__ == '__main__':
     args = vars(parser.parse_args())
     # Extract configuration
     config = ConfigParser()
-    config.read(os.path.join('config','%06d.ini' % (args['instance'])))
+    config.read(os.path.join(os.path.dirname(__file__),'config','%06d.ini' % (args['instance'])))
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
     if not isinstance(level, int):
@@ -147,7 +149,10 @@ if __name__ == '__main__':
             # Non int, so assume None
             random.seed()
         # Verify directory structure
-        dirName = os.path.join('Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (run))
+        dirName = os.path.join(os.path.dirname(__file__),'Instances',
+                               'Instance%d' % (args['instance']),'Runs','run-%d' % (run))
+        if not os.path.exists(dirName):
+            os.makedirs(dirName)
         logfile = os.path.join(dirName,'psychsim.log')
         try:
             os.stat(dirName)
@@ -253,7 +258,10 @@ if __name__ == '__main__':
         world.dependency.computeEvaluation()
 
         if args['write']:
-            writeDefinition(world,'SimulationDefinition')
+            defDir = os.path.join(os.path.dirname(__file__),'SimulationDefinition')
+            if not os.path.exists(defDir):
+                os.makedirs(defDir)
+            writeDefinition(world,defDir)
         cdfTables = {'InstanceVariable': [],
                      'RunData': [],
                      'SummaryStatisticsData':

@@ -1885,9 +1885,10 @@ class World:
             filename = '%s.xml' % (filename)
         if compressed:
             f = bz2.BZ2File(filename,'w')
+            f.write(self.__xml__().toprettyxml().encode('utf-8'))
         else:
             f = open(filename,'w')
-        f.write(self.__xml__().toprettyxml().encode('utf-8'))
+            f.write(self.__xml__().toprettyxml())
         f.close()
         return filename
 
