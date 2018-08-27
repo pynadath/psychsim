@@ -14,7 +14,6 @@ class Actor(Agent):
             name = 'Actor'
         else:
             name = 'Actor%04d' % (number)
-        logging.debug('Creating %s' % (name))
         Agent.__init__(self,name)
         world.addAgent(self)
 
@@ -306,9 +305,9 @@ class Actor(Agent):
         # Information-seeking actions
         if config.getboolean('Actors','infoseek'):
             tree = makeTree({'if': trueRow(alive), True: True, False: False})
-            self.addAction({'verb': 'seekInfoReHurricane','object': self.home},
-                           tree.desymbolize(world.symbols),
-                           'Seek out additional information about the hurricane and its impact')
+            infoseek = self.addAction({'verb': 'seekInfoReHurricane','object': self.home},
+                                      tree.desymbolize(world.symbols),
+                                      'Seek out additional information about the hurricane category')
                 
         # Effect on location
         if config.getboolean('Shelter','exists'):
@@ -607,6 +606,26 @@ class Actor(Agent):
                 self.setO('perceivedChildrenHealth',None,
                           makeTree(setToFeatureMatrix(omega,stateKey(self.name,'childrenHealth'))))
                 self.setState('perceivedChildrenHealth',self.health)
+            if config.getboolean('Actors','infoseek'):
+                omega = self.defineObservation('categoryData',domain=int)
+                if config.getint('Actors','info_reliability') == 5:
+                    # 100% reliable information
+                    self.setO('categoryData',infoseek,
+                              makeTree(setToFeatureMatrix(omega,real)))
+                else:
+                    assert config.getint('Actors','info_reliability') > 0
+                    # Not much point in having 0% reliable information
+                    trueProb = likert[5][config.getint('Actors','info_reliability')-1]
+                    self.setO('categoryData',infoseek,
+                              makeTree({'if': equalRow(real,1),
+                                        True: {'distribution': [(setToConstantMatrix(omega,1),trueProb),
+                                                                (setToConstantMatrix(omega,2),1.-trueProb)]},
+                                        False: {'if': equalRow(real,5),
+                                                True: {'distribution': [(setToConstantMatrix(omega,5),trueProb),
+                                                                        (setToConstantMatrix(omega,4),1.-trueProb)]},
+                                                False: {'distribution': [(setToFeatureMatrix(omega,real),trueProb),
+                                                                         (setToFeatureMatrix(omega,real,shift=-1),(1.-trueProb)/2.),
+                                                                         (setToFeatureMatrix(omega,real,shift=1),(1.-trueProb)/2.)]}}}))
         # Decision-making parameters
         self.setAttribute('horizon',config.getint('Actors','horizon'))
         #self.setAttribute('selection','distribution')
@@ -623,9 +642,10 @@ class Actor(Agent):
             msg = self.addAction({'verb': 'msgReHurricane','object': friend.name},
                                  tree.desymbolize(self.world.symbols),
                                  'Send message communicating my current perceptions about the hurricane and its impact')
+            omega = friend.defineObservation('rcvdCategoryMsg',domain=int)
+            
 
     def _initializeRelations(self,config):
-        logging.debug('Initializing relationships of %s' % (self.name))
         friends = set()
         population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
         friendMax = config.getint('Actors','friends')
@@ -698,7 +718,6 @@ class Actor(Agent):
                     self.setReward(maximizeFeature(stateKey(other.name,'health'),self.name),R)
         
     def _initializeBeliefs(self,config):
-        logging.debug('Initializing beliefs of %s' % (self.name))
         # Beliefs
         friends = set()
         population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
@@ -728,16 +747,19 @@ class Actor(Agent):
             elif isinstance(self.world.agents[agent],Actor):
                 if config.getint('Actors','altruism_neighbors') > 0 and agent in neighbors:
                     # I care about my neighbors' health
-                    if state2feature == 'health':
+                    if state2feature(key) == 'health':
                         include.add(key)
                 elif config.getint('Actors','altruism_friends') > 0 and \
                      self.world.getFeature(binaryKey(self.name,agent,'friendOf')).first():
                     # I care about my friends' health
-                    if state2feature == 'health':
+                    if state2feature(key) == 'health':
                         include.add(key)
             elif isinstance(self.world.agents[agent],Region):
-                if agent == self.home or self.world.agents[agent].number in shelters:
+                if agent == self.home:
                     if not isModelKey(key):
+                        include.add(key)
+                elif self.world.agents[agent].number in shelters:
+                    if state2feature(key)[:7] == 'shelter':
                         include.add(key)
         beliefs = self.resetBelief(include=include)
 
@@ -765,3 +787,31 @@ class Actor(Agent):
                         if 'object' not in action or myAction['object'] == action['object']:
                             return {myAction}
         return super().getActions(state,actions)
+
+    def getO(self,state,actions):
+        omega = super().getO(state,actions)
+        for action in actions:
+            if action['verb'] == 'msgReHurricane' and action['object'] == self.name:
+                trust = self.config.getint('Actors','friend_trust')
+                prob = likert[5][trust-1]
+                sender = self.world.agents[action['subject']]
+                # Is this cheating? Maybe.
+                belief = sender.getBelief(self.world.state)
+                category = self.world.getState('Nature','category',belief).max()
+                key = stateKey(self.name,'rcvdCategoryMsg')
+                if trust == 5:
+                    tree = setToConstantMatrix(key,category)
+                elif category == 1:
+                    tree = {'distribution': [(setToConstantMatrix(key,category),prob),
+                                             (setToConstantMatrix(key,category+1),1.-prob)]}
+                elif category == 5:
+                    tree = {'distribution': [(setToConstantMatrix(key,category),prob),
+                                             (setToConstantMatrix(key,category-1),1.-prob)]}
+                else:
+                    tree = {'distribution': [(setToConstantMatrix(key,category),prob),
+                                             (setToConstantMatrix(key,category+1),(1.-prob)/2.),
+                                             (setToConstantMatrix(key,category-1),(1.-prob)/2.)]}
+                omega[key] = makeTree(tree).desymbolize(self.world.symbols)
+                            
+        return omega
+    
