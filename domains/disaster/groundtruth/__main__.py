@@ -57,8 +57,11 @@ def writeHurricane(world,hurricane,dirName):
                         record[field] = hurricane
                     else:
                         record[field] = world.getState('Nature',field.lower()).first()
-                    if field == 'Location' and phase == 'approaching':
-                        record[field] = phase
+                    if field == 'Location':
+                        if phase == 'approaching':
+                            record[field] = phase
+                        elif record[field] == 'none':
+                            record[field] = 'leaving'
                 writer.writerow(record)
                 
 def writeCensus(world,regions,dirName):
@@ -134,7 +137,115 @@ def writeCensus(world,regions,dirName):
                               'Count': count}
                     writer.writerow(record)
 
+def createWorld(config):
+    try:
+        random.seed(config.getint('Simulation','seedGen'))
+    except ValueError:
+        # Non int, so assume None
+        random.seed()
+    world = World()
+    world.diagram = Diagram()
+    world.diagram.setColor(None,'deepskyblue')
 
+    regions = {}
+    shelters = [int(region) for region in config.get('Shelter','region').split(',')]
+    for region in range(config.getint('Regions','regions')):
+        capacity = None
+        if config.getboolean('Shelter','exists'):
+            try:
+                index = shelters.index(region+1)
+                capacity = int(config.get('Shelter','capacity').split(',')[index])
+            except ValueError:
+                pass
+
+        n = Region(region+1,world,config,capacity)
+        regions[n.name] = {'agent': n, 'inhabitants': [], 'number': region+1}
+
+    world.defineState(WORLD,'day',int,lo=1)
+    world.setState(WORLD,'day',1)
+
+    nature = Nature(world,config)
+
+    population = []
+    for i in range(config.getint('Actors','population')):
+        agent = Actor(i+1,world,config)
+        population.append(agent)
+        region = agent.getState('region').first()
+        regions[region]['inhabitants'].append(agent)
+
+    if config.getboolean('System','system'):
+        system = System(world,config)
+    else:
+        system = None
+
+    groups = []
+    if config.getboolean('Groups','region'):
+        for region,info in regions.items():
+            group = Group(info['agent'].name,world,config)
+            group.potentialMembers([a.name for a in info['inhabitants']])
+            groups.append(group)
+    if config.getboolean('Groups','ethnic'):
+        group = Group('EthnicMinority',world,config)
+        group.potentialMembers([a.name for a in population \
+                                if a.getState('ethnicGroup').first() == 'minority'])
+        world.diagram.setColor(group.name,'mediumpurple')
+        groups.append(group)
+        group = Group('EthnicMajority',world,config)
+        group.potentialMembers([a.name for a in population \
+                                if a.getState('ethnicGroup').first() == 'majority'])
+        world.diagram.setColor(group.name,'blueviolet')
+        groups.append(group)
+    if config.getboolean('Groups','religion'):
+        group = Group('ReligiousMinority',world,config)
+        group.potentialMembers([a.name for a in population \
+                                if a.getState('religion').first() == 'minority'])
+        world.diagram.setColor(group.name,'rosybrown')
+        groups.append(group)
+        group = Group('ReligiousMajority',world,config)
+        group.potentialMembers([a.name for a in population \
+                                if a.getState('religion').first() == 'majority'])
+        world.diagram.setColor(group.name,'darkorange')
+        groups.append(group)
+    if config.getboolean('Groups','generic'):
+        group = Group('',world,config)
+        group.potentialMembers([a.name for a in population])
+        world.diagram.setColor(group.name,'mediumpurple')
+        groups.append(group)
+
+    for agent in population:
+        agent._initializeRelations(config)
+
+    order = []
+    if groups:
+        order.append({g.name for g in groups})
+    if population:
+        order.append({agent.name for agent in population})
+    if system:
+        order.append({system.name})
+    order.append({'Nature'})
+
+    world.setOrder(order)
+
+    for agent in population:
+        agent._initializeBeliefs(config)
+        if not config.getboolean('Actors','beliefs'):
+            agent.setAttribute('static',True)
+
+    if system and config.getboolean('System','beliefs'):
+        system.resetBelief()
+
+
+    world.dependency.computeEvaluation()
+    return world
+
+def getConfig(instance):
+    """
+    @type instance: int
+    """
+    # Extract configuration
+    config = ConfigParser()
+    config.read(os.path.join(os.path.dirname(__file__),'config','%06d.ini' % (instance)))
+    return config
     
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -147,20 +258,14 @@ if __name__ == '__main__':
     parser.add_argument('-w','--write',action='store_true',help='Write simulation definition tables')
     
     args = vars(parser.parse_args())
-    # Extract configuration
-    config = ConfigParser()
-    config.read(os.path.join(os.path.dirname(__file__),'config','%06d.ini' % (args['instance'])))
+    config = getConfig(args['instance'])
+    os.environ['PYTHONHASHSEED'] = config.get('Simulation','seedEnv')
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
     if not isinstance(level, int):
         raise ValueError('Invalid debug level: %s' % args['debug'])
 
     for run in range(args['runs']):
-        try:
-            random.seed(config.getint('Simulation','seedGen'))
-        except ValueError:
-            # Non int, so assume None
-            random.seed()
         # Verify directory structure
         dirName = os.path.join(os.path.dirname(__file__),'Instances',
                                'Instance%d' % (args['instance']),'Runs','run-%d' % (run))
@@ -176,100 +281,13 @@ if __name__ == '__main__':
         except OSError:
             pass
         logging.basicConfig(level=level,filename=logfile)
-        world = World()
-        world.diagram = Diagram()
-        world.diagram.setColor(None,'deepskyblue')
 
-        regions = {}
-        shelters = [int(region) for region in config.get('Shelter','region').split(',')]
-        for region in range(config.getint('Regions','regions')):
-            capacity = None
-            if config.getboolean('Shelter','exists'):
-                try:
-                    index = shelters.index(region+1)
-                    capacity = int(config.get('Shelter','capacity').split(',')[index])
-                except ValueError:
-                    pass
-            
-            n = Region(region+1,world,config,capacity)
-            regions[n.name] = {'agent': n, 'inhabitants': [], 'number': region+1}
-
-        world.defineState(WORLD,'day',int,lo=1)
-        world.setState(WORLD,'day',1)
-
-        nature = Nature(world,config)
-
-        population = []
-        for i in range(config.getint('Actors','population')):
-            agent = Actor(i+1,world,config)
-            population.append(agent)
-            region = agent.getState('region').first()
-            regions[region]['inhabitants'].append(agent)
-
-        if config.getboolean('System','system'):
-            system = System(world,config)
-        else:
-            system = None
-
-        groups = []
-        if config.getboolean('Groups','region'):
-            for region,info in regions.items():
-                group = Group(info['agent'].name,world,config)
-                group.potentialMembers([a.name for a in info['inhabitants']])
-                groups.append(group)
-        if config.getboolean('Groups','ethnic'):
-            group = Group('EthnicMinority',world,config)
-            group.potentialMembers([a.name for a in population \
-                                    if a.getState('ethnicGroup').first() == 'minority'])
-            world.diagram.setColor(group.name,'mediumpurple')
-            groups.append(group)
-            group = Group('EthnicMajority',world,config)
-            group.potentialMembers([a.name for a in population \
-                                    if a.getState('ethnicGroup').first() == 'majority'])
-            world.diagram.setColor(group.name,'blueviolet')
-            groups.append(group)
-        if config.getboolean('Groups','religion'):
-            group = Group('ReligiousMinority',world,config)
-            group.potentialMembers([a.name for a in population \
-                                    if a.getState('religion').first() == 'minority'])
-            world.diagram.setColor(group.name,'rosybrown')
-            groups.append(group)
-            group = Group('ReligiousMajority',world,config)
-            group.potentialMembers([a.name for a in population \
-                                    if a.getState('religion').first() == 'majority'])
-            world.diagram.setColor(group.name,'darkorange')
-            groups.append(group)
-        if config.getboolean('Groups','generic'):
-            group = Group('',world,config)
-            group.potentialMembers([a.name for a in population])
-            world.diagram.setColor(group.name,'mediumpurple')
-            groups.append(group)
-
-        for agent in population:
-            agent._initializeRelations(config)
-
-        order = []
-        if groups:
-            order.append({g.name for g in groups})
-        if population:
-            order.append({agent.name for agent in population})
-        if system:
-            order.append({system.name})
-        order.append({'Nature'})
-
-        world.setOrder(order)
-
-        for agent in population:
-            agent._initializeBeliefs(config)
-            if not config.getboolean('Actors','beliefs'):
-                agent.setAttribute('static',True)
-
-        if system and config.getboolean('System','beliefs'):
-            system.resetBelief()
-
-
-        world.dependency.computeEvaluation()
-
+        world = createWorld(config)
+        population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
+        regions = {agent.name: {'agent': agent,
+                                'inhabitants': [a for a in population if a.home == agent.name]}
+                   for agent in world.agents.values() if isinstance(agent,Region)}
+        
         if args['write']:
             defDir = os.path.join(os.path.dirname(__file__),'SimulationDefinition')
             if not os.path.exists(defDir):
@@ -293,8 +311,7 @@ if __name__ == '__main__':
                      'Population': {'Deaths': (population,'alive','count=False'),
                                     'Casualties': (population,'health','count<0.2'),
                                     'Evacuees': (population,'location','count=evacuated'),
-                                    'Sheltered': ([world.agents[r] for r in regions],'shelterOccupancy',
-                                                  'sum'),
+                                    'Sheltered': (population,'shelterOccupancy','count=shelter'),
                      },
                      'Regional': {'Deaths': (regions,'alive','count=False'),
                                   'Casualties': (regions,'health','count<0.2'),
