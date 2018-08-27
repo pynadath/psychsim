@@ -10,7 +10,6 @@ class Region(Agent):
     
     def __init__(self,number,world,config,shelter):
         name = self.nameString % (number)
-        logging.debug('Creating %s' % (name))
         Agent.__init__(self,name)
         world.addAgent(self)
 
