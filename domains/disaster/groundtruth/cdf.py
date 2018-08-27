@@ -55,7 +55,11 @@ def processDatum(agent,feature,funs,world,data):
                 else:
                     target = value.__class__(target)
                 if fun[5] == '=':
-                    if value == target:
+                    if isinstance(target,str):
+                        if value[:len(target)] == target:
+                            # Handle prefixes (like "shelter...")
+                            data['count'] += 1
+                    elif value == target:
                         data['count'] += 1
                 elif fun[5] == '<':
                     if value < target:
@@ -104,17 +108,28 @@ def appendSummary(datum,world,writer,fields,region=None):
     record['Value'] = computeValue(data,funs)
     writer.writerow(record)
 
+def agentRoot(name):
+    if name[:5] == 'Actor':
+        return 'Actor'
+    elif name[:5] == 'Group':
+        return 'Group'
+    elif name[:6] == 'Region':
+        return 'Region'
+    else:
+        return name
+    
 def shorten(key):
     if isBinaryKey(key):
         relation = key2relation(key)
-        return '%s %s %s' % (relation['subject'],relation['relation'],relation['object'])
+        return '%s %s %s' % (agentRoot(relation['subject']),relation['relation'],
+                             agentRoot(relation['object']))
     elif isStateKey(key):
         if isActionKey(key):
-            return '%s action' % (state2agent(key))
+            return '%s action' % (agentRoot(state2agent(key)))
         elif state2agent(key) == WORLD:
             return '%s' % (state2feature(key))
         else:
-            return '%s %s' % (state2agent(key),state2feature(key))
+            return '%s %s' % (agentRoot(state2agent(key)),state2feature(key))
     else:
         return key
 
@@ -300,6 +315,14 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                                 record['VariableName'] = state2feature(key)
                             writer.writerow(record)
                 for agent in world.agents.values():
+                    if agent.name != 'Nature':
+                        key = stateKey(agent.name,ACTION)
+                        if key in world.state:
+                            record = {'Timestamp': day,
+                                      'VariableName': shorten(key),
+                                      'EntityIdx': agent.name,
+                                      'Value': world.getFeature(key).first()}
+                            writer.writerow(record)
                     model = world.getModel(agent.name,world.state)
                     assert len(model) == 1
                     if agent.getAttribute('static',model.first()) is None:
