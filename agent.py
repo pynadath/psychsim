@@ -245,6 +245,7 @@ class Agent:
             assert selection == 'consistent','Unknown action selection method: %s' % (selection)
             best.sort()
             result['action'] = best[0]
+        logging.debug('Choosing %s' % (action))
         return result
                 
     def value(self,vector,action=None,horizon=None,others=None,model=None,keys=None):
