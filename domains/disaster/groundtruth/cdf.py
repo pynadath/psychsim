@@ -23,7 +23,6 @@ fields = {'VariableDef': ['Name','LongName','Values','VarType','DataType','Notes
                                'ToEntityId','Data','Notes'],
           'Population': ['Timestep','Deaths','Casualties','Evacuees','Sheltered'],
           'Regional': ['Timestep','Region','Deaths','Casualties','Sheltered'],
-          'Hurricane': ['Timestep','Category'],
           }
 
 def processDatum(agent,feature,funs,world,data):
