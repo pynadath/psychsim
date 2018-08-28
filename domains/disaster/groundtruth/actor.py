@@ -62,7 +62,10 @@ class Actor(Agent):
         maxKids = config.getint('Actors','children_max')
         kids = world.defineState(self.name,'children',float,lo=0,hi=float(maxKids),
                                  description='Number of children')
-        self.kids = random.randint(0,maxKids)
+        if self.age > config.getint('Actors','parent_max_age'):
+            self.kids = 0
+        else:
+            self.kids = random.randint(0,maxKids)
         world.setFeature(kids,self.kids)
 
         job = world.defineState(self.name,'employed',bool,description='Has a full-time job')
@@ -462,7 +465,7 @@ class Actor(Agent):
             # Effect of doing bad
             benefit = likert[5][config.getint('Actors','antiresources_benefit')-1]
             for region,action in actBadResources.items():
-                tree = makeTree(incrementMatrix(wealth,benefit))
+                tree = makeTree(approachMatrix(wealth,benefit,1.))
                 world.setDynamics(wealth,action,tree)
             cost = config.getint('Actors','antiresources_cost_risk')
             if cost > 0:
