@@ -224,32 +224,7 @@ def toCDF(world,dirName,tables,unobservable=set()):
         with open(os.path.join(dirName,'%sTable' % (name)),'w') as csvfile:
             writer = csv.DictWriter(csvfile,fields[name],delimiter='\t',extrasaction='ignore')
             writer.writeheader()
-            if name == 'InstanceVariable':
-                for key,variable in sorted(world.variables.items()):
-                    if (isStateKey(key) and not isTurnKey(key) and not isModelKey(key) and \
-                        not isActionKey(key) and not isRewardKey(key)) or isBinaryKey(key):
-                        agent = state2agent(key)
-                        if agent != 'Nature':
-                            if key in world.dynamics:
-                                continue
-                            elif day > 1:
-                                continue
-                            elif isinstance(world.agents[agent].O,dict) and key in world.agents[agent].O:
-                                continue
-                            value = world.getFeature(key)
-                            assert len(value) == 1
-                            record = {'Name': shorten(key),
-                                      'Value': value.first()}
-                            if agent == 'Nature':
-                                record['Timestep'] = day
-                            writer.writerow(record)
-                for agent in [a for a in world.agents.values() if isinstance(a,Actor)]:
-                    model = world.getModel(agent.name,world.state)
-                    assert len(model) == 1
-                    record = {'Name': '%sHorizon' % (agent.name),
-                              'Value': agent.getAttribute('horizon',model.first())}
-                    writer.writerow(record)
-            elif name == 'RelationshipData':
+            if name == 'RelationshipData':
                 for key,variable in world.variables.items():
                     if isBinaryKey(key):
                         relation = key2relation(key)
@@ -264,6 +239,31 @@ def toCDF(world,dirName,tables,unobservable=set()):
                         if key in world.dynamics:
                             record['Timestep'] = day
                         writer.writerow(record)
+            # elif name == 'InstanceVariable':
+            #     for key,variable in sorted(world.variables.items()):
+            #         if (isStateKey(key) and not isTurnKey(key) and not isModelKey(key) and \
+            #             not isActionKey(key) and not isRewardKey(key)) or isBinaryKey(key):
+            #             agent = state2agent(key)
+            #             if agent != 'Nature':
+            #                 if key in world.dynamics:
+            #                     continue
+            #                 elif day > 1:
+            #                     continue
+            #                 elif isinstance(world.agents[agent].O,dict) and key in world.agents[agent].O:
+            #                     continue
+            #                 value = world.getFeature(key)
+            #                 assert len(value) == 1
+            #                 record = {'Name': shorten(key),
+            #                           'Value': value.first()}
+            #                 if agent == 'Nature':
+            #                     record['Timestep'] = day
+            #                 writer.writerow(record)
+            #     for agent in [a for a in world.agents.values() if isinstance(a,Actor)]:
+            #         model = world.getModel(agent.name,world.state)
+            #         assert len(model) == 1
+            #         record = {'Name': '%sHorizon' % (agent.name),
+            #                   'Value': agent.getAttribute('horizon',model.first())}
+            #         writer.writerow(record)
 
 def updateCDF(world,dirName,tables,unobservable=set()):
     stateKeys = [key for key in sorted(world.variables.keys()) \
@@ -299,12 +299,16 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                 for key,variable in sorted(world.variables.items()):
                     if isStateKey(key) or isBinaryKey(key):
                         agent = state2agent(key)
-                        if agent != 'Nature' and key in world.dynamics:
+                        if agent != 'Nature' and not isTurnKey(key) and not isModelKey(key) and not isRewardKey(key) and not isActionKey(key):
+                            if key not in world.dynamics and day > 1:
+                                continue
                             value = world.getFeature(key)
                             assert len(value) == 1
-                            record = {'Timestep': day,
-                                      'Value': value.first(),
-                                      }
+                            record = {'Value': value.first()}
+                            if key in world.dynamics:
+                                record['Timestep'] = day
+                            else:
+                                record['Timestep'] = 0
                             if agent in world.agents:
                                 generic = stateKey(world.agents[agent].__class__.__name__,
                                                    state2feature(key))
@@ -314,7 +318,9 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                                 record['VariableName'] = state2feature(key)
                             writer.writerow(record)
                 for agent in world.agents.values():
-                    if agent.name != 'Nature':
+                    model = world.getModel(agent.name,world.state)
+                    assert len(model) == 1
+                    if agent.name != 'Nature' and not isinstance(agent,Region):
                         key = stateKey(agent.name,ACTION)
                         if key in world.state:
                             record = {'Timestamp': day,
@@ -322,8 +328,12 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                                       'EntityIdx': agent.name,
                                       'Value': world.getFeature(key).first()}
                             writer.writerow(record)
-                    model = world.getModel(agent.name,world.state)
-                    assert len(model) == 1
+                        if day == 1:
+                            record = {'Timestamp': 0,
+                                      'VariableName': '%sHorizon' % (agent.name),
+                                      'EntityIdx': agent.name,
+                                      'Value': agent.getAttribute('horizon',model.first())}
+                            writer.writerow(record)
                     if agent.getAttribute('static',model.first()) is None:
                         belief = agent.getAttribute('beliefs',model.first())
                         for key in stateKeys:
