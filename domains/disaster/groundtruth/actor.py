@@ -3,6 +3,7 @@ import random
 
 from psychsim.probability import Distribution
 from psychsim.pwl import *
+from psychsim.action import *
 from psychsim.reward import *
 from psychsim.agent import Agent
 from data import likert,toLikert,sampleNormal
@@ -563,7 +564,7 @@ class Actor(Agent):
                 self.setReward(maximizeFeature(pet,self.name),self.Rweights['pet'])
         if config.getboolean('Actors','beliefs'):
             # Observations
-            
+            evolve = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
             omega = self.defineObservation('phase',domain=list,
                                            lo=self.world.variables['Nature\'s phase']['elements'])
             self.setO('phase',None,
@@ -580,24 +581,25 @@ class Actor(Agent):
                                        'under': likert[5][config.getint('Actors','category_under')-1]})
             distortion['none'] = 1.-distortion['over']-distortion['under']
             self.distortion = distortion.sample()
-            distortionProb = likert[5][config.getint('Actors','category_distortion')]
+            distortionProb = likert[5][config.getint('Actors','category_distortion')-1]
             real = stateKey('Nature','category')
             if self.distortion == 'none':
                 tree = setToFeatureMatrix(omega,real)
             elif self.distortion == 'over':
                 tree = {'if': equalRow(real,[0,1]),
                         True: setToFeatureMatrix(omega,real),
-                        False: {'distribution': [(setToFeatureMatrix(omega,real),1.-distortionProb),
+                        False: {'distribution': [(setToFeatureMatrix(omega,real),distortionProb),
                                                  (setToFeatureMatrix(omega,real,shift=1),
-                                                  distortionProb)]}}
+                                                  1.-distortionProb)]}}
             else:
                 assert self.distortion == 'under'
                 tree = {'if': equalRow(real,[0,5]),
                         True: setToFeatureMatrix(omega,real),
-                        False: {'distribution': [(setToFeatureMatrix(omega,real),1.-distortionProb),
+                        False: {'distribution': [(setToFeatureMatrix(omega,real),distortionProb),
                                                  (setToFeatureMatrix(omega,real,shift=-1),
-                                                  distortionProb)]}}
-            self.setO('category',None,makeTree(tree))
+                                                  1.-distortionProb)]}}
+            self.setO('category',evolve,makeTree(tree))
+            self.setO('category',None,makeTree(setToConstantMatrix(omega,0)))
             self.setState('category',0)
             
             omega = self.defineObservation('perceivedHealth')
