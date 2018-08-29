@@ -590,7 +590,10 @@ class VariableNode(QGraphicsEllipseItem):
         if change == QGraphicsItem.ItemPositionHasChanged:
             rect = self.sceneBoundingRect()
             if self.agent:
-                key = stateKey(self.agent.name,self.feature)
+                if isBinaryKey(self.feature):
+                    key = '%s %s' % (self.agent.name,self.feature)
+                else:
+                    key = stateKey(self.agent.name,self.feature)
             else:
                 key = stateKey(WORLD,self.feature)
             self.scene().updateEdges(key,rect)

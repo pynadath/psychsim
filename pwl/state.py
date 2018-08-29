@@ -447,7 +447,7 @@ class VectorDistributionSet:
                                 mySubstate = next(iter(mySubstates))
                             substates = newKids[index].substate(toCollapse[0]|set(newKids[index].distributions[substate].keys()))
                             if len(substates) > 1:
-                                substate = newWKids[index].collapse(substates,False)
+                                substate = newKids[index].collapse(substates,False)
                             else:
                                 substate = next(iter(substates))
                             toCollapse = ({k for k in self.distributions[mySubstate].keys() \
