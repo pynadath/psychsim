@@ -88,7 +88,7 @@ class Agent:
                 if subtree:
                     for key in model['V'][action].getKeysIn():
                         if not key in subtree.getKeysOut():
-                            fun = lambda m: KeyedMatrix(m.items()+[(key,KeyedVector({key: 1.}))])
+                            fun = lambda m: KeyedMatrix(list(m.items())+[(key,KeyedVector({key: 1.}))])
                             subtree = subtree.map(fun)
                     model['V'][action] = model['V'][action]*subtree
             keyList = [key for key in model['V'][action].getKeysIn() if isFuture(key)]
