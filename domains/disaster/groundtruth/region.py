@@ -8,7 +8,7 @@ from data import likert,toLikert,sampleNormal
 class Region(Agent):
     nameString = 'Region%02d'
     
-    def __init__(self,number,world,config,shelter):
+    def __init__(self,number,world,config,index):
         name = self.nameString % (number)
         Agent.__init__(self,name)
         world.addAgent(self)
@@ -59,17 +59,20 @@ class Region(Agent):
             self.security = likert[5][mean-1]
         world.setFeature(security,likert[5][toLikert(self.security,5)-1])
 
-        if shelter:
+        if index is not None:
             # Shelter in this region
             world.defineState(self.name,'shelterRisk',float)
-            riskLevel = config.getint('Shelter','risk')
+            riskLevel = int(config.get('Shelter','risk').split(',')[index])
             if riskLevel > 0:
                 self.setState('shelterRisk',likert[5][riskLevel-1])
             else:
                 self.setState('shelterRisk',0.)
             world.defineState(self.name,'shelterPets',bool)
-            self.setState('shelterPets',config.getboolean('Shelter','pets'))
+            if config.get('Shelter','pets').split(',')[index] == 'yes':
+                self.setState('shelterPets',True)
+            else:
+                self.setState('shelterPets',False)
             world.defineState(self.name,'shelterCapacity',int)
-            self.setState('shelterCapacity',shelter)
+            self.setState('shelterCapacity',int(config.get('Shelter','capacity').split(',')[index]))
             world.defineState(self.name,'shelterOccupancy',int)
             self.setState('shelterOccupancy',0)

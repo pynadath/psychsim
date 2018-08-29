@@ -191,6 +191,7 @@ def preSurvey(actor,dirName,hurricane):
                       'Hurricane': hurricane}
             preSurveyRecords.append(record)
             record['Participant'] = len(preSurveyRecords)
+            logging.debug('PreSurvey %d, Participant %d: %s' % (hurricane,record['Participant'],actor.name))
             record.update(getDemographics(actor))
             # Answer questions
             belief = actor.getBelief()
@@ -238,6 +239,7 @@ def postSurvey(actor,dirName,hurricane):
                       'Hurricane': hurricane}
             preSurveyRecords.append(record)
             record['Participant'] = len(preSurveyRecords)
+            logging.debug('PostSurvey %d, Participant %d: %s' % (hurricane,record['Participant'],actor.name))
             record.update(getDemographics(actor))
             for field,answer in postSurveyQuestions.items():
                 feature,fun = answer
@@ -286,15 +288,14 @@ def createWorld(config):
     regions = {}
     shelters = [int(region) for region in config.get('Shelter','region').split(',')]
     for region in range(config.getint('Regions','regions')):
-        capacity = None
+        index = None
         if config.getboolean('Shelter','exists'):
             try:
                 index = shelters.index(region+1)
-                capacity = int(config.get('Shelter','capacity').split(',')[index])
             except ValueError:
                 pass
 
-        n = Region(region+1,world,config,capacity)
+        n = Region(region+1,world,config,index)
         regions[n.name] = {'agent': n, 'inhabitants': [], 'number': region+1}
 
     world.defineState(WORLD,'day',int,lo=1)
@@ -454,7 +455,7 @@ if __name__ == '__main__':
                      'Population': {'Deaths': (population,'alive','count=False'),
                                     'Casualties': (population,'health','count<0.2'),
                                     'Evacuees': (population,'location','count=evacuated'),
-                                    'Sheltered': (population,'shelterOccupancy','count=shelter'),
+                                    'Sheltered': (population,'location','count=shelter'),
                      },
                      'Regional': {'Deaths': (regions,'alive','count=False'),
                                   'Casualties': (regions,'health','count<0.2'),
