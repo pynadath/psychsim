@@ -137,6 +137,142 @@ def writeCensus(world,regions,dirName):
                               'Count': count}
                     writer.writerow(record)
 
+demographics = {'Gender': 'gender',
+                'Age': 'age',
+                'Ethnicity': 'ethnicGroup',
+                'Religion': 'religion',
+                'Children': 'children',
+                'Fulltime Job': 'employed',
+                'Pets': 'pet',
+                'Wealth': 'resources',
+                'Residence': None}
+
+preSurveyRecords = []
+preSurveyFields = ['Timestep','Participant','Hurricane']
+preSurveyFields += sorted(list(demographics.keys()))
+preSurveyQuestions = {'At Shelter': ('location','=shelter'),
+                      'Evacuated': ('location','=evacuated'),
+                      'Category': ('Nature\'s category','max')}
+preSurveyFields += sorted(list(preSurveyQuestions.keys()))
+
+def getDemographics(actor):
+    record = {}
+    # Demographic info
+    for field,answer in demographics.items():
+        if isinstance(answer,str):
+            value = actor.getState(answer).first()
+            if field == 'Wealth':
+                record[field] = int(value*5.1)
+            elif isinstance(value,bool):
+                if value:
+                    record[field] = 'yes'
+                else:
+                    record[field] = 'no'
+            else:
+                record[field] = value
+        elif field == 'Residence':
+            record[field] = actor.home
+        else:
+            raise RuntimeError('Unable to process pre-survey field: %s' % (field))
+    return record
+    
+def preSurvey(actor,dirName,hurricane):
+    if actor is None:
+        mode = 'w'
+    else:
+        mode = 'a'
+    with open(os.path.join(dirName,'ActorPreTable'),mode) as csvfile:
+        writer = csv.DictWriter(csvfile,preSurveyFields,delimiter='\t',extrasaction='ignore')
+        if actor is None:
+            writer.writeheader()
+        else:
+            today = actor.world.getState(WORLD,'day').first()
+            record = {'Timestep': day,
+                      'Hurricane': hurricane}
+            preSurveyRecords.append(record)
+            record['Participant'] = len(preSurveyRecords)
+            record.update(getDemographics(actor))
+            # Answer questions
+            belief = actor.getBelief()
+            assert len(belief) == 1,'Unable to answer pre-survey with uncertain models'
+            belief = next(iter(belief.values()))
+            for field,answer in preSurveyQuestions.items():
+                key,fun = answer
+                if not isStateKey(key):
+                    key = stateKey(actor.name,key)
+                value = actor.world.getFeature(key,belief)
+                if fun == 'max':
+                    record[field] = value.max()
+                elif fun[0] == '=':
+                    target = fun[1:]
+                    assert len(value) == 1,'Unable to compute equality for uncertain beliefs'
+                    if value.first()[:len(target)] == target:
+                        record[field] = 'yes'
+                    else:
+                        record[field] = 'no'
+            writer.writerow(record)
+
+history = {}
+postSurveyRecords = []
+postSurveyFields = ['Timestep','Participant','Hurricane']
+postSurveyFields += sorted(list(demographics.keys()))
+postSurveyQuestions = {'At Shelter': ('location','=shelter'),
+                       'Evacuated': ('location','=evacuated'),
+                       'Risk': ('risk','max'),
+                       'Injured': ('health','<0.2'),
+                       'Government Response': ('grievance','likert')}
+postSurveyFields += sorted(list(postSurveyQuestions.keys()))
+
+def postSurvey(actor,dirName,hurricane):
+    if actor is None:
+        mode = 'w'
+    else:
+        mode = 'a'
+    with open(os.path.join(dirName,'ActorPostTable'),mode) as csvfile:
+        writer = csv.DictWriter(csvfile,preSurveyFields,delimiter='\t',extrasaction='ignore')
+        if actor is None:
+            writer.writeheader()
+        else:
+            today = actor.world.getState(WORLD,'day').first()
+            record = {'Timestep': day,
+                      'Hurricane': hurricane}
+            preSurveyRecords.append(record)
+            record['Participant'] = len(preSurveyRecords)
+            record.update(getDemographics(actor))
+            for field,answer in postSurveyQuestions.items():
+                feature,fun = answer
+                if fun == 'likert':
+                    value = actor.getState(feature)
+                    assert len(value) == 1,'Unable to answer questions using uncertain state'
+                    record[field] = toLikert(value.first())
+                else:
+                    for entry in history.get(actor.name,[]):
+                        value = entry[feature]
+                        if fun == 'max':
+                            if field in record:
+                                record[field] = max(record[field],value.expectation())
+                            else:
+                                record[field] = value.expectation()
+                        elif fun[0] == '=':
+                            assert len(value) == 1,'Unable to answer question about uncertain %s:\n%s'\
+                                % (stateKey(actor.name,feature),value)
+                            value = value.first()
+                            target = fun[1:]
+                            if value[:len(target)] == target:
+                                record[field] = 'yes'
+                                break
+                        elif fun[0] == '<':
+                            target = float(fun[1:])
+                            if value.expectation() < target:
+                                record[field] = 'yes'
+                                break
+                        else:
+                            raise ValueError('Unknown function: %s' % (fun))
+                    else:
+                        if not field in record:
+                            record[field] = 'no'
+            writer.writerow(record)
+
 def createWorld(config):
     try:
         random.seed(config.getint('Simulation','seedGen'))
@@ -282,17 +418,24 @@ if __name__ == '__main__':
             pass
         logging.basicConfig(level=level,filename=logfile)
 
+        # Initialize world
         world = createWorld(config)
         population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
+        living = population[:]
         regions = {agent.name: {'agent': agent,
                                 'inhabitants': [a for a in population if a.home == agent.name]}
                    for agent in world.agents.values() if isinstance(agent,Region)}
-        
+        # Write definition files
         if args['write']:
             defDir = os.path.join(os.path.dirname(__file__),'SimulationDefinition')
             if not os.path.exists(defDir):
                 os.makedirs(defDir)
             writeDefinition(world,defDir)
+        writeCensus(world,regions,dirName)
+        writeHurricane(world,0,dirName)
+        preSurvey(None,dirName,0)
+        postSurvey(None,dirName,0)
+        # Setup entity lists for CDF tables
         cdfTables = {'InstanceVariable': [],
                      'RunData': [],
                      'SummaryStatisticsData':
@@ -319,8 +462,6 @@ if __name__ == '__main__':
                                                 None)
                      },
         }
-        writeCensus(world,regions,dirName)
-        writeHurricane(world,0,dirName)
         toCDF(world,dirName,cdfTables)
         if args['compile']:
             for agent in population:
@@ -331,6 +472,7 @@ if __name__ == '__main__':
             # Non int, so assume None
             random.seed()
         hurricanes = 0
+        survey = set()
         oldPhase = world.getState('Nature','phase').first()
         start = time.time()
         while hurricanes < args['number']:
@@ -339,8 +481,39 @@ if __name__ == '__main__':
             day = today
             updateCDF(world,dirName,cdfTables)
             while day == today:
-                print(today,time.time()-start)
                 agents = world.next()
+                turn = world.agents[next(iter(agents))].__class__.__name__
+                print(today,turn,oldPhase,time.time()-start)
+                if oldPhase == 'approaching':
+                    # Pre-hurricane survey
+                    count = 0
+                    sampleLimit = int(float(len(living))*config.getfloat('Data','presample')/
+                                      float(config.getint('Disaster','phase_min_days')))
+                    while count < sampleLimit:
+                        actor = random.choice(living)
+                        while actor.name in survey:
+                            actor = random.choice(living)
+                        if actor.getState('alive').first():
+                            preSurvey(actor,dirName,hurricanes+1)
+                            survey.add(actor.name)
+                        else:
+                            living.remove(actor)
+                        count += 1
+                elif oldPhase == 'none' and hurricanes > 0:
+                    # Post-hurricane survey
+                    count = 0
+                    sampleLimit = int(float(len(living))*config.getfloat('Data','postsample')/
+                                      float(config.getint('Disaster','phase_min_days')))
+                    while count < sampleLimit:
+                        actor = random.choice(living)
+                        while actor.name in survey:
+                            actor = random.choice(living)
+                        if actor.getState('alive').first():
+                            postSurvey(actor,dirName,hurricanes+1)
+                            survey.add(actor.name)
+                        else:
+                            living.remove(actor)
+                        count += 1
                 if args['profile']:
                     prof = cProfile.Profile()
                     prof.enable()
@@ -353,15 +526,30 @@ if __name__ == '__main__':
                     logging.critical(buf.getvalue())
                     buf.close()
                 buf = StringIO()
-                world.explainAction(newState,level=1,buf=buf)
+                joint = world.explainAction(newState,level=1,buf=buf)
                 logging.debug('\n'+buf.getvalue())
                 buf.close()
                 buf = StringIO()
                 world.printState(newState,buf)
                 logging.debug(buf.getvalue())
                 buf.close()
+                if oldPhase == 'active':
+                    # Record what these doomed souls did to postpone the inevitable
+                    for name,action in joint.items():
+                        agent = world.agents[name]
+                        if isinstance(agent,Actor):
+                            belief = agent.getBelief()
+                            assert len(belief) == 1,'Unable to store beliefs over uncertain models'
+                            belief = next(iter(belief.values()))
+                            entry = {'action': action}
+                            for feature in ['location','risk','health','grievance']:
+                                entry[feature] = agent.getState(feature,belief)
+                            history[name] = history.get(name,[])+[entry]
                 day = world.getState(WORLD,'day').first()
                 phase = world.getState('Nature','phase').first()
+                if phase != oldPhase:
+                    # Reset survey on each phase change
+                    survey.clear()
                 if phase == 'none':
                     if oldPhase == 'active':
                         hurricanes += 1
