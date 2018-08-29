@@ -42,7 +42,7 @@ def processDatum(agent,feature,funs,world,data):
                 data['count'] += 1
             elif fun == 'sum':
                 data['total'] += value
-            elif fun[:5] == data['count']:
+            elif fun[:5] == 'count':
                 target = fun[6:]
                 if isinstance(value,bool):
                     if target == 'False':
