@@ -527,7 +527,7 @@ class Actor(Agent):
 
         # Reward
         sigma = config.getint('Actors','reward_sigma')
-        mean = config.getint('Actors','reward_health')
+        mean = config.getint('Actors','reward_health_%s' % (self.gender))
         self.Rweights = {'childrenHealth': 0.,'pet':0.}
         if mean > 0:
             if sigma > 0:
@@ -537,7 +537,7 @@ class Actor(Agent):
             self.setReward(maximizeFeature(health,self.name),self.Rweights['health'])
         else:
             self.Rweights['health'] = 0.
-        mean = config.getint('Actors','reward_wealth')
+        mean = config.getint('Actors','reward_wealth_%s' % (self.gender))
         if mean > 0:
             if sigma > 0:
                 self.Rweights['resources'] = sampleNormal(mean,sigma)
@@ -547,7 +547,7 @@ class Actor(Agent):
         else:
             self.Rweights['resources'] = 0.
         if self.kids > 0:
-            mean = config.getint('Actors','reward_kids')
+            mean = config.getint('Actors','reward_kids_%s' % (self.gender))
             if mean > 0:
                 if sigma > 0:
                     self.Rweights['childrenHealth'] = sampleNormal(mean,sigma)
@@ -690,7 +690,7 @@ class Actor(Agent):
                     friendCount[friend] += 1
 
         sigma = config.getint('Actors','reward_sigma')
-        mean = config.getint('Actors','altruism_neighbors')
+        mean = config.getint('Actors','altruism_neighbors_%s' % (self.religion))
         if mean > 0:
             if sigma > 0:
                 self.Rweights['neighbors'] = sampleNormal(mean,sigma)
@@ -702,7 +702,7 @@ class Actor(Agent):
                 pass
         else:
             self.Rweights['neighbors'] = 0.
-        mean = config.getint('Actors','altruism_friends')
+        mean = config.getint('Actors','altruism_friends_%s' % (self.religion))
         if mean > 0:
             if sigma > 0:
                 self.Rweights['friends'] = sampleNormal(mean,sigma)
@@ -752,11 +752,12 @@ class Actor(Agent):
             elif agent == WORLD:
                 include.add(key)
             elif isinstance(self.world.agents[agent],Actor):
-                if config.getint('Actors','altruism_neighbors') > 0 and agent in neighbors:
+                if config.getint('Actors','altruism_neighbors_%s' % (self.religion)) > 0 \
+                   and agent in neighbors:
                     # I care about my neighbors' health
                     if state2feature(key) == 'health':
                         include.add(key)
-                elif config.getint('Actors','altruism_friends') > 0 and \
+                elif config.getint('Actors','altruism_friends_%s' % (self.religion)) > 0 and \
                      self.world.getFeature(binaryKey(self.name,agent,'friendOf')).first():
                     # I care about my friends' health
                     if state2feature(key) == 'health':
