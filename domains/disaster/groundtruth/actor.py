@@ -309,7 +309,7 @@ class Actor(Agent):
         # Information-seeking actions
         if config.getboolean('Actors','infoseek'):
             tree = makeTree({'if': trueRow(alive), True: True, False: False})
-            infoseek = self.addAction({'verb': 'seekInfoReHurricane','object': self.home},
+            infoseek = self.addAction({'verb': 'seekInfoReHurricane'},
                                       tree.desymbolize(world.symbols),
                                       'Seek out additional information about the hurricane category')
                 
@@ -643,7 +643,9 @@ class Actor(Agent):
         self.world.setFeature(key,True)
         if config.getboolean('Actors','messages'):
             tree = makeTree({'if': trueRow(stateKey(self.name,'alive')),
-                             True: True, False: False})
+                             True: {'if': trueRow(key),
+                                    True: True, False: False},
+                             False: False})
             msg = self.addAction({'verb': 'msgReHurricane','object': friend.name},
                                  tree.desymbolize(self.world.symbols),
                                  'Send message communicating my current perceptions about the hurricane and its impact')
