@@ -588,14 +588,14 @@ class Actor(Agent):
                 tree = {'if': equalRow(real,[0,1]),
                         True: setToFeatureMatrix(omega,real),
                         False: {'distribution': [(setToFeatureMatrix(omega,real),1.-distortionProb),
-                                                 (setToFeatureMatrix(omega,real,shift=-1),
+                                                 (setToFeatureMatrix(omega,real,shift=1),
                                                   distortionProb)]}}
             else:
                 assert self.distortion == 'under'
                 tree = {'if': equalRow(real,[0,5]),
                         True: setToFeatureMatrix(omega,real),
                         False: {'distribution': [(setToFeatureMatrix(omega,real),1.-distortionProb),
-                                                 (setToFeatureMatrix(omega,real,shift=1),
+                                                 (setToFeatureMatrix(omega,real,shift=-1),
                                                   distortionProb)]}}
             self.setO('category',None,makeTree(tree))
             self.setState('category',0)
