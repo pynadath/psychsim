@@ -1,10 +1,11 @@
 Name	LongName	Values	VarType	DataType	Notes
-Actor __ACTION__	Actor's __ACTION__	Actor-stayInLocation,Actor-msgReHurricane-Actor,Actor-moveTo-shelter1,Actor-takeResources-Region01,Actor-moveTo-Region01,Actor-join-Group,Actor-leave-Group,Actor-evacuate,Actor-seekInfoReHurricane-Region01,Actor-decreaseRisk-Region01	fixed	String	Actor-stayInLocation: Actor does not move from current location, nor perform any pro/antisocial behaviors; Actor-msgReHurricane-Actor: Send message communicating my current perceptions about the hurricane and its impact; Actor-moveTo-shelter1: Move myself and family to the shelter in Region01; Actor-takeResources-Region01: Perform antisocial behaviors that gain resources personally at the expense of people in Region01; Actor-moveTo-Region01: Return home; Actor-join-Group: None; Actor-leave-Group: None; Actor-evacuate: Evacuate the city at least temporarily; Actor-seekInfoReHurricane-Region01: Seek out additional information about the hurricane and its impact; Actor-decreaseRisk-Region01: Perform prosocial behaviors to reduce the danger posed by the hurricane in Region01
+Actor action	Actor's Action Choice	Actor-msgReHurricane-Actor,Actor-moveTo-shelter1,Actor-leave-Group,Actor-evacuate,Actor-takeResources-Region01,Actor-join-Group,Actor-decreaseRisk-Region01,Actor-seekInfoReHurricane,Actor-moveTo-Region01,Actor-stayInLocation	fixed	String	Actor-msgReHurricane-Actor: Send message communicating my current perceptions about the hurricane and its impact; Actor-moveTo-shelter1: Move myself and family to the shelter in Region01; Actor-leave-Group: None; Actor-evacuate: Evacuate the city at least temporarily; Actor-takeResources-Region01: Perform antisocial behaviors that gain resources personally at the expense of people in Region01; Actor-join-Group: None; Actor-decreaseRisk-Region01: Perform prosocial behaviors to reduce the danger posed by the hurricane in Region01; Actor-seekInfoReHurricane: Seek out additional information about the hurricane category; Actor-moveTo-Region01: Return home; Actor-stayInLocation: Actor does not move from current location, nor perform any pro/antisocial behaviors
 Actor __REWARD__	Actor's __REWARD__	[-1.00-1.00]	fixed	Real	Reward for Actor in this state
 Actor age	Actor's age	[0-1]	fixed	Integer	
 Actor alive	Actor's alive	True,False	dynamic	Boolean	
 Actor attachment	Actor's attachment	secure,anxious,avoidant	fixed	String	Attachment style
 Actor category	Actor's category	[-1-1]	fixed	Integer	
+Actor categoryData	Actor's categoryData	[-1-1]	fixed	Integer	
 Actor center	Actor's center	Region01,none	fixed	String	
 Actor children	Actor's children	[0.00-2.00]	fixed	Real	Number of children
 Actor childrenHealth	Actor's childrenHealth	[0.00-1.00]	dynamic	Real	Current level of children's physical wellbeing
@@ -18,66 +19,52 @@ Actor perceivedChildrenHealth	Actor's perceivedChildrenHealth	[-1.00-1.00]	fixed
 Actor perceivedHealth	Actor's perceivedHealth	[-1.00-1.00]	fixed	Real	
 Actor pet	Actor's pet	True,False	fixed	Boolean	Owns a pet
 Actor phase	Actor's phase	none,approaching,active	fixed	String	
+Actor rcvdCategoryMsg	Actor's rcvdCategoryMsg	[-1-1]	fixed	Integer	
 Actor region	Actor's region	Region01	fixed	String	Region of residence
 Actor religion	Actor's religion	majority,minority,none	fixed	String	Religious affiliation of actor
 Actor resources	Actor's resources	[0.00-1.00]	dynamic	Real	Material resources (wealth) currently owned
 Actor risk	Actor's risk	[0.00-1.00]	dynamic	Real	Current level of risk from hurricane
-Group __ACTION__	Group's __ACTION__	Group-noDecision,Group-takeResources,Group-evacuate,Group-decreaseRisk,Group-returnHome	fixed	String	Group-noDecision: None; Group-takeResources: None; Group-evacuate: None; Group-decreaseRisk: None; Group-returnHome: None
+Actor x	Actor's x	[0.00-1.00]	fixed	Real	Representation of residence's longitude
+Actor y	Actor's y	[0.00-1.00]	fixed	Real	Representation of residence's latitude
+Group action	Group's Action Choice	Group-decreaseRisk,Group-evacuate,Group-noDecision,Group-returnHome,Group-takeResources	fixed	String	Group-decreaseRisk: None; Group-evacuate: None; Group-noDecision: None; Group-returnHome: None; Group-takeResources: None
 Group __REWARD__	Group's __REWARD__	[-1.00-1.00]	fixed	Real	Reward for Group in this state
 Group size	Group's size	[0-1]	dynamic	Integer	
-Nature __ACTION__	Nature's __ACTION__	Nature-evolve	fixed	String	Nature-evolve: None
+Nature action	Nature's Action Choice	Nature-evolve	fixed	String	Nature-evolve: None
 Nature category	Nature's category	[0-1]	dynamic	Integer	
 Nature days	Nature's days	[0-1]	dynamic	Integer	
 Nature location	Nature's location	Region01,none	dynamic	String	
 Nature phase	Nature's phase	none,approaching,active	dynamic	String	
-Region01 risk	Region01's risk	[0.00-1.00]	dynamic	Real	
-Region01 security	Region01's security	[0.00-1.00]	fixed	Real	
-Region01 shelterCapacity	Region01's shelterCapacity	[0-1]	fixed	Integer	
-Region01 shelterOccupancy	Region01's shelterOccupancy	[0-1]	dynamic	Integer	
-Region01 shelterPets	Region01's shelterPets	True,False	fixed	Boolean	
-Region01 shelterRisk	Region01's shelterRisk	[0.00-1.00]	dynamic	Real	
-System __ACTION__	System's __ACTION__	System-allocate-Region01	fixed	String	System-allocate-Region01: None
-System __REWARD__	System's __REWARD__	[-1.00-1.00]	fixed	Real	Reward for System in this state
+Region risk	Region01's risk	[0.00-1.00]	dynamic	Real	
+Region security	Region01's security	[0.00-1.00]	fixed	Real	
+Region shelterCapacity	Region01's shelterCapacity	[0-1]	fixed	Integer	
+Region shelterOccupancy	Region01's shelterOccupancy	[0-1]	dynamic	Integer	
+Region shelterPets	Region01's shelterPets	True,False	fixed	Boolean	
+Region shelterRisk	Region01's shelterRisk	[0.00-1.00]	dynamic	Real	
+System action	System's Action Choice	System-allocate-Region01	fixed	String	System-allocate-Region01: None
 System resources	System's resources	[0-100]	dynamic	Integer	
-__WORLD__ day	__WORLD__'s day	[1-1]	dynamic	Integer	
-ActorRewardWeightOfActor childrenHealth	Priority of Actor's childrenHealth to Actor in reward function	[0-1]	fixed	Real	Actor level
-ActorRewardWeightOfActor pet	Priority of Actor's pet to Actor in reward function	[0-1]	fixed	Real	Actor level
+day	__WORLD__'s day	[1-1]	dynamic	Integer	
+ActorRewardWeightOfchildrenHealth	Priority of childrenHealth to Actor in reward function	[0-1]	fixed	Real	Actor level
+ActorRewardWeightOfpet	Priority of pet to Actor in reward function	[0-1]	fixed	Real	Actor level
 ActorRewardWeightOfhealth	Priority of health to Actor in reward function	[0-1]	fixed	Real	Actor level
 ActorRewardWeightOfresources	Priority of resources to Actor in reward function	[0-1]	fixed	Real	Actor level
-ActorRewardWeightOfchildrenHealth	Priority of childrenHealth to Actor in reward function	[0-1]	fixed	Real	Actor level
 ActorRewardWeightOfneighbors	Priority of neighbors to Actor in reward function	[0-1]	fixed	Real	Actor level
 ActorRewardWeightOffriends	Priority of friends to Actor in reward function	[0-1]	fixed	Real	Actor level
-ActorBeliefOfActor alive	Probabilistic belief that Actor has about Actor's alive	[0-1]	dynamic		Actor level
-ActorBeliefOfActor childrenHealth	Probabilistic belief that Actor has about Actor's childrenHealth	[0-1]	dynamic		Actor level
-ActorBeliefOfActor employed	Probabilistic belief that Actor has about Actor's employed	[0-1]	dynamic		Actor level
-ActorBeliefOfActor grievance	Probabilistic belief that Actor has about Actor's grievance	[0-1]	dynamic		Actor level
-ActorBeliefOfActor health	Probabilistic belief that Actor has about Actor's health	[0-1]	dynamic		Actor level
-ActorBeliefOfActor location	Probabilistic belief that Actor has about Actor's location	[0-1]	dynamic		Actor level
-ActorBeliefOfActor resources	Probabilistic belief that Actor has about Actor's resources	[0-1]	dynamic		Actor level
-ActorBeliefOfActor risk	Probabilistic belief that Actor has about Actor's risk	[0-1]	dynamic		Actor level
-ActorBeliefOfNature category	Probabilistic belief that Actor has about Nature's category	[0-1]	dynamic		Actor level
-ActorBeliefOfNature days	Probabilistic belief that Actor has about Nature's days	[0-1]	dynamic		Actor level
-ActorBeliefOfNature location	Probabilistic belief that Actor has about Nature's location	[0-1]	dynamic		Actor level
-ActorBeliefOfNature phase	Probabilistic belief that Actor has about Nature's phase	[0-1]	dynamic		Actor level
-ActorBeliefOfRegion01 risk	Probabilistic belief that Actor has about Region01's risk	[0-1]	dynamic		Actor level
-ActorBeliefOfRegion01 shelterOccupancy	Probabilistic belief that Actor has about Region01's shelterOccupancy	[0-1]	dynamic		Actor level
-ActorBeliefOfRegion01 shelterRisk	Probabilistic belief that Actor has about Region01's shelterRisk	[0-1]	dynamic		Actor level
-ActorBeliefOf__WORLD__ day	Probabilistic belief that Actor has about __WORLD__'s day	[0-1]	dynamic		Actor level
-SystemBeliefOfActor alive	Probabilistic belief that System has about Actor's alive	[0-1]	dynamic		System level
-SystemBeliefOfActor childrenHealth	Probabilistic belief that System has about Actor's childrenHealth	[0-1]	dynamic		System level
-SystemBeliefOfActor employed	Probabilistic belief that System has about Actor's employed	[0-1]	dynamic		System level
-SystemBeliefOfActor grievance	Probabilistic belief that System has about Actor's grievance	[0-1]	dynamic		System level
-SystemBeliefOfActor health	Probabilistic belief that System has about Actor's health	[0-1]	dynamic		System level
-SystemBeliefOfActor location	Probabilistic belief that System has about Actor's location	[0-1]	dynamic		System level
-SystemBeliefOfActor resources	Probabilistic belief that System has about Actor's resources	[0-1]	dynamic		System level
-SystemBeliefOfActor risk	Probabilistic belief that System has about Actor's risk	[0-1]	dynamic		System level
-SystemBeliefOfGroup size	Probabilistic belief that System has about Group's size	[0-1]	dynamic		System level
-SystemBeliefOfNature category	Probabilistic belief that System has about Nature's category	[0-1]	dynamic		System level
-SystemBeliefOfNature days	Probabilistic belief that System has about Nature's days	[0-1]	dynamic		System level
-SystemBeliefOfNature location	Probabilistic belief that System has about Nature's location	[0-1]	dynamic		System level
-SystemBeliefOfNature phase	Probabilistic belief that System has about Nature's phase	[0-1]	dynamic		System level
-SystemBeliefOfRegion01 risk	Probabilistic belief that System has about Region01's risk	[0-1]	dynamic		System level
-SystemBeliefOfRegion01 shelterOccupancy	Probabilistic belief that System has about Region01's shelterOccupancy	[0-1]	dynamic		System level
-SystemBeliefOfRegion01 shelterRisk	Probabilistic belief that System has about Region01's shelterRisk	[0-1]	dynamic		System level
-SystemBeliefOfSystem resources	Probabilistic belief that System has about System's resources	[0-1]	dynamic		System level
-SystemBeliefOf__WORLD__ day	Probabilistic belief that System has about __WORLD__'s day	[0-1]	dynamic		System level
+ActorHorizon	Lookahead Horizon for Actor's Expected Reward	[1-Inf]	fixed	Integer	Actor level. Number of days into the future that the actor looks when evaluating candidate behaviors
+Actor's Belief OfActor alive	Probabilistic belief that Actor has about Actor's alive	[0-1]	dynamic		Actor level
+Actor's Belief OfActor childrenHealth	Probabilistic belief that Actor has about Actor's childrenHealth	[0-1]	dynamic		Actor level
+Actor's Belief OfActor employed	Probabilistic belief that Actor has about Actor's employed	[0-1]	dynamic		Actor level
+Actor's Belief OfActor grievance	Probabilistic belief that Actor has about Actor's grievance	[0-1]	dynamic		Actor level
+Actor's Belief OfActor health	Probabilistic belief that Actor has about Actor's health	[0-1]	dynamic		Actor level
+Actor's Belief OfActor location	Probabilistic belief that Actor has about Actor's location	[0-1]	dynamic		Actor level
+Actor's Belief OfActor resources	Probabilistic belief that Actor has about Actor's resources	[0-1]	dynamic		Actor level
+Actor's Belief OfActor risk	Probabilistic belief that Actor has about Actor's risk	[0-1]	dynamic		Actor level
+Actor's Belief OfGroup size	Probabilistic belief that Actor has about Group's size	[0-1]	dynamic		Actor level
+Actor's Belief OfNature category	Probabilistic belief that Actor has about Nature's category	[0-1]	dynamic		Actor level
+Actor's Belief OfNature days	Probabilistic belief that Actor has about Nature's days	[0-1]	dynamic		Actor level
+Actor's Belief OfNature location	Probabilistic belief that Actor has about Nature's location	[0-1]	dynamic		Actor level
+Actor's Belief OfNature phase	Probabilistic belief that Actor has about Nature's phase	[0-1]	dynamic		Actor level
+Actor's Belief OfRegion risk	Probabilistic belief that Actor has about Region01's risk	[0-1]	dynamic		Actor level
+Actor's Belief OfRegion shelterOccupancy	Probabilistic belief that Actor has about Region01's shelterOccupancy	[0-1]	dynamic		Actor level
+Actor's Belief OfRegion shelterRisk	Probabilistic belief that Actor has about Region01's shelterRisk	[0-1]	dynamic		Actor level
+Actor's Belief OfSystem resources	Probabilistic belief that Actor has about System's resources	[0-1]	dynamic		Actor level
+Actor's Belief Ofday	Probabilistic belief that Actor has about __WORLD__'s day	[0-1]	dynamic		Actor level
