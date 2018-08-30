@@ -1,5 +1,6 @@
 import logging
 import random
+import sys
 
 from psychsim.probability import Distribution
 from psychsim.pwl import *
@@ -8,6 +9,12 @@ from psychsim.reward import *
 from psychsim.agent import Agent
 from data import likert,toLikert,sampleNormal
 from region import Region
+
+
+if (sys.version_info > (3, 0)):
+    import configparser
+else:
+    import ConfigParser as configparser
 
 class Actor(Agent):
     def __init__(self,number,world,config):
@@ -130,15 +137,18 @@ class Actor(Agent):
 
         health = world.defineState(self.name,'health',float,
                                    description='Current level of physical wellbeing')
-        mean = int(config.get('Actors','health_mean_age').split(',')[ageInterval-1])
-        if self.ethnicGroup == 'minority':
-            mean += config.getint('Actors','health_mean_ethnic_minority')
-        mean = max(1,mean)
-        sigma = config.getint('Actors','health_sigma')
-        if sigma > 0:
-            self.health = sampleNormal(mean,sigma)
-        else:
-            self.health = likert[5][mean-1]
+        try:
+            self.health = float(config.get('Actors','health_value_age').split(',')[ageInterval-1])
+        except configparser.NoOptionError:
+            mean = int(config.get('Actors','health_mean_age').split(',')[ageInterval-1])
+            if self.ethnicGroup == 'minority':
+                mean += config.getint('Actors','health_mean_ethnic_minority')
+            mean = max(1,mean)
+            sigma = config.getint('Actors','health_sigma')
+            if sigma > 0:
+                self.health = sampleNormal(mean,sigma)
+            else:
+                self.health = likert[5][mean-1]
         world.setFeature(health,self.health)
 
         if self.kids > 0:
@@ -148,19 +158,22 @@ class Actor(Agent):
 
         wealth = world.defineState(self.name,'resources',float,
                                    description='Material resources (wealth) currently owned')
-        mean = int(config.get('Actors','wealth_mean_age').split(',')[ageInterval-1])
-        if self.ethnicGroup == 'minority':
-            mean += config.getint('Actors','wealth_mean_ethnic_minority')
-        if self.gender == 'female':
-            mean += config.getint('Actors','wealth_mean_female')
-        if self.religion == 'minority':
-            mean += config.getint('Actors','wealth_mean_religious_minority')
-        mean = max(1,mean)
-        sigma = config.getint('Actors','wealth_sigma')
-        if sigma > 0:
-            self.wealth = sampleNormal(mean,sigma)
-        else:
-            self.wealth = likert[5][meanWealth-1]
+        try:
+            self.wealth = float(config.get('Actors','wealth_value_age').split(',')[ageInterval-1])
+        except configparser.NoOptionError:
+            mean = int(config.get('Actors','wealth_mean_age').split(',')[ageInterval-1])
+            if self.ethnicGroup == 'minority':
+                mean += config.getint('Actors','wealth_mean_ethnic_minority')
+            if self.gender == 'female':
+                mean += config.getint('Actors','wealth_mean_female')
+            if self.religion == 'minority':
+                mean += config.getint('Actors','wealth_mean_religious_minority')
+            mean = max(1,mean)
+            sigma = config.getint('Actors','wealth_sigma')
+            if sigma > 0:
+                self.wealth = sampleNormal(mean,sigma)
+            else:
+                self.wealth = likert[5][meanWealth-1]
         world.setFeature(wealth,self.wealth)
 
         risk = world.defineState(self.name,'risk',float,
