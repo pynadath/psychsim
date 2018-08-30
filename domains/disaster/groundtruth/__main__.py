@@ -33,8 +33,7 @@ from system import System
 from group import Group
 from actor import Actor
 from cdf import *
-
-
+    
 def addState2tables(world,day,tables,population,regions):
     # Grab all of the relevant fields, but only once
     values = {agent.name: {} for agent in population}
@@ -194,7 +193,7 @@ def writeHurricane(world,hurricane,dirName):
                             record[field] = 'leaving'
                 writer.writerow(record)
                 
-def writeCensus(world,regions,dirName):
+def writeCensus(world,regions,dirName,filename='CensusTable',fieldSubset=None):
     census = {'Population': None,
               'Gender': 'gender',
               'Ethnicity': 'ethnicGroup',
@@ -203,7 +202,7 @@ def writeCensus(world,regions,dirName):
               'Employment': 'employed',
     }
     fields = ['Region','Field','Value','Count']
-    with open(os.path.join(dirName,'CensusTable'),'w') as csvfile:
+    with open(os.path.join(dirName,filename),'w') as csvfile:
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
         writer.writeheader()
         ages = [a.age for a in world.agents.values() if isinstance(a,Actor)]
@@ -212,6 +211,8 @@ def writeCensus(world,regions,dirName):
         labels += ['%d-%d' % (limits[i],limits[i+1]-1) for i in range(len(limits)-1)]
         labels.append('>%d' % (limits[-1]-1))
         for field,feature in census.items():
+            if fieldSubset and field not in fieldSubset:
+                continue
             if field == 'Population':
                 total = 0
             else:
@@ -648,9 +649,11 @@ if __name__ == '__main__':
             # Non int, so assume None
             random.seed()
         hurricanes = 0
+        endDay = None
         survey = set()
         oldPhase = world.getState('Nature','phase').first()
         start = time.time()
+        stats = {}
         while hurricanes < args['number']:
             today = world.getState(WORLD,'day').first()
             logging.info('Day %d' % (today))
@@ -690,9 +693,30 @@ if __name__ == '__main__':
                         else:
                             living.remove(actor)
                         count += 1
+                # if oldPhase == 'active' and turn == 'Actor' and hurricanes == 0:
+                #     actions = {}
+                #     samaritans = set()
+                #     for index in range(1,100,10):
+                #         actor = 'Actor%04d' % (index)
+                #         samaritans.add(actor)
+                #         for action in world.agents[actor].actions:
+                #             if action['verb'] == 'decreaseRisk':
+                #                 actions[actor] = action
+                #                 break
+                # elif day == 2 and turn == 'Actor':
+                #     actions = {}
+                #     for name in ['Actor0033','Actor0034']:
+                #         actor = world.agents[name]
+                #         for action in actor.actions:
+                #             if action['verb'] == 'stayInLocation':
+                #                 actions[name] = action
+                #                 break
+                # else:
+                #     actions = None
                 if args['profile']:
                     prof = cProfile.Profile()
                     prof.enable()
+                # newState = world.step(actions,select=True)
                 newState = world.step(select=True)
                 if args['profile']:
                     prof.disable()
@@ -721,6 +745,28 @@ if __name__ == '__main__':
                             for feature in ['location','risk','health','grievance']:
                                 entry[feature] = agent.getState(feature,belief)
                             history[name] = history.get(name,[])+[entry]
+                # elif turn == 'Actor':
+                #     regions = {}
+                #     for name,action in joint.items():
+                #         assert len(action) == 1
+                #         if action.first()['verb'] == 'takeResources':
+                #             region = action.first()['object']
+                #             regions[region] = regions.get(region,0) + 1
+                #     if 'before' in stats:
+                #         stats['after'] = regions
+                #         outFile = os.path.join(os.path.dirname(__file__),'Instances','Instance100001',
+                #                                'Runs','run-0','AccessibilityDemo12Table')
+                #         fields = ['Timestep','Crimes']
+                #         with open(outFile,'w') as csvfile:
+                #             writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+                #             writer.writeheader()
+                #             writer.writerow({'Timestep': 'Before',
+                #                              'Crimes': stats['before']['Region09']})
+                #             writer.writerow({'Timestep': 'After',
+                #                              'Crimes': stats['after'].get('Region09',0)})
+                #         sys.exit(0)
+                #     else:
+                #         stats['before'] = regions
                 day = world.getState(WORLD,'day').first()
                 phase = world.getState('Nature','phase').first()
                 if phase != oldPhase:
@@ -730,6 +776,30 @@ if __name__ == '__main__':
                     if oldPhase == 'active':
                         hurricanes += 1
                         logging.info('Completed Hurricane #%d' % (hurricanes))
+                        endDay = day
+                # if endDay and day == endDay + 7:
+                #     outFile = os.path.join(os.path.dirname(__file__),'Instances','Instance100001',
+                #                            'Runs','run-0','AccessibilityDemo14Table')
+                #     fields = ['Region','Risk','Deaths','Prosocial+']
+                #     with open(outFile,'w') as csvfile:
+                #         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+                #         writer.writeheader()
+                #         risk = 0.
+                #         for region,entry in regions.items():
+                #             risk += world.getState(region,'risk').expectation()
+                #             record = {'Region': region,
+                #                       'Deaths': 0,
+                #                       'Prosocial+': 'no'}
+                #             for actor in entry['inhabitants']:
+                #                 if not actor.getState('alive').first():
+                #                     record['Deaths'] += 1
+                #                 if actor.name in samaritans:
+                #                     record['Prosocial+'] = 'yes'
+                #             writer.writerow(record)
+                #         writer.writerow({'Region': 'all',
+                #                          'Risk': risk/float(len(regions))})
+                #     sys.exit(0)
+                                
                 oldPhase = phase
                 if args['visualize']:
                     addState2tables(world,today,allTables,population,regions)
