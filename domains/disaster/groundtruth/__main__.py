@@ -13,7 +13,6 @@ import random
 import sys
 import time
 
-
 if (sys.version_info > (3, 0)):
     from configparser import ConfigParser
 else:
@@ -35,6 +34,137 @@ from group import Group
 from actor import Actor
 from cdf import *
 
+
+def addState2tables(world,day,tables,population,regions):
+    # Grab all of the relevant fields, but only once
+    values = {agent.name: {} for agent in population}
+    for agent in population:
+        for table in tables.values():
+            if not table['population'] is Nature:
+                for feature,label,function in table['fields']:
+                    if not feature in values[agent.name]:
+                        value = world.getState(agent.name,feature)
+                        assert len(value) == 1
+                        values[agent.name][feature] = value.first()
+    # Create tables
+    for table in tables.values():
+        if table['population'] is Region:
+            for region in sorted(regions):
+                inhabitants = regions[region]['inhabitants']
+                entry = {'day': day,
+                         'region': region}
+                for feature,label,function in table['fields']:
+                    if world.variables[stateKey(population[0].name,feature)]['domain'] is bool:
+                        entry[label] = len([a for a in inhabitants if values[a.name][feature]])
+                        hi = len(inhabitants)
+                    elif function and function[0] == '#':
+                        target = function[1:]
+                        entry[label] = len([a for a in inhabitants if values[a.name][feature][:len(target)] == target])
+                        hi = len(inhabitants)
+                    elif function and function[0] == '%':
+                        target = function[1:]
+                        count = len([a for a in inhabitants if values[a.name][feature][:len(target)] == target])
+                        try:
+                            entry[label] = float(count)/float(len(inhabitants))
+                        except ZeroDivisionError:
+                            pass
+                        hi = 1.
+                    elif function and function[0] == '/':
+                        value = [values[a.name][feature] for a in inhabitants]
+                        entry[label] = sum(value)/float(len(value))
+                        hi = 1.
+                    else:
+                        value = world.getState(region,feature)
+                        assert len(value) == 1
+                        entry[label] = value.first()
+                        hi = 1.
+                    if function == 'invert':
+                        entry[label] = hi - entry[label]
+                    elif function == 'likert':
+                        entry[label] = toLikert(entry[label])
+                table['log'].append(entry)
+                #print("Region %s"%(entry))
+                addToVizData("regions", entry)
+        elif table['population'] is Actor:
+            for actor in population:
+                belief = next(iter(actor.getBelief().values()))
+                entry = {'day': day,'participant': actor.name[-4:]}
+                for feature,label,function in table['fields']:
+                    key = stateKey(actor.name,feature)
+                    if world.variables[key]['domain'] is bool:
+                        if function == 'invert':
+                            entry[label] = not values[actor.name][feature]
+                        else:
+                            entry[label] = values[actor.name][feature]
+                    else:
+                        if function == 'likert':
+                            entry[label] = toLikert(values[actor.name][feature])
+                        elif function and function[0] == '=':
+                            entry[label] = values[actor.name][feature] == function[1:]
+                        elif function == 'invert':
+                            entry[label] = 1.-values[actor.name][feature]
+                        else:
+                            entry[label] = values[actor.name][feature]
+                table['log'].append(entry)
+                #print("Actor %s"%(entry))
+                #print("Keys %s\nValues %s" %(entry.keys(), entry.values()))
+                if 'x' in list(entry.keys()) and 'y' in list(entry.keys()):
+                    addToIndividualList(entry)
+                addToVizData("actors", entry)
+       
+
+def addToIndividualList(entry):
+    vm.individualList.append(viz.Individual(entry['x'], entry['y'], viz.SimColor.GRAY,
+                                            int(entry['participant'])))
+    
+
+def vizUpdateLoop(day):
+    global simpaused
+    i = 0.0
+    #pygame.time.delay(100)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            exit()
+        elif event.type == pygame.KEYUP:
+            simpaused = not simpaused
+            print("Day %d %s" % (day, "(Paused)" if simpaused else "" ))
+            
+
+    viz.handleInput()
+    vm.update(day)        
+
+    pygame.display.set_caption("Visualization Day %d %s" % (day, "(Paused)" if simpaused else "" ))
+    pygame.display.update()
+
+
+def addToVizData(keyname, entry):
+
+    
+    if not keyname in simdata:
+        simdata[keyname] = []
+        simdata[keyname].append({})
+
+    headervalues = list(entry.keys())
+    values = list(entry.values())
+    entityname = values[1]
+    simday = int(values[0])
+
+    #print ("Simday %s EntityName %s %d" %(simday, entityname, len(simdata[keyname])))
+    if len(simdata[keyname]) == simday:
+        simdata[keyname].append({})
+    
+    if not entityname in simdata[keyname][simday]:
+        simdata[keyname][simday][entityname] = {}
+
+    for h in range(2,len(headervalues)):
+        simdata[keyname][simday][entityname][headervalues[h]] = []
+
+    entityname = list(entry.values())[1]
+    for cntr in range (2, len(entry)):
+        
+        simdata[keyname][simday][entityname][headervalues[cntr]].append(values[cntr])
+        
 def writeHurricane(world,hurricane,dirName):
     fields = ['Timestep','Name','Category','Location']
     today = world.getState(WORLD,'day').first()
@@ -385,6 +515,7 @@ def getConfig(instance):
     return config
     
 if __name__ == '__main__':
+
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
     parser.add_argument('-n','--number',default=1,type=int,help='Number of days to run')
@@ -393,7 +524,8 @@ if __name__ == '__main__':
     parser.add_argument('-p','--profile',action='store_true',help='Profile simulation step')
     parser.add_argument('-c','--compile',action='store_true',help='Pre-compile agent policies')
     parser.add_argument('-w','--write',action='store_true',help='Write simulation definition tables')
-    parser.add_argument('--no-save',action='store_true',help='Do not save scenario file at end')
+    parser.add_argument('-v','--visualize',default=None,help='Visualization feature')
+    parser.add_argument('--nosave',action='store_true',help='Do not save scenario file at end')
     
     args = vars(parser.parse_args())
     config = getConfig(args['instance'])
@@ -403,6 +535,21 @@ if __name__ == '__main__':
     if not isinstance(level, int):
         raise ValueError('Invalid debug level: %s' % args['debug'])
 
+    # Initialize visualization
+    global vm
+    global simpaused
+    simpaused = False
+
+    if args['visualize']:
+        import pygame
+        import psychsim.ui.viz as viz
+
+        simdata = {}
+        win = pygame.display.set_mode((1024, 768))
+        pygame.init()
+
+        vm = viz.VizMap(1024, 768, 7, 7, simdata, 2, "", win, "safety", args['visualize'])
+    
     for run in range(args['runs']):
         # Verify directory structure
         dirName = os.path.join(os.path.dirname(__file__),'Instances',
@@ -465,6 +612,33 @@ if __name__ == '__main__':
                      },
         }
         toCDF(world,dirName,cdfTables)
+        # Set up tables for visualization
+        allTables = {'Region': {'fields': [('alive','casualties','invert'),
+                                           ('location','evacuated','#evacuated'),
+                                           ('location','shelter','#shelter'),
+                                           ('risk','safety','invert')],
+                                'population': Region,
+                                'series': True,
+                                'log': []},
+                     'Actors': {'fields': [('alive','alive',None),
+                                           ('location','shelter','=shelter'),
+                                           ('location','evacuated','=evacuated'),
+                                           ('risk','safety','invert'),
+                                           ('health','health',None),
+                                           ('grievance','grievance','invert'),
+                     ],
+                                'population': Actor,
+                                'series': True,
+                                'log': []},
+                     'Display': {'fields': [('x','x',None),
+                                            ('y','y',None),
+                                            ('region','region',None)],
+                                 'population': Actor,
+                                 'series': False,
+                                 'log': []}
+        }
+        if args['visualize']:
+            addState2tables(world,0,allTables,population,regions)
         if args['compile']:
             for agent in population:
                 agent.compileV()
@@ -557,6 +731,9 @@ if __name__ == '__main__':
                         hurricanes += 1
                         logging.info('Completed Hurricane #%d' % (hurricanes))
                 oldPhase = phase
+                if args['visualize']:
+                    addState2tables(world,today,allTables,population,regions)
+                    vizUpdateLoop(day)
             writeHurricane(world,hurricanes+1,dirName)
-        if not args['no-save']:
+        if not args['nosave']:
             world.save(os.path.join(dirName,'scenario.psy'))
