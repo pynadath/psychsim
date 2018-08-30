@@ -27,6 +27,8 @@ class System(Agent):
         populated = set()
         for actor in population:
             populated.add(world.getState(actor,'region').first())
+            self.setReward(maximizeFeature(stateKey(actor,'health'),self.name),1.)
+            self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),1.)
         allocation = config.getint('System','system_allocation')
         for region in populated:
             tree = makeTree({'if': thresholdRow(resources,allocation),True: True,False: False})
