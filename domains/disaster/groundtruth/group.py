@@ -72,7 +72,7 @@ class Group(Agent):
             agent = self.world.agents[name]
             member = self.world.defineRelation(name,self.name,'memberOf',bool)
             # Join a group
-            self.world.setFeature(member,True)
+            self.world.setFeature(member,False)
             tree = makeTree({'if': trueRow(stateKey(name,'alive')),
                              True: {'if': trueRow(member),
                                     True: False, False: True},
@@ -136,7 +136,8 @@ class Group(Agent):
         if model is None:
             model = self.world.getModel(self.name,state)
         belief = None
-        for name in self.members(state):
+        members = self.members(state)
+        for name in members:
             agent = self.world.agents[name]
             subbelief = agent.getBelief(state)
             assert len(subbelief) == 1
