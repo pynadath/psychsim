@@ -1,14 +1,17 @@
 Name	LongName	Values	VarType	DataType	Notes
-Actor action	Actor's Action Choice	Actor-moveTo-shelter1,Actor-stayInLocation,Actor-msgReHurricane-Actor,Actor-moveTo-Region01,Actor-seekInfoReHurricane,Actor-takeResources-Region01,Actor-leave-Group,Actor-decreaseRisk-Region01,Actor-evacuate,Actor-join-Group	fixed	String	Actor-moveTo-shelter1: Move myself and family to the shelter in Region01; Actor-stayInLocation: Actor does not move from current location, nor perform any pro/antisocial behaviors; Actor-msgReHurricane-Actor: Send message communicating my current perceptions about the hurricane and its impact; Actor-moveTo-Region01: Return home; Actor-seekInfoReHurricane: Seek out additional information about the hurricane category; Actor-takeResources-Region01: Perform antisocial behaviors that gain resources personally at the expense of people in Region01; Actor-leave-Group: None; Actor-decreaseRisk-Region01: Perform prosocial behaviors to reduce the danger posed by the hurricane in Region01; Actor-evacuate: Evacuate the city at least temporarily; Actor-join-Group: None
+Actor action	Actor's Action Choice	Actor-takeResources-Region01,Actor-decreaseRisk-Region01,Actor-evacuate,Actor-stayInLocation,Actor-seekInfoReHurricane,Actor-join-Group,Actor-moveTo-Region01,Actor-moveTo-shelter1,Actor-msgReHurricane-Actor,Actor-leave-Group	fixed	String	Actor-takeResources-Region01: Perform antisocial behaviors that gain resources personally at the expense of people in Region01; Actor-decreaseRisk-Region01: Perform prosocial behaviors to reduce the danger posed by the hurricane in Region01; Actor-evacuate: Evacuate the city at least temporarily; Actor-stayInLocation: Actor does not move from current location, nor perform any pro/antisocial behaviors; Actor-seekInfoReHurricane: Seek out additional information about the hurricane category; Actor-join-Group: None; Actor-moveTo-Region01: Return home; Actor-moveTo-shelter1: Move myself and family to the shelter in Region01; Actor-msgReHurricane-Actor: Send message communicating my current perceptions about the hurricane and its impact; Actor-leave-Group: None
 Actor __REWARD__	Actor's __REWARD__	[-1.00-1.00]	fixed	Real	Reward for Actor in this state
 Actor age	Actor's age	[0-1]	fixed	Integer	
 Actor alive	Actor's alive	True,False	dynamic	Boolean	
 Actor attachment	Actor's attachment	secure,anxious,avoidant	fixed	String	Attachment style
+Actor attribution	Actor's attribution	none,internal,external	fixed	String	Causal attribution style, whether attributing events to internal or external causes
 Actor category	Actor's category	[-1-1]	fixed	Integer	
 Actor categoryData	Actor's categoryData	[-1-1]	fixed	Integer	
 Actor center	Actor's center	Region01,none	fixed	String	
 Actor children	Actor's children	[0.00-2.00]	fixed	Real	Number of children
 Actor childrenHealth	Actor's childrenHealth	[0.00-1.00]	dynamic	Real	Current level of children's physical wellbeing
+Actor control	Actor's control	none,hiEfficacy,loEfficacy	fixed	String	Control style, whether low or high self-efficacy
+Actor coping	Actor's coping	none,emotion,problem	fixed	String	Coping style, whether biased toward emotion- or problem-directed decision-making
 Actor employed	Actor's employed	True,False	dynamic	Boolean	Has a full-time job
 Actor ethnicGroup	Actor's ethnicGroup	majority,minority	fixed	String	Ethnicity of actor
 Actor gender	Actor's gender	male,female	fixed	String	
@@ -17,7 +20,7 @@ Actor health	Actor's health	[0.00-1.00]	dynamic	Real	Current level of physical w
 Actor location	Actor's location	Region01,evacuated,shelter1	dynamic	String	Current location
 Actor perceivedChildrenHealth	Actor's perceivedChildrenHealth	[-1.00-1.00]	fixed	Real	
 Actor perceivedHealth	Actor's perceivedHealth	[-1.00-1.00]	fixed	Real	
-Actor pet	Actor's pet	True,False	fixed	Boolean	Owns a pet
+Actor pet	Actor's pet	True,False	dynamic	Boolean	Owns a pet
 Actor phase	Actor's phase	none,approaching,active	fixed	String	
 Actor rcvdCategoryMsg	Actor's rcvdCategoryMsg	[-1-1]	fixed	Integer	
 Actor region	Actor's region	Region01	fixed	String	Region of residence
@@ -26,7 +29,7 @@ Actor resources	Actor's resources	[0.00-1.00]	dynamic	Real	Material resources (w
 Actor risk	Actor's risk	[0.00-1.00]	dynamic	Real	Current level of risk from hurricane
 Actor x	Actor's x	[0.00-1.00]	fixed	Real	Representation of residence's longitude
 Actor y	Actor's y	[0.00-1.00]	fixed	Real	Representation of residence's latitude
-Group action	Group's Action Choice	Group-returnHome,Group-evacuate,Group-takeResources,Group-noDecision,Group-decreaseRisk	fixed	String	Group-returnHome: None; Group-evacuate: None; Group-takeResources: None; Group-noDecision: None; Group-decreaseRisk: None
+Group action	Group's Action Choice	Group-noDecision,Group-decreaseRisk,Group-evacuate,Group-takeResources,Group-returnHome	fixed	String	Group-noDecision: None; Group-decreaseRisk: None; Group-evacuate: None; Group-takeResources: None; Group-returnHome: None
 Group __REWARD__	Group's __REWARD__	[-1.00-1.00]	fixed	Real	Reward for Group in this state
 Group size	Group's size	[0-1]	dynamic	Integer	
 Nature action	Nature's Action Choice	Nature-evolve	fixed	String	Nature-evolve: None
@@ -41,6 +44,7 @@ Region shelterOccupancy	Region01's shelterOccupancy	[0-1]	dynamic	Integer
 Region shelterPets	Region01's shelterPets	True,False	fixed	Boolean	
 Region shelterRisk	Region01's shelterRisk	[0.00-1.00]	dynamic	Real	
 System action	System's Action Choice	System-allocate-Region01	fixed	String	System-allocate-Region01: None
+System __REWARD__	System's __REWARD__	[-1.00-1.00]	fixed	Real	Reward for System in this state
 System resources	System's resources	[0-100]	dynamic	Integer	
 day	__WORLD__'s day	[1-1]	dynamic	Integer	
 ActorRewardWeightOfchildrenHealth	Priority of childrenHealth to Actor in reward function	[0-1]	fixed	Real	Actor level
@@ -56,6 +60,7 @@ Actor's Belief OfActor employed	Probabilistic belief that Actor has about Actor'
 Actor's Belief OfActor grievance	Probabilistic belief that Actor has about Actor's grievance	[0-1]	dynamic		Actor level
 Actor's Belief OfActor health	Probabilistic belief that Actor has about Actor's health	[0-1]	dynamic		Actor level
 Actor's Belief OfActor location	Probabilistic belief that Actor has about Actor's location	[0-1]	dynamic		Actor level
+Actor's Belief OfActor pet	Probabilistic belief that Actor has about Actor's pet	[0-1]	dynamic		Actor level
 Actor's Belief OfActor resources	Probabilistic belief that Actor has about Actor's resources	[0-1]	dynamic		Actor level
 Actor's Belief OfActor risk	Probabilistic belief that Actor has about Actor's risk	[0-1]	dynamic		Actor level
 Actor's Belief OfGroup size	Probabilistic belief that Actor has about Group's size	[0-1]	dynamic		Actor level
