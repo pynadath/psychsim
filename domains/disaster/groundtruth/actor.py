@@ -364,7 +364,7 @@ class Actor(Agent):
             tree = makeTree({'if': trueRow(alive), True: True, False: False})
             infoseek = self.addAction({'verb': 'seekInfoReHurricane'},
                                       tree.desymbolize(world.symbols),
-                                      'Seek out additional information about the hurricane category')
+                                      'Seek out additional information about the hurricane risk')
                 
         # Effect on location
         if config.getboolean('Shelter','exists'):
