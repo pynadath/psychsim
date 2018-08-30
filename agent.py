@@ -101,7 +101,7 @@ class Agent:
 #            ER = state[Rkey]
         return model['V']
                             
-    def decide(self,vector,horizon=None,others=None,model=None,selection=None,actions=None,keySet=None):
+    def decide(self,vector=None,horizon=None,others=None,model=None,selection=None,actions=None,keySet=None):
         """
         Generate an action choice for this agent in the given state
         @param vector: the current state in which the agent is making its decision
@@ -122,6 +122,8 @@ class Agent:
         @param actions: possible action choices (default is all legal actions)
         @param keySet: subset of state features to project over (default is all state features)
         """
+        if vector is None:
+            vector = self.world.state
         if model is None:
             model = self.world.getModel(self.name,vector)
         assert not model is True
@@ -133,7 +135,12 @@ class Agent:
             for submodel in model.domain():
                 result[submodel] = self.decide(vector,horizon,others,submodel,
                                                selection,actions,keySet)
-                matrix = setToConstantMatrix(myAction,result[submodel]['action'])
+                if isinstance(result[submodel]['action'],Distribution):
+                    matrix = {'distribution': [(setToConstantMatrix(myAction,el),
+                                                result[submodel]['action'][el]) \
+                                               for el in result[submodel]['action'].domain()]}
+                else:
+                    matrix = setToConstantMatrix(myAction,result[submodel]['action'])
                 if tree is None:
                     # Assume it's this model (?)
                     tree = matrix
@@ -159,7 +166,7 @@ class Agent:
             horizon = self.getAttribute('horizon',model)
         if actions is None:
             # Consider all legal actions (legality determined by my belief, circumscribed by real world)
-            actions = self.getActions(belief) 
+            actions = self.getActions(belief)
         if len(actions) == 0:
             # Someone made a boo-boo because there is no legal action for this agent right now
             buf = StringIO()
