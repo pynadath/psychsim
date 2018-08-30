@@ -1,5 +1,11 @@
 import logging
 import random
+import sys
+
+if (sys.version_info > (3, 0)):
+    import configparser
+else:
+    import ConfigParser as configparser
 
 from psychsim.agent import Agent
 
@@ -42,22 +48,28 @@ class Region(Agent):
         self.setAttribute('static',True)
         
         risk = world.defineState(self.name,'risk',float)
-        mean = config.getint('Regions','risk_mean')
-        sigma = config.getint('Regions','risk_sigma')
-        if sigma > 0:
-            self.risk = sampleNormal(mean,sigma)
-        else:
-            self.risk = likert[5][mean-1]
-        world.setFeature(risk,likert[5][toLikert(self.risk,5)-1])
+        try:
+            self.risk = config.getfloat('Regions','risk_value')
+        except configparser.NoOptionError:
+            mean = config.getint('Regions','risk_mean')
+            sigma = config.getint('Regions','risk_sigma')
+            if sigma > 0:
+                self.risk = sampleNormal(mean,sigma)
+            else:
+                self.risk = likert[5][mean-1]
+        world.setFeature(risk,self.risk)
 
         security = world.defineState(self.name,'security',float)
-        mean = config.getint('Regions','security_mean')
-        sigma = config.getint('Regions','security_sigma')
-        if sigma > 0:
-            self.security = sampleNormal(mean,sigma)
-        else:
-            self.security = likert[5][mean-1]
-        world.setFeature(security,likert[5][toLikert(self.security,5)-1])
+        try:
+            self.security = config.getfloat('Regions','security_value')
+        except configparser.NoOptionError:
+            mean = config.getint('Regions','security_mean')
+            sigma = config.getint('Regions','security_sigma')
+            if sigma > 0:
+                self.security = sampleNormal(mean,sigma)
+            else:
+                self.security = likert[5][mean-1]
+        world.setFeature(security,self.security)
 
         if index is not None:
             # Shelter in this region
