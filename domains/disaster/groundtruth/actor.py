@@ -85,16 +85,56 @@ class Actor(Agent):
         threshold = likert[5][config.getint('Actors','pet_prob')-1]
         self.pet = random.random() < threshold
         world.setFeature(pet,self.pet)
-        
+
         # Psychological
-        attachmentStyles = {'secure': likert[5][config.getint('Actors','attachment_secure')-1],
-                            'anxious': likert[5][config.getint('Actors','attachment_anxious')-1]}
-        attachmentStyles['avoidant'] = 1.-attachmentStyles['secure']-attachmentStyles['anxious']
-        attachmentStyles = Distribution(attachmentStyles)
-        attachment = world.defineState(self.name,'attachment',list,list(attachmentStyles.domain()),
-                                       description='Attachment style')
-        self.attachment = attachmentStyles.sample()
-        world.setFeature(attachment,self.attachment)
+        if config.getboolean('Actors','attachment'):
+            attachmentStyles = {'secure': likert[5][config.getint('Actors','attachment_secure')-1],
+                                'anxious': likert[5][config.getint('Actors','attachment_anxious')-1]}
+            attachmentStyles['avoidant'] = 1.-attachmentStyles['secure']-attachmentStyles['anxious']
+            attachmentStyles = Distribution(attachmentStyles)
+            attachment = world.defineState(self.name,'attachment',list,list(attachmentStyles.domain()),
+                                           description='Attachment style')
+            self.attachment = attachmentStyles.sample()
+            world.setFeature(attachment,self.attachment)
+        if config.getboolean('Actors','appraisal'):
+            # Coping Style
+            copingStyles = {'none': 1.}
+            if config.getint('Actors','coping_emotion') > 0:
+                copingStyles['emotion'] = likert[5][config.getint('Actors','coping_emotion')-1]
+            if config.getint('Actors','coping_problem') > 0:
+                copingStyles['problem'] = likert[5][config.getint('Actors','coping_problem')-1]
+            copingStyles = Distribution(copingStyles)
+            coping = world.defineState(self.name,'coping',list,['none','emotion','problem'],
+                                       description='Coping style, whether biased toward emotion- or problem-directed decision-making')
+            self.coping = copingStyles.sample()
+            world.setFeature(coping,self.coping)
+            # Control bias
+            controlStyles = {'none': 1.}
+            if config.getint('Actors','control_hi') > 0:
+                controlStyles['hiEfficacy'] = likert[5][config.getint('Actors','control_hi')-1]
+                controlStyles['none'] -= controlStyles['hiEfficacy']
+            if config.getint('Actors','control_lo') > 0:
+                controlStyles['loEfficacy'] = likert[5][config.getint('Actors','control_lo')-1]
+                controlStyles['none'] -= controlStyles['loEfficacy']
+            controlStyles = Distribution(controlStyles)
+            control = world.defineState(self.name,'control',list,['none','hiEfficacy','loEfficacy'],
+                                        description='Control style, whether low or high self-efficacy')
+            self.control = controlStyles.sample()
+            world.setFeature(control,self.control)
+            # Causal attribution
+            attributionStyles = {'none': 1.}
+            if config.getint('Actors','attribution_in') > 0:
+                attributionStyles['internal'] = likert[5][config.getint('Actors','attribution_in')-1]
+                attributionStyles['none'] -= attributionStyles['internal']
+            if config.getint('Actors','attribution_ex') > 0:
+                attributionStyles['external'] = likert[5][config.getint('Actors','attribution_ex')-1]
+                attributionStyles['none'] -= attributionStyles['external']
+            attributionStyles = Distribution(attributionStyles)
+            attribution = world.defineState(self.name,'attribution',list,['none','internal',
+                                                                          'external'],
+                                            description='Causal attribution style, whether attributing events to internal or external causes')
+            self.attribution = attributionStyles.sample()
+            world.setFeature(attribution,self.attribution)
 
         regions = sorted([name for name in self.world.agents
                           if isinstance(self.world.agents[name],Region)])
@@ -418,6 +458,7 @@ class Actor(Agent):
         impactJob = config.getint('Actors','job_impact')
         impactNoJob = config.getint('Actors','wealth_spend')
         if impactJob > 0:
+            # Being at home or out of town, allows your job to make money
             tree = {'if': trueRow(alive),
                     True: {'if': trueRow(job),
                            True: {'if': equalRow(location,[self.home,'evacuated']),
@@ -430,6 +471,17 @@ class Actor(Agent):
             else:
                 tree[True][False] = noChangeMatrix(wealth)
             world.setDynamics(wealth,nop,makeTree(tree))
+            # Going home allows you to work again
+            tree = {'if': trueRow(alive),
+                    True: {'if': trueRow(job),
+                           True: approachMatrix(wealth,likert[5][impactJob-1],1.),
+                           False: None},
+                    False: noChangeMatrix(wealth)}
+            if impactNoJob > 0:
+                tree[True][False] = approachMatrix(wealth,likert[5][impactNoJob-1],0.)
+            else:
+                tree[True][False] = noChangeMatrix(wealth)
+            world.setDynamics(wealth,goHome,makeTree(tree))
         if config.getboolean('Actors','evacuation'):
             cost = config.getint('Actors','evacuation_cost')
             if cost > 0:
@@ -529,12 +581,13 @@ class Actor(Agent):
 
         if self.pet and config.getboolean('Shelter','exists'):
             # Process shelters' pet policy
-            petPolicy = config.get('Shelter','pets').split(',')
             for index,action in actShelter.items():
-                if petPolicy[shelters.index(index)] == 'no':
+#                if petPolicy[shelters.index(index)] == 'no':
                     region = Region.nameString % (int(index))
                     tree = makeTree({'if': equalRow(makeFuture(location),'shelter%s' % (index)),
-                                     True: setFalseMatrix(pet),
+                                     True: {'if': trueRow(stateKey(region,'shelterPets')),
+                                            True: noChangeMatrix(pet),
+                                            False: setFalseMatrix(pet)},
                                      False: noChangeMatrix(pet)})
                     world.setDynamics(pet,action,tree)
 
