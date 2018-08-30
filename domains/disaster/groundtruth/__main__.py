@@ -393,6 +393,7 @@ if __name__ == '__main__':
     parser.add_argument('-p','--profile',action='store_true',help='Profile simulation step')
     parser.add_argument('-c','--compile',action='store_true',help='Pre-compile agent policies')
     parser.add_argument('-w','--write',action='store_true',help='Write simulation definition tables')
+    parser.add_argument('--no-save',action='store_true',help='Do not save scenario file at end')
     
     args = vars(parser.parse_args())
     config = getConfig(args['instance'])
@@ -557,4 +558,5 @@ if __name__ == '__main__':
                         logging.info('Completed Hurricane #%d' % (hurricanes))
                 oldPhase = phase
             writeHurricane(world,hurricanes+1,dirName)
-        world.save(os.path.join(dirName,'scenario.psy'))
+        if not args['no-save']:
+            world.save(os.path.join(dirName,'scenario.psy'))
