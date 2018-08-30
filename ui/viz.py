@@ -30,7 +30,7 @@ class Individual:
         #print("Drawing circle %d at %f, %f in region %s" %( int(self.id), r.x, r.y, self.id) )
         value = vm._simdata["actors"][currentDay-1][individualname][currentPropIndividual]
 
-        color = SimColor.getColorForValue(float(value[0]) / 5.0) #1 to 5 => 0 to 1
+        color = SimColor.getColorForValue(value[0]) #1 to 5 => 0 to 1
         #hack to draw filled circle with black border
         circle = pygame.draw.circle(vm._win, (0, 0, 0), (int(r.x + r.width * self.percentxpos), int(r.y + r.height * self.percentypos)), 7, 2)
         circle = pygame.draw.circle(vm._win, color, (int(r.x + r.width * self.percentxpos), int(r.y + r.height * self.percentypos)), 6, 0)
@@ -91,7 +91,8 @@ class SimColor:
         #test Green to Red
         #temp = float(numOfDays - currentDay) / float(numOfDays)
         #myColor = ( min(255, 255 * 2.0 * (1 - temp)),min(255,255 * 2.0 * temp), 0)
-        myColor = ( min(255, 255 * 2.0 * (1 - val)),min(255,255 * 2.0 * val), 0)
+#        myColor = ( min(255, 255 * 2.0 * (1 - val)),min(255,255 * 2.0 * val), 0)
+        myColor = ( 255. * (1.-val),255. * val, 32)
         return myColor
         # if val <= 0.2:
         #     return cls.RED
