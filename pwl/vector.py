@@ -36,7 +36,7 @@ class KeyedVector(collections.MutableMapping):
                 delta += abs(value)
             tested[key] = True
         for key,value in other.items():
-            if not tested.has_key(key):
+            if key not in tested:
                 delta += abs(value)
         return delta < self.epsilon
 
