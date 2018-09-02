@@ -190,7 +190,7 @@ class KeyedVector(collections.MutableMapping):
         return '%s(%r)' % (self.__class__.__name__,dict(self))
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(tuple(self._data.items()))
 
     def __xml__(self):
         doc = Document()
