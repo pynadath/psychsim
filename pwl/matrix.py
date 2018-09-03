@@ -11,10 +11,10 @@ class KeyedMatrix(dict):
         self._keysIn = None
         self._keysOut = None
         if isinstance(arg,Node):
-            dict.__init__(self)
+            super().__init__()
             self.parse(arg)
         else:
-            dict.__init__(self,arg)
+            super().__init__(arg)
             self._string = None
         
     def __eq__(self,other):
@@ -207,7 +207,7 @@ class KeyedMatrix(dict):
         return self._string
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(tuple(self.items()))
 
     def __xml__(self):
         doc = Document()
