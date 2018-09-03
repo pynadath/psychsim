@@ -139,16 +139,16 @@ class World:
         # Update turn order
         effect.append(self.deltaTurn(state,joint))
         for stage in effect:
-            self.applyEffect(state,stage)
+            self.applyEffect(state,stage,select)
+        # The future becomes the present
+        state.rollback()
+#        if select:
+#            prob = state.select()
+        effect = self.effect(joint,state,updateBeliefs,keySubset,select)
         # The future becomes the present
         state.rollback()
         if select:
-            prob = state.select()
-        effect = self.effect(joint,state,updateBeliefs,keySubset)
-        # The future becomes the present
-        state.rollback()
-        if select:
-            prob *= state.select()
+            state.select()
         if self.memory:
             self.history.append(copy.deepcopy(state))
            # self.modelGC(False)
@@ -311,7 +311,7 @@ class World:
                         Ofuns[key] = [tree]
         return Ofuns
 
-    def applyEffect(self,state,effect):
+    def applyEffect(self,state,effect,select=False):
         for key,dynamics in effect.items():
             if dynamics is None:
                 # No dynamics, so status quo
@@ -327,6 +327,7 @@ class World:
             elif len(dynamics) == 1:
                 tree = dynamics[0]
                 state *= tree
+                substate = state.keyMap[makeFuture(key)]
             else:
                 cumulative = None
                 for tree in dynamics:
@@ -337,8 +338,11 @@ class World:
                         cumulative.makeFuture([key])
                         cumulative *= tree
                 state *= cumulative
-        
-    def effect(self,actions,state,updateBeliefs=True,keySubset=None):
+                substate = state.keyMap[makeFuture(key)]
+            if select and len(state.distributions[substate]) > 1:
+                state.distributions[substate].select()
+                
+    def effect(self,actions,state,updateBeliefs=True,keySubset=None,select=False):
         if not isinstance(state,VectorDistributionSet):
             state = psychsim.pwl.VectorDistributionSet(state)
         result = {'new': state,'effect': []}
@@ -347,7 +351,7 @@ class World:
         result['effect'].append(O)
         # Apply all of these update functions
         for stage in result['effect']:
-            self.applyEffect(result['new'],stage)
+            self.applyEffect(result['new'],stage,select)
         if updateBeliefs:
             # Update agent models included in the original world
             # (after finding out possible new worlds)
@@ -360,6 +364,8 @@ class World:
                          for omega in agent.omega}
                 substate = result['new'].collapse(Omega|{key},False)
                 result['effect'].append(agent.updateBeliefs(result['new'],actions))
+                if select:
+                    result['new'].distributions[substate].select()
         return result
 
     def deltaState(self,actions,state,keySubset=None):
@@ -1562,7 +1568,7 @@ class World:
 #            print('%s\tUnchanged' % (prefix),file=buf)
         if csv:
             print(','.join(elements),file=buf)
-
+                
     def printDelta(self,old,new,buf=None,prefix=''):
         """
         Prints a kind of diff patch for one state vector with respect to another
