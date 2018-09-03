@@ -78,7 +78,14 @@ class KeyedPlane:
                 assert len(total) == 1,'Unable to handle uncertain test results'
                 total = total.first()
             if comparison > 0:
-                if total+plane.epsilon > threshold:
+                value = total+plane.epsilon
+                if isinstance(threshold,list):
+                    for index in range(len(threshold)):
+                        if value <= threshold[index]:
+                            return index
+                    else:
+                        return len(threshold)
+                elif value > threshold:
                     if not self.isConjunction:
                         # Disjunction, so any positive result is sufficient
                         return True
@@ -86,7 +93,14 @@ class KeyedPlane:
                     # Conjunction, so any negative result is sufficient
                     return False
             elif comparison < 0:
-                if total-plane.epsilon < threshold:
+                value = total-plane.epsilon
+                if isinstance(threshold,list):
+                    for index in range(len(threshold)):
+                        if value < threshold[index]:
+                            return index
+                    else:
+                        return len(threshold)
+                elif value  < threshold:
                     if not self.isConjunction:
                         # Disjunction, so any positive result is sufficient
                         return True
@@ -95,6 +109,13 @@ class KeyedPlane:
                     return False
             elif comparison == 0:
                 if isinstance(threshold,list):
+                    for index in range(len(threshold)):
+                        if abs(total-threshold[index]) < plane.epsilon:
+                            # Disjunction, so any positive result is sufficient
+                                return index
+                    else:
+                        return None
+                elif isinstance(threshold,set):
                     for t in threshold:
                         if abs(total-t) < plane.epsilon:
                             # Disjunction, so any positive result is sufficient
@@ -135,6 +156,8 @@ class KeyedPlane:
                 return threshold
         elif isinstance(threshold,list):
             return [self.desymbolizeThreshold(t,table) for t in threshold]
+        elif isinstance(threshold,set):
+            return {self.desymbolizeThreshold(t,table) for t in threshold}
         else:
             return threshold
 
@@ -198,11 +221,32 @@ class KeyedPlane:
         @return: C{None} if no conflict was detected, C{True} if the tests are redundant, C{False} if the tests are conflicting
         @warning: correct, but not complete
         """
-        if self.vector == other.vector:
-            if self.comparison == 0:
-                if other.comparison == 0:
+        assert len(self.planes) == 1,'Unable to compare branches with multiple tests'
+        assert len(other.planes) == 1,'Unable to compare branches with multiple tests'
+        myVec,myThresh,myComp = self.planes[0]
+        yrVec,yrThresh,yrComp = other.planes[0]
+        if myVec == yrVec:
+            if myComp == 0:
+                if yrComp == 0:
                     # Both are equality tests
-                    if abs(self.threshold - other.threshold) < self.vector.epsilon:
+                    if isinstance(myThresh,set):
+                        if isinstance(yrThresh,set):
+                            raise NotImplementedError
+                        elif isinstance(yrThresh,list):
+                            raise NotImplementedError
+                        else:
+                            if yrThresh in myThresh:
+                                # This equality test is one of my acceptable values
+                                if value is True:
+                                    return True
+                            return None
+                    elif isinstance(yrThresh,set):
+                        if myThresh in yrThresh:
+                            # Not in a set that includes my acceptable value
+                            if value is False:
+                                return False
+                        return None
+                    elif abs(myThresh - yrThresh) < myVec.epsilon:
                         # Values are the same, so test results must be the same
                         return value
                     elif value:
@@ -211,7 +255,7 @@ class KeyedPlane:
                     else:
                         # Values are different, but not equal to other, so no information
                         return None
-                elif cmp(self.threshold,other.threshold) == other.comparison:
+                elif cmp(myThresh,yrThresh) == yrComp:
                     # Our value satisfies other's inequality
                     if value:
                         # So no information in this case
@@ -227,14 +271,17 @@ class KeyedPlane:
                     else:
                         # And no information
                         return None
-            elif other.comparison == 0:
+            elif yrComp == 0:
                 # Other specifies equality, we are inequality
                 if value:
                     # Determine whether equality condition satisfies our inequality
-                    return cmp(other.threshold,self.threshold) == self.comparison
+                    return cmp(yrThresh,myThresh) == myComp
                 else:
                     # No information about inequality
                     return None
+            elif myThresh == yrThresh and myComp == yrComp:
+                # Identical planes
+                return value
             else:
                 # Both inequalities, we should do something here
                 return None
@@ -283,10 +330,23 @@ class KeyedPlane:
             if node.nodeType == node.ELEMENT_NODE:
                 assert node.tagName == 'vector'
                 vector = KeyedVector(node)
-                try:
-                    threshold = float(node.getAttribute('threshold'))
-                except ValueError:
-                    threshold = eval(str(node.getAttribute('threshold')))
+                text = node.getAttribute('threshold')
+                if ',' in text:
+                    if text[0] == '[':
+                        if '.' in text:
+                            threshold = [float(t) for t in text[1:-1].split(',')]
+                        else:
+                            threshold = [int(t) for t in text[1:-1].split(',')]
+                    else:
+                        assert text[0] == '{'
+                        if '.' in text:
+                            threshold = {float(t) for t in text[1:-1].split(',')}
+                        else:
+                            threshold = {int(t) for t in text[1:-1].split(',')}
+                elif '.' in text:
+                    threshold = float(text)
+                else:
+                    threshold = int(text)
                 try:
                     comparison = int(node.getAttribute('comparison'))
                 except ValueError:
@@ -345,9 +405,3 @@ def equalFeatureRow(key1,key2):
     @rtype: L{KeyedPlane}
     """
     return KeyedPlane(KeyedVector({key1: 1.,key2: -1.}),0,0)
-def caseRow(key):
-    """
-    @return: a plane potentially testing the value of the given feature against multiple target values
-    @rtype: L{KeyedPlane}
-    """
-    return KeyedPlane(KeyedVector({key: 1.}),0,'switch')
