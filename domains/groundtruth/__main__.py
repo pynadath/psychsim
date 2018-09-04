@@ -481,8 +481,11 @@ def createWorld(config):
         world.diagram.setColor(group.name,'mediumpurple')
         groups.append(group)
 
-    for agent in population:
-        agent._initializeRelations(config)
+    toInit = [agent.name for agent in population]
+    while toInit:
+        name = random.choice(toInit)
+        toInit.remove(name)
+        world.agents[name]._initializeRelations(config)
 
     order = []
 #    if groups:
