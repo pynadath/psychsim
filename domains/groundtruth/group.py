@@ -1,3 +1,5 @@
+import random
+
 from psychsim.pwl import *
 from psychsim.agent import Agent
         
