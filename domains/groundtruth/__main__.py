@@ -451,7 +451,7 @@ def createWorld(config):
         for region,info in regions.items():
             group = Group(info['agent'].name,world,config)
             group.potentialMembers([a.name for a in info['inhabitants']],
-                                   config.getint('Groups','region_membership'))
+                                   membership=config.getint('Groups','region_membership'))
             groups.append(group)
     if config.getboolean('Groups','ethnic'):
         group = Group('EthnicMinority',world,config)
@@ -485,8 +485,8 @@ def createWorld(config):
         agent._initializeRelations(config)
 
     order = []
-    if groups:
-        order.append({g.name for g in groups})
+#    if groups:
+#        order.append({g.name for g in groups})
     if population:
         order.append({agent.name for agent in population})
     if system:
@@ -527,7 +527,7 @@ if __name__ == '__main__':
     parser.add_argument('-c','--compile',action='store_true',help='Pre-compile agent policies')
     parser.add_argument('-w','--write',action='store_true',help='Write simulation definition tables')
     parser.add_argument('-v','--visualize',default=None,help='Visualization feature')
-    parser.add_argument('--nosave',action='store_true',help='Do not save scenario file at end')
+    parser.add_argument('--pickle',action='store_true',help='Use Python pickle, not XML, to save scenario')
     
     args = vars(parser.parse_args())
     config = getConfig(args['instance'])
@@ -573,6 +573,7 @@ if __name__ == '__main__':
         world = createWorld(config)
         population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
         living = population[:]
+        groups = [agent for agent in world.agents.values() if isinstance(agent,Group)]
         regions = {agent.name: {'agent': agent,
                                 'inhabitants': [a for a in population if a.home == agent.name]}
                    for agent in world.agents.values() if isinstance(agent,Region)}
@@ -658,7 +659,7 @@ if __name__ == '__main__':
         if args['profile']:
             prof = cProfile.Profile()
             prof.enable()
-        while hurricanes < args['number'] or (oldPhase == 'none' and world.getState('Nature','days').first() <= config.getint('Disaster','phase_min_days')):
+        while hurricanes < args['number'] or (args['number'] > 0 and oldPhase == 'none' and world.getState('Nature','days').first() <= config.getint('Disaster','phase_min_days')):
             today = world.getState(WORLD,'day').first()
             logging.info('Day %d' % (today))
             day = today
@@ -667,6 +668,10 @@ if __name__ == '__main__':
                 agents = world.next()
                 turn = world.agents[next(iter(agents))].__class__.__name__
                 print(today,turn,oldPhase,time.time()-start)
+                actions = {}
+                if turn == 'Actor' and groups:
+                    # Make group decisions
+                    pass
                 if oldPhase == 'approaching':
                     if turn == 'Actor':
                         # Pre-hurricane survey
@@ -703,7 +708,6 @@ if __name__ == '__main__':
                     assert oldPhase == 'active'
                     print(world.getState('Nature','location').first())
                 # if oldPhase == 'active' and turn == 'Actor' and hurricanes == 0:
-                #     actions = {}
                 #     samaritans = set()
                 #     for index in range(1,100,10):
                 #         actor = 'Actor%04d' % (index)
@@ -713,17 +717,14 @@ if __name__ == '__main__':
                 #                 actions[actor] = action
                 #                 break
                 # elif day == 2 and turn == 'Actor':
-                #     actions = {}
                 #     for name in ['Actor0033','Actor0034']:
                 #         actor = world.agents[name]
                 #         for action in actor.actions:
                 #             if action['verb'] == 'stayInLocation':
                 #                 actions[name] = action
                 #                 break
-                # else:
-                #     actions = None
                 # newState = world.step(actions,select=True)
-                newState = world.step(select=True)
+                newState = world.step(actions,select=True)
                 buf = StringIO()
                 joint = world.explainAction(newState,level=1,buf=buf)
                 logging.debug('\n'+buf.getvalue())
@@ -811,5 +812,9 @@ if __name__ == '__main__':
             profile.sort_stats('time').print_stats()
             logging.critical(buf.getvalue())
             buf.close()
-        if not args['nosave']:
+        if args['pickle']:
+            import pickle
+            with open(os.path.join(dirName,'scenario.pkl'),'wb') as outfile:
+                pickle.dump(world,outfile)
+        else:
             world.save(os.path.join(dirName,'scenario.psy'))
