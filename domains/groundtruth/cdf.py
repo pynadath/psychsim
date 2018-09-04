@@ -308,7 +308,7 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                             if key in world.dynamics:
                                 record['Timestep'] = day
                             else:
-                                record['Timestep'] = 0
+                                record['Timestep'] = 1
                             if agent in world.agents:
                                 generic = stateKey(world.agents[agent].__class__.__name__,
                                                    state2feature(key))
