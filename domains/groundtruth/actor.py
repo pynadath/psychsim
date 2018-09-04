@@ -139,8 +139,11 @@ class Actor(Agent):
         regions = sorted([name for name in self.world.agents
                           if isinstance(self.world.agents[name],Region)])
         region = world.defineState(self.name,'region',list,regions,description='Region of residence')
-        index = int((number-1)*config.getint('Regions','regions')/config.getint('Actors','population'))
-        self.home = regions[index]
+        if config.getboolean('Regions','random_population'):
+            self.home = random.choice(regions)
+        else:
+            index = int((number-1)*config.getint('Regions','regions')/config.getint('Actors','population'))
+            self.home = regions[index]
         world.setFeature(region,self.home)
 
         # For display use only
@@ -240,7 +243,7 @@ class Actor(Agent):
 
         nop = self.addAction({'verb': 'stayInLocation'},
                              description='Actor does not move from current location, nor perform any pro/antisocial behaviors')
-        goHomeFrom = []
+        goHomeFrom = set()
         shelters = config.get('Shelter','region').split(',')
         if config.getboolean('Shelter','exists'):
             # Go to shelter
@@ -248,7 +251,7 @@ class Actor(Agent):
             for index in shelters:
                 shelter = 'shelter%s' % (index)
                 region = Region.nameString % (int(index))
-                goHomeFrom.append(shelter)
+                goHomeFrom.add(shelter)
                 tree = {'if': equalRow(stateKey('Nature','phase'),'none'),
                         True: False,
                         False: {'if': trueRow(alive),
@@ -282,7 +285,7 @@ class Actor(Agent):
                                              True: True, False: False}}})
             actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols),
                                          'Evacuate the city at least temporarily')
-            goHomeFrom.append('evacuated')
+            goHomeFrom.add('evacuated')
         if goHomeFrom:
             tree = makeTree({'if': equalRow(location,goHomeFrom),
                              True: True, False: False})
@@ -343,15 +346,15 @@ class Actor(Agent):
                 cell = int(region.name[-2:])
                 row = (cell-1) / 5
                 col = (cell-1) % 5
-                bordering = []
+                bordering = set()
                 if row > 0:
-                    bordering.append('Region%02d' % ((row-1)*5+col+1))
+                    bordering.add('Region%02d' % ((row-1)*5+col+1))
                 if row < len(regions)/5-1:
-                    bordering.append('Region%02d' % ((row+1)*5+col+1))
+                    bordering.add('Region%02d' % ((row+1)*5+col+1))
                 if col > 0:
-                    bordering.append('Region%02d' % (cell-1))
+                    bordering.add('Region%02d' % (cell-1))
                 if col < 4:
-                    bordering.append('Region%02d' % (cell+1))
+                    bordering.add('Region%02d' % (cell+1))
                 tree = makeTree({'if': equalRow(location,bordering),
                                  True: {'if': trueRow(alive),
                                         True: True, False: False}, False: False})
@@ -407,40 +410,26 @@ class Actor(Agent):
         
         # Effect on my health
         impact = likert[5][config.getint('Actors','health_impact')-1]
-        tree = {'if': thresholdRow(makeFuture(risk),likert[5][0]),
-                True: None,
-                False: approachMatrix(health,impact,self.health)}
-        subtree = tree
-        for level in range(1,4):
+        tree = {'if': thresholdRow(makeFuture(risk),likert[5][:]),
+                0: approachMatrix(health,impact,self.health)}
+        for level in range(1,6):
             value = likert[5][level-1]
             dist = [(approachMatrix(health,impact,0.),value),
                     (approachMatrix(health,impact,self.health),1.-value)]
-            subtree[True] = {'if': thresholdRow(makeFuture(risk),likert[5][level]),
-                             True: None,
-                             False: {'distribution': dist}}
-            subtree = subtree[True]
-        subtree[True] = {'distribution': [(approachMatrix(health,impact,0.),likert[5][3]),
-                                          (approachMatrix(health,impact,self.health),1.-likert[5][3])]}
+            tree[level] = {'distribution': dist}
         tree = makeTree({'if': trueRow(alive),
                          True: tree, False: setToConstantMatrix(health,0.)})
         world.setDynamics(health,True,tree)
 
         if self.kids > 0:
             # Effect on kids' health
-            tree = {'if': thresholdRow(makeFuture(risk),likert[5][0]),
-                    True: None,
-                    False: approachMatrix(kidHealth,impact,self.health)}
-            subtree = tree
-            for level in range(1,4):
+            tree = {'if': thresholdRow(makeFuture(risk),likert[5][:]),
+                    0: approachMatrix(kidHealth,impact,self.health)}
+            for level in range(1,6):
                 value = likert[5][level-1]
                 dist = [(approachMatrix(kidHealth,impact,0.),value),
                         (approachMatrix(kidHealth,impact,self.health),1.-value)]
-                subtree[True] = {'if': thresholdRow(makeFuture(risk),likert[5][level]),
-                                 True: None,
-                                 False: {'distribution': dist}}
-                subtree = subtree[True]
-            subtree[True] = {'distribution': [(approachMatrix(kidHealth,impact,0.),likert[5][3]),
-                                              (approachMatrix(kidHealth,impact,self.health),1.-likert[5][3])]}
+                tree[level] = {'distribution': dist}
             tree = makeTree({'if': trueRow(alive),
                              True: tree, False: setToConstantMatrix(kidHealth,0.)})
             world.setDynamics(kidHealth,True,tree)
@@ -461,7 +450,7 @@ class Actor(Agent):
             # Being at home or out of town, allows your job to make money
             tree = {'if': trueRow(alive),
                     True: {'if': trueRow(job),
-                           True: {'if': equalRow(location,[self.home,'evacuated']),
+                           True: {'if': equalRow(location,{self.home,'evacuated'}),
                                   True: approachMatrix(wealth,likert[5][impactJob-1],1.),
                                   False: noChangeMatrix(wealth)},
                            False: None},
@@ -636,6 +625,10 @@ class Actor(Agent):
             self.setO('phase',None,
                       makeTree(setToFeatureMatrix(omega,stateKey('Nature','phase'))))
             self.setState('phase','none')
+            omega = self.defineObservation('days',domain=int)
+            self.setO('days',None,
+                      makeTree(setToFeatureMatrix(omega,stateKey('Nature','days'))))
+            self.setState('days',0)
             omega = self.defineObservation('center',domain=list,
                                            lo=self.world.variables['Nature\'s location']['elements'])
             self.setO('center',None,
@@ -652,14 +645,14 @@ class Actor(Agent):
             if self.distortion == 'none':
                 tree = setToFeatureMatrix(omega,real)
             elif self.distortion == 'over':
-                tree = {'if': equalRow(real,[0,1]),
+                tree = {'if': equalRow(real,{0,1}),
                         True: setToFeatureMatrix(omega,real),
                         False: {'distribution': [(setToFeatureMatrix(omega,real),distortionProb),
                                                  (setToFeatureMatrix(omega,real,shift=1),
                                                   1.-distortionProb)]}}
             else:
                 assert self.distortion == 'under'
-                tree = {'if': equalRow(real,[0,5]),
+                tree = {'if': equalRow(real,{0,5}),
                         True: setToFeatureMatrix(omega,real),
                         False: {'distribution': [(setToFeatureMatrix(omega,real),distortionProb),
                                                  (setToFeatureMatrix(omega,real,shift=-1),

@@ -63,7 +63,7 @@ class Group(Agent):
         self.setAttribute('horizon',config.getint('Groups','horizon'))
         self.potentials = None
 
-    def potentialMembers(self,agents,weights=None):
+    def potentialMembers(self,agents,weights=None,membership=0):
         assert len(self.models) == 1,'Define potential members before adding multiple models of group %s' % (self.name)
         self.potentials = agents
         model = next(iter(self.models.keys()))
@@ -72,7 +72,11 @@ class Group(Agent):
             agent = self.world.agents[name]
             member = self.world.defineRelation(name,self.name,'memberOf',bool)
             # Join a group
-            self.world.setFeature(member,False)
+            if membership == 0:
+                self.world.setFeature(member,False)
+            else:
+                self.world.setFeature(member,random.random() < likert[5][membership-1])
+                
             tree = makeTree({'if': trueRow(stateKey(name,'alive')),
                              True: {'if': trueRow(member),
                                     True: False, False: True},
