@@ -12,6 +12,7 @@ class TestGroundTruth(unittest.TestCase):
         self.world = gt.createWorld(self.config)
 
     def test_loop(self):
+        keys = self.world.state.keys()
         seed = self.config.getint('Simulation','seedRun')
         self.assertEqual(seed,1)
         random.seed(seed)
@@ -22,7 +23,8 @@ class TestGroundTruth(unittest.TestCase):
             day = today
             while day == today:
                 names = sorted(self.world.next())
-                print('Day:',day,oldPhase,self.world.agents[names[0]].__class__.__name__)
+                turn = self.world.agents[names[0]].__class__.__name__
+                print('Day:',day,oldPhase,turn)
                 for name in names:
                     agent = self.world.agents[name]
                     if name[:5] == 'Actor':
@@ -58,7 +60,7 @@ class TestGroundTruth(unittest.TestCase):
                                 V = {}
                                 for action in actions:
                                     hypo = copy.deepcopy(belief)
-                                    self.world.step(action,hypo,belief.keys(),horizon=0)
+                                    self.world.step(action,hypo,keySubset=belief.keys(),horizon=0)
                                     V[action] = agent.reward(hypo,model)
                                 Vmax = max(V.values())
                                 for action in sorted(V):
@@ -69,8 +71,12 @@ class TestGroundTruth(unittest.TestCase):
                                 Astar = agent.decide(belief,horizon=1,model=model)['action']
                                 print(Astar)
                 newState = self.world.step(select=True)
+                for key in newState.keys():
+                    self.assertIn(key,newState.keyMap)
                 day = self.world.getState(WORLD,'day').first()
                 phase = self.world.getState('Nature','phase').first()
+                if turn == 'Nature' and oldPhase != 'active':
+                    self.assertNotEqual(phase,oldPhase)
                 if phase == 'none':
                     if oldPhase == 'active':
                         # Completed one hurricane
