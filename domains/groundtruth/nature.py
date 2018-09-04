@@ -114,8 +114,7 @@ class Nature(Agent):
         base_decrease = likert[5][config.getint('Disaster','risk_decay')-1]
         for region in regions:
             risk = stateKey(region,'risk')
-            distance = [abs(world.agents[center].x-world.agents[region].x) + \
-                        abs(world.agents[center].y-world.agents[region].y) for center in regions]
+            distance = [world.agents[region].distance(world.agents[center]) for center in regions]
             subtrees = {i: {'if': equalRow(category,list(range(1,6)))} for i in range(len(regions))}
             for i in range(len(regions)):
                 subtrees[i].update({cat: approachMatrix(risk,base_increase*float(cat+1)/\
