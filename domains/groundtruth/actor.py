@@ -248,7 +248,14 @@ class Actor(Agent):
         if config.getboolean('Shelter','exists'):
             # Go to shelter
             actShelter = {}
+            distances = {}
             for index in shelters:
+                shelter = 'shelter%s' % (index)
+                region = Region.nameString % (int(index))
+                distances[index] = self.world.agents[region].distance(self.home)
+            shortest = min(distances.values())
+            closest = [index for index in shelters if distances[index] == shortest]
+            for index in closest:
                 shelter = 'shelter%s' % (index)
                 region = Region.nameString % (int(index))
                 goHomeFrom.add(shelter)
@@ -695,9 +702,13 @@ class Actor(Agent):
         #self.setAttribute('selection','distribution')
         #self.setAttribute('rationality',1.)
 
+        self.friends = set()
+        
+
     def makeFriend(self,friend,config):
         key = binaryKey(self.name,friend.name,'friendOf')
-        if not key in self.world.variables:
+        if 'friendOf' not in self.world.relations or \
+           key not in self.world.relations['friendOf']:
             self.world.defineRelation(self.name,friend.name,'friendOf',bool)
         self.world.setFeature(key,True)
         if config.getboolean('Actors','messages'):
@@ -712,41 +723,35 @@ class Actor(Agent):
             
 
     def _initializeRelations(self,config):
-        friends = set()
         population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
         friendMax = config.getint('Actors','friends')
         neighbors = {a.name for a in population if a.name != self.name and \
                      self.world.getState(a.name,'region').first() == self.home}
-        friends = set()
         if friendMax > 0:
             # Social network
             friendCount = {}
-            for other in population:
-                if other.name != self.name or len(population) == 1:
-                    friendship = binaryKey(self.name,other.name,'friendOf')
-                    if not friendship in self.world.variables:
-                        self.world.defineRelation(self.name,other.name,'friendOf',bool)
-                    self.world.setFeature(friendship,False)
-                    friendCount[other.name] = 0
-                    if other.name in self.world.relations:
-                        for key in self.world.relations[other.name]:
-                            relation = key2relation(key)
-                            if relation['relation'] == 'friendOf':
-                                if self.world.getFeature(key).first():
-                                    # This person has a friend
-                                    friendCount[other.name] += 1
-                                    if friendCount[other.name] == friendMax:
-                                        del friendCount[other.name]
-                                        break
-            for count in range(friendMax):
-                friend = random.choice(list(set(friendCount.keys())))
+            if 'friendOf' in self.world.relations:
+                for key in self.world.relations['friendOf']:
+                    relation = key2relation(key)
+                    if relation['subject'] == self.name:
+                        self.friends.add(relation['object'])
+                    else:
+                        friendCount[relation['subject']] = friendCount.get(relation['subject'],0)+1
+            numFriends = random.randint(max(1,len(self.friends)),friendMax)
+            possibles = {agent.name for agent in population
+                         if friendCount.get(agent.name,0) < friendMax}
+            possibles -= self.friends
+            if len(population) > 1:
+                # For illustrative graph purposes, we allow links to self
+                possibles -= {self.name}
+            possibles = list(possibles)
+            while len(self.friends) < numFriends and possibles:
+                friend = random.choice(possibles)
+                possibles.remove(friend)
+                self.friends.add(friend)
                 self.makeFriend(self.world.agents[friend],config)
                 self.world.agents[friend].makeFriend(self,config)
-                friends.add(friend)
-                if friendCount[friend] == friendMax - 1:
-                    del friendCount[friend]
-                else:
-                    friendCount[friend] += 1
+                self.world.agents[friend].friends.add(self.name)
 
         sigma = config.getint('Actors','reward_sigma')
         mean = config.getint('Actors','altruism_neighbors_%s' % (self.religion))
@@ -762,13 +767,13 @@ class Actor(Agent):
         else:
             self.Rweights['neighbors'] = 0.
         mean = config.getint('Actors','altruism_friends_%s' % (self.religion))
-        if mean > 0:
+        if mean > 0 and self.friends:
             if sigma > 0:
                 self.Rweights['friends'] = sampleNormal(mean,sigma)
             else:
                 self.Rweights['friends'] = likert[mean-1]
             try:
-                self.Rweights['friends'] /= float(friendMax)
+                self.Rweights['friends'] /= float(len(self.friends))
             except ZeroDivisionError:
                 pass
         else:
@@ -778,7 +783,7 @@ class Actor(Agent):
                 R = 0.
                 if other in neighbors:
                     R += self.Rweights['neighbors']
-                if other in friends:
+                if other in self.friends:
                     R += self.Rweights['friends']
                 if R > 1e-8:
                     self.setReward(maximizeFeature(stateKey(other.name,'health'),self.name),R)
@@ -793,6 +798,8 @@ class Actor(Agent):
         shelters = {int(region) for region in config.get('Shelter','region').split(',')}
 
         include = set()
+        altNeighbor = config.getint('Actors','altruism_neighbors_%s' % (self.religion))
+        altFriend = config.getint('Actors','altruism_friends_%s' % (self.religion))
         for key in self.world.state.keys():
             if isBinaryKey(key):
                 agent = key2relation(key)['subject']
@@ -811,12 +818,11 @@ class Actor(Agent):
             elif agent == WORLD:
                 include.add(key)
             elif isinstance(self.world.agents[agent],Actor):
-                if config.getint('Actors','altruism_neighbors_%s' % (self.religion)) > 0 \
-                   and agent in neighbors:
+                if altNeighbor > 0 and agent in neighbors:
                     # I care about my neighbors' health
                     if state2feature(key) == 'health':
                         include.add(key)
-                elif config.getint('Actors','altruism_friends_%s' % (self.religion)) > 0 and \
+                elif altFriend > 0 and \
                      self.world.getFeature(binaryKey(self.name,agent,'friendOf')).first():
                     # I care about my friends' health
                     if state2feature(key) == 'health':
