@@ -27,15 +27,16 @@ class KeyedTree:
             self.makeLeaf(leaf)
             
     def isLeaf(self):
-        return self.leaf
+        return len(self.children) == 1
+#        return self.leaf
 
     def makeLeaf(self,leaf):
         self.children = {None: leaf}
         self.leaf = True
         self.branch = None
 
-    def makeBranch(self,plane,trueTree,falseTree):
-        self.children = {True: trueTree,False: falseTree}
+    def makeBranch(self,plane,children):
+        self.children = children
         self.branch = plane
         self.leaf = False
 
@@ -147,8 +148,9 @@ class KeyedTree:
             else:
                 tree.makeLeaf(leaf)
         elif self.branch:
-            tree.makeBranch(self.branch.desymbolize(table),self.children[True].desymbolize(table),
-                            self.children[False].desymbolize(table))
+            tree.makeBranch(self.branch.desymbolize(table),
+                            {value: self.children[value].desymbolize(table) \
+                             for value in self.children})
         else:
             new = TreeDistribution()
             for child in self.children.domain():
@@ -168,10 +170,11 @@ class KeyedTree:
             del self.children[None]
             fMatrix = setToConstantMatrix(key,lo)
             branch = KeyedPlane(KeyedVector(tMatrix[key]),lo)
-            self.makeBranch(branch,KeyedTree(tMatrix),KeyedTree(fMatrix))
+            self.makeBranch(branch,{True: KeyedTree(tMatrix),
+                                    False: KeyedTree(fMatrix)})
         elif self.branch:
-            self.children[True].floor(key,lo)
-            self.children[False].floor(key,lo)
+            for child in self.children.values():
+                child.floor(key,lo)
         else:
             for child in self.children.domain():
                 prob = self.children[child]
@@ -191,10 +194,11 @@ class KeyedTree:
             del self.children[None]
             tMatrix = setToConstantMatrix(key,hi)
             branch = KeyedPlane(KeyedVector(fMatrix[key]),hi)
-            self.makeBranch(branch,KeyedTree(tMatrix),KeyedTree(fMatrix))
+            self.makeBranch(branch,{True: KeyedTree(tMatrix),
+                                    False: KeyedTree(fMatrix)})
         elif self.branch:
-            self.children[True].ceil(key,hi)
-            self.children[False].ceil(key,hi)
+            for child in self.children.values():
+                child.ceil(key,hi)
         else:
             for child in self.children.domain():
                 prob = self.children[child]
@@ -234,8 +238,8 @@ class KeyedTree:
         if self.isLeaf():
             tree.makeLeaf(self.children[None].scale(table))
         elif self.branch:
-            tree.makeBranch(self.branch.scale(table),self.children[True].scale(table),
-                            self.children[False].scale(table))
+            tree.makeBranch(self.branch.scale(table),
+                            {value: self.children[value].scale(table) for value in self.children})
         else:
             new = {}
             for child in self.children.domain():
@@ -249,8 +253,8 @@ class KeyedTree:
                 return self.children[None] == other.children[None]
             else:
                 return False
-        elif isinstance(self.children,Distribution):
-            if isinstance(other.children,Distribution):
+        elif self.isProbabilistic():
+            if other.isProbabilistic():
                 return self.children == other.children
             else:
                 return False
@@ -287,8 +291,8 @@ class KeyedTree:
                     dist[other*child] = self.children[child]
                 tree.makeProbabilistic(TreeDistribution(dist))
             else:
-                tree.makeBranch(self.branch,other*self.children[True],
-                            other*self.children[False])
+                tree.makeBranch(self.branch,
+                                {value: other*self.children[value] for value in self.children})
             return tree
         else:
             return NotImplemented
@@ -313,7 +317,7 @@ class KeyedTree:
             else:
                 # Assume vectors
                 weights = leaf1 - leaf2
-            result.makeBranch(KeyedPlane(weights,0.),KeyedTree(leaf1),KeyedTree(leaf2))
+            result.makeBranch(KeyedPlane(weights,0.),{True: KeyedTree(leaf1),False: KeyedTree(leaf2)})
         return result
 
     def compose(self,other,leafOp=None,planeOp=None):
@@ -329,7 +333,7 @@ class KeyedTree:
         if other.isLeaf():
             if self.isLeaf():
                 result.graft(leafOp(self.children[None],other.children[None]))
-            elif self.branch is None:
+            elif self.isProbabilistic():
                 # Probabilistic branch
                 distribution = self.children.__class__()
                 for old in self.children.domain():
@@ -346,18 +350,23 @@ class KeyedTree:
                     result.graft(new)
             else:
                 # Deterministic branch
-                trueTree = self.children[True].compose(other,leafOp,planeOp)
-                falseTree = self.children[False].compose(other,leafOp,planeOp)
-                if trueTree == falseTree:
-                    result.graft(trueTree)
+                trees = {value: self.children[value].compose(other,leafOp,planeOp) \
+                         for value in self.children}
+                protoTree = None
+                for tree in trees.values():
+                    if protoTree is None:
+                        protoTree = tree
+                    elif tree != protoTree:
+                        if planeOp is None or not isinstance(other.children[None],KeyedMatrix):
+                            plane = self.branch
+                        else:
+                            plane = KeyedPlane([(planeOp(p,other.children[None]),t,c)
+                                                for p,t,c in self.branch.planes])
+                        result.makeBranch(plane,trees)
+                        break
                 else:
-                    if planeOp is None or not isinstance(other.children[None],KeyedMatrix):
-                        plane = self.branch
-                    else:
-                        plane = KeyedPlane([(planeOp(p,other.children[None]),t,c)
-                                            for p,t,c in self.branch.planes])
-                    result.makeBranch(plane,trueTree,falseTree)
-        elif other.branch is None:
+                    result.graft(protoTree)
+        elif other.isProbabilistic():
             # Probabilistic branch
             distribution = other.children.__class__()
             for old in other.children.domain():
@@ -374,12 +383,17 @@ class KeyedTree:
                 result.graft(new)
         else:
             # Deterministic branch
-            trueTree = self.compose(other.children[True],leafOp,planeOp)
-            falseTree = self.compose(other.children[False],leafOp,planeOp)
-            if trueTree == falseTree:
-                result.graft(trueTree)
+            trees = {value: self.compose(other.children[value],leafOp,planeOp) \
+                     for value in other.children}
+            protoTree = None
+            for tree in trees.values():
+                if protoTree is None:
+                    protoTree = tree
+                elif tree != protoTree:
+                    result.makeBranch(other.branch,trees)
+                    break
             else:
-                result.makeBranch(other.branch,trueTree,falseTree)
+                result.graft(protoTree)
         return result
             
     def replace(self,old,new):
@@ -430,8 +444,8 @@ class KeyedTree:
                 branch = planeOp(self.branch)
             else:
                 branch = self.branch
-            result.makeBranch(branch,self.children[True].map(leafOp,planeOp,distOp),
-                              self.children[False].map(leafOp,planeOp,distOp))
+            result.makeBranch(branch,{value: self.children[value].map(leafOp,planeOp,distOp) \
+                                      for value in self.children})
         return result
 
     def graft(self,root):
@@ -447,7 +461,7 @@ class KeyedTree:
             elif root.isProbabilistic():
                 self.makeProbabilistic(root.children)
             else:
-                self.makeBranch(root.branch,root.children[True],root.children[False])
+                self.makeBranch(root.branch,{value: root.children[value] for value in root.children})
         else:
             # Leaf node (not a very smart use of graft, but who are we to judge)
             self.makeLeaf(root)
@@ -466,26 +480,27 @@ class KeyedTree:
             distribution = self.children.__class__() 
             for tree in self.children.domain():
                 prob = self.children[tree]
-                tree.prune(path)
+                child = tree.prune(path)
                 try:
-                    distribution[tree] += prob
+                    distribution[child] += prob
                 except KeyError:
-                    distribution[tree] = prob
+                    distribution[child] = prob
             if len(distribution) == 1:
-                result.graft(tree)
+                result.graft(child)
             else:
                 result.makeProbabilistic(distribution)
         else:
             # Deterministic branch
             for branch,value in path:
                 conflict = self.branch.compare(branch,value)
-                if not conflict is None:
+                if conflict is not None:
                     result.graft(self.children[conflict].prune(path))
                     break
             else:
                 # No matches
-                result.makeBranch(self.branch,self.children[True].prune(path+[(self.branch,True)]),
-                                  self.children[False].prune(path+[(self.branch,False)]))
+                result.makeBranch(self.branch,
+                                  {value: self.children[value].prune(path+[(self.branch,value)]) 
+                                   for value in self.children})
         return result
                 
     def minimizePlanes(self):
@@ -518,13 +533,13 @@ class KeyedTree:
         if self._string is None:
             if self.isLeaf():
                 self._string = str(self.children[None])
-            elif True in self.children:
-                # Deterministic branch
-                self._string = 'if %s\nThen\t%s\nElse\t%s' % (str(self.branch),str(self.children[True]).replace('\n','\n\t'),
-                                                      str(self.children[False]).replace('\n','\n\t'))
-            else:
+            elif self.isProbabilistic():
                 # Probabilistic branch
                 self._string = '\n'.join(map(lambda el: '%d%%: %s' % (100.*self.children[el],str(el)),self.children.domain()))
+            else:
+                # Deterministic branch
+                self._string = 'if %s\n'  % (str(self.branch)) + \
+                               '\n'.join(['%s\t%s' % (value,str(self.children[value]).replace('\n','\n\t')) for value in self.children])
         return self._string
 
     def __xml__(self):
@@ -543,6 +558,9 @@ class KeyedTree:
                 elif isinstance(value,str):
                     node = doc.createElement('str')
                     node.appendChild(doc.createTextNode(value))
+                elif isinstance(value,int):
+                    node = doc.createElement('int')
+                    node.appendChild(doc.createTextNode(str(value)))
                 elif value is None:
                     node = doc.createElement('none')
                 else:
@@ -586,6 +604,9 @@ class KeyedTree:
                 elif node.tagName == 'str':
                     key = eval(node.getAttribute('key'))
                     children[key] = str(node.firstChild.data).strip()
+                elif node.tagName == 'int':
+                    key = int(node.getAttribute('key'))
+                    children[key] = KeyedTree(node)
                 elif node.tagName == 'none':
                     key = eval(node.getAttribute('key'))
                     children[key] = None
@@ -625,7 +646,8 @@ def makeTree(table):
     elif 'if' in table:
         # Binary deterministic branch
         tree = KeyedTree()
-        tree.makeBranch(table['if'],makeTree(table[True]),makeTree(table[False]))
+        children = {key: makeTree(table[key]) for key in table if key != 'if'}
+        tree.makeBranch(table['if'],children)
         return tree
     elif 'case' in table:
         # Non-binary deterministic branch
