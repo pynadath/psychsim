@@ -88,3 +88,10 @@ class Region(Agent):
             self.setState('shelterCapacity',int(config.get('Shelter','capacity').split(',')[index]))
             world.defineState(self.name,'shelterOccupancy',int)
             self.setState('shelterOccupancy',0)
+
+    def distance(self,region):
+        if isinstance(region,str):
+            return self.distance(self.world.agents[region])
+        else:
+            return abs(region.x-self.x) + abs(region.y-self.y)
+    
