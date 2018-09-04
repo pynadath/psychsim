@@ -1,6 +1,7 @@
 import random
 
 from psychsim.pwl import *
+from psychsim.action import *
 from psychsim.agent import Agent
         
 from data import likert
@@ -61,7 +62,7 @@ class Group(Agent):
             actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols))
             goHome = self.addAction({'verb': 'returnHome'})
 
-        doNothing = self.addAction({'verb': 'noDecision'})
+        self.nop = self.addAction({'verb': 'noDecision'})
         self.setAttribute('horizon',config.getint('Groups','horizon'))
         self.potentials = None
 
@@ -70,6 +71,7 @@ class Group(Agent):
         self.potentials = agents
         model = next(iter(self.models.keys()))
         size = stateKey(self.name,'size')
+        count = 0
         for name in agents:
             agent = self.world.agents[name]
             member = self.world.defineRelation(name,self.name,'memberOf',bool)
@@ -77,7 +79,10 @@ class Group(Agent):
             if membership == 0:
                 self.world.setFeature(member,False)
             else:
-                self.world.setFeature(member,random.random() < likert[5][membership-1])
+                inGroup = random.random() < likert[5][membership-1]
+                self.world.setFeature(member,inGroup)
+                if inGroup:
+                    count += 1
                 
             tree = makeTree({'if': trueRow(stateKey(name,'alive')),
                              True: {'if': trueRow(member),
@@ -118,6 +123,7 @@ class Group(Agent):
             weights = {a: 1. for a in agents}
         for name,weight in weights.items():
             self.setReward(name,weight,model)
+        self.setState('size',count)
 
     def members(self,state=None):
         if state is None:
@@ -181,12 +187,44 @@ class Group(Agent):
                         for key in dist.keys():
                             if key != CONSTANT:
                                 belief.keyMap[key] = substate
+        if belief is None:
+            belief = state.__class__()
+        for name in self.potentials:
             # Insert true models of members into group beliefs
             key = modelKey(name)
             submodel = state[key]
             assert len(submodel) == 1,'Unable to form uncertain beliefs about members'
-            substate = max(belief.keyMap.values())+1
-            belief.keyMap[key] = substate
-            vector = KeyedVector({CONSTANT: 1.,key: submodel.first()})
-            belief.distributions[substate] = VectorDistribution({vector: 1.})
+            belief.join(key,submodel)
         return belief
+
+    def decide(self,state=None,horizon=None,others=None,model=None,selection=None,actions=None):
+        if state is None:
+            state = self.world.state
+        if actions is None:
+            actions = self.getActions(state)
+        print(self.name)
+        print(self.getState('size',state))
+        if len(actions) == 1:
+            # Probably nop because no one's joined
+            result = {'action': next(iter(actions))}
+            result['policy'] = makeTree(setToConstantMatrix(stateKey(self.name,ACTION),
+                                                            result['action']))
+            return result
+        belief = self.getBelief(state,model)
+        members = self.members(state)
+        V = {}
+        for action in actions:
+            print(action)
+            assert len(action) == 1
+            joint = {}
+            current = copy.deepcopy(belief)
+            if action['verb'] == 'noDecision':
+                print(self.reward(current))
+            else:
+                for name in members:
+                    act = Action(next(iter(action)))
+                    act['subject'] = name
+                    joint[name] = ActionSet([act])
+                self.world.step(joint,current,keySubset=belief.keys(),updateBeliefs=False)
+            print(self.reward(current,model))
+        raise RuntimeError
