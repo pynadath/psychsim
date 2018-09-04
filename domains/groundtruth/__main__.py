@@ -283,7 +283,7 @@ preSurveyFields = ['Timestep','Participant','Hurricane']
 preSurveyFields += sorted(list(demographics.keys()))
 preSurveyQuestions = {'At Shelter': ('location','=shelter'),
                       'Evacuated': ('location','=evacuated'),
-                      'Category': ('Nature\'s category','max')}
+                      'Risk': ('Nature\'s category','max')}
 preSurveyFields += sorted(list(preSurveyQuestions.keys()))
 
 def getDemographics(actor):
@@ -450,7 +450,8 @@ def createWorld(config):
     if config.getboolean('Groups','region'):
         for region,info in regions.items():
             group = Group(info['agent'].name,world,config)
-            group.potentialMembers([a.name for a in info['inhabitants']])
+            group.potentialMembers([a.name for a in info['inhabitants']],
+                                   config.getint('Groups','region_membership'))
             groups.append(group)
     if config.getboolean('Groups','ethnic'):
         group = Group('EthnicMinority',world,config)
@@ -654,7 +655,10 @@ if __name__ == '__main__':
         oldPhase = world.getState('Nature','phase').first()
         start = time.time()
         stats = {}
-        while hurricanes < args['number']:
+        if args['profile']:
+            prof = cProfile.Profile()
+            prof.enable()
+        while hurricanes < args['number'] or (oldPhase == 'none' and world.getState('Nature','days').first() <= config.getint('Disaster','phase_min_days')):
             today = world.getState(WORLD,'day').first()
             logging.info('Day %d' % (today))
             day = today
@@ -664,35 +668,40 @@ if __name__ == '__main__':
                 turn = world.agents[next(iter(agents))].__class__.__name__
                 print(today,turn,oldPhase,time.time()-start)
                 if oldPhase == 'approaching':
-                    # Pre-hurricane survey
-                    count = 0
-                    sampleLimit = int(float(len(living))*config.getfloat('Data','presample')/
-                                      float(config.getint('Disaster','phase_min_days')))
-                    while count < sampleLimit:
-                        actor = random.choice(living)
-                        while actor.name in survey:
+                    if turn == 'Actor':
+                        # Pre-hurricane survey
+                        count = 0
+                        sampleLimit = int(float(len(living))*config.getfloat('Data','presample')/
+                                          float(config.getint('Disaster','phase_min_days')))
+                        while count < sampleLimit:
                             actor = random.choice(living)
-                        if actor.getState('alive').first():
-                            preSurvey(actor,dirName,hurricanes+1)
-                            survey.add(actor.name)
-                        else:
-                            living.remove(actor)
-                        count += 1
-                elif oldPhase == 'none' and hurricanes > 0:
-                    # Post-hurricane survey
-                    count = 0
-                    sampleLimit = int(float(len(living))*config.getfloat('Data','postsample')/
-                                      float(config.getint('Disaster','phase_min_days')))
-                    while count < sampleLimit:
-                        actor = random.choice(living)
-                        while actor.name in survey:
+                            while actor.name in survey:
+                                actor = random.choice(living)
+                            if actor.getState('alive').first():
+                                preSurvey(actor,dirName,hurricanes+1)
+                                survey.add(actor.name)
+                            else:
+                                living.remove(actor)
+                            count += 1
+                elif oldPhase == 'none':
+                    if hurricanes > 0:
+                        # Post-hurricane survey
+                        count = 0
+                        sampleLimit = int(float(len(living))*config.getfloat('Data','postsample')/
+                                          float(config.getint('Disaster','phase_min_days')))
+                        while count < sampleLimit:
                             actor = random.choice(living)
-                        if actor.getState('alive').first():
-                            postSurvey(actor,dirName,hurricanes+1)
-                            survey.add(actor.name)
-                        else:
-                            living.remove(actor)
-                        count += 1
+                            while actor.name in survey:
+                                actor = random.choice(living)
+                            if actor.getState('alive').first():
+                                postSurvey(actor,dirName,hurricanes+1)
+                                survey.add(actor.name)
+                            else:
+                                living.remove(actor)
+                            count += 1
+                else:
+                    assert oldPhase == 'active'
+                    print(world.getState('Nature','location').first())
                 # if oldPhase == 'active' and turn == 'Actor' and hurricanes == 0:
                 #     actions = {}
                 #     samaritans = set()
@@ -713,18 +722,8 @@ if __name__ == '__main__':
                 #                 break
                 # else:
                 #     actions = None
-                if args['profile']:
-                    prof = cProfile.Profile()
-                    prof.enable()
                 # newState = world.step(actions,select=True)
                 newState = world.step(select=True)
-                if args['profile']:
-                    prof.disable()
-                    buf = StringIO()
-                    profile = pstats.Stats(prof, stream=buf)
-                    profile.sort_stats('time').print_stats()
-                    logging.critical(buf.getvalue())
-                    buf.close()
                 buf = StringIO()
                 joint = world.explainAction(newState,level=1,buf=buf)
                 logging.debug('\n'+buf.getvalue())
@@ -805,5 +804,12 @@ if __name__ == '__main__':
                     addState2tables(world,today,allTables,population,regions)
                     vizUpdateLoop(day)
             writeHurricane(world,hurricanes+1,dirName)
+        if args['profile']:
+            prof.disable()
+            buf = StringIO()
+            profile = pstats.Stats(prof, stream=buf)
+            profile.sort_stats('time').print_stats()
+            logging.critical(buf.getvalue())
+            buf.close()
         if not args['nosave']:
             world.save(os.path.join(dirName,'scenario.psy'))
