@@ -845,14 +845,15 @@ class Actor(Agent):
     def getActions(self,state,actions=None):
         for group in self.memberOf(state):
             key = stateKey(group.name,ACTION)
-            dist = self.world.getFeature(key)
-            assert len(dist) == 1,'Unable to handle uncertain group decisions'
-            action = dist.first()
-            if action['verb'] != 'noDecision':
-                for myAction in self.actions:
-                    if myAction['verb'] == action['verb']:
-                        if 'object' not in action or myAction['object'] == action['object']:
-                            return {myAction}
+            if key in state:
+                dist = self.world.getFeature(key,state)
+                assert len(dist) == 1,'Unable to handle uncertain group decisions'
+                action = dist.first()
+                if action['verb'] != 'noDecision':
+                    for myAction in self.actions:
+                        if myAction['verb'] == action['verb']:
+                            if 'object' not in action or myAction['object'] == action['object']:
+                                return {myAction}
         return super().getActions(state,actions)
 
     def getO(self,state,actions):
