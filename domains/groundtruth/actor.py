@@ -759,7 +759,7 @@ class Actor(Agent):
             if sigma > 0:
                 self.Rweights['neighbors'] = sampleNormal(mean,sigma)
             else:
-                self.Rweights['neighbors'] = likert[mean-1]
+                self.Rweights['neighbors'] = likert[5][mean-1]
             try:
                 self.Rweights['neighbors'] /= float(len(neighbors))
             except ZeroDivisionError:
@@ -771,7 +771,7 @@ class Actor(Agent):
             if sigma > 0:
                 self.Rweights['friends'] = sampleNormal(mean,sigma)
             else:
-                self.Rweights['friends'] = likert[mean-1]
+                self.Rweights['friends'] = likert[5][mean-1]
             try:
                 self.Rweights['friends'] /= float(len(self.friends))
             except ZeroDivisionError:
