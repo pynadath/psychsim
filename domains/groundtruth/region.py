@@ -104,5 +104,8 @@ class Region(Agent):
     def setInhabitants(self,agents):
         self.inhabitants = agents
         total = sum([agent.getState('resources').expectation() for agent in agents])
-        self.setState('economy',total/float(len(agents)))
+        if agents:
+            self.setState('economy',total/float(len(agents)))
+        else:
+            self.setState('economy',total)
         
