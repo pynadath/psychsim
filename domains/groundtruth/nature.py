@@ -65,8 +65,8 @@ class Nature(Agent):
                                                         (incrementMatrix(category,1),prob/2.)]}}}
         else:
             subtree = noChangeMatrix(category)
-        tree = makeTree({'if': equalRow(makeFuture(phase),'approaching'),
-                         True: {'if': equalRow(category,0),
+        tree = makeTree({'if': equalRow(makeFuture(phase),['approaching','active','none']),
+                         0: {'if': equalRow(category,0),
                                 # Generate a random cateogry
                                 True: {'distribution': [(setToConstantMatrix(category,1),0.2),
                                                         (setToConstantMatrix(category,2),0.2),
@@ -74,9 +74,8 @@ class Nature(Agent):
                                                         (setToConstantMatrix(category,4),0.2),
                                                         (setToConstantMatrix(category,5),0.2)]},
                                 False: subtree},
-                         False: {'if': equalRow(makeFuture(phase),'active'),
-                                 True: noChangeMatrix(category),
-                                 False: setToConstantMatrix(category,0)}})
+                         1: noChangeMatrix(category),
+                         2: setToConstantMatrix(category,0)})
         world.setDynamics(category,evolution,tree)
 
         # For computing initial locations
