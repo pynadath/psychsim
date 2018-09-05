@@ -47,7 +47,7 @@ class Region(Agent):
 
         self.setAttribute('static',True)
         
-        risk = world.defineState(self.name,'risk',float)
+        risk = world.defineState(self.name,'risk',float,description='Level of risk from hurricane')
         try:
             self.risk = config.getfloat('Regions','risk_value')
         except configparser.NoOptionError:
@@ -59,7 +59,8 @@ class Region(Agent):
                 self.risk = likert[5][mean-1]
         world.setFeature(risk,self.risk)
 
-        security = world.defineState(self.name,'security',float)
+        security = world.defineState(self.name,'security',float,
+                                     description='Level of law enforcement in region')
         try:
             self.security = config.getfloat('Regions','security_value')
         except configparser.NoOptionError:
@@ -70,6 +71,10 @@ class Region(Agent):
             else:
                 self.security = likert[5][mean-1]
         world.setFeature(security,self.security)
+
+        economy = world.defineState(self.name,'economy',float,
+                                    description='Current economic level of region')
+        world.setFeature(economy,1.)
 
         if index is not None:
             # Shelter in this region
@@ -95,3 +100,9 @@ class Region(Agent):
         else:
             return abs(region.x-self.x) + abs(region.y-self.y)
     
+
+    def setInhabitants(self,agents):
+        self.inhabitants = agents
+        total = sum([agent.getState('resources').expectation() for agent in agents])
+        self.setState('economy',total/float(len(agents)))
+        
