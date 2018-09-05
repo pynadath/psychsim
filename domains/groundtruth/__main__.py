@@ -33,11 +33,12 @@ from system import System
 from group import Group
 from actor import Actor
 from cdf import *
+
 def runInstance(instance,args,config):
     for run in range(args['runs']):
         # Verify directory structure
         dirName = os.path.join(os.path.dirname(__file__),'Instances',
-                               'Instance%d' % (args['instance']),'Runs','run-%d' % (run))
+                               'Instance%d' % (instance),'Runs','run-%d' % (run))
         if not os.path.exists(dirName):
             os.makedirs(dirName)
         logfile = os.path.join(dirName,'psychsim.log')
@@ -808,8 +809,7 @@ if __name__ == '__main__':
     group.add_argument('-s','--samples',default=None,help='File of sample parameter settings')
     
     args = vars(parser.parse_args())
-    config = getConfig(args['instance'])
-    os.environ['PYTHONHASHSEED'] = config.get('Simulation','seedEnv')
+    
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
     if not isinstance(level, int):
@@ -893,7 +893,7 @@ if __name__ == '__main__':
                                        '%06d.ini' % (instance)),'w') as csvfile:
                     config.write(csvfile)
                 runInstance(instance,args,config)
-                sys.exit(0)
     else:
+        config = getConfig(args['instance'])
         runInstance(args['instance'],args,config)
         
