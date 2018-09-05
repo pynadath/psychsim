@@ -619,7 +619,8 @@ postSurveyQuestions = {'At Shelter': ('location','=shelter'),
                        'Evacuated': ('location','=evacuated'),
                        'Risk': ('risk','max'),
                        'Injured': ('health','<0.2'),
-                       'Government Response': ('grievance','likert')}
+#                       'Government Response': ('grievance','likert'),
+                       }
 postSurveyFields += sorted(list(postSurveyQuestions.keys()))
 
 def postSurvey(actor,dirName,hurricane):
