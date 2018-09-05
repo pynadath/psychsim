@@ -266,10 +266,10 @@ class Actor(Agent):
                                        True: False,
                                        False: True},
                                 False: False}}
-                if world.getState(region,'shelterCapacity').first() > 0:
-                    tree = {'if': greaterThanRow(stateKey(region,'shelterCapacity'),
-                                                 stateKey(region,'shelterOccupancy')),
-                            True: tree, False: False}
+#                if world.getState(region,'shelterCapacity').first() > 0:
+#                    tree = {'if': greaterThanRow(stateKey(region,'shelterCapacity'),
+#                                                 stateKey(region,'shelterOccupancy')),
+#                            True: tree, False: False}
                 if config.getboolean('Actors','movement'):
                     # Actors move from region to region
                     tree = {'if': equalFeatureRow(location,Region.nameString % (int(index))),
@@ -555,9 +555,9 @@ class Actor(Agent):
             # Effect on shelter occupancy
             for index,action in actShelter.items():
                 region = Region.nameString % (int(index))
-                key = stateKey(region,'shelterOccupancy')
-                tree = makeTree(incrementMatrix(key,1))
-                world.setDynamics(key,action,tree)
+                # key = stateKey(region,'shelterOccupancy')
+                # tree = makeTree(incrementMatrix(key,1))
+                # world.setDynamics(key,action,tree)
                 tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
                                  True: incrementMatrix(key,-1),
                                  False: noChangeMatrix(key)})
