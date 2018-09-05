@@ -205,8 +205,10 @@ def runInstance(instance,args,config):
                 #             if action['verb'] == 'stayInLocation':
                 #                 actions[name] = action
                 #                 break
-                # newState = world.step(actions,select=True)
-                newState = world.step(actions,select=True)
+                try:
+                    newState = world.step(actions,select=True)
+                except:
+                    raise
                 buf = StringIO()
                 joint = world.explainAction(newState,level=1,buf=buf)
                 logging.debug('\n'+buf.getvalue())
@@ -802,7 +804,7 @@ if __name__ == '__main__':
     parser.add_argument('-v','--visualize',default=None,help='Visualization feature')
     parser.add_argument('--pickle',action='store_true',help='Use Python pickle, not XML, to save scenario')
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('-i','--instance',default=1,type=int,help='Instance number')
+    group.add_argument('-i','--instance',default=None,type=int,help='Instance number')
     group.add_argument('-s','--samples',default=None,help='File of sample parameter settings')
     
     args = vars(parser.parse_args())
