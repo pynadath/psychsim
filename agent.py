@@ -71,7 +71,7 @@ class Agent:
         actions = self.actions
         model['V'] = {}
         for action in actions:
-            effects = self.world.deltaState(action,belief)
+            effects = self.world.deltaState(action,belief,belief.keys())
             effects.reverse()
             model['V'][action] = copy.deepcopy(R)
             keyList = model['V'][action].getKeysIn()
@@ -94,11 +94,7 @@ class Agent:
             keyList = [key for key in model['V'][action].getKeysIn() if isFuture(key)]
             if keyList:
                 model['V'][action].makePresent(keyList)
-#            print(model['V'][action])
-#            state = copy.deepcopy(belief)
-#            state.join(CONSTANT,1.)
-#            state *= model['V'][action]
-#            ER = state[Rkey]
+            model['V'][action] = model['V'][action].prune()
         return model['V']
                             
     def decide(self,vector=None,horizon=None,others=None,model=None,selection=None,actions=None,keySet=None):
@@ -952,7 +948,7 @@ class Agent:
                     SE[oldModel][label] = self.models[newModel]['index']
                 else:
                     # Work to be done. Start by getting old belief state.
-                    beliefs = self.getBelief(trueState,oldModel)
+                    beliefs = copy.deepcopy(self.getBelief(trueState,oldModel))
                     # Project direct effect of the actions, including possible observations
                     assert isinstance(actions,ActionSet)
                     relevantActions = actions.__class__({action for action in actions

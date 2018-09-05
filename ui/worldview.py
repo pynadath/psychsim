@@ -121,7 +121,7 @@ class WorldView(QGraphicsScene):
             g = graph.DependencyGraph(self.world)
             state = self.world.agents[agent].getBelief()
             assert len(state) == 1
-            g.computeGraph(state=state['%s0' % (agent)])
+            g.computeGraph(state=state.first())
         layout = getLayout(g)
         if agent == WORLD:
             # Lay out the action nodes

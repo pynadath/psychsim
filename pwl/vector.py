@@ -36,7 +36,7 @@ class KeyedVector(collections.MutableMapping):
                 delta += abs(value)
             tested[key] = True
         for key,value in other.items():
-            if not tested.has_key(key):
+            if key not in tested:
                 delta += abs(value)
         return delta < self.epsilon
 
@@ -190,7 +190,7 @@ class KeyedVector(collections.MutableMapping):
         return '%s(%r)' % (self.__class__.__name__,dict(self))
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(tuple(self._data.items()))
 
     def __xml__(self):
         doc = Document()
