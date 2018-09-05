@@ -558,22 +558,22 @@ class Actor(Agent):
                 # key = stateKey(region,'shelterOccupancy')
                 # tree = makeTree(incrementMatrix(key,1))
                 # world.setDynamics(key,action,tree)
-                tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
-                                 True: incrementMatrix(key,-1),
-                                 False: noChangeMatrix(key)})
-                if config.getboolean('Actors','evacuation'):
-                    world.setDynamics(key,actEvacuate,tree)
-                    tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
-                                     True: incrementMatrix(key,-1),
-                                     False: noChangeMatrix(key)})
-                world.setDynamics(key,goHome,tree)
-                for other in actShelter:
-                    if other != index:
-                        tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
-                                         True: incrementMatrix(key,-1),
-                                         False: noChangeMatrix(key)})
-                        world.setDynamics(key,actShelter[other],tree)
-                assert not config.getboolean('Actors','movement')
+                # tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
+                #                 True: incrementMatrix(key,-1),
+                #                 False: noChangeMatrix(key)})
+                #if config.getboolean('Actors','evacuation'):
+                #    world.setDynamics(key,actEvacuate,tree)
+                #    tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
+                #                     True: incrementMatrix(key,-1),
+                #                     False: noChangeMatrix(key)})
+                #world.setDynamics(key,goHome,tree)
+                #for other in actShelter:
+                #    if other != index:
+                #        tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
+                #                         True: incrementMatrix(key,-1),
+                #                         False: noChangeMatrix(key)})
+                #        world.setDynamics(key,actShelter[other],tree)
+                #assert not config.getboolean('Actors','movement')
 
         if self.pet and config.getboolean('Shelter','exists'):
             # Process shelters' pet policy
