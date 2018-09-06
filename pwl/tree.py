@@ -27,7 +27,7 @@ class KeyedTree:
             self.makeLeaf(leaf)
             
     def isLeaf(self):
-        return len(self.children) == 1
+        return len(self.children) == 1 and not isinstance(self.children,Distribution)
 #        return self.leaf
 
     def makeLeaf(self,leaf):
@@ -612,7 +612,7 @@ class KeyedTree:
                     children[key] = None
             node = node.nextSibling
         if plane:
-            self.makeBranch(plane,children[True],children[False])
+            self.makeBranch(plane,children)
         elif isinstance(children,Distribution):
             self.makeProbabilistic(children)
         else:
