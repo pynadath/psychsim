@@ -34,13 +34,16 @@ from group import Group
 from actor import Actor
 from cdf import *
 
-def runInstance(instance,args,config):
+def runInstance(instance,args,config,rerun=True):
     for run in range(args['runs']):
         # Verify directory structure
         dirName = os.path.join(os.path.dirname(__file__),'Instances',
                                'Instance%d' % (instance),'Runs','run-%d' % (run))
         if not os.path.exists(dirName):
             os.makedirs(dirName)
+        if not rerun and os.path.exists(os.path.join(dirName,'scenario.pkl')):
+            # Already ran this
+            return
         logfile = os.path.join(dirName,'psychsim.log')
         try:
             os.stat(dirName)
@@ -52,6 +55,7 @@ def runInstance(instance,args,config):
             pass
         logging.basicConfig(level=level,filename=logfile)
 
+        logging.info('Running Instance %d' % (instance))
         # Initialize world
         world = createWorld(config)
         population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
@@ -836,17 +840,16 @@ if __name__ == '__main__':
             base = int(os.path.splitext(os.path.split(args['samples'])[1])[0])
             config = getConfig(base)
             reader = csv.DictReader(csvfile,delimiter='\t')
-            shelters = []
-            risks = []
-            pets = []
-            healths = []
-            wealths = []
             for row in reader:
+                shelters = []
+                risks = []
+                pets = []
+                healths = []
+                wealths = []
                 for key,value in row.items():
                     key = key.strip()
                     if key == 'Sample ID':
                         instance = base+int(row[key])
-                        logging.debug('Parsing Instance %d' % (instance))
                     elif key == '\'Actor’s distribution over gender\'':
                         value = int(value)
                         if value == 1:
@@ -877,22 +880,24 @@ if __name__ == '__main__':
                                 pets.append('yes')
                             config.set('Shelter','pets',','.join(pets))
                     elif key[:-2] == '\'Actor’s distribution over health: group ':
-                        healths.append(value)
+                        healths.append(str(max(min(1.,float(value)),0.2)))
                         assert int(key[-2:-1]) == len(healths)
                         config.set('Actors','health_value_age',','.join(healths))
                     elif key[:-2] == '\'Actor’s distribution over resources: group ':
-                        wealths.append(value)
+                        wealths.append(str(max(min(1.,float(value)),0.2)))
                         assert int(key[-2:-1]) == len(wealths)
                         config.set('Actors','wealth_value_age',','.join(wealths))
                     else:
                         section,option,fun = mapFromTandE[key]
                         if fun is not None:
                             value = fun[value]
+                        if section == 'Regions':
+                            value = str(max(min(1.,float(value)),0.2))
                         config.set(section,option,value)
                 with open(os.path.join(os.path.dirname(__file__),'config',
                                        '%06d.ini' % (instance)),'w') as csvfile:
                     config.write(csvfile)
-                runInstance(instance,args,config)
+                runInstance(instance,args,config,False)
     else:
         config = getConfig(args['instance'])
         runInstance(args['instance'],args,config)
