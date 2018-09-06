@@ -225,6 +225,14 @@ def writeDefinition(world,dirName):
         for name in sorted(world.variables.keys()):
             if isBinaryKey(name):
                 writer.writerow(var2def(name,world))
+        record = {'Name': 'Actor neighborOf Actor','LongName': 'Actor is neighbor of Actor',
+                  'DataType': 'Boolean',
+                  'Values': '[%s]' % (sorted([a.name for a in world.agents.values()
+                                              if isinstance(a,region)])),
+                  }
+        writer.writerow(record)
+                         
+                         
                 
 def toCDF(world,dirName,tables,unobservable=set()):
     day = world.getState(WORLD,'day').first()
