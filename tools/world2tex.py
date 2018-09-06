@@ -188,14 +188,18 @@ def addTree(doc,tree,world,indent=0,prefix=None):
                     doc.append(Math(data='<',inline=True))
                 else:
                     doc.append(Math(data='>',inline=True))
-                if allInt:
+                if isinstance(threshold,list):
+                    doc.append('[%s]' % (','.join(map(str,threshold))))
+                elif isinstance(threshold,set):
+                    doc.append('{%s}' % (','.join(map(str,threshold))))
+                elif allInt:
                     doc.append('%d' % (threshold))
                 else:
                     doc.append('%4.2f' % (threshold))
         if len(tree.children) == 2 and True in tree.children and False in tree.children:
             values = [True,False]
         else:
-            values = sorted(tree.children.keys())
+            values = tree.children.keys()
         for value in values:
             child = tree.children[value]
             doc.append(LineBreak())
