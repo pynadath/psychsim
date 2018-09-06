@@ -78,15 +78,15 @@ def runInstance(instance,args,config,rerun=True):
         cdfTables = {'InstanceVariable': [],
                      'RunData': [],
                      'SummaryStatisticsData':
-                     [(population,'alive','count=False'),
-                      (population,'health','count<0.2'),
-                      (population,'location','count=evacuated'),
-                      (population,'location','count=shelter'),
-                      (population,'health','mean'),
-                      (population,'resources','mean'),
-                      ([world.agents[r] for r in regions],'risk','invert,mean'),
-                      (population,ACTION,'count=decreaseRisk'),
-                      (population,ACTION,'count=takeResources'),
+                     [(population,'alive','count=False','Deaths'),
+                      (population,'health','count<0.2','Casualties'),
+                      (population,'location','count=evacuated','Evacuees'),
+                      (population,'location','count=shelter','Sheltered'),
+                      (population,'health','mean','Wellbeing'),
+                      (population,'resources','mean','Wealth'),
+                      ([world.agents[r] for r in regions],'risk','invert,mean','Safety'),
+                      (population,ACTION,'count=decreaseRisk','Prosocial'),
+                      (population,ACTION,'count=takeResources','Antisocial'),
                      ],
                      'QualitativeData': [],
                      'RelationshipData': [],
@@ -133,7 +133,7 @@ def runInstance(instance,args,config,rerun=True):
             for agent in population:
                 agent.compileV()
         try:
-            random.seed(config.getint('Simulation','seedRun'))
+            random.seed(config.getint('Simulation','seedRun')+run)
         except ValueError:
             # Non int, so assume None
             random.seed()
@@ -156,9 +156,27 @@ def runInstance(instance,args,config,rerun=True):
                 turn = world.agents[next(iter(agents))].__class__.__name__
                 print(today,turn,oldPhase,time.time()-start)
                 actions = {}
-                if turn == 'Actor' and groups:
-                    # Make group decisions
-                    pass
+                if turn == 'Actor':
+                    if groups:
+                        # Make group decisions
+                        pass
+                    if config.getboolean('Actors','messages') and oldPhase != 'none':
+                        for actor in living:
+                            friends = [friend for friend in actor.friends
+                                       if world.agents[friend] in living]
+                            if friends:
+                                beliefs = actor.getBelief()
+                                assert len(beliefs) == 1
+                                model,myBelief = next(iter(beliefs.items()))
+                                key = 'Nature\'s category'
+                                total = myBelief[key]
+                                for friend in friends:
+                                    yrBelief = next(iter(world.agents[friend].getBelief().values()))
+                                    msg = yrBelief[key]
+                                    for value in msg.domain():
+                                        total.addProb(value,msg[value])
+                                total.normalize()
+                                actor.setBelief(key,total,model)
                 if oldPhase == 'approaching':
                     if turn == 'Actor':
                         # Pre-hurricane survey
@@ -301,6 +319,7 @@ def runInstance(instance,args,config,rerun=True):
             profile.sort_stats('time').print_stats()
             logging.critical(buf.getvalue())
             buf.close()
+        print('Saving...')
         if args['pickle']:
             import pickle
             with open(os.path.join(dirName,'scenario.pkl'),'wb') as outfile:

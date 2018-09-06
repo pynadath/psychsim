@@ -711,15 +711,15 @@ class Actor(Agent):
            key not in self.world.relations['friendOf']:
             self.world.defineRelation(self.name,friend.name,'friendOf',bool)
         self.world.setFeature(key,True)
-        if config.getboolean('Actors','messages'):
-            tree = makeTree({'if': trueRow(stateKey(self.name,'alive')),
-                             True: {'if': trueRow(key),
-                                    True: True, False: False},
-                             False: False})
-            msg = self.addAction({'verb': 'msgReHurricane','object': friend.name},
-                                 tree.desymbolize(self.world.symbols),
-                                 'Send message communicating my current perceptions about the hurricane and its impact')
-            omega = friend.defineObservation('rcvdCategoryMsg',domain=int)
+        # if config.getboolean('Actors','messages'):
+        #     tree = makeTree({'if': trueRow(stateKey(self.name,'alive')),
+        #                      True: {'if': trueRow(key),
+        #                             True: True, False: False},
+        #                      False: False})
+        #     msg = self.addAction({'verb': 'msgReHurricane','object': friend.name},
+        #                          tree.desymbolize(self.world.symbols),
+        #                          'Send message communicating my current perceptions about the hurricane and its impact')
+        #     omega = friend.defineObservation('rcvdCategoryMsg',domain=int)
             
 
     def _initializeRelations(self,config):
