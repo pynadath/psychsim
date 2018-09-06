@@ -77,7 +77,12 @@ def computeValue(data,funs):
         raise ValueError('Unknown functional value: %s' % (funs[-1]))
     
 def appendSummary(datum,world,writer,fields,region=None):
-    entities,feature,metadata = datum
+    if len(datum) == 3:
+        entities,feature,metadata = datum
+        label = None
+    else:
+        assert len(datum) == 4
+        entities,feature,metadata,label = datum
     funs = metadata.split(',')
     data = {'total': 0,
             'count': 0}
@@ -99,7 +104,10 @@ def appendSummary(datum,world,writer,fields,region=None):
         elif field == 'EntityIdx':
             record[field] = '[%s%d-%d]' % (generic,first,last)
         elif field == 'Metadata':
-            record[field] = metadata
+            if label:
+                record[field] = label
+            else:
+                record[field] = metadata
         elif field == 'Timestep':
             record[field] = world.getState(WORLD,'day').first()
         elif field != 'Value':
@@ -230,15 +238,35 @@ def toCDF(world,dirName,tables,unobservable=set()):
                         relation = key2relation(key)
                         value = world.getFeature(key)
                         assert len(value) == 1
-                        record = {'RelationshipType': relation['relation'],
-                                  'Directed': 'yes',
-                                  'FromEntityId': relation['subject'],
-                                  'ToEntityId': relation['object'],
-                                  'Data': value.first()
-                                  }
-                        if key in world.dynamics:
-                            record['Timestep'] = day
-                        writer.writerow(record)
+                        if key in world.dynamics or value.first():
+                            record = {'RelationshipType': relation['relation'],
+                                      'Directed': 'yes',
+                                      'FromEntityId': relation['subject'],
+                                      'ToEntityId': relation['object'],
+                                      'Data': value.first()
+                                      }
+                            if key in world.dynamics:
+                                record['Timestep'] = day
+                            writer.writerow(record)
+                neighbors = {}
+                for name1 in world.agents:
+                    agent1 = world.agents[name1]
+                    if isinstance(agent1,Actor):
+                        try:
+                            neighbors[agent1.home].append(name1)
+                        except KeyError:
+                            neighbors[agent1.home] = [name1]
+                for region,agents in neighbors.items():
+                    for i in range(len(agents)-1):
+                        for j in range(i+1,len(agents)):
+                            record = {'RelationshipType': 'neighbor',
+                                      'Directed': 'no',
+                                      'FromEntityId': agents[i],
+                                      'ToEntityId': agents[j],
+                                      'Data': region,
+                            }
+                            writer.writerow(record)
+                    
             # elif name == 'InstanceVariable':
             #     for key,variable in sorted(world.variables.items()):
             #         if (isStateKey(key) and not isTurnKey(key) and not isModelKey(key) and \
