@@ -331,18 +331,16 @@ class KeyedPlane:
                 assert node.tagName == 'vector'
                 vector = KeyedVector(node)
                 text = node.getAttribute('threshold')
-                if ',' in text:
-                    if text[0] == '[':
-                        if '.' in text:
-                            threshold = [float(t) for t in text[1:-1].split(',')]
-                        else:
-                            threshold = [int(t) for t in text[1:-1].split(',')]
+                if text[0] == '[':
+                    if '.' in text:
+                        threshold = [float(t) for t in text[1:-1].split(',')]
                     else:
-                        assert text[0] == '{'
-                        if '.' in text:
-                            threshold = {float(t) for t in text[1:-1].split(',')}
-                        else:
-                            threshold = {int(t) for t in text[1:-1].split(',')}
+                        threshold = [int(t) for t in text[1:-1].split(',')]
+                elif text[0] == '{':
+                    if '.' in text:
+                        threshold = {float(t) for t in text[1:-1].split(',')}
+                    else:
+                        threshold = {int(t) for t in text[1:-1].split(',')}
                 elif '.' in text:
                     threshold = float(text)
                 else:
