@@ -81,7 +81,7 @@ def runInstance(instance,args,config,rerun=True):
                      [(population,'alive','count=False'),
                       (population,'health','count<0.2'),
                       (population,'location','count=evacuated'),
-                      ([world.agents[r] for r in regions],'shelterOccupancy','sum'),
+                      (population,'location','count=shelter'),
                       (population,'health','mean'),
                       (population,'resources','mean'),
                       ([world.agents[r] for r in regions],'risk','invert,mean'),
