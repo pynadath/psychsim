@@ -706,6 +706,7 @@ class Actor(Agent):
         
 
     def makeFriend(self,friend,config):
+        self.friends.add(friend.name)
         key = binaryKey(self.name,friend.name,'friendOf')
         if 'friendOf' not in self.world.relations or \
            key not in self.world.relations['friendOf']:
@@ -748,10 +749,8 @@ class Actor(Agent):
             while len(self.friends) < numFriends and possibles:
                 friend = random.choice(possibles)
                 possibles.remove(friend)
-                self.friends.add(friend)
                 self.makeFriend(self.world.agents[friend],config)
                 self.world.agents[friend].makeFriend(self,config)
-                self.world.agents[friend].friends.add(self.name)
 
         sigma = config.getint('Actors','reward_sigma')
         mean = config.getint('Actors','altruism_neighbors_%s' % (self.religion))
@@ -820,12 +819,12 @@ class Actor(Agent):
             elif isinstance(self.world.agents[agent],Actor):
                 if altNeighbor > 0 and agent in neighbors:
                     # I care about my neighbors' health
-                    if state2feature(key) == 'health':
+                    if state2feature(key) in {'health','alive','risk'}:
                         include.add(key)
                 elif altFriend > 0 and \
                      self.world.getFeature(binaryKey(self.name,agent,'friendOf')).first():
                     # I care about my friends' health
-                    if state2feature(key) == 'health':
+                    if state2feature(key) in {'health','alive','risk'}:
                         include.add(key)
             elif isinstance(self.world.agents[agent],Region):
                 if agent == self.home:
