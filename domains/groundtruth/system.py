@@ -31,16 +31,17 @@ class System(Agent):
 #            self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),1.)
         allocation = config.getint('System','system_allocation')
         for region in populated:
-            tree = makeTree({'if': thresholdRow(resources,allocation),True: True,False: False})
-            allocate = self.addAction({'verb': 'allocate','object': region},
-                                      tree.desymbolize(world.symbols))
+#            tree = makeTree({'if': thresholdRow(resources,allocation),True: True,False: False})
+            allocate = self.addAction({'verb': 'allocate','object': region})
+#                                      tree.desymbolize(world.symbols))
             risk = stateKey(region,'risk')
             self.setReward(minimizeFeature(risk,self.name),
                            likert[5][config.getint('System','reward_health')-1])
-            tree = makeTree(approachMatrix(risk,0.1,0.))
+            tree = makeTree(approachMatrix(risk,likert[5][config.getint('System','system_impact')-1],
+                                           0.))
             world.setDynamics(risk,allocate,tree)
-            tree = makeTree(incrementMatrix(resources,-allocation))
-            world.setDynamics(resources,allocate,tree)
+#            tree = makeTree(incrementMatrix(resources,-allocation))
+#            world.setDynamics(resources,allocate,tree)
             if config.getboolean('Actors','grievance'):
                 delta = likert[5][config.getint('Actors','grievance_delta')]
                 for actor in population:
