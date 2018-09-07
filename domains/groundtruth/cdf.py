@@ -331,6 +331,23 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                                   'ToEntityId': relation['object'],
                                   'Data': value.first()}
                         writer.writerow(record)
+            elif name == 'QualitativeData':
+                if len(table) > 1:
+                    population = sorted([a.name for a in world.agents.values() if isinstance(a,Actor)])
+                    for key,value in table[-1].items():
+                        delta = value - table[-2][key]
+                        if delta > len(population)/10:
+                            record = {'Timestep': day,
+                                      'EntityIdx': '[%s-%s]' % (population[0],population[-1]),
+                                      'QualData': 'Many more people %s during this hurricane than the previous one.' % (key),
+                                      'Metadata': 'Based on official records.'}
+                            writer.writerow(record)
+                        elif delta < -len(population)/10:
+                            record = {'Timestep': day,
+                                      'EntityIdx': '[%s-%s]' % (population[0],population[-1]),
+                                      'QualData': 'Many fewer people %s during this hurricane than the previous one.' % (key),
+                                      'Metadata': 'Based on official records.'}
+                            writer.writerow(record)
             elif name == 'RunData':
                 for key,variable in sorted(world.variables.items()):
                     if isStateKey(key) or isBinaryKey(key):

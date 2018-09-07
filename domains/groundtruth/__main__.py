@@ -97,8 +97,7 @@ def runInstance(instance,args,config,rerun=True):
                      },
                      'Regional': {'Deaths': (regions,'alive','count=False'),
                                   'Casualties': (regions,'health','count<0.2'),
-                                  'Sheltered': ([world.agents[r] for r in regions],'shelterOccupancy',
-                                                None)
+                                  'Sheltered': (regions,'location','count=shelter')
                      },
         }
         toCDF(world,dirName,cdfTables)
@@ -161,6 +160,8 @@ def runInstance(instance,args,config,rerun=True):
                         # Make group decisions
                         pass
                     if config.getboolean('Actors','messages') and oldPhase != 'none':
+                        myScale = likert[5][config.getint('Actors','self_trust')-1]
+                        yrScale = likert[5][config.getint('Actors','friend_trust')-1]
                         for actor in living:
                             friends = [friend for friend in actor.friends
                                        if world.agents[friend] in living]
@@ -169,12 +170,13 @@ def runInstance(instance,args,config,rerun=True):
                                 assert len(beliefs) == 1
                                 model,myBelief = next(iter(beliefs.items()))
                                 key = 'Nature\'s category'
-                                total = myBelief[key]
+                                dist = myBelief[key]
+                                total = Distribution({el: myScale*dist[el] for el in dist.domain()})
                                 for friend in friends:
                                     yrBelief = next(iter(world.agents[friend].getBelief().values()))
                                     msg = yrBelief[key]
                                     for value in msg.domain():
-                                        total.addProb(value,msg[value])
+                                        total.addProb(value,yrScale*msg[value])
                                 total.normalize()
                                 actor.setBelief(key,total,model)
                 if oldPhase == 'approaching':
@@ -242,16 +244,31 @@ def runInstance(instance,args,config,rerun=True):
                 buf.close()
                 if oldPhase == 'active':
                     # Record what these doomed souls did to postpone the inevitable
+                    evacuees = 0
+                    shelter = 0
+                    deaths = 0
                     for name,action in joint.items():
                         agent = world.agents[name]
                         if isinstance(agent,Actor):
-                            belief = agent.getBelief()
-                            assert len(belief) == 1,'Unable to store beliefs over uncertain models'
-                            belief = next(iter(belief.values()))
-                            entry = {'action': action}
-                            for feature in ['location','risk','health','grievance']:
-                                entry[feature] = agent.getState(feature,belief)
-                            history[name] = history.get(name,[])+[entry]
+                            if agent.getState('alive').first():
+                                belief = agent.getBelief()
+                                assert len(belief) == 1,'Unable to store beliefs over uncertain models'
+                                belief = next(iter(belief.values()))
+                                entry = {'action': action}
+                                for feature in ['location','risk','health','grievance']:
+                                    entry[feature] = agent.getState(feature,belief)
+                                    if feature == 'location':
+                                        if entry[feature].first() == 'evacuated':
+                                            evacuees += 1
+                                        elif entry[feature].first()[:7] == 'shelter':
+                                            shelter += 1
+                                history[name] = history.get(name,[])+[entry]
+                            else:
+                                deaths += 1
+                    qualData = cdfTables['QualitativeData'][-1]
+                    qualData['evacuated'] = max(evacuees,qualData.get('evacuated',0))
+                    qualData['went to shelters'] = max(shelter,qualData.get('shelter',0))
+                    qualData['died'] = max(deaths,qualData.get('deaths',0))
                 # elif turn == 'Actor':
                 #     regions = {}
                 #     for name,action in joint.items():
@@ -279,6 +296,9 @@ def runInstance(instance,args,config,rerun=True):
                 if phase != oldPhase:
                     # Reset survey on each phase change
                     survey.clear()
+                    if phase == 'active':
+                        # New hurricane
+                        cdfTables['QualitativeData'].append({})
                 if phase == 'none':
                     if oldPhase == 'active':
                         hurricanes += 1
@@ -785,8 +805,8 @@ def createWorld(config):
         world.agents[name]._initializeRelations(config)
 
     order = []
-#    if groups:
-#        order.append({g.name for g in groups})
+    if groups:
+        order.append({g.name for g in groups})
     if population:
         order.append({agent.name for agent in population})
     if system:
