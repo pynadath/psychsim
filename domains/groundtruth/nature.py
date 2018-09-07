@@ -84,16 +84,17 @@ class Nature(Agent):
         # For computing hurricane movement
         subtree = {'if': equalRow(location,regions[:]),
                    None: noChangeMatrix(location)}
+        northProb = likert[5][config.getint('Disaster','move_north')-1]
         for index in range(len(regions)):
             region = world.agents[regions[index]]
             if config.getint('Disaster','stall_prob') > 0:
                 stall = likert[5][config.getint('Disaster','stall_prob')-1]
                 dist = [(setToConstantMatrix(location,region.name),stall),
-                        (setToConstantMatrix(location,region.north),(1.-stall)/2.),
-                        (setToConstantMatrix(location,region.east),(1.-stall)/2.)]
+                        (setToConstantMatrix(location,region.north),(1.-stall)*northProb),
+                        (setToConstantMatrix(location,region.east),(1.-stall)*(1.-northProb))]
             else:
-                dist = [(setToConstantMatrix(location,region.north),0.5),
-                        (setToConstantMatrix(location,region.east),0.5)]
+                dist = [(setToConstantMatrix(location,region.north),northProb),
+                        (setToConstantMatrix(location,region.east),1.-northProb)]
             subtree[index] = {'distribution': dist}
         tree = makeTree({'if': equalRow(makeFuture(phase),['approaching','active','none']),
                          0: {'if': equalRow(location,'none'),
