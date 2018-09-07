@@ -624,6 +624,20 @@ class Actor(Agent):
                 else:
                     self.Rweights['pet'] = likert[5][mean-1]
                 self.setReward(maximizeFeature(pet,self.name),self.Rweights['pet'])
+        mean = config.getint('Actors','altruism_neighbors_%s' % (self.religion))
+        if mean > 0:
+            if sigma > 0:
+                self.Rweights['neighbors'] = sampleNormal(mean,sigma)
+            else:
+                self.Rweights['neighbors'] = likert[5][mean-1]
+            try:
+                self.Rweights['neighbors'] /= float(len(neighbors))
+            except ZeroDivisionError:
+                pass
+            self.setReward(minimizeFeature(stateKey(self.home,'risk'),self.name),
+                           self.Rweights['neighbors'])
+        else:
+            self.Rweights['neighbors'] = 0.
         if config.getboolean('Actors','beliefs'):
             # Observations
             evolve = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
@@ -698,7 +712,12 @@ class Actor(Agent):
                                                                          (setToFeatureMatrix(omega,real,shift=-1),(1.-trueProb)/2.),
                                                                          (setToFeatureMatrix(omega,real,shift=1),(1.-trueProb)/2.)]}}}))
         # Decision-making parameters
-        self.setAttribute('horizon',config.getint('Actors','horizon'))
+        minH = config.getint('Actors','min_horizon')
+        maxH = config.getint('Actors','max_horizon')
+        if minH == maxH:
+            self.setAttribute('horizon',minH)
+        else:
+            self.setAttribute('horizon',random.randint(minH,maxH))
         #self.setAttribute('selection','distribution')
         #self.setAttribute('rationality',1.)
 
@@ -753,18 +772,6 @@ class Actor(Agent):
                 self.world.agents[friend].makeFriend(self,config)
 
         sigma = config.getint('Actors','reward_sigma')
-        mean = config.getint('Actors','altruism_neighbors_%s' % (self.religion))
-        if mean > 0:
-            if sigma > 0:
-                self.Rweights['neighbors'] = sampleNormal(mean,sigma)
-            else:
-                self.Rweights['neighbors'] = likert[5][mean-1]
-            try:
-                self.Rweights['neighbors'] /= float(len(neighbors))
-            except ZeroDivisionError:
-                pass
-        else:
-            self.Rweights['neighbors'] = 0.
         mean = config.getint('Actors','altruism_friends_%s' % (self.religion))
         if mean > 0 and self.friends:
             if sigma > 0:
@@ -780,8 +787,8 @@ class Actor(Agent):
         for other in population:
             if self.name != other.name:
                 R = 0.
-                if other in neighbors:
-                    R += self.Rweights['neighbors']
+#                if other in neighbors:
+#                    R += self.Rweights['neighbors']
                 if other in self.friends:
                     R += self.Rweights['friends']
                 if R > 1e-8:
@@ -816,16 +823,16 @@ class Actor(Agent):
                 include.add(key)
             elif agent == WORLD:
                 include.add(key)
-            elif isinstance(self.world.agents[agent],Actor):
-                if altNeighbor > 0 and agent in neighbors:
-                    # I care about my neighbors' health
-                    if state2feature(key) in {'health','alive','risk'}:
-                        include.add(key)
-                elif altFriend > 0 and \
-                     self.world.getFeature(binaryKey(self.name,agent,'friendOf')).first():
-                    # I care about my friends' health
-                    if state2feature(key) in {'health','alive','risk'}:
-                        include.add(key)
+            # elif isinstance(self.world.agents[agent],Actor):
+            #     if altNeighbor > 0 and agent in neighbors:
+            #         # I care about my neighbors' health
+            #         if state2feature(key) in {'health','alive','risk'}:
+            #             include.add(key)
+            #     elif altFriend > 0 and \
+            #          self.world.getFeature(binaryKey(self.name,agent,'friendOf')).first():
+            #         # I care about my friends' health
+            #         if state2feature(key) in {'health','alive','risk'}:
+            #             include.add(key)
             elif isinstance(self.world.agents[agent],Region):
                 if agent == self.home:
                     if not isModelKey(key):
