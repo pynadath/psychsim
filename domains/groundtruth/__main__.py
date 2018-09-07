@@ -87,6 +87,7 @@ def runInstance(instance,args,config,rerun=True):
                       ([world.agents[r] for r in regions],'risk','invert,mean','Safety'),
                       (population,ACTION,'count=decreaseRisk','Prosocial'),
                       (population,ACTION,'count=takeResources','Antisocial'),
+                      (regions,'health','mean','Regional Wellbeing'),
                      ],
                      'QualitativeData': [],
                      'RelationshipData': [],
@@ -161,7 +162,8 @@ def runInstance(instance,args,config,rerun=True):
                         pass
                     if config.getboolean('Actors','messages') and oldPhase != 'none':
                         myScale = likert[5][config.getint('Actors','self_trust')-1]
-                        yrScale = likert[5][config.getint('Actors','friend_trust')-1]
+                        optScale = likert[5][config.getint('Actors','friend_opt_trust')-1]
+                        pessScale = likert[5][config.getint('Actors','friend_pess_trust')-1]
                         for actor in living:
                             friends = [friend for friend in actor.friends
                                        if world.agents[friend] in living]
@@ -175,6 +177,10 @@ def runInstance(instance,args,config,rerun=True):
                                 for friend in friends:
                                     yrBelief = next(iter(world.agents[friend].getBelief().values()))
                                     msg = yrBelief[key]
+                                    if msg.expectation() > dist.expectation():
+                                        yrScale = pessScale
+                                    else:
+                                        yrScale = optScale
                                     for value in msg.domain():
                                         total.addProb(value,yrScale*msg[value])
                                 total.normalize()
@@ -246,7 +252,6 @@ def runInstance(instance,args,config,rerun=True):
                     # Record what these doomed souls did to postpone the inevitable
                     evacuees = 0
                     shelter = 0
-                    deaths = 0
                     for name,action in joint.items():
                         agent = world.agents[name]
                         if isinstance(agent,Actor):
@@ -263,12 +268,9 @@ def runInstance(instance,args,config,rerun=True):
                                         elif entry[feature].first()[:7] == 'shelter':
                                             shelter += 1
                                 history[name] = history.get(name,[])+[entry]
-                            else:
-                                deaths += 1
                     qualData = cdfTables['QualitativeData'][-1]
                     qualData['evacuated'] = max(evacuees,qualData.get('evacuated',0))
                     qualData['went to shelters'] = max(shelter,qualData.get('shelter',0))
-                    qualData['died'] = max(deaths,qualData.get('deaths',0))
                 # elif turn == 'Actor':
                 #     regions = {}
                 #     for name,action in joint.items():
@@ -596,7 +598,7 @@ preSurveyFields = ['Timestep','Participant','Hurricane']
 preSurveyFields += sorted(list(demographics.keys()))
 preSurveyQuestions = {'At Shelter': ('location','=shelter'),
                       'Evacuated': ('location','=evacuated'),
-                      'Risk': ('Nature\'s category','max')}
+                      'Risk': ('risk','expectation')}
 preSurveyFields += sorted(list(preSurveyQuestions.keys()))
 
 def getDemographics(actor):
@@ -655,6 +657,8 @@ def preSurvey(actor,dirName,hurricane):
                         record[field] = 'yes'
                     else:
                         record[field] = 'no'
+                elif fun == 'expectation':
+                    record[field] = toLikert(value.expectation())
             writer.writerow(record)
 
 history = {}
@@ -682,24 +686,28 @@ def postSurvey(actor,dirName,hurricane):
             today = actor.world.getState(WORLD,'day').first()
             record = {'Timestep': today,
                       'Hurricane': hurricane}
-            preSurveyRecords.append(record)
-            record['Participant'] = len(preSurveyRecords)
+            postSurveyRecords.append(record)
+            record['Participant'] = len(postSurveyRecords)
             logging.debug('PostSurvey %d, Participant %d: %s' % (hurricane,record['Participant'],actor.name))
             record.update(getDemographics(actor))
+            belief = actor.getBelief()
+            assert len(belief) == 1,'Unable to answer pre-survey with uncertain models'
+            belief = next(iter(belief.values()))
             for field,answer in postSurveyQuestions.items():
                 feature,fun = answer
                 if fun == 'likert':
-                    value = actor.getState(feature)
-                    assert len(value) == 1,'Unable to answer questions using uncertain state'
+                    value = actor.getState(feature,belief)
+                    if len(value) > 1:
+                        value = value.expectation()
                     record[field] = toLikert(value.first())
                 else:
                     for entry in history.get(actor.name,[]):
                         value = entry[feature]
                         if fun == 'max':
                             if field in record:
-                                record[field] = max(record[field],value.expectation())
+                                record[field] = max(record[field],toLikert(value.expectation()))
                             else:
-                                record[field] = value.expectation()
+                                record[field] = toLikert(value.expectation())
                         elif fun[0] == '=':
                             assert len(value) == 1,'Unable to answer question about uncertain %s:\n%s'\
                                 % (stateKey(actor.name,feature),value)
