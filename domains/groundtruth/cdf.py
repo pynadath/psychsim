@@ -86,34 +86,44 @@ def appendSummary(datum,world,writer,fields,region=None):
     funs = metadata.split(',')
     data = {'total': 0,
             'count': 0}
+    if isinstance(entities,dict):
+        entities = entities.values()
+    recurse = False
     for agent in entities:
         if isinstance(agent,dict):
             # Region dictionary
-            appendSummary(agent['inhabitants'],world,writer,fields,agent['agent'].name)
+            appendSummary((agent['inhabitants'],feature,metadata,label),world,writer,
+                          fields,agent['agent'].name)
+            recurse = True
         else:
             processDatum(agent,feature,funs,world,data)
-    generic = entities[0].__class__.__name__
-    key = stateKey(generic,feature)
-    entities = sorted([agent.name for agent in entities])
-    first = int(entities[0][len(generic):])
-    last = int(entities[-1][len(generic):])
-    record = {}
-    for field in fields:
-        if field == 'VariableName':
-            record[field] = shorten(key)
-        elif field == 'EntityIdx':
-            record[field] = '[%s%d-%d]' % (generic,first,last)
-        elif field == 'Metadata':
-            if label:
-                record[field] = label
-            else:
-                record[field] = metadata
-        elif field == 'Timestep':
-            record[field] = world.getState(WORLD,'day').first()
-        elif field != 'Value':
-            raise RuntimeError('Unknown field: %s' % (field))
-    record['Value'] = computeValue(data,funs)
-    writer.writerow(record)
+    if not recurse:
+        generic = next(iter(entities)).__class__.__name__
+        key = stateKey(generic,feature)
+        entities = sorted([agent.name for agent in entities])
+        first = int(entities[0][len(generic):])
+        last = int(entities[-1][len(generic):])
+        if last-first+1 == len(entities):
+            idx = '[%s%d-%d]' % (generic,first,last)
+        else:
+            idx = '[%s]' % (','.join(entities))
+        record = {}
+        for field in fields:
+            if field == 'VariableName':
+                record[field] = shorten(key)
+            elif field == 'EntityIdx':
+                record[field] = idx
+            elif field == 'Metadata':
+                if label:
+                    record[field] = label
+                else:
+                    record[field] = metadata
+            elif field == 'Timestep':
+                record[field] = world.getState(WORLD,'day').first()
+            elif field != 'Value':
+                raise RuntimeError('Unknown field: %s' % (field))
+        record['Value'] = computeValue(data,funs)
+        writer.writerow(record)
 
 def agentRoot(name):
     if name[:5] == 'Actor':
