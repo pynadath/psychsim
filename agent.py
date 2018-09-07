@@ -121,7 +121,11 @@ class Agent:
         if vector is None:
             vector = self.world.state
         if model is None:
-            model = self.world.getModel(self.name,vector)
+            try:
+                model = self.world.getModel(self.name,vector)
+            except KeyError:
+                # Use real model as fallback?
+                model = self.world.getModel(self.name)
         assert not model is True
         if isinstance(model,Distribution):
             result = {}
@@ -960,8 +964,14 @@ class Agent:
                     # Condition on actual observations
                     for omega in Omega:
                         beliefs[omega] = vector[keys.makeFuture(omega)]
-                        assert len(beliefs) > 0,'Impossible observation %s=%s' % \
-                            (omega,vector[keys.makeFuture(omega)])
+                        if len(beliefs) == 0:
+                            logging.error('Impossible observation %s=%s' % \
+                                          (omega,vector[keys.makeFuture(omega)]))
+                            self.world.printState(trueState)
+                            self.world.printState(beliefs)
+                            print('omega')
+                            print(vector)
+                            raise ValueError
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
                     newModel = self.belief2model(oldModel,beliefs)
