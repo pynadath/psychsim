@@ -117,7 +117,7 @@ class Group(Agent):
                                                 True: setToFeatureMatrix(R,member,-1.),
                                                 False: setToConstantMatrix(R,0.)}},
                                  False: setToConstantMatrix(R,0.)})
-                agent.setReward(tree,self.config.getfloat('Actors','attachment_r'))
+                agent.setReward(tree,likert[5][self.config.getint('Actors','attachment_r')-1])
         # Define reward function for this group as weighted sum of members
         if weights is None:
             weights = {a: 1. for a in agents}
