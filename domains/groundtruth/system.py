@@ -27,14 +27,16 @@ class System(Agent):
         populated = set()
         for actor in population:
             populated.add(world.getState(actor,'region').first())
-            self.setReward(maximizeFeature(stateKey(actor,'health'),self.name),1.)
-            self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),1.)
+#            self.setReward(maximizeFeature(stateKey(actor,'health'),self.name),1.)
+#            self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),1.)
         allocation = config.getint('System','system_allocation')
         for region in populated:
             tree = makeTree({'if': thresholdRow(resources,allocation),True: True,False: False})
             allocate = self.addAction({'verb': 'allocate','object': region},
                                       tree.desymbolize(world.symbols))
             risk = stateKey(region,'risk')
+            self.setReward(minimizeFeature(risk,self.name),
+                           likert[5][config.getint('System','reward_health')-1])
             tree = makeTree(approachMatrix(risk,0.1,0.))
             world.setDynamics(risk,allocate,tree)
             tree = makeTree(incrementMatrix(resources,-allocation))
@@ -67,3 +69,11 @@ class System(Agent):
                     ER += weights[feature]*dist[vector]*vector[key]
         return ER
         
+    def decide(self,state=None,horizon=None,others=None,model=None,selection=None,actions=None):
+        state = self.world.state
+        if actions is None:
+            actions = self.getActions(state)
+        risks = [(state[stateKey(a['object'],'risk')].expectation(),a) for a in actions]
+        tree = makeTree(setToConstantMatrix(stateKey(self.name,ACTION),max(risks)[1]))
+        return {'policy': tree.desymbolize(self.world.symbols)}
+            
