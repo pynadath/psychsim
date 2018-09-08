@@ -252,9 +252,10 @@ class Actor(Agent):
             for index in shelters:
                 shelter = 'shelter%s' % (index)
                 region = Region.nameString % (int(index))
-                distances[index] = self.world.agents[region].distance(self.home)
+                if region in self.world.agents:
+                    distances[index] = self.world.agents[region].distance(self.home)
             shortest = min(distances.values())
-            closest = [index for index in shelters if distances[index] == shortest]
+            closest = [index for index in shelters if distances.get(index,100) == shortest]
             for index in closest:
                 shelter = 'shelter%s' % (index)
                 region = Region.nameString % (int(index))

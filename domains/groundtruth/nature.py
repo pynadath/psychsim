@@ -129,17 +129,18 @@ class Nature(Agent):
         if config.getboolean('Shelter','exists'):
             for index in map(int,config.get('Shelter','region').split(',')):
                 region = Region.nameString % (index)
-                risk = stateKey(region,'shelterRisk')
-                subtree = {'if': equalRow(category,list(range(1,6)))}
-                for cat in range(5):
-                    effect = base_increase*float(cat)
-                    subtree[cat] = approachMatrix(risk,effect,1.)
-                tree = makeTree({'if': equalRow(makeFuture(phase),'active'),
-                                 True: {'if': equalRow(makeFuture(location),region),
-                                        True: subtree,
-                                        False: noChangeMatrix(risk)},
-                                 False: approachMatrix(risk,base_decrease,0.)})
-                world.setDynamics(risk,evolution,tree)
+                if region in world.agents:
+                    risk = stateKey(region,'shelterRisk')
+                    subtree = {'if': equalRow(category,list(range(1,6)))}
+                    for cat in range(5):
+                        effect = base_increase*float(cat)
+                        subtree[cat] = approachMatrix(risk,effect,1.)
+                    tree = makeTree({'if': equalRow(makeFuture(phase),'active'),
+                                     True: {'if': equalRow(makeFuture(location),region),
+                                            True: subtree,
+                                            False: noChangeMatrix(risk)},
+                                     False: approachMatrix(risk,base_decrease,0.)})
+                    world.setDynamics(risk,evolution,tree)
         self.setAttribute('static',True)
                                         
         # Advance calendar after Nature moves
