@@ -1,0 +1,9 @@
+ParameterName	ControlInstance	TreatmentInstance
+category_under	9		2
+job_majority	9		3
+prorisk_cost_risk		9	4
+reward_sigma			9	5
+altruism_neighbors_majority	9	6
+evacuation_unemployment		9	7
+friend_pess_trust		9	8
+max_horizon			9	1

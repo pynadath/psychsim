@@ -4,7 +4,10 @@ import sys
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from PyQt5 import QtSvg
+try:
+    from PyQt5 import QtSvg
+except ImportError:
+    pass
 
 class MapView(QGraphicsScene):
     images = '/home/david/PsychSim/psychsim/domains/inequality/images'
