@@ -238,7 +238,7 @@ def writeDefinition(world,dirName):
         record = {'Name': 'Actor neighborOf Actor','LongName': 'Actor is neighbor of Actor',
                   'DataType': 'Boolean',
                   'Values': '[%s]' % (sorted([a.name for a in world.agents.values()
-                                              if isinstance(a,region)])),
+                                              if isinstance(a,Region)])),
                   }
         writer.writerow(record)
                          
