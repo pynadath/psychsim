@@ -341,13 +341,14 @@ def runInstance(instance,args,config,rerun=True):
             profile.sort_stats('time').print_stats()
             logging.critical(buf.getvalue())
             buf.close()
-        print('Saving...')
-        if args['pickle']:
-            import pickle
-            with open(os.path.join(dirName,'scenario.pkl'),'wb') as outfile:
-                pickle.dump(world,outfile)
-        else:
-            world.save(os.path.join(dirName,'scenario.psy'))
+        if not args['no-save']:
+            print('Saving...')
+            if args['pickle']:
+                import pickle
+                with open(os.path.join(dirName,'scenario.pkl'),'wb') as outfile:
+                    pickle.dump(world,outfile)
+            else:
+                world.save(os.path.join(dirName,'scenario.psy'))
     
 def addState2tables(world,day,tables,population,regions):
     # Grab all of the relevant fields, but only once
@@ -855,6 +856,7 @@ if __name__ == '__main__':
     parser.add_argument('-w','--write',action='store_true',help='Write simulation definition tables')
     parser.add_argument('-v','--visualize',default=None,help='Visualization feature')
     parser.add_argument('--pickle',action='store_true',help='Use Python pickle, not XML, to save scenario')
+    parser.add_argument('--no-save',action='store_true',help='Do not save scenario')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-i','--instance',default=None,type=int,help='Instance number')
     group.add_argument('-s','--samples',default=None,help='File of sample parameter settings')
