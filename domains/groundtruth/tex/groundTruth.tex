@@ -70,6 +70,15 @@ Integer%
 \item[Type:]%
 Boolean%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/aliveOfActor.png}%
+\caption{Ground Truth subgraph for Actor's alive}%
+\end{figure}
+
+%
 \subsubsection{Default change in Actor's alive}%
 \label{ssubsec:Default change in Actor's alive}%
 \begin{flushleft}%
@@ -115,34 +124,18 @@ String%
 \textbf{avoidant}%
 , %
 \textbf{secure}%
-\end{description}
+\end{description}%
 
-%
-\subsection{Actor's attribution}%
-\label{subsec:Actor's attribution}%
-Causal attribution style, whether attributing events to internal or external causes%
-\begin{description}%
-\item[Type:]%
-String%
-\item[Values:]%
-\textbf{external}%
-, %
-\textbf{internal}%
-, %
-\textbf{none}%
-\end{description}
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/attachmentOfActor.png}%
+\caption{Ground Truth subgraph for Actor's attachment}%
+\end{figure}
 
 %
 \subsection{Actor's category}%
 \label{subsec:Actor's category}%
-\begin{description}%
-\item[Type:]%
-Integer%
-\end{description}
-
-%
-\subsection{Actor's categoryData}%
-\label{subsec:Actor's categoryData}%
 \begin{description}%
 \item[Type:]%
 Integer%
@@ -167,7 +160,14 @@ Number of children%
 \begin{description}%
 \item[Type:]%
 Real%
-\end{description}
+\end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/childrenOfActor.png}%
+\caption{Ground Truth subgraph for Actor's children}%
+\end{figure}
 
 %
 \subsection{Actor's childrenHealth}%
@@ -177,6 +177,15 @@ Current level of children's physical wellbeing%
 \item[Type:]%
 Real%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/childrenHealthOfActor.png}%
+\caption{Ground Truth subgraph for Actor's childrenHealth}%
+\end{figure}
+
+%
 \subsubsection{Default change in Actor's childrenHealth}%
 \label{ssubsec:Default change in Actor's childrenHealth}%
 \begin{flushleft}%
@@ -306,36 +315,6 @@ $\leftarrow$%
 \end{flushleft}
 
 %
-\subsection{Actor's control}%
-\label{subsec:Actor's control}%
-Control style, whether low or high self{-}efficacy%
-\begin{description}%
-\item[Type:]%
-String%
-\item[Values:]%
-\textbf{hiEfficacy}%
-, %
-\textbf{loEfficacy}%
-, %
-\textbf{none}%
-\end{description}
-
-%
-\subsection{Actor's coping}%
-\label{subsec:Actor's coping}%
-Coping style, whether biased toward emotion{-} or problem{-}directed decision{-}making%
-\begin{description}%
-\item[Type:]%
-String%
-\item[Values:]%
-\textbf{emotion}%
-, %
-\textbf{none}%
-, %
-\textbf{problem}%
-\end{description}
-
-%
 \subsection{Actor's days}%
 \label{subsec:Actor's days}%
 \begin{description}%
@@ -351,13 +330,13 @@ Has a full{-}time job%
 \item[Type:]%
 Boolean%
 \end{description}%
-\subsubsection{Effect of Actor{-}evacuate on Actor's employed}%
-\label{ssubsec:Effect of Actor{-}evacuate on Actor's employed}%
-\begin{flushleft}%
-$\mbox{\textbf{Actor's employed}} '$%
-$\leftarrow$%
-\textbf{Actor's employed}%
-\end{flushleft}
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/employedOfActor.png}%
+\caption{Ground Truth subgraph for Actor's employed}%
+\end{figure}
 
 %
 \subsection{Actor's ethnicGroup}%
@@ -392,31 +371,13 @@ Current level of grievance felt toward system%
 \item[Type:]%
 Real%
 \end{description}%
-\subsubsection{Effect of System{-}allocate{-}Region01 on Actor's grievance}%
-\label{ssubsec:Effect of System{-}allocate{-}Region01 on Actor's grievance}%
-\begin{flushleft}%
-IF %
-\textbf{Actor's region}%
-$=$%
-\textbf{Region01}%
-\linebreak%
-\hspace*{2em}%
-THEN %
-$\mbox{\textbf{Actor's grievance}} '$%
-$\leftarrow$%
-80\%%
-$\cdot$%
-\textbf{Actor's grievance}%
-\linebreak%
-\hspace*{2em}%
-ELSE %
-$\mbox{\textbf{Actor's grievance}} '$%
-$\leftarrow$%
-80\%%
-$\cdot$%
-\textbf{Actor's grievance}%
-+0.20%
-\end{flushleft}
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/grievanceOfActor.png}%
+\caption{Ground Truth subgraph for Actor's grievance}%
+\end{figure}
 
 %
 \subsection{Actor's health}%
@@ -426,6 +387,15 @@ Current level of physical wellbeing%
 \item[Type:]%
 Real%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/healthOfActor.png}%
+\caption{Ground Truth subgraph for Actor's health}%
+\end{figure}
+
+%
 \subsubsection{Default change in Actor's health}%
 \label{ssubsec:Default change in Actor's health}%
 \begin{flushleft}%
@@ -568,6 +538,15 @@ String%
 , %
 \textbf{shelter1}%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/locationOfActor.png}%
+\caption{Ground Truth subgraph for Actor's location}%
+\end{figure}
+
+%
 \subsubsection{Effect of Actor{-}evacuate on Actor's location}%
 \label{ssubsec:Effect of Actor{-}evacuate on Actor's location}%
 \begin{flushleft}%
@@ -617,38 +596,7 @@ Owns a pet%
 \begin{description}%
 \item[Type:]%
 Boolean%
-\end{description}%
-\subsubsection{Effect of Actor{-}moveTo{-}shelter1 on Actor's pet}%
-\label{ssubsec:Effect of Actor{-}moveTo{-}shelter1 on Actor's pet}%
-\begin{flushleft}%
-IF %
-$\mbox{\textbf{Actor's location}} '$%
-$=$%
-\textbf{shelter1}%
-\linebreak%
-\hspace*{2em}%
-THEN %
-IF %
-\textbf{Region01's shelterPets}%
-\linebreak%
-\hspace*{4em}%
-THEN %
-$\mbox{\textbf{Actor's pet}} '$%
-$\leftarrow$%
-\textbf{Actor's pet}%
-\linebreak%
-\hspace*{4em}%
-ELSE %
-$\mbox{\textbf{Actor's pet}} '$%
-$\leftarrow$%
-\textbf{false}%
-\linebreak%
-\hspace*{2em}%
-ELSE %
-$\mbox{\textbf{Actor's pet}} '$%
-$\leftarrow$%
-\textbf{Actor's pet}%
-\end{flushleft}
+\end{description}
 
 %
 \subsection{Actor's phase}%
@@ -665,14 +613,6 @@ String%
 \end{description}
 
 %
-\subsection{Actor's rcvdCategoryMsg}%
-\label{subsec:Actor's rcvdCategoryMsg}%
-\begin{description}%
-\item[Type:]%
-Integer%
-\end{description}
-
-%
 \subsection{Actor's region}%
 \label{subsec:Actor's region}%
 Region of residence%
@@ -681,7 +621,14 @@ Region of residence%
 String%
 \item[Values:]%
 \textbf{Region01}%
-\end{description}
+\end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/regionOfActor.png}%
+\caption{Ground Truth subgraph for Actor's region}%
+\end{figure}
 
 %
 \subsection{Actor's religion}%
@@ -706,6 +653,15 @@ Material resources (wealth) currently owned%
 \item[Type:]%
 Real%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/resourcesOfActor.png}%
+\caption{Ground Truth subgraph for Actor's resources}%
+\end{figure}
+
+%
 \subsubsection{Effect of Actor{-}evacuate on Actor's resources}%
 \label{ssubsec:Effect of Actor{-}evacuate on Actor's resources}%
 \begin{flushleft}%
@@ -753,8 +709,6 @@ $\cdot$%
 ELSE %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
-80\%%
-$\cdot$%
 \textbf{Actor's resources}%
 \linebreak%
 \hspace*{2em}%
@@ -802,8 +756,6 @@ $\leftarrow$%
 ELSE %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
-80\%%
-$\cdot$%
 \textbf{Actor's resources}%
 \linebreak%
 \hspace*{2em}%
@@ -833,6 +785,15 @@ Current level of risk from hurricane%
 \item[Type:]%
 Real%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/riskOfActor.png}%
+\caption{Ground Truth subgraph for Actor's risk}%
+\end{figure}
+
+%
 \subsubsection{Effect of Actor{-}decreaseRisk{-}Region01 on Actor's risk}%
 \label{ssubsec:Effect of Actor{-}decreaseRisk{-}Region01 on Actor's risk}%
 \begin{flushleft}%
@@ -866,10 +827,10 @@ $\cdot$%
 ELSE %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
-80\%%
+40\%%
 $\cdot$%
 \textbf{Actor's risk}%
-+0.20%
++0.60%
 \end{flushleft}
 
 %
@@ -945,6 +906,15 @@ Real%
 \item[Type:]%
 Integer%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/sizeOfGroup.png}%
+\caption{Ground Truth subgraph for Group's size}%
+\end{figure}
+
+%
 \subsubsection{Effect of Actor{-}join{-}Group on Group's size}%
 \label{ssubsec:Effect of Actor{-}join{-}Group on Group's size}%
 \begin{flushleft}%
@@ -971,6 +941,15 @@ ${-}1$%
 \item[Type:]%
 Integer%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/categoryOfNature.png}%
+\caption{Ground Truth subgraph for Nature's category}%
+\end{figure}
+
+%
 \subsubsection{Effect of Nature{-}evolve on Nature's category}%
 \label{ssubsec:Effect of Nature{-}evolve on Nature's category}%
 \begin{flushleft}%
@@ -1033,13 +1012,13 @@ $=$%
 THEN %
 \linebreak%
 \hspace*{8em}%
-80\%: %
+60\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 \linebreak%
 \hspace*{8em}%
-20\%: %
+40\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 2%
@@ -1055,13 +1034,13 @@ $=$%
 THEN %
 \linebreak%
 \hspace*{10em}%
-20\%: %
+40\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 4%
 \linebreak%
 \hspace*{10em}%
-80\%: %
+60\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
@@ -1070,20 +1049,20 @@ $\leftarrow$%
 ELSE %
 \linebreak%
 \hspace*{10em}%
-10\%: %
+20\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 ${-}1$%
 \linebreak%
 \hspace*{10em}%
-80\%: %
+60\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 \linebreak%
 \hspace*{10em}%
-10\%: %
+20\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
@@ -1109,6 +1088,15 @@ $\leftarrow$%
 \item[Type:]%
 Integer%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/daysOfNature.png}%
+\caption{Ground Truth subgraph for Nature's days}%
+\end{figure}
+
+%
 \subsubsection{Effect of Nature{-}evolve on Nature's days}%
 \label{ssubsec:Effect of Nature{-}evolve on Nature's days}%
 \begin{flushleft}%
@@ -1142,6 +1130,15 @@ String%
 , %
 \textbf{none}%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/locationOfNature.png}%
+\caption{Ground Truth subgraph for Nature's location}%
+\end{figure}
+
+%
 \subsubsection{Effect of Nature{-}evolve on Nature's location}%
 \label{ssubsec:Effect of Nature{-}evolve on Nature's location}%
 \begin{flushleft}%
@@ -1185,15 +1182,6 @@ $\leftarrow$%
 \textbf{Nature's location}%
 \linebreak%
 \hspace*{4em}%
-\linebreak%
-\hspace*{6em}%
-20\%: %
-$\mbox{\textbf{Nature's location}} '$%
-$\leftarrow$%
-\textbf{Region01}%
-\linebreak%
-\hspace*{6em}%
-40\%: %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{none}%
@@ -1218,6 +1206,15 @@ String%
 , %
 \textbf{none}%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/phaseOfNature.png}%
+\caption{Ground Truth subgraph for Nature's phase}%
+\end{figure}
+
+%
 \subsubsection{Effect of Nature{-}evolve on Nature's phase}%
 \label{ssubsec:Effect of Nature{-}evolve on Nature's phase}%
 \begin{flushleft}%
@@ -1232,19 +1229,19 @@ $=$%
 IF %
 \textbf{Nature's days}%
 $>$%
-5%
+1%
 \linebreak%
 \hspace*{4em}%
 THEN %
 \linebreak%
 \hspace*{6em}%
-40\%: %
+80\%: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{approaching}%
 \linebreak%
 \hspace*{6em}%
-60\%: %
+19\%: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{none}%
@@ -1260,19 +1257,19 @@ $\leftarrow$%
 IF %
 \textbf{Nature's days}%
 $>$%
-5%
+1%
 \linebreak%
 \hspace*{4em}%
 THEN %
 \linebreak%
 \hspace*{6em}%
-40\%: %
+80\%: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{active}%
 \linebreak%
 \hspace*{6em}%
-60\%: %
+19\%: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{approaching}%
@@ -1319,6 +1316,15 @@ Level of risk from hurricane%
 \item[Type:]%
 Real%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/riskOfRegion01.png}%
+\caption{Ground Truth subgraph for Region01's risk}%
+\end{figure}
+
+%
 \subsubsection{Effect of Actor{-}decreaseRisk{-}Region01 on Region01's risk}%
 \label{ssubsec:Effect of Actor{-}decreaseRisk{-}Region01 on Region01's risk}%
 \begin{flushleft}%
@@ -1417,7 +1423,7 @@ $\cdot$%
 \begin{flushleft}%
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
-90\%%
+80\%%
 $\cdot$%
 \textbf{Region01's risk}%
 \end{flushleft}
@@ -1446,6 +1452,15 @@ Boolean%
 \item[Type:]%
 Real%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/shelterRiskOfRegion01.png}%
+\caption{Ground Truth subgraph for Region01's shelterRisk}%
+\end{figure}
+
+%
 \subsubsection{Effect of Nature{-}evolve on Region01's shelterRisk}%
 \label{ssubsec:Effect of Nature{-}evolve on Region01's shelterRisk}%
 \begin{flushleft}%
@@ -1531,14 +1546,13 @@ $\cdot$%
 \item[Type:]%
 Integer%
 \end{description}%
-\subsubsection{Effect of System{-}allocate{-}Region01 on System's resources}%
-\label{ssubsec:Effect of System{-}allocate{-}Region01 on System's resources}%
-\begin{flushleft}%
-$\mbox{\textbf{System's resources}} '$%
-$\leftarrow$%
-\textbf{System's resources}%
-${-}5$%
-\end{flushleft}
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/resourcesOfSystem.png}%
+\caption{Ground Truth subgraph for System's resources}%
+\end{figure}
 
 %
 \subsection{day}%
@@ -1547,6 +1561,15 @@ ${-}5$%
 \item[Type:]%
 Integer%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/day.png}%
+\caption{Ground Truth subgraph for day}%
+\end{figure}
+
+%
 \subsubsection{Effect of Nature{-}evolve on day}%
 \label{ssubsec:Effect of Nature{-}evolve on day}%
 \begin{flushleft}%
@@ -1573,6 +1596,15 @@ Boolean%
 \item[Type:]%
 Boolean%
 \end{description}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/ActormemberOf->Group.png}%
+\caption{Ground Truth subgraph for Actor memberOf {-}> Group}%
+\end{figure}
+
+%
 \subsubsection{Effect of Actor{-}join{-}Group on Actor memberOf Group}%
 \label{ssubsec:Effect of Actor{-}join{-}Group on Actor memberOf Group}%
 \begin{flushleft}%
@@ -1666,13 +1698,13 @@ $=$%
 THEN %
 \linebreak%
 \hspace*{8em}%
-80\%: %
+60\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 \linebreak%
 \hspace*{8em}%
-20\%: %
+40\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 2%
@@ -1688,13 +1720,13 @@ $=$%
 THEN %
 \linebreak%
 \hspace*{10em}%
-20\%: %
+40\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 4%
 \linebreak%
 \hspace*{10em}%
-80\%: %
+60\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
@@ -1703,20 +1735,20 @@ $\leftarrow$%
 ELSE %
 \linebreak%
 \hspace*{10em}%
-10\%: %
+20\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 ${-}1$%
 \linebreak%
 \hspace*{10em}%
-80\%: %
+60\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 \linebreak%
 \hspace*{10em}%
-10\%: %
+20\%: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
@@ -1802,15 +1834,6 @@ $\leftarrow$%
 \textbf{Nature's location}%
 \linebreak%
 \hspace*{4em}%
-\linebreak%
-\hspace*{6em}%
-20\%: %
-$\mbox{\textbf{Nature's location}} '$%
-$\leftarrow$%
-\textbf{Region01}%
-\linebreak%
-\hspace*{6em}%
-40\%: %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{none}%
@@ -1837,19 +1860,19 @@ $=$%
 IF %
 \textbf{Nature's days}%
 $>$%
-5%
+1%
 \linebreak%
 \hspace*{4em}%
 THEN %
 \linebreak%
 \hspace*{6em}%
-40\%: %
+80\%: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{approaching}%
 \linebreak%
 \hspace*{6em}%
-60\%: %
+19\%: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{none}%
@@ -1865,19 +1888,19 @@ $\leftarrow$%
 IF %
 \textbf{Nature's days}%
 $>$%
-5%
+1%
 \linebreak%
 \hspace*{4em}%
 THEN %
 \linebreak%
 \hspace*{6em}%
-40\%: %
+80\%: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{active}%
 \linebreak%
 \hspace*{6em}%
-60\%: %
+19\%: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{approaching}%
@@ -2189,15 +2212,6 @@ ELSE %
 \end{flushleft}
 
 %
-\subsubsection{Effect on Actor's employed of Actor evacuate}%
-\label{ssubsec:Effect on Actor's employed of Actor evacuate}%
-\begin{flushleft}%
-$\mbox{\textbf{Actor's employed}} '$%
-$\leftarrow$%
-\textbf{Actor's employed}%
-\end{flushleft}
-
-%
 \subsubsection{Effect on Actor's location of Actor evacuate}%
 \label{ssubsec:Effect on Actor's location of Actor evacuate}%
 \begin{flushleft}%
@@ -2402,8 +2416,6 @@ $\cdot$%
 ELSE %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
-80\%%
-$\cdot$%
 \textbf{Actor's resources}%
 \linebreak%
 \hspace*{2em}%
@@ -2472,102 +2484,6 @@ $\leftarrow$%
 \end{flushleft}
 
 %
-\subsubsection{Effect on Actor's pet of Actor moveTo shelter1}%
-\label{ssubsec:Effect on Actor's pet of Actor moveTo shelter1}%
-\begin{flushleft}%
-IF %
-$\mbox{\textbf{Actor's location}} '$%
-$=$%
-\textbf{shelter1}%
-\linebreak%
-\hspace*{2em}%
-THEN %
-IF %
-\textbf{Region01's shelterPets}%
-\linebreak%
-\hspace*{4em}%
-THEN %
-$\mbox{\textbf{Actor's pet}} '$%
-$\leftarrow$%
-\textbf{Actor's pet}%
-\linebreak%
-\hspace*{4em}%
-ELSE %
-$\mbox{\textbf{Actor's pet}} '$%
-$\leftarrow$%
-\textbf{false}%
-\linebreak%
-\hspace*{2em}%
-ELSE %
-$\mbox{\textbf{Actor's pet}} '$%
-$\leftarrow$%
-\textbf{Actor's pet}%
-\end{flushleft}
-
-%
-\subsection{Actor msgReHurricane Actor}%
-\label{subsec:Actor msgReHurricane Actor}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Actor-msgReHurricane-Actor.png}%
-\caption{Ground Truth subgraph for Actor{-}msgReHurricane{-}Actor}%
-\end{figure}
-
-%
-\subsubsection{Applicability of Actor msgReHurricane Actor}%
-\label{ssubsec:Applicability of Actor msgReHurricane Actor}%
-\begin{flushleft}%
-IF %
-\textbf{Actor's alive}%
-\linebreak%
-\hspace*{2em}%
-THEN %
-IF %
-\textbf{Actor friendOf Actor}%
-\linebreak%
-\hspace*{4em}%
-THEN %
-\textbf{true}%
-\linebreak%
-\hspace*{4em}%
-ELSE %
-\textbf{false}%
-\linebreak%
-\hspace*{2em}%
-ELSE %
-\textbf{false}%
-\end{flushleft}
-
-%
-\subsection{Actor seekInfoReHurricane}%
-\label{subsec:Actor seekInfoReHurricane}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Actor-seekInfoReHurricane.png}%
-\caption{Ground Truth subgraph for Actor{-}seekInfoReHurricane}%
-\end{figure}
-
-%
-\subsubsection{Applicability of Actor seekInfoReHurricane}%
-\label{ssubsec:Applicability of Actor seekInfoReHurricane}%
-\begin{flushleft}%
-IF %
-\textbf{Actor's alive}%
-\linebreak%
-\hspace*{2em}%
-THEN %
-\textbf{true}%
-\linebreak%
-\hspace*{2em}%
-ELSE %
-\textbf{false}%
-\end{flushleft}
-
-%
 \subsection{Actor stayInLocation}%
 \label{subsec:Actor stayInLocation}%
 
@@ -2616,8 +2532,6 @@ $\leftarrow$%
 ELSE %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
-80\%%
-$\cdot$%
 \textbf{Actor's resources}%
 \linebreak%
 \hspace*{2em}%
@@ -2699,10 +2613,10 @@ $\cdot$%
 ELSE %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
-80\%%
+40\%%
 $\cdot$%
 \textbf{Actor's risk}%
-+0.20%
++0.60%
 \end{flushleft}
 
 %
@@ -2717,69 +2631,14 @@ $\cdot$%
 \end{figure}
 
 %
-\subsubsection{Applicability of System allocate Region01}%
-\label{ssubsec:Applicability of System allocate Region01}%
-\begin{flushleft}%
-IF %
-\textbf{System's resources}%
-$>$%
-5%
-\linebreak%
-\hspace*{2em}%
-THEN %
-\textbf{true}%
-\linebreak%
-\hspace*{2em}%
-ELSE %
-\textbf{false}%
-\end{flushleft}
-
-%
-\subsubsection{Effect on Actor's grievance of System allocate Region01}%
-\label{ssubsec:Effect on Actor's grievance of System allocate Region01}%
-\begin{flushleft}%
-IF %
-\textbf{Actor's region}%
-$=$%
-\textbf{Region01}%
-\linebreak%
-\hspace*{2em}%
-THEN %
-$\mbox{\textbf{Actor's grievance}} '$%
-$\leftarrow$%
-80\%%
-$\cdot$%
-\textbf{Actor's grievance}%
-\linebreak%
-\hspace*{2em}%
-ELSE %
-$\mbox{\textbf{Actor's grievance}} '$%
-$\leftarrow$%
-80\%%
-$\cdot$%
-\textbf{Actor's grievance}%
-+0.20%
-\end{flushleft}
-
-%
 \subsubsection{Effect on Region01's risk of System allocate Region01}%
 \label{ssubsec:Effect on Region01's risk of System allocate Region01}%
 \begin{flushleft}%
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
-90\%%
+80\%%
 $\cdot$%
 \textbf{Region01's risk}%
-\end{flushleft}
-
-%
-\subsubsection{Effect on System's resources of System allocate Region01}%
-\label{ssubsec:Effect on System's resources of System allocate Region01}%
-\begin{flushleft}%
-$\mbox{\textbf{System's resources}} '$%
-$\leftarrow$%
-\textbf{System's resources}%
-${-}5$%
 \end{flushleft}
 
 %
@@ -2894,6 +2753,246 @@ ELSE %
 %
 \section{Expected Reward}%
 \label{sec:Expected Reward}%
+\subsection{Actor's Reward}%
+\label{subsec:Actor's Reward}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/Actor.png}%
+\caption{Ground Truth subgraph for Actor}%
+\end{figure}
+
+%
+\begin{flushleft}%
+IF %
+\textbf{Actor's risk}%
+$>$%
+0.60%
+\linebreak%
+\hspace*{2em}%
+THEN %
+IF %
+\textbf{Actor's attachment}%
+$=$%
+\textbf{anxious}%
+\linebreak%
+\hspace*{4em}%
+THEN %
+$R$%
+$\leftarrow$%
+20\%%
+$\cdot$%
+\textbf{Actor memberOf Group}%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's childrenHealth}%
++%
+60\%%
+$\cdot$%
+\textbf{Actor's health}%
++%
+20\%%
+$\cdot$%
+\textbf{Actor's resources}%
++%
+{-}60\%%
+$\cdot$%
+\textbf{Region01's risk}%
+\linebreak%
+\hspace*{4em}%
+ELSE %
+IF %
+\textbf{Actor's attachment}%
+$=$%
+\textbf{avoidant}%
+\linebreak%
+\hspace*{6em}%
+THEN %
+$R$%
+$\leftarrow$%
+{-}20\%%
+$\cdot$%
+\textbf{Actor memberOf Group}%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's childrenHealth}%
++%
+60\%%
+$\cdot$%
+\textbf{Actor's health}%
++%
+20\%%
+$\cdot$%
+\textbf{Actor's resources}%
++%
+{-}60\%%
+$\cdot$%
+\textbf{Region01's risk}%
+\linebreak%
+\hspace*{6em}%
+ELSE %
+$R$%
+$\leftarrow$%
+40\%%
+$\cdot$%
+\textbf{Actor's childrenHealth}%
++%
+60\%%
+$\cdot$%
+\textbf{Actor's health}%
++%
+20\%%
+$\cdot$%
+\textbf{Actor's resources}%
++%
+{-}60\%%
+$\cdot$%
+\textbf{Region01's risk}%
+\linebreak%
+\hspace*{2em}%
+ELSE %
+$R$%
+$\leftarrow$%
+40\%%
+$\cdot$%
+\textbf{Actor's childrenHealth}%
++%
+60\%%
+$\cdot$%
+\textbf{Actor's health}%
++%
+20\%%
+$\cdot$%
+\textbf{Actor's resources}%
++%
+{-}60\%%
+$\cdot$%
+\textbf{Region01's risk}%
+\end{flushleft}
+
+%
+\subsection{Group's Reward}%
+\label{subsec:Group's Reward}%
+
+
+\begin{figure}[ht]%
+\centering%
+\includegraphics[width=0.8\textwidth]{images/Group.png}%
+\caption{Ground Truth subgraph for Group}%
+\end{figure}
+
+%
+\begin{flushleft}%
+IF %
+\textbf{Actor's risk}%
+$>$%
+0.60%
+\linebreak%
+\hspace*{2em}%
+THEN %
+IF %
+\textbf{Actor's attachment}%
+$=$%
+\textbf{anxious}%
+\linebreak%
+\hspace*{4em}%
+THEN %
+$R$%
+$\leftarrow$%
+20\%%
+$\cdot$%
+\textbf{Actor memberOf Group}%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's childrenHealth}%
++%
+60\%%
+$\cdot$%
+\textbf{Actor's health}%
++%
+20\%%
+$\cdot$%
+\textbf{Actor's resources}%
++%
+{-}60\%%
+$\cdot$%
+\textbf{Region01's risk}%
+\linebreak%
+\hspace*{4em}%
+ELSE %
+IF %
+\textbf{Actor's attachment}%
+$=$%
+\textbf{avoidant}%
+\linebreak%
+\hspace*{6em}%
+THEN %
+$R$%
+$\leftarrow$%
+{-}20\%%
+$\cdot$%
+\textbf{Actor memberOf Group}%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's childrenHealth}%
++%
+60\%%
+$\cdot$%
+\textbf{Actor's health}%
++%
+20\%%
+$\cdot$%
+\textbf{Actor's resources}%
++%
+{-}60\%%
+$\cdot$%
+\textbf{Region01's risk}%
+\linebreak%
+\hspace*{6em}%
+ELSE %
+$R$%
+$\leftarrow$%
+40\%%
+$\cdot$%
+\textbf{Actor's childrenHealth}%
++%
+60\%%
+$\cdot$%
+\textbf{Actor's health}%
++%
+20\%%
+$\cdot$%
+\textbf{Actor's resources}%
++%
+{-}60\%%
+$\cdot$%
+\textbf{Region01's risk}%
+\linebreak%
+\hspace*{2em}%
+ELSE %
+$R$%
+$\leftarrow$%
+40\%%
+$\cdot$%
+\textbf{Actor's childrenHealth}%
++%
+60\%%
+$\cdot$%
+\textbf{Actor's health}%
++%
+20\%%
+$\cdot$%
+\textbf{Actor's resources}%
++%
+{-}60\%%
+$\cdot$%
+\textbf{Region01's risk}%
+\end{flushleft}
 
 %
 \end{document}
