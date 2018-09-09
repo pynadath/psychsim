@@ -171,7 +171,9 @@ class Actor(Agent):
         locationSet.append('evacuated')
         if config.getboolean('Shelter','exists'):
             for index in config.get('Shelter','region').split(','):
-                locationSet.append('shelter%s' % (index))
+                region = Region.nameString % (int(index))
+                if region in self.world.agents:
+                    locationSet.append('shelter%s' % (index))
         location = world.defineState(self.name,'location',list,locationSet,
                                      description='Current location')
         world.setFeature(location,self.home)
@@ -244,18 +246,17 @@ class Actor(Agent):
         nop = self.addAction({'verb': 'stayInLocation'},
                              description='Actor does not move from current location, nor perform any pro/antisocial behaviors')
         goHomeFrom = set()
-        shelters = config.get('Shelter','region').split(',')
         if config.getboolean('Shelter','exists'):
             # Go to shelter
+            shelters = config.get('Shelter','region').split(',')
             actShelter = {}
             distances = {}
             for index in shelters:
-                shelter = 'shelter%s' % (index)
                 region = Region.nameString % (int(index))
                 if region in self.world.agents:
                     distances[index] = self.world.agents[region].distance(self.home)
             shortest = min(distances.values())
-            closest = [index for index in shelters if distances.get(index,100) == shortest]
+            closest = [index for index in distances if distances[index] == shortest]
             for index in closest:
                 shelter = 'shelter%s' % (index)
                 region = Region.nameString % (int(index))
@@ -552,34 +553,10 @@ class Actor(Agent):
                                      False: approachMatrix(risk,likert[5][cost-1],1.)})
                     world.setDynamics(risk,action,tree)
 
-        if config.getboolean('Shelter','exists'):
-            # Effect on shelter occupancy
-            for index,action in actShelter.items():
-                region = Region.nameString % (int(index))
-                # key = stateKey(region,'shelterOccupancy')
-                # tree = makeTree(incrementMatrix(key,1))
-                # world.setDynamics(key,action,tree)
-                # tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
-                #                 True: incrementMatrix(key,-1),
-                #                 False: noChangeMatrix(key)})
-                #if config.getboolean('Actors','evacuation'):
-                #    world.setDynamics(key,actEvacuate,tree)
-                #    tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
-                #                     True: incrementMatrix(key,-1),
-                #                     False: noChangeMatrix(key)})
-                #world.setDynamics(key,goHome,tree)
-                #for other in actShelter:
-                #    if other != index:
-                #        tree = makeTree({'if': equalRow(location,'shelter%s' % (index)),
-                #                         True: incrementMatrix(key,-1),
-                #                         False: noChangeMatrix(key)})
-                #        world.setDynamics(key,actShelter[other],tree)
-                #assert not config.getboolean('Actors','movement')
 
         if self.pet and config.getboolean('Shelter','exists'):
             # Process shelters' pet policy
             for index,action in actShelter.items():
-#                if petPolicy[shelters.index(index)] == 'no':
                     region = Region.nameString % (int(index))
                     tree = makeTree({'if': equalRow(makeFuture(location),'shelter%s' % (index)),
                                      True: {'if': trueRow(stateKey(region,'shelterPets')),
