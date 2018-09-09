@@ -43,7 +43,8 @@ def runInstance(instance,args,config,rerun=True):
             os.makedirs(dirName)
         if not rerun and os.path.exists(os.path.join(dirName,'scenario.pkl')):
             # Already ran this
-            return
+            print('Skipping instance %d, run %d' % (instance,run))
+            continue
         logfile = os.path.join(dirName,'psychsim.log')
         try:
             os.stat(dirName)
@@ -56,6 +57,7 @@ def runInstance(instance,args,config,rerun=True):
         logging.basicConfig(level=level,filename=logfile)
 
         logging.info('Running Instance %d' % (instance))
+        print('Running Instance %d' % (instance))
         # Initialize world
         world = createWorld(config)
         population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
@@ -341,7 +343,10 @@ def runInstance(instance,args,config,rerun=True):
             profile.sort_stats('time').print_stats()
             logging.critical(buf.getvalue())
             buf.close()
-        if not args['no-save']:
+        if args['nosave']:
+            with open(os.path.join(dirName,'scenario.pkl'),'w') as outfile:
+                print('Done',file=outfile)
+        else:
             print('Saving...')
             if args['pickle']:
                 import pickle
@@ -856,7 +861,7 @@ if __name__ == '__main__':
     parser.add_argument('-w','--write',action='store_true',help='Write simulation definition tables')
     parser.add_argument('-v','--visualize',default=None,help='Visualization feature')
     parser.add_argument('--pickle',action='store_true',help='Use Python pickle, not XML, to save scenario')
-    parser.add_argument('--no-save',action='store_true',help='Do not save scenario')
+    parser.add_argument('--nosave',action='store_true',help='Do not save scenario')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-i','--instance',default=None,type=int,help='Instance number')
     group.add_argument('-s','--samples',default=None,help='File of sample parameter settings')
@@ -949,5 +954,5 @@ if __name__ == '__main__':
                 runInstance(instance,args,config,False)
     else:
         config = getConfig(args['instance'])
-        runInstance(args['instance'],args,config)
+        runInstance(args['instance'],args,config,False)
         
