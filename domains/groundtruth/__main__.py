@@ -57,7 +57,7 @@ def runInstance(instance,args,config,rerun=True):
         logging.basicConfig(level=level,filename=logfile)
 
         logging.info('Running Instance %d' % (instance))
-        print('Running Instance %d' % (instance))
+        print('Running instance %d, run %d' % (instance,run))
         # Initialize world
         world = createWorld(config)
         population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
@@ -193,10 +193,10 @@ def runInstance(instance,args,config,rerun=True):
                         count = 0
                         sampleLimit = int(float(len(living))*config.getfloat('Data','presample')/
                                           float(config.getint('Disaster','phase_min_days')))
-                        while count < sampleLimit:
-                            actor = random.choice(living)
-                            while actor.name in survey:
-                                actor = random.choice(living)
+                        remaining = {actor.name for actor in living} - survey
+                        while count < sampleLimit and remaining:
+                            actor = world.agents[random.choice(list(remaining))]
+                            remaining.remove(actor.name)
                             if actor.getState('alive').first():
                                 preSurvey(actor,dirName,hurricanes+1)
                                 survey.add(actor.name)
@@ -204,21 +204,22 @@ def runInstance(instance,args,config,rerun=True):
                                 living.remove(actor)
                             count += 1
                 elif oldPhase == 'none':
-                    if hurricanes > 0:
-                        # Post-hurricane survey
-                        count = 0
-                        sampleLimit = int(float(len(living))*config.getfloat('Data','postsample')/
-                                          float(config.getint('Disaster','phase_min_days')))
-                        while count < sampleLimit:
-                            actor = random.choice(living)
-                            while actor.name in survey:
-                                actor = random.choice(living)
-                            if actor.getState('alive').first():
-                                postSurvey(actor,dirName,hurricanes+1)
-                                survey.add(actor.name)
-                            else:
-                                living.remove(actor)
-                            count += 1
+                    if turn == 'Actor':
+                        if hurricanes > 0:
+                            # Post-hurricane survey
+                            count = 0
+                            sampleLimit = int(float(len(living))*config.getfloat('Data','postsample')/
+                                              float(config.getint('Disaster','phase_min_days')))
+                            remaining = {actor.name for actor in living} - survey
+                            while count < sampleLimit and remaining:
+                                actor = world.agents[random.choice(list(remaining))]
+                                remaining.remove(actor.name)
+                                if actor.getState('alive').first():
+                                    postSurvey(actor,dirName,hurricanes+1)
+                                    survey.add(actor.name)
+                                else:
+                                    living.remove(actor)
+                                count += 1
                 else:
                     assert oldPhase == 'active'
                     print(world.getState('Nature','location').first())
