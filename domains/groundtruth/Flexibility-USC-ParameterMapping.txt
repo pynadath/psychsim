@@ -7,3 +7,5 @@ altruism_neighbors_majority	9	6
 evacuation_unemployment		9	7
 friend_pess_trust		9	8
 max_horizon			9	1
+self_trust			9	0
+
