@@ -49,11 +49,11 @@ class Distribution(dict):
         return next(iter(self.domain()))
 
     def get(self,element):
-        key = str(element)
+        key = hash(element)
         return dict.get(self,key,0.)
     
     def __getitem__(self,element):
-        key = str(element)
+        key = hash(element)
         return dict.__getitem__(self,key)
         
     def __setitem__(self,element,value):
@@ -62,7 +62,7 @@ class Distribution(dict):
         @param value: the probability to associate with the given key
         @type value: float
         """
-        key = str(element)
+        key = hash(element)
         self._domain[key] = element
         dict.__setitem__(self,key,value)
 
@@ -85,7 +85,7 @@ class Distribution(dict):
             return 0.
 
     def __delitem__(self,element):
-        key = str(element)
+        key = hash(element)
         dict.__delitem__(self,key)
         del self._domain[key]
 
@@ -226,8 +226,8 @@ class Distribution(dict):
             node = doc.createElement('entry')
             root.appendChild(node)
             node.setAttribute('probability',str(prob))
-            if key != str(value):
-                node.setAttribute('key',key)
+#            if key != hash(value):
+#                node.setAttribute('key',key)
             if isinstance(value,str):
                 node.setAttribute('key',key)
             else:
@@ -249,15 +249,17 @@ class Distribution(dict):
         while node:
             if node.nodeType == node.ELEMENT_NODE:
                 prob = float(node.getAttribute('probability'))
-                key = str(node.getAttribute('key'))
-                subNode = node.firstChild
-                while subNode and subNode.nodeType != subNode.ELEMENT_NODE:
-                    subNode = subNode.nextSibling
-                value = self.xml2element(key,subNode)
-                if not key:
-                    key = str(value)
-                dict.__setitem__(self,key,prob)
-                self._domain[key] = value
+                value = str(node.getAttribute('key'))
+                if not value:
+                    subNode = node.firstChild
+                    while subNode and subNode.nodeType != subNode.ELEMENT_NODE:
+                        subNode = subNode.nextSibling
+                    value = self.xml2element(key,subNode)
+                self[value] = prob
+#                if not key:
+#                    key = str(value)
+#                dict.__setitem__(self,key,prob)
+#                self._domain[key] = value
             node = node.nextSibling
 
     def xml2element(self,key,node):
