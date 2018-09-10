@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import random
 
 likert = {5: [0.2,0.4,0.6,0.8,1.],

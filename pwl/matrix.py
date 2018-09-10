@@ -11,10 +11,16 @@ class KeyedMatrix(dict):
         self._keysIn = None
         self._keysOut = None
         if isinstance(arg,Node):
-            super().__init__()
+            try:
+                super().__init__()
+            except TypeError:
+                super(KeyedMatrix,self).__init__()
             self.parse(arg)
         else:
-            super().__init__(arg)
+            try:
+                super().__init__(arg)
+            except TypeError:
+                super(KeyedMatrix,self).__init__(arg)
             self._string = None
         
     def __eq__(self,other):
