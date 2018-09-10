@@ -13,7 +13,7 @@ from psychsim.agent import Agent
 import psychsim.graph
 from psychsim.ui.diagram import Diagram
 
-class World:
+class World(object):
     """
     @ivar agents: table of agents in this world, indexed by name
     @type agents: strS{->}L{Agent}
