@@ -844,10 +844,16 @@ class Actor(Agent):
                         if myAction['verb'] == action['verb']:
                             if 'object' not in action or myAction['object'] == action['object']:
                                 return {myAction}
-        return super().getActions(state,actions)
+        try:
+            return super().getActions(state,actions)
+        except TypeError:
+            return super(Actor,self).getActions(state,actions)
 
     def getO(self,state,actions):
-        omega = super().getO(state,actions)
+        try:
+            omega = super().getO(state,actions)
+        except TypeError:
+            omega = super(Actor,self).getO(state,actions)
         for action in actions:
             if action['verb'] == 'msgReHurricane' and action['object'] == self.name:
                 trust = self.config.getint('Actors','friend_trust')
