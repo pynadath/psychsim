@@ -13,7 +13,7 @@ from psychsim.action import Action,ActionSet
 from psychsim.pwl import *
 from psychsim.probability import Distribution
 
-class Agent:
+class Agent(object):
     """
     @ivar name: agent name
     @type name: str
@@ -974,6 +974,15 @@ class Agent:
                             raise ValueError
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
+                    for dist in beliefs.distributions.values():
+                        if len(dist) > 1:
+                            deletion = False
+                            for vec in dist.domain():
+                                if dist[vec] < 1e-6:
+                                    del dist[vec]
+                                    deletion = True
+                            if deletion:
+                                dist.normalize()
                     newModel = self.belief2model(oldModel,beliefs)
                     SE[oldModel][label] = newModel['index']
                     if not actions in self.models[oldModel]['SE']:
