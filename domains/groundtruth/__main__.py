@@ -1,3 +1,4 @@
+from __future__ import print_function
 from argparse import ArgumentParser
 import cProfile
 try:
@@ -131,6 +132,9 @@ def runInstance(instance,args,config,rerun=True):
         }
         if args['visualize']:
             addState2tables(world,0,allTables,population,regions)
+        if args['profile']:
+            prof = cProfile.Profile()
+            prof.enable()
         if args['compile']:
             for agent in population:
                 agent.compileV()
@@ -145,9 +149,6 @@ def runInstance(instance,args,config,rerun=True):
         oldPhase = world.getState('Nature','phase').first()
         start = time.time()
         stats = {}
-        if args['profile']:
-            prof = cProfile.Profile()
-            prof.enable()
         while hurricanes < args['number'] or (args['number'] > 0 and oldPhase == 'none' and world.getState('Nature','days').first() <= config.getint('Disaster','phase_min_days')):
             today = world.getState(WORLD,'day').first()
             logging.info('Day %d' % (today))
@@ -337,6 +338,17 @@ def runInstance(instance,args,config,rerun=True):
                     addState2tables(world,today,allTables,population,regions)
                     vizUpdateLoop(day)
             writeHurricane(world,hurricanes+1,dirName)
+        if args['pickle']:
+            print('Pickling...')
+            import pickle
+            with open(os.path.join(dirName,'scenario.pkl'),'wb') as outfile:
+                pickle.dump(world,outfile)
+        elif args['xml']:
+            print('Saving...')
+            world.save(os.path.join(dirName,'scenario.psy'))
+        else:
+            with open(os.path.join(dirName,'scenario.pkl'),'w') as outfile:
+                print('%d' % (hurricanes),file=outfile)
         if args['profile']:
             prof.disable()
             buf = StringIO()
@@ -344,17 +356,6 @@ def runInstance(instance,args,config,rerun=True):
             profile.sort_stats('time').print_stats()
             logging.critical(buf.getvalue())
             buf.close()
-        if args['nosave']:
-            with open(os.path.join(dirName,'scenario.pkl'),'w') as outfile:
-                print('Done',file=outfile)
-        else:
-            print('Saving...')
-            if args['pickle']:
-                import pickle
-                with open(os.path.join(dirName,'scenario.pkl'),'wb') as outfile:
-                    pickle.dump(world,outfile)
-            else:
-                world.save(os.path.join(dirName,'scenario.psy'))
     
 def addState2tables(world,day,tables,population,regions):
     # Grab all of the relevant fields, but only once
@@ -861,8 +862,10 @@ if __name__ == '__main__':
     parser.add_argument('-c','--compile',action='store_true',help='Pre-compile agent policies')
     parser.add_argument('-w','--write',action='store_true',help='Write simulation definition tables')
     parser.add_argument('-v','--visualize',default=None,help='Visualization feature')
-    parser.add_argument('--pickle',action='store_true',help='Use Python pickle, not XML, to save scenario')
-    parser.add_argument('--nosave',action='store_true',help='Do not save scenario')
+    parser.add_argument('--rerun',action='store_true',help='Run instance, even if previously saved')
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--pickle',action='store_true',help='Use Python pickle, not XML, to save scenario')
+    group.add_argument('--xml',action='store_true',help='Save scenario as XML')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-i','--instance',default=None,type=int,help='Instance number')
     group.add_argument('-s','--samples',default=None,help='File of sample parameter settings')
@@ -952,8 +955,8 @@ if __name__ == '__main__':
                 with open(os.path.join(os.path.dirname(__file__),'config',
                                        '%06d.ini' % (instance)),'w') as csvfile:
                     config.write(csvfile)
-                runInstance(instance,args,config,False)
+                runInstance(instance,args,config,args['rerun'])
     else:
         config = getConfig(args['instance'])
-        runInstance(args['instance'],args,config,False)
+        runInstance(args['instance'],args,config,args['rerun'])
         
