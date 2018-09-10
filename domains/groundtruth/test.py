@@ -4,7 +4,7 @@ import random
 import unittest
 
 from psychsim.pwl.keys import WORLD
-import psychsim.domains.disaster.groundtruth.__main__ as gt
+import psychsim.domains.groundtruth.__main__ as gt
 
 class TestGroundTruth(unittest.TestCase):
     def setUp(self):
