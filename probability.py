@@ -271,7 +271,9 @@ class Distribution(dict):
         return '\n'.join(['%4.1f%%\t%s' % (100.*self[el],str(el)) for el in elements])
 
     def __str__(self):
-        return '\n'.join(map(lambda el: '%d%%\t%s' % (100.*self[el],str(el).replace('\n','\n\t')),self.domain()))
+        return '\n'.join(['%d%%\t%s' % (100*self[el],str(el).replace('\n','\n\t'))
+                          for el in sorted(self._domain.values())])
+#        return '\n'.join(map(lambda el: '%d%%\t%s' % (100.*self[el],str(el).replace('\n','\n\t')),self.domain()))
 
     def __hash__(self):
         return hash(str(self))
