@@ -228,7 +228,7 @@ class Actor(Agent):
         mean = config.getint('Actors','grievance_ethnic_%s' % (self.ethnicGroup))
         mean += config.getint('Actors','grievance_religious_%s' % (self.religion))
         mean += config.getint('Actors','grievance_%s' % (self.gender))
-        if self.wealth > 0.75:
+        if self.wealth > likert[5][config.getint('Actors','grievance_wealth_threshold')-1]:
             mean += config.getint('Actors','grievance_wealth_yes')
         else:
             mean += config.getint('Actors','grievance_wealth_no')
