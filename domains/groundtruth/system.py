@@ -42,8 +42,9 @@ class System(Agent):
             world.setDynamics(risk,allocate,tree)
 #            tree = makeTree(incrementMatrix(resources,-allocation))
 #            world.setDynamics(resources,allocate,tree)
-            if config.getboolean('Actors','grievance'):
-                delta = likert[5][config.getint('Actors','grievance_delta')]
+            if config.getboolean('Actors','grievance') and \
+               config.getint('Actors','grievance_delta') > 0:
+                delta = likert[5][config.getint('Actors','grievance_delta')-1]
                 for actor in population:
                     grievance = stateKey(actor,'grievance')
                     tree = makeTree({'if': equalRow(stateKey(actor,'region'),region),
@@ -59,8 +60,8 @@ class System(Agent):
             model = self.world.getModel(self.name,state)
         population = [name for name in self.world.agents
                       if isinstance(self.world.agents[name],Actor)]
-        weights = {'health': likert[5][self.config.getint('System','reward_health')],
-                   'grievance': -likert[5][self.config.getint('System','reward_grievance')]}
+        weights = {'health': likert[5][self.config.getint('System','reward_health')-1],
+                   'grievance': -likert[5][self.config.getint('System','reward_grievance')-1]}
         ER = 0.
         for actor in population:
             for feature in weights:
@@ -75,6 +76,7 @@ class System(Agent):
         if actions is None:
             actions = self.getActions(state)
         risks = [(state[stateKey(a['object'],'risk')].expectation(),a) for a in actions]
-        tree = makeTree(setToConstantMatrix(stateKey(self.name,ACTION),max(risks)[1]))
+        choice = max(risks)
+        tree = makeTree(setToConstantMatrix(stateKey(self.name,ACTION),choice[1]))
         return {'policy': tree.desymbolize(self.world.symbols)}
             
