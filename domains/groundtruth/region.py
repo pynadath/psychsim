@@ -89,10 +89,6 @@ class Region(Agent):
                 self.setState('shelterPets',True)
             else:
                 self.setState('shelterPets',False)
-#            world.defineState(self.name,'shelterCapacity',int)
-#            self.setState('shelterCapacity',int(config.get('Shelter','capacity').split(',')[index]))
-#            world.defineState(self.name,'shelterOccupancy',int)
-#            self.setState('shelterOccupancy',0)
 
     def distance(self,region):
         if isinstance(region,str):
