@@ -216,7 +216,7 @@ def runInstance(instance,args,config,rerun=True):
                                 actor = world.agents[random.choice(list(remaining))]
                                 remaining.remove(actor.name)
                                 if actor.getState('alive').first():
-                                    postSurvey(actor,dirName,hurricanes+1)
+                                    postSurvey(actor,dirName,hurricanes)
                                     survey.add(actor.name)
                                 else:
                                     living.remove(actor)
@@ -246,6 +246,8 @@ def runInstance(instance,args,config,rerun=True):
                     raise
                 buf = StringIO()
                 joint = world.explainAction(newState,level=1,buf=buf)
+                joint = {name: action for name,action in joint.items()
+                         if world.agents[name].__class__.__name__ == turn}
                 logging.debug('\n'+buf.getvalue())
                 buf.close()
                 buf = StringIO()
@@ -677,7 +679,7 @@ postSurveyQuestions = {'At Shelter': ('location','=shelter'),
                        'Evacuated': ('location','=evacuated'),
                        'Risk': ('risk','max'),
                        'Injured': ('health','<0.2'),
-#                       'Government Response': ('grievance','likert'),
+                       'Dissatisfaction': ('grievance','likert'),
                        }
 postSurveyFields += sorted(list(postSurveyQuestions.keys()))
 
@@ -687,7 +689,7 @@ def postSurvey(actor,dirName,hurricane):
     else:
         mode = 'a'
     with open(os.path.join(dirName,'ActorPostTable'),mode) as csvfile:
-        writer = csv.DictWriter(csvfile,preSurveyFields,delimiter='\t',extrasaction='ignore')
+        writer = csv.DictWriter(csvfile,postSurveyFields,delimiter='\t',extrasaction='ignore')
         if actor is None:
             writer.writeheader()
         else:
@@ -699,15 +701,15 @@ def postSurvey(actor,dirName,hurricane):
             logging.debug('PostSurvey %d, Participant %d: %s' % (hurricane,record['Participant'],actor.name))
             record.update(getDemographics(actor))
             belief = actor.getBelief()
-            assert len(belief) == 1,'Unable to answer pre-survey with uncertain models'
+            assert len(belief) == 1,'Unable to answer post-survey with uncertain models'
             belief = next(iter(belief.values()))
             for field,answer in postSurveyQuestions.items():
                 feature,fun = answer
                 if fun == 'likert':
-                    value = actor.getState(feature,belief)
-                    if len(value) > 1:
+                    if stateKey(actor.name,feature) in belief:
+                        value = actor.getState(feature,belief)
                         value = value.expectation()
-                    record[field] = toLikert(value.first())
+                        record[field] = toLikert(value)
                 else:
                     for entry in history.get(actor.name,[]):
                         value = entry[feature]
