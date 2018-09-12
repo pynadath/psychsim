@@ -45,6 +45,7 @@ class System(Agent):
             if config.getboolean('Actors','grievance') and \
                config.getint('Actors','grievance_delta') > 0:
                 delta = likert[5][config.getint('Actors','grievance_delta')-1]
+                delta /= len(regions)
                 for actor in population:
                     grievance = stateKey(actor,'grievance')
                     tree = makeTree({'if': equalRow(stateKey(actor,'region'),region),
@@ -75,7 +76,10 @@ class System(Agent):
         state = self.world.state
         if actions is None:
             actions = self.getActions(state)
-        risks = [(state[stateKey(a['object'],'risk')].expectation(),a) for a in actions]
+        population = {name: [a for a in self.world.agents.values() if isinstance(a,Actor) and a.home == name]
+                      for name in self.world.agents if isinstance(self.world.agents[name],Region)}
+        risks = [(state[stateKey(a['object'],'risk')].expectation()*len(population[a['object']]),a)
+                 for a in actions]
         choice = max(risks)
         tree = makeTree(setToConstantMatrix(stateKey(self.name,ACTION),choice[1]))
         return {'policy': tree.desymbolize(self.world.symbols)}
