@@ -379,6 +379,8 @@ class World(object):
                 keySet = {k for k in keySet if k in keySubset}
             if len(keySet) > 0:
                 keyOrder.append(keySet)
+        if TERMINATED in state:
+            keyOrder.append({TERMINATED})
         effects = []
         for keySet in keyOrder:
             dynamics = {}
