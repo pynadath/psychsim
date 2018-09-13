@@ -248,7 +248,7 @@ class VectorDistribution(Distribution):
         domain = self.domain()
         self.clear()
         for row in domain:
-            prob = original[str(row)]
+            prob = original[hash(row)]
             if isinstance(value,Distribution):
                 for element in value.domain():
                     new = row.__class__(row)

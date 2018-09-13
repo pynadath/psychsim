@@ -200,16 +200,37 @@ class WorldView(QGraphicsScene):
             self.addItem(self.agents[agent]['box'])
 
         if self.xml:
+            for agent in self.world.agents.values():
+                if agent.O is not True:
+                    for omega,table in agent.O.items():
+                        oNode = self.xml.add_node(omega)
+                        for action,tree in table.items():
+                            if action is not None:
+                                for aNode in self.xml.nodes():
+                                    if aNode['label'] == str(action):
+                                        break
+                                else:
+                                    raise ValueError('Unable to find node for %s' % (action))
+                                self.xml.add_edge(aNode,oNode)
+                            for key in tree.getKeysIn():
+                                if key != CONSTANT:
+                                    for sNode in self.xml.nodes():
+                                        if sNode['label'] == key:
+                                            break
+                                    else:
+                                        raise ValueError('Unable to find node for %s' % (key))
+                                    self.xml.add_edge(sNode,oNode)
+                                    bNode = self.xml.add_node('%sBeliefOf%s' % (agent.name,key))
+                                    self.xml.add_edge(oNode,bNode)
             parser = GraphMLParser()
-            parser.write(self.xml,'/tmp/psygraph.xml')
+            parser.write(self.xml,'/tmp/GroundTruth-USC.graphml')
 
     def drawStateNodes(self,nodes,graph,x0,y0,xkey,ykey,believer=None,maxRows=10):
         x = x0
         even = True
         for layer in nodes:
             y = y0
-            for key in sorted(layer,lambda k0,k1: cmp((graph[k0]['agent'],k0),
-                                                      (graph[k1]['agent'],k1))):
+            for key in sorted(layer,key=lambda k: graph[k]['agent']):
                 if believer:
                     label = beliefKey(believer,key)
                 else:
@@ -270,7 +291,7 @@ class WorldView(QGraphicsScene):
         x = x0
         y = y0 - self.rowHeight/2
         for name in agents:
-            if graph.has_key(name):
+            if name in graph:
                 agent = self.world.agents[name]
                 if self.world.diagram.getX(agent.name) is None:
                     self.setDirty()
@@ -284,16 +305,24 @@ class WorldView(QGraphicsScene):
         
     def drawEdge(self,parent,child,graph=None,rect0=None,rect1=None):
         if self.xml:
+            if isinstance(parent,str):
+                parentVal = makePresent(parent)
+            else:
+                parentVal = parent
+            if isinstance(child,str):
+                childVal = makePresent(child)
+            else:
+                childVal = child
             for nP in self.xml.nodes():
-                if nP['label'] == parent:
+                if nP['label'] == parentVal:
                     break
             else:
-                nP = self.xml.add_node(parent)
+                nP = self.xml.add_node(parentVal)
             for nC in self.xml.nodes():
-                if nC['label'] == child:
+                if nC['label'] == childVal:
                     break
             else:
-                nC = self.xml.add_node(child)
+                nC = self.xml.add_node(childVal)
             self.xml.add_edge(nP,nC,True)
         if graph is None:
             graph = self.graph
@@ -363,7 +392,7 @@ class WorldView(QGraphicsScene):
         @type center: str
         """
         self.center = center
-        for key,table in self.edgesOut.items()+self.edgesIn.items():
+        for key,table in list(self.edgesOut.items())+list(self.edgesIn.items()):
             if key == center:
                 # All edges are important!
                 for edge,arrow in table.values():

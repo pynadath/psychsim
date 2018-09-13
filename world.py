@@ -13,7 +13,7 @@ from psychsim.agent import Agent
 import psychsim.graph
 from psychsim.ui.diagram import Diagram
 
-class World:
+class World(object):
     """
     @ivar agents: table of agents in this world, indexed by name
     @type agents: strS{->}L{Agent}
@@ -240,7 +240,7 @@ class World:
             for name,policy in actionDict.items():
                 actions[name] = ActionSet(policy)
         if isinstance(actions,dict):
-            for name,policy in actions.items():
+            for name,policy in list(actions.items()):
                 if isinstance(policy,ActionSet):
                     # Transfer fixed action into policy
                     key = keys.stateKey(name,keys.ACTION)
@@ -266,7 +266,7 @@ class World:
             assert actions is None
             actions = {}
         for name in self.agents:
-            if not name in actions and modelKey(name) in state:
+            if not name in actions: # and modelKey(name) in state:
                 # No action pre-specified
                 key = keys.turnKey(name)
                 if key in state.keyMap and 0 in state.domain(key):

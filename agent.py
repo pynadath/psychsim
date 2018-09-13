@@ -13,7 +13,7 @@ from psychsim.action import Action,ActionSet
 from psychsim.pwl import *
 from psychsim.probability import Distribution
 
-class Agent:
+class Agent(object):
     """
     @ivar name: agent name
     @type name: str
@@ -121,7 +121,11 @@ class Agent:
         if vector is None:
             vector = self.world.state
         if model is None:
-            model = self.world.getModel(self.name,vector)
+            try:
+                model = self.world.getModel(self.name,vector)
+            except KeyError:
+                # Use real model as fallback?
+                model = self.world.getModel(self.name)
         assert not model is True
         if isinstance(model,Distribution):
             result = {}
@@ -960,10 +964,25 @@ class Agent:
                     # Condition on actual observations
                     for omega in Omega:
                         beliefs[omega] = vector[keys.makeFuture(omega)]
-                        assert len(beliefs) > 0,'Impossible observation %s=%s' % \
-                            (omega,vector[keys.makeFuture(omega)])
+                        if len(beliefs) == 0:
+                            logging.error('Impossible observation %s=%s' % \
+                                          (omega,vector[keys.makeFuture(omega)]))
+                            self.world.printState(trueState)
+                            self.world.printState(beliefs)
+                            print('omega')
+                            print(vector)
+                            raise ValueError
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
+                    for dist in beliefs.distributions.values():
+                        if len(dist) > 1:
+                            deletion = False
+                            for vec in dist.domain():
+                                if dist[vec] < 1e-6:
+                                    del dist[vec]
+                                    deletion = True
+                            if deletion:
+                                dist.normalize()
                     newModel = self.belief2model(oldModel,beliefs)
                     SE[oldModel][label] = newModel['index']
                     if not actions in self.models[oldModel]['SE']:

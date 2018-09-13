@@ -54,22 +54,23 @@ class Neighborhood:
             rect = pygame.draw.rect(vm._win, self.startcolor, (self.x, self.y, self.width, self.height))
             return
         regionname = "Region%02d" % self.id
-        value = vm._simdata["regions"][currentDay-1][regionname][currentPropRegion]
-        #print ("Day ", currentDay, " Neighborhood ", regionname, "Property ", self.currentProp, "Value", value[0])
-        #print (currentDay - 1, "\t", regionname, "\t", value[0], "\t",         )
-        if vm._showActors == 1 :
-            self.color = SimColor.DGRAY
-        else:
-            self.color = SimColor.getColorForValue(float(value[0]))
+        if regionname in vm._simdata["regions"][currentDay-1]:
+            value = vm._simdata["regions"][currentDay-1][regionname][currentPropRegion]
+            #print ("Day ", currentDay, " Neighborhood ", regionname, "Property ", self.currentProp, "Value", value[0])
+            #print (currentDay - 1, "\t", regionname, "\t", value[0], "\t",         )
+            if vm._showActors == 1 :
+                self.color = SimColor.DGRAY
+            else:
+                self.color = SimColor.getColorForValue(float(value[0]))
 
-        rect = pygame.draw.rect(vm._win, self.color, (self.x, self.y, self.width, self.height))
+            rect = pygame.draw.rect(vm._win, self.color, (self.x, self.y, self.width, self.height))
 
-        #mouse over code below
-        # if rect.collidepoint(pygame.mouse.get_pos()):
-        #     s = pygame.Surface((self.width,self.height), pygame.SRCALPHA)
-        #     s.set_alpha(127)
-        #     s.fill((127, 127, 127))                        
-        #     win.blit(s, (self.x, self.y))  
+            #mouse over code below
+            # if rect.collidepoint(pygame.mouse.get_pos()):
+            #     s = pygame.Surface((self.width,self.height), pygame.SRCALPHA)
+            #     s.set_alpha(127)
+            #     s.fill((127, 127, 127))                        
+            #     win.blit(s, (self.x, self.y))  
 
 class SimColor:
     RED = (255,0,0)
@@ -185,7 +186,6 @@ class VizMap:
         
         if self._showActors > 0:
             for i in self.individualList:
-                
                 i.update(currentDay, self._currentPropIndividual, self)
 
 
