@@ -92,9 +92,10 @@ def appendSummary(datum,world,writer,fields,region=None):
     for agent in entities:
         if isinstance(agent,dict):
             # Region dictionary
-            appendSummary((agent['inhabitants'],feature,metadata,label),world,writer,
-                          fields,agent['agent'].name)
-            recurse = True
+            if agent['inhabitants']:
+                appendSummary((agent['inhabitants'],feature,metadata,label),world,writer,
+                              fields,agent['agent'].name)
+                recurse = True
         else:
             processDatum(agent,feature,funs,world,data)
     if not recurse:
