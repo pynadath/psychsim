@@ -1020,4 +1020,3 @@ if __name__ == '__main__':
         for level in range(len(WAYPOINTS)):
             runMission(username,level,args['ability'],args['explanation'],
                        args['embodiment'],args['acknowledgment'],args['learning'])
-            break
