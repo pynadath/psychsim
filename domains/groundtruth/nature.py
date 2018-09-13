@@ -118,7 +118,7 @@ class Nature(Agent):
             subtrees = {i: {'if': equalRow(category,list(range(1,6)))} for i in range(len(regions))}
             for i in range(len(regions)):
                 subtrees[i].update({cat: approachMatrix(risk,base_increase*float(cat+1)/\
-                                                        float(distance[i]+2),1.) \
+                                                        float(max(distance[i],1)),1.) \
                                     for cat in range(5)})         
             subtree = {'if': equalRow(makeFuture(location),regions[:]),
                        None: approachMatrix(risk,base_decrease,0.)}
