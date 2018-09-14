@@ -2,9 +2,9 @@ from psychsim.pwl import *
 from psychsim.reward import *
 from psychsim.agent import Agent
 
-from data import likert
-from region import Region
-from actor import Actor
+from psychsim.domains.groundtruth.data import likert
+from psychsim.domains.groundtruth.region import Region
+from psychsim.domains.groundtruth.actor import Actor
 
 class System(Agent):
     def __init__(self,world,config):

@@ -3,8 +3,8 @@ import os.path
 
 from psychsim.pwl.keys import *
 from psychsim.action import ActionSet
-from actor import Actor
-from region import Region
+from psychsim.domains.groundtruth.actor import Actor
+from psychsim.domains.groundtruth.region import Region
 
 dataTypes = {bool: 'Boolean',
              list: 'String',
