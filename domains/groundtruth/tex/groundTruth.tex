@@ -37,15 +37,15 @@ We use influence diagrams as the underlying graph structure for our ground truth
 \item%
 Rectangular nodes are possible actions for a particular agent (``Actor 1'', indicated by color) representing a potential behavior. They are labeled with a verb (``action'') and an optional object of the verb (``Actor2''). An action node has a binary value, indicating whether or not the action was chosen.%
 \item%
-Oval nodes are state variables. Their value is potentially a probability distribution over a domain of possible values. All true state variables will be certain (i.e., 100\textbackslash{}\% probability for a single value), but agents' perceptions of the true state will often be uncertain.%
+Oval nodes are state variables. Their value is potentially a probability distribution over a domain of possible values. All true state variables will be certain (i.e., 100\% probability for a single value), but agents' perceptions of the true state will often be uncertain.%
 \item%
 Hexagonal nodes are utility or reward nodes. They represent an expected value computation by the agent (``Actor1''). The node's value is a table with each row corresponding to a possible action choice and its expected utility.%
 \item%
-Links from action nodes to state nodes specify an effect that the action has on the value of the state.%
+Links from action nodes to state nodes specify an effect that the action has on the value of the state. In the following specifications of these effects, a variable name followed by a ' will denote the value of the variable after the action is performed.%
 \item%
 Links from one state node to another specify an influence that the value of the first state node has on the effect of at least one action on the second state node.%
 \item%
-Links from a state node to an agent's utility node specify that the state node is an input to the expected value calculation performed by that agent. There is a real{-}valued weight from \$(0,1\textbackslash{}{]}\$ on each link specifying the priority of that variable's influence on that agent's reward calculation (higher values mean higher priority).%
+Links from a state node to an agent's utility node specify that the state node is an input to the expected value calculation performed by that agent. There is a real{-}valued weight from \$(0,1{]}\$ on each link specifying the priority of that variable's influence on that agent's reward calculation (higher values mean higher priority).%
 \item%
 Links from utility nodes to action nodes indicate that the expected value calculation then determines whether or not that action is chosen. In the simulations described here, we use a strict maximization, so that the action choice is deterministic (i.e., the action with the highest expected value is performed, with ties broken by a pre{-}determined fixed order).%
 \item%
@@ -87,6 +87,7 @@ IF %
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 $\mbox{\textbf{Actor's health}} '$%
 $>$%
@@ -94,18 +95,21 @@ $>$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 $\mbox{\textbf{Actor's alive}} '$%
 $\leftarrow$%
 \textbf{true}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's alive}} '$%
 $\leftarrow$%
 \textbf{false}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's alive}} '$%
 $\leftarrow$%
 \textbf{Actor's alive}%
@@ -194,12 +198,14 @@ IF %
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 $\mbox{\textbf{Actor's risk}} '$%
-$>$%
-{[}0.2,0.4,0.6,0.8,1.0{]}%
+$\in$%
 \linebreak%
 \hspace*{4em}%
+{[}0,0.2{]}%
+: %
 $\mbox{\textbf{Actor's childrenHealth}} '$%
 $\leftarrow$%
 60\%%
@@ -208,10 +214,12 @@ $\cdot$%
 +0.24%
 \linebreak%
 \hspace*{4em}%
-1 %
+(0.2,0.4{]}%
+: %
 \linebreak%
 \hspace*{6em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Actor's childrenHealth}} '$%
 $\leftarrow$%
 60\%%
@@ -219,27 +227,8 @@ $\cdot$%
 \textbf{Actor's childrenHealth}%
 \linebreak%
 \hspace*{6em}%
-80\%: %
-$\mbox{\textbf{Actor's childrenHealth}} '$%
-$\leftarrow$%
-60\%%
-$\cdot$%
-\textbf{Actor's childrenHealth}%
-+0.24%
-\linebreak%
-\hspace*{4em}%
-2 %
-\linebreak%
-\hspace*{6em}%
-40\%: %
-$\mbox{\textbf{Actor's childrenHealth}} '$%
-$\leftarrow$%
-60\%%
-$\cdot$%
-\textbf{Actor's childrenHealth}%
-\linebreak%
-\hspace*{6em}%
-60\%: %
+80\%:%
+: %
 $\mbox{\textbf{Actor's childrenHealth}} '$%
 $\leftarrow$%
 60\%%
@@ -248,10 +237,12 @@ $\cdot$%
 +0.24%
 \linebreak%
 \hspace*{4em}%
-3 %
+(0.4,0.6{]}%
+: %
 \linebreak%
 \hspace*{6em}%
-60\%: %
+40\%:%
+: %
 $\mbox{\textbf{Actor's childrenHealth}} '$%
 $\leftarrow$%
 60\%%
@@ -259,27 +250,8 @@ $\cdot$%
 \textbf{Actor's childrenHealth}%
 \linebreak%
 \hspace*{6em}%
-40\%: %
-$\mbox{\textbf{Actor's childrenHealth}} '$%
-$\leftarrow$%
-60\%%
-$\cdot$%
-\textbf{Actor's childrenHealth}%
-+0.24%
-\linebreak%
-\hspace*{4em}%
-4 %
-\linebreak%
-\hspace*{6em}%
-80\%: %
-$\mbox{\textbf{Actor's childrenHealth}} '$%
-$\leftarrow$%
-60\%%
-$\cdot$%
-\textbf{Actor's childrenHealth}%
-\linebreak%
-\hspace*{6em}%
-19\%: %
+60\%:%
+: %
 $\mbox{\textbf{Actor's childrenHealth}} '$%
 $\leftarrow$%
 60\%%
@@ -288,10 +260,12 @@ $\cdot$%
 +0.24%
 \linebreak%
 \hspace*{4em}%
-5 %
+(0.6,0.8{]}%
+: %
 \linebreak%
 \hspace*{6em}%
-100\%: %
+60\%:%
+: %
 $\mbox{\textbf{Actor's childrenHealth}} '$%
 $\leftarrow$%
 60\%%
@@ -299,7 +273,54 @@ $\cdot$%
 \textbf{Actor's childrenHealth}%
 \linebreak%
 \hspace*{6em}%
-0\%: %
+40\%:%
+: %
+$\mbox{\textbf{Actor's childrenHealth}} '$%
+$\leftarrow$%
+60\%%
+$\cdot$%
+\textbf{Actor's childrenHealth}%
++0.24%
+\linebreak%
+\hspace*{4em}%
+(0.8,1.0{]}%
+: %
+\linebreak%
+\hspace*{6em}%
+80\%:%
+: %
+$\mbox{\textbf{Actor's childrenHealth}} '$%
+$\leftarrow$%
+60\%%
+$\cdot$%
+\textbf{Actor's childrenHealth}%
+\linebreak%
+\hspace*{6em}%
+19\%:%
+: %
+$\mbox{\textbf{Actor's childrenHealth}} '$%
+$\leftarrow$%
+60\%%
+$\cdot$%
+\textbf{Actor's childrenHealth}%
++0.24%
+\linebreak%
+\hspace*{4em}%
+(1.0,1{]}%
+: %
+\linebreak%
+\hspace*{6em}%
+100\%:%
+: %
+$\mbox{\textbf{Actor's childrenHealth}} '$%
+$\leftarrow$%
+60\%%
+$\cdot$%
+\textbf{Actor's childrenHealth}%
+\linebreak%
+\hspace*{6em}%
+0\%:%
+: %
 $\mbox{\textbf{Actor's childrenHealth}} '$%
 $\leftarrow$%
 60\%%
@@ -309,6 +330,7 @@ $\cdot$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's childrenHealth}} '$%
 $\leftarrow$%
 0.00%
@@ -404,12 +426,14 @@ IF %
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 $\mbox{\textbf{Actor's risk}} '$%
-$>$%
-{[}0.2,0.4,0.6,0.8,1.0{]}%
+$\in$%
 \linebreak%
 \hspace*{4em}%
+{[}0,0.2{]}%
+: %
 $\mbox{\textbf{Actor's health}} '$%
 $\leftarrow$%
 60\%%
@@ -418,10 +442,12 @@ $\cdot$%
 +0.24%
 \linebreak%
 \hspace*{4em}%
-1 %
+(0.2,0.4{]}%
+: %
 \linebreak%
 \hspace*{6em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Actor's health}} '$%
 $\leftarrow$%
 60\%%
@@ -429,27 +455,8 @@ $\cdot$%
 \textbf{Actor's health}%
 \linebreak%
 \hspace*{6em}%
-80\%: %
-$\mbox{\textbf{Actor's health}} '$%
-$\leftarrow$%
-60\%%
-$\cdot$%
-\textbf{Actor's health}%
-+0.24%
-\linebreak%
-\hspace*{4em}%
-2 %
-\linebreak%
-\hspace*{6em}%
-40\%: %
-$\mbox{\textbf{Actor's health}} '$%
-$\leftarrow$%
-60\%%
-$\cdot$%
-\textbf{Actor's health}%
-\linebreak%
-\hspace*{6em}%
-60\%: %
+80\%:%
+: %
 $\mbox{\textbf{Actor's health}} '$%
 $\leftarrow$%
 60\%%
@@ -458,10 +465,12 @@ $\cdot$%
 +0.24%
 \linebreak%
 \hspace*{4em}%
-3 %
+(0.4,0.6{]}%
+: %
 \linebreak%
 \hspace*{6em}%
-60\%: %
+40\%:%
+: %
 $\mbox{\textbf{Actor's health}} '$%
 $\leftarrow$%
 60\%%
@@ -469,27 +478,8 @@ $\cdot$%
 \textbf{Actor's health}%
 \linebreak%
 \hspace*{6em}%
-40\%: %
-$\mbox{\textbf{Actor's health}} '$%
-$\leftarrow$%
-60\%%
-$\cdot$%
-\textbf{Actor's health}%
-+0.24%
-\linebreak%
-\hspace*{4em}%
-4 %
-\linebreak%
-\hspace*{6em}%
-80\%: %
-$\mbox{\textbf{Actor's health}} '$%
-$\leftarrow$%
-60\%%
-$\cdot$%
-\textbf{Actor's health}%
-\linebreak%
-\hspace*{6em}%
-19\%: %
+60\%:%
+: %
 $\mbox{\textbf{Actor's health}} '$%
 $\leftarrow$%
 60\%%
@@ -498,10 +488,12 @@ $\cdot$%
 +0.24%
 \linebreak%
 \hspace*{4em}%
-5 %
+(0.6,0.8{]}%
+: %
 \linebreak%
 \hspace*{6em}%
-100\%: %
+60\%:%
+: %
 $\mbox{\textbf{Actor's health}} '$%
 $\leftarrow$%
 60\%%
@@ -509,7 +501,54 @@ $\cdot$%
 \textbf{Actor's health}%
 \linebreak%
 \hspace*{6em}%
-0\%: %
+40\%:%
+: %
+$\mbox{\textbf{Actor's health}} '$%
+$\leftarrow$%
+60\%%
+$\cdot$%
+\textbf{Actor's health}%
++0.24%
+\linebreak%
+\hspace*{4em}%
+(0.8,1.0{]}%
+: %
+\linebreak%
+\hspace*{6em}%
+80\%:%
+: %
+$\mbox{\textbf{Actor's health}} '$%
+$\leftarrow$%
+60\%%
+$\cdot$%
+\textbf{Actor's health}%
+\linebreak%
+\hspace*{6em}%
+19\%:%
+: %
+$\mbox{\textbf{Actor's health}} '$%
+$\leftarrow$%
+60\%%
+$\cdot$%
+\textbf{Actor's health}%
++0.24%
+\linebreak%
+\hspace*{4em}%
+(1.0,1{]}%
+: %
+\linebreak%
+\hspace*{6em}%
+100\%:%
+: %
+$\mbox{\textbf{Actor's health}} '$%
+$\leftarrow$%
+60\%%
+$\cdot$%
+\textbf{Actor's health}%
+\linebreak%
+\hspace*{6em}%
+0\%:%
+: %
 $\mbox{\textbf{Actor's health}} '$%
 $\leftarrow$%
 60\%%
@@ -519,6 +558,7 @@ $\cdot$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's health}} '$%
 $\leftarrow$%
 0.00%
@@ -672,6 +712,7 @@ $>$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
@@ -679,6 +720,7 @@ ${-}0.20$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 0.00%
@@ -693,11 +735,13 @@ IF %
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 \textbf{Actor's employed}%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 80\%%
@@ -707,12 +751,14 @@ $\cdot$%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
@@ -727,18 +773,21 @@ IF %
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 \textbf{Actor's employed}%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 IF %
 \textbf{Actor's location}%
 $=$%
-\textbf{\{'Region01', 'evacuated'\}}%
+\textbf{\{'evacuated', 'Region01'\}}%
 \linebreak%
 \hspace*{6em}%
 THEN %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 80\%%
@@ -748,18 +797,21 @@ $\cdot$%
 \linebreak%
 \hspace*{6em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
@@ -816,6 +868,7 @@ $=$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
 19\%%
@@ -825,6 +878,7 @@ $\cdot$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
 40\%%
@@ -842,6 +896,7 @@ IF %
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 $\mbox{\textbf{Actor's location}} '$%
 $=$%
@@ -849,12 +904,14 @@ $=$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
 \textbf{Region01's shelterRisk}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 IF %
 $\mbox{\textbf{Actor's location}} '$%
 $=$%
@@ -862,6 +919,7 @@ $=$%
 \linebreak%
 \hspace*{6em}%
 THEN %
+: %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
 9\%%
@@ -870,12 +928,14 @@ $\cdot$%
 \linebreak%
 \hspace*{6em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
 \textbf{Region01's risk}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
 0.00%
@@ -955,14 +1015,10 @@ Integer%
 \begin{flushleft}%
 IF %
 $\mbox{\textbf{Nature's phase}} '$%
-$=$%
-\textbf{none}%
- or %
-\textbf{approaching}%
- or %
-\textbf{active}%
 \linebreak%
 \hspace*{2em}%
+$= \mbox{\textbf{approaching}}$%
+: %
 IF %
 \textbf{Nature's category}%
 $=$%
@@ -970,39 +1026,46 @@ $=$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 \linebreak%
 \hspace*{6em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 1%
 \linebreak%
 \hspace*{6em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 2%
 \linebreak%
 \hspace*{6em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 3%
 \linebreak%
 \hspace*{6em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 4%
 \linebreak%
 \hspace*{6em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 5%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 IF %
 \textbf{Nature's category}%
 $=$%
@@ -1010,21 +1073,25 @@ $=$%
 \linebreak%
 \hspace*{6em}%
 THEN %
+: %
 \linebreak%
 \hspace*{8em}%
-60\%: %
+60\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 \linebreak%
 \hspace*{8em}%
-40\%: %
+40\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 2%
 \linebreak%
 \hspace*{6em}%
 ELSE %
+: %
 IF %
 \textbf{Nature's category}%
 $=$%
@@ -1032,50 +1099,59 @@ $=$%
 \linebreak%
 \hspace*{8em}%
 THEN %
+: %
 \linebreak%
 \hspace*{10em}%
-40\%: %
+40\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 4%
 \linebreak%
 \hspace*{10em}%
-60\%: %
+60\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 \linebreak%
 \hspace*{8em}%
 ELSE %
+: %
 \linebreak%
 \hspace*{10em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 ${-}1$%
 \linebreak%
 \hspace*{10em}%
-60\%: %
+60\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 \linebreak%
 \hspace*{10em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 +1%
 \linebreak%
 \hspace*{2em}%
-1 %
+$= \mbox{\textbf{active}}$%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 \linebreak%
 \hspace*{2em}%
-2 %
+$= \mbox{\textbf{none}}$%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 0%
@@ -1107,6 +1183,7 @@ $\mbox{\textbf{Nature's phase}} '$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 $\mbox{\textbf{Nature's days}} '$%
 $\leftarrow$%
 \textbf{Nature's days}%
@@ -1114,6 +1191,7 @@ $\leftarrow$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Nature's days}} '$%
 $\leftarrow$%
 0%
@@ -1144,14 +1222,10 @@ String%
 \begin{flushleft}%
 IF %
 $\mbox{\textbf{Nature's phase}} '$%
-$=$%
-\textbf{none}%
- or %
-\textbf{approaching}%
- or %
-\textbf{active}%
 \linebreak%
 \hspace*{2em}%
+$= \mbox{\textbf{approaching}}$%
+: %
 IF %
 \textbf{Nature's location}%
 $=$%
@@ -1159,35 +1233,41 @@ $=$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{Region01}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{Nature's location}%
 \linebreak%
 \hspace*{2em}%
-1 %
+$= \mbox{\textbf{active}}$%
+: %
 IF %
 \textbf{Nature's location}%
-$=$%
-\textbf{Region01}%
 \linebreak%
 \hspace*{4em}%
+OTHERWISE %
+: %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{Nature's location}%
 \linebreak%
 \hspace*{4em}%
+$= \mbox{\textbf{Region01}}$%
+: %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{none}%
 \linebreak%
 \hspace*{2em}%
-2 %
+$= \mbox{\textbf{none}}$%
+: %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{none}%
@@ -1220,12 +1300,10 @@ String%
 \begin{flushleft}%
 IF %
 \textbf{Nature's phase}%
-$=$%
-\textbf{none}%
- or %
-\textbf{approaching}%
 \linebreak%
 \hspace*{2em}%
+$= \mbox{\textbf{none}}$%
+: %
 IF %
 \textbf{Nature's days}%
 $>$%
@@ -1233,27 +1311,32 @@ $>$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 \linebreak%
 \hspace*{6em}%
-80\%: %
+80\%:%
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{approaching}%
 \linebreak%
 \hspace*{6em}%
-19\%: %
+19\%:%
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{none}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{none}%
 \linebreak%
 \hspace*{2em}%
-1 %
+$= \mbox{\textbf{approaching}}$%
+: %
 IF %
 \textbf{Nature's days}%
 $>$%
@@ -1261,26 +1344,32 @@ $>$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 \linebreak%
 \hspace*{6em}%
-80\%: %
+80\%:%
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{active}%
 \linebreak%
 \hspace*{6em}%
-19\%: %
+19\%:%
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{approaching}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{approaching}%
 \linebreak%
 \hspace*{2em}%
+OTHERWISE %
+: %
 IF %
 \textbf{Nature's location}%
 $=$%
@@ -1288,12 +1377,14 @@ $=$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{none}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{active}%
@@ -1346,12 +1437,13 @@ $=$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 $\mbox{\textbf{Nature's location}} '$%
-$=$%
-\textbf{Region01}%
 \linebreak%
 \hspace*{4em}%
+OTHERWISE %
+: %
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
 80\%%
@@ -1359,21 +1451,14 @@ $\cdot$%
 \textbf{Region01's risk}%
 \linebreak%
 \hspace*{4em}%
+$= \mbox{\textbf{Region01}}$%
+: %
 IF %
 \textbf{Nature's category}%
-$=$%
-{[}1,2,3,4,5{]}%
 \linebreak%
 \hspace*{6em}%
-$\mbox{\textbf{Region01's risk}} '$%
-$\leftarrow$%
-90\%%
-$\cdot$%
-\textbf{Region01's risk}%
-+0.10%
-\linebreak%
-\hspace*{6em}%
-1 %
+$= \mbox{\textbf{1}}$%
+: %
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
 80\%%
@@ -1382,16 +1467,8 @@ $\cdot$%
 +0.20%
 \linebreak%
 \hspace*{6em}%
-2 %
-$\mbox{\textbf{Region01's risk}} '$%
-$\leftarrow$%
-70\%%
-$\cdot$%
-\textbf{Region01's risk}%
-+0.30%
-\linebreak%
-\hspace*{6em}%
-3 %
+$= \mbox{\textbf{2}}$%
+: %
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
 60\%%
@@ -1400,16 +1477,38 @@ $\cdot$%
 +0.40%
 \linebreak%
 \hspace*{6em}%
-4 %
+$= \mbox{\textbf{3}}$%
+: %
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
-50\%%
+39\%%
 $\cdot$%
 \textbf{Region01's risk}%
-+0.50%
++0.60%
+\linebreak%
+\hspace*{6em}%
+$= \mbox{\textbf{4}}$%
+: %
+$\mbox{\textbf{Region01's risk}} '$%
+$\leftarrow$%
+19\%%
+$\cdot$%
+\textbf{Region01's risk}%
++0.80%
+\linebreak%
+\hspace*{6em}%
+$= \mbox{\textbf{5}}$%
+: %
+$\mbox{\textbf{Region01's risk}} '$%
+$\leftarrow$%
+0\%%
+$\cdot$%
+\textbf{Region01's risk}%
++1.00%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
 80\%%
@@ -1471,6 +1570,7 @@ $=$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 $\mbox{\textbf{Nature's location}} '$%
 $=$%
@@ -1478,18 +1578,20 @@ $=$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 IF %
 \textbf{Nature's category}%
-$=$%
-{[}1,2,3,4,5{]}%
 \linebreak%
 \hspace*{6em}%
+$= \mbox{\textbf{1}}$%
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 \textbf{Region01's shelterRisk}%
 \linebreak%
 \hspace*{6em}%
-1 %
+$= \mbox{\textbf{2}}$%
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 80\%%
@@ -1498,7 +1600,8 @@ $\cdot$%
 +0.20%
 \linebreak%
 \hspace*{6em}%
-2 %
+$= \mbox{\textbf{3}}$%
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 60\%%
@@ -1507,7 +1610,8 @@ $\cdot$%
 +0.40%
 \linebreak%
 \hspace*{6em}%
-3 %
+$= \mbox{\textbf{4}}$%
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 39\%%
@@ -1516,7 +1620,8 @@ $\cdot$%
 +0.60%
 \linebreak%
 \hspace*{6em}%
-4 %
+$= \mbox{\textbf{5}}$%
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 19\%%
@@ -1526,12 +1631,14 @@ $\cdot$%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 \textbf{Region01's shelterRisk}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 80\%%
@@ -1641,14 +1748,10 @@ $\leftarrow$%
 \begin{flushleft}%
 IF %
 $\mbox{\textbf{Nature's phase}} '$%
-$=$%
-\textbf{none}%
- or %
-\textbf{approaching}%
- or %
-\textbf{active}%
 \linebreak%
 \hspace*{2em}%
+$= \mbox{\textbf{approaching}}$%
+: %
 IF %
 \textbf{Nature's category}%
 $=$%
@@ -1656,39 +1759,46 @@ $=$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 \linebreak%
 \hspace*{6em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 1%
 \linebreak%
 \hspace*{6em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 2%
 \linebreak%
 \hspace*{6em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 3%
 \linebreak%
 \hspace*{6em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 4%
 \linebreak%
 \hspace*{6em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 5%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 IF %
 \textbf{Nature's category}%
 $=$%
@@ -1696,21 +1806,25 @@ $=$%
 \linebreak%
 \hspace*{6em}%
 THEN %
+: %
 \linebreak%
 \hspace*{8em}%
-60\%: %
+60\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 \linebreak%
 \hspace*{8em}%
-40\%: %
+40\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 2%
 \linebreak%
 \hspace*{6em}%
 ELSE %
+: %
 IF %
 \textbf{Nature's category}%
 $=$%
@@ -1718,50 +1832,59 @@ $=$%
 \linebreak%
 \hspace*{8em}%
 THEN %
+: %
 \linebreak%
 \hspace*{10em}%
-40\%: %
+40\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 4%
 \linebreak%
 \hspace*{10em}%
-60\%: %
+60\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 \linebreak%
 \hspace*{8em}%
 ELSE %
+: %
 \linebreak%
 \hspace*{10em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 ${-}1$%
 \linebreak%
 \hspace*{10em}%
-60\%: %
+60\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 \linebreak%
 \hspace*{10em}%
-20\%: %
+20\%:%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 +1%
 \linebreak%
 \hspace*{2em}%
-1 %
+$= \mbox{\textbf{active}}$%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 \textbf{Nature's category}%
 \linebreak%
 \hspace*{2em}%
-2 %
+$= \mbox{\textbf{none}}$%
+: %
 $\mbox{\textbf{Nature's category}} '$%
 $\leftarrow$%
 0%
@@ -1778,6 +1901,7 @@ $\mbox{\textbf{Nature's phase}} '$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 $\mbox{\textbf{Nature's days}} '$%
 $\leftarrow$%
 \textbf{Nature's days}%
@@ -1785,6 +1909,7 @@ $\leftarrow$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Nature's days}} '$%
 $\leftarrow$%
 0%
@@ -1796,14 +1921,10 @@ $\leftarrow$%
 \begin{flushleft}%
 IF %
 $\mbox{\textbf{Nature's phase}} '$%
-$=$%
-\textbf{none}%
- or %
-\textbf{approaching}%
- or %
-\textbf{active}%
 \linebreak%
 \hspace*{2em}%
+$= \mbox{\textbf{approaching}}$%
+: %
 IF %
 \textbf{Nature's location}%
 $=$%
@@ -1811,35 +1932,41 @@ $=$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{Region01}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{Nature's location}%
 \linebreak%
 \hspace*{2em}%
-1 %
+$= \mbox{\textbf{active}}$%
+: %
 IF %
 \textbf{Nature's location}%
-$=$%
-\textbf{Region01}%
 \linebreak%
 \hspace*{4em}%
+OTHERWISE %
+: %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{Nature's location}%
 \linebreak%
 \hspace*{4em}%
+$= \mbox{\textbf{Region01}}$%
+: %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{none}%
 \linebreak%
 \hspace*{2em}%
-2 %
+$= \mbox{\textbf{none}}$%
+: %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{none}%
@@ -1851,12 +1978,10 @@ $\leftarrow$%
 \begin{flushleft}%
 IF %
 \textbf{Nature's phase}%
-$=$%
-\textbf{none}%
- or %
-\textbf{approaching}%
 \linebreak%
 \hspace*{2em}%
+$= \mbox{\textbf{none}}$%
+: %
 IF %
 \textbf{Nature's days}%
 $>$%
@@ -1864,27 +1989,32 @@ $>$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 \linebreak%
 \hspace*{6em}%
-80\%: %
+80\%:%
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{approaching}%
 \linebreak%
 \hspace*{6em}%
-19\%: %
+19\%:%
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{none}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{none}%
 \linebreak%
 \hspace*{2em}%
-1 %
+$= \mbox{\textbf{approaching}}$%
+: %
 IF %
 \textbf{Nature's days}%
 $>$%
@@ -1892,26 +2022,32 @@ $>$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 \linebreak%
 \hspace*{6em}%
-80\%: %
+80\%:%
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{active}%
 \linebreak%
 \hspace*{6em}%
-19\%: %
+19\%:%
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{approaching}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{approaching}%
 \linebreak%
 \hspace*{2em}%
+OTHERWISE %
+: %
 IF %
 \textbf{Nature's location}%
 $=$%
@@ -1919,12 +2055,14 @@ $=$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{none}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{active}%
@@ -1941,12 +2079,13 @@ $=$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 $\mbox{\textbf{Nature's location}} '$%
-$=$%
-\textbf{Region01}%
 \linebreak%
 \hspace*{4em}%
+OTHERWISE %
+: %
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
 80\%%
@@ -1954,21 +2093,14 @@ $\cdot$%
 \textbf{Region01's risk}%
 \linebreak%
 \hspace*{4em}%
+$= \mbox{\textbf{Region01}}$%
+: %
 IF %
 \textbf{Nature's category}%
-$=$%
-{[}1,2,3,4,5{]}%
 \linebreak%
 \hspace*{6em}%
-$\mbox{\textbf{Region01's risk}} '$%
-$\leftarrow$%
-90\%%
-$\cdot$%
-\textbf{Region01's risk}%
-+0.10%
-\linebreak%
-\hspace*{6em}%
-1 %
+$= \mbox{\textbf{1}}$%
+: %
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
 80\%%
@@ -1977,16 +2109,8 @@ $\cdot$%
 +0.20%
 \linebreak%
 \hspace*{6em}%
-2 %
-$\mbox{\textbf{Region01's risk}} '$%
-$\leftarrow$%
-70\%%
-$\cdot$%
-\textbf{Region01's risk}%
-+0.30%
-\linebreak%
-\hspace*{6em}%
-3 %
+$= \mbox{\textbf{2}}$%
+: %
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
 60\%%
@@ -1995,16 +2119,38 @@ $\cdot$%
 +0.40%
 \linebreak%
 \hspace*{6em}%
-4 %
+$= \mbox{\textbf{3}}$%
+: %
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
-50\%%
+39\%%
 $\cdot$%
 \textbf{Region01's risk}%
-+0.50%
++0.60%
+\linebreak%
+\hspace*{6em}%
+$= \mbox{\textbf{4}}$%
+: %
+$\mbox{\textbf{Region01's risk}} '$%
+$\leftarrow$%
+19\%%
+$\cdot$%
+\textbf{Region01's risk}%
++0.80%
+\linebreak%
+\hspace*{6em}%
+$= \mbox{\textbf{5}}$%
+: %
+$\mbox{\textbf{Region01's risk}} '$%
+$\leftarrow$%
+0\%%
+$\cdot$%
+\textbf{Region01's risk}%
++1.00%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
 80\%%
@@ -2023,6 +2169,7 @@ $=$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 $\mbox{\textbf{Nature's location}} '$%
 $=$%
@@ -2030,18 +2177,20 @@ $=$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 IF %
 \textbf{Nature's category}%
-$=$%
-{[}1,2,3,4,5{]}%
 \linebreak%
 \hspace*{6em}%
+$= \mbox{\textbf{1}}$%
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 \textbf{Region01's shelterRisk}%
 \linebreak%
 \hspace*{6em}%
-1 %
+$= \mbox{\textbf{2}}$%
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 80\%%
@@ -2050,7 +2199,8 @@ $\cdot$%
 +0.20%
 \linebreak%
 \hspace*{6em}%
-2 %
+$= \mbox{\textbf{3}}$%
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 60\%%
@@ -2059,7 +2209,8 @@ $\cdot$%
 +0.40%
 \linebreak%
 \hspace*{6em}%
-3 %
+$= \mbox{\textbf{4}}$%
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 39\%%
@@ -2068,7 +2219,8 @@ $\cdot$%
 +0.60%
 \linebreak%
 \hspace*{6em}%
-4 %
+$= \mbox{\textbf{5}}$%
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 19\%%
@@ -2078,12 +2230,14 @@ $\cdot$%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 \textbf{Region01's shelterRisk}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
 80\%%
@@ -2123,19 +2277,23 @@ $=$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 \textbf{Actor's alive}%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 \textbf{true}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 \textbf{false}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 \textbf{false}%
 \end{flushleft}
 
@@ -2184,10 +2342,12 @@ $=$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 \textbf{false}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 IF %
 \textbf{Actor's location}%
 $=$%
@@ -2195,19 +2355,23 @@ $=$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 \textbf{false}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 IF %
 \textbf{Actor's alive}%
 \linebreak%
 \hspace*{6em}%
 THEN %
+: %
 \textbf{true}%
 \linebreak%
 \hspace*{6em}%
 ELSE %
+: %
 \textbf{false}%
 \end{flushleft}
 
@@ -2231,6 +2395,7 @@ $>$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
@@ -2238,6 +2403,7 @@ ${-}0.20$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 0.00%
@@ -2263,19 +2429,23 @@ IF %
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 \textbf{Actor memberOf Group}%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 \textbf{false}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 \textbf{true}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 \textbf{false}%
 \end{flushleft}
 
@@ -2318,19 +2488,23 @@ IF %
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 \textbf{Actor memberOf Group}%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 \textbf{true}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 \textbf{false}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 \textbf{false}%
 \end{flushleft}
 
@@ -2375,10 +2549,12 @@ $=$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 \textbf{true}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 \textbf{false}%
 \end{flushleft}
 
@@ -2400,11 +2576,13 @@ IF %
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 \textbf{Actor's employed}%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 80\%%
@@ -2414,12 +2592,14 @@ $\cdot$%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
@@ -2447,15 +2627,18 @@ $=$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 \textbf{false}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 IF %
 \textbf{Actor's alive}%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 IF %
 \textbf{Actor's location}%
 $=$%
@@ -2463,14 +2646,17 @@ $=$%
 \linebreak%
 \hspace*{6em}%
 THEN %
+: %
 \textbf{false}%
 \linebreak%
 \hspace*{6em}%
 ELSE %
+: %
 \textbf{true}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 \textbf{false}%
 \end{flushleft}
 
@@ -2503,18 +2689,21 @@ IF %
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 \textbf{Actor's employed}%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 IF %
 \textbf{Actor's location}%
 $=$%
-\textbf{\{'Region01', 'evacuated'\}}%
+\textbf{\{'evacuated', 'Region01'\}}%
 \linebreak%
 \hspace*{6em}%
 THEN %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 80\%%
@@ -2524,18 +2713,21 @@ $\cdot$%
 \linebreak%
 \hspace*{6em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
@@ -2563,19 +2755,23 @@ $=$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 \textbf{Actor's alive}%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 \textbf{true}%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 \textbf{false}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 \textbf{false}%
 \end{flushleft}
 
@@ -2602,6 +2798,7 @@ $=$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
 19\%%
@@ -2611,6 +2808,7 @@ $\cdot$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
 40\%%
@@ -2663,10 +2861,12 @@ $>$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 \textbf{true}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 \textbf{false}%
 \end{flushleft}
 
@@ -2692,10 +2892,12 @@ $=$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 \textbf{false}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 \textbf{true}%
 \end{flushleft}
 
@@ -2743,10 +2945,12 @@ $>$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 \textbf{true}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 \textbf{false}%
 \end{flushleft}
 
@@ -2772,6 +2976,7 @@ $>$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 \textbf{Actor's attachment}%
 $=$%
@@ -2779,6 +2984,7 @@ $=$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 $R$%
 $\leftarrow$%
 20\%%
@@ -2803,6 +3009,7 @@ $\cdot$%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 IF %
 \textbf{Actor's attachment}%
 $=$%
@@ -2810,6 +3017,7 @@ $=$%
 \linebreak%
 \hspace*{6em}%
 THEN %
+: %
 $R$%
 $\leftarrow$%
 {-}20\%%
@@ -2834,6 +3042,7 @@ $\cdot$%
 \linebreak%
 \hspace*{6em}%
 ELSE %
+: %
 $R$%
 $\leftarrow$%
 40\%%
@@ -2854,6 +3063,7 @@ $\cdot$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $R$%
 $\leftarrow$%
 40\%%
@@ -2893,6 +3103,7 @@ $>$%
 \linebreak%
 \hspace*{2em}%
 THEN %
+: %
 IF %
 \textbf{Actor's attachment}%
 $=$%
@@ -2900,6 +3111,7 @@ $=$%
 \linebreak%
 \hspace*{4em}%
 THEN %
+: %
 $R$%
 $\leftarrow$%
 20\%%
@@ -2924,6 +3136,7 @@ $\cdot$%
 \linebreak%
 \hspace*{4em}%
 ELSE %
+: %
 IF %
 \textbf{Actor's attachment}%
 $=$%
@@ -2931,6 +3144,7 @@ $=$%
 \linebreak%
 \hspace*{6em}%
 THEN %
+: %
 $R$%
 $\leftarrow$%
 {-}20\%%
@@ -2955,6 +3169,7 @@ $\cdot$%
 \linebreak%
 \hspace*{6em}%
 ELSE %
+: %
 $R$%
 $\leftarrow$%
 40\%%
@@ -2975,6 +3190,7 @@ $\cdot$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
+: %
 $R$%
 $\leftarrow$%
 40\%%
