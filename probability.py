@@ -15,6 +15,11 @@ class Distribution(dict):
     """
     epsilon = 1e-8
 
+    def __new__(cls,args=None,rationality=None):
+        obj = super().__new__(cls)
+        obj._domain = {}
+        return obj
+        
     def __init__(self,args=None,rationality=None):
         """
         @param args: the initial elements of the probability distribution
@@ -22,8 +27,8 @@ class Distribution(dict):
         @param rationality: if not C{None}, then use as a rationality parameter in a quantal response over the provided values
         @type rationality: float
         """
-        self._domain = {}
-        dict.__init__(self)
+        super().__init__(self)
+#        self._domain = {}
         if not args is None:
             if isinstance(args,Node):
                 self.parse(args)
@@ -254,7 +259,7 @@ class Distribution(dict):
                     subNode = node.firstChild
                     while subNode and subNode.nodeType != subNode.ELEMENT_NODE:
                         subNode = subNode.nextSibling
-                    value = self.xml2element(key,subNode)
+                    value = self.xml2element(None,subNode)
                 self[value] = prob
 #                if not key:
 #                    key = str(value)
@@ -272,7 +277,7 @@ class Distribution(dict):
 
     def __str__(self):
         return '\n'.join(['%d%%\t%s' % (100*self[el],str(el).replace('\n','\n\t'))
-                          for el in sorted(self._domain.values())])
+                          for el in self._domain.values()])
 #        return '\n'.join(map(lambda el: '%d%%\t%s' % (100.*self[el],str(el).replace('\n','\n\t')),self.domain()))
 
     def __hash__(self):
@@ -280,3 +285,11 @@ class Distribution(dict):
 
     def __copy__(self):
         return self.__class__(self.__xml__().documentElement)
+
+    def __getstate__(self):
+        return {el: self[el] for el in self.domain()}
+    
+    def __setstate__(self,state):
+        self.clear()
+        for el,prob in state.items():
+            self[el] = prob

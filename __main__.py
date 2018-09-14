@@ -1,4 +1,5 @@
 import os.path
+import pickle
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -26,7 +27,11 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
             self.openScenario(str(filename))
 
     def openScenario(self,filename):
-        self.world = World(filename)
+        if os.path.splitext(filename)[1] == '.pkl':
+            with open(filename,'rb') as f:
+                self.world = pickle.load(f)
+        else:
+            self.world = World(filename)
         self.scene.world = self.world
         self.scene.clear()
         settings.setValue('LastFile',os.path.abspath(filename))
@@ -130,7 +135,7 @@ if __name__ == '__main__':
     if args.scenario is None:
         filename = settings.value('LastFile')
         if filename and QFile.exists(filename):
-                win.openScenario(filename)
+            win.openScenario(filename)
     else:
         win.openScenario(args.scenario)
     win.showMaximized()

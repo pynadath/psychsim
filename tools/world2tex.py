@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import inspect
 import os
+import pickle
 import sys
 
 from pylatex import *
@@ -54,7 +55,8 @@ def addTree(doc,tree,world,indent=0,prefix=None):
     if indent:
         doc.append(HorizontalSpace('%dem' % (indent)))
     if prefix:
-        doc.append('%s ' % (prefix))
+        doc.append(prefix)
+        doc.append(': ')
     if tree.isLeaf():
         matrix = tree.children[None]
         if isinstance(matrix,bool):
@@ -152,13 +154,15 @@ def addTree(doc,tree,world,indent=0,prefix=None):
                     doc.append(key2tex(key))
                     if len(vector) == 1:
                         assert abs(vector[key]-1.) < 1e-6,tree.branch
-                        doc.append(Math(data='=',inline=True))
+#                        doc.append(Math(data='=',inline=True))
                         if isinstance(threshold,list):
-                            for value in sorted(threshold):
-                                if value != sorted(threshold)[0]:
-                                    doc.append(' or ')
-                                doc.append(bold(world.float2value(makePresent(key),value)))
+                            pass
+#                            for value in sorted(threshold):
+#                                if value != sorted(threshold)[0]:
+#                                    doc.append(' or ')
+#                                doc.append(bold(world.float2value(makePresent(key),value)))
                         else:
+                            doc.append(Math(data='=',inline=True))
                             doc.append(bold(world.float2value(makePresent(key),threshold)))
                         done = True
                     else:
@@ -183,13 +187,18 @@ def addTree(doc,tree,world,indent=0,prefix=None):
                     raise RuntimeError(variable['domain'])
             if not done:
                 if comparison == 0:
-                    doc.append(Math(data='=',inline=True))
+                    if isinstance(threshold,set):
+                        doc.append(Math(data=Command('in'),inline=True))
+                    elif not isinstance(threshold,list):
+                        doc.append(Math(data='=',inline=True))
+                elif isinstance(threshold,list):
+                    doc.append(Math(data=Command('in'),inline=True))
                 elif comparison < 0:
                     doc.append(Math(data='<',inline=True))
                 else:
                     doc.append(Math(data='>',inline=True))
                 if isinstance(threshold,list):
-                    doc.append('[%s]' % (','.join(map(str,threshold))))
+                    pass
                 elif isinstance(threshold,set):
                     doc.append('{%s}' % (','.join(map(str,threshold))))
                 elif allInt:
@@ -204,11 +213,38 @@ def addTree(doc,tree,world,indent=0,prefix=None):
             child = tree.children[value]
             doc.append(LineBreak())
             if value is True:
-                addTree(doc,child,world,indent+2,'THEN')
-            elif value is False:
-                addTree(doc,child,world,indent+2,'ELSE')
+                addTree(doc,child,world,indent+2,'THEN ')
+            elif str(value) == 'False':
+                addTree(doc,child,world,indent+2,'ELSE ')
+            elif isinstance(value,int):
+                if isinstance(threshold,list):
+                    if comparison == 0:
+                        key = next(iter(vector.keys()))
+                        label = Math(data=['=',Command('mbox',bold(world.float2value(makePresent(key),threshold[value])))],inline=True)
+                    elif comparison < 0:
+                        if value == 0:
+                            label = '[0'
+                        else:
+                            label = '[%s' % (threshold[value-1])
+                        if value < len(threshold):
+                            label += ',%s)' % (threshold[value])
+                        else:
+                            label += ',1]'
+                    else:
+                        if value == 0:
+                            label = '[0'
+                        else:
+                            label = '(%s' % (threshold[value-1])
+                        if value < len(threshold):
+                            label += ',%s]' % (threshold[value])
+                        else:
+                            label += ',1]'
+                    addTree(doc,child,world,indent+2,label)
+                else:
+                    addTree(doc,child,world,indent+2,value)
             else:
-                addTree(doc,child,world,indent+2,value)
+                assert value is None
+                addTree(doc,child,world,indent+2,'OTHERWISE ')
 #        doc.append(escape_latex(line.strip()))
 #    doc.append(LineBreak())
 
@@ -305,11 +341,11 @@ def background(doc):
             gtGraph.add_caption('Simple influence diagram')
         with doc.create(Itemize()) as itemize:
             itemize.add_item('Rectangular nodes are possible actions for a particular agent (``Actor 1\'\', indicated by color) representing a potential behavior. They are labeled with a verb (``action\'\') and an optional object of the verb (``Actor2\'\'). An action node has a binary value, indicating whether or not the action was chosen.')
-            itemize.add_item('Oval nodes are state variables. Their value is potentially a probability distribution over a domain of possible values. All true state variables will be certain (i.e., 100\% probability for a single value), but agents\' perceptions of the true state will often be uncertain.')
+            itemize.add_item('Oval nodes are state variables. Their value is potentially a probability distribution over a domain of possible values. All true state variables will be certain (i.e., 100% probability for a single value), but agents\' perceptions of the true state will often be uncertain.')
             itemize.add_item('Hexagonal nodes are utility or reward nodes. They represent an expected value computation by the agent (``Actor1\'\'). The node\'s value is a table with each row corresponding to a possible action choice and its expected utility.')
-            itemize.add_item('Links from action nodes to state nodes specify an effect that the action has on the value of the state.')
+            itemize.add_item('Links from action nodes to state nodes specify an effect that the action has on the value of the state. In the following specifications of these effects, a variable name followed by a \' will denote the value of the variable after the action is performed.')
             itemize.add_item('Links from one state node to another specify an influence that the value of the first state node has on the effect of at least one action on the second state node.')
-            itemize.add_item('Links from a state node to an agent\'s utility node specify that the state node is an input to the expected value calculation performed by that agent. There is a real-valued weight from $(0,1\]$ on each link specifying the priority of that variable\'s influence on that agent\'s reward calculation (higher values mean higher priority).')
+            itemize.add_item('Links from a state node to an agent\'s utility node specify that the state node is an input to the expected value calculation performed by that agent. There is a real-valued weight from $(0,1]$ on each link specifying the priority of that variable\'s influence on that agent\'s reward calculation (higher values mean higher priority).')
             itemize.add_item('Links from utility nodes to action nodes indicate that the expected value calculation then determines whether or not that action is chosen. In the simulations described here, we use a strict maximization, so that the action choice is deterministic (i.e., the action with the highest expected value is performed, with ties broken by a pre-determined fixed order).')
             itemize.add_item('Therefore, in the above simple ground truth, whether or not ``Actor1\'\' chooses to do ``action\'\' to ``Actor2\'\' influences the subsequent value of the variable ``state\'\' (link from rectangle to oval). The subsequent value of ``state\'\' also depends on its prior value (link from oval to itself). ``Actor1\'\'\'s expected value of doing ``action\'\' to ``Actor2\'\' is a function of the value of ``state\'\' (link from oval to hexagon), and this expected value influences whether or not ``Actor1\'\' chooses to do so (link from hexagon to rectangle).')
         doc.append('Any real values (e.g., initial values of variables, conditional probability table values, reward weights) will be drawn from either a set {0, 0.5, 1} or {0, 0.2, 0.4, 0.6, 0.8, 1}, depending on the appropriate granularity needed.')
@@ -344,8 +380,13 @@ if __name__ == '__main__':
                         help='Output root file')
     parser.add_argument('-t','--title',default=None,help='Document title')
     args = vars(parser.parse_args())
-    
-    world = World(args['scenario'][0])
+
+    filename = args['scenario'][0]
+    if os.path.splitext(filename)[1] == '.pkl':
+        with open(filename,'rb') as f:
+            world = pickle.load(f)
+    else:
+        world = World(filename)
 
     doc = createDoc(args['title'])
     addState(doc,world)
