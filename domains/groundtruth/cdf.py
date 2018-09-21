@@ -183,7 +183,7 @@ def var2def(name,world,base=None):
     return record
     
 def writeDefinition(world,dirName):
-    with open(os.path.join(dirName,'VariableDefTable'),'w') as csvfile:
+    with open(os.path.join(dirName,'VariableDefTable.tsv'),'w') as csvfile:
         writer = csv.DictWriter(csvfile,fields['VariableDef'],delimiter='\t',
                                 extrasaction='ignore')
         writer.writeheader()
@@ -229,7 +229,7 @@ def writeDefinition(world,dirName):
                                   }
                         writer.writerow(record)
                                   
-    with open(os.path.join(dirName,'RelationshipDefTable'),'w') as csvfile:
+    with open(os.path.join(dirName,'RelationshipDefTable.tsv'),'w') as csvfile:
         writer = csv.DictWriter(csvfile,fields['RelationshipDef'],delimiter='\t',
                                 extrasaction='ignore')
         writer.writeheader()
@@ -248,7 +248,7 @@ def writeDefinition(world,dirName):
 def toCDF(world,dirName,tables,unobservable=set()):
     day = world.getState(WORLD,'day').first()
     for name,table in tables.items():
-        with open(os.path.join(dirName,'%sTable' % (name)),'w') as csvfile:
+        with open(os.path.join(dirName,'%sTable.tsv' % (name)),'w') as csvfile:
             writer = csv.DictWriter(csvfile,fields[name],delimiter='\t',extrasaction='ignore')
             writer.writeheader()
             if name == 'RelationshipData':
@@ -317,7 +317,7 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                  if not isModelKey(key) and not isTurnKey(key) and not isBinaryKey(key)]
     day = world.getState(WORLD,'day').first()
     for name,table in tables.items():
-        with open(os.path.join(dirName,'%sTable' % (name)),'a') as csvfile:
+        with open(os.path.join(dirName,'%sTable.tsv' % (name)),'a') as csvfile:
             writer = csv.DictWriter(csvfile,fields[name],delimiter='\t',extrasaction='ignore')
             if name == 'InstanceVariable':
                 for key,variable in sorted(world.variables.items()):

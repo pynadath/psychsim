@@ -496,7 +496,7 @@ def writeHurricane(world,hurricane,dirName):
         mode = 'w'
     else:
         mode = 'a'
-    with open(os.path.join(dirName,'HurricaneTable'),mode) as csvfile:
+    with open(os.path.join(dirName,'HurricaneTable.tsv'),mode) as csvfile:
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
         if hurricane == 0:
             writer.writeheader()
@@ -527,7 +527,7 @@ def writeCensus(world,regions,dirName,filename='CensusTable',fieldSubset=None):
               'Employment': 'employed',
     }
     fields = ['Region','Field','Value','Count']
-    with open(os.path.join(dirName,filename),'w') as csvfile:
+    with open(os.path.join(dirName,'%s.tsv' % (filename)),'w') as csvfile:
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
         writer.writeheader()
         ages = [a.age for a in world.agents.values() if isinstance(a,Actor)]
@@ -637,7 +637,7 @@ def preSurvey(actor,dirName,hurricane):
         mode = 'w'
     else:
         mode = 'a'
-    with open(os.path.join(dirName,'ActorPreTable'),mode) as csvfile:
+    with open(os.path.join(dirName,'ActorPreTable.tsv'),mode) as csvfile:
         writer = csv.DictWriter(csvfile,preSurveyFields,delimiter='\t',extrasaction='ignore')
         if actor is None:
             writer.writeheader()
@@ -688,7 +688,7 @@ def postSurvey(actor,dirName,hurricane):
         mode = 'w'
     else:
         mode = 'a'
-    with open(os.path.join(dirName,'ActorPostTable'),mode) as csvfile:
+    with open(os.path.join(dirName,'ActorPostTable.tsv'),mode) as csvfile:
         writer = csv.DictWriter(csvfile,postSurveyFields,delimiter='\t',extrasaction='ignore')
         if actor is None:
             writer.writeheader()
