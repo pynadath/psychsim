@@ -29,7 +29,17 @@ class PsychSimUI(QMainWindow, Ui_MainWindow):
     def openScenario(self,filename):
         if os.path.splitext(filename)[1] == '.pkl':
             with open(filename,'rb') as f:
-                self.world = pickle.load(f)
+                try:
+                    self.world = pickle.load(f)
+                except ValueError:
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Warning)
+                    msg.setText('Scenario file saved under different version of Python')
+                    msg.setInformativeText(filename)
+                    msg.setWindowTitle('Unable to open scenario')
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    msg.exec_()
+                    return
         else:
             self.world = World(filename)
         self.scene.world = self.world

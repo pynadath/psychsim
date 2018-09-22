@@ -16,7 +16,7 @@ class Distribution(dict):
     epsilon = 1e-8
 
     def __new__(cls,args=None,rationality=None):
-        obj = super().__new__(cls)
+        obj = dict.__new__(cls)
         obj._domain = {}
         return obj
         
@@ -27,7 +27,7 @@ class Distribution(dict):
         @param rationality: if not C{None}, then use as a rationality parameter in a quantal response over the provided values
         @type rationality: float
         """
-        super().__init__(self)
+        dict.__init__(self)
 #        self._domain = {}
         if not args is None:
             if isinstance(args,Node):
