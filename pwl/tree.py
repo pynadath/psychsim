@@ -3,6 +3,7 @@ from xml.dom.minidom import Document,Node
 from psychsim.probability import Distribution
 from psychsim.action import Action
 
+from psychsim.pwl.keys import CONSTANT
 from psychsim.pwl.vector import KeyedVector
 from psychsim.pwl.matrix import KeyedMatrix,setToConstantMatrix
 from psychsim.pwl.plane import KeyedPlane,equalRow
@@ -498,9 +499,15 @@ class KeyedTree:
                     break
             else:
                 # No matches
-                result.makeBranch(self.branch,
-                                  {value: self.children[value].prune(path+[(self.branch,value)]) 
-                                   for value in self.children})
+                for weights,threshold,comparison in self.branch.planes:
+                    if len(weights) == 1 and CONSTANT in weights:
+                        value = self.branch.evaluate(weights[CONSTANT])
+                        result.graft(self.children[value].prune(path))
+                        break
+                else:
+                    result.makeBranch(self.branch,
+                                      {value: self.children[value].prune(path+[(self.branch,value)]) 
+                                       for value in self.children})
         return result
                 
     def minimizePlanes(self):
@@ -538,8 +545,19 @@ class KeyedTree:
                 self._string = '\n'.join(map(lambda el: '%d%%: %s' % (100.*self.children[el],str(el)),self.children.domain()))
             else:
                 # Deterministic branch
-                self._string = 'if %s\n'  % (str(self.branch)) + \
-                               '\n'.join(['%s\t%s' % (value,str(self.children[value]).replace('\n','\n\t')) for value in self.children])
+                if len(self.branch.planes) == 1 and isinstance(self.branch.planes[0][1],list):
+                    thresholds = self.branch.planes[0][1][:]
+                    if self.branch.planes[0][2] < 0:
+                        thresholds.append(1.)
+                    elif self.branch.planes[0][2] > 0:
+                        thresholds.insert(0,0.)
+                    children = '\n'.join(['%s\t%s' % (thresholds[value],
+                                                      str(self.children[value]).replace('\n','\n\t'))
+                                          for value in self.children])
+                else:
+                    children = '\n'.join(['%s\t%s' % (value,str(self.children[value]).replace('\n','\n\t')) for value in self.children])
+                self._string = 'if %s\n%s'  % (str(self.branch),children)
+                                               
         return self._string
 
     def __xml__(self):

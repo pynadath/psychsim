@@ -211,7 +211,7 @@ class WorldView(QGraphicsScene):
                                         break
                                 else:
                                     raise ValueError('Unable to find node for %s' % (action))
-                                self.xml.add_edge(aNode,oNode)
+                                self.xml.add_edge(aNode,oNode,True)
                             for key in tree.getKeysIn():
                                 if key != CONSTANT:
                                     for sNode in self.xml.nodes():
@@ -219,9 +219,9 @@ class WorldView(QGraphicsScene):
                                             break
                                     else:
                                         raise ValueError('Unable to find node for %s' % (key))
-                                    self.xml.add_edge(sNode,oNode)
+                                    self.xml.add_edge(sNode,oNode,True)
                                     bNode = self.xml.add_node('%sBeliefOf%s' % (agent.name,key))
-                                    self.xml.add_edge(oNode,bNode)
+                                    self.xml.add_edge(oNode,bNode,True)
             parser = GraphMLParser()
             parser.write(self.xml,'/tmp/GroundTruth-USC.graphml')
 
