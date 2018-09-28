@@ -312,7 +312,7 @@ class Actor(Agent):
                                      False: False})
                     actGoodRisk[region] = self.addAction({'verb': 'decreaseRisk','object': region},
                                                          tree.desymbolize(world.symbols),
-                                                         'Perform prosocial behaviors to reduce the danger posed by the hurricane in %s' % (region))
+                                                         'Perform prosocial behaviors to reduce the danger posed by the hurricane in a given region')
         if config.getboolean('Actors','proresources'):
             # Prosocial behavior
             actGoodResources = {}
@@ -324,7 +324,7 @@ class Actor(Agent):
                     actGoodResources[region] = self.addAction({'verb': 'giveResources',
                                                                'object': region},
                                                               tree.desymbolize(world.symbols),
-                                                              'Perform prosocial behaviors to gather and donate resources to the people of %s' % (region))
+                                                              'Perform prosocial behaviors to gather and donate resources to the people of a given region')
         if config.getboolean('Actors','antirisk'):
             # Antisocial behavior
             actBadRisk = {}
@@ -335,7 +335,7 @@ class Actor(Agent):
                                      False: False})
                     actBadRisk[region] = self.addAction({'verb': 'increaseRisk','object': region},
                                                         tree.desymbolize(world.symbols),
-                                                        'Perform antisocial behaviors that increase the danger faced by people in %s' % (region))
+                                                        'Perform antisocial behaviors that increase the danger faced by people in a given region')
         if config.getboolean('Actors','antiresources'):
             # Antisocial behavior
             actBadResources = {}
@@ -347,7 +347,7 @@ class Actor(Agent):
                     actBadResources[region] = self.addAction({'verb': 'takeResources',
                                                               'object': region},
                                                              tree.desymbolize(world.symbols),
-                                                             'Perform antisocial behaviors that gain resources personally at the expense of people in %s' % (region))
+                                                             'Perform antisocial behaviors that gain resources personally at the expense of people in a given region')
         regions = [n for n in self.world.agents.values()
                          if isinstance(n,Region)]
         if config.getboolean('Actors','movement'):
