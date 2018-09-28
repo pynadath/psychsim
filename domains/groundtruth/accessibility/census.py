@@ -7,7 +7,7 @@ from psychsim.domains.groundtruth.region import Region
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('instance',type=int,help='Instance to query')
-    parser.add_argument('-o','--output',default='RequestCensusTable.tsv',help='Output filename')
+    parser.add_argument('-o','--output',default='RequestCensus.tsv',help='Output filename')
     parser.add_argument('-r','--run',type=int,default=0,help='Run to query')
     parser.add_argument('--region',type=int,help='Specific region for query')
     parser.add_argument('--day',type=int,help='Days of query')
