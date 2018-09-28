@@ -279,11 +279,14 @@ def toCDF(world,dirName,tables,unobservable=set()):
                     for i in range(len(agents)-1):
                         for j in range(i+1,len(agents)):
                             record = {'RelationshipType': 'neighbor',
-                                      'Directed': 'no',
+                                      'Directed': 'yes',
                                       'FromEntityId': agents[i],
                                       'ToEntityId': agents[j],
                                       'Data': region,
                             }
+                            writer.writerow(record)
+                            record['FromEntityId'] = agents[j]
+                            record['ToEntityId'] = agents[i]
                             writer.writerow(record)
                     
             # elif name == 'InstanceVariable':
@@ -387,13 +390,13 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                     if agent.name != 'Nature' and not isinstance(agent,Region):
                         key = stateKey(agent.name,ACTION)
                         if key in world.state:
-                            record = {'Timestamp': day,
+                            record = {'Timestep': day,
                                       'VariableName': shorten(key),
                                       'EntityIdx': agent.name,
                                       'Value': world.getFeature(key).first()}
                             writer.writerow(record)
                         if day == 1:
-                            record = {'Timestamp': 0,
+                            record = {'Timestep': 0,
                                       'VariableName': '%sHorizon' % (agent.name),
                                       'EntityIdx': agent.name,
                                       'Value': agent.getAttribute('horizon',model.first())}
