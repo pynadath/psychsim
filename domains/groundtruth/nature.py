@@ -8,7 +8,8 @@ class Nature(Agent):
         Agent.__init__(self,'Nature')
         world.addAgent(self)
 
-        world.diagram.setColor(self.name,'red')
+        if world.diagram:
+            world.diagram.setColor(self.name,'red')
 
         evolution = self.addAction({'verb': 'evolve'})
 

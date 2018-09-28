@@ -41,8 +41,8 @@ class Region(Agent):
         else:
             self.east = 'none'
         self.config = config
-        
-        if number == 1:
+
+        if world.diagram and number == 1:
             world.diagram.setColor(self.name,'mediumseagreen')
 
         self.setAttribute('static',True)

@@ -25,10 +25,11 @@ class Actor(Agent):
         Agent.__init__(self,name)
         world.addAgent(self)
 
-        if number == 1:
-            world.diagram.setColor(self.name,'gold')
-        elif number == 2:
-            world.diagram.setColor(self.name,'yellow')
+        if world.diagram:
+            if number == 1:
+                world.diagram.setColor(self.name,'gold')
+            elif number == 2:
+                world.diagram.setColor(self.name,'yellow')
 
         # States
 

@@ -14,7 +14,7 @@ class Group(Agent):
         world.addAgent(self)
 
         self.config = config
-        if name == 'Region01':
+        if world.diagram and name == 'Region01':
             world.diagram.setColor(self.name,'yellowgreen')
             
         regions = sorted([name for name in self.world.agents

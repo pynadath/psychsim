@@ -25,8 +25,12 @@ from psychsim.action import powerset
 from psychsim.reward import *
 from psychsim.world import *
 from psychsim.agent import Agent
-from psychsim.ui.diagram import Diagram
-
+try:
+    from psychsim.ui.diagram import Diagram
+    __ui__ = True
+except:
+    __ui__ = False
+    
 from psychsim.domains.groundtruth.data import *
 from psychsim.domains.groundtruth.region import Region
 from psychsim.domains.groundtruth.nature import Nature
@@ -745,8 +749,9 @@ def createWorld(config):
         # Non int, so assume None
         random.seed()
     world = World()
-    world.diagram = Diagram()
-    world.diagram.setColor(None,'deepskyblue')
+    if __ui__:
+        world.diagram = Diagram()
+        world.diagram.setColor(None,'deepskyblue')
 
     regions = {}
     shelters = [int(region) for region in config.get('Shelter','region').split(',')]
@@ -792,28 +797,33 @@ def createWorld(config):
         group = Group('EthnicMinority',world,config)
         group.potentialMembers([a.name for a in population \
                                 if a.getState('ethnicGroup').first() == 'minority'])
-        world.diagram.setColor(group.name,'mediumpurple')
+        if world.diagram:
+            world.diagram.setColor(group.name,'mediumpurple')
         groups.append(group)
         group = Group('EthnicMajority',world,config)
         group.potentialMembers([a.name for a in population \
                                 if a.getState('ethnicGroup').first() == 'majority'])
-        world.diagram.setColor(group.name,'blueviolet')
+        if world.diagram:
+            world.diagram.setColor(group.name,'blueviolet')
         groups.append(group)
     if config.getboolean('Groups','religion'):
         group = Group('ReligiousMinority',world,config)
         group.potentialMembers([a.name for a in population \
                                 if a.getState('religion').first() == 'minority'])
-        world.diagram.setColor(group.name,'rosybrown')
+        if world.diagram:
+            world.diagram.setColor(group.name,'rosybrown')
         groups.append(group)
         group = Group('ReligiousMajority',world,config)
         group.potentialMembers([a.name for a in population \
                                 if a.getState('religion').first() == 'majority'])
-        world.diagram.setColor(group.name,'darkorange')
+        if world.diagram:
+            world.diagram.setColor(group.name,'darkorange')
         groups.append(group)
     if config.getboolean('Groups','generic'):
         group = Group('',world,config)
         group.potentialMembers([a.name for a in population])
-        world.diagram.setColor(group.name,'mediumpurple')
+        if world.diagram:
+            world.diagram.setColor(group.name,'mediumpurple')
         groups.append(group)
 
     toInit = [agent.name for agent in population]
