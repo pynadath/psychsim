@@ -2,6 +2,7 @@ from __future__ import print_function
 import copy
 import logging
 import math
+import multiprocessing
 import random
 try:
     from cStringIO import StringIO
@@ -12,6 +13,8 @@ from xml.dom.minidom import Document,Node
 from psychsim.action import Action,ActionSet
 from psychsim.pwl import *
 from psychsim.probability import Distribution
+
+__parallel__ = False
 
 class Agent(object):
     """
@@ -190,37 +193,18 @@ class Agent(object):
             # Only one possible action
             return {'action': next(iter(actions))}
         # Keep track of value function
-        V = {}
+        if __parallel__:
+            with multiprocessing.Pool() as pool:
+                results = [(action,pool.apply_async(self.value,
+                                                    args=(belief,action,model,horizon,keySet)))
+                           for action in actions]
+                V = {action: result.get() for action,result in results}
+        else:
+            V = {}
+            for action in actions:
+                V[action] = self.value(belief,action,model,horizon,keySet)
         best = None
         for action in actions:
-            # Compute value across possible worlds
-            logging.debug('Considering %s' % (action))
-            V_A = self.getAttribute('V',model)
-            if V_A:
-                current = copy.deepcopy(belief)
-                current *= V_A[action]
-                R = current[makeFuture(rewardKey(self.name))]
-                V[action] = {'__beliefs__': current,
-                             '__S__': [current],
-                             '__ER__': [R],
-                             '__EV__': R.expectation()}
-            else:
-                V[action] = {'__EV__': 0.,'__ER__': [],'__S__': []}
-                if isinstance(keySet,dict):
-                    subkeys = keySet[action]
-                else:
-                    subkeys = belief.keys()
-                current = copy.deepcopy(belief)
-                start = action
-                for t in range(horizon):
-                    logging.debug('Time %d/%d' % (t+1,horizon))
-                    outcome = self.world.step(start,current,keySubset=subkeys,
-                                              horizon=horizon-t-1)
-                    V[action]['__ER__'].append(self.reward(current,model))
-                    V[action]['__EV__'] += V[action]['__ER__'][-1]
-                    V[action]['__S__'].append(current)
-                    start = None
-                V[action]['__beliefs__'] = current
             # Determine whether this action is the best
             if best is None:
                 best = [action]
@@ -254,8 +238,40 @@ class Agent(object):
             result['action'] = best[0]
         logging.debug('Choosing %s' % (action))
         return result
-                
-    def value(self,vector,action=None,horizon=None,others=None,model=None,keys=None):
+
+    def value(self,belief,action,model,horizon=None,keySet=None):
+        if horizon is None:
+            horizon = self.getAttribute('horizon',model)
+        # Compute value across possible worlds
+        logging.debug('Considering %s' % (action))
+        current = copy.deepcopy(belief)
+        V_A = self.getAttribute('V',model)
+        if V_A:
+            current *= V_A[action]
+            R = current[makeFuture(rewardKey(self.name))]
+            V = {'__beliefs__': current,
+                         '__S__': [current],
+                         '__ER__': [R],
+                         '__EV__': R.expectation()}
+        else:
+            V = {'__EV__': 0.,'__ER__': [],'__S__': []}
+            if isinstance(keySet,dict):
+                subkeys = keySet[action]
+            else:
+                subkeys = belief.keys()
+            start = action
+            for t in range(horizon):
+                logging.debug('Time %d/%d' % (t+1,horizon))
+                outcome = self.world.step(start,current,keySubset=subkeys,
+                                          horizon=horizon-t-1)
+                V['__ER__'].append(self.reward(current,model))
+                V['__EV__'] += V['__ER__'][-1]
+                V['__S__'].append(current)
+                start = None
+            V['__beliefs__'] = current
+        return V
+        
+    def oldvalue(self,vector,action=None,horizon=None,others=None,model=None,keys=None):
         """
         Computes the expected value of a state vector (and optional action choice) to this agent
         @param vector: the state vector (not distribution) representing the possible world under consideration

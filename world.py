@@ -3,6 +3,8 @@ import bz2
 import copy
 import logging
 import io
+import multiprocessing
+__parallel__ = False
 import pprint
 from xml.dom.minidom import Document,Node,parseString
 
@@ -265,17 +267,27 @@ class World(object):
         else:
             assert actions is None
             actions = {}
-        for name in self.agents:
-            if not name in actions: # and modelKey(name) in state:
-                # No action pre-specified
-                key = keys.turnKey(name)
-                if key in state.keyMap and 0 in state.domain(key):
-                    # This agent might have a turn now
-                    logging.debug('%s deciding...' % (name))
-                    agent = self.agents[name]
-                    decision = self.agents[name].decide(state,horizon,actions,
-                                                        None,tiebreak,agent.getActions(state))
-                    actions[name] = decision['policy']
+        toDecide = [name for name in self.agents if name not in actions and
+                    keys.turnKey(name) in state.keyMap and 0 in state.domain(keys.turnKey(name))]
+        if __parallel__ and state is self.state:
+            with multiprocessing.Pool() as pool:
+                results = [(name,pool.apply_async(self.agents[name].decide,
+                                                  args=(None,horizon,None,None,tiebreak,None)))
+                           for name in toDecide]
+                decisions = []
+                for name,result in results:
+                    decisions.append((name,result.get()))
+                    print(len(decisions))
+            for name,decision in decisions:
+                actions[name] = decision['policy']
+        else:
+            for name in toDecide:
+                # This agent might have a turn now
+                logging.debug('%s deciding...' % (name))
+                agent = self.agents[name]
+                decision = self.agents[name].decide(state,horizon,actions,
+                                                    None,tiebreak,agent.getActions(state))
+                actions[name] = decision['policy']
         if len(actions) == 0:
             self.printState(state)
             raise RuntimeError('Nobody has a turn!')
