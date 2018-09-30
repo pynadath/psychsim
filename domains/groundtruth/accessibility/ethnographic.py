@@ -1,36 +1,51 @@
+from argparse import ArgumentParser
 import csv
 import os
+import pickle
 import random
 import sys
 
+from psychsim.pwl.keys import *
 from psychsim.world import World
 
-instance = int(sys.argv[1])
-inFile = os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance),
-                      'Runs','run-0','scenario.psy')
+if __name__ == '__main__':
+    parser = ArgumentParser()
+    parser.add_argument('instance',type=int,help='Instance to query')
+    parser.add_argument('-o','--output',default='RequestEthnographic.tsv',help='Output filename')
+    parser.add_argument('-r','--run',type=int,default=0,help='Run to query')
+    parser.add_argument('-s','--samples',type=int,default=2,help='Number of people to survey')
+    args = vars(parser.parse_args())
 
+    root = os.path.join(os.path.dirname(__file__),'..')
+    inFile = os.path.join(root,'Instances','Instance%d' % (args['instance']),
+                          'Runs','run-%d' % (args['run']),'RunDataTable.tsv')
+    shelters = {}
+    with open(inFile,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        for row in reader:
+            if row['VariableName'] == 'Actor location':
+                if row['Value'][:7] == 'shelter':
+                    if not row['Value'] in shelters:
+                        shelters[row['Value']] = {}
+                    if not row['Timestep'] in shelters[row['Value']]:
+                        shelters[row['Value']][row['Timestep']] = []
+                    shelters[row['Value']][row['Timestep']].append(row['EntityIdx'])
 
-samples = []
-world = World(inFile)
-actors = [actor for actor in world.agents.values() if actor.name[:5] == 'Actor' and \
-          actor.getState('alive').first() and actor.getState('location').first()[:7] == 'shelter']
-outFile = os.path.join(os.path.dirname(__file__),'Instances','Instance100001',
-                       'Runs','run-0','AccessibilityDemo06Table')
-fields = ['Actor','Shelter','Alive','Dead']
-with open(outFile,'w') as csvfile:
-    writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
-    writer.writeheader()
-    while len(samples) < 2:
-        actor = random.choice(actors)
-        actors.remove(actor)
-        shelter = actor.getState('location').first()
-        samples.append({'Actor': actor.name,
-                        'Shelter': shelter})
-        fellows = [actor for actor in world.agents.values() if actor.name[:5] == 'Actor' and \
-                   actor.getState('location').first() == shelter]
-
-        samples[-1]['Alive'] = len([actor for actor in fellows if \
-                                    actor.getState('alive').first()])
-        samples[-1]['Dead'] = len([actor for actor in fellows if \
-                                   not actor.getState('alive').first()])
-        writer.writerow(samples[-1])
+    samples = []
+    while len(samples) < args['samples'] and shelters:
+        shelter = random.choice(list(shelters.keys()))
+        day,occupants = random.choice(list(shelters[shelter].items()))
+        samples.append({'Timestep': day,
+                        'ParticipantID': len(samples)+1,
+                        'Shelter': 'Region%s' % (shelter[-2:]),
+                        'Alive': len(occupants),
+                        'Dead': 0})
+        del shelters[shelter]
+    outFile = os.path.join(root,'Instances','Instance%d' % (args['instance']),
+                           'Runs','run-%d' % (args['run']),args['output'])
+    fields = ['Timestep','ParticipantID','Shelter','Alive','Dead']
+    with open(outFile,'w') as csvfile:
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+        writer.writeheader()
+        for record in samples:
+            writer.writerow(record)
