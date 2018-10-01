@@ -281,28 +281,6 @@ def runInstance(instance,args,config,rerun=True):
                     qualData = cdfTables['QualitativeData'][-1]
                     qualData['evacuated'] = max(evacuees,qualData.get('evacuated',0))
                     qualData['went to shelters'] = max(shelter,qualData.get('shelter',0))
-                # elif turn == 'Actor':
-                #     regions = {}
-                #     for name,action in joint.items():
-                #         assert len(action) == 1
-                #         if action.first()['verb'] == 'takeResources':
-                #             region = action.first()['object']
-                #             regions[region] = regions.get(region,0) + 1
-                #     if 'before' in stats:
-                #         stats['after'] = regions
-                #         outFile = os.path.join(os.path.dirname(__file__),'Instances','Instance100001',
-                #                                'Runs','run-0','AccessibilityDemo12Table')
-                #         fields = ['Timestep','Crimes']
-                #         with open(outFile,'w') as csvfile:
-                #             writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
-                #             writer.writeheader()
-                #             writer.writerow({'Timestep': 'Before',
-                #                              'Crimes': stats['before']['Region09']})
-                #             writer.writerow({'Timestep': 'After',
-                #                              'Crimes': stats['after'].get('Region09',0)})
-                #         sys.exit(0)
-                #     else:
-                #         stats['before'] = regions
                 day = world.getState(WORLD,'day').first()
                 phase = world.getState('Nature','phase').first()
                 if phase != oldPhase:
