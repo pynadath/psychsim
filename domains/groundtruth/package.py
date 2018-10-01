@@ -6,8 +6,51 @@ import os
 import sys
 import zipfile
 
+def directNeighbors(fname):
+    data = []
+    with open(fname,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        fields = None
+        for row in reader:
+            if fields is None:
+                fields = list(row.keys())
+            if row['Directed'] == 'no':
+                row['Directed'] = 'yes'
+                data.append(row)
+                row = row.__class__(row)
+                tmp = row['ToEntityId']
+                row['ToEntityId'] = row['FromEntityId']
+                row['FromEntityId'] = tmp
+                data.append(row)
+            else:
+                data.append(row)
+    with open(fname,'w') as csvfile:
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t')
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
+
+def addMissingTime(fname):
+    data = []
+    with open(fname,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        fields = None
+        for row in reader:
+            if fields is None:
+                fields = list(row.keys())
+            if row['Timestep'] == '':
+                row['Timestep'] = timestep
+            else:
+                timestep = row['Timestep']
+            data.append(row)
+    with open(fname,'w') as csvfile:
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t')
+        writer.writeheader()
+        for row in data:
+            writer.writerow(row)
+            
 def fixStats(fname,stats,residents):
-    with open(fname) as csvfile:
+    with open(fname,'r') as csvfile:
         reader = csv.DictReader(csvfile,delimiter='\t')
         fields = None
         for row in reader:
@@ -28,7 +71,7 @@ def fixStats(fname,stats,residents):
     return fields
 
 def mergeRegions(fname,stats):
-    with open(fname) as csvfile:
+    with open(fname,'r') as csvfile:
         reader = csv.DictReader(csvfile,delimiter='\t')
         for row in reader:
             for field in ['Deaths','Casualties','Sheltered']:
@@ -40,7 +83,7 @@ def mergeRegions(fname,stats):
                 
 def mergeData(fname,stats):
     residents = {}
-    with open(fname) as csvfile:
+    with open(fname,'r') as csvfile:
         reader = csv.DictReader(csvfile,delimiter='\t')
         for row in reader:
             if row['VariableName'] == 'Region risk':
@@ -53,7 +96,7 @@ def mergeData(fname,stats):
             elif row['VariableName'] == 'Actor region':
                 residents[row['EntityIdx']] = row['Value']
     return residents
-            
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('output',help='Output file')
@@ -61,9 +104,11 @@ if __name__ == '__main__':
     parser.add_argument('-a','--all',action='store_true',
                         help='Archive all runs (otherwise, just run-0)')
     parser.add_argument('--clean',action='store_true')
+    parser.add_argument('--clean2',action='store_true')
     args = vars(parser.parse_args())
 
-    os.chdir('/home/david/psychsim/domains/groundtruth')
+    if os.path.dirname(__file__):
+        os.chdir(os.path.dirname(__file__))
             
     targets = {'InstanceVariableTable','RunDataTable','SummaryStatisticsDataTable',
                'QualitativeDataTable','RelationshipDataTable',}
@@ -79,7 +124,7 @@ if __name__ == '__main__':
             else:
                 maxRun = 1
             for run in range(maxRun):
-                if args['clean']:
+                if args['clean'] or args['clean2']:
                     print(i,run)
                     stats = []
                     fields = []
@@ -94,6 +139,11 @@ if __name__ == '__main__':
                                 os.rename(fname,os.path.join(current,'%s.bak' % (base)))
                             elif base == 'RunDataTable':
                                 residents = mergeData(fname,stats)
+                        elif args['clean2']:
+                            if base == 'RelationshipDataTable':
+                                directNeighbors(fname)
+                            elif base == 'RunDataTable':
+                                addMissingTime(fname)
                         else:
                             archive.write(fname)
                 if args['clean']:
