@@ -104,7 +104,9 @@ def appendSummary(datum,world,writer,fields,region=None):
         entities = sorted([agent.name for agent in entities])
         first = int(entities[0][len(generic):])
         last = int(entities[-1][len(generic):])
-        if last-first+1 == len(entities):
+        if region:
+            idx = region
+        elif last-first+1 == len(entities):
             idx = '[%s%d-%d]' % (generic,first,last)
         else:
             idx = '[%s]' % (','.join(entities))
@@ -116,7 +118,8 @@ def appendSummary(datum,world,writer,fields,region=None):
                 record[field] = idx
             elif field == 'Metadata':
                 if label:
-                    record[field] = label
+                    record[field] = record['VariableName']
+                    record['VariableName'] = label
                 else:
                     record[field] = metadata
             elif field == 'Timestep':
