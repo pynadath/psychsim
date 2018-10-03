@@ -155,176 +155,16 @@ def runInstance(instance,args,config,rerun=True):
         survey = set()
         oldPhase = world.getState('Nature','phase').first()
         start = time.time()
-        stats = {}
-        while hurricanes < args['number'] or (args['number'] > 0 and oldPhase == 'none' and world.getState('Nature','days').first() <= config.getint('Disaster','phase_min_days')):
-            today = world.getState(WORLD,'day').first()
-            logging.info('Day %d' % (today))
-            day = today
-            updateCDF(world,dirName,cdfTables)
-            while day == today:
-                agents = world.next()
-                turn = world.agents[next(iter(agents))].__class__.__name__
-                print(today,turn,oldPhase,time.time()-start)
-                actions = {}
-                if turn == 'Actor':
-                    if groups:
-                        # Make group decisions
-                        pass
-                    if config.getboolean('Actors','messages') and oldPhase != 'none':
-                        myScale = likert[5][config.getint('Actors','self_trust')-1]
-                        optScale = likert[5][config.getint('Actors','friend_opt_trust')-1]
-                        pessScale = likert[5][config.getint('Actors','friend_pess_trust')-1]
-                        for actor in living:
-                            friends = [friend for friend in actor.friends
-                                       if world.agents[friend] in living]
-                            if friends:
-                                beliefs = actor.getBelief()
-                                assert len(beliefs) == 1
-                                model,myBelief = next(iter(beliefs.items()))
-                                key = 'Nature\'s category'
-                                dist = myBelief[key]
-                                total = Distribution({el: myScale*dist[el] for el in dist.domain()})
-                                for friend in friends:
-                                    yrBelief = next(iter(world.agents[friend].getBelief().values()))
-                                    msg = yrBelief[key]
-                                    if msg.expectation() > dist.expectation():
-                                        yrScale = pessScale
-                                    else:
-                                        yrScale = optScale
-                                    for value in msg.domain():
-                                        total.addProb(value,yrScale*msg[value])
-                                total.normalize()
-                                actor.setBelief(key,total,model)
-                if oldPhase == 'approaching':
-                    if turn == 'Actor':
-                        # Pre-hurricane survey
-                        count = 0
-                        sampleLimit = int(float(len(living))*config.getfloat('Data','presample')/
-                                          float(config.getint('Disaster','phase_min_days')))
-                        remaining = {actor.name for actor in living} - survey
-                        while count < sampleLimit and remaining:
-                            actor = world.agents[random.choice(list(remaining))]
-                            remaining.remove(actor.name)
-                            if actor.getState('alive').first():
-                                preSurvey(actor,dirName,hurricanes+1)
-                                survey.add(actor.name)
-                            else:
-                                living.remove(actor)
-                            count += 1
-                elif oldPhase == 'none':
-                    if turn == 'Actor':
-                        if hurricanes > 0:
-                            # Post-hurricane survey
-                            count = 0
-                            sampleLimit = int(float(len(living))*config.getfloat('Data','postsample')/
-                                              float(config.getint('Disaster','phase_min_days')))
-                            remaining = {actor.name for actor in living} - survey
-                            while count < sampleLimit and remaining:
-                                actor = world.agents[random.choice(list(remaining))]
-                                remaining.remove(actor.name)
-                                if actor.getState('alive').first():
-                                    postSurvey(actor,dirName,hurricanes)
-                                    survey.add(actor.name)
-                                else:
-                                    living.remove(actor)
-                                count += 1
-                else:
-                    assert oldPhase == 'active'
-                    print(world.getState('Nature','location').first())
-                # if oldPhase == 'active' and turn == 'Actor' and hurricanes == 0:
-                #     samaritans = set()
-                #     for index in range(1,100,10):
-                #         actor = 'Actor%04d' % (index)
-                #         samaritans.add(actor)
-                #         for action in world.agents[actor].actions:
-                #             if action['verb'] == 'decreaseRisk':
-                #                 actions[actor] = action
-                #                 break
-                # elif day == 2 and turn == 'Actor':
-                #     for name in ['Actor0033','Actor0034']:
-                #         actor = world.agents[name]
-                #         for action in actor.actions:
-                #             if action['verb'] == 'stayInLocation':
-                #                 actions[name] = action
-                #                 break
-                try:
-                    newState = world.step(actions,select=True)
-                except:
-                    raise
-                buf = StringIO()
-                joint = world.explainAction(newState,level=1,buf=buf)
-                joint = {name: action for name,action in joint.items()
-                         if world.agents[name].__class__.__name__ == turn}
-                logging.debug('\n'+buf.getvalue())
-                buf.close()
-                buf = StringIO()
-                world.printState(newState,buf)
-                logging.debug(buf.getvalue())
-                buf.close()
-                if oldPhase == 'active':
-                    # Record what these doomed souls did to postpone the inevitable
-                    evacuees = 0
-                    shelter = 0
-                    for name,action in joint.items():
-                        agent = world.agents[name]
-                        if isinstance(agent,Actor):
-                            if agent.getState('alive').first():
-                                belief = agent.getBelief()
-                                assert len(belief) == 1,'Unable to store beliefs over uncertain models'
-                                belief = next(iter(belief.values()))
-                                entry = {'action': action}
-                                for feature in ['location','risk','health','grievance']:
-                                    entry[feature] = agent.getState(feature,belief)
-                                    if feature == 'location':
-                                        if entry[feature].first() == 'evacuated':
-                                            evacuees += 1
-                                        elif entry[feature].first()[:7] == 'shelter':
-                                            shelter += 1
-                                history[name] = history.get(name,[])+[entry]
-                    qualData = cdfTables['QualitativeData'][-1]
-                    qualData['evacuated'] = max(evacuees,qualData.get('evacuated',0))
-                    qualData['went to shelters'] = max(shelter,qualData.get('shelter',0))
-                day = world.getState(WORLD,'day').first()
-                phase = world.getState('Nature','phase').first()
-                if phase != oldPhase:
-                    # Reset survey on each phase change
-                    survey.clear()
-                    if phase == 'active':
-                        # New hurricane
-                        cdfTables['QualitativeData'].append({})
-                if phase == 'none':
-                    if oldPhase == 'active':
-                        hurricanes += 1
-                        logging.info('Completed Hurricane #%d' % (hurricanes))
-                        endDay = day
-                # if endDay and day == endDay + 7:
-                #     outFile = os.path.join(os.path.dirname(__file__),'Instances','Instance100001',
-                #                            'Runs','run-0','AccessibilityDemo14Table')
-                #     fields = ['Region','Risk','Deaths','Prosocial+']
-                #     with open(outFile,'w') as csvfile:
-                #         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
-                #         writer.writeheader()
-                #         risk = 0.
-                #         for region,entry in regions.items():
-                #             risk += world.getState(region,'risk').expectation()
-                #             record = {'Region': region,
-                #                       'Deaths': 0,
-                #                       'Prosocial+': 'no'}
-                #             for actor in entry['inhabitants']:
-                #                 if not actor.getState('alive').first():
-                #                     record['Deaths'] += 1
-                #                 if actor.name in samaritans:
-                #                     record['Prosocial+'] = 'yes'
-                #             writer.writerow(record)
-                #         writer.writerow({'Region': 'all',
-                #                          'Risk': risk/float(len(regions))})
-                #     sys.exit(0)
-                                
-                oldPhase = phase
-                if args['visualize']:
-                    addState2tables(world,today,allTables,population,regions)
-                    vizUpdateLoop(day)
-            writeHurricane(world,hurricanes+1,dirName)
+        state = {'hurricanes': 0,
+                 'phase': world.getState('Nature','phase').first()}
+        while state['hurricanes'] < args['number'] or \
+              (args['number'] > 0 and state['phase'] == 'none' and
+               world.getState('Nature','days').first() <= config.getint('Disaster','phase_min_days')):
+            nextDay(world,living,groups,state,config,dirName,survey,start,cdfTables)
+            if args['visualize']:
+                addState2tables(world,today,allTables,population,regions)
+                vizUpdateLoop(day)
+        logging.info('Total time: %f' % (time.time()-start))
         if args['pickle']:
             print('Pickling...')
             import pickle
@@ -343,6 +183,137 @@ def runInstance(instance,args,config,rerun=True):
             profile.sort_stats('time').print_stats()
             logging.critical(buf.getvalue())
             buf.close()
+
+def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfTables={},actions={}):
+    state['today'] = world.getState(WORLD,'day').first()
+    logging.info('Day %d' % (state['today']))
+    day = state['today']
+    updateCDF(world,dirName,cdfTables)
+    while day == state['today']:
+        agents = world.next()
+        turn = world.agents[next(iter(agents))].__class__.__name__
+        if start:
+            print(state['today'],turn,state['phase'],time.time()-start)
+        else:
+            print(state['today'],turn,state['phase'])
+        if turn == 'Actor':
+            if groups:
+                # Make group decisions
+                pass
+            if config.getboolean('Actors','messages') and state['phase'] != 'none':
+                myScale = likert[5][config.getint('Actors','self_trust')-1]
+                optScale = likert[5][config.getint('Actors','friend_opt_trust')-1]
+                pessScale = likert[5][config.getint('Actors','friend_pess_trust')-1]
+                for actor in living:
+                    friends = [friend for friend in actor.friends
+                               if world.agents[friend] in living]
+                    if friends:
+                        beliefs = actor.getBelief()
+                        assert len(beliefs) == 1
+                        model,myBelief = next(iter(beliefs.items()))
+                        key = 'Nature\'s category'
+                        dist = myBelief[key]
+                        total = Distribution({el: myScale*dist[el] for el in dist.domain()})
+                        for friend in friends:
+                            yrBelief = next(iter(world.agents[friend].getBelief().values()))
+                            msg = yrBelief[key]
+                            if msg.expectation() > dist.expectation():
+                                yrScale = pessScale
+                            else:
+                                yrScale = optScale
+                            for value in msg.domain():
+                                total.addProb(value,yrScale*msg[value])
+                        total.normalize()
+                        actor.setBelief(key,total,model)
+        if state['phase'] == 'approaching':
+            if turn == 'Actor' and survey is not None:
+                # Pre-hurricane survey
+                count = 0
+                sampleLimit = int(float(len(living))*config.getfloat('Data','presample')/
+                                  float(config.getint('Disaster','phase_min_days')))
+                remaining = {actor.name for actor in living} - survey
+                while count < sampleLimit and remaining:
+                    actor = world.agents[random.choice(list(remaining))]
+                    remaining.remove(actor.name)
+                    if actor.getState('alive').first():
+                        preSurvey(actor,dirName,state['hurricanes']+1)
+                        survey.add(actor.name)
+                    else:
+                        living.remove(actor)
+                    count += 1
+        elif state['phase'] == 'none':
+            if turn == 'Actor' and survey is not None and state['hurricanes'] > 0:
+                # Post-hurricane survey
+                count = 0
+                sampleLimit = int(float(len(living))*config.getfloat('Data','postsample')/
+                                  float(config.getint('Disaster','phase_min_days')))
+                remaining = {actor.name for actor in living} - survey
+                while count < sampleLimit and remaining:
+                    actor = world.agents[random.choice(list(remaining))]
+                    remaining.remove(actor.name)
+                    if actor.getState('alive').first():
+                        postSurvey(actor,dirName,state['hurricanes'])
+                        survey.add(actor.name)
+                    else:
+                        living.remove(actor)
+                    count += 1
+        else:
+            assert state['phase'] == 'active'
+            print(world.getState('Nature','location').first())
+        try:
+            newState = world.step(actions.get(turn,None),select=True)
+        except:
+            raise
+        buf = StringIO()
+        joint = world.explainAction(newState,level=1,buf=buf)
+        joint = {name: action for name,action in joint.items()
+                 if world.agents[name].__class__.__name__ == turn}
+        logging.debug('\n'+buf.getvalue())
+        buf.close()
+        buf = StringIO()
+        world.printState(newState,buf)
+        logging.debug(buf.getvalue())
+        buf.close()
+        if state['phase'] == 'active':
+            # Record what these doomed souls did to postpone the inevitable
+            evacuees = 0
+            shelter = 0
+            for name,action in joint.items():
+                agent = world.agents[name]
+                if isinstance(agent,Actor):
+                    if agent.getState('alive').first():
+                        belief = agent.getBelief()
+                        assert len(belief) == 1,'Unable to store beliefs over uncertain models'
+                        belief = next(iter(belief.values()))
+                        entry = {'action': action}
+                        for feature in ['location','risk','health','grievance']:
+                            entry[feature] = agent.getState(feature,belief)
+                            if feature == 'location':
+                                if entry[feature].first() == 'evacuated':
+                                    evacuees += 1
+                                elif entry[feature].first()[:7] == 'shelter':
+                                    shelter += 1
+                        history[name] = history.get(name,[])+[entry]
+            if 'QualitativeData' in cdfTables:
+                qualData = cdfTables['QualitativeData'][-1]
+                qualData['evacuated'] = max(evacuees,qualData.get('evacuated',0))
+                qualData['went to shelters'] = max(shelter,qualData.get('shelter',0))
+        day = world.getState(WORLD,'day').first()
+        phase = world.getState('Nature','phase').first()
+        if phase != state['phase']:
+            if survey is not None:
+                # Reset survey on each phase change
+                survey.clear()
+            if phase == 'active' and 'QualitativeData' in cdfTables:
+                # New hurricane
+                cdfTables['QualitativeData'].append({})
+        if phase == 'none':
+            if state['phase'] == 'active':
+                state['hurricanes'] += 1
+                logging.info('Completed Hurricane #%d' % (state['hurricanes']))
+                endDay = day
+        state['phase'] = phase
+    writeHurricane(world,state['hurricanes']+1,dirName)
     
 def addState2tables(world,day,tables,population,regions):
     # Grab all of the relevant fields, but only once
@@ -869,6 +840,7 @@ if __name__ == '__main__':
     level = getattr(logging, args['debug'].upper(), None)
     if not isinstance(level, int):
         raise ValueError('Invalid debug level: %s' % args['debug'])
+    logging.getLogger().setLevel(level)
 
     # Initialize visualization
     global vm
