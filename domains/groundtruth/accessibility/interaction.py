@@ -10,8 +10,10 @@ if __name__ == '__main__':
     parser.add_argument('-o','--output',default='RequestInteraction.tsv',help='Output filename')
     parser.add_argument('-r','--run',type=int,default=0,help='Run to query')
     parser.add_argument('-s','--samples',type=int,default=20,help='Number of people to survey')
+    parser.add_argument('--seed',type=int,default=None,help='Random number generator seed')
     args = vars(parser.parse_args())
 
+    random.seed(args['seed'])
     root = os.path.join(os.path.dirname(__file__),'..')
     inFile = os.path.join(root,'Instances','Instance%d' % (args['instance']),
                           'Runs','run-%d' % (args['run']),'RelationshipDataTable.tsv')
