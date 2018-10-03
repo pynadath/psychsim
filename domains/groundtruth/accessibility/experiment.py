@@ -62,11 +62,6 @@ if __name__ == '__main__':
     firstDay = hurricane[0]['Timestep']
     lastDay = hurricane[-1]['Timestep']
     
-    inFile = os.path.join(dirName,'RunDataTable.tsv')
-    with open(inFile,'r') as csvfile:
-        reader = csv.DictReader(csvfile,delimiter='\t')
-        for row in reader:
-            pass
     lastHurricane = int(hurricanes[-1][0]['Name'])
     state = {'hurricanes': lastHurricane,
              'phase': world.getState('Nature','phase').first()}
