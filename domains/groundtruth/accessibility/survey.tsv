@@ -1,0 +1,19 @@
+item	type	entity	feature	value
+1	condition	Nature	category	5
+1	condition	Nature	phase	approaching
+1	condition	Nature	location	Region01
+1	condition	Nature	days	5
+1	condition	self	location	self's region
+1	action	self	moveTo	shelter
+2	condition	Nature	category	3
+2	condition	Nature	phase	approaching
+2	condition	Nature	location	Region01
+2	condition	Nature	days	5
+2	condition	self	location	self's region
+2	action	self	moveTo	shelter
+3	condition	Nature	category	1
+3	condition	Nature	phase	approaching
+3	condition	Nature	location	Region01
+3	condition	Nature	days	5
+3	condition	self	location	self's region
+3	action	self	moveTo	shelter

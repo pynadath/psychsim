@@ -1,0 +1,5 @@
+item	type	entity	feature	value
+1	belief	self	grievance
+2	observation	System	allocate	self's region
+3	belief	self	health	delta
+
