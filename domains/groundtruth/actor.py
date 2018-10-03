@@ -880,3 +880,19 @@ class Actor(Agent):
                             
         return omega
     
+    def recvMessage(self,key,msg,myScale=1.,yrScaleOpt=1.,yrScalePess=1.,model=None):
+        beliefs = self.getBelief()
+        if model is None:
+            assert len(beliefs) == 1,'Unable to incorporate messages when identity is uncertain'
+            model,myBelief = next(iter(beliefs.items()))
+        else:
+            myBelief = beliefs[model]
+        dist = myBelief[key]
+        total = Distribution({el: myScale*dist[el] for el in dist.domain()})
+        for value in msg.domain():
+            if msg.expectation() > dist.expectation():
+                total.addProb(value,yrScaleOpt*msg[value])
+            else:
+                total.addProb(value,yrScalePess*msg[value])
+        total.normalize()
+        self.setBelief(key,total,model)

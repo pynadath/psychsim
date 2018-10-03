@@ -208,23 +208,11 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
                     friends = [friend for friend in actor.friends
                                if world.agents[friend] in living]
                     if friends:
-                        beliefs = actor.getBelief()
-                        assert len(beliefs) == 1
-                        model,myBelief = next(iter(beliefs.items()))
-                        key = 'Nature\'s category'
-                        dist = myBelief[key]
-                        total = Distribution({el: myScale*dist[el] for el in dist.domain()})
+                        key = stateKey('Nature','category')
                         for friend in friends:
                             yrBelief = next(iter(world.agents[friend].getBelief().values()))
                             msg = yrBelief[key]
-                            if msg.expectation() > dist.expectation():
-                                yrScale = pessScale
-                            else:
-                                yrScale = optScale
-                            for value in msg.domain():
-                                total.addProb(value,yrScale*msg[value])
-                        total.normalize()
-                        actor.setBelief(key,total,model)
+                            actor.recvMessage(key,msg,myScale,optScale,pessScale)
         if state['phase'] == 'approaching':
             if turn == 'Actor' and survey is not None:
                 # Pre-hurricane survey
