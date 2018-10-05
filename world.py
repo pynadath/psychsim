@@ -65,6 +65,7 @@ class World(object):
         self.history = []
 
         self.diagram = None
+        self.extras = {}
 
         if isinstance(xml,Node):
             self.parse(xml)
@@ -587,7 +588,7 @@ class World(object):
         keysIn = tree.getKeysIn()
         keysOut = tree.getKeysOut()
     
-    def setDynamics(self,key,action,tree,enforceMin=False,enforceMax=False):
+    def setDynamics(self,key,action,tree,enforceMin=False,enforceMax=False,extra=None):
         """
         Defines the effect of an action on a given state feature
         @param key: the key of the affected state feature
@@ -624,6 +625,8 @@ class World(object):
             # Modify tree to enforce ceiling
             tree.ceil(key,self.variables[key]['hi'])
         self.dynamics[key][action] = tree
+        if extra:
+            self.extras['%s %s' % (key,action)] = extra
 
     def getDynamics(self,key,action,state=None):
         if not state is None:
@@ -706,7 +709,7 @@ class World(object):
                 if not key in self.variables:
                     if self.turnSubstate == None:
                         self.turnSubstate = max(self.state.distributions.keys())+1
-                    self.defineVariable(key,int,hi=self.maxTurn,evaluate=False,substate=self.turnSubstate)
+                    self.defineVariable(key,int,hi=self.maxTurn,substate=self.turnSubstate)
                 self.state.join(key,index)
                 # Insert action key
                 key = stateKey(name,keys.ACTION)
@@ -829,7 +832,7 @@ class World(object):
     """-------------"""
 
     def defineVariable(self,key,domain=float,lo=-1.,hi=1.,description=None,
-                       combinator=None,substate=None,evaluate=True):
+                       combinator=None,substate=None,extra=None):
         """
         Define the type and domain of a given element of the state vector
         @param key: string label for the column being defined
@@ -901,6 +904,8 @@ class World(object):
             raise ValueError('Unknown domain type %s for %s' % (domain,key))
         self.variables[key]['key'] = key
         self.dependency.clear()
+        if extra:
+            self.extras[key] = extra
 
     def setFeature(self,key,value,state=None):
         """
@@ -1016,7 +1021,7 @@ class World(object):
         raise DeprecationWarning('Use float2value method instead')
 
     def defineState(self,entity,feature,domain=float,lo=0.,hi=1.,description=None,combinator=None,
-                    substate=None):
+                    substate=None,extra=None):
         """
         Defines a state feature associated with a single agent, or with the global world state.
         @param entity: if C{None}, the given feature is on the global world state; otherwise, it is local to the named agent
@@ -1033,7 +1038,7 @@ class World(object):
             self.locals[entity] = {feature: key}
         if not domain is None:
             # Haven't defined this feature yet
-            self.defineVariable(key,domain,lo,hi,description,combinator,substate)
+            self.defineVariable(key,domain,lo,hi,description,combinator,substate,extra)
         return key
 
     def setState(self,entity,feature,value,state=None):

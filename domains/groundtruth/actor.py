@@ -1,3 +1,4 @@
+import inspect
 import logging
 import random
 import sys
@@ -60,8 +61,10 @@ class Actor(Agent):
         else:
             self.gender = 'female'
         world.setFeature(gender,self.gender)
-        
-        age = world.defineState(self.name,'age',int)
+
+        # Section 2.1
+        age = world.defineState(self.name,'age',int,extra='%s:%d' %
+                                (inspect.getmodule(self).__name__,inspect.currentframe().f_lineno))
         ageMin = config.getint('Actors','age_min')
         ageMax = config.getint('Actors','age_max')
         self.age = random.randint(ageMin,ageMax)
@@ -178,7 +181,9 @@ class Actor(Agent):
         location = world.defineState(self.name,'location',list,locationSet,
                                      description='Current location')
         world.setFeature(location,self.home)
-        alive = world.defineState(self.name,'alive',bool)
+        # Section 2.2
+        alive = world.defineState(self.name,'alive',bool,extra='%s:%d' %
+        (inspect.getmodule(self).__name__,inspect.currentframe().f_lineno))
         world.setFeature(alive,True)
 
         health = world.defineState(self.name,'health',float,
@@ -444,14 +449,15 @@ class Actor(Agent):
                              True: tree, False: setToConstantMatrix(kidHealth,0.)})
             world.setDynamics(kidHealth,True,tree)
 
-        # Effect on life
+        # Section 2.2.1: Effect on life
         tree = makeTree({'if': trueRow(alive),
                          True: {'if': thresholdRow(makeFuture(health),
                                                    config.getfloat('Actors','life_threshold')),
                                 True: setTrueMatrix(alive),
                                 False: setFalseMatrix(alive)},
                          False: noChangeMatrix(alive)})
-        world.setDynamics(alive,True,tree)
+        world.setDynamics(alive,True,tree,extra='%s:%d' % 
+                          (inspect.getmodule(self).__name__,inspect.currentframe().f_lineno))
         
         # Effect on wealth
         impactJob = config.getint('Actors','job_impact')
