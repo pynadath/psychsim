@@ -109,6 +109,7 @@ if __name__ == '__main__':
 
     if os.path.dirname(__file__):
         os.chdir(os.path.dirname(__file__))
+    os.chdir('..')
             
     targets = {'InstanceVariableTable','RunDataTable','SummaryStatisticsDataTable',
                'QualitativeDataTable','RelationshipDataTable',}
