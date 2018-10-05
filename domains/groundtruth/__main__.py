@@ -164,6 +164,7 @@ def runInstance(instance,args,config,rerun=True):
             if args['visualize']:
                 addState2tables(world,today,allTables,population,regions)
                 vizUpdateLoop(day)
+            writeHurricane(world,state['hurricanes']+1,dirName)
         logging.info('Total time: %f' % (time.time()-start))
         if args['pickle']:
             print('Pickling...')
@@ -301,7 +302,6 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
                 logging.info('Completed Hurricane #%d' % (state['hurricanes']))
                 endDay = day
         state['phase'] = phase
-    writeHurricane(world,state['hurricanes']+1,dirName)
     
 def addState2tables(world,day,tables,population,regions):
     # Grab all of the relevant fields, but only once
