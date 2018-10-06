@@ -21,7 +21,7 @@ class Group(Agent):
                           if isinstance(self.world.agents[name],Region)])
         self.setAttribute('static',True)
 
-        size = world.defineState(self.name,'size',int)
+        size = world.defineState(self.name,'size',int,codePtr=True)
         self.setState('size',0)
         
         if config.getboolean('Groups','prorisk'):
@@ -74,7 +74,7 @@ class Group(Agent):
         count = 0
         for name in agents:
             agent = self.world.agents[name]
-            member = self.world.defineRelation(name,self.name,'memberOf',bool)
+            member = self.world.defineRelation(name,self.name,'memberOf',bool,codePtr=True)
             # Join a group
             if membership == 0:
                 self.world.setFeature(member,False)
@@ -91,9 +91,9 @@ class Group(Agent):
             join = agent.addAction({'verb': 'join','object': self.name},
                                    tree.desymbolize(self.world.symbols))
             tree = makeTree(setTrueMatrix(member))
-            self.world.setDynamics(member,join,tree)
+            self.world.setDynamics(member,join,tree,codePtr=True)
             tree = makeTree(incrementMatrix(size,1))
-            self.world.setDynamics(size,join,tree)
+            self.world.setDynamics(size,join,tree,codePtr=True)
             # Leave a group
             tree = makeTree({'if': trueRow(stateKey(name,'alive')),
                              True: {'if': trueRow(member),
@@ -102,9 +102,9 @@ class Group(Agent):
             leave = agent.addAction({'verb': 'leave','object': self.name},
                                     tree.desymbolize(self.world.symbols))
             tree = makeTree(setFalseMatrix(member))
-            self.world.setDynamics(member,leave,tree)
+            self.world.setDynamics(member,leave,tree,codePtr=True)
             tree = makeTree(incrementMatrix(size,-1))
-            self.world.setDynamics(size,leave,tree)
+            self.world.setDynamics(size,leave,tree,codePtr=True)
             if self.config.getboolean('Actors','attachment'):
                 # Reward associated with being a member
                 attachment = stateKey(name,'attachment')

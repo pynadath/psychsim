@@ -2,10 +2,10 @@ from __future__ import print_function
 import bz2
 import copy
 import logging
-import io
+import inspect
 import multiprocessing
+import os
 __parallel__ = False
-import pprint
 from xml.dom.minidom import Document,Node,parseString
 
 from psychsim.action import ActionSet,Action
@@ -588,7 +588,7 @@ class World(object):
         keysIn = tree.getKeysIn()
         keysOut = tree.getKeysOut()
     
-    def setDynamics(self,key,action,tree,enforceMin=False,enforceMax=False,extra=None):
+    def setDynamics(self,key,action,tree,enforceMin=False,enforceMax=False,codePtr=False):
         """
         Defines the effect of an action on a given state feature
         @param key: the key of the affected state feature
@@ -597,6 +597,8 @@ class World(object):
         @type action: L{Action} or L{ActionSet}
         @param tree: the decision tree defining the effect
         @type tree: L{psychsim.pwl.KeyedTree}
+        @param codePtr: if C{True}, tags the dynamics with a pointer to the module and line number where the tree is defined
+        @type codePtr: bool
         """
 #        logging.warning('setDynamics will soon be deprecated. Please migrate to using addDynamics instead.')
         if isinstance(action,str):
@@ -625,8 +627,11 @@ class World(object):
             # Modify tree to enforce ceiling
             tree.ceil(key,self.variables[key]['hi'])
         self.dynamics[key][action] = tree
-        if extra:
-            self.extras['%s %s' % (key,action)] = extra
+        if codePtr:
+            frame = inspect.getouterframes(inspect.currentframe())[1]
+            mod = os.path.relpath(frame.filename,
+                                  os.path.abspath(os.path.join(os.path.dirname(__file__),'..')))
+            self.extras['%s %s' % (key,action)] = '%s:%d' % (mod,frame.lineno)
 
     def getDynamics(self,key,action,state=None):
         if not state is None:
@@ -832,7 +837,7 @@ class World(object):
     """-------------"""
 
     def defineVariable(self,key,domain=float,lo=-1.,hi=1.,description=None,
-                       combinator=None,substate=None,extra=None):
+                       combinator=None,substate=None,codePtr=False):
         """
         Define the type and domain of a given element of the state vector
         @param key: string label for the column being defined
@@ -904,8 +909,13 @@ class World(object):
             raise ValueError('Unknown domain type %s for %s' % (domain,key))
         self.variables[key]['key'] = key
         self.dependency.clear()
-        if extra:
-            self.extras[key] = extra
+        if codePtr:
+            for frame in inspect.getouterframes(inspect.currentframe()):
+                if frame.filename != __file__:
+                    break
+            mod = os.path.relpath(frame.filename,
+                                  os.path.abspath(os.path.join(os.path.dirname(__file__),'..')))
+            self.extras[key] = '%s:%d' % (mod,frame.lineno)
 
     def setFeature(self,key,value,state=None):
         """
@@ -1021,7 +1031,7 @@ class World(object):
         raise DeprecationWarning('Use float2value method instead')
 
     def defineState(self,entity,feature,domain=float,lo=0.,hi=1.,description=None,combinator=None,
-                    substate=None,extra=None):
+                    substate=None,codePtr=False):
         """
         Defines a state feature associated with a single agent, or with the global world state.
         @param entity: if C{None}, the given feature is on the global world state; otherwise, it is local to the named agent
@@ -1038,7 +1048,7 @@ class World(object):
             self.locals[entity] = {feature: key}
         if not domain is None:
             # Haven't defined this feature yet
-            self.defineVariable(key,domain,lo,hi,description,combinator,substate,extra)
+            self.defineVariable(key,domain,lo,hi,description,combinator,substate,codePtr)
         return key
 
     def setState(self,entity,feature,value,state=None):
@@ -1060,7 +1070,7 @@ class World(object):
         """
         return self.getFeature(stateKey(entity,feature),state)
 
-    def defineRelation(self,subj,obj,name,domain=float,lo=0.,hi=1.,description=None):
+    def defineRelation(self,subj,obj,name,domain=float,lo=0.,hi=1.,**kwargs):
         """
         Defines a binary relationship between two agents
         @param subj: one of the agents in the relation (if a directed link, it is the "origin" of the edge)
@@ -1077,7 +1087,7 @@ class World(object):
             self.relations[name] = {key: {'subject': subj,'object': obj}}
         if not domain is None:
             # Haven't defined this feature yet
-            self.defineVariable(key,domain,lo,hi,description)
+            self.defineVariable(key,domain,lo,hi,kwargs)
         return key
 
     """------------------"""

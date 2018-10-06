@@ -263,7 +263,8 @@ def addState(doc,world):
                     if os.access(os.path.join('images','%s.png' % (fname)),os.R_OK):
                         addGraph(doc,name,fname)
                     if name in world.extras:
-                        doc.append(verbatim(world.extras[name]))
+                        with doc.create(FlushLeft()):
+                            doc.append(verbatim(world.extras[name]))
                     if name in world.dynamics:
                         for action,tree in sorted(world.dynamics[name].items()):
                             if action is True:
@@ -272,10 +273,10 @@ def addState(doc,world):
                                 heading = 'Effect of %s on %s' % (str(action),label)
                             with doc.create(Subsubsection(heading)):
                                 with doc.create(FlushLeft()):
-                                    addTree(doc,tree,world)
                                     if '%s %s' % (name,action) in world.extras:
-                                        doc.append(LineBreak())
                                         doc.append(verbatim(world.extras[ '%s %s' % (name,action)]))
+                                        doc.append(LineBreak())
+                                    addTree(doc,tree,world)
 
 def addRelations(doc,world):
     with doc.create(Section('Relations')):

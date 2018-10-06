@@ -17,7 +17,7 @@ class System(Agent):
             world.diagram.setColor(self.name,'gray')
         self.setAttribute('static',True)
         
-        resources = world.defineState(self.name,'resources',int,lo=0,hi=100)
+        resources = world.defineState(self.name,'resources',int,lo=0,hi=100,codePtr=True)
         self.setState('resources',int(likert[5][config.getint('System','resources')]*100))
         
         regions = [name for name in self.world.agents
@@ -40,9 +40,9 @@ class System(Agent):
                            likert[5][config.getint('System','reward_health')-1])
             tree = makeTree(approachMatrix(risk,likert[5][config.getint('System','system_impact')-1],
                                            0.))
-            world.setDynamics(risk,allocate,tree)
+            world.setDynamics(risk,allocate,tree,codePtr=True)
 #            tree = makeTree(incrementMatrix(resources,-allocation))
-#            world.setDynamics(resources,allocate,tree)
+#            world.setDynamics(resources,allocate,tree,codePtr=True)
             if config.getboolean('Actors','grievance') and \
                config.getint('Actors','grievance_delta') > 0:
                 delta = likert[5][config.getint('Actors','grievance_delta')-1]
@@ -52,7 +52,7 @@ class System(Agent):
                     tree = makeTree({'if': equalRow(stateKey(actor,'region'),region),
                                      True: approachMatrix(grievance,delta,0.),
                                      False: approachMatrix(grievance,delta,1.)})
-                    world.setDynamics(grievance,allocate,tree)
+                    world.setDynamics(grievance,allocate,tree,codePtr=True)
         self.setAttribute('horizon',config.getint('System','horizon'))
 
     def reward(self,state=None,model=None,recurse=True):

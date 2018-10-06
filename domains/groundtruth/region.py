@@ -47,7 +47,8 @@ class Region(Agent):
 
         self.setAttribute('static',True)
         
-        risk = world.defineState(self.name,'risk',float,description='Level of risk from hurricane')
+        risk = world.defineState(self.name,'risk',float,description='Level of risk from hurricane',
+                                 codePtr=True)
         try:
             self.risk = config.getfloat('Regions','risk_value')
         except configparser.NoOptionError:
@@ -59,7 +60,7 @@ class Region(Agent):
                 self.risk = likert[5][mean-1]
         world.setFeature(risk,self.risk)
 
-        security = world.defineState(self.name,'security',float,
+        security = world.defineState(self.name,'security',float,codePtr=True,
                                      description='Level of law enforcement in region')
         try:
             self.security = config.getfloat('Regions','security_value')
@@ -72,19 +73,19 @@ class Region(Agent):
                 self.security = likert[5][mean-1]
         world.setFeature(security,self.security)
 
-        economy = world.defineState(self.name,'economy',float,
+        economy = world.defineState(self.name,'economy',float,codePtr=True,
                                     description='Current economic level of region')
         world.setFeature(economy,1.)
 
         if index is not None:
             # Shelter in this region
-            world.defineState(self.name,'shelterRisk',float)
+            world.defineState(self.name,'shelterRisk',float,codePtr=True)
             riskLevel = int(config.get('Shelter','risk').split(',')[index])
             if riskLevel > 0:
                 self.setState('shelterRisk',likert[5][riskLevel-1])
             else:
                 self.setState('shelterRisk',0.)
-            world.defineState(self.name,'shelterPets',bool)
+            world.defineState(self.name,'shelterPets',bool,codePtr=True)
             if config.get('Shelter','pets').split(',')[index] == 'yes':
                 self.setState('shelterPets',True)
             else:

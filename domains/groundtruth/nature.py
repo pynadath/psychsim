@@ -13,17 +13,17 @@ class Nature(Agent):
 
         evolution = self.addAction({'verb': 'evolve'})
 
-        phase = world.defineState(self.name,'phase',list,['none','approaching','active'])
+        phase = world.defineState(self.name,'phase',list,['none','approaching','active'],codePtr=True)
         world.setFeature(phase,'none')
-        days = world.defineState(self.name,'days',int)
+        days = world.defineState(self.name,'days',int,codePtr=True)
         world.setFeature(days,0)
 
         regions = sorted([name for name in self.world.agents
                           if isinstance(self.world.agents[name],Region)])
-        location = world.defineState(self.name,'location',list,regions+['none'])
+        location = world.defineState(self.name,'location',list,regions+['none'],codePtr=True)
         world.setFeature(location,'none')
 
-        category = world.defineState(self.name,'category',int)
+        category = world.defineState(self.name,'category',int,codePtr=True)
         world.setFeature(category,0)
         
         # Phase dynamics
@@ -46,12 +46,12 @@ class Nature(Agent):
                 None: {'if': equalRow(location,'none'),
                        True: setToConstantMatrix(phase,'none'),
                        False: setToConstantMatrix(phase,'active')}}
-        world.setDynamics(phase,evolution,makeTree(tree))
+        world.setDynamics(phase,evolution,makeTree(tree),codePtr=True)
 
         tree = makeTree({'if': equalFeatureRow(phase,makeFuture(phase)),
                          True: incrementMatrix(days,1),
                          False: setToConstantMatrix(days,0)})
-        world.setDynamics(days,evolution,tree)
+        world.setDynamics(days,evolution,tree,codePtr=True)
 
         if config.getint('Disaster','category_change') > 0:
             prob = likert[5][config.getint('Disaster','category_change')-1]
@@ -77,7 +77,7 @@ class Nature(Agent):
                                 False: subtree},
                          1: noChangeMatrix(category),
                          2: setToConstantMatrix(category,0)})
-        world.setDynamics(category,evolution,tree)
+        world.setDynamics(category,evolution,tree,codePtr=True)
 
         # For computing initial locations
         coastline = {r for r in regions if world.agents[r].x == 1}
@@ -108,7 +108,7 @@ class Nature(Agent):
                          subtree,
                          2: # No hurricane
                          setToConstantMatrix(location,'none')})
-        world.setDynamics(location,evolution,tree)
+        world.setDynamics(location,evolution,tree,codePtr=True)
 
         # Effect of disaster on risk
         base_increase = likert[5][config.getint('Disaster','risk_impact')-1]
@@ -126,7 +126,7 @@ class Nature(Agent):
             subtree.update({i: subtrees[i] for i in range(len(regions))})
             tree = makeTree({'if': equalRow(makeFuture(phase),'active'),
                              True: subtree, False: approachMatrix(risk,base_decrease,0.)})
-            world.setDynamics(risk,evolution,tree)
+            world.setDynamics(risk,evolution,tree,codePtr=True)
         if config.getboolean('Shelter','exists'):
             for index in map(int,config.get('Shelter','region').split(',')):
                 region = Region.nameString % (index)
@@ -141,9 +141,9 @@ class Nature(Agent):
                                             True: subtree,
                                             False: noChangeMatrix(risk)},
                                      False: approachMatrix(risk,base_decrease,0.)})
-                    world.setDynamics(risk,evolution,tree)
+                    world.setDynamics(risk,evolution,tree,codePtr=True)
         self.setAttribute('static',True)
                                         
         # Advance calendar after Nature moves
         tree = makeTree(incrementMatrix(stateKey(WORLD,'day'),1))
-        world.setDynamics(stateKey(WORLD,'day'),evolution,tree)
+        world.setDynamics(stateKey(WORLD,'day'),evolution,tree,codePtr=True)
