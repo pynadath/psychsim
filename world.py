@@ -5,7 +5,6 @@ import logging
 import inspect
 import multiprocessing
 import os
-__parallel__ = False
 from xml.dom.minidom import Document,Node,parseString
 
 from psychsim.action import ActionSet,Action
@@ -80,6 +79,7 @@ class World(object):
             doc = parseString(f.read())
             f.close()
             self.parse(doc.documentElement)
+        self.parallel = False
 
     def initialize(self):
         self.agents.clear()
@@ -103,6 +103,14 @@ class World(object):
                 del variable['ypre']
                 del variable['xpost']
                 del variable['ypost']
+
+    def setParallel(self,flag=True):
+        """
+        Turns on multiprocessing when agents have turns in parallel
+        @param flag: multiprocessing is on iff C{True} (default is C{True})
+        @type flag: bool
+        """
+        self.parallel = flag
         
     """------------------"""
     """Simulation methods"""
@@ -270,7 +278,7 @@ class World(object):
             actions = {}
         toDecide = [name for name in self.agents if name not in actions and
                     keys.turnKey(name) in state.keyMap and 0 in state.domain(keys.turnKey(name))]
-        if __parallel__ and state is self.state:
+        if self.parallel and state is self.state:
             with multiprocessing.Pool() as pool:
                 results = [(name,pool.apply_async(self.agents[name].decide,
                                                   args=(None,horizon,None,None,tiebreak,None)))
@@ -278,7 +286,6 @@ class World(object):
                 decisions = []
                 for name,result in results:
                     decisions.append((name,result.get()))
-                    print(len(decisions))
             for name,decision in decisions:
                 actions[name] = decision['policy']
         else:

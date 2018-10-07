@@ -65,6 +65,7 @@ def runInstance(instance,args,config,rerun=True):
         print('Running instance %d, run %d' % (instance,run))
         # Initialize world
         world = createWorld(config)
+        world.setParallel(args['multiprocessing'])
         population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
         living = population[:]
         groups = [agent for agent in world.agents.values() if isinstance(agent,Group)]
@@ -814,6 +815,7 @@ if __name__ == '__main__':
     parser.add_argument('-c','--compile',action='store_true',help='Pre-compile agent policies')
     parser.add_argument('-w','--write',action='store_true',help='Write simulation definition tables')
     parser.add_argument('-v','--visualize',default=None,help='Visualization feature')
+    parser.add_argument('-m','--multiprocessing',action='store_true',help='Use multiprocessing')
     parser.add_argument('--rerun',action='store_true',help='Run instance, even if previously saved')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--pickle',action='store_true',help='Use Python pickle, not XML, to save scenario')
