@@ -12,6 +12,9 @@ class Action(dict):
         if isinstance(arg,Node):
             dict.__init__(self)
             self.parse(arg)
+        if isinstance(arg,str):
+            values = arg.split('-')
+            dict.__init__(self,{self.special[i]: values[i] for i in range(len(values))})
         else:
             dict.__init__(self,arg)
         self._string = None

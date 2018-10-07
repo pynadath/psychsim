@@ -132,7 +132,7 @@ def addTree(doc,tree,world,indent=0,prefix=None):
         else:
             for value in tree.children.domain():
                 doc.append(LineBreak())
-                addTree(doc,value,world,indent+2,'%d%%:' % (tree.children[value]*100))
+                addTree(doc,value,world,indent+2,'%d%%' % (tree.children[value]*100))
     else:
         doc.append('IF ')
         assert len(tree.branch.planes) == 1
@@ -245,8 +245,7 @@ def addTree(doc,tree,world,indent=0,prefix=None):
             else:
                 assert value is None
                 addTree(doc,child,world,indent+2,'OTHERWISE ')
-#        doc.append(escape_latex(line.strip()))
-#    doc.append(LineBreak())
+        
 
 def addState(doc,world):
     with doc.create(Section('State')):
@@ -263,6 +262,9 @@ def addState(doc,world):
                     fname = escapeKey(name)
                     if os.access(os.path.join('images','%s.png' % (fname)),os.R_OK):
                         addGraph(doc,name,fname)
+                    if name in world.extras:
+                        with doc.create(FlushLeft()):
+                            doc.append(verbatim(world.extras[name]))
                     if name in world.dynamics:
                         for action,tree in sorted(world.dynamics[name].items()):
                             if action is True:
@@ -271,6 +273,9 @@ def addState(doc,world):
                                 heading = 'Effect of %s on %s' % (str(action),label)
                             with doc.create(Subsubsection(heading)):
                                 with doc.create(FlushLeft()):
+                                    if '%s %s' % (name,action) in world.extras:
+                                        doc.append(verbatim(world.extras[ '%s %s' % (name,action)]))
+                                        doc.append(LineBreak())
                                     addTree(doc,tree,world)
 
 def addRelations(doc,world):

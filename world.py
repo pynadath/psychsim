@@ -2,8 +2,9 @@ from __future__ import print_function
 import bz2
 import copy
 import logging
-import io
-import pprint
+import inspect
+import multiprocessing
+import os
 from xml.dom.minidom import Document,Node,parseString
 
 from psychsim.action import ActionSet,Action
@@ -11,11 +12,7 @@ import psychsim.probability
 from psychsim.pwl import *
 from psychsim.agent import Agent
 import psychsim.graph
-
-try:
-    from psychsim.ui.diagram import Diagram
-except:
-    pass
+from psychsim.ui.diagram import Diagram
 
 class World(object):
     """
@@ -67,6 +64,7 @@ class World(object):
         self.history = []
 
         self.diagram = None
+        self.extras = {}
 
         if isinstance(xml,Node):
             self.parse(xml)
@@ -81,6 +79,7 @@ class World(object):
             doc = parseString(f.read())
             f.close()
             self.parse(doc.documentElement)
+        self.parallel = False
 
     def initialize(self):
         self.agents.clear()
@@ -104,6 +103,14 @@ class World(object):
                 del variable['ypre']
                 del variable['xpost']
                 del variable['ypost']
+
+    def setParallel(self,flag=True):
+        """
+        Turns on multiprocessing when agents have turns in parallel
+        @param flag: multiprocessing is on iff C{True} (default is C{True})
+        @type flag: bool
+        """
+        self.parallel = flag
         
     """------------------"""
     """Simulation methods"""
@@ -269,17 +276,26 @@ class World(object):
         else:
             assert actions is None
             actions = {}
-        for name in self.agents:
-            if not name in actions: # and modelKey(name) in state:
-                # No action pre-specified
-                key = keys.turnKey(name)
-                if key in state.keyMap and 0 in state.domain(key):
-                    # This agent might have a turn now
-                    logging.debug('%s deciding...' % (name))
-                    agent = self.agents[name]
-                    decision = self.agents[name].decide(state,horizon,actions,
-                                                        None,tiebreak,agent.getActions(state))
-                    actions[name] = decision['policy']
+        toDecide = [name for name in self.agents if name not in actions and
+                    keys.turnKey(name) in state.keyMap and 0 in state.domain(keys.turnKey(name))]
+        if self.parallel and state is self.state:
+            with multiprocessing.Pool() as pool:
+                results = [(name,pool.apply_async(self.agents[name].decide,
+                                                  args=(None,horizon,None,None,tiebreak,None)))
+                           for name in toDecide]
+                decisions = []
+                for name,result in results:
+                    decisions.append((name,result.get()))
+            for name,decision in decisions:
+                actions[name] = decision['policy']
+        else:
+            for name in toDecide:
+                # This agent might have a turn now
+                logging.debug('%s deciding...' % (name))
+                agent = self.agents[name]
+                decision = self.agents[name].decide(state,horizon,actions,
+                                                    None,tiebreak,agent.getActions(state))
+                actions[name] = decision['policy']
         if len(actions) == 0:
             self.printState(state)
             raise RuntimeError('Nobody has a turn!')
@@ -579,7 +595,7 @@ class World(object):
         keysIn = tree.getKeysIn()
         keysOut = tree.getKeysOut()
     
-    def setDynamics(self,key,action,tree,enforceMin=False,enforceMax=False):
+    def setDynamics(self,key,action,tree,enforceMin=False,enforceMax=False,codePtr=False):
         """
         Defines the effect of an action on a given state feature
         @param key: the key of the affected state feature
@@ -588,6 +604,8 @@ class World(object):
         @type action: L{Action} or L{ActionSet}
         @param tree: the decision tree defining the effect
         @type tree: L{psychsim.pwl.KeyedTree}
+        @param codePtr: if C{True}, tags the dynamics with a pointer to the module and line number where the tree is defined
+        @type codePtr: bool
         """
 #        logging.warning('setDynamics will soon be deprecated. Please migrate to using addDynamics instead.')
         if isinstance(action,str):
@@ -616,6 +634,11 @@ class World(object):
             # Modify tree to enforce ceiling
             tree.ceil(key,self.variables[key]['hi'])
         self.dynamics[key][action] = tree
+        if codePtr:
+            frame = inspect.getouterframes(inspect.currentframe())[1]
+            mod = os.path.relpath(frame.filename,
+                                  os.path.abspath(os.path.join(os.path.dirname(__file__),'..')))
+            self.extras['%s %s' % (key,action)] = '%s:%d' % (mod,frame.lineno)
 
     def getDynamics(self,key,action,state=None):
         if not state is None:
@@ -698,7 +721,7 @@ class World(object):
                 if not key in self.variables:
                     if self.turnSubstate == None:
                         self.turnSubstate = max(self.state.distributions.keys())+1
-                    self.defineVariable(key,int,hi=self.maxTurn,evaluate=False,substate=self.turnSubstate)
+                    self.defineVariable(key,int,hi=self.maxTurn,substate=self.turnSubstate)
                 self.state.join(key,index)
                 # Insert action key
                 key = stateKey(name,keys.ACTION)
@@ -821,7 +844,7 @@ class World(object):
     """-------------"""
 
     def defineVariable(self,key,domain=float,lo=-1.,hi=1.,description=None,
-                       combinator=None,substate=None,evaluate=True):
+                       combinator=None,substate=None,codePtr=False):
         """
         Define the type and domain of a given element of the state vector
         @param key: string label for the column being defined
@@ -893,6 +916,13 @@ class World(object):
             raise ValueError('Unknown domain type %s for %s' % (domain,key))
         self.variables[key]['key'] = key
         self.dependency.clear()
+        if codePtr:
+            for frame in inspect.getouterframes(inspect.currentframe()):
+                if frame.filename != __file__:
+                    break
+            mod = os.path.relpath(frame.filename,
+                                  os.path.abspath(os.path.join(os.path.dirname(__file__),'..')))
+            self.extras[key] = '%s:%d' % (mod,frame.lineno)
 
     def setFeature(self,key,value,state=None):
         """
@@ -1008,7 +1038,7 @@ class World(object):
         raise DeprecationWarning('Use float2value method instead')
 
     def defineState(self,entity,feature,domain=float,lo=0.,hi=1.,description=None,combinator=None,
-                    substate=None):
+                    substate=None,codePtr=False):
         """
         Defines a state feature associated with a single agent, or with the global world state.
         @param entity: if C{None}, the given feature is on the global world state; otherwise, it is local to the named agent
@@ -1025,7 +1055,7 @@ class World(object):
             self.locals[entity] = {feature: key}
         if not domain is None:
             # Haven't defined this feature yet
-            self.defineVariable(key,domain,lo,hi,description,combinator,substate)
+            self.defineVariable(key,domain,lo,hi,description,combinator,substate,codePtr)
         return key
 
     def setState(self,entity,feature,value,state=None):
@@ -1047,7 +1077,7 @@ class World(object):
         """
         return self.getFeature(stateKey(entity,feature),state)
 
-    def defineRelation(self,subj,obj,name,domain=float,lo=0.,hi=1.,description=None):
+    def defineRelation(self,subj,obj,name,domain=float,lo=0.,hi=1.,**kwargs):
         """
         Defines a binary relationship between two agents
         @param subj: one of the agents in the relation (if a directed link, it is the "origin" of the edge)
@@ -1064,7 +1094,7 @@ class World(object):
             self.relations[name] = {key: {'subject': subj,'object': obj}}
         if not domain is None:
             # Haven't defined this feature yet
-            self.defineVariable(key,domain,lo,hi,description)
+            self.defineVariable(key,domain,lo,hi,kwargs)
         return key
 
     """------------------"""
