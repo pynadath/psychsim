@@ -12,7 +12,10 @@ import psychsim.probability
 from psychsim.pwl import *
 from psychsim.agent import Agent
 import psychsim.graph
-from psychsim.ui.diagram import Diagram
+try:
+    from psychsim.ui.diagram import Diagram
+except:
+    pass
 
 class World(object):
     """
