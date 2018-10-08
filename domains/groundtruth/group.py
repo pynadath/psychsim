@@ -65,6 +65,23 @@ class Group(Agent):
         self.nop = self.addAction({'verb': 'noDecision'})
         self.setAttribute('horizon',config.getint('Groups','horizon'))
         self.potentials = None
+        # Belief aggregation
+        aggregators = ['mean']
+        weights = [5]
+        value = config.getint('Groups','belief_max')
+        if value:
+            aggregators.append('max')
+            weights.append(value)
+            weights[0] -= value
+        value = config.getint('Groups','belief_min')
+        if value:
+            aggregators.append('min')
+            weights.append(value)
+            weights[0] -= value
+        if len(aggregators) > 1:
+            self.aggregator = random.choices(aggregators,weights)[0]
+        else:
+            self.aggregator = aggregators[0]
 
     def potentialMembers(self,agents,weights=None,membership=0):
         assert len(self.models) == 1,'Define potential members before adding multiple models of group %s' % (self.name)
@@ -147,46 +164,51 @@ class Group(Agent):
             state = self.world.state
         if model is None:
             model = self.world.getModel(self.name,state)
-        belief = None
         members = self.members(state)
-        for name in members:
-            agent = self.world.agents[name]
-            subbelief = agent.getBelief(state)
-            assert len(subbelief) == 1
-            subbelief = next(iter(subbelief.values()))
-            if belief is None:
-                belief = copy.deepcopy(subbelief)
-            else:
-                for dist in subbelief.distributions.values():
-                    existing = [key for key in dist.keys() if key in belief]
-                    if existing:
-                        substates = belief.substate(existing)
-                        if len(substates) == 1:
-                            substate = next(iter(substates))
+        beliefs = {name: self.world.agents[name].getBelief(state)
+                   for name in members}
+        belief = None
+        if self.aggregator == 'max':
+            pass
+        elif self.aggregator == 'min':
+            pass
+        elif self.aggregator == 'mean':
+            for name in members:
+                assert len(beliefs[name]) == 1
+                subbelief = next(iter(beliefs[name].values()))
+                if belief is None:
+                    belief = copy.deepcopy(subbelief)
+                else:
+                    for dist in subbelief.distributions.values():
+                        existing = [key for key in dist.keys() if key in belief]
+                        if existing:
+                            substates = belief.substate(existing)
+                            if len(substates) == 1:
+                                substate = next(iter(substates))
+                            else:
+                                substate = belief.collapse(substates)
+                            if dist != belief.distributions[substate]:
+                                newDist = belief.distributions[substate].__class__()
+                                for oldVec in belief.distributions[substate].domain():
+                                    prob = belief.distributions[substate][oldVec]
+                                    del belief.distributions[substate][oldVec]
+                                    for newVec in dist.domain():
+                                        for key in existing:
+                                            if oldVec[key] != newVec[key]:
+                                                break
+                                        else:
+                                            result = oldVec.__class__(oldVec)
+                                            for key in newVec:
+                                                if not key in existing:
+                                                    result[key] = newVec[key]
+                                            newDist.addProb(result,prob*dist[newVec])
+                                belief.distributions[substate] = newDist
                         else:
-                            substate = belief.collapse(substates)
-                        if dist != belief.distributions[substate]:
-                            newDist = belief.distributions[substate].__class__()
-                            for oldVec in belief.distributions[substate].domain():
-                                prob = belief.distributions[substate][oldVec]
-                                del belief.distributions[substate][oldVec]
-                                for newVec in dist.domain():
-                                    for key in existing:
-                                        if oldVec[key] != newVec[key]:
-                                            break
-                                    else:
-                                        result = oldVec.__class__(oldVec)
-                                        for key in newVec:
-                                            if not key in existing:
-                                                result[key] = newVec[key]
-                                        newDist.addProb(result,prob*dist[newVec])
-                            belief.distributions[substate] = newDist
-                    else:
-                        substate = max(belief.keyMap.values())+1
-                        belief.distributions[substate] = copy.deepcopy(dist)
-                        for key in dist.keys():
-                            if key != CONSTANT:
-                                belief.keyMap[key] = substate
+                            substate = max(belief.keyMap.values())+1
+                            belief.distributions[substate] = copy.deepcopy(dist)
+                            for key in dist.keys():
+                                if key != CONSTANT:
+                                    belief.keyMap[key] = substate
         if belief is None:
             belief = state.__class__()
         for name in self.potentials:
@@ -202,8 +224,6 @@ class Group(Agent):
             state = self.world.state
         if actions is None:
             actions = self.getActions(state)
-        print(self.name)
-        print(self.getState('size',state))
         if len(actions) == 1:
             # Probably nop because no one's joined
             result = {'action': next(iter(actions))}
@@ -216,15 +236,28 @@ class Group(Agent):
         for action in actions:
             print(action)
             assert len(action) == 1
-            joint = {}
+            joint = {self.name: action}
             current = copy.deepcopy(belief)
             if action['verb'] == 'noDecision':
-                print(self.reward(current))
+                V[action] = self.reward(current)
             else:
+                dist = None
                 for name in members:
                     act = Action(next(iter(action)))
                     act['subject'] = name
                     joint[name] = ActionSet([act])
+                    if dist is None:
+                        dist = current.distributions[current.keyMap[turnKey(name)]]
+                for vector in dist.domain():
+                    prob = dist[vector]
+                    del dist[vector]
+                    for name in members:
+                        vector[turnKey(name)] = 0
+                    dist[vector] = prob
                 self.world.step(joint,current,keySubset=belief.keys(),updateBeliefs=False)
-            print(self.reward(current,model))
-        raise RuntimeError
+                V[action] = self.reward(current,model)
+        best = None
+        for action,value in V.items():
+            if best is None or value > best[1]:
+                best = action,value
+        return {'action': best[0],'V': V}
