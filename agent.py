@@ -1,5 +1,6 @@
 from __future__ import print_function
 import copy
+import inspect
 import logging
 import math
 import multiprocessing
@@ -1126,6 +1127,15 @@ class Agent(object):
         @type omega: str
         """
         key = stateKey(self.name,omega)
+        if 'codePtr' in kwargs and kwargs['codePtr'] is True:
+            for frame in inspect.getouterframes(inspect.currentframe()):
+                try:
+                    fname = frame.filename
+                except AttributeError:
+                    fname = frame[1]
+                if fname != __file__:
+                    break
+            kwargs['codePtr'] = frame
         if not key in self.world.variables:
             self.world.defineVariable(key,**kwargs)
         self.omega.add(omega)

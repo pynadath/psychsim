@@ -927,13 +927,16 @@ class World(object):
         self.variables[key]['key'] = key
         self.dependency.clear()
         if codePtr:
-            for frame in inspect.getouterframes(inspect.currentframe()):
-                try:
-                    fname = frame.filename
-                except AttributeError:
-                    fname = frame[1]
-                if fname != __file__:
-                    break
+            if codePtr is True:
+                for frame in inspect.getouterframes(inspect.currentframe()):
+                    try:
+                        fname = frame.filename
+                    except AttributeError:
+                        fname = frame[1]
+                    if fname != __file__:
+                        break
+            else:
+                frame = codePtr
             mod = os.path.relpath(frame.filename,
                                   os.path.abspath(os.path.join(os.path.dirname(__file__),'..')))
             try:
