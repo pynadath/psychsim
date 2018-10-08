@@ -711,6 +711,7 @@ class Actor(Agent):
         #self.setAttribute('rationality',1.)
 
         self.friends = set()
+        self.groups = set()
         
 
     def makeFriend(self,friend,config):
@@ -808,6 +809,7 @@ class Actor(Agent):
                     include.add(key)
             elif agent[:5] == 'Group' and self.name in self.world.agents[agent].potentials:
                 include.add(key)
+                self.groups.add(agent[5:])
             elif agent[:6] == 'System':
                 include.add(key)
             elif agent == WORLD:
@@ -906,3 +908,17 @@ class Actor(Agent):
                 total.addProb(value,yrScalePess*msg[value])
         total.normalize()
         self.setBelief(key,total,model)
+
+    def groupDecide(self,state=None,horizon=None,others=None,model=None,selection=None,actions=None):
+        if state is None:
+            state = self.world.state
+        if actions is None:
+            actions = self.getActions(state)
+        belief = self.getBelief(state,model)
+        for group in self.groups:
+            membership = world.getState(binaryKey(self.name,group,'memberOf'))
+            assert len(membership) == 1,'Unable to handle uncertain group membership'
+            if membership.first():
+                action = world.getState(stateKey(group,ACTION))
+                print(action)
+                raise RuntimeError
