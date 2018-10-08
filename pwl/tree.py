@@ -3,7 +3,7 @@ from xml.dom.minidom import Document,Node
 from psychsim.probability import Distribution
 from psychsim.action import Action
 
-from psychsim.pwl.keys import CONSTANT
+from psychsim.pwl.keys import CONSTANT,makeFuture,makePresent
 from psychsim.pwl.vector import KeyedVector
 from psychsim.pwl.matrix import KeyedMatrix,setToConstantMatrix
 from psychsim.pwl.plane import KeyedPlane,equalRow
@@ -695,3 +695,30 @@ def makeTree(table):
     else:
         # Leaf
         return KeyedTree(table)
+
+def collapseDynamics(tree,effects):
+    effects.reverse()
+    present = tree.getKeysIn()
+    tree.makeFuture(present)
+    for stage in effects:
+        subtree = None
+        for key,dynamics in stage.items():
+            if dynamics and makeFuture(key) in tree.getKeysIn():
+                assert len(dynamics) == 1
+                if subtree is None:
+                    subtree = dynamics[0]
+                else:
+                    subtree += dynamics[0]
+        if subtree:
+            if tree is None:
+                tree = subtree
+            else:
+                for key in tree.getKeysIn():
+                    if not key in subtree.getKeysOut():
+                        fun = lambda m: KeyedMatrix(list(m.items())+[(key,KeyedVector({key: 1.}))])
+                        subtree = subtree.map(fun)
+                tree = tree*subtree
+    future = [key for key in tree.getKeysIn() if isFuture(key)]
+    if future:
+        tree.makePresent(future)
+    return tree.prune()
