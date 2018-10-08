@@ -639,9 +639,16 @@ class World(object):
         self.dynamics[key][action] = tree
         if codePtr:
             frame = inspect.getouterframes(inspect.currentframe())[1]
-            mod = os.path.relpath(frame.filename,
+            try:
+                fname = frame.filename
+            except AttributeError:
+                fname = frame[1]
+            mod = os.path.relpath(fname,
                                   os.path.abspath(os.path.join(os.path.dirname(__file__),'..')))
-            self.extras['%s %s' % (key,action)] = '%s:%d' % (mod,frame.lineno)
+            try:
+                self.extras['%s %s' % (key,action)] = '%s:%d' % (mod,frame.lineno)
+            except AttributeError:
+                self.extras['%s %s' % (key,action)] = '%s:%d' % (mod,frame[2])
 
     def getDynamics(self,key,action,state=None):
         if not state is None:
@@ -921,11 +928,18 @@ class World(object):
         self.dependency.clear()
         if codePtr:
             for frame in inspect.getouterframes(inspect.currentframe()):
-                if frame.filename != __file__:
+                try:
+                    fname = frame.filename
+                except AttributeError:
+                    fname = frame[1]
+                if fname != __file__:
                     break
             mod = os.path.relpath(frame.filename,
                                   os.path.abspath(os.path.join(os.path.dirname(__file__),'..')))
-            self.extras[key] = '%s:%d' % (mod,frame.lineno)
+            try:
+                self.extras[key] = '%s:%d' % (mod,frame.lineno)
+            except AttributeError:
+                self.extras[key] = '%s:%d' % (mod,frame[2])
 
     def setFeature(self,key,value,state=None):
         """
