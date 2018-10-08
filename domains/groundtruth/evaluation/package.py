@@ -103,6 +103,8 @@ if __name__ == '__main__':
     parser.add_argument('instances',type=int,nargs='+',help='Instance numbers to archived')
     parser.add_argument('-a','--all',action='store_true',
                         help='Archive all runs (otherwise, just run-0)')
+    parser.add_argument('--ta2',action='store_true',
+                        help='Prepare data package for TA2')
     parser.add_argument('--clean',action='store_true')
     parser.add_argument('--clean2',action='store_true')
     args = vars(parser.parse_args())
@@ -110,13 +112,17 @@ if __name__ == '__main__':
     if os.path.dirname(__file__):
         os.chdir(os.path.dirname(__file__))
     os.chdir('..')
-            
-    targets = {'InstanceVariableTable','RunDataTable','SummaryStatisticsDataTable',
-               'QualitativeDataTable','RelationshipDataTable',}
+
+    if args['ta2']:
+        targets = {'CensusTable','PopulationTable','RegionalTable','ActorPreTable','ActorPostTable','HurricaneTable'}
+    else:
+        targets = {'InstanceVariableTable','RunDataTable','SummaryStatisticsDataTable',
+                   'QualitativeDataTable','RelationshipDataTable',}
     
     with zipfile.ZipFile(args['output'],'w') as archive:
-        archive.write(os.path.join('SimulationDefinition','VariableDefTable.tsv'))
-        archive.write(os.path.join('SimulationDefinition','RelationshipDefTable.tsv'))
+        if not args['ta2']:
+            archive.write(os.path.join('SimulationDefinition','VariableDefTable.tsv'))
+            archive.write(os.path.join('SimulationDefinition','RelationshipDefTable.tsv'))
         for i in args['instances']:
             runDir = os.path.join('Instances','Instance%d' % (i),'Runs')
             runs = os.listdir(runDir)
@@ -130,6 +136,9 @@ if __name__ == '__main__':
                     stats = []
                     fields = []
                 current = os.path.join(runDir,'run-%d' % (run))
+                if args['ta2']:
+                    os.chdir(current)
+                    current = '.'
                 for name in os.listdir(current):
                     base,ext = os.path.splitext(name)
                     if base in targets and ext == '.tsv':
