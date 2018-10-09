@@ -447,6 +447,35 @@ Real%
 %
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:248|%
+\end{flushleft}%
+\subsubsection{Effect of System{-}allocate{-}Region01 on Actor's grievance}%
+\label{ssubsec:Effect of System{-}allocate{-}Region01 on Actor's grievance}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/system.py:55|%
+\linebreak%
+IF %
+\textbf{Actor's region}%
+$=$%
+\textbf{Region01}%
+\linebreak%
+\hspace*{2em}%
+THEN %
+: %
+$\mbox{\textbf{Actor's grievance}} '$%
+$\leftarrow$%
+80\%%
+$\cdot$%
+\textbf{Actor's grievance}%
+\linebreak%
+\hspace*{2em}%
+ELSE %
+: %
+$\mbox{\textbf{Actor's grievance}} '$%
+$\leftarrow$%
+80\%%
+$\cdot$%
+\textbf{Actor's grievance}%
++0.20%
 \end{flushleft}
 
 %
@@ -2715,7 +2744,7 @@ ${-}1$%
 IF %
 \textbf{Actor's location}%
 $=$%
-\textbf{\{'evacuated', 'shelter1'\}}%
+\textbf{\{'shelter1', 'evacuated'\}}%
 \linebreak%
 \hspace*{2em}%
 THEN %
@@ -2997,6 +3026,35 @@ $\cdot$%
 \includegraphics[width=0.8\textwidth]{images/System-allocate-Region01.png}%
 \caption{Ground Truth subgraph for System{-}allocate{-}Region01}%
 \end{figure}
+
+%
+\subsubsection{Effect on Actor's grievance of System allocate Region01}%
+\label{ssubsec:Effect on Actor's grievance of System allocate Region01}%
+\begin{flushleft}%
+IF %
+\textbf{Actor's region}%
+$=$%
+\textbf{Region01}%
+\linebreak%
+\hspace*{2em}%
+THEN %
+: %
+$\mbox{\textbf{Actor's grievance}} '$%
+$\leftarrow$%
+80\%%
+$\cdot$%
+\textbf{Actor's grievance}%
+\linebreak%
+\hspace*{2em}%
+ELSE %
+: %
+$\mbox{\textbf{Actor's grievance}} '$%
+$\leftarrow$%
+80\%%
+$\cdot$%
+\textbf{Actor's grievance}%
++0.20%
+\end{flushleft}
 
 %
 \subsubsection{Effect on Region01's risk of System allocate Region01}%
