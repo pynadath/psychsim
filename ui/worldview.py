@@ -236,7 +236,7 @@ class WorldView(QGraphicsScene):
         even = True
         for layer in nodes:
             y = y0
-            for key in sorted(layer,key=lambda k: graph[k]['agent']):
+            for key in sorted(layer):
                 if believer:
                     label = beliefKey(believer,key)
                     if self.xml:
