@@ -861,7 +861,7 @@ THEN %
 IF %
 \textbf{Actor's location}%
 $=$%
-\textbf{\{'evacuated', 'Region01'\}}%
+\textbf{\{'Region01', 'evacuated'\}}%
 \linebreak%
 \hspace*{6em}%
 THEN %
@@ -1776,21 +1776,25 @@ $\leftarrow$%
 \label{sec:Relations}%
 \subsection{Actor friendOf Actor}%
 \label{subsec:Actor friendOf Actor}%
-\{'codePtr': True\}%
 \begin{description}%
 \item[Type:]%
 Boolean%
-\end{description}
+\end{description}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/actor.py:722|%
+\end{flushleft}
 
 %
 \subsection{Actor memberOf Group}%
 \label{subsec:Actor memberOf Group}%
-\{'codePtr': True\}%
 \begin{description}%
 \item[Type:]%
 Boolean%
 \end{description}%
 \includegraphics[width=\textwidth]{images/ActormemberOf->Group.png}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/group.py:94|%
+\end{flushleft}%
 \subsubsection{Effect of Actor{-}join{-}Group on Actor memberOf Group}%
 \label{ssubsec:Effect of Actor{-}join{-}Group on Actor memberOf Group}%
 \begin{flushleft}%
@@ -2576,7 +2580,7 @@ ${-}1$%
 IF %
 \textbf{Actor's location}%
 $=$%
-\textbf{\{'evacuated', 'shelter1'\}}%
+\textbf{\{'shelter1', 'evacuated'\}}%
 \linebreak%
 \hspace*{2em}%
 THEN %
@@ -2751,7 +2755,7 @@ THEN %
 IF %
 \textbf{Actor's location}%
 $=$%
-\textbf{\{'evacuated', 'Region01'\}}%
+\textbf{\{'Region01', 'evacuated'\}}%
 \linebreak%
 \hspace*{6em}%
 THEN %
