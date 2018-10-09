@@ -44,12 +44,8 @@ def describeVar(doc,variable):
             description.add_item('Values:',dumps_list(values))
                 
 def addGraph(doc,key,fname):
-    with doc.create(Figure(position='ht')) as gtGraph:
-        gtGraph.add_image('%s' % (os.path.join('images','%s.png' % (fname))))
-        if isStateKey(key) and state2agent(key) == WORLD:
-            gtGraph.add_caption('Ground Truth subgraph for %s' % (state2feature(key)))
-        else:
-            gtGraph.add_caption('Ground Truth subgraph for %s' % (key))
+    doc.append(StandAloneGraphic('%s' % (os.path.join('images','%s.png' % (fname))),
+                                 image_options=r'width=\textwidth'))
     
 def addTree(doc,tree,world,indent=0,prefix=None):
     if indent:
