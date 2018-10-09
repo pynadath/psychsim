@@ -121,7 +121,7 @@ class WorldView(QGraphicsScene):
             g = graph.DependencyGraph(self.world)
             state = self.world.agents[agent].getBelief()
             assert len(state) == 1
-            g.computeGraph(state=state.first())
+            g.computeGraph(state=next(iter(state.values())))
         layout = getLayout(g)
         if agent == WORLD:
             # Lay out the action nodes
@@ -220,8 +220,14 @@ class WorldView(QGraphicsScene):
                                     else:
                                         raise ValueError('Unable to find node for %s' % (key))
                                     self.xml.add_edge(sNode,oNode,True)
-                                    bNode = self.xml.add_node('%sBeliefOf%s' % (agent.name,key))
-                                    self.xml.add_edge(oNode,bNode,True)
+                                    label = '%sBeliefOf%s' % (agent.name,key)
+                                    for bNode in self.xml.nodes():
+                                        if bNode['label'] == label:
+                                            self.xml.add_edge(oNode,bNode,True)
+                                            break
+                                    else:
+                                        pass
+#                                        raise ValueError('Unable to find node for %s' % (label))
             parser = GraphMLParser()
             parser.write(self.xml,'/tmp/GroundTruth-USC.graphml')
 
@@ -233,8 +239,12 @@ class WorldView(QGraphicsScene):
             for key in sorted(layer,key=lambda k: graph[k]['agent']):
                 if believer:
                     label = beliefKey(believer,key)
+                    if self.xml:
+                        self.xml.add_node('%sBeliefOf%s' % (believer,makePresent(key)))
                 else:
                     label = key
+                    if self.xml:
+                        self.xml.add_node(makePresent(key))
                 variable = self.world.variables[makePresent(key)]
                 if y >= y0+maxRows*self.rowHeight:
                     even = not even
@@ -284,6 +294,8 @@ class WorldView(QGraphicsScene):
                 y = max(y,self.world.diagram.getY(action))
             node = ActionNode(self.world.agents[self.graph[action]['agent']],action,scene=self)
             self.nodes[self.graph[action]['type']][action] = node
+            if self.xml:
+                self.xml.add_node(str(action))
         x += self.colWidth
         return x
 
@@ -300,6 +312,8 @@ class WorldView(QGraphicsScene):
                     self.world.diagram.y[agent.name] = y
                 node = UtilityNode(agent,x,y,scene=self)
                 self.nodes[graph[name]['type']][name] = node
+                if self.xml:
+                    self.xml.add_node(name)
         x += self.colWidth
         return x
         
@@ -308,21 +322,27 @@ class WorldView(QGraphicsScene):
             if isinstance(parent,str):
                 parentVal = makePresent(parent)
             else:
-                parentVal = parent
+                parentVal = str(parent)
+            if isBeliefKey(parentVal):
+                parentVal = '%sBeliefOf%s' % (belief2believer(parentVal),
+                                              makePresent(belief2key(parentVal)))
             if isinstance(child,str):
                 childVal = makePresent(child)
             else:
-                childVal = child
+                childVal = str(child)
+            if isBeliefKey(childVal):
+                childVal = '%sBeliefOf%s' % (belief2believer(childVal),
+                                             makePresent(belief2key(childVal)))
             for nP in self.xml.nodes():
-                if nP['label'] == parentVal:
+                if nP['label'] == str(parentVal):
                     break
             else:
-                nP = self.xml.add_node(parentVal)
+                raise RuntimeError('Unable to find GraphML node %s' % (parentVal))
             for nC in self.xml.nodes():
-                if nC['label'] == childVal:
+                if nC['label'] == str(childVal):
                     break
             else:
-                nC = self.xml.add_node(childVal)
+                raise RuntimeError('Unable to find GraphML node %s' % (childVal))
             self.xml.add_edge(nP,nC,True)
         if graph is None:
             graph = self.graph

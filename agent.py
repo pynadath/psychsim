@@ -1,5 +1,6 @@
 from __future__ import print_function
 import copy
+import inspect
 import logging
 import math
 import multiprocessing
@@ -13,8 +14,6 @@ from xml.dom.minidom import Document,Node
 from psychsim.action import Action,ActionSet
 from psychsim.pwl import *
 from psychsim.probability import Distribution
-
-__parallel__ = False
 
 class Agent(object):
     """
@@ -55,6 +54,7 @@ class Agent(object):
             self.parse(name)
         else:
             self.name = name
+        self.parallel = False
 
     """------------------"""
     """Policy methods"""
@@ -73,31 +73,29 @@ class Agent(object):
         Rkey = rewardKey(self.name,True)
         actions = self.actions
         model['V'] = {}
+        for key in [k for k in belief.keys() if isTurnKey(k)]:
+            other = self.world.agents[state2agent(key)]
+            if other.name == self.name:
+                pass
+            elif len(other.actions) > 1:
+                logging.warning('%s ignoring %s when compiling policy. Currently unable to generate policies in beliefs of others with multiple actions')
+            else:
+                # Compile mental model of this agent's policy
+                if modelKey(other.name) in belief:
+                    mentalModel = self.world.getModel(other.name,belief)
+                    assert len(mentalModel) == 1,'Currently unable to compile policies for uncertain mental models'
+                    mentalModel = mentalModel.first()
+                else:
+                    assert len(other.models) == 1,'Unable to compile policies without explicit mental model of %s' % (other.name)
+                    mentalModel = next(iter(other.models.keys()))
+                mentalModel = other.addModel('%s_modelOf_%s' % (self.name,mentalModel),
+                                             parent=mentalModel,static=True)
+                action = next(iter(other.actions))
+                effects = self.world.deltaState(action,belief,belief.keys())
+                mentalModel['policy'] = collapseDynamics(copy.deepcopy(R),effects)
         for action in actions:
             effects = self.world.deltaState(action,belief,belief.keys())
-            effects.reverse()
-            model['V'][action] = copy.deepcopy(R)
-            keyList = model['V'][action].getKeysIn()
-            model['V'][action].makeFuture(keyList)
-            for stage in effects:
-                subtree = None
-                for key,dynamics in stage.items():
-                    if dynamics and makeFuture(key) in model['V'][action].getKeysIn():
-                        assert len(dynamics) == 1
-                        if subtree is None:
-                            subtree = dynamics[0]
-                        else:
-                            subtree += dynamics[0]
-                if subtree:
-                    for key in model['V'][action].getKeysIn():
-                        if not key in subtree.getKeysOut():
-                            fun = lambda m: KeyedMatrix(list(m.items())+[(key,KeyedVector({key: 1.}))])
-                            subtree = subtree.map(fun)
-                    model['V'][action] = model['V'][action]*subtree
-            keyList = [key for key in model['V'][action].getKeysIn() if isFuture(key)]
-            if keyList:
-                model['V'][action].makePresent(keyList)
-            model['V'][action] = model['V'][action].prune()
+            model['V'][action] = collapseDynamics(copy.deepcopy(R),effects)
         return model['V']
                             
     def decide(self,vector=None,horizon=None,others=None,model=None,selection=None,actions=None,keySet=None):
@@ -193,7 +191,7 @@ class Agent(object):
             # Only one possible action
             return {'action': next(iter(actions))}
         # Keep track of value function
-        if __parallel__:
+        if self.parallel:
             with multiprocessing.Pool() as pool:
                 results = [(action,pool.apply_async(self.value,
                                                     args=(belief,action,model,horizon,keySet)))
@@ -1129,6 +1127,15 @@ class Agent(object):
         @type omega: str
         """
         key = stateKey(self.name,omega)
+        if 'codePtr' in kwargs and kwargs['codePtr'] is True:
+            for frame in inspect.getouterframes(inspect.currentframe()):
+                try:
+                    fname = frame.filename
+                except AttributeError:
+                    fname = frame[1]
+                if fname != __file__:
+                    break
+            kwargs['codePtr'] = frame
         if not key in self.world.variables:
             self.world.defineVariable(key,**kwargs)
         self.omega.add(omega)
