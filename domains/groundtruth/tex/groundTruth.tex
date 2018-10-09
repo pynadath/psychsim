@@ -73,15 +73,7 @@ Integer%
 \item[Type:]%
 Boolean%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/aliveOfActor.png}%
-\caption{Ground Truth subgraph for Actor's alive}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/aliveOfActor.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:190|%
 \end{flushleft}%
@@ -137,15 +129,7 @@ String%
 , %
 \textbf{secure}%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/attachmentOfActor.png}%
-\caption{Ground Truth subgraph for Actor's attachment}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/attachmentOfActor.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:101|%
 \end{flushleft}
@@ -184,15 +168,7 @@ Number of children%
 \item[Type:]%
 Real%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/childrenOfActor.png}%
-\caption{Ground Truth subgraph for Actor's children}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/childrenOfActor.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:75|%
 \end{flushleft}
@@ -205,15 +181,7 @@ Current level of children's physical wellbeing%
 \item[Type:]%
 Real%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/childrenHealthOfActor.png}%
-\caption{Ground Truth subgraph for Actor's childrenHealth}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/childrenHealthOfActor.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:212|%
 \end{flushleft}%
@@ -384,15 +352,7 @@ Has a full{-}time job%
 \item[Type:]%
 Boolean%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/employedOfActor.png}%
-\caption{Ground Truth subgraph for Actor's employed}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/employedOfActor.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:83|%
 \end{flushleft}
@@ -436,22 +396,14 @@ Current level of grievance felt toward system%
 \item[Type:]%
 Real%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/grievanceOfActor.png}%
-\caption{Ground Truth subgraph for Actor's grievance}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/grievanceOfActor.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:248|%
 \end{flushleft}%
 \subsubsection{Effect of System{-}allocate{-}Region01 on Actor's grievance}%
 \label{ssubsec:Effect of System{-}allocate{-}Region01 on Actor's grievance}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/system.py:55|%
+\verb|psychsim/domains/groundtruth/system.py:53|%
 \linebreak%
 IF %
 \textbf{Actor's region}%
@@ -486,15 +438,7 @@ Current level of physical wellbeing%
 \item[Type:]%
 Real%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/healthOfActor.png}%
-\caption{Ground Truth subgraph for Actor's health}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/healthOfActor.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:194|%
 \end{flushleft}%
@@ -660,15 +604,7 @@ String%
 , %
 \textbf{shelter1}%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/locationOfActor.png}%
-\caption{Ground Truth subgraph for Actor's location}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/locationOfActor.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:187|%
 \end{flushleft}%
@@ -734,8 +670,46 @@ Owns a pet%
 \item[Type:]%
 Boolean%
 \end{description}%
+\includegraphics[width=\textwidth]{images/petOfActor.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:88|%
+\end{flushleft}%
+\subsubsection{Effect of Actor{-}moveTo{-}shelter1 on Actor's pet}%
+\label{ssubsec:Effect of Actor{-}moveTo{-}shelter1 on Actor's pet}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/actor.py:577|%
+\linebreak%
+IF %
+$\mbox{\textbf{Actor's location}} '$%
+$=$%
+\textbf{shelter1}%
+\linebreak%
+\hspace*{2em}%
+THEN %
+: %
+IF %
+\textbf{Region01's shelterPets}%
+\linebreak%
+\hspace*{4em}%
+THEN %
+: %
+$\mbox{\textbf{Actor's pet}} '$%
+$\leftarrow$%
+\textbf{Actor's pet}%
+\linebreak%
+\hspace*{4em}%
+ELSE %
+: %
+$\mbox{\textbf{Actor's pet}} '$%
+$\leftarrow$%
+\textbf{false}%
+\linebreak%
+\hspace*{2em}%
+ELSE %
+: %
+$\mbox{\textbf{Actor's pet}} '$%
+$\leftarrow$%
+\textbf{Actor's pet}%
 \end{flushleft}
 
 %
@@ -765,15 +739,7 @@ String%
 \item[Values:]%
 \textbf{Region01}%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/regionOfActor.png}%
-\caption{Ground Truth subgraph for Actor's region}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/regionOfActor.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:150|%
 \end{flushleft}
@@ -804,15 +770,7 @@ Material resources (wealth) currently owned%
 \item[Type:]%
 Real%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/resourcesOfActor.png}%
-\caption{Ground Truth subgraph for Actor's resources}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/resourcesOfActor.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:216|%
 \end{flushleft}%
@@ -959,15 +917,7 @@ Current level of risk from hurricane%
 \item[Type:]%
 Real%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/riskOfActor.png}%
-\caption{Ground Truth subgraph for Actor's risk}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/riskOfActor.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/actor.py:236|%
 \end{flushleft}%
@@ -1103,15 +1053,7 @@ Real%
 \item[Type:]%
 Integer%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/sizeOfGroup.png}%
-\caption{Ground Truth subgraph for Group's size}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/sizeOfGroup.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/group.py:24|%
 \end{flushleft}%
@@ -1145,15 +1087,7 @@ ${-}1$%
 \item[Type:]%
 Integer%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/categoryOfNature.png}%
-\caption{Ground Truth subgraph for Nature's category}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/categoryOfNature.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/nature.py:26|%
 \end{flushleft}%
@@ -1313,15 +1247,7 @@ $\leftarrow$%
 \item[Type:]%
 Integer%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/daysOfNature.png}%
-\caption{Ground Truth subgraph for Nature's days}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/daysOfNature.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/nature.py:18|%
 \end{flushleft}%
@@ -1362,15 +1288,7 @@ String%
 , %
 \textbf{none}%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/locationOfNature.png}%
-\caption{Ground Truth subgraph for Nature's location}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/locationOfNature.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/nature.py:23|%
 \end{flushleft}%
@@ -1445,15 +1363,7 @@ String%
 , %
 \textbf{none}%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/phaseOfNature.png}%
-\caption{Ground Truth subgraph for Nature's phase}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/phaseOfNature.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/nature.py:16|%
 \end{flushleft}%
@@ -1574,15 +1484,7 @@ Level of risk from hurricane%
 \item[Type:]%
 Real%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/riskOfRegion01.png}%
-\caption{Ground Truth subgraph for Region01's risk}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/riskOfRegion01.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/region.py:51|%
 \end{flushleft}%
@@ -1694,7 +1596,7 @@ $\cdot$%
 \subsubsection{Effect of System{-}allocate{-}Region01 on Region01's risk}%
 \label{ssubsec:Effect of System{-}allocate{-}Region01 on Region01's risk}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/system.py:43|%
+\verb|psychsim/domains/groundtruth/system.py:41|%
 \linebreak%
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
@@ -1722,6 +1624,7 @@ Real%
 \item[Type:]%
 Boolean%
 \end{description}%
+\includegraphics[width=\textwidth]{images/shelterPetsOfRegion01.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/region.py:88|%
 \end{flushleft}
@@ -1733,15 +1636,7 @@ Boolean%
 \item[Type:]%
 Real%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/shelterRiskOfRegion01.png}%
-\caption{Ground Truth subgraph for Region01's shelterRisk}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/shelterRiskOfRegion01.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/region.py:82|%
 \end{flushleft}%
@@ -1840,17 +1735,18 @@ $\cdot$%
 \item[Type:]%
 Integer%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/resourcesOfSystem.png}%
-\caption{Ground Truth subgraph for System's resources}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/resourcesOfSystem.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/system.py:20|%
+\end{flushleft}%
+\subsubsection{Effect of System{-}allocate{-}Region01 on System's resources}%
+\label{ssubsec:Effect of System{-}allocate{-}Region01 on System's resources}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/system.py:43|%
+\linebreak%
+$\mbox{\textbf{System's resources}} '$%
+$\leftarrow$%
+\textbf{System's resources}%
 \end{flushleft}
 
 %
@@ -1860,15 +1756,7 @@ Integer%
 \item[Type:]%
 Integer%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/day.png}%
-\caption{Ground Truth subgraph for day}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/day.png}%
 \begin{flushleft}%
 \verb|psychsim/domains/groundtruth/__main__.py:710|%
 \end{flushleft}%
@@ -1902,15 +1790,7 @@ Boolean%
 \item[Type:]%
 Boolean%
 \end{description}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/ActormemberOf->Group.png}%
-\caption{Ground Truth subgraph for Actor memberOf {-}> Group}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/ActormemberOf->Group.png}%
 \subsubsection{Effect of Actor{-}join{-}Group on Actor memberOf Group}%
 \label{ssubsec:Effect of Actor{-}join{-}Group on Actor memberOf Group}%
 \begin{flushleft}%
@@ -1933,15 +1813,7 @@ $\leftarrow$%
 \label{sec:Actions}%
 \subsection{Nature evolve}%
 \label{subsec:Nature evolve}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Nature-evolve.png}%
-\caption{Ground Truth subgraph for Nature{-}evolve}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/Nature-evolve.png}%
 \subsubsection{Effect on Nature's category of Nature evolve}%
 \label{ssubsec:Effect on Nature's category of Nature evolve}%
 \begin{flushleft}%
@@ -2457,15 +2329,7 @@ $\leftarrow$%
 %
 \subsection{Actor decreaseRisk Region01}%
 \label{subsec:Actor decreaseRisk Region01}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Actor-decreaseRisk-Region01.png}%
-\caption{Ground Truth subgraph for Actor{-}decreaseRisk{-}Region01}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/Actor-decreaseRisk-Region01.png}%
 \subsubsection{Applicability of Actor decreaseRisk Region01}%
 \label{ssubsec:Applicability of Actor decreaseRisk Region01}%
 \begin{flushleft}%
@@ -2522,15 +2386,7 @@ $\cdot$%
 %
 \subsection{Actor evacuate}%
 \label{subsec:Actor evacuate}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Actor-evacuate.png}%
-\caption{Ground Truth subgraph for Actor{-}evacuate}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/Actor-evacuate.png}%
 \subsubsection{Applicability of Actor evacuate}%
 \label{ssubsec:Applicability of Actor evacuate}%
 \begin{flushleft}%
@@ -2611,15 +2467,7 @@ $\leftarrow$%
 %
 \subsection{Actor join Group}%
 \label{subsec:Actor join Group}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Actor-join-Group.png}%
-\caption{Ground Truth subgraph for Actor{-}join{-}Group}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/Actor-join-Group.png}%
 \subsubsection{Applicability of Actor join Group}%
 \label{ssubsec:Applicability of Actor join Group}%
 \begin{flushleft}%
@@ -2670,15 +2518,7 @@ $\leftarrow$%
 %
 \subsection{Actor leave Group}%
 \label{subsec:Actor leave Group}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Actor-leave-Group.png}%
-\caption{Ground Truth subgraph for Actor{-}leave{-}Group}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/Actor-leave-Group.png}%
 \subsubsection{Applicability of Actor leave Group}%
 \label{ssubsec:Applicability of Actor leave Group}%
 \begin{flushleft}%
@@ -2729,22 +2569,14 @@ ${-}1$%
 %
 \subsection{Actor moveTo Region01}%
 \label{subsec:Actor moveTo Region01}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Actor-moveTo-Region01.png}%
-\caption{Ground Truth subgraph for Actor{-}moveTo{-}Region01}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/Actor-moveTo-Region01.png}%
 \subsubsection{Applicability of Actor moveTo Region01}%
 \label{ssubsec:Applicability of Actor moveTo Region01}%
 \begin{flushleft}%
 IF %
 \textbf{Actor's location}%
 $=$%
-\textbf{\{'shelter1', 'evacuated'\}}%
+\textbf{\{'evacuated', 'shelter1'\}}%
 \linebreak%
 \hspace*{2em}%
 THEN %
@@ -2807,15 +2639,7 @@ $\leftarrow$%
 %
 \subsection{Actor moveTo shelter1}%
 \label{subsec:Actor moveTo shelter1}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Actor-moveTo-shelter1.png}%
-\caption{Ground Truth subgraph for Actor{-}moveTo{-}shelter1}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/Actor-moveTo-shelter1.png}%
 \subsubsection{Applicability of Actor moveTo shelter1}%
 \label{ssubsec:Applicability of Actor moveTo shelter1}%
 \begin{flushleft}%
@@ -2869,17 +2693,46 @@ $\leftarrow$%
 \end{flushleft}
 
 %
-\subsection{Actor stayInLocation}%
-\label{subsec:Actor stayInLocation}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Actor-stayInLocation.png}%
-\caption{Ground Truth subgraph for Actor{-}stayInLocation}%
-\end{figure}
+\subsubsection{Effect on Actor's pet of Actor moveTo shelter1}%
+\label{ssubsec:Effect on Actor's pet of Actor moveTo shelter1}%
+\begin{flushleft}%
+IF %
+$\mbox{\textbf{Actor's location}} '$%
+$=$%
+\textbf{shelter1}%
+\linebreak%
+\hspace*{2em}%
+THEN %
+: %
+IF %
+\textbf{Region01's shelterPets}%
+\linebreak%
+\hspace*{4em}%
+THEN %
+: %
+$\mbox{\textbf{Actor's pet}} '$%
+$\leftarrow$%
+\textbf{Actor's pet}%
+\linebreak%
+\hspace*{4em}%
+ELSE %
+: %
+$\mbox{\textbf{Actor's pet}} '$%
+$\leftarrow$%
+\textbf{false}%
+\linebreak%
+\hspace*{2em}%
+ELSE %
+: %
+$\mbox{\textbf{Actor's pet}} '$%
+$\leftarrow$%
+\textbf{Actor's pet}%
+\end{flushleft}
 
 %
+\subsection{Actor stayInLocation}%
+\label{subsec:Actor stayInLocation}%
+\includegraphics[width=\textwidth]{images/Actor-stayInLocation.png}%
 \subsubsection{Effect on Actor's resources of Actor stayInLocation}%
 \label{ssubsec:Effect on Actor's resources of Actor stayInLocation}%
 \begin{flushleft}%
@@ -2935,15 +2788,7 @@ $\leftarrow$%
 %
 \subsection{Actor takeResources Region01}%
 \label{subsec:Actor takeResources Region01}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Actor-takeResources-Region01.png}%
-\caption{Ground Truth subgraph for Actor{-}takeResources{-}Region01}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/Actor-takeResources-Region01.png}%
 \subsubsection{Applicability of Actor takeResources Region01}%
 \label{ssubsec:Applicability of Actor takeResources Region01}%
 \begin{flushleft}%
@@ -3019,15 +2864,7 @@ $\cdot$%
 %
 \subsection{System allocate Region01}%
 \label{subsec:System allocate Region01}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/System-allocate-Region01.png}%
-\caption{Ground Truth subgraph for System{-}allocate{-}Region01}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/System-allocate-Region01.png}%
 \subsubsection{Effect on Actor's grievance of System allocate Region01}%
 \label{ssubsec:Effect on Actor's grievance of System allocate Region01}%
 \begin{flushleft}%
@@ -3068,17 +2905,18 @@ $\cdot$%
 \end{flushleft}
 
 %
-\subsection{Group decreaseRisk}%
-\label{subsec:Group decreaseRisk}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Group-decreaseRisk.png}%
-\caption{Ground Truth subgraph for Group{-}decreaseRisk}%
-\end{figure}
+\subsubsection{Effect on System's resources of System allocate Region01}%
+\label{ssubsec:Effect on System's resources of System allocate Region01}%
+\begin{flushleft}%
+$\mbox{\textbf{System's resources}} '$%
+$\leftarrow$%
+\textbf{System's resources}%
+\end{flushleft}
 
 %
+\subsection{Group decreaseRisk}%
+\label{subsec:Group decreaseRisk}%
+\includegraphics[width=\textwidth]{images/Group-decreaseRisk.png}%
 \subsubsection{Applicability of Group decreaseRisk}%
 \label{ssubsec:Applicability of Group decreaseRisk}%
 \begin{flushleft}%
@@ -3101,15 +2939,7 @@ ELSE %
 %
 \subsection{Group evacuate}%
 \label{subsec:Group evacuate}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Group-evacuate.png}%
-\caption{Ground Truth subgraph for Group{-}evacuate}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/Group-evacuate.png}%
 \subsubsection{Applicability of Group evacuate}%
 \label{ssubsec:Applicability of Group evacuate}%
 \begin{flushleft}%
@@ -3132,37 +2962,17 @@ ELSE %
 %
 \subsection{Group noDecision}%
 \label{subsec:Group noDecision}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Group-noDecision.png}%
-\caption{Ground Truth subgraph for Group{-}noDecision}%
-\end{figure}
+\includegraphics[width=\textwidth]{images/Group-noDecision.png}
 
 %
 \subsection{Group returnHome}%
 \label{subsec:Group returnHome}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Group-returnHome.png}%
-\caption{Ground Truth subgraph for Group{-}returnHome}%
-\end{figure}
+\includegraphics[width=\textwidth]{images/Group-returnHome.png}
 
 %
 \subsection{Group takeResources}%
 \label{subsec:Group takeResources}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Group-takeResources.png}%
-\caption{Ground Truth subgraph for Group{-}takeResources}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/Group-takeResources.png}%
 \subsubsection{Applicability of Group takeResources}%
 \label{ssubsec:Applicability of Group takeResources}%
 \begin{flushleft}%
@@ -3187,15 +2997,7 @@ ELSE %
 \label{sec:Expected Reward}%
 \subsection{Actor's Reward}%
 \label{subsec:Actor's Reward}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Actor.png}%
-\caption{Ground Truth subgraph for Actor}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/Actor.png}%
 \begin{flushleft}%
 IF %
 \textbf{Actor's risk}%
@@ -3226,6 +3028,10 @@ $\cdot$%
 60\%%
 $\cdot$%
 \textbf{Actor's health}%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's pet}%
 +%
 20\%%
 $\cdot$%
@@ -3260,6 +3066,10 @@ $\cdot$%
 $\cdot$%
 \textbf{Actor's health}%
 +%
+40\%%
+$\cdot$%
+\textbf{Actor's pet}%
++%
 20\%%
 $\cdot$%
 \textbf{Actor's resources}%
@@ -3281,6 +3091,10 @@ $\cdot$%
 $\cdot$%
 \textbf{Actor's health}%
 +%
+40\%%
+$\cdot$%
+\textbf{Actor's pet}%
++%
 20\%%
 $\cdot$%
 \textbf{Actor's resources}%
@@ -3301,6 +3115,10 @@ $\cdot$%
 60\%%
 $\cdot$%
 \textbf{Actor's health}%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's pet}%
 +%
 20\%%
 $\cdot$%
@@ -3314,15 +3132,7 @@ $\cdot$%
 %
 \subsection{Group's Reward}%
 \label{subsec:Group's Reward}%
-
-
-\begin{figure}[ht]%
-\centering%
-\includegraphics[width=0.8\textwidth]{images/Group.png}%
-\caption{Ground Truth subgraph for Group}%
-\end{figure}
-
-%
+\includegraphics[width=\textwidth]{images/Group.png}%
 \begin{flushleft}%
 IF %
 \textbf{Actor's risk}%
@@ -3353,6 +3163,10 @@ $\cdot$%
 60\%%
 $\cdot$%
 \textbf{Actor's health}%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's pet}%
 +%
 20\%%
 $\cdot$%
@@ -3387,6 +3201,10 @@ $\cdot$%
 $\cdot$%
 \textbf{Actor's health}%
 +%
+40\%%
+$\cdot$%
+\textbf{Actor's pet}%
++%
 20\%%
 $\cdot$%
 \textbf{Actor's resources}%
@@ -3408,6 +3226,10 @@ $\cdot$%
 $\cdot$%
 \textbf{Actor's health}%
 +%
+40\%%
+$\cdot$%
+\textbf{Actor's pet}%
++%
 20\%%
 $\cdot$%
 \textbf{Actor's resources}%
@@ -3428,6 +3250,10 @@ $\cdot$%
 60\%%
 $\cdot$%
 \textbf{Actor's health}%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's pet}%
 +%
 20\%%
 $\cdot$%
