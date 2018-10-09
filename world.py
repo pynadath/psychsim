@@ -1114,7 +1114,7 @@ class World(object):
             self.relations[name] = {key: {'subject': subj,'object': obj}}
         if not domain is None:
             # Haven't defined this feature yet
-            self.defineVariable(key,domain,lo,hi,kwargs)
+            self.defineVariable(key,domain,lo,hi,**kwargs)
         return key
 
     """------------------"""
