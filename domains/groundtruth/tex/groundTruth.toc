@@ -1,118 +1,118 @@
-\contentsline {section}{\numberline {1}Background}{3}{section.1}
-\contentsline {section}{\numberline {2}State}{4}{section.2}
-\contentsline {subsection}{\numberline {2.1}Actor's age}{4}{subsection.2.1}
-\contentsline {subsection}{\numberline {2.2}Actor's alive}{4}{subsection.2.2}
-\contentsline {subsubsection}{\numberline {2.2.1}Default change in Actor's alive}{4}{subsubsection.2.2.1}
-\contentsline {subsection}{\numberline {2.3}Actor's attachment}{4}{subsection.2.3}
-\contentsline {subsection}{\numberline {2.4}Actor's category}{4}{subsection.2.4}
-\contentsline {subsection}{\numberline {2.5}Actor's center}{5}{subsection.2.5}
-\contentsline {subsection}{\numberline {2.6}Actor's children}{5}{subsection.2.6}
-\contentsline {subsection}{\numberline {2.7}Actor's childrenHealth}{5}{subsection.2.7}
-\contentsline {subsubsection}{\numberline {2.7.1}Default change in Actor's childrenHealth}{6}{subsubsection.2.7.1}
-\contentsline {subsection}{\numberline {2.8}Actor's days}{6}{subsection.2.8}
-\contentsline {subsection}{\numberline {2.9}Actor's employed}{6}{subsection.2.9}
-\contentsline {subsection}{\numberline {2.10}Actor's ethnicGroup}{7}{subsection.2.10}
-\contentsline {subsection}{\numberline {2.11}Actor's gender}{7}{subsection.2.11}
-\contentsline {subsection}{\numberline {2.12}Actor's grievance}{7}{subsection.2.12}
-\contentsline {subsection}{\numberline {2.13}Actor's health}{7}{subsection.2.13}
-\contentsline {subsubsection}{\numberline {2.13.1}Default change in Actor's health}{8}{subsubsection.2.13.1}
-\contentsline {subsection}{\numberline {2.14}Actor's location}{8}{subsection.2.14}
-\contentsline {subsubsection}{\numberline {2.14.1}Effect of Actor{-}evacuate on Actor's location}{9}{subsubsection.2.14.1}
-\contentsline {subsubsection}{\numberline {2.14.2}Effect of Actor{-}moveTo{-}Region01 on Actor's location}{9}{subsubsection.2.14.2}
-\contentsline {subsubsection}{\numberline {2.14.3}Effect of Actor{-}moveTo{-}shelter1 on Actor's location}{9}{subsubsection.2.14.3}
-\contentsline {subsection}{\numberline {2.15}Actor's perceivedChildrenHealth}{10}{subsection.2.15}
-\contentsline {subsection}{\numberline {2.16}Actor's perceivedHealth}{10}{subsection.2.16}
-\contentsline {subsection}{\numberline {2.17}Actor's pet}{10}{subsection.2.17}
-\contentsline {subsection}{\numberline {2.18}Actor's phase}{10}{subsection.2.18}
-\contentsline {subsection}{\numberline {2.19}Actor's region}{10}{subsection.2.19}
-\contentsline {subsection}{\numberline {2.20}Actor's religion}{10}{subsection.2.20}
-\contentsline {subsection}{\numberline {2.21}Actor's resources}{10}{subsection.2.21}
-\contentsline {subsubsection}{\numberline {2.21.1}Effect of Actor{-}evacuate on Actor's resources}{11}{subsubsection.2.21.1}
-\contentsline {subsubsection}{\numberline {2.21.2}Effect of Actor{-}moveTo{-}Region01 on Actor's resources}{11}{subsubsection.2.21.2}
-\contentsline {subsubsection}{\numberline {2.21.3}Effect of Actor{-}stayInLocation on Actor's resources}{11}{subsubsection.2.21.3}
-\contentsline {subsubsection}{\numberline {2.21.4}Effect of Actor{-}takeResources{-}Region01 on Actor's resources}{12}{subsubsection.2.21.4}
-\contentsline {subsection}{\numberline {2.22}Actor's risk}{12}{subsection.2.22}
-\contentsline {subsubsection}{\numberline {2.22.1}Effect of Actor{-}decreaseRisk{-}Region01 on Actor's risk}{12}{subsubsection.2.22.1}
-\contentsline {subsubsection}{\numberline {2.22.2}Effect of Actor{-}takeResources{-}Region01 on Actor's risk}{12}{subsubsection.2.22.2}
-\contentsline {subsubsection}{\numberline {2.22.3}Default change in Actor's risk}{13}{subsubsection.2.22.3}
-\contentsline {subsection}{\numberline {2.23}Actor's x}{13}{subsection.2.23}
-\contentsline {subsection}{\numberline {2.24}Actor's y}{13}{subsection.2.24}
-\contentsline {subsection}{\numberline {2.25}Group's size}{13}{subsection.2.25}
-\contentsline {subsubsection}{\numberline {2.25.1}Effect of Actor{-}join{-}Group on Group's size}{13}{subsubsection.2.25.1}
-\contentsline {subsubsection}{\numberline {2.25.2}Effect of Actor{-}leave{-}Group on Group's size}{14}{subsubsection.2.25.2}
-\contentsline {subsection}{\numberline {2.26}Nature's category}{14}{subsection.2.26}
-\contentsline {subsubsection}{\numberline {2.26.1}Effect of Nature{-}evolve on Nature's category}{14}{subsubsection.2.26.1}
-\contentsline {subsection}{\numberline {2.27}Nature's days}{15}{subsection.2.27}
-\contentsline {subsubsection}{\numberline {2.27.1}Effect of Nature{-}evolve on Nature's days}{15}{subsubsection.2.27.1}
-\contentsline {subsection}{\numberline {2.28}Nature's location}{15}{subsection.2.28}
-\contentsline {subsubsection}{\numberline {2.28.1}Effect of Nature{-}evolve on Nature's location}{16}{subsubsection.2.28.1}
-\contentsline {subsection}{\numberline {2.29}Nature's phase}{16}{subsection.2.29}
-\contentsline {subsubsection}{\numberline {2.29.1}Effect of Nature{-}evolve on Nature's phase}{16}{subsubsection.2.29.1}
-\contentsline {subsection}{\numberline {2.30}Region01's economy}{17}{subsection.2.30}
-\contentsline {subsection}{\numberline {2.31}Region01's risk}{17}{subsection.2.31}
-\contentsline {subsubsection}{\numberline {2.31.1}Effect of Actor{-}decreaseRisk{-}Region01 on Region01's risk}{17}{subsubsection.2.31.1}
-\contentsline {subsubsection}{\numberline {2.31.2}Effect of Nature{-}evolve on Region01's risk}{17}{subsubsection.2.31.2}
-\contentsline {subsubsection}{\numberline {2.31.3}Effect of System{-}allocate{-}Region01 on Region01's risk}{17}{subsubsection.2.31.3}
-\contentsline {subsection}{\numberline {2.32}Region01's security}{18}{subsection.2.32}
-\contentsline {subsection}{\numberline {2.33}Region01's shelterPets}{18}{subsection.2.33}
-\contentsline {subsection}{\numberline {2.34}Region01's shelterRisk}{18}{subsection.2.34}
-\contentsline {subsubsection}{\numberline {2.34.1}Effect of Nature{-}evolve on Region01's shelterRisk}{18}{subsubsection.2.34.1}
-\contentsline {subsection}{\numberline {2.35}System's resources}{18}{subsection.2.35}
-\contentsline {subsection}{\numberline {2.36}day}{19}{subsection.2.36}
-\contentsline {subsubsection}{\numberline {2.36.1}Effect of Nature{-}evolve on day}{19}{subsubsection.2.36.1}
-\contentsline {section}{\numberline {3}Relations}{19}{section.3}
-\contentsline {subsection}{\numberline {3.1}Actor friendOf Actor}{19}{subsection.3.1}
-\contentsline {subsection}{\numberline {3.2}Actor memberOf Group}{19}{subsection.3.2}
-\contentsline {subsubsection}{\numberline {3.2.1}Effect of Actor{-}join{-}Group on Actor memberOf Group}{19}{subsubsection.3.2.1}
-\contentsline {subsubsection}{\numberline {3.2.2}Effect of Actor{-}leave{-}Group on Actor memberOf Group}{20}{subsubsection.3.2.2}
-\contentsline {section}{\numberline {4}Actions}{20}{section.4}
-\contentsline {subsection}{\numberline {4.1}Nature evolve}{20}{subsection.4.1}
-\contentsline {subsubsection}{\numberline {4.1.1}Effect on Nature's category of Nature evolve}{20}{subsubsection.4.1.1}
-\contentsline {subsubsection}{\numberline {4.1.2}Effect on Nature's days of Nature evolve}{21}{subsubsection.4.1.2}
-\contentsline {subsubsection}{\numberline {4.1.3}Effect on Nature's location of Nature evolve}{21}{subsubsection.4.1.3}
-\contentsline {subsubsection}{\numberline {4.1.4}Effect on Nature's phase of Nature evolve}{21}{subsubsection.4.1.4}
-\contentsline {subsubsection}{\numberline {4.1.5}Effect on Region01's risk of Nature evolve}{22}{subsubsection.4.1.5}
-\contentsline {subsubsection}{\numberline {4.1.6}Effect on Region01's shelterRisk of Nature evolve}{22}{subsubsection.4.1.6}
-\contentsline {subsubsection}{\numberline {4.1.7}Effect on day of Nature evolve}{22}{subsubsection.4.1.7}
-\contentsline {subsection}{\numberline {4.2}Actor decreaseRisk Region01}{22}{subsection.4.2}
-\contentsline {subsubsection}{\numberline {4.2.1}Applicability of Actor decreaseRisk Region01}{23}{subsubsection.4.2.1}
-\contentsline {subsubsection}{\numberline {4.2.2}Effect on Actor's risk of Actor decreaseRisk Region01}{23}{subsubsection.4.2.2}
-\contentsline {subsubsection}{\numberline {4.2.3}Effect on Region01's risk of Actor decreaseRisk Region01}{23}{subsubsection.4.2.3}
-\contentsline {subsection}{\numberline {4.3}Actor evacuate}{23}{subsection.4.3}
-\contentsline {subsubsection}{\numberline {4.3.1}Applicability of Actor evacuate}{23}{subsubsection.4.3.1}
-\contentsline {subsubsection}{\numberline {4.3.2}Effect on Actor's location of Actor evacuate}{23}{subsubsection.4.3.2}
-\contentsline {subsubsection}{\numberline {4.3.3}Effect on Actor's resources of Actor evacuate}{23}{subsubsection.4.3.3}
-\contentsline {subsection}{\numberline {4.4}Actor join Group}{24}{subsection.4.4}
-\contentsline {subsubsection}{\numberline {4.4.1}Applicability of Actor join Group}{24}{subsubsection.4.4.1}
-\contentsline {subsubsection}{\numberline {4.4.2}Effect on Actor memberOf Group of Actor join Group}{24}{subsubsection.4.4.2}
-\contentsline {subsubsection}{\numberline {4.4.3}Effect on Group's size of Actor join Group}{24}{subsubsection.4.4.3}
-\contentsline {subsection}{\numberline {4.5}Actor leave Group}{24}{subsection.4.5}
-\contentsline {subsubsection}{\numberline {4.5.1}Applicability of Actor leave Group}{25}{subsubsection.4.5.1}
-\contentsline {subsubsection}{\numberline {4.5.2}Effect on Actor memberOf Group of Actor leave Group}{25}{subsubsection.4.5.2}
-\contentsline {subsubsection}{\numberline {4.5.3}Effect on Group's size of Actor leave Group}{25}{subsubsection.4.5.3}
-\contentsline {subsection}{\numberline {4.6}Actor moveTo Region01}{25}{subsection.4.6}
-\contentsline {subsubsection}{\numberline {4.6.1}Applicability of Actor moveTo Region01}{25}{subsubsection.4.6.1}
-\contentsline {subsubsection}{\numberline {4.6.2}Effect on Actor's location of Actor moveTo Region01}{25}{subsubsection.4.6.2}
-\contentsline {subsubsection}{\numberline {4.6.3}Effect on Actor's resources of Actor moveTo Region01}{25}{subsubsection.4.6.3}
-\contentsline {subsection}{\numberline {4.7}Actor moveTo shelter1}{26}{subsection.4.7}
-\contentsline {subsubsection}{\numberline {4.7.1}Applicability of Actor moveTo shelter1}{26}{subsubsection.4.7.1}
-\contentsline {subsubsection}{\numberline {4.7.2}Effect on Actor's location of Actor moveTo shelter1}{26}{subsubsection.4.7.2}
-\contentsline {subsection}{\numberline {4.8}Actor stayInLocation}{26}{subsection.4.8}
-\contentsline {subsubsection}{\numberline {4.8.1}Effect on Actor's resources of Actor stayInLocation}{26}{subsubsection.4.8.1}
-\contentsline {subsection}{\numberline {4.9}Actor takeResources Region01}{27}{subsection.4.9}
-\contentsline {subsubsection}{\numberline {4.9.1}Applicability of Actor takeResources Region01}{27}{subsubsection.4.9.1}
-\contentsline {subsubsection}{\numberline {4.9.2}Effect on Actor's resources of Actor takeResources Region01}{27}{subsubsection.4.9.2}
-\contentsline {subsubsection}{\numberline {4.9.3}Effect on Actor's risk of Actor takeResources Region01}{27}{subsubsection.4.9.3}
-\contentsline {subsection}{\numberline {4.10}System allocate Region01}{27}{subsection.4.10}
-\contentsline {subsubsection}{\numberline {4.10.1}Effect on Region01's risk of System allocate Region01}{27}{subsubsection.4.10.1}
-\contentsline {subsection}{\numberline {4.11}Group decreaseRisk}{27}{subsection.4.11}
-\contentsline {subsubsection}{\numberline {4.11.1}Applicability of Group decreaseRisk}{27}{subsubsection.4.11.1}
-\contentsline {subsection}{\numberline {4.12}Group evacuate}{28}{subsection.4.12}
-\contentsline {subsubsection}{\numberline {4.12.1}Applicability of Group evacuate}{28}{subsubsection.4.12.1}
-\contentsline {subsection}{\numberline {4.13}Group noDecision}{28}{subsection.4.13}
-\contentsline {subsection}{\numberline {4.14}Group returnHome}{28}{subsection.4.14}
-\contentsline {subsection}{\numberline {4.15}Group takeResources}{28}{subsection.4.15}
-\contentsline {subsubsection}{\numberline {4.15.1}Applicability of Group takeResources}{28}{subsubsection.4.15.1}
-\contentsline {section}{\numberline {5}Expected Reward}{29}{section.5}
-\contentsline {subsection}{\numberline {5.1}Actor's Reward}{29}{subsection.5.1}
-\contentsline {subsection}{\numberline {5.2}Group's Reward}{29}{subsection.5.2}
+\contentsline {section}{\numberline {1}Background}{5}{section.1}
+\contentsline {section}{\numberline {2}State}{6}{section.2}
+\contentsline {subsection}{\numberline {2.1}Actor's age}{6}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Actor's alive}{6}{subsection.2.2}
+\contentsline {subsubsection}{\numberline {2.2.1}Default change in Actor's alive}{6}{subsubsection.2.2.1}
+\contentsline {subsection}{\numberline {2.3}Actor's attachment}{6}{subsection.2.3}
+\contentsline {subsection}{\numberline {2.4}Actor's category}{6}{subsection.2.4}
+\contentsline {subsection}{\numberline {2.5}Actor's center}{7}{subsection.2.5}
+\contentsline {subsection}{\numberline {2.6}Actor's children}{7}{subsection.2.6}
+\contentsline {subsection}{\numberline {2.7}Actor's childrenHealth}{7}{subsection.2.7}
+\contentsline {subsubsection}{\numberline {2.7.1}Default change in Actor's childrenHealth}{8}{subsubsection.2.7.1}
+\contentsline {subsection}{\numberline {2.8}Actor's days}{8}{subsection.2.8}
+\contentsline {subsection}{\numberline {2.9}Actor's employed}{8}{subsection.2.9}
+\contentsline {subsection}{\numberline {2.10}Actor's ethnicGroup}{9}{subsection.2.10}
+\contentsline {subsection}{\numberline {2.11}Actor's gender}{9}{subsection.2.11}
+\contentsline {subsection}{\numberline {2.12}Actor's grievance}{9}{subsection.2.12}
+\contentsline {subsection}{\numberline {2.13}Actor's health}{9}{subsection.2.13}
+\contentsline {subsubsection}{\numberline {2.13.1}Default change in Actor's health}{10}{subsubsection.2.13.1}
+\contentsline {subsection}{\numberline {2.14}Actor's location}{10}{subsection.2.14}
+\contentsline {subsubsection}{\numberline {2.14.1}Effect of Actor{-}evacuate on Actor's location}{11}{subsubsection.2.14.1}
+\contentsline {subsubsection}{\numberline {2.14.2}Effect of Actor{-}moveTo{-}Region01 on Actor's location}{11}{subsubsection.2.14.2}
+\contentsline {subsubsection}{\numberline {2.14.3}Effect of Actor{-}moveTo{-}shelter1 on Actor's location}{11}{subsubsection.2.14.3}
+\contentsline {subsection}{\numberline {2.15}Actor's perceivedChildrenHealth}{12}{subsection.2.15}
+\contentsline {subsection}{\numberline {2.16}Actor's perceivedHealth}{12}{subsection.2.16}
+\contentsline {subsection}{\numberline {2.17}Actor's pet}{12}{subsection.2.17}
+\contentsline {subsection}{\numberline {2.18}Actor's phase}{12}{subsection.2.18}
+\contentsline {subsection}{\numberline {2.19}Actor's region}{12}{subsection.2.19}
+\contentsline {subsection}{\numberline {2.20}Actor's religion}{12}{subsection.2.20}
+\contentsline {subsection}{\numberline {2.21}Actor's resources}{12}{subsection.2.21}
+\contentsline {subsubsection}{\numberline {2.21.1}Effect of Actor{-}evacuate on Actor's resources}{13}{subsubsection.2.21.1}
+\contentsline {subsubsection}{\numberline {2.21.2}Effect of Actor{-}moveTo{-}Region01 on Actor's resources}{13}{subsubsection.2.21.2}
+\contentsline {subsubsection}{\numberline {2.21.3}Effect of Actor{-}stayInLocation on Actor's resources}{13}{subsubsection.2.21.3}
+\contentsline {subsubsection}{\numberline {2.21.4}Effect of Actor{-}takeResources{-}Region01 on Actor's resources}{14}{subsubsection.2.21.4}
+\contentsline {subsection}{\numberline {2.22}Actor's risk}{14}{subsection.2.22}
+\contentsline {subsubsection}{\numberline {2.22.1}Effect of Actor{-}decreaseRisk{-}Region01 on Actor's risk}{14}{subsubsection.2.22.1}
+\contentsline {subsubsection}{\numberline {2.22.2}Effect of Actor{-}takeResources{-}Region01 on Actor's risk}{14}{subsubsection.2.22.2}
+\contentsline {subsubsection}{\numberline {2.22.3}Default change in Actor's risk}{15}{subsubsection.2.22.3}
+\contentsline {subsection}{\numberline {2.23}Actor's x}{15}{subsection.2.23}
+\contentsline {subsection}{\numberline {2.24}Actor's y}{15}{subsection.2.24}
+\contentsline {subsection}{\numberline {2.25}Group's size}{15}{subsection.2.25}
+\contentsline {subsubsection}{\numberline {2.25.1}Effect of Actor{-}join{-}Group on Group's size}{15}{subsubsection.2.25.1}
+\contentsline {subsubsection}{\numberline {2.25.2}Effect of Actor{-}leave{-}Group on Group's size}{16}{subsubsection.2.25.2}
+\contentsline {subsection}{\numberline {2.26}Nature's category}{16}{subsection.2.26}
+\contentsline {subsubsection}{\numberline {2.26.1}Effect of Nature{-}evolve on Nature's category}{16}{subsubsection.2.26.1}
+\contentsline {subsection}{\numberline {2.27}Nature's days}{17}{subsection.2.27}
+\contentsline {subsubsection}{\numberline {2.27.1}Effect of Nature{-}evolve on Nature's days}{17}{subsubsection.2.27.1}
+\contentsline {subsection}{\numberline {2.28}Nature's location}{17}{subsection.2.28}
+\contentsline {subsubsection}{\numberline {2.28.1}Effect of Nature{-}evolve on Nature's location}{18}{subsubsection.2.28.1}
+\contentsline {subsection}{\numberline {2.29}Nature's phase}{18}{subsection.2.29}
+\contentsline {subsubsection}{\numberline {2.29.1}Effect of Nature{-}evolve on Nature's phase}{18}{subsubsection.2.29.1}
+\contentsline {subsection}{\numberline {2.30}Region01's economy}{19}{subsection.2.30}
+\contentsline {subsection}{\numberline {2.31}Region01's risk}{19}{subsection.2.31}
+\contentsline {subsubsection}{\numberline {2.31.1}Effect of Actor{-}decreaseRisk{-}Region01 on Region01's risk}{19}{subsubsection.2.31.1}
+\contentsline {subsubsection}{\numberline {2.31.2}Effect of Nature{-}evolve on Region01's risk}{19}{subsubsection.2.31.2}
+\contentsline {subsubsection}{\numberline {2.31.3}Effect of System{-}allocate{-}Region01 on Region01's risk}{19}{subsubsection.2.31.3}
+\contentsline {subsection}{\numberline {2.32}Region01's security}{20}{subsection.2.32}
+\contentsline {subsection}{\numberline {2.33}Region01's shelterPets}{20}{subsection.2.33}
+\contentsline {subsection}{\numberline {2.34}Region01's shelterRisk}{20}{subsection.2.34}
+\contentsline {subsubsection}{\numberline {2.34.1}Effect of Nature{-}evolve on Region01's shelterRisk}{20}{subsubsection.2.34.1}
+\contentsline {subsection}{\numberline {2.35}System's resources}{20}{subsection.2.35}
+\contentsline {subsection}{\numberline {2.36}day}{21}{subsection.2.36}
+\contentsline {subsubsection}{\numberline {2.36.1}Effect of Nature{-}evolve on day}{21}{subsubsection.2.36.1}
+\contentsline {section}{\numberline {3}Relations}{21}{section.3}
+\contentsline {subsection}{\numberline {3.1}Actor friendOf Actor}{21}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Actor memberOf Group}{21}{subsection.3.2}
+\contentsline {subsubsection}{\numberline {3.2.1}Effect of Actor{-}join{-}Group on Actor memberOf Group}{22}{subsubsection.3.2.1}
+\contentsline {subsubsection}{\numberline {3.2.2}Effect of Actor{-}leave{-}Group on Actor memberOf Group}{22}{subsubsection.3.2.2}
+\contentsline {section}{\numberline {4}Actions}{22}{section.4}
+\contentsline {subsection}{\numberline {4.1}Nature evolve}{22}{subsection.4.1}
+\contentsline {subsubsection}{\numberline {4.1.1}Effect on Nature's category of Nature evolve}{22}{subsubsection.4.1.1}
+\contentsline {subsubsection}{\numberline {4.1.2}Effect on Nature's days of Nature evolve}{23}{subsubsection.4.1.2}
+\contentsline {subsubsection}{\numberline {4.1.3}Effect on Nature's location of Nature evolve}{23}{subsubsection.4.1.3}
+\contentsline {subsubsection}{\numberline {4.1.4}Effect on Nature's phase of Nature evolve}{23}{subsubsection.4.1.4}
+\contentsline {subsubsection}{\numberline {4.1.5}Effect on Region01's risk of Nature evolve}{24}{subsubsection.4.1.5}
+\contentsline {subsubsection}{\numberline {4.1.6}Effect on Region01's shelterRisk of Nature evolve}{24}{subsubsection.4.1.6}
+\contentsline {subsubsection}{\numberline {4.1.7}Effect on day of Nature evolve}{24}{subsubsection.4.1.7}
+\contentsline {subsection}{\numberline {4.2}Actor decreaseRisk Region01}{24}{subsection.4.2}
+\contentsline {subsubsection}{\numberline {4.2.1}Applicability of Actor decreaseRisk Region01}{24}{subsubsection.4.2.1}
+\contentsline {subsubsection}{\numberline {4.2.2}Effect on Actor's risk of Actor decreaseRisk Region01}{24}{subsubsection.4.2.2}
+\contentsline {subsubsection}{\numberline {4.2.3}Effect on Region01's risk of Actor decreaseRisk Region01}{25}{subsubsection.4.2.3}
+\contentsline {subsection}{\numberline {4.3}Actor evacuate}{25}{subsection.4.3}
+\contentsline {subsubsection}{\numberline {4.3.1}Applicability of Actor evacuate}{25}{subsubsection.4.3.1}
+\contentsline {subsubsection}{\numberline {4.3.2}Effect on Actor's location of Actor evacuate}{25}{subsubsection.4.3.2}
+\contentsline {subsubsection}{\numberline {4.3.3}Effect on Actor's resources of Actor evacuate}{26}{subsubsection.4.3.3}
+\contentsline {subsection}{\numberline {4.4}Actor join Group}{26}{subsection.4.4}
+\contentsline {subsubsection}{\numberline {4.4.1}Applicability of Actor join Group}{26}{subsubsection.4.4.1}
+\contentsline {subsubsection}{\numberline {4.4.2}Effect on Actor memberOf Group of Actor join Group}{26}{subsubsection.4.4.2}
+\contentsline {subsubsection}{\numberline {4.4.3}Effect on Group's size of Actor join Group}{26}{subsubsection.4.4.3}
+\contentsline {subsection}{\numberline {4.5}Actor leave Group}{26}{subsection.4.5}
+\contentsline {subsubsection}{\numberline {4.5.1}Applicability of Actor leave Group}{26}{subsubsection.4.5.1}
+\contentsline {subsubsection}{\numberline {4.5.2}Effect on Actor memberOf Group of Actor leave Group}{26}{subsubsection.4.5.2}
+\contentsline {subsubsection}{\numberline {4.5.3}Effect on Group's size of Actor leave Group}{27}{subsubsection.4.5.3}
+\contentsline {subsection}{\numberline {4.6}Actor moveTo Region01}{27}{subsection.4.6}
+\contentsline {subsubsection}{\numberline {4.6.1}Applicability of Actor moveTo Region01}{27}{subsubsection.4.6.1}
+\contentsline {subsubsection}{\numberline {4.6.2}Effect on Actor's location of Actor moveTo Region01}{27}{subsubsection.4.6.2}
+\contentsline {subsubsection}{\numberline {4.6.3}Effect on Actor's resources of Actor moveTo Region01}{27}{subsubsection.4.6.3}
+\contentsline {subsection}{\numberline {4.7}Actor moveTo shelter1}{28}{subsection.4.7}
+\contentsline {subsubsection}{\numberline {4.7.1}Applicability of Actor moveTo shelter1}{28}{subsubsection.4.7.1}
+\contentsline {subsubsection}{\numberline {4.7.2}Effect on Actor's location of Actor moveTo shelter1}{28}{subsubsection.4.7.2}
+\contentsline {subsection}{\numberline {4.8}Actor stayInLocation}{28}{subsection.4.8}
+\contentsline {subsubsection}{\numberline {4.8.1}Effect on Actor's resources of Actor stayInLocation}{29}{subsubsection.4.8.1}
+\contentsline {subsection}{\numberline {4.9}Actor takeResources Region01}{29}{subsection.4.9}
+\contentsline {subsubsection}{\numberline {4.9.1}Applicability of Actor takeResources Region01}{29}{subsubsection.4.9.1}
+\contentsline {subsubsection}{\numberline {4.9.2}Effect on Actor's resources of Actor takeResources Region01}{29}{subsubsection.4.9.2}
+\contentsline {subsubsection}{\numberline {4.9.3}Effect on Actor's risk of Actor takeResources Region01}{29}{subsubsection.4.9.3}
+\contentsline {subsection}{\numberline {4.10}System allocate Region01}{29}{subsection.4.10}
+\contentsline {subsubsection}{\numberline {4.10.1}Effect on Region01's risk of System allocate Region01}{29}{subsubsection.4.10.1}
+\contentsline {subsection}{\numberline {4.11}Group decreaseRisk}{30}{subsection.4.11}
+\contentsline {subsubsection}{\numberline {4.11.1}Applicability of Group decreaseRisk}{30}{subsubsection.4.11.1}
+\contentsline {subsection}{\numberline {4.12}Group evacuate}{30}{subsection.4.12}
+\contentsline {subsubsection}{\numberline {4.12.1}Applicability of Group evacuate}{30}{subsubsection.4.12.1}
+\contentsline {subsection}{\numberline {4.13}Group noDecision}{31}{subsection.4.13}
+\contentsline {subsection}{\numberline {4.14}Group returnHome}{31}{subsection.4.14}
+\contentsline {subsection}{\numberline {4.15}Group takeResources}{31}{subsection.4.15}
+\contentsline {subsubsection}{\numberline {4.15.1}Applicability of Group takeResources}{31}{subsubsection.4.15.1}
+\contentsline {section}{\numberline {5}Expected Reward}{31}{section.5}
+\contentsline {subsection}{\numberline {5.1}Actor's Reward}{31}{subsection.5.1}
+\contentsline {subsection}{\numberline {5.2}Group's Reward}{32}{subsection.5.2}
