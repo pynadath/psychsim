@@ -265,6 +265,8 @@ def addState(doc,world):
                     if name in world.extras:
                         with doc.create(FlushLeft()):
                             doc.append(verbatim(world.extras[name]))
+                    else:
+                        raise RuntimeError('Missing code pointer for %s' % (name))
                     if name in world.dynamics:
                         for action,tree in sorted(world.dynamics[name].items()):
                             if action is True:
@@ -276,6 +278,8 @@ def addState(doc,world):
                                     if '%s %s' % (name,action) in world.extras:
                                         doc.append(verbatim(world.extras[ '%s %s' % (name,action)]))
                                         doc.append(LineBreak())
+                                    else:
+                                        raise RuntimeError
                                     addTree(doc,tree,world)
 
 def addRelations(doc,world):
