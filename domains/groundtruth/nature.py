@@ -11,7 +11,7 @@ class Nature(Agent):
         if world.diagram:
             world.diagram.setColor(self.name,'red')
 
-        evolution = self.addAction({'verb': 'evolve'})
+        evolution = self.addAction({'verb': 'evolve'},codePtr=True)
 
         phase = world.defineState(self.name,'phase',list,['none','approaching','active'],codePtr=True)
         world.setFeature(phase,'none')

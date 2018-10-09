@@ -4,6 +4,7 @@ import inspect
 import logging
 import math
 import multiprocessing
+import os
 import random
 try:
     from cStringIO import StringIO
@@ -517,7 +518,7 @@ class Agent(object):
     """Action methods"""
     """------------------"""
 
-    def addAction(self,action,condition=None,description=None):
+    def addAction(self,action,condition=None,description=None,codePtr=False):
         """
         @param condition: optional legality condition
         @type condition: L{KeyedPlane}
@@ -544,6 +545,24 @@ class Agent(object):
         self.actions.add(new)
         if condition:
             self.legal[new] = condition
+        if codePtr:
+            if codePtr is True:
+                for frame in inspect.getouterframes(inspect.currentframe()):
+                    try:
+                        fname = frame.filename
+                    except AttributeError:
+                        fname = frame[1]
+                    if fname != __file__:
+                        break
+            else:
+                frame = codePtr
+            mod = os.path.relpath(frame.filename,
+                                  os.path.abspath(os.path.join(os.path.dirname(__file__),'..')))
+            try:
+                self.world.extras[new] = '%s:%d' % (mod,frame.lineno)
+            except AttributeError:
+                self.world.extras[new] = '%s:%d' % (mod,frame[2])
+            
         return new
 
     def getActions(self,vector,actions=None):

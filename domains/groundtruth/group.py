@@ -28,41 +28,40 @@ class Group(Agent):
             tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
             if name in regions:
                 actGoodRisk = self.addAction({'verb': 'decreaseRisk','object': name},
-                                             tree.desymbolize(world.symbols))
+                                             tree.desymbolize(world.symbols),codePtr=True)
             else:
                 actGoodRisk = self.addAction({'verb': 'decreaseRisk'},
-                                             tree.desymbolize(world.symbols))
+                                             tree.desymbolize(world.symbols),codePtr=True)
         if config.getboolean('Groups','proresources'):
             tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
             if name in regions:
                 actGoodResources = self.addAction({'verb': 'giveResources','object': name},
-                                         tree.desymbolize(world.symbols))
-                actGoodResources = self.addAction({'verb': 'giveResources'},
-                                                  tree.desymbolize(world.symbols))
+                                                  tree.desymbolize(world.symbols),codePtr=True)
         if config.getboolean('Groups','antirisk'):
             tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
             if name in regions:
                 actBadRisk = self.addAction({'verb': 'increaseRisk','object': name},
-                                            tree.desymbolize(world.symbols))
+                                            tree.desymbolize(world.symbols),codePtr=True)
             else:
                 actBadRisk = self.addAction({'verb': 'increaseRisk'},
-                                            tree.desymbolize(world.symbols))
+                                            tree.desymbolize(world.symbols),codePtr=True)
         if config.getboolean('Groups','antiresources'):
             tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
             if name in regions:
                 actBadResources = self.addAction({'verb': 'takeResources','object': name},
-                                                 tree.desymbolize(world.symbols))
+                                                 tree.desymbolize(world.symbols),codePtr=True)
             else:
                 actBadResources = self.addAction({'verb': 'takeResources'},
-                                                 tree.desymbolize(world.symbols))
+                                                 tree.desymbolize(world.symbols),codePtr=True)
         if config.getboolean('Groups','evacuate'):
             # Evacuate city altogether
             tree = makeTree({'if': equalRow(stateKey('Nature','phase'),'none'),
                              True: False, False: True})
-            actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols))
-            goHome = self.addAction({'verb': 'returnHome'})
+            actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols),
+                                         codePtr=True)
+            goHome = self.addAction({'verb': 'returnHome'},codePtr=True)
 
-        self.nop = self.addAction({'verb': 'noDecision'})
+        self.nop = self.addAction({'verb': 'noDecision'},codePtr=True)
         self.setAttribute('horizon',config.getint('Groups','horizon'))
         self.potentials = None
         # Belief aggregation
@@ -106,7 +105,7 @@ class Group(Agent):
                                     True: False, False: True},
                              False: False})
             join = agent.addAction({'verb': 'join','object': self.name},
-                                   tree.desymbolize(self.world.symbols))
+                                   tree.desymbolize(self.world.symbols),codePtr=True)
             tree = makeTree(setTrueMatrix(member))
             self.world.setDynamics(member,join,tree,codePtr=True)
             tree = makeTree(incrementMatrix(size,1))
@@ -117,7 +116,7 @@ class Group(Agent):
                                     True: True, False: False},
                              False: False})
             leave = agent.addAction({'verb': 'leave','object': self.name},
-                                    tree.desymbolize(self.world.symbols))
+                                    tree.desymbolize(self.world.symbols),codePtr=True)
             tree = makeTree(setFalseMatrix(member))
             self.world.setDynamics(member,leave,tree,codePtr=True)
             tree = makeTree(incrementMatrix(size,-1))

@@ -34,7 +34,7 @@ class System(Agent):
                            likert[5][config.getint('System','reward_grievance')-1])
         allocation = config.getint('System','system_allocation')
         for region in populated:
-            allocate = self.addAction({'verb': 'allocate','object': region})
+            allocate = self.addAction({'verb': 'allocate','object': region},codePtr=True)
             risk = stateKey(region,'risk')
             tree = makeTree(approachMatrix(risk,likert[5][config.getint('System','system_impact')-1],
                                            0.))

@@ -254,7 +254,7 @@ class Actor(Agent):
 
         # Actions and Dynamics
 
-        nop = self.addAction({'verb': 'stayInLocation'},
+        nop = self.addAction({'verb': 'stayInLocation'},codePtr=True,
                              description='Actor does not move from current location, nor perform any pro/antisocial behaviors')
         goHomeFrom = set()
         if config.getboolean('Shelter','exists'):
@@ -294,7 +294,7 @@ class Actor(Agent):
                 actShelter[index] = self.addAction({'verb':'moveTo','object': shelter},
                                                    tree.desymbolize(world.symbols),
                                                    'Move myself and family to the shelter in %s' \
-                                                   % (region))
+                                                   % (region),True)
         if config.getboolean('Actors','evacuation'):
             # Evacuate city altogether
             tree = makeTree({'if': equalRow(stateKey('Nature','phase'),'none'),
@@ -304,14 +304,14 @@ class Actor(Agent):
                                      False: {'if': trueRow(alive),
                                              True: True, False: False}}})
             actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols),
-                                         'Evacuate the city at least temporarily')
+                                         'Evacuate the city at least temporarily',True)
             goHomeFrom.add('evacuated')
         if goHomeFrom:
             tree = makeTree({'if': equalRow(location,goHomeFrom),
                              True: True, False: False})
             goHome = self.addAction({'verb': 'moveTo','object': self.home},
                                     tree.desymbolize(world.symbols),
-                                    'Return home')
+                                    'Return home',True)
         if config.getboolean('Actors','prorisk'):
             # Prosocial behavior
             actGoodRisk = {}
@@ -322,7 +322,7 @@ class Actor(Agent):
                                      False: False})
                     actGoodRisk[region] = self.addAction({'verb': 'decreaseRisk','object': region},
                                                          tree.desymbolize(world.symbols),
-                                                         'Perform prosocial behaviors to reduce the danger posed by the hurricane in a given region')
+                                                         'Perform prosocial behaviors to reduce the danger posed by the hurricane in a given region',True)
         if config.getboolean('Actors','proresources'):
             # Prosocial behavior
             actGoodResources = {}
@@ -334,7 +334,7 @@ class Actor(Agent):
                     actGoodResources[region] = self.addAction({'verb': 'giveResources',
                                                                'object': region},
                                                               tree.desymbolize(world.symbols),
-                                                              'Perform prosocial behaviors to gather and donate resources to the people of a given region')
+                                                              'Perform prosocial behaviors to gather and donate resources to the people of a given region',True)
         if config.getboolean('Actors','antirisk'):
             # Antisocial behavior
             actBadRisk = {}
@@ -345,7 +345,7 @@ class Actor(Agent):
                                      False: False})
                     actBadRisk[region] = self.addAction({'verb': 'increaseRisk','object': region},
                                                         tree.desymbolize(world.symbols),
-                                                        'Perform antisocial behaviors that increase the danger faced by people in a given region')
+                                                        'Perform antisocial behaviors that increase the danger faced by people in a given region',True)
         if config.getboolean('Actors','antiresources'):
             # Antisocial behavior
             actBadResources = {}
@@ -357,7 +357,7 @@ class Actor(Agent):
                     actBadResources[region] = self.addAction({'verb': 'takeResources',
                                                               'object': region},
                                                              tree.desymbolize(world.symbols),
-                                                             'Perform antisocial behaviors that gain resources personally at the expense of people in a given region')
+                                                             'Perform antisocial behaviors that gain resources personally at the expense of people in a given region',True)
         regions = [n for n in self.world.agents.values()
                          if isinstance(n,Region)]
         if config.getboolean('Actors','movement'):
@@ -380,14 +380,15 @@ class Actor(Agent):
                                         True: True, False: False}, False: False})
                 actMove[region.name] = self.addAction({'verb': 'moveTo',
                                                        'object': region.name},
-                                                      tree.desymbolize(world.symbols))
+                                                      tree.desymbolize(world.symbols),
+                                                      codePtr=True)
 
         # Information-seeking actions
         if config.getboolean('Actors','infoseek'):
             tree = makeTree({'if': trueRow(alive), True: True, False: False})
             infoseek = self.addAction({'verb': 'seekInfoReHurricane'},
                                       tree.desymbolize(world.symbols),
-                                      'Seek out additional information about the hurricane risk')
+                                      'Seek out additional information about the hurricane risk',True)
                 
         # Effect on location
         if config.getboolean('Shelter','exists'):
@@ -728,7 +729,7 @@ class Actor(Agent):
         #                      False: False})
         #     msg = self.addAction({'verb': 'msgReHurricane','object': friend.name},
         #                          tree.desymbolize(self.world.symbols),
-        #                          'Send message communicating my current perceptions about the hurricane and its impact')
+        #                          'Send message communicating my current perceptions about the hurricane and its impact',True)
         #     omega = friend.defineObservation('rcvdCategoryMsg',domain=int,codePtr=True)
             
 

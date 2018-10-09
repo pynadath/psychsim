@@ -85,8 +85,14 @@ def addTree(doc,tree,world,indent=0,prefix=None):
                         doc.append(Math(data=Command('lnot'),inline=True))
                     doc.append(key2tex(subkey))
             elif variable['domain'] is set or variable['domain'] is list:
-                assert len(row) == 1
-                subkey = next(iter(row.keys()))
+                if len(row) > 1:
+                    subkey = None
+                    for key in row.keys():
+                        if abs(row[key]) > 1e-8:
+                            assert subkey is None
+                            subkey = key
+                else:
+                    subkey = next(iter(row.keys()))
                 if subkey == CONSTANT:
                     doc.append(bold(world.float2value(makePresent(key),row[CONSTANT])))
                 else:
@@ -247,9 +253,11 @@ def addState(doc,world):
     with doc.create(Section('State')):
         for name,variable in sorted(world.variables.items()):
             if isStateKey(name):
-                if state2feature(name) in [ACTION,REWARD,MODEL,TURN]:
+                feature = state2feature(name)
+                if feature in [ACTION,REWARD,MODEL,TURN]:
                     continue
-                if state2agent(name) == WORLD:
+                agent = state2agent(name)
+                if agent == WORLD:
                     label = state2feature(name)
                 else:
                     label = name
@@ -263,7 +271,21 @@ def addState(doc,world):
                             doc.append(verbatim(world.extras[name]))
                     else:
                         raise RuntimeError('Missing code pointer for %s' % (name))
-                    if name in world.dynamics:
+                    if agent != WORLD and feature in world.agents[agent].omega:
+                        for action,tree in world.agents[agent].O[name].items():
+                            if action is None:
+                                heading = 'Default observation of %s' % (label)
+                            else:
+                                heading = 'Observation function of %s when %s' % (label,str(action))
+                            with doc.create(Subsubsection(heading)):
+                                with doc.create(FlushLeft()):
+                                    if '%s %s' % (name,action) in world.extras:
+                                        doc.append(verbatim(world.extras[ '%s %s' % (name,action)]))
+                                        doc.append(LineBreak())
+#                                    else:
+#                                        raise RuntimeError
+                                    addTree(doc,tree,world)
+                    elif name in world.dynamics:
                         for action,tree in sorted(world.dynamics[name].items()):
                             if action is True:
                                 heading = 'Default change in %s' % (label)
@@ -314,6 +336,11 @@ def addActions(doc,world):
                     label = '%s %s' % (action['subject'],action['verb'])
                 with doc.create(Subsection(label)):
                     addGraph(doc,action,str(action))
+                    if action in world.extras:
+                        with doc.create(FlushLeft()):
+                            doc.append(verbatim(world.extras[action]))
+                    else:
+                        raise RuntimeError('Missing code pointer for %s' % (name))
                     if action in agent.legal:
                         with doc.create(Subsubsection('Applicability of %s' % (label))):
                             with doc.create(FlushLeft()):
