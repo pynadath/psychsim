@@ -154,25 +154,26 @@ class Actor(Agent):
             index = int((number-1)*config.getint('Regions','regions')/config.getint('Actors','population'))
             self.home = regions[index]
         world.setFeature(region,self.home)
+        neighbors = [a for a  in world.agents.values() if isinstance(a,Actor) and \
+                     not a.name == self.name and a.getState('location').first() == self.home]
 
-        # For display use only
-        tooClose = True
-        xKey = world.defineState(self.name,'x',float,
-                                 description='Representation of residence\'s longitude',codePtr=True)
-        yKey = world.defineState(self.name,'y',float,
-                                 description='Representation of residence\'s latitude',codePtr=True)
-        while tooClose:
-            x = random.random()
-            y = random.random()
-            neighbors = [a for a  in world.agents.values() if isinstance(a,Actor) and \
-                         not a.name == self.name and a.getState('location').first() == self.home]
-            for neighbor in neighbors:
-                if abs(neighbor.getState('x').first()-x)+abs(neighbor.getState('y').first()-y) < 0.05:
-                    break
-            else:
-                tooClose = False
-        world.setFeature(xKey,x)
-        world.setFeature(yKey,y)
+        if config.getboolean('Simulation','visualize'):
+            # For display use only
+            tooClose = True
+            xKey = world.defineState(self.name,'x',float,
+                                     description='Representation of residence\'s longitude',codePtr=True)
+            yKey = world.defineState(self.name,'y',float,
+                                     description='Representation of residence\'s latitude',codePtr=True)
+            while tooClose:
+                x = random.random()
+                y = random.random()
+                for neighbor in neighbors:
+                    if abs(neighbor.getState('x').first()-x)+abs(neighbor.getState('y').first()-y) < 0.05:
+                        break
+                else:
+                    tooClose = False
+            world.setFeature(xKey,x)
+            world.setFeature(yKey,y)
                              
 
         # Dynamic states
@@ -632,21 +633,25 @@ class Actor(Agent):
             # Observations
             evolve = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
             omega = self.defineObservation('phase',domain=list,codePtr=True,
-                                           lo=self.world.variables['Nature\'s phase']['elements'])
+                                           lo=self.world.variables['Nature\'s phase']['elements'],
+                                           description='Perception of Nature\'s phase')
             self.setO('phase',None,
                       makeTree(setToFeatureMatrix(omega,stateKey('Nature','phase'))))
             self.setState('phase','none')
-            omega = self.defineObservation('days',domain=int,codePtr=True)
+            omega = self.defineObservation('days',domain=int,codePtr=True,
+                                           description='Perception of Nature\'s days')
             self.setO('days',None,
                       makeTree(setToFeatureMatrix(omega,stateKey('Nature','days'))))
             self.setState('days',0)
             omega = self.defineObservation('center',domain=list,codePtr=True,
-                                           lo=self.world.variables['Nature\'s location']['elements'])
+                                           lo=self.world.variables['Nature\'s location']['elements'],
+                                           description='Perception of Nature\'s location')
             self.setO('center',None,
                       makeTree(setToFeatureMatrix(omega,stateKey('Nature','location'))))
             self.setState('center','none')
 
-            omega = self.defineObservation('category',domain=int,codePtr=True)
+            omega = self.defineObservation('category',domain=int,codePtr=True,
+                                           description='Perception of Nature\'s category')
             distortion = Distribution({'over': likert[5][config.getint('Actors','category_over')-1],
                                        'under': likert[5][config.getint('Actors','category_under')-1]})
             distortion['none'] = 1.-distortion['over']-distortion['under']
@@ -672,17 +677,20 @@ class Actor(Agent):
             self.setO('category',None,makeTree(setToConstantMatrix(omega,0)))
             self.setState('category',0)
             
-            omega = self.defineObservation('perceivedHealth',codePtr=True)
+            omega = self.defineObservation('perceivedHealth',codePtr=True,
+                                           description='Perception of Actor\'s health')
             self.setO('perceivedHealth',None,
                       makeTree(setToFeatureMatrix(omega,stateKey(self.name,'health'))))
             self.setState('perceivedHealth',self.health)
             if self.kids > 0:
-                omega = self.defineObservation('perceivedChildrenHealth',domain=float,codePtr=True)
+                omega = self.defineObservation('perceivedChildrenHealth',domain=float,codePtr=True,
+                                           description='Perception of Actor\'s childrenHealth')
                 self.setO('perceivedChildrenHealth',None,
                           makeTree(setToFeatureMatrix(omega,stateKey(self.name,'childrenHealth'))))
                 self.setState('perceivedChildrenHealth',self.health)
             if config.getboolean('Actors','infoseek'):
-                omega = self.defineObservation('categoryData',domain=int,codePtr=True)
+                omega = self.defineObservation('categoryData',domain=int,codePtr=True,
+                                           description='Information received from explicit seeking')
                 if config.getint('Actors','info_reliability') == 5:
                     # 100% reliable information
                     self.setO('categoryData',infoseek,
