@@ -101,7 +101,7 @@ class WorldView(QGraphicsScene):
             for child in entry['children']:
                 self.drawEdge(key,child)
 
-    def displayGroundTruth(self,agent=WORLD,x0=0,y0=0,maxRows=10,recursive=False):
+    def displayGroundTruth(self,agent=WORLD,x0=0,y0=0,maxRows=10,recursive=False,selfCycle=False):
         if agent == WORLD:
             self.clear()
             if __graph__:
@@ -179,7 +179,8 @@ class WorldView(QGraphicsScene):
                     continue
                 if child in self.world.agents and not child in uNodes:
                     continue
-                self.drawEdge(key,child,g)
+                if selfCycle or key != child:
+                    self.drawEdge(key,child,g)
         x += self.colWidth
         if recursive:
             rect = QRectF(-self.colWidth/2,y0-self.rowHeight/2,
