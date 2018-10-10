@@ -374,7 +374,7 @@ def background(doc):
     with doc.create(Section('Background')):
         doc.append('We use influence diagrams as the underlying graph structure for our ground truth. Here is a simple influence diagram for a simulation of two actors, showing the three types of nodes and some possible links (always directed) among them:')
         with doc.create(Figure(position='ht')) as gtGraph:
-            gtGraph.add_image(os.path.join(path,'simple.png'))
+            gtGraph.add_image(os.path.join(path,'simple.png'),width=NoEscape(r'0.4\textwidth'))
             gtGraph.add_caption('Simple influence diagram')
         with doc.create(Itemize()) as itemize:
             itemize.add_item('Rectangular nodes are possible actions for a particular agent (``Actor 1\'\', indicated by color) representing a potential behavior. They are labeled with a verb (``action\'\') and an optional object of the verb (``Actor2\'\'). An action node has a binary value, indicating whether or not the action was chosen.')
