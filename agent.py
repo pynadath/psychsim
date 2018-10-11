@@ -195,13 +195,13 @@ class Agent(object):
         if self.parallel:
             with multiprocessing.Pool() as pool:
                 results = [(action,pool.apply_async(self.value,
-                                                    args=(belief,action,model,horizon,keySet)))
+                                                    args=(belief,action,model,horizon,others,keySet)))
                            for action in actions]
                 V = {action: result.get() for action,result in results}
         else:
             V = {}
             for action in actions:
-                V[action] = self.value(belief,action,model,horizon,keySet)
+                V[action] = self.value(belief,action,model,horizon,others,keySet)
         best = None
         for action in actions:
             # Determine whether this action is the best
@@ -238,7 +238,7 @@ class Agent(object):
         logging.debug('Choosing %s' % (action))
         return result
 
-    def value(self,belief,action,model,horizon=None,keySet=None):
+    def value(self,belief,action,model,horizon=None,others=None,keySet=None,updateBeliefs=True):
         if horizon is None:
             horizon = self.getAttribute('horizon',model)
         # Compute value across possible worlds
@@ -249,24 +249,34 @@ class Agent(object):
             current *= V_A[action]
             R = current[makeFuture(rewardKey(self.name))]
             V = {'__beliefs__': current,
-                         '__S__': [current],
-                         '__ER__': [R],
-                         '__EV__': R.expectation()}
+                 '__S__': [current],
+                 '__ER__': [R],
+                 '__EV__': R.expectation()}
         else:
             V = {'__EV__': 0.,'__ER__': [],'__S__': []}
             if isinstance(keySet,dict):
                 subkeys = keySet[action]
             else:
                 subkeys = belief.keys()
-            start = action
+            if others:
+                start = dict(others)
+            else:
+                start = {}
+            if action:
+                start[self.name] = action
             for t in range(horizon):
                 logging.debug('Time %d/%d' % (t+1,horizon))
-                outcome = self.world.step(start,current,keySubset=subkeys,
-                                          horizon=horizon-t-1)
+                turn = self.world.next(current)
+                actions = {}
+                for name in turn:
+                    if name in start:
+                        actions[name] = start[name]
+                        del start[name]
+                outcome = self.world.step(actions,current,keySubset=subkeys,
+                                          horizon=horizon-t-1,updateBeliefs=updateBeliefs)
                 V['__ER__'].append(self.reward(current,model))
                 V['__EV__'] += V['__ER__'][-1]
                 V['__S__'].append(current)
-                start = None
             V['__beliefs__'] = current
         return V
         
