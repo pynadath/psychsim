@@ -274,6 +274,8 @@ class World(object):
                         else:
                             logging.warning('Policy generated for %s out of turn' % (name))
                             del actions[name]
+                    else:
+                        raise RuntimeError('Action from %s who never has a turn!' % (name))
             for name,policy in actions.items():
                 actions[name] = policy.desymbolize(self.symbols)
         else:
@@ -298,7 +300,11 @@ class World(object):
                 agent = self.agents[name]
                 decision = self.agents[name].decide(state,horizon,actions,
                                                     None,tiebreak,agent.getActions(state))
-                actions[name] = decision['policy']
+                try:
+                    actions[name] = decision['policy']
+                except KeyError:
+                    key = keys.stateKey(name,keys.ACTION)
+                    actions[name] = makeTree(setToConstantMatrix(key,decision['action'])).desymbolize(self.symbols)
         if len(actions) == 0:
             self.printState(state)
             raise RuntimeError('Nobody has a turn!')
