@@ -730,10 +730,11 @@ def createWorld(config):
     groups = []
     if config.getboolean('Groups','region'):
         for region,info in regions.items():
-            group = Group(info['agent'].name,world,config)
-            group.potentialMembers([a.name for a in info['inhabitants']],
-                                   membership=config.getint('Groups','region_membership'))
-            groups.append(group)
+            if len(info['inhabitants']) > 1:
+                group = Group(info['agent'].name,world,config)
+                group.potentialMembers([a.name for a in info['inhabitants']],
+                                       membership=config.getint('Groups','region_membership'))
+                groups.append(group)
     if config.getboolean('Groups','ethnic'):
         group = Group('EthnicMinority',world,config)
         group.potentialMembers([a.name for a in population \
