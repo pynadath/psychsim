@@ -29,7 +29,10 @@ class KeyedTree:
             
     def isLeaf(self):
         return len(self.children) == 1 and not isinstance(self.children,Distribution)
-#        return self.leaf
+    #        return self.leaf
+
+    def getLeaf(self):
+        return self.children[None]
 
     def makeLeaf(self,leaf):
         self.children = {None: leaf}
