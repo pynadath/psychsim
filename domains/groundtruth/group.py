@@ -4,9 +4,8 @@ from psychsim.pwl import *
 from psychsim.action import *
 from psychsim.agent import Agent
         
-from psychsim.domains.groundtruth.data import likert
-
-from psychsim.domains.groundtruth.region import Region
+from .data import likert
+from .region import Region
 
 class Group(Agent):
     def __init__(self,name,world,config):
@@ -25,7 +24,7 @@ class Group(Agent):
         self.setState('size',0)
         
         if config.getboolean('Groups','prorisk'):
-            tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
+            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
             if name in regions:
                 actGoodRisk = self.addAction({'verb': 'decreaseRisk','object': name},
                                              tree.desymbolize(world.symbols),codePtr=True)
@@ -33,12 +32,12 @@ class Group(Agent):
                 actGoodRisk = self.addAction({'verb': 'decreaseRisk'},
                                              tree.desymbolize(world.symbols),codePtr=True)
         if config.getboolean('Groups','proresources'):
-            tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
+            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
             if name in regions:
                 actGoodResources = self.addAction({'verb': 'giveResources','object': name},
                                                   tree.desymbolize(world.symbols),codePtr=True)
         if config.getboolean('Groups','antirisk'):
-            tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
+            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
             if name in regions:
                 actBadRisk = self.addAction({'verb': 'increaseRisk','object': name},
                                             tree.desymbolize(world.symbols),codePtr=True)
@@ -46,7 +45,7 @@ class Group(Agent):
                 actBadRisk = self.addAction({'verb': 'increaseRisk'},
                                             tree.desymbolize(world.symbols),codePtr=True)
         if config.getboolean('Groups','antiresources'):
-            tree = makeTree({'if': thresholdRow(size,0.5),True: True, False: False})
+            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
             if name in regions:
                 actBadResources = self.addAction({'verb': 'takeResources','object': name},
                                                  tree.desymbolize(world.symbols),codePtr=True)
@@ -134,6 +133,43 @@ class Group(Agent):
                                                 False: setToConstantMatrix(R,0.)}},
                                  False: setToConstantMatrix(R,0.)})
                 agent.setReward(tree,likert[5][self.config.getint('Actors','attachment_r')-1])
+            magnify = self.config.getint('Groups','magnification')
+            if self.config.getboolean('Groups','prorisk') and magnify > 0:
+                for action in self.actions:
+                    if action['verb'] == 'decreaseRisk':
+                        for lonely in agent.actions:
+                            if lonely['verb'] == action['verb'] and \
+                               lonely['object'] == action['object']:
+                                # Magnify effect of prosocial behavior
+                                risk = stateKey(action['object'],'risk')
+                                tree = self.world.dynamics[risk][lonely]
+                                assert tree.isLeaf(),'Unable to magnify branching trees'
+                                weight = tree.getLeaf()[makeFuture(risk)][risk]
+                                newWeight = (1.-weight)*(1.+likert[5][magnify-1])
+                                newTree = {'if': trueRow(binaryKey(name,self.name,'memberOf')),
+                                           True: approachMatrix(risk,newWeight,0.),
+                                           False: tree}
+                                self.world.setDynamics(risk,lonely,makeTree(newTree))
+                                # Minimize cost of prosocial behavior
+                                risk = stateKey(name,'risk')
+                                try:
+                                    tree = self.world.dynamics[risk][lonely]
+                                    assert tree.isLeaf(),'Unable to magnify branching trees'
+                                    weight = tree.getLeaf()[makeFuture(risk)][risk]
+                                    newWeight = (1.-weight)*(1.-likert[5][magnify-1])
+                                    newTree = {'if': trueRow(binaryKey(name,self.name,'memberOf')),
+                                               True: approachMatrix(risk,newWeight,1.),
+                                               False: tree}
+                                    self.world.setDynamics(risk,lonely,makeTree(newTree))
+                                except KeyError:
+                                    pass
+                                break
+                        else:
+                            raise ValueError('Member %s of %s has no equivalent of %s' %
+                                             (name,self.name,action))
+                        break
+                else:
+                    raise ValueError('Group %s has no prosocial action' % (self.name))
         # Define reward function for this group as weighted sum of members
         if weights is None:
             weights = {a: 1. for a in agents}
@@ -179,7 +215,7 @@ class Group(Agent):
                     belief = copy.deepcopy(subbelief)
                 else:
                     for dist in subbelief.distributions.values():
-                        existing = [key for key in dist.keys() if key in belief]
+                        existing = [key for key in dist.keys() if key in belief and key != CONSTANT]
                         if existing:
                             substates = belief.substate(existing)
                             if len(substates) == 1:
@@ -191,16 +227,32 @@ class Group(Agent):
                                 for oldVec in belief.distributions[substate].domain():
                                     prob = belief.distributions[substate][oldVec]
                                     del belief.distributions[substate][oldVec]
+                                    found = False
                                     for newVec in dist.domain():
                                         for key in existing:
                                             if oldVec[key] != newVec[key]:
-                                                break
+                                                if key == stateKey(self.name,'size'):
+                                                    oldVec[key] = len(members)
+                                                elif state2feature(key) == 'risk':
+                                                    oldVec[key] = (oldVec[key]+newVec[key])/2.
+                                                else:
+                                                    break
                                         else:
+                                            found = True
                                             result = oldVec.__class__(oldVec)
                                             for key in newVec:
                                                 if not key in existing:
                                                     result[key] = newVec[key]
+                                                    belief.keyMap[key] = substate
                                             newDist.addProb(result,prob*dist[newVec])
+                                    if not found:
+                                        print(existing)
+                                        print(sorted(list(belief.keys())))
+                                        print('Old')
+                                        print(belief.distributions[substate])
+                                        print('New')
+                                        print(dist)
+                                        raise RuntimeError
                                 belief.distributions[substate] = newDist
                         else:
                             substate = max(belief.keyMap.values())+1
@@ -214,7 +266,7 @@ class Group(Agent):
             # Insert true models of members into group beliefs
             key = modelKey(name)
             submodel = state[key]
-            assert len(submodel) == 1,'Unable to form uncertain beliefs about members'
+            assert len(submodel) == 1
             belief.join(key,submodel)
         return belief
 
@@ -226,14 +278,16 @@ class Group(Agent):
         if len(actions) == 1:
             # Probably nop because no one's joined
             result = {'action': next(iter(actions))}
-            result['policy'] = makeTree(setToConstantMatrix(stateKey(self.name,ACTION),
-                                                            result['action']))
             return result
+        if model is None:
+            model = self.world.getModel(self.name,state)
+            assert len(model) == 1,'Currently unable to decide under uncertain models'
+            model = model.first()
+        horizon = self.getAttribute('horizon',model)
         belief = self.getBelief(state,model)
         members = self.members(state)
         V = {}
         for action in actions:
-            print(action)
             assert len(action) == 1
             joint = {self.name: action}
             current = copy.deepcopy(belief)
@@ -245,16 +299,9 @@ class Group(Agent):
                     act = Action(next(iter(action)))
                     act['subject'] = name
                     joint[name] = ActionSet([act])
-                    if dist is None:
-                        dist = current.distributions[current.keyMap[turnKey(name)]]
-                for vector in dist.domain():
-                    prob = dist[vector]
-                    del dist[vector]
-                    for name in members:
-                        vector[turnKey(name)] = 0
-                    dist[vector] = prob
-                self.world.step(joint,current,keySubset=belief.keys(),updateBeliefs=False)
-                V[action] = self.reward(current,model)
+                # Use final value
+                V[action] = self.value(belief,action,model,horizon,joint,belief.keys(),
+                                       updateBeliefs=False)['__ER__'][-1]
         best = None
         for action,value in V.items():
             if best is None or value > best[1]:
