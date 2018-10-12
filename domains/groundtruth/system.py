@@ -71,7 +71,8 @@ class System(Agent):
                     ER += weights[feature]*dist[vector]*vector[key]
         return ER
         
-    def decide(self,state=None,horizon=None,others=None,model=None,selection=None,actions=None):
+    def decide(self,state=None,horizon=None,others=None,model=None,selection=None,actions=None,
+               debug={}):
         state = self.world.state
         if actions is None:
             actions = self.getActions(state)
