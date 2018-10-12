@@ -399,7 +399,7 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                                       'Value': world.getFeature(key).first()}
                             writer.writerow(record)
                         if day == 1:
-                            record = {'Timestep': 0,
+                            record = {'Timestep': 1,
                                       'VariableName': '%sHorizon' % (agent.name),
                                       'EntityIdx': agent.name,
                                       'Value': agent.getAttribute('horizon',model.first())}
