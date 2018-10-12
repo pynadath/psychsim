@@ -135,9 +135,10 @@ class Group(Agent):
                     if action['verb'] == 'decreaseRisk':
                         for lonely in agent.actions:
                             if lonely['verb'] == action['verb'] and \
-                               lonely['object'] == action['object']:
+                               (action.get('object') is None or \
+                                lonely['object'] == action['object']):
                                 # Magnify effect of prosocial behavior
-                                risk = stateKey(action['object'],'risk')
+                                risk = stateKey(lonely['object'],'risk')
                                 tree = self.world.dynamics[risk][lonely]
                                 assert tree.isLeaf(),'Unable to magnify branching trees'
                                 weight = tree.getLeaf()[makeFuture(risk)][risk]
@@ -285,7 +286,8 @@ class Group(Agent):
         assert turnKey(self.name) in belief.keys(),'%s\n%s' % (self.name,members)
         return belief
 
-    def decide(self,state=None,horizon=None,others=None,model=None,selection=None,actions=None):
+    def decide(self,state=None,horizon=None,others=None,model=None,selection=None,actions=None,
+               debug={}):
         if state is None:
             state = self.world.state
         if actions is None:
@@ -302,23 +304,41 @@ class Group(Agent):
         horizon = self.getAttribute('horizon',model)
         belief = self.getBelief(state,model)
         V = {}
+        risk = {}
+        risks = {}
+        health = {}
         for action in actions:
             assert len(action) == 1
             joint = {self.name: action}
             current = copy.deepcopy(belief)
-            if action['verb'] == 'noDecision':
-                V[action] = self.reward(current)
-            else:
-                dist = None
-                for name in members:
+            dist = None
+            for name in members:
+                if action['verb'] == 'noDecision':
+                    joint[name] = self.world.agents[name].nop
+                else:
                     act = Action(next(iter(action)))
                     act['subject'] = name
                     joint[name] = ActionSet([act])
-                # Use final value
-                V[action] = self.value(belief,action,model,horizon,joint,belief.keys(),
-                                       updateBeliefs=False)['__ER__'][-1]
+            # Use final value
+            EV = self.value(belief,action,model,horizon,joint,belief.keys(),
+                            updateBeliefs=False,debug=debug)
+            # risk[action] = EV['__S__'][-1]['%s\'s risk' % (self.name[5:])].expectation()
+            # health[action] = {}
+            # risks[action] = {}
+            # for name in members:
+            #     health[action][name] = EV['__S__'][-1]['%s\'s health' % (name)].expectation()
+            #     risks[action][name] = EV['__S__'][-1]['%s\'s risk' % (name)].expectation()
+            V[action] = EV['__ER__'][-1]
         best = None
         for action,value in V.items():
             if best is None or value > best[1]:
                 best = action,value
+        # actions = [a for a in risk]
+        # print(actions)
+        # print(risk)
+        # print('Risk:',risk[actions[0]]-risk[actions[1]])
+        # for name in members:
+        #     print(name,'risk',risks[actions[0]][name]-risks[actions[1]][name])
+        #     print(name,'health',health[actions[0]][name]-health[actions[1]][name])
         return {'action': best[0],'V': V}
+
