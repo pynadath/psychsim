@@ -191,9 +191,19 @@ class DependencyGraph(dict):
         """
         self.getLayers()
         self.evaluation = []
+        # for key in self.world.variables:
+        #     while len(self.evaluation) <= self[key]['level']:
+        #         self.evaluation.append(set())
+        #     self.evaluation[self[key]['level']].add(makePresent(key))
+            
         for agent,variables in self.world.locals.items():
             for feature in variables.keys():
                 key = stateKey(agent,feature,True)
+                while len(self.evaluation) <= self[key]['level']:
+                    self.evaluation.append(set())
+                self.evaluation[self[key]['level']].add(makePresent(key))
+        for relation,variables in self.world.relations.items():
+            for key,table in variables.items():
                 while len(self.evaluation) <= self[key]['level']:
                     self.evaluation.append(set())
                 self.evaluation[self[key]['level']].add(makePresent(key))
