@@ -255,8 +255,8 @@ class Actor(Agent):
 
         # Actions and Dynamics
 
-        nop = self.addAction({'verb': 'stayInLocation'},codePtr=True,
-                             description='Actor does not move from current location, nor perform any pro/antisocial behaviors')
+        self.nop = self.addAction({'verb': 'stayInLocation'},codePtr=True,
+                                  description='Actor does not move from current location, nor perform any pro/antisocial behaviors')
         goHomeFrom = set()
         if config.getboolean('Shelter','exists'):
             # Go to shelter
@@ -411,7 +411,7 @@ class Actor(Agent):
         if config.getboolean('Actors','movement'):
             tree = noChangeMatrix(risk)
         else:
-            tree = setToFeatureMatrix(risk,stateKey(self.home,'risk'))
+            tree = setToFeatureMatrix(risk,makeFuture(stateKey(self.home,'risk')))
         if config.getboolean('Actors','evacuation'):
             tree = {'if': equalRow(makeFuture(location),'evacuated'),
                     True: approachMatrix(risk,0.9,0.),
@@ -481,7 +481,7 @@ class Actor(Agent):
                 tree[True][False] = approachMatrix(wealth,likert[5][impactNoJob-1],0.)
             else:
                 tree[True][False] = noChangeMatrix(wealth)
-            world.setDynamics(wealth,nop,makeTree(tree),codePtr=True)
+            world.setDynamics(wealth,self.nop,makeTree(tree),codePtr=True)
             # Going home allows you to work again
             tree = {'if': trueRow(alive),
                     True: {'if': trueRow(job),
