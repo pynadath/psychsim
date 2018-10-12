@@ -20,38 +20,34 @@ class Group(Agent):
                           if isinstance(self.world.agents[name],Region)])
         self.setAttribute('static',True)
 
-        size = world.defineState(self.name,'size',int,codePtr=True)
-        self.setState('size',0)
+        # size = world.defineState(self.name,'size',int,codePtr=True)
+        # self.setState('size',0)
         
         if config.getboolean('Groups','prorisk'):
-            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
+#            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
             if name in regions:
-                actGoodRisk = self.addAction({'verb': 'decreaseRisk','object': name},
-                                             tree.desymbolize(world.symbols),codePtr=True)
+                actGoodRisk = self.addAction({'verb': 'decreaseRisk','object': name},codePtr=True)
             else:
-                actGoodRisk = self.addAction({'verb': 'decreaseRisk'},
-                                             tree.desymbolize(world.symbols),codePtr=True)
+                actGoodRisk = self.addAction({'verb': 'decreaseRisk'},codePtr=True)
         if config.getboolean('Groups','proresources'):
-            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
+#            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
             if name in regions:
                 actGoodResources = self.addAction({'verb': 'giveResources','object': name},
-                                                  tree.desymbolize(world.symbols),codePtr=True)
+                                                  codePtr=True)
         if config.getboolean('Groups','antirisk'):
-            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
+#            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
             if name in regions:
-                actBadRisk = self.addAction({'verb': 'increaseRisk','object': name},
-                                            tree.desymbolize(world.symbols),codePtr=True)
+                actBadRisk = self.addAction({'verb': 'increaseRisk','object': name},codePtr=True)
             else:
-                actBadRisk = self.addAction({'verb': 'increaseRisk'},
-                                            tree.desymbolize(world.symbols),codePtr=True)
+                actBadRisk = self.addAction({'verb': 'increaseRisk'},codePtr=True)
         if config.getboolean('Groups','antiresources'):
-            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
+#            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
             if name in regions:
                 actBadResources = self.addAction({'verb': 'takeResources','object': name},
-                                                 tree.desymbolize(world.symbols),codePtr=True)
+                                                 codePtr=True)
             else:
                 actBadResources = self.addAction({'verb': 'takeResources'},
-                                                 tree.desymbolize(world.symbols),codePtr=True)
+                                                 codePtr=True)
         if config.getboolean('Groups','evacuate'):
             # Evacuate city altogether
             tree = makeTree({'if': equalRow(stateKey('Nature','phase'),'none'),
@@ -85,7 +81,7 @@ class Group(Agent):
         assert len(self.models) == 1,'Define potential members before adding multiple models of group %s' % (self.name)
         self.potentials = agents
         model = next(iter(self.models.keys()))
-        size = stateKey(self.name,'size')
+#        size = stateKey(self.name,'size')
         count = 0
         for name in agents:
             agent = self.world.agents[name]
@@ -107,8 +103,8 @@ class Group(Agent):
                                    tree.desymbolize(self.world.symbols),codePtr=True)
             tree = makeTree(setTrueMatrix(member))
             self.world.setDynamics(member,join,tree,codePtr=True)
-            tree = makeTree(incrementMatrix(size,1))
-            self.world.setDynamics(size,join,tree,codePtr=True)
+#            tree = makeTree(incrementMatrix(size,1))
+#            self.world.setDynamics(size,join,tree,codePtr=True)
             # Leave a group
             tree = makeTree({'if': trueRow(stateKey(name,'alive')),
                              True: {'if': trueRow(member),
@@ -118,8 +114,8 @@ class Group(Agent):
                                     tree.desymbolize(self.world.symbols),codePtr=True)
             tree = makeTree(setFalseMatrix(member))
             self.world.setDynamics(member,leave,tree,codePtr=True)
-            tree = makeTree(incrementMatrix(size,-1))
-            self.world.setDynamics(size,leave,tree,codePtr=True)
+#            tree = makeTree(incrementMatrix(size,-1))
+#            self.world.setDynamics(size,leave,tree,codePtr=True)
             if self.config.getboolean('Actors','attachment'):
                 # Reward associated with being a member
                 attachment = stateKey(name,'attachment')
@@ -174,8 +170,11 @@ class Group(Agent):
         if weights is None:
             weights = {a: 1. for a in agents}
         for name,weight in weights.items():
-            self.setReward(name,weight,model)
-        self.setState('size',count)
+            agent = self.world.agents[name]
+            R = agent.getReward(self.world.getModel(name,self.world.state).first())
+            assert isinstance(R,KeyedTree)
+            self.setReward(R,weights[name],model)
+#        self.setState('size',count)
 
     def members(self,state=None):
         if state is None:
@@ -200,7 +199,13 @@ class Group(Agent):
         if model is None:
             model = self.world.getModel(self.name,state)
         members = self.members(state)
-        beliefs = {name: self.world.agents[name].getBelief(state)
+        models = {}
+        for name in members:
+            if modelKey(name) in state:
+                models[name] = self.world.getModel(name,state)
+            else:
+                models[name] = self.world.getModel(name,self.world.state)
+        beliefs = {name: self.world.agents[name].getBelief(state,models[name])
                    for name in members}
         belief = None
         if self.aggregator == 'max':
@@ -221,7 +226,14 @@ class Group(Agent):
                             if len(substates) == 1:
                                 substate = next(iter(substates))
                             else:
-                                substate = belief.collapse(substates)
+                                if len(substates) == 0:
+                                    print(existing)
+                                    self.world.printState(belief)
+                                    raise RuntimeError
+                                substate = belief.collapse(substates,False)
+                                if substate is None:
+                                    print(substates)
+                                    raise RuntimeError
                             if dist != belief.distributions[substate]:
                                 newDist = belief.distributions[substate].__class__()
                                 for oldVec in belief.distributions[substate].domain():
@@ -234,6 +246,8 @@ class Group(Agent):
                                                 if key == stateKey(self.name,'size'):
                                                     oldVec[key] = len(members)
                                                 elif state2feature(key) == 'risk':
+                                                    oldVec[key] = (oldVec[key]+newVec[key])/2.
+                                                elif key == 'Nature\'s category':
                                                     oldVec[key] = (oldVec[key]+newVec[key])/2.
                                                 else:
                                                     break
@@ -265,9 +279,10 @@ class Group(Agent):
         for name in self.potentials:
             # Insert true models of members into group beliefs
             key = modelKey(name)
-            submodel = state[key]
+            submodel = self.world.state[key]
             assert len(submodel) == 1
             belief.join(key,submodel)
+        assert turnKey(self.name) in belief.keys(),'%s\n%s' % (self.name,members)
         return belief
 
     def decide(self,state=None,horizon=None,others=None,model=None,selection=None,actions=None):
@@ -275,17 +290,17 @@ class Group(Agent):
             state = self.world.state
         if actions is None:
             actions = self.getActions(state)
-        if len(actions) == 1:
-            # Probably nop because no one's joined
-            result = {'action': next(iter(actions))}
-            return result
+        members = self.members(state)
+        if len(members) < 2:
+            for action in actions:
+                if action['verb'] == 'noDecision':
+                    return{'action': action}
         if model is None:
             model = self.world.getModel(self.name,state)
             assert len(model) == 1,'Currently unable to decide under uncertain models'
             model = model.first()
         horizon = self.getAttribute('horizon',model)
         belief = self.getBelief(state,model)
-        members = self.members(state)
         V = {}
         for action in actions:
             assert len(action) == 1
