@@ -99,7 +99,8 @@ class Agent(object):
             model['V'][action] = collapseDynamics(copy.deepcopy(R),effects)
         return model['V']
                             
-    def decide(self,vector=None,horizon=None,others=None,model=None,selection=None,actions=None,keySet=None):
+    def decide(self,vector=None,horizon=None,others=None,model=None,selection=None,actions=None,
+               keySet=None,debug={}):
         """
         Generate an action choice for this agent in the given state
         @param vector: the current state in which the agent is making its decision
@@ -238,7 +239,8 @@ class Agent(object):
         logging.debug('Choosing %s' % (action))
         return result
 
-    def value(self,belief,action,model,horizon=None,others=None,keySet=None,updateBeliefs=True):
+    def value(self,belief,action,model,horizon=None,others=None,keySet=None,updateBeliefs=True,
+              debug={}):
         if horizon is None:
             horizon = self.getAttribute('horizon',model)
         # Compute value across possible worlds
@@ -272,8 +274,8 @@ class Agent(object):
                     if name in start:
                         actions[name] = start[name]
                         del start[name]
-                outcome = self.world.step(actions,current,keySubset=subkeys,
-                                          horizon=horizon-t-1,updateBeliefs=updateBeliefs)
+                outcome = self.world.step(actions,current,keySubset=subkeys,horizon=horizon-t-1,
+                                          updateBeliefs=updateBeliefs,debug=debug)
                 V['__ER__'].append(self.reward(current,model))
                 V['__EV__'] += V['__ER__'][-1]
                 V['__S__'].append(current)

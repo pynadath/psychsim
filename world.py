@@ -120,7 +120,7 @@ class World(object):
     """------------------"""
                 
     def step(self,actions=None,state=None,real=True,select=False,keySubset=None,
-             horizon=None,tiebreak=None,updateBeliefs=True):
+             horizon=None,tiebreak=None,updateBeliefs=True,debug={}):
         """
         The simulation method
         @param actions: optional argument setting a subset of actions to be performed in this turn
@@ -142,13 +142,15 @@ class World(object):
         if self.terminated(state):
             return state
         # Determine the actions taken by the agents in this world
-        outcome['actions'] = self.stepPolicy(state,actions,horizon,tiebreak)
+        outcome['actions'] = self.stepPolicy(state,actions,horizon,tiebreak,debug)
         joint = ActionSet()
         for actor,policy in outcome['actions'].items():
             assert policy.isLeaf(),'Currently unable to project stochastic decisions'
             key = stateKey(actor,ACTION)
             action = self.float2value(key,policy.children[None][makeFuture(key)][CONSTANT])
             joint = ActionSet(joint | action)
+            if actor in debug:
+                print('%s: %s' % (actor,action))
         effect = self.deltaState(joint,state,keySubset)
         # Update turn order
         effect.append(self.deltaTurn(state,joint))
@@ -241,7 +243,7 @@ class World(object):
             pass
         return outcome
 
-    def stepPolicy(self,state=None,actions=None,horizon=None,tiebreak=None):
+    def stepPolicy(self,state=None,actions=None,horizon=None,tiebreak=None,debug={}):
         if state is None:
             state = self.state
         if isinstance(actions,Action):
@@ -298,13 +300,16 @@ class World(object):
                 # This agent might have a turn now
                 logging.debug('%s deciding...' % (name))
                 agent = self.agents[name]
-                decision = self.agents[name].decide(state,horizon,actions,
-                                                    None,tiebreak,agent.getActions(state))
+                decision = self.agents[name].decide(state,horizon,actions,None,tiebreak,
+                                                    agent.getActions(state),debug=debug.get(name,{}))
                 try:
                     actions[name] = decision['policy']
                 except KeyError:
                     key = keys.stateKey(name,keys.ACTION)
                     actions[name] = makeTree(setToConstantMatrix(key,decision['action'])).desymbolize(self.symbols)
+                if name in debug and 'V' in debug[name] and 'V' in decision:
+                    for action,V in sorted(decision['V'].items()):
+                        print('%6.4f\t%s' % (V,action))
         if len(actions) == 0:
             self.printState(state)
             raise RuntimeError('Nobody has a turn!')
