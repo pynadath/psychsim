@@ -85,6 +85,13 @@ class DependencyGraph(dict):
                                         'type': 'action',
                                         'parents': set(),
                                         'children': set()}
+                if agent.O is not True:
+                    # Process the agent observations
+                    for omega,table in agent.O.items():
+                        self[omega] = {'agent': name,
+                                       'type': 'observation',
+                                       'parents': set(),
+                                       'children': set()}
         # Create links from dynamics
         for key,dynamics in self.world.dynamics.items():
             if isTurnKey(key):
@@ -135,6 +142,18 @@ class DependencyGraph(dict):
                             # Link between prerequisite variable and action
                             dict.__getitem__(self,action)['parents'].add(parent)
                             dict.__getitem__(self,parent)['children'].add(action)
+                # Create links from observations
+                if agent.O is not True:
+                    # Process the agent observations
+                    for omega,table in agent.O.items():
+                        for action,tree in table.items():
+                            if action is not None:
+                                # Action affects observation probability
+                                dict.__getitem__(self,omega)['parents'].add(action)
+                                dict.__getitem__(self,action)['children'].add(omega)
+                            for parent in tree.getKeysIn() - {CONSTANT}:
+                                dict.__getitem__(self,omega)['parents'].add(parent)
+                                dict.__getitem__(self,parent)['children'].add(omega)
 
     def items(self):
         if len(self) == 0:
