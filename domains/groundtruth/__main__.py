@@ -251,7 +251,12 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
             assert state['phase'] == 'active'
             print(world.getState('Nature','location').first())
         try:
-            newState = world.step(actions.get(turn,None),select=True)
+            debug = {}
+#            debug = {name: {'V': True} for name in world.agents if name[:5] == 'Group'}
+#            for name in debug:
+#                for agent in world.agents[name].members():
+#                    debug[name][agent] = {}
+            newState = world.step(actions.get(turn,None),select=True,debug=debug)
         except:
             raise
         buf = StringIO()
@@ -264,6 +269,10 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
         world.printState(newState,buf)
         logging.debug(buf.getvalue())
         buf.close()
+        for actor in living:
+            belief = actor.getBelief()
+            for dist in belief.values():
+                assert len(dist) < 3,'%s\n%s' % (actor.name,dist)
         if state['phase'] == 'active':
             # Record what these doomed souls did to postpone the inevitable
             evacuees = 0
@@ -435,7 +444,7 @@ def addToVizData(keyname, entry):
         simdata[keyname][simday][entityname][headervalues[cntr]].append(values[cntr])
         
 def writeHurricane(world,hurricane,dirName):
-    fields = ['Timestep','Name','Category','Location']
+    fields = ['Timestep','Name','Category','Location','Landed']
     today = world.getState(WORLD,'day').first()
     if hurricane == 0:
         mode = 'w'
@@ -454,12 +463,15 @@ def writeHurricane(world,hurricane,dirName):
                         record[field] = today
                     elif field == 'Name':
                         record[field] = hurricane
+                    elif field == 'Landed':
+                        if phase == 'approaching':
+                            record[field] = 'no'
+                        else:
+                            record[field] = 'yes'
                     else:
                         record[field] = world.getState('Nature',field.lower()).first()
                     if field == 'Location':
-                        if phase == 'approaching':
-                            record[field] = phase
-                        elif record[field] == 'none':
+                        if record[field] == 'none':
                             record[field] = 'leaving'
                 writer.writerow(record)
                 
@@ -651,8 +663,13 @@ def postSurvey(actor,dirName,hurricane):
             for field,answer in postSurveyQuestions.items():
                 feature,fun = answer
                 if fun == 'likert':
-                    if stateKey(actor.name,feature) in belief:
-                        value = actor.getState(feature,belief)
+                    if ',' in feature:
+                        agentFeature,feature = feature.split(',')
+                        agent = actor.getState(agentFeature,belief).first()
+                    else:
+                        agent = actor.name
+                    if stateKey(agent,feature) in belief:
+                        value = world.getState(agent,feature,belief)
                         value = value.expectation()
                         record[field] = toLikert(value)
                 else:
