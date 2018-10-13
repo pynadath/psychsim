@@ -168,6 +168,12 @@ class ActionSet(frozenset):
                 raise ValueError('Conflicting values for key: %s' % (key))
         return result
 
+    def get(self,key,default=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
+        
     def __str__(self):
         return ','.join(map(str,self))
 
