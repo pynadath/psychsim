@@ -5,7 +5,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-from pwl.keys import *
+from psychsim.pwl.keys import *
 import psychsim.graph as graph
 import psychsim.ui.diagram as diagram
 from psychsim.world import *
