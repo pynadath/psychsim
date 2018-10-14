@@ -160,6 +160,7 @@ class World(object):
         state.rollback()
 #        if select:
 #            prob = state.select()
+
         effect = self.effect(joint,state,updateBeliefs,keySubset,select)
         # The future becomes the present
         state.rollback()
@@ -372,6 +373,7 @@ class World(object):
                         cumulative = copy.deepcopy(cumulative)
                         cumulative.makeFuture([key])
                         cumulative *= tree
+                        cumulative = cumulative.prune()
                 state *= cumulative
                 substate = state.keyMap[makeFuture(key)]
             if select and len(state.distributions[substate]) > 1:
@@ -632,12 +634,12 @@ class World(object):
             # Action -> ActionSet
             action = ActionSet([action])
         assert key in self.variables,'No state element "%s"' % (key) 
-        if not action is True:
-            for atom in action:
-                assert atom['subject'] in self.agents,\
-                    'Unknown actor %s' % (atom['subject'])
-                assert self.agents[atom['subject']].hasAction(atom),\
-                    'Unknown action %s' % (atom)
+        # if not action is True:
+        #     for atom in action:
+        #         assert atom['subject'] in self.agents,\
+        #             'Unknown actor %s' % (atom['subject'])
+        #         assert self.agents[atom['subject']].hasAction(atom),\
+        #             'Unknown action %s' % (atom)
         if not key in self.dynamics:
             self.dynamics[key] = {}
         # Translate symbolic names into numeric values
@@ -696,6 +698,12 @@ class World(object):
                             for field in atom.getParameters():
                                 table[actionKey(field)] = atom[field]
                             dynamics.append(tree.desymbolize(table))
+                    if len(dynamics) == 0:
+                        # See whether there are key patterns that match this action
+                        for root,tree in self.dynamics[key].items():
+                            if isinstance(root,ActionSet) and len(root) == 1:
+                                if atom.match(next(iter(root))):
+                                    dynamics.append(tree)
             if len(dynamics) == 0:
                 # No action-specific dynamics, fall back to default dynamics
                 if True in self.dynamics[key]:
