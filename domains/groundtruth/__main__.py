@@ -268,9 +268,11 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
         for actor in living:
             belief = actor.getBelief()
             for dist in belief.values():
-                if len(dist) > 3:
-                    print(actor.name)
-                    world.printState(dist)
+                for sdist in dist.distributions.values():
+                    if len(sdist) > 3:
+                        print(actor.name)
+                        world.printState(sdist)
+                        print(sorted([sdist[e] for e in sdist.domain()]))
         if state['phase'] == 'active':
             # Record what these doomed souls did to postpone the inevitable
             evacuees = 0
@@ -667,7 +669,7 @@ def postSurvey(actor,dirName,hurricane):
                     else:
                         agent = actor.name
                     if stateKey(agent,feature) in belief:
-                        value = world.getState(agent,feature,belief)
+                        value = actor.world.getState(agent,feature,belief)
                         value = value.expectation()
                         record[field] = toLikert(value)
                 else:
@@ -726,6 +728,7 @@ def createWorld(config):
     population = []
     for i in range(config.getint('Actors','population')):
         agent = Actor(i+1,world,config)
+        agent.epsilon = 1e-4
         population.append(agent)
         region = agent.getState('region').first()
         regions[region]['inhabitants'].append(agent)
