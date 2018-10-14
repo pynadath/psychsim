@@ -143,8 +143,9 @@ class Group(Agent):
                                 assert tree.isLeaf(),'Unable to magnify branching trees'
                                 weight = tree.getLeaf()[makeFuture(risk)][risk]
                                 newWeight = (1.-weight)*(1.+likert[5][magnify-1])
-                                newTree = {'if': trueRow(binaryKey(name,self.name,'memberOf')),
-                                           True: approachMatrix(risk,newWeight,0.),
+                                newTree = {'if': equalRow(stateKey(self.name,ACTION),action),
+                                           True: approachMatrix(risk,newWeight,1.,
+                                                                stateKey(lonely['object'],'riskMin')),
                                            False: tree}
                                 self.world.setDynamics(risk,lonely,makeTree(newTree))
                                 # Minimize cost of prosocial behavior
@@ -155,7 +156,10 @@ class Group(Agent):
                                     weight = tree.getLeaf()[makeFuture(risk)][risk]
                                     newWeight = (1.-weight)*(1.-likert[5][magnify-1])
                                     newTree = {'if': trueRow(binaryKey(name,self.name,'memberOf')),
-                                               True: approachMatrix(risk,newWeight,1.),
+                                               True: {'if': equalRow(stateKey(self.name,ACTION),
+                                                                     action),
+                                                      True: approachMatrix(risk,newWeight,1.),
+                                                      False: copy.deepcopy(tree)},
                                                False: tree}
                                     self.world.setDynamics(risk,lonely,makeTree(newTree))
                                 except KeyError:
@@ -325,7 +329,7 @@ class Group(Agent):
             # risk[action] = EV['__S__'][-1]['%s\'s risk' % (self.name[5:])].expectation()
             # health[action] = {}
             # risks[action] = {}
-            # for name in members:
+            #for name in members:
             #     health[action][name] = EV['__S__'][-1]['%s\'s health' % (name)].expectation()
             #     risks[action][name] = EV['__S__'][-1]['%s\'s risk' % (name)].expectation()
             V[action] = EV['__ER__'][-1]
