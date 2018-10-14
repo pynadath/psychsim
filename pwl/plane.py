@@ -3,6 +3,7 @@ from xml.dom.minidom import Node,Document
 
 from psychsim.pwl.vector import KeyedVector
 from psychsim.probability import Distribution
+from psychsim.action import ActionSet
 
 class KeyedPlane:
     """
@@ -158,6 +159,8 @@ class KeyedPlane:
             return [self.desymbolizeThreshold(t,table) for t in threshold]
         elif isinstance(threshold,set):
             return {self.desymbolizeThreshold(t,table) for t in threshold}
+        elif isinstance(threshold,ActionSet):
+            return table[threshold]
         else:
             return threshold
 
