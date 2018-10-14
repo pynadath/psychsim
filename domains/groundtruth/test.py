@@ -1,17 +1,69 @@
 import copy
+import csv
 import logging
+import os
 import random
 import unittest
 
 from psychsim.pwl.keys import WORLD
-import .__main__ as gt
+from psychsim.domains.groundtruth.region import Region
+import psychsim.domains.groundtruth.__main__ as gt
 
+instance = 24
+run = 0
+
+class TestDataPackage(unittest.TestCase):
+    def setUp(self):
+        dirName = os.path.join(os.path.dirname(__file__),'Instances',
+                               'Instance%d' % (instance),'Runs','run-%d' % (run))
+        os.chdir(dirName)
+
+    def test_census(self):
+        population = {}
+        with open('CensusTable.tsv','r') as csvfile:
+            reader = csv.DictReader(csvfile,delimiter='\t')
+            for row in reader:
+                if row['Region'] not in population:
+                    population[row['Region']] = {}
+                if not row['Field'] in population[row['Region']]:
+                    population[row['Region']][row['Field']] = {}
+                if row['Field'] == 'Population':
+                    self.assertEqual(row['Value'],'')
+                population[row['Region']][row['Field']][row['Value']] = int(row['Count'])
+        self.assertEqual(len(population),17)
+        total = population['All']
+        # Make sure regional tables contain everything that is in total
+        for region in range(16):
+            name = Region.nameString % (region+1)
+            self.assertEqual(len(population[name]),len(total))
+            for field in population[name]:
+                for value in population[name][field]:
+                    self.assertIn(value,total[field])
+        # Make sure regional counts add up to total counts
+        for field in total:
+            for value in total[field]:
+                count = 0
+                for region in range(16):
+                    name = Region.nameString % (region+1)
+                    count += population[name][field].get(value,0)
+                self.assertEqual(count,total[field][value])
+        # Make sure regional subcounts add up to regional population
+        for region in range(16):
+            name = Region.nameString % (region+1)
+            for field in population[name]:
+                count = sum(population[name][field].values())
+                if field != 'Age' and field != 'Population':
+                    count += population[name]['Age']['<18']
+                self.assertEqual(count,population[name]['Population'][''],
+                                 'Mismatch for field %s in %s' % (field,name))
+                    
+        
 class TestGroundTruth(unittest.TestCase):
     def setUp(self):
         self.config = gt.getConfig(999998)
         self.world = gt.createWorld(self.config)
 
-    def test_loop(self):
+    def DONTtest_loop(self):
         keys = self.world.state.keys()
         seed = self.config.getint('Simulation','seedRun')
         self.assertEqual(seed,1)
