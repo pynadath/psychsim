@@ -146,11 +146,7 @@ def runInstance(instance,args,config,rerun=True):
         if args['compile']:
             for agent in population:
                 agent.compileV()
-        try:
-            random.seed(config.getint('Simulation','seedRun')+run)
-        except ValueError:
-            # Non int, so assume None
-            random.seed()
+        random.seed(config.getint('Simulation','seedRun')+run)
         hurricanes = 0
         endDay = None
         survey = set()
@@ -195,9 +191,9 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
         agents = world.next()
         turn = world.agents[next(iter(agents))].__class__.__name__
         if start:
-            print(state['today'],turn,state['phase'],time.time()-start)
+            print('Day %d: %6s %11s (%8.2f)' % (state['today'],turn,state['phase'],time.time()-start))
         else:
-            print(state['today'],turn,state['phase'])
+            print(('Day %d: %6s %11s' % (state['today'],turn,state['phase'])))
         if turn == 'Actor':
             if groups:
                 # Make group decisions
@@ -252,7 +248,7 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
             print(world.getState('Nature','location').first())
         try:
             debug = {}
-#            debug = {name: {'V': True} for name in world.agents if name[:5] == 'Group'}
+#            debug.update({name: {'V': True} for name in world.agents if name[:5] == 'Group'})
 #            for name in debug:
 #                for agent in world.agents[name].members():
 #                    debug[name][agent] = {}
@@ -272,7 +268,9 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
         for actor in living:
             belief = actor.getBelief()
             for dist in belief.values():
-                assert len(dist) < 3,'%s\n%s' % (actor.name,dist)
+                if len(dist) > 3:
+                    print(actor.name)
+                    world.printState(dist)
         if state['phase'] == 'active':
             # Record what these doomed souls did to postpone the inevitable
             evacuees = 0
@@ -516,8 +514,8 @@ def writeCensus(world,regions,dirName,filename='CensusTable',fieldSubset=None):
                             if agent.age < limits[i]:
                                 histogram[i] += 1
                                 break
-                    else:
-                        histogram[-1] += 1
+                        else:
+                            histogram[-1] += 1
                     for i in range(len(histogram)):
                         record = {'Region': name,
                                   'Field': field,
@@ -701,11 +699,7 @@ def postSurvey(actor,dirName,hurricane):
             writer.writerow(record)
 
 def createWorld(config):
-    try:
-        random.seed(config.getint('Simulation','seedGen'))
-    except ValueError:
-        # Non int, so assume None
-        random.seed()
+    random.seed(config.getint('Simulation','seedGen'))
     world = World()
     if __ui__:
         world.diagram = Diagram()
@@ -785,10 +779,10 @@ def createWorld(config):
             world.diagram.setColor(group.name,'mediumpurple')
         groups.append(group)
 
+        
     toInit = [agent.name for agent in population]
-    while toInit:
-        name = random.choice(toInit)
-        toInit.remove(name)
+    random.shuffle(toInit)
+    for name in toInit:
         world.agents[name]._initializeRelations(config)
 
     order = []
