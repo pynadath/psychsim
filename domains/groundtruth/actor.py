@@ -32,6 +32,20 @@ class Actor(Agent):
             elif number == 2:
                 world.diagram.setColor(self.name,'yellow')
 
+        # Decision-making parameters
+        minH = config.getint('Actors','min_horizon')
+        maxH = config.getint('Actors','max_horizon')
+        if minH == maxH:
+            self.horizon = minH
+        else:
+            self.horizon = random.randint(minH,maxH)
+        self.setAttribute('horizon',self.horizon)
+        #self.setAttribute('selection','distribution')
+        #self.setAttribute('rationality',1.)
+
+        self.friends = set()
+        self.groups = set()
+
         # States
 
         # Demographic info
@@ -206,6 +220,9 @@ class Actor(Agent):
             else:
                 self.health = likert[5][mean-1]
         world.setFeature(health,self.health)
+        healthMax = world.defineState(self.name,'healthMax',float,
+                                      description='Maximum level of physical wellbeing',codePtr=True)
+        world.setFeature(healthMax,self.health)
 
         if self.kids > 0:
             kidHealth = world.defineState(self.name,'childrenHealth',float,
@@ -255,6 +272,7 @@ class Actor(Agent):
 
         # Actions and Dynamics
 
+        evolve = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
         self.nop = self.addAction({'verb': 'stayInLocation'},codePtr=True,
                                   description='Actor does not move from current location, nor perform any pro/antisocial behaviors')
         goHomeFrom = set()
@@ -288,6 +306,7 @@ class Actor(Agent):
                     # Actors move from region to region
                     tree = {'if': equalFeatureRow(location,Region.nameString % (int(index))),
                             True: tree, False: False}
+                    # TODO: Add actions for movement here
 #                elif config.getboolean('Actors','evacuation'):
 #                    tree = {'if': equalRow(location,'evacuated'),
 #                            True: False, False: tree}
@@ -427,34 +446,40 @@ class Actor(Agent):
                 tree = {'if': equalRow(makeFuture(location),region.name),
                         True: setToFeatureMatrix(risk,stateKey(region.name,'risk')),
                         False: tree}
-        tree = {'if': trueRow(alive),True: tree, False: setToConstantMatrix(risk,0.)}
-        world.setDynamics(risk,True,makeTree(tree),codePtr=True)
+            tree = {'if': trueRow(alive),True: tree, False: setToConstantMatrix(risk,0.)}
+            world.setDynamics(risk,True,makeTree(tree),codePtr=True)
         
         # Effect on my health
         impact = likert[5][config.getint('Actors','health_impact')-1]
         tree = {'if': thresholdRow(makeFuture(risk),likert[5][:]),
-                0: approachMatrix(health,impact,self.health)}
+                0: approachMatrix(health,impact,1.,healthMax)}
         for level in range(1,6):
             value = likert[5][level-1]
             dist = [(approachMatrix(health,impact,0.),value),
-                    (approachMatrix(health,impact,self.health),1.-value)]
+                    (approachMatrix(health,impact,1.,healthMax),1.-value)]
             tree[level] = {'distribution': dist}
         tree = makeTree({'if': trueRow(alive),
                          True: tree, False: setToConstantMatrix(health,0.)})
-        world.setDynamics(health,True,tree,codePtr=True)
+        if self.horizon <= 2:
+            world.setDynamics(health,Action({'subject': self.name}),tree,codePtr=True)
+        else:
+            world.setDynamics(health,evolve,tree,codePtr=True)
 
         if self.kids > 0:
             # Effect on kids' health
             tree = {'if': thresholdRow(makeFuture(risk),likert[5][:]),
-                    0: approachMatrix(kidHealth,impact,self.health)}
+                    0: approachMatrix(kidHealth,impact,1.,healthMax)}
             for level in range(1,6):
                 value = likert[5][level-1]
                 dist = [(approachMatrix(kidHealth,impact,0.),value),
-                        (approachMatrix(kidHealth,impact,self.health),1.-value)]
+                        (approachMatrix(kidHealth,impact,1.,healthMax),1.-value)]
                 tree[level] = {'distribution': dist}
             tree = makeTree({'if': trueRow(alive),
                              True: tree, False: setToConstantMatrix(kidHealth,0.)})
-            world.setDynamics(kidHealth,True,tree,codePtr=True)
+            if self.horizon <= 2:
+                world.setDynamics(kidHealth,Action({'subject': self.name}),tree,codePtr=True)
+            else:
+                world.setDynamics(kidHealth,evolve,tree,codePtr=True)
 
         # Section 2.2.1: Effect on life
         tree = makeTree({'if': trueRow(alive),
@@ -519,7 +544,7 @@ class Actor(Agent):
             benefit = likert[5][config.getint('Actors','prorisk_benefit')-1]
             for region,action in actGoodRisk.items():
                 key = stateKey(region,'risk')
-                tree = makeTree(approachMatrix(key,benefit,0.))
+                tree = makeTree(approachMatrix(key,benefit,1.,stateKey(region,'riskMin')))
                 world.setDynamics(key,action,tree,codePtr=True)
             cost = config.getint('Actors','prorisk_cost_risk')
             if cost > 0:
@@ -709,18 +734,6 @@ class Actor(Agent):
                                                 False: {'distribution': [(setToFeatureMatrix(omega,real),trueProb),
                                                                          (setToFeatureMatrix(omega,real,shift=-1),(1.-trueProb)/2.),
                                                                          (setToFeatureMatrix(omega,real,shift=1),(1.-trueProb)/2.)]}}}))
-        # Decision-making parameters
-        minH = config.getint('Actors','min_horizon')
-        maxH = config.getint('Actors','max_horizon')
-        if minH == maxH:
-            self.setAttribute('horizon',minH)
-        else:
-            self.setAttribute('horizon',random.randint(minH,maxH))
-        #self.setAttribute('selection','distribution')
-        #self.setAttribute('rationality',1.)
-
-        self.friends = set()
-        self.groups = set()
         
 
     def makeFriend(self,friend,config):
@@ -756,14 +769,13 @@ class Actor(Agent):
                         self.friends.add(relation['object'])
                     else:
                         friendCount[relation['subject']] = friendCount.get(relation['subject'],0)+1
-            numFriends = random.randint(max(1,len(self.friends)),friendMax)
-            possibles = {agent.name for agent in population
-                         if friendCount.get(agent.name,0) < friendMax}
-            possibles -= self.friends
+            numFriends = random.randint(len(self.friends),friendMax)
+            possibles = [agent.name for agent in population
+                         if friendCount.get(agent.name,0) < friendMax
+                         and agent.name not in self.friends]
             if len(population) > 1:
                 # For illustrative graph purposes, we allow links to self
-                possibles -= {self.name}
-            possibles = list(possibles)
+                possibles.remove(self.name)
             while len(self.friends) < numFriends and possibles:
                 friend = random.choice(possibles)
                 possibles.remove(friend)
@@ -818,7 +830,7 @@ class Actor(Agent):
                     include.add(key)
             elif agent[:5] == 'Group' and self.name in self.world.agents[agent].potentials:
                 include.add(key)
-                self.groups.add(agent[5:])
+                self.groups.add(agent)
             elif agent[:6] == 'System':
                 include.add(key)
             elif agent == WORLD:
@@ -843,11 +855,9 @@ class Actor(Agent):
         beliefs = self.resetBelief(include=include)
 
     def memberOf(self,state):
-        groups = [group for group in self.world.agents.values() if group.name[:5] == 'Group' \
-                  and self.name in group.potentials]
         inGroup = []
-        for group in groups:
-            key = binaryKey(self.name,group.name,'memberOf')
+        for group in self.groups:
+            key = binaryKey(self.name,group,'memberOf')
             membership = self.world.getFeature(key,state)
             assert len(membership) == 1,'Unable to process uncertain group membership'
             if membership.first():
@@ -856,7 +866,7 @@ class Actor(Agent):
     
     def getActions(self,state,actions=None):
         for group in self.memberOf(state):
-            key = stateKey(group.name,ACTION)
+            key = stateKey(group,ACTION)
             if key in state:
                 dist = self.world.getFeature(key,state)
                 assert len(dist) == 1,'Unable to handle uncertain group decisions'
@@ -918,16 +928,41 @@ class Actor(Agent):
         total.normalize()
         self.setBelief(key,total,model)
 
-    def groupDecide(self,state=None,horizon=None,others=None,model=None,selection=None,actions=None):
+    def decide(self,state=None,horizon=None,others=None,model=None,selection=None,
+                    actions=None,debug={}):
         if state is None:
             state = self.world.state
+        if model is None:
+            try:
+                model = self.world.getModel(self.name,state)
+            except KeyError:
+                # Use real model as fallback?
+                model = self.world.getModel(self.name)
+            assert len(model) == 1
+            model = model.first()
         if actions is None:
             actions = self.getActions(state)
         belief = self.getBelief(state,model)
         for group in self.groups:
-            membership = world.getState(binaryKey(self.name,group,'memberOf'))
+            membership = self.world.getFeature(binaryKey(self.name,group,'memberOf'))
             assert len(membership) == 1,'Unable to handle uncertain group membership'
             if membership.first():
-                action = world.getState(stateKey(group,ACTION))
-                print(action)
-                raise RuntimeError
+                # I'm in this group; has there been a group decision?
+                action = self.world.getFeature(stateKey(group,ACTION))
+                assert len(action) == 1
+                action = action.first()
+                if action['verb'] != 'noDecision':
+                    candidates = []
+                    for lonely in actions:
+                        if lonely['verb'] == action['verb']:
+                            if 'object' in action:
+                                if lonely['object'] == action['object']:
+                                    return {'action': lonely}
+                            elif 'object' in lonely:
+                                candidates.append(lonely)
+                            else:
+                                return {'action': lonely}
+                    assert len(candidates) == 1,'Multiple options for agent %s to satisfy group %s decision %s:\n%s' % (self.name,group,action,candidates)
+                    return {'action': candidates[0]}
+        else:
+            return Agent.decide(self,state,horizon,others,model,selection,actions,belief.keys(),debug)
