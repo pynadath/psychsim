@@ -572,7 +572,8 @@ preSurveyFields = ['Timestep','Participant','Hurricane']
 preSurveyFields += sorted(list(demographics.keys()))
 preSurveyQuestions = {'At Shelter': ('location','=shelter'),
                       'Evacuated': ('location','=evacuated'),
-                      'Risk': ('risk','expectation')}
+                      'My Risk': ('risk','expectation'),
+                      'Home Risk': ('region,risk','expectation')}
 preSurveyFields += sorted(list(preSurveyQuestions.keys()))
 
 def getDemographics(actor):
@@ -620,7 +621,12 @@ def preSurvey(actor,dirName,hurricane):
             for field,answer in preSurveyQuestions.items():
                 key,fun = answer
                 if not isStateKey(key):
-                    key = stateKey(actor.name,key)
+                    if ',' in key:
+                        feature,key = key.split(',')
+                        agent = actor.world.getState(actor.name,feature).first()
+                    else:
+                        agent = actor.name
+                    key = stateKey(agent,key)
                 value = actor.world.getFeature(key,belief)
                 if fun == 'max':
                     record[field] = value.max()
