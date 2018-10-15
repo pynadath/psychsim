@@ -105,7 +105,9 @@ class Nature(Agent):
                              # No change?
                              False: noChangeMatrix(location)},
                          1: # Hurricane moving through regions
-                         subtree,
+                         {'if': equalRow(phase,'approaching'),
+                          True: noChangeMatrix(location),
+                          False: subtree},
                          2: # No hurricane
                          setToConstantMatrix(location,'none')})
         world.setDynamics(location,evolution,tree,codePtr=True)
