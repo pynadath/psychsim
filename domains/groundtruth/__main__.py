@@ -191,9 +191,9 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
         agents = world.next()
         turn = world.agents[next(iter(agents))].__class__.__name__
         if start:
-            print('Day %d: %6s %11s (%8.2f)' % (state['today'],turn,state['phase'],time.time()-start))
+            print('Day %3d: %-6s %-11s (%8.2f)' % (state['today'],turn,state['phase'] if state['phase'] != 'active' else world.getState('Nature','location').first(),time.time()-start))
         else:
-            print(('Day %d: %6s %11s' % (state['today'],turn,state['phase'])))
+            print(('Day %3d: %-6s %-11s' % (state['today'],turn,state['phase'] if state['phase'] != 'active' else world.getState('Nature','location').first())))
         if turn == 'Actor':
             if groups:
                 # Make group decisions
@@ -245,7 +245,6 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
                     count += 1
         else:
             assert state['phase'] == 'active'
-            print(world.getState('Nature','location').first())
         try:
             debug = {}
 #            debug.update({name: {'V': True} for name in world.agents if name[:5] == 'Group'})
@@ -270,9 +269,17 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
             for dist in belief.values():
                 for sdist in dist.distributions.values():
                     if len(sdist) > 3:
-                        print(actor.name)
-                        world.printState(sdist)
-                        print(sorted([sdist[e] for e in sdist.domain()]))
+#                        print(actor.name)
+#                        world.printState(sdist)
+#                        print(sorted([sdist[e] for e in sdist.domain()]))
+                        true = {}
+                        for key in sdist.keys():
+                            if key != CONSTANT:
+                                trueDist = world.state.distributions[world.state.keyMap[key]]
+                                assert len(trueDist) == 1
+                                true[key] = trueDist.first()[key]
+                        sdist.prune(actor.epsilon,true)
+#                        world.printState(sdist)
         if state['phase'] == 'active':
             # Record what these doomed souls did to postpone the inevitable
             evacuees = 0
@@ -728,7 +735,7 @@ def createWorld(config):
     population = []
     for i in range(config.getint('Actors','population')):
         agent = Actor(i+1,world,config)
-        agent.epsilon = 1e-4
+        agent.epsilon = config.getfloat('Actors','likelihood_threshold')
         population.append(agent)
         region = agent.getState('region').first()
         regions[region]['inhabitants'].append(agent)
