@@ -4,6 +4,7 @@ import inspect
 import logging
 import math
 import multiprocessing
+import os
 import random
 try:
     from cStringIO import StringIO
@@ -17,24 +18,24 @@ from psychsim.probability import Distribution
 
 class Agent(object):
     """
-    @ivar name: agent name
-    @type name: str
-    @ivar world: the environment that this agent inhabits
-    @type world: L{World<psychsim.world.World>}
-    @ivar actions: the set of possible actions that the agent can choose from
-    @type actions: {L{Action}}
-    @ivar legal: a set of conditions under which certain action choices are allowed (default is that all actions are allowed at all times)
-    @type legal: L{ActionSet}S{->}L{KeyedPlane}
-    @ivar omega: the set of possible observations this agent may receive
-    @type ivar omega: {str}
-    @ivar O: the observation function; default is C{True}, which means perfect observations of actions
-    @type O: L{KeyedTree}
-    @ivar x: X coordinate to be used in UI
-    @type x: int
-    @ivar y: Y coordinate to be used in UI
-    @type y: int
-    @ivar color: color name to be used in UI
-    @type color: str
+    :ivar name: agent name
+    :type name: str
+    :ivar world: the environment that this agent inhabits
+    :type world: L{World<psychsim.world.World>}
+    :ivar actions: the set of possible actions that the agent can choose from
+    :type actions: `Action<psychsim.action.Action>`
+    :ivar legal: a set of conditions under which certain action choices are allowed (default is that all actions are allowed at all times)
+    :type legal: L{ActionSet}S{->}L{KeyedPlane}
+    :ivar omega: the set of possible observations this agent may receive
+    :type ivar omega: {str}
+    :ivar O: the observation function; default is ``True``, which means perfect observations of actions
+    :type O: L{KeyedTree}
+    :ivar x: X coordinate to be used in UI
+    :type x: int
+    :ivar y: Y coordinate to be used in UI
+    :type y: int
+    :ivar color: color name to be used in UI
+    :type color: str
     """
 
     def __init__(self,name,world=None):
@@ -55,6 +56,7 @@ class Agent(object):
         else:
             self.name = name
         self.parallel = False
+        self.epsilon = 1e-6
 
     """------------------"""
     """Policy methods"""
@@ -98,26 +100,29 @@ class Agent(object):
             model['V'][action] = collapseDynamics(copy.deepcopy(R),effects)
         return model['V']
                             
-    def decide(self,vector=None,horizon=None,others=None,model=None,selection=None,actions=None,keySet=None):
+    def decide(self,vector=None,horizon=None,others=None,model=None,selection=None,actions=None,
+               keySet=None,debug={}):
         """
         Generate an action choice for this agent in the given state
-        @param vector: the current state in which the agent is making its decision
-        @type vector: L{KeyedVector}
-        @param horizon: the value function horizon (default is use horizon specified in model)
-        @type horizon: int
-        @param others: the optional action choices of other agents in the current time step
-        @type others: strS{->}L{ActionSet}
-        @param model: the mental model to use (default is model specified in vector)
-        @type model: str
-        @param selection: how to translate value function into action selection
+
+        :param vector: the current state in which the agent is making its decision
+        :type vector: L{KeyedVector}
+        :param horizon: the value function horizon (default is use horizon specified in model)
+        :type horizon: int
+        :param others: the optional action choices of other agents in the current time step
+        :type others: strS{->}L{ActionSet}
+        :param model: the mental model to use (default is model specified in vector)
+        :type model: str
+        :param selection: how to translate value function into action selection
            - random: choose one of the maximum-value actions at random
            - uniform: return a uniform distribution over the maximum-value actions
            - distribution: return a distribution (a la quantal response or softmax) using rationality of the given model
            - consistent: make a deterministic choice among the maximum-value actions (default setting for a model)
-           - C{None}: use the selection method specified by the given model (default)
-        @type selection: str
-        @param actions: possible action choices (default is all legal actions)
-        @param keySet: subset of state features to project over (default is all state features)
+           - ``None``: use the selection method specified by the given model (default)
+
+        :type selection: str
+        :param actions: possible action choices (default is all legal actions)
+        :param keySet: subset of state features to project over (default is all state features)
         """
         if vector is None:
             vector = self.world.state
@@ -194,13 +199,13 @@ class Agent(object):
         if self.parallel:
             with multiprocessing.Pool() as pool:
                 results = [(action,pool.apply_async(self.value,
-                                                    args=(belief,action,model,horizon,keySet)))
+                                                    args=(belief,action,model,horizon,others,keySet)))
                            for action in actions]
                 V = {action: result.get() for action,result in results}
         else:
             V = {}
             for action in actions:
-                V[action] = self.value(belief,action,model,horizon,keySet)
+                V[action] = self.value(belief,action,model,horizon,others,keySet)
         best = None
         for action in actions:
             # Determine whether this action is the best
@@ -237,7 +242,8 @@ class Agent(object):
         logging.debug('Choosing %s' % (action))
         return result
 
-    def value(self,belief,action,model,horizon=None,keySet=None):
+    def value(self,belief,action,model,horizon=None,others=None,keySet=None,updateBeliefs=True,
+              debug={}):
         if horizon is None:
             horizon = self.getAttribute('horizon',model)
         # Compute value across possible worlds
@@ -248,40 +254,51 @@ class Agent(object):
             current *= V_A[action]
             R = current[makeFuture(rewardKey(self.name))]
             V = {'__beliefs__': current,
-                         '__S__': [current],
-                         '__ER__': [R],
-                         '__EV__': R.expectation()}
+                 '__S__': [current],
+                 '__ER__': [R],
+                 '__EV__': R.expectation()}
         else:
             V = {'__EV__': 0.,'__ER__': [],'__S__': []}
             if isinstance(keySet,dict):
                 subkeys = keySet[action]
             else:
                 subkeys = belief.keys()
-            start = action
+            if others:
+                start = dict(others)
+            else:
+                start = {}
+            if action:
+                start[self.name] = action
             for t in range(horizon):
                 logging.debug('Time %d/%d' % (t+1,horizon))
-                outcome = self.world.step(start,current,keySubset=subkeys,
-                                          horizon=horizon-t-1)
+                turn = self.world.next(current)
+                actions = {}
+                for name in turn:
+                    if name in start:
+                        actions[name] = start[name]
+                        del start[name]
+                outcome = self.world.step(actions,current,keySubset=subkeys,horizon=horizon-t-1,
+                                          updateBeliefs=updateBeliefs,debug=debug)
                 V['__ER__'].append(self.reward(current,model))
                 V['__EV__'] += V['__ER__'][-1]
                 V['__S__'].append(current)
-                start = None
             V['__beliefs__'] = current
         return V
         
     def oldvalue(self,vector,action=None,horizon=None,others=None,model=None,keys=None):
         """
         Computes the expected value of a state vector (and optional action choice) to this agent
-        @param vector: the state vector (not distribution) representing the possible world under consideration
-        @type vector: L{KeyedVector}
-        @param action: prescribed action choice for the agent to evaluate; if C{None}, then use agent's own action choice (default is C{None})
-        @type action: L{ActionSet}
-        @param horizon: the number of time steps to project into the future (default is agent's horizon)
-        @type horizon: int
-        @param others: optional table of actions being performed by other agents in this time step (default is no other actions)
-        @type others: strS{->}L{ActionSet}
-        @param model: the model of this agent to use (default is C{True})
-        @param keys: subset of state features to project over in computing future value (default is all state features)
+
+        :param vector: the state vector (not distribution) representing the possible world under consideration
+        :type vector: L{KeyedVector}
+        :param action: prescribed action choice for the agent to evaluate; if ``None``, then use agent's own action choice (default is ``None``)
+        :type action: L{ActionSet}
+        :param horizon: the number of time steps to project into the future (default is agent's horizon)
+        :type horizon: int
+        :param others: optional table of actions being performed by other agents in this time step (default is no other actions)
+        :type others: strS{->}L{ActionSet}
+        :param model: the model of this agent to use (default is ``True``)
+        :param keys: subset of state features to project over in computing future value (default is all state features)
         """
         if model is None:
             model = self.world.getModel(self.name,vector)
@@ -331,7 +348,7 @@ class Agent(object):
                         result['projection'].append(entry)
                     # The following is typically "expectation", but might be "max" or "min", too
                     op = self.getAttribute('projector',model)
-                    if discount < -1e-6:
+                    if discount < -self.epsilon:
                         # Only final value matters
                         result['V'] = apply(op,(future,))
                     else:
@@ -342,7 +359,7 @@ class Agent(object):
                     outcome['probability'] = 1.
                     Vrest = self.value(outcome['new'],None,horizon-1,None,model,keys)
                     outcome.update(Vrest)
-                    if discount < -1e-6:
+                    if discount < -self.epsilon:
                         # Only final value matters
                         result['V'] = Vrest['V']
                     else:
@@ -467,9 +484,9 @@ class Agent(object):
 
     def setHorizon(self,horizon,model=None,level=None):
         """
-        @type horizon: int
-        @param model: the model to set the horizon for, where C{None} means set it for all (default is C{None})
-        @param level: if setting across models, the recursive level of models to do so, where C{None} means all levels (default is C{None})
+        :type horizon: int
+        :param model: the model to set the horizon for, where ``None`` means set it for all (default is ``None``)
+        :param level: if setting across models, the recursive level of models to do so, where ``None`` means all levels (default is ``None``)
         """
         self.setAttribute('horizon',horizon,model,level)
 
@@ -479,11 +496,11 @@ class Agent(object):
     def setAttribute(self,name,value,model=None,level=None):
         """
         Set a parameter value for the given model(s)
-        @param name: the feature of the model to set
-        @type name: str
-        @param value: the new value for the parameter
-        @param model: the model to set the horizon for, where C{None} means set it for all (default is C{None})
-        @param level: if setting across models, the recursive level of models to do so, where C{None} means all levels (default is C{None})
+        :param name: the feature of the model to set
+        :type name: str
+        :param value: the new value for the parameter
+        :param model: the model to set the horizon for, where ``None`` means set it for all (default is ``None``)
+        :param level: if setting across models, the recursive level of models to do so, where ``None`` means all levels (default is ``None``)
         """
         if model is None:
             for model in self.models.values():
@@ -494,7 +511,8 @@ class Agent(object):
 
     def findAttribute(self,name,model):
         """
-        @return: the name of the nearest ancestor model (include the given model itself) that specifies a value for the named feature
+        
+	:returns: the name of the nearest ancestor model (include the given model itself) that specifies a value for the named feature
         """
         if name in self.models[model]:
             return model
@@ -505,7 +523,8 @@ class Agent(object):
 
     def getAttribute(self,name,model):
         """
-        @return: the value for the specified parameter of the specified mental model
+        
+	:returns: the value for the specified parameter of the specified mental model
         """
         ancestor = self.findAttribute(name,model)
         if ancestor is None:
@@ -517,12 +536,13 @@ class Agent(object):
     """Action methods"""
     """------------------"""
 
-    def addAction(self,action,condition=None,description=None):
+    def addAction(self,action,condition=None,description=None,codePtr=False):
         """
-        @param condition: optional legality condition
-        @type condition: L{KeyedPlane}
-        @return: the action added
-        @rtype: L{ActionSet}
+        :param condition: optional legality condition
+        :type condition: L{KeyedPlane}
+        
+	:returns: the action added
+        :rtype: L{ActionSet}
         """
         actions = []
         if isinstance(action,set) or isinstance(action,frozenset) or isinstance(action,list):
@@ -544,14 +564,40 @@ class Agent(object):
         self.actions.add(new)
         if condition:
             self.legal[new] = condition
+        if codePtr:
+            if codePtr is True:
+                for frame in inspect.getouterframes(inspect.currentframe()):
+                    try:
+                        fname = frame.filename
+                    except AttributeError:
+                        fname = frame[1]
+                    if fname != __file__:
+                        break
+            else:
+                frame = codePtr
+            mod = os.path.relpath(frame.filename,
+                                  os.path.abspath(os.path.join(os.path.dirname(__file__),'..')))
+            try:
+                self.world.extras[new] = '%s:%d' % (mod,frame.lineno)
+            except AttributeError:
+                self.world.extras[new] = '%s:%d' % (mod,frame[2])
+        # Add to state vector
+        key = stateKey(self.name,keys.ACTION)
+        if key in self.world.variables:
+            self.world.symbols[new] = len(self.world.symbols)
+            self.world.symbolList.append(new)
+        else:
+            self.world.defineVariable(key,ActionSet,description='Action performed by %s' % (self.name))
+            self.world.setFeature(key,new)
         return new
 
     def getActions(self,vector,actions=None):
         """
-        @param vector: the world in which to test legality
-        @param actions: the set of actions to test legality of (default is all available actions)
-        @return: the set of possible actions to choose from in the given state vector
-        @rtype: {L{ActionSet}}
+        :param vector: the world in which to test legality
+        :param actions: the set of actions to test legality of (default is all available actions)
+        
+	:returns: the set of possible actions to choose from in the given state vector
+        :rtype: {L{ActionSet}}
         """
         if actions is None:
             actions = self.actions
@@ -575,17 +621,18 @@ class Agent(object):
     def setLegal(self,action,tree):
         """
         Sets the legality decision tree for a given action
-        @param action: the action whose legality we are setting
-        @param tree: the decision tree for the legality of the action
-        @type tree: L{KeyedTree}
+        :param action: the action whose legality we are setting
+        :param tree: the decision tree for the legality of the action
+        :type tree: L{KeyedTree}
         """
         self.legal[action] = tree.desymbolize(self.world.symbols)
 
     def hasAction(self,atom):
         """
-        @type atom: L{Action}
-        @return: C{True} iff this agent has the given action (possibly in combination with other actions)
-        @rtype: bool
+        :type atom: L{Action}
+        
+	:returns: ``True`` iff this agent has the given action (possibly in combination with other actions)
+        :rtype: bool
         """
         for action in self.actions:
             for candidate in action:
@@ -656,10 +703,11 @@ class Agent(object):
         
     def reward(self,vector=None,model=None,recurse=True):
         """
-        @param recurse: C{True} iff it is OK to recurse into another agent's reward (default is C{True})
-        @type recurse: bool
-        @return: the reward I derive in the given state (under the given model, default being the C{True} model)
-        @rtype: float
+        :param recurse: ``True`` iff it is OK to recurse into another agent's reward (default is ``True``)
+        :type recurse: bool
+        
+	:returns: the reward I derive in the given state (under the given model, default being the ``True`` model)
+        :rtype: float
         """
         total = 0.
         if vector is None:
@@ -745,18 +793,20 @@ class Agent(object):
     def addModel(self,name,**kwargs):
         """
         Adds a new possible model for this agent (to be used as either true model or else as mental model another agent has of it). Possible arguments are:
-         - R: the reward table for the agent under this model (default is C{True}), L{KeyedTree}S{->}float
-         - beliefs: the beliefs the agent has under this model (default is C{True}), L{MatrixDistribution}
-         - horizon: the horizon of the value function under this model (default is C{True}),int
-         - level: the recursive depth of this model (default is C{True}),int
+         - R: the reward table for the agent under this model (default is ``True``), L{KeyedTree}S{->}float
+         - beliefs: the beliefs the agent has under this model (default is ``True``), L{MatrixDistribution}
+         - horizon: the horizon of the value function under this model (default is ``True``),int
+         - level: the recursive depth of this model (default is ``True``),int
          - rationality: the rationality parameter used in a quantal response function when modeling others (default is 10),float
          - discount: discount factor used in lookahead
          - selection: selection mechanism used in L{decide}
-         - parent: another model that this model inherits from (default is C{True})
-        @param name: the label for this model
-        @type name: sotr
-        @return: the model created
-        @rtype: dict
+         - parent: another model that this model inherits from (default is ``True``)
+
+        :param name: the label for this model
+        :type name: sotr
+        
+	:returns: the model created
+        :rtype: dict
         """
         if name is None:
             raise NameError('"None" is an illegal model name')
@@ -781,7 +831,8 @@ class Agent(object):
     def deleteModel(self,name):
         """
         Deletes the named model from the space
-        @warning: does not check whether there are remaining references to this model
+
+        .. warning:: does not check whether there are remaining references to this model
         """
         del self.modelList[self.models[name]['index']]
         del self.models[name]
@@ -789,9 +840,9 @@ class Agent(object):
     def predict(self,vector,name,V,horizon=0):
         """
         Generate a distribution over possible actions based on a table of values for those actions
-        @param V: either a L{ValueFunction} instance, or a dictionary of float values indexed by actions
-        @param vector: the current state vector
-        @param name: the name of the agent whose behavior is to be predicted
+        :param V: either a L{ValueFunction} instance, or a dictionary of float values indexed by actions
+        :param vector: the current state vector
+        :param name: the name of the agent whose behavior is to be predicted
         """
         if isinstance(V,ValueFunction):
             V = V.actionTable(name,vector,horizon)
@@ -814,18 +865,18 @@ class Agent(object):
     def model2index(self,model):
         """
         Convert a model name to a numeric representation
-        @param model: the model name
-        @type model: str
-        @rtype: int
+        :param model: the model name
+        :type model: str
+        :rtype: int
         """
         return self.models[model]['index']
 
     def index2model(self,index,throwException=False):
         """
         Convert a numeric representation of a model to a name
-        @param index: the numeric representation of the model
-        @type index: int
-        @rtype: str
+        :param index: the numeric representation of the model
+        :type index: int
+        :rtype: str
         """
         if isinstance(index,float):
             index = int(index+0.5)
@@ -912,8 +963,9 @@ class Agent(object):
 
     def getBelief(self,vector=None,model=None):
         """
-        @param model: the model of the agent to use, default is to use model specified in the state vector
-        @return: the agent's belief in the given world
+        :param model: the model of the agent to use, default is to use model specified in the state vector
+        
+	:returns: the agent's belief in the given world
         """
         if vector is None:
             vector = self.world.state
@@ -932,12 +984,8 @@ class Agent(object):
 
     def updateBeliefs(self,trueState,actions):
         """
-        @warning: Even if this agent starts with C{True} beliefs, its beliefs can
-        deviate after actions with stochastic effects (i.e., the world transitions
-        to a specific state with some probability, but the agent only knows a 
-        posterior distribution over that resulting state). If you want the agent's 
-        beliefs to stay correct, then set the C{static} attribute on the model to 
-        C{True}.
+        .. warning:: Even if this agent starts with ``True`` beliefs, its beliefs can deviate after actions with stochastic effects (i.e., the world transitions to a specific state with some probability, but the agent only knows a posterior distribution over that resulting state). If you want the agent's beliefs to stay correct, then set the ``static`` attribute on the model to ``True``.
+
         """
         oldModelKey = modelKey(self.name)
         newModelKey = makeFuture(oldModelKey)
@@ -981,18 +1029,19 @@ class Agent(object):
                         if len(beliefs) == 0:
                             logging.error('Impossible observation %s=%s' % \
                                           (omega,vector[keys.makeFuture(omega)]))
-                            self.world.printState(trueState)
-                            self.world.printState(beliefs)
-                            print('omega')
-                            print(vector)
-                            raise ValueError
+#                            self.world.printState(trueState)
+#                            self.world.printState(beliefs)
+                            print('full omega')
+                            self.world.printVector(vector)
+                            raise ValueError('Impossible observation %s=%s' % \
+                                             (omega,vector[keys.makeFuture(omega)]))
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
                     for dist in beliefs.distributions.values():
                         if len(dist) > 1:
                             deletion = False
                             for vec in dist.domain():
-                                if dist[vec] < 1e-6:
+                                if dist[vec] < self.epsilon:
                                     del dist[vec]
                                     deletion = True
                             if deletion:
@@ -1123,8 +1172,8 @@ class Agent(object):
 
     def defineObservation(self,omega,**kwargs):
         """
-        @param omega: The label of this dimension of observations (e.g., an existing feature key, or a new observation dimension)
-        @type omega: str
+        :param omega: The label of this dimension of observations (e.g., an existing feature key, or a new observation dimension)
+        :type omega: str
         """
         key = stateKey(self.name,omega)
         if 'codePtr' in kwargs and kwargs['codePtr'] is True:
@@ -1184,8 +1233,9 @@ class Agent(object):
         
     def observe(self,vector,actions,model=True):
         """
-        @return: distribution over observations received by this agent in the given world when the given actions are performed
-        @rtype: L{Distribution}
+        
+	:returns: distribution over observations received by this agent in the given world when the given actions are performed
+        :rtype: L{Distribution}
         """
         O = self.getO(vector,actions,model)
         # Generate observations along each dimension
@@ -1557,7 +1607,8 @@ class ValueFunction:
 
     def actionTable(self,name,state,horizon):
         """
-        @return: a table of values for actions for the given agent in the given state
+        
+	:returns: a table of values for actions for the given agent in the given state
         """
         V = self.table[horizon]
         table = dict(V[state][name])

@@ -5,7 +5,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 
-from pwl.keys import *
+from psychsim.pwl.keys import *
 import psychsim.graph as graph
 import psychsim.ui.diagram as diagram
 from psychsim.world import *
@@ -101,7 +101,7 @@ class WorldView(QGraphicsScene):
             for child in entry['children']:
                 self.drawEdge(key,child)
 
-    def displayGroundTruth(self,agent=WORLD,x0=0,y0=0,maxRows=10,recursive=False):
+    def displayGroundTruth(self,agent=WORLD,x0=0,y0=0,maxRows=10,recursive=False,selfCycle=False):
         if agent == WORLD:
             self.clear()
             if __graph__:
@@ -179,7 +179,8 @@ class WorldView(QGraphicsScene):
                     continue
                 if child in self.world.agents and not child in uNodes:
                     continue
-                self.drawEdge(key,child,g)
+                if selfCycle or key != child:
+                    self.drawEdge(key,child,g)
         x += self.colWidth
         if recursive:
             rect = QRectF(-self.colWidth/2,y0-self.rowHeight/2,
@@ -236,7 +237,7 @@ class WorldView(QGraphicsScene):
         even = True
         for layer in nodes:
             y = y0
-            for key in sorted(layer,key=lambda k: graph[k]['agent']):
+            for key in sorted(layer):
                 if believer:
                     label = beliefKey(believer,key)
                     if self.xml:

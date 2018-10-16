@@ -75,10 +75,16 @@ class Distribution(dict):
         """
         Utility method that increases the probability of the given element by the given value
         """
-        try:
-            self[element] += value
-        except KeyError:
-            self[element] = value
+        key = hash(element)
+        if key in self._domain:
+            dict.__setitem__(self,key,dict.__getitem__(self,key)+value)
+        else:
+            self._domain[key] = element
+            dict.__setitem__(self,key,value)
+#        try:
+#            self[element] += value
+#        except KeyError:
+#            self[element] = value
 
     def getProb(self,element):
         """

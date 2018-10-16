@@ -190,7 +190,7 @@ class KeyedVector(collections.MutableMapping):
         return '%s(%r)' % (self.__class__.__name__,dict(self))
 
     def __hash__(self):
-        return hash(tuple(self._data.items()))
+        return hash(frozenset(self._data.items()))
 
     def __xml__(self):
         doc = Document()
@@ -351,7 +351,20 @@ class VectorDistribution(Distribution):
             return Distribution(result)
         else:
             return NotImplemented
-        
+
+    def prune(self,probThreshold,true=None):
+        for vec in self.domain():
+            if self[vec] < probThreshold:
+                if true:
+                    for key in true:
+                        if vec[key] != true[key]:
+                            break
+                    else:
+                        # Has the true state, so don't delete
+                        continue
+                del self[vec]
+        self.normalize()
+                
     def __deepcopy__(self,memo):
         result = self.__class__({})
         for vector in self.domain():

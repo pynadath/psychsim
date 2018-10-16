@@ -19,29 +19,29 @@ except:
 
 class World(object):
     """
-    @ivar agents: table of agents in this world, indexed by name
-    @type agents: strS{->}L{Agent}
-    @ivar state: the distribution over states of the world
-    @type state: strS{->}L{VectorDistribution}
-    @ivar variables: definitions of the domains of possible variables (state features, relationships, observations)
-    @type variables: dict
-    @ivar symbols: utility storage of symbols used across all enumerated state variables
-    @type symbols: strS{->}int
-    @ivar dynamics: table of action effect models
-    @type dynamics: dict
-    @ivar dependency: dependency structure among state features that impose temporal constraints
-    @type dependency: L{psychsim.graph.DependencyGraph}
-    @ivar history: accumulated list of outcomes from simulation steps
-    @type history: list
-    @ivar termination: list of conditions under which the simulation terminates (default is none)
-    @type termination: L{psychsim.pwl.KeyedTree}[]
+    :ivar agents: table of agents in this world, indexed by name
+    :type agents: strS{->}L{Agent}
+    :ivar state: the distribution over states of the world
+    :type state: ``psychsim.pwl.state.VectorDistributionSet``
+    :ivar variables: definitions of the domains of possible variables (state features, relationships, observations)
+    :type variables: dict
+    :ivar symbols: utility storage of symbols used across all enumerated state variables
+    :type symbols: dict
+    :ivar dynamics: table of action effect models
+    :type dynamics: dict
+    :ivar dependency: dependency structure among state features that impose temporal constraints
+    :type dependency: ``psychsim.graph.DependencyGraph``
+    :ivar history: accumulated list of outcomes from simulation steps
+    :type history: list
+    :ivar termination: list of conditions under which the simulation terminates (default is none)
+    :type termination: ``psychsim.pwl.tree.KeyedTree[]``
     """
     memory = False
 
     def __init__(self,xml=None):
         """
-        @param xml: Initialization argument, either an XML Element, or a filename
-        @type xml: Node or str
+        :param xml: Initialization argument, either an XML Element, or a filename
+        :type xml: Node or str
         """
         self.agents = {}
 
@@ -110,8 +110,8 @@ class World(object):
     def setParallel(self,flag=True):
         """
         Turns on multiprocessing when agents have turns in parallel
-        @param flag: multiprocessing is on iff C{True} (default is C{True})
-        @type flag: bool
+        :param flag: multiprocessing is on iff C{True} (default is C{True})
+        :type flag: bool
         """
         self.parallel = flag
         
@@ -120,15 +120,15 @@ class World(object):
     """------------------"""
                 
     def step(self,actions=None,state=None,real=True,select=False,keySubset=None,
-             horizon=None,tiebreak=None,updateBeliefs=True):
+             horizon=None,tiebreak=None,updateBeliefs=True,debug={}):
         """
         The simulation method
-        @param actions: optional argument setting a subset of actions to be performed in this turn
-        @type actions: strS{->}L{ActionSet}
-        @param state: optional initial state distribution (default is the current world state distribution)
-        @type state: L{VectorDistribution}
-        @param real: if C{True}, then modify the given state; otherwise, this is only hypothetical (default is C{True})
-        @type real: bool
+        :param actions: optional argument setting a subset of actions to be performed in this turn
+        :type actions: strS{->}L{ActionSet}
+        :param state: optional initial state distribution (default is the current world state distribution)
+        :type state: L{VectorDistribution}
+        :param real: if C{True}, then modify the given state; otherwise, this is only hypothetical (default is C{True})
+        :type real: bool
         """
         if state is None:
             state = self.state
@@ -142,13 +142,15 @@ class World(object):
         if self.terminated(state):
             return state
         # Determine the actions taken by the agents in this world
-        outcome['actions'] = self.stepPolicy(state,actions,horizon,tiebreak)
+        outcome['actions'] = self.stepPolicy(state,actions,horizon,tiebreak,debug)
         joint = ActionSet()
         for actor,policy in outcome['actions'].items():
             assert policy.isLeaf(),'Currently unable to project stochastic decisions'
             key = stateKey(actor,ACTION)
             action = self.float2value(key,policy.children[None][makeFuture(key)][CONSTANT])
             joint = ActionSet(joint | action)
+            if actor in debug:
+                print('%s: %s' % (actor,action))
         effect = self.deltaState(joint,state,keySubset)
         # Update turn order
         effect.append(self.deltaTurn(state,joint))
@@ -158,6 +160,7 @@ class World(object):
         state.rollback()
 #        if select:
 #            prob = state.select()
+
         effect = self.effect(joint,state,updateBeliefs,keySubset,select)
         # The future becomes the present
         state.rollback()
@@ -241,7 +244,7 @@ class World(object):
             pass
         return outcome
 
-    def stepPolicy(self,state=None,actions=None,horizon=None,tiebreak=None):
+    def stepPolicy(self,state=None,actions=None,horizon=None,tiebreak=None,debug={}):
         if state is None:
             state = self.state
         if isinstance(actions,Action):
@@ -274,6 +277,8 @@ class World(object):
                         else:
                             logging.warning('Policy generated for %s out of turn' % (name))
                             del actions[name]
+                    else:
+                        raise RuntimeError('Action from %s who never has a turn!' % (name))
             for name,policy in actions.items():
                 actions[name] = policy.desymbolize(self.symbols)
         else:
@@ -296,9 +301,16 @@ class World(object):
                 # This agent might have a turn now
                 logging.debug('%s deciding...' % (name))
                 agent = self.agents[name]
-                decision = self.agents[name].decide(state,horizon,actions,
-                                                    None,tiebreak,agent.getActions(state))
-                actions[name] = decision['policy']
+                decision = self.agents[name].decide(state,horizon,actions,None,tiebreak,
+                                                    agent.getActions(state),debug=debug.get(name,{}))
+                try:
+                    actions[name] = decision['policy']
+                except KeyError:
+                    key = keys.stateKey(name,keys.ACTION)
+                    actions[name] = makeTree(setToConstantMatrix(key,decision['action'])).desymbolize(self.symbols)
+                if name in debug and 'V' in debug[name] and 'V' in decision:
+                    for action,V in sorted(decision['V'].items()):
+                        print('%6.4f\t%s' % (V,action))
         if len(actions) == 0:
             self.printState(state)
             raise RuntimeError('Nobody has a turn!')
@@ -309,10 +321,10 @@ class World(object):
     def deltaTurn(self,state,actions):
         """
         Computes the change in the turn order based on the given actions
-        @param start: The original state
-        @param end: The final state (which will be modified to reflect the new turn order)
-        @type start,end: L{VectorDistributionSet}
-        @return: The dynamics functions applied to update the turn order
+        :param start: The original state
+        :param end: The final state (which will be modified to reflect the new turn order)
+        :type start,end: L{VectorDistributionSet}
+        :returns: The dynamics functions applied to update the turn order
         """
         turnKeys = {k for k in state.keyMap.keys() if isTurnKey(k)}
         dynamics = {}
@@ -323,7 +335,8 @@ class World(object):
     def deltaObservations(self,state,actions,keySubset=None):
         """
         Computes the new observations for each agent in the given state 
-        @warning: Does not currently enforce order between observations that have direct dependencies. If you want such a dependency, introduce a state feature to indirectly capture it. 
+
+        .. warning:: Does not currently enforce order between observations that have direct dependencies. If you want such a dependency, introduce a state feature to indirectly capture it. 
         """
         Ofuns = {}
         for name in self.agents:
@@ -360,6 +373,7 @@ class World(object):
                         cumulative = copy.deepcopy(cumulative)
                         cumulative.makeFuture([key])
                         cumulative *= tree
+                        cumulative = cumulative.prune()
                 state *= cumulative
                 substate = state.keyMap[makeFuture(key)]
             if select and len(state.distributions[substate]) > 1:
@@ -428,7 +442,7 @@ class World(object):
 
     def singleDeltaVector(self,actions,old,key,dynamics=None):
         """
-        @type old: L{psychsim.pwl.KeyedVector}
+        :type old: L{psychsim.pwl.KeyedVector}
         """
         if dynamics is None:
             dynamics = self.getDynamics(key,actions,old)
@@ -515,10 +529,10 @@ class World(object):
     def terminated(self,state=None):
         """
         Evaluates world states with respect to termination conditions
-        @param state: the state vector (or distribution thereof) to evaluate (default is the current world state)
-        @type state: L{psychsim.pwl.KeyedVector} or L{VectorDistribution}
-        @return: C{True} iff the given state (or all possible worlds if a distribution) satisfies at least one termination condition
-        @rtype: bool
+        :param state: the state vector (or distribution thereof) to evaluate (default is the current world state)
+        :type state: L{psychsim.pwl.KeyedVector} or L{VectorDistribution}
+        :returns: C{True} iff the given state (or all possible worlds if a distribution) satisfies at least one termination condition
+        :rtype: bool
         """
         if state is None:
             state = self.state
@@ -561,10 +575,10 @@ class World(object):
 
     def has_agent(self,agent):
         """
-        @param agent: The agent (or agent name) to look for
-        @type agent: L{Agent} or str
-        @return: C{True} iff this C{World} already has an agent with the same name
-        @rtype: bool
+        :param agent: The agent (or agent name) to look for
+        :type agent: L{Agent} or str
+        :returns: C{True} iff this C{World} already has an agent with the same name
+        :rtype: bool
         """
         if isinstance(agent,str):
             return agent in self.agents
@@ -574,12 +588,12 @@ class World(object):
     def setTurnDynamics(self,name,action,tree):
         """
         Convenience method for setting custom dynamics for the turn order
-        @param name: the name of the agent whose turn dynamics are being set
-        @type name: str
-        @param action: the action affecting the turn order
-        @type action: L{Action} or L{ActionSet}
-        @param tree: the decision tree defining the effect on this agent's turn order
-        @type tree: L{psychsim.pwl.KeyedTree}
+        :param name: the name of the agent whose turn dynamics are being set
+        :type name: str
+        :param action: the action affecting the turn order
+        :type action: L{Action} or L{ActionSet}
+        :param tree: the decision tree defining the effect on this agent's turn order
+        :type tree: L{psychsim.pwl.KeyedTree}
         """
         if self.maxTurn is None:
             raise ValueError('Call setOrder before setting turn dynamics')
@@ -601,14 +615,14 @@ class World(object):
     def setDynamics(self,key,action,tree,enforceMin=False,enforceMax=False,codePtr=False):
         """
         Defines the effect of an action on a given state feature
-        @param key: the key of the affected state feature
-        @type key: str
-        @param action: the action affecting the state feature
-        @type action: L{Action} or L{ActionSet}
-        @param tree: the decision tree defining the effect
-        @type tree: L{psychsim.pwl.KeyedTree}
-        @param codePtr: if C{True}, tags the dynamics with a pointer to the module and line number where the tree is defined
-        @type codePtr: bool
+        :param key: the key of the affected state feature
+        :type key: str
+        :param action: the action affecting the state feature
+        :type action: L{Action} or L{ActionSet}
+        :param tree: the decision tree defining the effect
+        :type tree: L{psychsim.pwl.KeyedTree}
+        :param codePtr: if C{True}, tags the dynamics with a pointer to the module and line number where the tree is defined
+        :type codePtr: bool
         """
 #        logging.warning('setDynamics will soon be deprecated. Please migrate to using addDynamics instead.')
         if isinstance(action,str):
@@ -620,12 +634,12 @@ class World(object):
             # Action -> ActionSet
             action = ActionSet([action])
         assert key in self.variables,'No state element "%s"' % (key) 
-        if not action is True:
-            for atom in action:
-                assert atom['subject'] in self.agents,\
-                    'Unknown actor %s' % (atom['subject'])
-                assert self.agents[atom['subject']].hasAction(atom),\
-                    'Unknown action %s' % (atom)
+        # if not action is True:
+        #     for atom in action:
+        #         assert atom['subject'] in self.agents,\
+        #             'Unknown actor %s' % (atom['subject'])
+        #         assert self.agents[atom['subject']].hasAction(atom),\
+        #             'Unknown action %s' % (atom)
         if not key in self.dynamics:
             self.dynamics[key] = {}
         # Translate symbolic names into numeric values
@@ -684,6 +698,12 @@ class World(object):
                             for field in atom.getParameters():
                                 table[actionKey(field)] = atom[field]
                             dynamics.append(tree.desymbolize(table))
+                    if len(dynamics) == 0:
+                        # See whether there are key patterns that match this action
+                        for root,tree in self.dynamics[key].items():
+                            if isinstance(root,ActionSet) and len(root) == 1:
+                                if atom.match(next(iter(root))):
+                                    dynamics.append(tree)
             if len(dynamics) == 0:
                 # No action-specific dynamics, fall back to default dynamics
                 if True in self.dynamics[key]:
@@ -692,7 +712,7 @@ class World(object):
 
     def getAncestors(self,keySubset,actions):
         """
-        @return: a set of keys that potentially influence at least one key in the given set of keys (including this set as well)
+        :returns: a set of keys that potentially influence at least one key in the given set of keys (including this set as well)
         """
         remaining = set(keySubset)
         result = set()
@@ -715,8 +735,8 @@ class World(object):
     def setOrder(self,order):
         """
         Initializes the turn order to the given order
-        @param order: the turn order, as a list of names (each agent acts in sequence) or a list of sets of names (agents within a set acts in parallel)
-        @type order: str[] or {str}[]
+        :param order: the turn order, as a list of names (each agent acts in sequence) or a list of sets of names (agents within a set acts in parallel)
+        :type order: str[] or {str}[]
         """
         self.maxTurn = len(order) - 1
         for index in range(len(order)):
@@ -741,8 +761,8 @@ class World(object):
 
     def next(self,vector=None):
         """
-        @return: a list of agents (by name) whose turn it is in the current epoch
-        @rtype: str[]
+        :returns: a list of agents (by name) whose turn it is in the current epoch
+        :rtype: str[]
         """
         if vector is None:
             vector = self.state
@@ -768,8 +788,9 @@ class World(object):
 
     def deltaOrder(self,actions,vector):
         """
-        @warning: assumes that no one is acting out of turn
-        @return: the new turn sequence resulting from the performance of the given actions
+        .. warning:: assumes that no one is acting out of turn
+
+        :returns: the new turn sequence resulting from the performance of the given actions
         """
         potentials = [name for name in self.agents.keys()
                       if turnKey(name) in vector]
@@ -832,8 +853,7 @@ class World(object):
         
     def getActions(self,vector,agents=None,actions=None):
         """
-        @return: the set of all possible action combinations that could happen in the given state
-        @rtype: set(L{ActionSet})
+        :returns: the set of all possible action combinations that could happen in the given state
         """
         if agents is None:
             agents = self.next(vector)
@@ -857,23 +877,25 @@ class World(object):
                        combinator=None,substate=None,codePtr=False):
         """
         Define the type and domain of a given element of the state vector
-        @param key: string label for the column being defined
-        @type key: str
-        @param domain: the domain of values for this feature. Acceptable values are:
+
+        :param key: string label for the column being defined
+        :type key: str
+        :param domain: the domain of values for this feature. Acceptable values are:
            - float: continuous range
            - int: discrete numeric range
            - bool: True/False value
            - list: enumerated set of discrete values
            - ActionSet: enumerated set of actions, of the named agent (as key)
-        @type domain: class
-        @param lo: for float/int features, the lowest possible value. for list features, a list of possible values.
-        @type lo: float/int/list
-        @param hi: for float/int features, the highest possible value
-        @type hi: float/int
-        @param description: optional text description explaining what this state feature means
-        @type description: str
-        @param combinator: how should multiple dynamics for this variable be combined
-        @param substate: name of independent state subvector this variable belongs to
+
+        :type domain: class
+        :param lo: for float/int features, the lowest possible value. for list features, a list of possible values.
+        :type lo: float/int/list
+        :param hi: for float/int features, the highest possible value
+        :type hi: float/int
+        :param description: optional text description explaining what this state feature means
+        :type description: str
+        :param combinator: how should multiple dynamics for this variable be combined
+        :param substate: name of independent state subvector this variable belongs to
         """
         for agent in self.agents.values():
             for model in agent.models.values():
@@ -947,11 +969,11 @@ class World(object):
     def setFeature(self,key,value,state=None):
         """
         Set the value of an individual element of the state vector
-        @param key: the label of the element to set
-        @type key: str
-        @type value: float or L{psychsim.probability.Distribution}
-        @param state: the state distribution to modify (default is the current world state)
-        @type state: L{VectorDistribution}
+        :param key: the label of the element to set
+        :type key: str
+        :type value: float or L{psychsim.probability.Distribution}
+        :param state: the state distribution to modify (default is the current world state)
+        :type state: L{VectorDistribution}
         """
         if state is None or state is self.state:
             for agent in self.agents.values():
@@ -999,7 +1021,7 @@ class World(object):
 
     def value2float(self,key,value):
         """
-        @return: the float value (appropriate for storing in a L{psychsim.pwl.KeyedVector}) corresponding to the given (possibly symbolic, bool, etc.) value
+        :returns: the float value (appropriate for storing in a L{psychsim.pwl.KeyedVector}) corresponding to the given (possibly symbolic, bool, etc.) value
         """
         if isinstance(value,psychsim.probability.Distribution):
             # Encode each element
@@ -1024,12 +1046,12 @@ class World(object):
 
     def getFeature(self,key,state=None):
         """
-        @param key: the label of the state element of interest
-        @type key: str
-        @param state: the distribution over possible worlds (default is the current world state)
-        @type state: L{VectorDistribution}
-        @return: a distribution over values for the given feature
-        @rtype: L{psychsim.probability.Distribution}
+        :param key: the label of the state element of interest
+        :type key: str
+        :param state: the distribution over possible worlds (default is the current world state)
+        :type state: L{VectorDistribution}
+        :returns: a distribution over values for the given feature
+        :rtype: L{psychsim.probability.Distribution}
         """
         if state is None:
             state = self.state
@@ -1041,11 +1063,11 @@ class World(object):
     def getValue(self,key,state=None):
         """
         Helper method that returns a single value from a vector or a singleton distribution
-        @param key: the label of the state element of interest
-        @type key: str
-        @param state: the distribution over possible worlds (default is the current world state)
-        @type state: L{VectorDistribution} or L{psychsim.pwl.KeyedVector}
-        @return: a single value for the given feature
+        :param key: the label of the state element of interest
+        :type key: str
+        :param state: the distribution over possible worlds (default is the current world state)
+        :type state: L{VectorDistribution} or L{psychsim.pwl.KeyedVector}
+        :returns: a single value for the given feature
         """
         if isinstance(state,psychsim.pwl.KeyedVector):
             return self.float2value(key,state[key])
@@ -1061,8 +1083,8 @@ class World(object):
                     substate=None,codePtr=False):
         """
         Defines a state feature associated with a single agent, or with the global world state.
-        @param entity: if C{None}, the given feature is on the global world state; otherwise, it is local to the named agent
-        @type entity: str
+        :param entity: if C{None}, the given feature is on the global world state; otherwise, it is local to the named agent
+        :type entity: str
         """
         if isinstance(entity,Agent):
             entity = entity.name
@@ -1081,31 +1103,31 @@ class World(object):
     def setState(self,entity,feature,value,state=None):
         """
         For backward compatibility
-        @param entity: the name of the entity whose state feature we're setting (does not have to be an agent)
-        @type entity: str
-        @type feature: str
+        :param entity: the name of the entity whose state feature we're setting (does not have to be an agent)
+        :type entity: str
+        :type feature: str
         """
         self.setFeature(stateKey(entity,feature),value,state)
 
     def getState(self,entity,feature,state=None):
         """
         For backward compatibility
-        @param entity: the name of the entity of interest (C{None} if the feature of interest is of the world itself)
-        @type entity: str
-        @param feature: the state feature of interest
-        @type feature: str
+        :param entity: the name of the entity of interest (C{None} if the feature of interest is of the world itself)
+        :type entity: str
+        :param feature: the state feature of interest
+        :type feature: str
         """
         return self.getFeature(stateKey(entity,feature),state)
 
     def defineRelation(self,subj,obj,name,domain=float,lo=0.,hi=1.,**kwargs):
         """
         Defines a binary relationship between two agents
-        @param subj: one of the agents in the relation (if a directed link, it is the "origin" of the edge)
-        @type subj: str
-        @param obj: one of the agents in the relation (if a directed link, it is the "destination" of the edge)
-        @type obj: str
-        @param name: the name of the relation (e.g., the verb to use between the subject and object)
-        @type name: str
+        :param subj: one of the agents in the relation (if a directed link, it is the "origin" of the edge)
+        :type subj: str
+        :param obj: one of the agents in the relation (if a directed link, it is the "destination" of the edge)
+        :type obj: str
+        :param name: the name of the relation (e.g., the verb to use between the subject and object)
+        :type name: str
         """
         key = binaryKey(subj,obj,name)
         try:
@@ -1114,7 +1136,7 @@ class World(object):
             self.relations[name] = {key: {'subject': subj,'object': obj}}
         if not domain is None:
             # Haven't defined this feature yet
-            self.defineVariable(key,domain,lo,hi,kwargs)
+            self.defineVariable(key,domain,lo,hi,**kwargs)
         return key
 
     """------------------"""
@@ -1123,10 +1145,10 @@ class World(object):
 
     def getModel(self,modelee,vector=None):
         """
-        @return: the name of the model of the given agent indicated by the given state vector
-        @type modelee: str
-        @type vector: L{psychsim.pwl.KeyedVector}
-        @rtype: str
+        :returns: the name of the model of the given agent indicated by the given state vector
+        :type modelee: str
+        :type vector: L{psychsim.pwl.KeyedVector}
+        :rtype: str
         """
         if vector is None:
             vector = self.state
@@ -1291,10 +1313,10 @@ class World(object):
     def scaleState(self,vector):
         """
         Normalizes the given state vector so that all elements occur in [0,1]
-        @param vector: the vector to normalize
-        @type vector: L{psychsim.pwl.KeyedVector}
-        @return: the normalized vector
-        @rtype: L{psychsim.pwl.KeyedVector}
+        :param vector: the vector to normalize
+        :type vector: L{psychsim.pwl.KeyedVector}
+        :returns: the normalized vector
+        :rtype: L{psychsim.pwl.KeyedVector}
         """
         result = vector.__class__()
         remaining = dict(vector)
@@ -1326,8 +1348,8 @@ class World(object):
     def reachable(self,state=None,transition=None,horizon=-1,ignore=[],debug=False):
         """
         @note: The C{__predecessors__} entry for each reachable vector is a set of possible preceding states (i.e., those whose value must be updated if the value of this vector changes
-        @return: transition matrix among states reachable from the given state (default is current state)
-        @rtype: psychsim.pwl.KeyedVectorS{->}ActionSetS{->}VectorDistribution
+        :returns: transition matrix among states reachable from the given state (default is current state)
+        :rtype: psychsim.pwl.KeyedVectorS{->}ActionSetS{->}VectorDistribution
         """
         envelope = set()
         transition = {}
@@ -1389,17 +1411,19 @@ class World(object):
     def explain(self,outcomes,level=1,buf=None):
         """
         Generate a more readable interpretation of outcomes generated by L{step}
-        @param outcomes: the return value from L{step}
-        @type outcomes: dict[]
-        @param level: the level of explanation detail:
+
+        :param outcomes: the return value from L{step}
+        :type outcomes: dict[]
+        :param level: the level of explanation detail:
            0. No explanation
            1. Agent decisions
            2. Agent value functions
            3. Agent expectations
            4. Effects of expected actions
            5. World state (possibly subjective) at each step
-        @type level: int
-        @param buf: the string buffer to put the explanation into (default is standard out)
+
+        :type level: int
+        :param buf: the string buffer to put the explanation into (default is standard out)
         """
         for outcome in outcomes:
             if level > 0: print('%d%%' % (outcome['probability']*100.),file=buf)
@@ -1464,12 +1488,12 @@ class World(object):
     def printState(self,distribution=None,buf=None,prefix='',beliefs=True):
         """
         Utility method for displaying a distribution over possible worlds
-        @type distribution: L{VectorDistribution}
-        @param buf: the string buffer to put the string representation in (default is standard output)
-        @param prefix: a string prefix (e.g., tabs) to insert at the beginning of each line
-        @type prefix: str
-        @param beliefs: if C{True}, print out inaccurate beliefs, too
-        @type beliefs: bool
+        :type distribution: L{VectorDistribution}
+        :param buf: the string buffer to put the string representation in (default is standard output)
+        :param prefix: a string prefix (e.g., tabs) to insert at the beginning of each line
+        :type prefix: str
+        :param beliefs: if C{True}, print out inaccurate beliefs, too
+        :type beliefs: bool
         """
         if distribution is None:
             distribution = self.state
@@ -1507,16 +1531,16 @@ class World(object):
     def printVector(self,vector,buf=None,prefix='',first=True,beliefs=False,csv=False):
         """
         Utility method for displaying a single possible world
-        @type vector: L{psychsim.pwl.KeyedVector}
-        @param buf: the string buffer to put the string representation in (default is standard output)
-        @param prefix: a string prefix (e.g., tabs) to insert at the beginning of each line
-        @type prefix: str
-        @param first: if C{True}, then the first line is the continuation of an existing line (default is C{True})
-        @type first: bool
-        @param csv: if C{True}, then print the vector as comma-separated values (default is C{False})
-        @type csv: bool
-        @param beliefs: if C{True}, then print any agent beliefs that might deviate from this vector as well (default is C{False})
-        @type beliefs: bool
+        :type vector: L{psychsim.pwl.KeyedVector}
+        :param buf: the string buffer to put the string representation in (default is standard output)
+        :param prefix: a string prefix (e.g., tabs) to insert at the beginning of each line
+        :type prefix: str
+        :param first: if C{True}, then the first line is the continuation of an existing line (default is C{True})
+        :type first: bool
+        :param csv: if C{True}, then print the vector as comma-separated values (default is C{False})
+        :type csv: bool
+        :param beliefs: if C{True}, then print any agent beliefs that might deviate from this vector as well (default is C{False})
+        :type beliefs: bool
         """
         if csv:
             if prefix:
@@ -1628,10 +1652,10 @@ class World(object):
     def printDelta(self,old,new,buf=None,prefix=''):
         """
         Prints a kind of diff patch for one state vector with respect to another
-        @param old: the "original" state vector
-        @type old: L{psychsim.pwl.KeyedVector}
-        @param new: the state vector we want to see the diff of
-        @type new: L{VectorDistribution}
+        :param old: the "original" state vector
+        :type old: L{psychsim.pwl.KeyedVector}
+        :param new: the state vector we want to see the diff of
+        :type new: L{VectorDistribution}
         """
         deltaDist = psychsim.pwl.VectorDistribution()
         for vector in new.domain():
@@ -1935,10 +1959,10 @@ class World(object):
         
     def save(self,filename,compressed=True):
         """
-        @param compressed: if C{True}, then save in compressed XML; otherwise, save in XML (default is C{True})
-        @type compressed: bool
-        @return: the filename used (possibly with a .psy extension added)
-        @rtype: str
+        :param compressed: if C{True}, then save in compressed XML; otherwise, save in XML (default is C{True})
+        :type compressed: bool
+        :returns: the filename used (possibly with a .psy extension added)
+        :rtype: str
         """
         if compressed:
             if filename[-4:] != '.psy':
@@ -2005,7 +2029,7 @@ def parseDomain(subnode):
 
 def scaleValue(value,entry):
     """
-    @return: a new float value that has been normalized according to the feature's domain
+    :returns: a new float value that has been normalized according to the feature's domain
     """
     if entry['domain'] is float or entry['domain'] is int:
         # Scale by range of possible values

@@ -119,7 +119,7 @@ class KeyedMatrix(dict):
             
     def getKeysIn(self):
         """
-        @return: a set of keys which affect the result of multiplying by this matrix
+        :returns: a set of keys which affect the result of multiplying by this matrix
         """
         if self._keysIn is None:
             self._keysIn = set()
@@ -131,7 +131,7 @@ class KeyedMatrix(dict):
 
     def getKeysOut(self):
         """
-        @return: a set of keys which are changed as a result of multiplying by this matrix
+        :returns: a set of keys which are changed as a result of multiplying by this matrix
         """
         if self._keysOut is None:
             self.getKeysIn()
@@ -149,7 +149,7 @@ class KeyedMatrix(dict):
     def makeFuture(self,keyList=None):
         """
         Transforms matrix so that each row refers to only future keys
-        @param keyList: If present, only references to these keys (within each row) are made future
+        :param keyList: If present, only references to these keys (within each row) are made future
         """
         return self.changeTense(True,keyList)
 
@@ -159,7 +159,7 @@ class KeyedMatrix(dict):
     def changeTense(self,future=True,keyList=None):
         """
         Transforms matrix so that each row refers to only future keys
-        @param keyList: If present, only references to these keys (within each row) are made future
+        :param keyList: If present, only references to these keys (within each row) are made future
         """
         self._string = None
         self._keysIn = None
@@ -238,66 +238,68 @@ class KeyedMatrix(dict):
 
 def dynamicsMatrix(key,vector):
     """
-    @return: a dynamics matrix setting the given key to be equal to the given weighted sum
-    @rtype: L{KeyedMatrix}
+    :returns: a dynamics matrix setting the given key to be equal to the given weighted sum
+    :rtype: L{KeyedMatrix}
     """
     return KeyedMatrix({makeFuture(key): KeyedVector(vector)})
 def scaleMatrix(key,weight):
     """
-    @return: a dynamics matrix modifying the given keyed value by scaling it by the given weight
-    @rtype: L{KeyedMatrix}
+    :returns: a dynamics matrix modifying the given keyed value by scaling it by the given weight
+    :rtype: L{KeyedMatrix}
     """
     return KeyedMatrix({makeFuture(key): KeyedVector({key: weight})})
 def noChangeMatrix(key):
     """
-    @return: a dynamics matrix indicating no change to the given keyed value
-    @rtype: L{KeyedMatrix}
+    :returns: a dynamics matrix indicating no change to the given keyed value
+    :rtype: L{KeyedMatrix}
     """
     return scaleMatrix(key,1.)
 def nullMatrix(key):
     """
-    @return: a fake dynamics matrix that doesn't change time
-    @rtype: L{KeyedMatrix}
+    :returns: a fake dynamics matrix that doesn't change time
+    :rtype: L{KeyedMatrix}
     """
     return KeyedMatrix({key: KeyedVector({key: 1.})})
-def approachMatrix(key,weight,limit):
+def approachMatrix(key,weight,limit,limitKey=CONSTANT):
     """
-    @param weight: the percentage by which you want the feature to approach the limit
-    @type weight: float
-    @param limit: the value you want the feature to approach
-    @type limit: float
-    @return: a dynamics matrix modifying the given keyed value by approaching the given limit by the given weighted percentage of distance
-    @rtype: L{KeyedMatrix}
+    :param weight: the percentage by which you want the feature to approach the limit
+    :type weight: float
+    :param limit: the value you want the feature to approach
+    :type limit: float
+    :returns: a dynamics matrix modifying the given keyed value by approaching the given limit by the given weighted percentage of distance
+    :rtype: L{KeyedMatrix}
+    :param limitKey: the feature whose value to approach (default is CONSTANT)
+    :type limitKey: str
     """
     return KeyedMatrix({makeFuture(key): KeyedVector({key: 1.-weight,
-                                                      CONSTANT: weight*limit})})
+                                                      limitKey: weight*limit})})
 def incrementMatrix(key,delta):
     """
-    @param delta: the constant value to add to the state feature
-    @type delta: float
-    @return: a dynamics matrix incrementing the given keyed value by the constant delta
-    @rtype: L{KeyedMatrix}
+    :param delta: the constant value to add to the state feature
+    :type delta: float
+    :returns: a dynamics matrix incrementing the given keyed value by the constant delta
+    :rtype: L{KeyedMatrix}
     """
     return KeyedMatrix({makeFuture(key): KeyedVector({key: 1.,CONSTANT: delta})})
 def setToConstantMatrix(key,value):
     """
-    @type value: float
-    @return: a dynamics matrix setting the given keyed value to the constant value
-    @rtype: L{KeyedMatrix}
+    :type value: float
+    :returns: a dynamics matrix setting the given keyed value to the constant value
+    :rtype: L{KeyedMatrix}
     """
     return KeyedMatrix({makeFuture(key): KeyedVector({CONSTANT: value})})
 def setToFeatureMatrix(key,otherKey,pct=1.,shift=0.):
     """
-    @type otherKey: str
-    @return: a dynamics matrix setting the given keyed value to a percentage of another keyed value plus a constant shift (default is 100% with shift of 0)
-    @rtype: L{KeyedMatrix}
+    :type otherKey: str
+    :returns: a dynamics matrix setting the given keyed value to a percentage of another keyed value plus a constant shift (default is 100% with shift of 0)
+    :rtype: L{KeyedMatrix}
     """
     return KeyedMatrix({makeFuture(key): KeyedVector({otherKey: pct,CONSTANT: shift})})
 def addFeatureMatrix(key,otherKey,pct=1.):
     """
-    @type otherKey: str
-    @return: a dynamics matrix adding a percentage of another feature value to the given feature value (default percentage is 100%)
-    @rtype: L{KeyedMatrix}
+    :type otherKey: str
+    :returns: a dynamics matrix adding a percentage of another feature value to the given feature value (default percentage is 100%)
+    :rtype: L{KeyedMatrix}
     """
     return KeyedMatrix({makeFuture(key): KeyedVector({key: 1.,otherKey: pct})})
 def setTrueMatrix(key):

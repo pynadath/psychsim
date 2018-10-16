@@ -591,6 +591,8 @@ class VectorDistributionSet:
                     del vector[now]
                 if len(vector) > 1:
                     distribution.addProb(vector,prob)
+                elif len(vector) == 1:
+                    assert next(iter(vector.keys())) == keys.CONSTANT
             if nowSub != futureSub:
                 # Kill two birds with two stones
                 if len(distribution) == 0:
@@ -604,6 +606,8 @@ class VectorDistributionSet:
                     del vector[future]
                     if len(vector) > 1:
                         distribution.addProb(vector,prob)
+                    elif len(vector) == 1:
+                        assert next(iter(vector.keys())) == keys.CONSTANT
             assert now in self.keyMap
             assert self.keyMap[now] in self.distributions,now
         for s in self.distributions:

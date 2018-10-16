@@ -44,12 +44,8 @@ def describeVar(doc,variable):
             description.add_item('Values:',dumps_list(values))
                 
 def addGraph(doc,key,fname):
-    with doc.create(Figure(position='ht')) as gtGraph:
-        gtGraph.add_image('%s' % (os.path.join('images','%s.png' % (fname))))
-        if isStateKey(key) and state2agent(key) == WORLD:
-            gtGraph.add_caption('Ground Truth subgraph for %s' % (state2feature(key)))
-        else:
-            gtGraph.add_caption('Ground Truth subgraph for %s' % (key))
+    doc.append(StandAloneGraphic('%s' % (os.path.join('images','%s.png' % (fname))),
+                                 image_options=r'width=\textwidth'))
     
 def addTree(doc,tree,world,indent=0,prefix=None):
     if indent:
@@ -89,8 +85,14 @@ def addTree(doc,tree,world,indent=0,prefix=None):
                         doc.append(Math(data=Command('lnot'),inline=True))
                     doc.append(key2tex(subkey))
             elif variable['domain'] is set or variable['domain'] is list:
-                assert len(row) == 1
-                subkey = next(iter(row.keys()))
+                if len(row) > 1:
+                    subkey = None
+                    for key in row.keys():
+                        if abs(row[key]) > 1e-8:
+                            assert subkey is None
+                            subkey = key
+                else:
+                    subkey = next(iter(row.keys()))
                 if subkey == CONSTANT:
                     doc.append(bold(world.float2value(makePresent(key),row[CONSTANT])))
                 else:
@@ -251,9 +253,11 @@ def addState(doc,world):
     with doc.create(Section('State')):
         for name,variable in sorted(world.variables.items()):
             if isStateKey(name):
-                if state2feature(name) in [ACTION,REWARD,MODEL,TURN]:
+                feature = state2feature(name)
+                if feature in [ACTION,REWARD,MODEL,TURN]:
                     continue
-                if state2agent(name) == WORLD:
+                agent = state2agent(name)
+                if agent == WORLD:
                     label = state2feature(name)
                 else:
                     label = name
@@ -267,7 +271,21 @@ def addState(doc,world):
                             doc.append(verbatim(world.extras[name]))
                     else:
                         raise RuntimeError('Missing code pointer for %s' % (name))
-                    if name in world.dynamics:
+                    if agent != WORLD and feature in world.agents[agent].omega:
+                        for action,tree in world.agents[agent].O[name].items():
+                            if action is None:
+                                heading = 'Default observation of %s' % (label)
+                            else:
+                                heading = 'Observation function of %s when %s' % (label,str(action))
+                            with doc.create(Subsubsection(heading)):
+                                with doc.create(FlushLeft()):
+                                    if '%s %s' % (name,action) in world.extras:
+                                        doc.append(verbatim(world.extras[ '%s %s' % (name,action)]))
+                                        doc.append(LineBreak())
+#                                    else:
+#                                        raise RuntimeError
+                                    addTree(doc,tree,world)
+                    elif name in world.dynamics:
                         for action,tree in sorted(world.dynamics[name].items()):
                             if action is True:
                                 heading = 'Default change in %s' % (label)
@@ -293,6 +311,11 @@ def addRelations(doc,world):
                     fname = escapeKey(name)
                     if os.access(os.path.join('images','%s.png' % (fname)),os.R_OK):
                         addGraph(doc,name,escapeKey(name))
+                    if name in world.extras:
+                        with doc.create(FlushLeft()):
+                            doc.append(verbatim(world.extras[name]))
+                    else:
+                        raise RuntimeError('Missing code pointer for %s' % (name))
                     if name in world.dynamics:
                         for action,tree in sorted(world.dynamics[name].items()):
                             if action is True:
@@ -313,6 +336,11 @@ def addActions(doc,world):
                     label = '%s %s' % (action['subject'],action['verb'])
                 with doc.create(Subsection(label)):
                     addGraph(doc,action,str(action))
+                    if action in world.extras:
+                        with doc.create(FlushLeft()):
+                            doc.append(verbatim(world.extras[action]))
+                    else:
+                        raise RuntimeError('Missing code pointer for %s' % (name))
                     if action in agent.legal:
                         with doc.create(Subsubsection('Applicability of %s' % (label))):
                             with doc.create(FlushLeft()):
@@ -346,7 +374,7 @@ def background(doc):
     with doc.create(Section('Background')):
         doc.append('We use influence diagrams as the underlying graph structure for our ground truth. Here is a simple influence diagram for a simulation of two actors, showing the three types of nodes and some possible links (always directed) among them:')
         with doc.create(Figure(position='ht')) as gtGraph:
-            gtGraph.add_image(os.path.join(path,'simple.png'))
+            gtGraph.add_image(os.path.join(path,'simple.png'),width=NoEscape(r'0.4\textwidth'))
             gtGraph.add_caption('Simple influence diagram')
         with doc.create(Itemize()) as itemize:
             itemize.add_item('Rectangular nodes are possible actions for a particular agent (``Actor 1\'\', indicated by color) representing a potential behavior. They are labeled with a verb (``action\'\') and an optional object of the verb (``Actor2\'\'). An action node has a binary value, indicating whether or not the action was chosen.')

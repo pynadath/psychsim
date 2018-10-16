@@ -29,7 +29,10 @@ class KeyedTree:
             
     def isLeaf(self):
         return len(self.children) == 1 and not isinstance(self.children,Distribution)
-#        return self.leaf
+    #        return self.leaf
+
+    def getLeaf(self):
+        return self.children[None]
 
     def makeLeaf(self,leaf):
         self.children = {None: leaf}
@@ -551,7 +554,7 @@ class KeyedTree:
                         thresholds.append(1.)
                     elif self.branch.planes[0][2] > 0:
                         thresholds.insert(0,0.)
-                    children = '\n'.join(['%s\t%s' % (thresholds[value],
+                    children = '\n'.join(['%s\t%s' % (thresholds[value] if isinstance(value,int) else 'Otherwise',
                                                       str(self.children[value]).replace('\n','\n\t'))
                                           for value in self.children])
                 else:
