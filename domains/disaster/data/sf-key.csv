@@ -1,0 +1,20 @@
+field,variable,class,agent,time,type,domain,description
+V6,V1,id,resident,,,,
+Risk_to_Bay,RiskSeattle,belief,,0,bool,5,I believe the anthrax attack poses a serious risk to residents of the Seattle area.
+Risk_to_me,RiskMe,belief,resident,0,bool,5,I believe the anthrax attack poses a serious risk to me.
+One_paycheck_problem,MissPay1,belief,resident,0,bool,5,If I miss ONE paycheck I would not have enough money to buy food and pay bills.
+Several_paycheck_problem,MissPayMany,belief,resident,0,bool,5,If I miss SEVERAL paychecks I would not have enough money to buy food and pay bills.
+Work_Fulltime,JobFulltime,state,0,resident,bool,,What is your current employment status (paid opportunities only)?
+Change_routine,ChangeRoutine,action,resident,1,,,I would change my daily routine to avoid exposure to anthrax.
+Attend_work_school,ContWorkSch,action,resident,1,,I would continue going to work or school if open.
+Take_protective_measures,OutdoorPrecaution,action,resident,1,,I would take necessary precautions to avoid anthrax exposure when outside.
+Take_antibiotic,TakeAntiBiotic,action,resident,1,,I would obtain the antibiotic and take it as directed.
+Leave,Leave,action,resident,0,,I would LEAVE the Seattle area for at least a short time after watching the earlier news video.
+,StaySeattle,action,resident,,,
+Leave_LookforWork,TempWork,action,resident,1,,I would look for temporary work.
+Leave_LookforWork,PermanentMove,action,resident,1,,I would plan to move out of the Seattle area (e.g. look for permanent employment school housing).
+PersonalSafety_1,PersonalSafety,reward,resident,bool,0,,Personal safety (from crime)
+FinancialStability_1,FinanceStable,reward,resident,bool,0,,Financial stability (being financially stable/secure; general affordability of necessities)
+HealthSafety_1,PersonalSurvival,reward,resident,bool,1,,Health safety and personal anthrax survival (effectiveness and access to antibiotic)
+FamilyFriend_1,FriendSurvival,reward,resident,bool,0,,Family or friend anthrax survival
+
