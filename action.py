@@ -19,6 +19,15 @@ class Action(dict):
             dict.__init__(self,arg)
         self._string = None
         self.description = description
+
+    def match(self,pattern):
+        for key,value in pattern.items():
+            if not key in self or self[key] != value:
+                # Mismatch
+                return False
+        else:
+            # Match
+            return True
         
     def agentLess(self):
         """
@@ -149,12 +158,7 @@ class ActionSet(frozenset):
         @rtype: L{Action}
         """
         for action in self:
-            for key,value in pattern.items():
-                if not key in action or action[key] != value:
-                    # Mismatch
-                    break
-            else:
-                # Match
+            if action.match(pattern):
                 return action
         else:
             # No matching actions

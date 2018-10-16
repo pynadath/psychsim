@@ -581,7 +581,14 @@ class Agent(object):
                 self.world.extras[new] = '%s:%d' % (mod,frame.lineno)
             except AttributeError:
                 self.world.extras[new] = '%s:%d' % (mod,frame[2])
-            
+        # Add to state vector
+        key = stateKey(self.name,keys.ACTION)
+        if key in self.world.variables:
+            self.world.symbols[new] = len(self.world.symbols)
+            self.world.symbolList.append(new)
+        else:
+            self.world.defineVariable(key,ActionSet,description='Action performed by %s' % (self.name))
+            self.world.setFeature(key,new)
         return new
 
     def getActions(self,vector,actions=None):
@@ -1022,11 +1029,12 @@ class Agent(object):
                         if len(beliefs) == 0:
                             logging.error('Impossible observation %s=%s' % \
                                           (omega,vector[keys.makeFuture(omega)]))
-                            self.world.printState(trueState)
-                            self.world.printState(beliefs)
-                            print('omega')
-                            print(vector)
-                            raise ValueError
+#                            self.world.printState(trueState)
+#                            self.world.printState(beliefs)
+                            print('full omega')
+                            self.world.printVector(vector)
+                            raise ValueError('Impossible observation %s=%s' % \
+                                             (omega,vector[keys.makeFuture(omega)]))
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
                     for dist in beliefs.distributions.values():
