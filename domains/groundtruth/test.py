@@ -10,7 +10,7 @@ from psychsim.domains.groundtruth.region import Region
 import psychsim.domains.groundtruth.__main__ as gt
 
 instance = 24
-run = 0
+run = 1
 
 class TestDataPackage(unittest.TestCase):
     def setUp(self):
@@ -56,7 +56,28 @@ class TestDataPackage(unittest.TestCase):
                     count += population[name]['Age']['<18']
                 self.assertEqual(count,population[name]['Population'][''],
                                  'Mismatch for field %s in %s' % (field,name))
-                    
+
+    def testRegional(self):
+        totals = []
+        with open('PopulationTable.tsv','r') as csvfile:
+            reader = csv.DictReader(csvfile,delimiter='\t')
+            for row in reader:
+                totals.append(row)
+        with open('RegionalTable.tsv','r') as csvfile:
+            last = None
+            total = {}
+            reader = csv.DictReader(csvfile,delimiter='\t')
+            for row in reader:
+                t = int(row['Timestep'])
+                if t != last:
+                    if last:
+                        for field in total:
+                            self.assertEqual(total[field],int(totals[last-1][field]))
+                    total.clear()
+                    last = t
+                for field in totals[t-1]:
+                    if field != 'Timestep' and field != 'Evacuees':
+                        total[field] = int(row[field]) + total.get(field,0)
         
 class TestGroundTruth(unittest.TestCase):
     def setUp(self):
