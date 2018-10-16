@@ -434,8 +434,8 @@ def applyEffects(world,effects,logger=logging.getLogger()):
             if not isinstance(action,str):
                 world.setDynamics(objective['key'],action,makeTree(tree))
             else:
-                print action
-                print resident.actions
+                print(action)
+                print(resident.actions)
                 
 def readVariations(fname):
     variations = []
@@ -646,7 +646,7 @@ def processData(inData,data={},createNew=False,logger=logging.getLogger()):
                                 record[name] = row['%s_1' % (key)]
                                 break
                         else:
-                            print [k for k in row.keys() if len(k) < 16]
+                            print([k for k in row.keys() if len(k) < 16])
                             raise KeyError('Missing objective %s and alternatives %s for %s' % \
                                            (name,', '.join(objective['alt']),record['V1']))
                     else:
@@ -1093,8 +1093,7 @@ def readOldPredictions(filename,variations,logger=logging.getLogger()):
                     model = links2model(values,variations)
                     if field != model:
                         if model in record:
-                            raise RuntimeError,\
-                                'Field duplication\nOriginal: %s\nMapping: %s' % (field,model)
+                            raise RuntimeError('Field duplication\nOriginal: %s\nMapping: %s' % (field,model))
                         record[model] = record[field]
                         del record[field]
                     if first:
@@ -1270,5 +1269,5 @@ if __name__ == '__main__':
         total += num
         logging.info('%2d: %s covers %3d new (Cumulative: %3d)' % (index+1,model,num,total))
         logging.info('Covers %3d total' % (len([r for r in data.values() if r['predictions'].get(model,'')==r['Leave']])))
-        printConfusion(confusion(data,model,'Leave'))
+        print<Confusion(confusion(data,model,'Leave'))
     logging.info('%d/%d' % (len(data)-len(unmatchable),len(data)))

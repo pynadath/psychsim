@@ -75,6 +75,6 @@ class Diagram:
                 elif node.tagName == 'color':
                     self.setColor(key,str(node.firstChild.data).strip())
                 else:
-                    raise NameError,'Unknown element %s when parsing %s' % \
-                        (node.tagName,self.__class__.__name__)
+                    raise NameError('Unknown element %s when parsing %s' % \
+                                    (node.tagName,self.__class__.__name__))
             node = node.nextSibling
