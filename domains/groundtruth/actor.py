@@ -446,8 +446,8 @@ class Actor(Agent):
                 tree = {'if': equalRow(makeFuture(location),region.name),
                         True: setToFeatureMatrix(risk,stateKey(region.name,'risk')),
                         False: tree}
-            tree = {'if': trueRow(alive),True: tree, False: setToConstantMatrix(risk,0.)}
-            world.setDynamics(risk,True,makeTree(tree),codePtr=True)
+        tree = {'if': trueRow(alive),True: tree, False: setToConstantMatrix(risk,0.)}
+        world.setDynamics(risk,True,makeTree(tree),codePtr=True)
         
         # Effect on my health
         impact = likert[5][config.getint('Actors','health_impact')-1]
@@ -518,6 +518,10 @@ class Actor(Agent):
             else:
                 tree[True][False] = noChangeMatrix(wealth)
             world.setDynamics(wealth,goHome,makeTree(tree),codePtr=True)
+        if not config.getboolean('Shelter','job'):
+            for index,action in actShelter.items():
+                tree = makeTree(approachMatrix(wealth,likert[5][impactNoJob-1],0.))
+                world.setDynamics(wealth,action,tree,codePtr=True)
         if config.getboolean('Actors','evacuation'):
             cost = config.getint('Actors','evacuation_cost')
             if cost > 0:
@@ -928,7 +932,7 @@ class Actor(Agent):
         total.normalize()
         self.setBelief(key,total,model)
 
-    def decide(self,state=None,horizon=None,others=None,model=None,selection=None,
+    def decide(self,state=None,horizon=None,others=None,model=None,selection='uniform',
                     actions=None,debug={}):
         if state is None:
             state = self.world.state
@@ -965,4 +969,17 @@ class Actor(Agent):
                     assert len(candidates) == 1,'Multiple options for agent %s to satisfy group %s decision %s:\n%s' % (self.name,group,action,candidates)
                     return {'action': candidates[0]}
         else:
-            return Agent.decide(self,state,horizon,others,model,selection,actions,belief.keys(),debug)
+            decision = Agent.decide(self,state,horizon,others,model,'uniform',actions,
+                                    belief.keys(),debug)
+            if len(decision['action']) > 1:
+                if self.world.getState(self.name,'location',belief).first() == self.home:
+                    action = ActionSet(Action({'subject': self.name,'verb': 'stayInLocation'}))
+                else:
+                    action = ActionSet(Action({'subject': self.name, 'verb': 'moveTo','object': self.home}))
+                for choice in decision['action'].domain():
+                    if action == choice:
+                        decision['action'] = choice
+                        break
+                else:
+                    decision['action'] = decision['action'].first()
+            return decision
