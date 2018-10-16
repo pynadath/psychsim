@@ -103,6 +103,8 @@ if __name__ == '__main__':
     parser.add_argument('instances',type=int,nargs='+',help='Instance numbers to archived')
     parser.add_argument('-a','--all',action='store_true',
                         help='Archive all runs (otherwise, just run-0)')
+    parser.add_argument('-r','--run',type=int,default=0,
+                        help='Archive all runs (otherwise, just run-0)')
     parser.add_argument('--ta2',action='store_true',
                         help='Prepare data package for TA2')
     parser.add_argument('--clean',action='store_true')
@@ -127,10 +129,10 @@ if __name__ == '__main__':
             runDir = os.path.join('Instances','Instance%d' % (i),'Runs')
             runs = os.listdir(runDir)
             if args['all']:
-                maxRun = len(runs)
+                runList = range(len(runs))
             else:
-                maxRun = 1
-            for run in range(maxRun):
+                runList = [args['run']]
+            for run in runList:
                 if args['clean'] or args['clean2']:
                     print(i,run)
                     stats = []
