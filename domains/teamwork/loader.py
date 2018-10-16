@@ -1,5 +1,8 @@
-from Tkinter import *
-from teamwork import *
+try:
+    from tkinter import *
+except ModuleNotFoundError:
+    from Tkinter import *
+from .teamwork import *
 from time import sleep
 
 class BaseLoader:
