@@ -572,8 +572,7 @@ preSurveyFields = ['Timestep','Participant','Hurricane']
 preSurveyFields += sorted(list(demographics.keys()))
 preSurveyQuestions = {'At Shelter': ('location','=shelter'),
                       'Evacuated': ('location','=evacuated'),
-                      'My Risk': ('risk','expectation'),
-                      'Home Risk': ('region,risk','expectation')}
+                      'Severity': ('Nature\'s category','round')}
 preSurveyFields += sorted(list(preSurveyQuestions.keys()))
 
 def getDemographics(actor):
@@ -639,6 +638,8 @@ def preSurvey(actor,dirName,hurricane):
                         record[field] = 'no'
                 elif fun == 'expectation':
                     record[field] = toLikert(value.expectation())
+                elif fun == 'round':
+                    record[field] = int(round(value.expectation()))
             writer.writerow(record)
 
 history = {}
