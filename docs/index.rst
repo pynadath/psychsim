@@ -6,10 +6,14 @@
 Welcome to PsychSim's documentation!
 ====================================
 
+    "I never satisfy myself until I can make a mechanical model of a thing. If I can make a mechanical model, I can understand it. As long as I cannot make a mechanical model all the way through I cannot understand it."
+
+    -- Lord Kelvin
+
 .. image:: ../ui/psychsim.gif
 	   :alt: (c) Susana Maria Halpine
 	   :align: right
-	   
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -21,3 +25,5 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+  
