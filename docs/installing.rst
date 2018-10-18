@@ -1,5 +1,5 @@
-Installation
-============
+Installing
+==========
 
 1. Clone the repository::
 
