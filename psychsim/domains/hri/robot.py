@@ -627,7 +627,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                      'verb': 'recommend %s' % (recommendation),
                      'object': location})
     assert len(world.getModel('robot')) == 1
-    world.step(action)
+    world.step(action,select=True)
     assert len(world.getModel('robot')) == 1
     beliefState = list(world.agents['robot'].getBelief().values())[0]
     belief = world.getState(location,'danger',beliefState)
@@ -1020,4 +1020,3 @@ if __name__ == '__main__':
         for level in range(len(WAYPOINTS)):
             runMission(username,level,args['ability'],args['explanation'],
                        args['embodiment'],args['acknowledgment'],args['learning'])
-            break

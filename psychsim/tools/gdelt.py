@@ -31,7 +31,6 @@ def parseCAMEO():
     return cameo,oemac
 
 # Global variables for reference, CAMEO and GDELT formats
-cameo,oemac = parseCAMEO()
 headings = 'GLOBALEVENTID	SQLDATE	MonthYear	Year	FractionDate	Actor1Code	Actor1Name	Actor1CountryCode	Actor1KnownGroupCode	Actor1EthnicCode	Actor1Religion1Code	Actor1Religion2Code	Actor1Type1Code	Actor1Type2Code	Actor1Type3Code	Actor2Code	Actor2Name	Actor2CountryCode	Actor2KnownGroupCode	Actor2EthnicCode	Actor2Religion1Code	Actor2Religion2Code	Actor2Type1Code	Actor2Type2Code	Actor2Type3Code	IsRootEvent	EventCode	EventBaseCode	EventRootCode	QuadClass	GoldsteinScale	NumMentions	NumSources	NumArticles	AvgTone	Actor1Geo_Type	Actor1Geo_FullName	Actor1Geo_CountryCode	Actor1Geo_ADM1Code	Actor1Geo_Lat	Actor1Geo_Long	Actor1Geo_FeatureID	Actor2Geo_Type	Actor2Geo_FullName	Actor2Geo_CountryCode	Actor2Geo_ADM1Code	Actor2Geo_Lat	Actor2Geo_Long	Actor2Geo_FeatureID	ActionGeo_Type	ActionGeo_FullName	ActionGeo_CountryCode	ActionGeo_ADM1Code	ActionGeo_Lat	ActionGeo_Long	ActionGeo_FeatureID	DATEADDED'.split('\t')
 
 intHeadings = {'GLOBALEVENTID','SQLDATE','MonthYear','Year',
@@ -104,13 +103,13 @@ def parseGDELT(fname,targets=[]):
             today = event['SQLDATE']
             events = []
             result['calendar'][event['SQLDATE']] = events
-            print >> sys.stderr,today
+            print(today,file=sys.stderr)
         if event['Actor1Code'] is None: 
             # No actor?
             event['Actor1Code'] = 'Unknown'
         if lines%10000 == 0 and events:
-            print >> sys.stderr,'\t%dK (%d events,%d agents)' % \
-                (lines/1000,len(events),len(result['agents']))
+            print('\t%dK (%d events,%d agents)' % \
+                  (lines/1000,len(events),len(result['agents'])),file=sys.stderr)
         if matchActor(event['Actor1Code'],targets) or \
                 matchActor(event['Actor2Code'],targets):
             # Event matching our target
@@ -143,6 +142,7 @@ if __name__ == '__main__':
     parser.add_argument('--actor',metavar='ACTOR',action='append',help='KEDS actor codes to search for')
     args = parser.parse_args()
     # Initialization
+    cameo,oemac = parseCAMEO()
     world = World()
     count = 0
     eventCalendar = {}
@@ -175,18 +175,18 @@ if __name__ == '__main__':
             events += day
                 
     # Print summary
-    print >> sys.stderr,format(len(world.agents),',d'),'agents'
-    print >> sys.stderr,format(len(events),',d'),'events'
-    print >> sys.stderr,len(eventCalendar),'days'
+    print(format(len(world.agents),',d'),'agents',file=sys.stderr)
+    print(format(len(events),',d'),'events',file=sys.stderr)
+    print(len(eventCalendar),'days',file=sys.stderr)
 
     # Print calendar
     pairs = matrix.keys()
     pairs.sort()
     for pair in pairs:
         today = None
-        print pair
+        print(pair)
         for event in matrix[pair]:
             if event['SQLDATE'] != today:
-                print '\t',event['SQLDATE']
+                print('\t',event['SQLDATE'])
                 today = event['SQLDATE']
-            print '\t\t%s %4.2f %d/%d/%d %4.2f' % (event['action'],event['GoldsteinScale'],event['NumMentions'],event['NumSources'],event['NumArticles'],event['AvgTone'])
+            print('\t\t%s %4.2f %d/%d/%d %4.2f' % (event['action'],event['GoldsteinScale'],event['NumMentions'],event['NumSources'],event['NumArticles'],event['AvgTone']))

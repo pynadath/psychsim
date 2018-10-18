@@ -5,22 +5,18 @@
 # Enemy - minimize distance between self and explorer and distractor
 # Base - deploy distractor when explorer in danger (new)
 
-from __future__ import print_function, division
+from __future__ import print_function
 from psychsim.reward import *
 from psychsim.pwl import *
 from psychsim.action import *
 from psychsim.world import *
 from psychsim.agent import *
-
 import pyglet
 from pyglet.window import key
-
-from argparse import ArgumentParser
 from threading import Thread
 from time import time
-import logging
 import os
-import random
+
 
 class Scenario:
     def __init__(self,
@@ -57,18 +53,12 @@ class Scenario:
         self.world = World()
         self.world.defineState(None, 'turns', int)
         self.world.setState(None, 'turns', 0)
-
-        self.termination = makeTree({'if': thresholdRow(stateKey(None, 'turns'), 20),
-                                     True: setTrueMatrix(TERMINATED),
-                                     False: setFalseMatrix(TERMINATED)})
-        self.obstacles = []
-        self.generate_obstacles()
+        self.world.addTermination(makeTree({'if': thresholdRow(stateKey(None, 'turns'), 20),
+                                            True: True, False: False}))
         self.create_friendly_agents()
         self.create_enemy_agents()
         self.create_distract_agents()
         self.create_base()
-        self.world.addTermination(self.termination)
-        print(self.world.agents)
 
         self.paused = False
 
@@ -118,7 +108,7 @@ class Scenario:
 
     def create_base(self):
         for index in range(0, self.D_ACTORS):
-            base = Agent('Base' + str(index),self.world)
+            base = Agent('Base' + str(index))
             self.world.addAgent(base)
             base.setHorizon(5)
 
@@ -151,7 +141,7 @@ class Scenario:
 
     def create_friendly_agents(self):
         for index in range(0, self.F_ACTORS):
-            actor = Agent('Actor' + str(index),self.world)
+            actor = Agent('Actor' + str(index))
             self.world.addAgent(actor)
             actor.setHorizon(5)
 
@@ -180,12 +170,13 @@ class Scenario:
             self.set_friendly_actions(actor)
 
             # Terminate if agent reaches goal
-            self.termination = makeTree({'if': equalFeatureRow(stateKey(actor.name, 'x'),
-                                                               stateKey(actor.name, 'goal_x'))+
-                                         equalFeatureRow(stateKey(actor.name, 'y'),
-                                                         stateKey(actor.name, 'goal_y')),
-                                         True: setTrueMatrix(TERMINATED),
-                                         False: self.termination})
+            tree = makeTree({'if': equalFeatureRow(stateKey(actor.name, 'x'), stateKey(actor.name, 'goal_x')),
+                             True: {'if': equalFeatureRow(stateKey(actor.name, 'y'), stateKey(actor.name, 'goal_y')),
+                                    True: True,
+                                    False: False},
+                             False: False})
+            self.world.addTermination(tree)
+
 
     def set_friendly_actions(self, actor):
         # Nop
@@ -253,7 +244,7 @@ class Scenario:
 
     def create_distract_agents(self):
         for index in range(0, self.D_ACTORS):
-            actor = Agent('Distractor' + str(index),self.world)
+            actor = Agent('Distractor' + str(index))
             self.world.addAgent(actor)
             actor.setHorizon(5)
 
@@ -369,7 +360,7 @@ class Scenario:
 
     def create_enemy_agents(self):
         for index in range(0, self.E_ACTORS):
-            actor = Agent('Enemy' + str(index),self.world)
+            actor = Agent('Enemy' + str(index))
             self.world.addAgent(actor)
             actor.setHorizon(5)
 
@@ -395,12 +386,11 @@ class Scenario:
             self.set_enemy_actions(actor, index)
 
             # Terminate if enemy captures agent
-            self.termination = makeTree({'if': equalFeatureRow(stateKey(actor.name, 'x'),
-                                                               stateKey('Actor' + str(index), 'x'))+
-                                         equalFeatureRow(stateKey(actor.name, 'y'),
-                                                         stateKey('Actor' + str(index), 'y')),
-                                         True: setTrueMatrix(TERMINATED),
-                                         False: self.termination})
+            tree = {'if': equalFeatureRow(stateKey(actor.name, 'x'), stateKey('Actor' + str(index), 'x')),
+                    True: {'if': equalFeatureRow(stateKey(actor.name, 'y'), stateKey('Actor' + str(index), 'y')),
+                           True: True, False: False},
+                    False: False}
+            self.world.addTermination(makeTree(tree))
 
     def set_enemy_actions(self, actor, index):
         # Nop
@@ -466,12 +456,6 @@ class Scenario:
                          True: False, False: True})
         actor.setLegal(action, tree)
 
-    def generate_obstacles(self):
-        #TODO
-        #1/10 of the map tiles will be obstacles
-        for i in range(0,int(self.MAP_SIZE_X*self.MAP_SIZE_Y/10)):
-            self.obstacles.append((random.randint(0,self.MAP_SIZE_X-1),random.randint(0,self.MAP_SIZE_Y-1)))
-
     def evaluate_score(self):
         cwd = os.getcwd()
         print(cwd)
@@ -504,17 +488,14 @@ class Scenario:
         file.write("Minimizing soldier and enemy distance : " + str(self.DISTRACTOR[1]) + "\n")
         file.write("\n \n")
 
-        max_distance = self.MAP_SIZE_X + self.MAP_SIZE_Y
-
         file.write("Scores:\n")
         file.write("Soldier-Goal Manhattan Distance: \n")
         agent_goal_scores = []
         for index in range(0, self.F_ACTORS):
             ending_x = int(self.world.getState('Actor' + str(index), 'x').domain()[0])
             ending_y = int(self.world.getState('Actor' + str(index), 'y').domain()[0])
-            soldier_goal_distance = abs(self.f_get_goal_x(index) - ending_x) + abs(
-                self.f_get_goal_y(index) - ending_y)
-            agent_goal_scores.append(max_distance - soldier_goal_distance)
+            agent_goal_scores.append(abs(self.f_get_goal_x(index) - ending_x) + abs(
+                self.f_get_goal_y(index) - ending_y))
             file.write("Soldier" + str(index) + ": " + str(agent_goal_scores[index]) + "\n")
             # print(agent_goal_scores[index])
 
@@ -525,9 +506,8 @@ class Scenario:
             soldier_y = int(self.world.getState('Actor' + str(index), 'y').domain()[0])
             enemy_x = int(self.world.getState('Enemy' + str(index), 'x').domain()[0])
             enemy_y = int(self.world.getState('Enemy' + str(index), 'y').domain()[0])
-            soldier_enemy_distance = abs(soldier_x - enemy_x) + abs(
-                soldier_y - enemy_y)
-            agent_enemy_scores.append(soldier_enemy_distance - max_distance)
+            agent_enemy_scores.append(abs(soldier_x - enemy_x) + abs(
+                soldier_y - enemy_y))
             file.write("Soldier" + str(index) + ": " + str(agent_enemy_scores[index]) + "\n")
             if(agent_enemy_scores[index] == 0):
                 file.write("Soldier was captured, penalty awarded")
@@ -546,14 +526,6 @@ class Scenario:
         if(turns < 10):
             file.write("Bonus for taking less than 10 turns")
 
-        file.write("Overall Score: \n")
-        for index in range(0, self.F_ACTORS):
-            score = agent_goal_scores[index] + agent_enemy_scores[index] + 20 - helicopter_cost_scores[index] + 20 - turns
-            possible = max_distance + 20 + 20
-            print(float(score * 100 / possible))
-            total = float(score * 100 / possible)
-            file.write("Soldier" + str(index) + ": " + str(total))
-
     def run_without_visual(self):
         while not self.world.terminated():
             result = self.world.step()
@@ -561,7 +533,7 @@ class Scenario:
         self.evaluate_score()
 
     def run_with_visual(self):
-        pyglet.resource.path = ['../resources']
+        pyglet.resource.path = ['./resources']
         pyglet.resource.reindex()
 
         SCREEN_WIDTH = self.MAP_SIZE_X * 32
@@ -633,27 +605,14 @@ class Scenario:
                 batch=allies_batch)
             )
 
-        obstacle_image = pyglet.resource.image("rock.png")
-        obstacle_batch = pyglet.graphics.Batch()
-        obs = []
-        for index in range(0,len(self.obstacles)):
-            obs.append(pyglet.sprite.Sprite(
-                img=obstacle_image,
-                x=self.obstacles[index][0]*32,
-                y=self.obstacles[index][1]*32,
-                batch=obstacle_batch)
-            )
-
         @window.event
         def on_draw():
             window.clear()
             tiles_batch.draw()
-            obstacle_batch.draw()
             goals_batch.draw()
             agents_batch.draw()
             enemies_batch.draw()
             allies_batch.draw()
-            
 
         @window.event
         def on_key_press(symbol, modifiers):
@@ -689,36 +648,6 @@ class Scenario:
         Thread(target=pyglet.app.run()).start()
         # target=pyglet.app.run()
 
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.ERROR)
-    parser = ArgumentParser()
-    parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
-    parser.add_argument('-v','--visual',action='store_true',help='Run with visualization')
-    args = vars(parser.parse_args())
-
-    # Extract logging level from command-line argument
-    level = getattr(logging, args['debug'].upper(), None)
-    if not isinstance(level, int):
-        raise ValueError('Invalid debug level: %s' % args['debug'])
-    logging.getLogger().setLevel(level)
-
-    run = Scenario(
-        MAP_SIZE_X=10,
-        MAP_SIZE_Y=10,
-        F_ACTORS=1,
-        F_START_LOC=["1,1"],
-        F_GOAL_LOC=["5,5"],
-        E_ACTORS=1,
-        E_START_LOC=["9,9"],
-        E_PATROL_RANGE=5,
-        D_ACTORS=1,
-        D_START_LOC=["0,0"],
-        BASE=[0.5, 0.2],
-        DISTRACTOR=[-1.0, 1.0],
-        ENEMY=[0.5, 0.6, -1.0],
-        AGENT=[1.0,-0.5])
-    if args['visual']:
-        run.run_with_visual()
-    else:
-        run.run_without_visual()
-        #     print('RUN COMPLETE!')
+# if __name__ == '__main__':
+#
+#     print('RUN COMPLETE!')

@@ -10,13 +10,17 @@ Welcome to PsychSim's documentation!
 
     -- Lord Kelvin
 
-.. image:: ../ui/psychsim.gif
+.. image:: ../psychsim/ui/psychsim.gif
 	   :alt: (c) Susana Maria Halpine
 	   :align: right
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+   installing
+   modeling
+   simulation
 
 
 Indices and tables

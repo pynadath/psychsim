@@ -854,7 +854,6 @@ class World(object):
     def getActions(self,vector,agents=None,actions=None):
         """
         :returns: the set of all possible action combinations that could happen in the given state
-        :rtype: set(ActionSet)
         """
         if agents is None:
             agents = self.next(vector)
