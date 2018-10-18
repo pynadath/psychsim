@@ -1,17 +1,5 @@
-psychsim\.domains\.disaster package
-===================================
-
-Submodules
-----------
-
-psychsim\.domains\.disaster\.anthrax module
--------------------------------------------
-
-.. automodule:: psychsim.domains.disaster.anthrax
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
+psychsim.domains.disaster package
+=================================
 
 Module contents
 ---------------

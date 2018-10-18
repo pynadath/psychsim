@@ -1,27 +1,27 @@
-psychsim\.tools package
-=======================
+psychsim.tools package
+======================
 
 Submodules
 ----------
 
-psychsim\.tools\.gdelt module
------------------------------
+psychsim.tools.gdelt module
+---------------------------
 
 .. automodule:: psychsim.tools.gdelt
     :members:
     :undoc-members:
     :show-inheritance:
 
-psychsim\.tools\.graph module
------------------------------
+psychsim.tools.graph module
+---------------------------
 
 .. automodule:: psychsim.tools.graph
     :members:
     :undoc-members:
     :show-inheritance:
 
-psychsim\.tools\.world2tex module
----------------------------------
+psychsim.tools.world2tex module
+-------------------------------
 
 .. automodule:: psychsim.tools.world2tex
     :members:

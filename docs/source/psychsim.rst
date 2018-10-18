@@ -6,6 +6,7 @@ Subpackages
 
 .. toctree::
 
+    psychsim.domains
     psychsim.pwl
     psychsim.tools
     psychsim.ui
@@ -13,72 +14,72 @@ Subpackages
 Submodules
 ----------
 
-psychsim\.action module
------------------------
+psychsim.action module
+----------------------
 
 .. automodule:: psychsim.action
     :members:
     :undoc-members:
     :show-inheritance:
 
-psychsim\.agent module
-----------------------
+psychsim.agent module
+---------------------
 
 .. automodule:: psychsim.agent
     :members:
     :undoc-members:
     :show-inheritance:
 
-psychsim\.graph module
-----------------------
+psychsim.graph module
+---------------------
 
 .. automodule:: psychsim.graph
     :members:
     :undoc-members:
     :show-inheritance:
 
-psychsim\.keys module
----------------------
+psychsim.keys module
+--------------------
 
 .. automodule:: psychsim.keys
     :members:
     :undoc-members:
     :show-inheritance:
 
-psychsim\.modeling module
--------------------------
+psychsim.modeling module
+------------------------
 
 .. automodule:: psychsim.modeling
     :members:
     :undoc-members:
     :show-inheritance:
 
-psychsim\.probability module
-----------------------------
+psychsim.probability module
+---------------------------
 
 .. automodule:: psychsim.probability
     :members:
     :undoc-members:
     :show-inheritance:
 
-psychsim\.reward module
------------------------
+psychsim.reward module
+----------------------
 
 .. automodule:: psychsim.reward
     :members:
     :undoc-members:
     :show-inheritance:
 
-psychsim\.shell module
-----------------------
+psychsim.shell module
+---------------------
 
 .. automodule:: psychsim.shell
     :members:
     :undoc-members:
     :show-inheritance:
 
-psychsim\.world module
-----------------------
+psychsim.world module
+---------------------
 
 .. automodule:: psychsim.world
     :members:

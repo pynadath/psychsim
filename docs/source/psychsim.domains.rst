@@ -1,5 +1,5 @@
-psychsim\.domains package
-=========================
+psychsim.domains package
+========================
 
 Subpackages
 -----------

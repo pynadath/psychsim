@@ -5,3 +5,4 @@ psychsim
    :maxdepth: 4
 
    psychsim
+   setup

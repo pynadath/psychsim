@@ -1,19 +1,19 @@
-psychsim\.domains\.teamwork package
-===================================
+psychsim.domains.teamwork package
+=================================
 
 Submodules
 ----------
 
-psychsim\.domains\.teamwork\.loader module
-------------------------------------------
+psychsim.domains.teamwork.loader module
+---------------------------------------
 
 .. automodule:: psychsim.domains.teamwork.loader
     :members:
     :undoc-members:
     :show-inheritance:
 
-psychsim\.domains\.teamwork\.teamwork module
---------------------------------------------
+psychsim.domains.teamwork.teamwork module
+-----------------------------------------
 
 .. automodule:: psychsim.domains.teamwork.teamwork
     :members:
