@@ -18,6 +18,10 @@ Welcome to PsychSim's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   installing
+   modeling
+   simulating
+
 
 Indices and tables
 ==================
