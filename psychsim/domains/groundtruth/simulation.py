@@ -31,13 +31,13 @@ try:
 except:
     __ui__ = False
     
-from psychsim.domains.groundtruth.data import *
-from psychsim.domains.groundtruth.region import Region
-from psychsim.domains.groundtruth.nature import Nature
-from psychsim.domains.groundtruth.system import System
-from psychsim.domains.groundtruth.group import Group
-from psychsim.domains.groundtruth.actor import Actor
-from psychsim.domains.groundtruth.cdf import *
+from data import *
+from region import Region
+from nature import Nature
+from system import System
+from group import Group
+from actor import Actor
+from cdf import *
 
 def runInstance(instance,args,config,rerun=True):
     for run in range(args['runs']):
@@ -835,7 +835,6 @@ def getConfig(instance):
     return config
     
 if __name__ == '__main__':
-
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
     parser.add_argument('-n','--number',default=1,type=int,help='Number of hurricanes to run')
