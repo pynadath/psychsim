@@ -157,7 +157,10 @@ def runInstance(instance,args,config,rerun=True):
         while state['hurricanes'] < args['number'] or \
               (args['number'] > 0 and state['phase'] == 'none' and
                world.getState('Nature','days').first() <= config.getint('Disaster','phase_min_days')):
-            nextDay(world,living,groups,state,config,dirName,survey,start,cdfTables)
+            try:
+                nextDay(world,living,groups,state,config,dirName,survey,start,cdfTables)
+            except ValueError:
+                break
             if args['visualize']:
                 addState2tables(world,today,allTables,population,regions)
                 vizUpdateLoop(day)
@@ -245,15 +248,12 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
                     count += 1
         else:
             assert state['phase'] == 'active'
-        try:
-            debug = {}
-#            debug.update({name: {'V': True} for name in world.agents if name[:5] == 'Group'})
-#            for name in debug:
-#                for agent in world.agents[name].members():
-#                    debug[name][agent] = {}
-            newState = world.step(actions.get(turn,None),select=True,debug=debug)
-        except:
-            raise
+        debug = {}
+        #            debug.update({name: {'V': True} for name in world.agents if name[:5] == 'Group'})
+        #            for name in debug:
+        #                for agent in world.agents[name].members():
+        #                    debug[name][agent] = {}
+        newState = world.step(actions.get(turn,None),select=True,debug=debug)
         buf = StringIO()
         joint = world.explainAction(newState,level=1,buf=buf)
         joint = {name: action for name,action in joint.items()
