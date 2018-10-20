@@ -1,0 +1,8 @@
+title: PsychSim
+description: Social simulation using Python-based decision-theoretic agents with Theory of Mind
+google_analytics: UA-54499813-1
+show_downloads: true
+theme: jekyll-theme-minimal
+
+gems:
+  - jekyll-mentions
