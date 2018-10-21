@@ -6,19 +6,57 @@ import random
 import unittest
 
 from psychsim.pwl.keys import WORLD
-from psychsim.domains.groundtruth.region import Region
-import psychsim.domains.groundtruth.__main__ as gt
+from simulation.region import Region
+from simulation.create import getConfig,createWorld
 
 instance = 24
 run = 1
 
+class TestWorlds(unittest.TestCase):
+
+    def test_equality(self):
+        """
+        Verify that all simulations created from the same instance are identical at time 1
+        """
+        os.chdir('Instances')
+        for instance in os.listdir('.'):
+            if instance[-2] == '3':
+                os.chdir(os.path.join(instance,'Runs'))
+                runs = os.listdir('.')
+                base = {}
+                if len(runs) > 1:
+                    for run in runs:
+                        inFile = os.path.join(run,'RunDataTable.tsv')
+                        with open(inFile,'r') as csvfile:
+                            reader = csv.DictReader(csvfile,delimiter='\t')
+                            for row in reader:
+                                if row['Timestep'] == '1':
+                                    label = '%s %s' % (row['VariableName'],row['EntityIdx'])
+                                    if label in base:
+                                        self.assertEqual(row['Value'],base[label],
+                                                         'Run %s deviates on value for %s on %s' % \
+                                                         (run,label,instance))
+                                    else:
+                                        base[label] = row['Value']
+                                else:
+                                    break
+                os.chdir(os.path.join('..','..'))
+        os.chdir('..')
+
 class TestDataPackage(unittest.TestCase):
     def setUp(self):
+        self.root = os.getcwd()
         dirName = os.path.join(os.path.dirname(__file__),'Instances',
                                'Instance%d' % (instance),'Runs','run-%d' % (run))
         os.chdir(dirName)
 
+    def tearDown(self):
+        os.chdir(self.root)
+
     def test_census(self):
+        """
+        Verify that census counts all add up in the right way
+        """
         population = {}
         with open('CensusTable.tsv','r') as csvfile:
             reader = csv.DictReader(csvfile,delimiter='\t')
