@@ -8,8 +8,8 @@ from psychsim.pwl import *
 from psychsim.action import *
 from psychsim.reward import *
 from psychsim.agent import Agent
-from data import likert,toLikert,sampleNormal
-from region import Region
+from .data import likert,toLikert,sampleNormal
+from .region import Region
 
 
 if (sys.version_info > (3, 0)):

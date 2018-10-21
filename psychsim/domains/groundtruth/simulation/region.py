@@ -9,7 +9,7 @@ else:
 
 from psychsim.agent import Agent
 
-from data import likert,toLikert,sampleNormal
+from .data import likert,toLikert,sampleNormal
 
 class Region(Agent):
     nameString = 'Region%02d'
