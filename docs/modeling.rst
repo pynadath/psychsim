@@ -149,15 +149,41 @@ Sometimes an agent can make a decision that simultaneously combines multiple act
 
 For the purposes of the agent's decision problem, this option is equivalent to a single atomic action (e.g., simultaneous rejection and attack). However, as we will see in :ref:`sec-dynamics`, separate atomic actions can sometimes simplify the definition of the effects of such a combined action.
 
-The return value of :py:meth:`~psychsim.agent.Agent.addAction` is an :py:class:`~psychsim.action.ActionSet`, even if only one atomic :py:class:`~psychsim.action.Action` is specified. An :py:class:`~psychsim.action.ActionSet` is a subclass of `set`, so all standard Python set operations apply::
+The return value of :py:meth:`~psychsim.agent.Agent.addAction` is an :py:class:`~psychsim.action.ActionSet`, even if only one atomic :py:class:`~psychsim.action.Action` is specified. All of an agent's available actions are stored as a set of :py:class:`~psychsim.action.ActionSet` instances within an agent's :py:attr:`~psychsim.agent.Agent.actions`. An :py:class:`~psychsim.action.ActionSet` is a subclass of `set`, so all standard Python set operations apply::
 
    for action in free.actions:
       print(len(action))
    rejectAndAttack = reject | battle
 
-As we will see in :ref:`sec-legality`, not all of the agent's choices may be legal under all circumstances. Rather than inspecting the :py:attr:`~psychsim.agent.Agent.actions` attribute itself, we typically examine the context-specific set of action choices instead::
+By default, an agent can choose from all of its available actions on every turn. However, we may sometimes want to restrict the available action choices based on the current state of the world. We will cover how to specify such restrictions in :ref:`sec-legality`. As a result, rather than inspecting the :py:attr:`~psychsim.agent.Agent.actions` attribute itself, we typically examine the context-specific set of action choices instead::
 
-   print(free.getActions(world.state))
+   for action in free.getActions():
+      if len(action) == 1:
+         print(action['verb'])
+
+The fragment above illustrates one helpful shortcut for :py:class:`~psychsim.action.ActionSet` instances: you can access fields within the member actions as long as all of the member actions have the same value for that field. In other words, ``rejectAndAttack['subject']`` would return ``'Freedonia'``, but ``rejectAndAttack['verb']`` would raise an exception.
+
+Probability
+-----------
+
+Maybe you already know this, but uncertainty is everywhere in social interaction. As a result, :py:class:`~psychsim.probability.Distribution` objects are central to PsychSim's representations. Probability distributions can be treated as dictionaries, where the keys are the elements of the sample space, and the values are the probabilities associated with them. For example, we can represent a fair coin with the following distribution::
+
+  coin = Distribution({'heads': 0.5, 'tails': 0.5})
+  if coin.sample() == 'heads':
+     print('You win!')
+
+If you happen to lose enough that you suspect that the coin is in fact *not* fair, then you can update your beliefs by changing the distribution::
+
+  coin['heads'] = 0.25
+  coin['tails'] = 0.75
+
+If you want to know the probability that the coin lands on its edge, ``coin['edge']`` would throw an exception, while ``coin.get('edge')`` would return 0. To account for the nonzero probability that the coin lands on its edge, you must explicitly add such a probability::
+
+  coin['edge'] = 1e-8
+  coin.normalize()
+  for element in coin.domain():
+     print(coin[element])
+
 
 Piecewise Linear (PWL) Functions
 --------------------------------
@@ -189,7 +215,7 @@ When querying for a given state feature, the returned value is *always* in :py:c
       print 'P(%s=%s) = %5.3f' % (stateKey(free.name,'phase'),
                                   phase,value[phase])
 
-The :py:func:`~psychsim.pwl.keys.stateKey` function is useful for translating an agent (or the world) and state feature into a canonical string representation.
+The :py:func:`~psychsim.pwl.keys.stateKey` function is useful for translating an agent (or the world) and state feature into a canonical string representation::
 
    from psychsim.pwl import *
    s = KeyedVector({'S_0': 0.3, 'S_1': 0.7})
