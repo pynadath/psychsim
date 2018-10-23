@@ -90,7 +90,7 @@ int
    integer valued and discrete
 
 bool
-   a binary {\tt True}/{\tt False} value
+   a binary ``True``/``False`` value
 
 list/set
    an enumerated set of possible values (typically strings)
