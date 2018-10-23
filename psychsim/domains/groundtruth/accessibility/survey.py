@@ -8,7 +8,7 @@ import sys
 from psychsim.pwl.keys import *
 from psychsim.action import Action
 from psychsim.world import World
-from psychsim.domains.groundtruth.data import toLikert
+from ..simulation.data import toLikert
 
 if __name__ == '__main__':
     parser = ArgumentParser()

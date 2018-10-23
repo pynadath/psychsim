@@ -6,15 +6,19 @@ import random
 import unittest
 
 from psychsim.pwl.keys import WORLD
-from simulation.region import Region
-from simulation.create import getConfig,createWorld
+if __name__ == '__main__':
+    from simulation.region import Region
+    from simulation.create import getConfig,createWorld
+else:
+    from .simulation.region import Region
+    from .simulation.create import getConfig,createWorld
 
 instance = 24
 run = 1
 
 class TestWorlds(unittest.TestCase):
 
-    def test_equality(self):
+    def test_creation(self):
         """
         Verify that all simulations created from the same instance are identical at time 1
         """
@@ -42,6 +46,11 @@ class TestWorlds(unittest.TestCase):
                                     break
                 os.chdir(os.path.join('..','..'))
         os.chdir('..')
+
+    def test_decisions(self):
+        self.config = getConfig(999998)
+        self.world = createWorld(self.config)
+        
 
 class TestDataPackage(unittest.TestCase):
     def setUp(self):
@@ -119,8 +128,8 @@ class TestDataPackage(unittest.TestCase):
         
 class TestGroundTruth(unittest.TestCase):
     def setUp(self):
-        self.config = gt.getConfig(999998)
-        self.world = gt.createWorld(self.config)
+        self.config = getConfig(999998)
+        self.world = createWorld(self.config)
 
     def DONTtest_loop(self):
         keys = self.world.state.keys()

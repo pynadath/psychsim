@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 import csv
 import os
 
-from psychsim.domains.groundtruth.region import Region
+from ..simulation.region import Region
 
 if __name__ == '__main__':
     parser = ArgumentParser()

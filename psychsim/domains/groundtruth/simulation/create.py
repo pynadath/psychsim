@@ -10,10 +10,10 @@ try:
 except:
     __ui__ = False
 
-from simulation.region import Region
-from simulation.nature import Nature
-from simulation.actor import Actor
-from simulation.system import System
+from .region import Region
+from .nature import Nature
+from .actor import Actor
+from .system import System
     
 if (sys.version_info > (3, 0)):
     from configparser import ConfigParser

@@ -5,7 +5,7 @@ import random
 import sys
 
 from psychsim.probability import Distribution
-from psychsim.domains.groundtruth.data import toLikert
+from ..simulation.data import toLikert
 
 if __name__ == '__main__':
     parser = ArgumentParser()

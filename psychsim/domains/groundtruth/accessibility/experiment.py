@@ -10,10 +10,11 @@ from psychsim.pwl.keys import *
 
 from psychsim.world import World
 
-from psychsim.domains.groundtruth.data import toLikert
-from psychsim.domains.groundtruth.accessibility.environmental import readHurricanes
-from psychsim.domains.groundtruth.__main__ import nextDay,getConfig
-from psychsim.domains.groundtruth.actor import Actor
+from ..simulation.data import toLikert
+from .environmental import readHurricanes
+from ..simulation.create import getConfig
+from ..simulation.execute import nextDay
+from ..simulation.actor import Actor
 
 if __name__ == '__main__':
     parser = ArgumentParser()

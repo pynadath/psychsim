@@ -247,7 +247,7 @@ class Actor(Agent):
             if sigma > 0:
                 self.wealth = sampleNormal(mean,sigma)
             else:
-                self.wealth = likert[5][meanWealth-1]
+                self.wealth = likert[5][mean-1]
         world.setFeature(wealth,self.wealth)
 
         risk = world.defineState(self.name,'risk',float,codePtr=True,

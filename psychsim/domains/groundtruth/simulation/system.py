@@ -18,7 +18,7 @@ class System(Agent):
         self.setAttribute('static',True)
         
         resources = world.defineState(self.name,'resources',int,lo=0,hi=100,codePtr=True)
-        self.setState('resources',int(likert[5][config.getint('System','resources')]*100))
+        self.setState('resources',int(likert[5][config.getint('System','resources')-1]*100))
         
         regions = [name for name in self.world.agents
                         if isinstance(self.world.agents[name],Region)]
