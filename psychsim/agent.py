@@ -591,7 +591,7 @@ class Agent(object):
             self.world.setFeature(key,new)
         return new
 
-    def getActions(self,vector,actions=None):
+    def getActions(self,vector=None,actions=None):
         """
         :param vector: the world in which to test legality
         :param actions: the set of actions to test legality of (default is all available actions)
@@ -599,6 +599,8 @@ class Agent(object):
 	:returns: the set of possible actions to choose from in the given state vector
         :rtype: {L{ActionSet}}
         """
+        if vector is None:
+            vector = self.world.state
         if actions is None:
             actions = self.actions
         if len(self.legal) == 0:
