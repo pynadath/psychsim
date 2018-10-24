@@ -2,6 +2,7 @@ import copy
 import csv
 import logging
 import os
+import pickle
 import random
 import unittest
 
@@ -17,6 +18,29 @@ instance = 24
 run = 1
 
 class TestWorlds(unittest.TestCase):
+
+    def test_pickle(self):
+        """
+        Verify that a pickled scenario in one run matches the logs of a scenario created in a different run
+        """
+        dirName = os.path.join(os.path.dirname(__file__),'Instances',
+                               'Instance%d' % (instance),'Runs')
+        with open(os.path.join(dirName,'run-0','scenario.pkl'),'rb') as f:
+            world = pickle.load(f)
+        inFile = os.path.join(dirName,'run-%d' % (run),'RunDataTable.tsv')
+        with open(inFile,'r') as csvfile:
+            reader = csv.DictReader(csvfile,delimiter='\t')
+            for row in reader:
+                if row['Timestep'] == '1':
+                    if row['VariableName'][:6] == 'Actor ':
+                        feature = row['VariableName'].split()[1]
+                        if feature != 'action':
+                            self.assertEqual(str(world.getState(row['EntityIdx'],feature).first()),
+                                             row['Value'],
+                                             'Scenario deviates on value for %s for %s' % \
+                                             (feature,row['EntityIdx']))
+                else:
+                    break
 
     def test_creation(self):
         """
