@@ -20,7 +20,7 @@ Welcome to PsychSim's documentation!
 
    installing
    modeling
-   simulation
+   simulating
 
 
 Indices and tables
