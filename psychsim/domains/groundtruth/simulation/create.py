@@ -1,4 +1,5 @@
 import os
+import pickle
 import random
 import sys
 
@@ -139,3 +140,10 @@ def getConfig(instance):
     config = ConfigParser()
     config.read(os.path.join(os.path.dirname(__file__),'..','config','%06d.ini' % (instance)))
     return config
+
+def loadPickle(instance,run):
+    with open(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
+                           'Runs','run-%d' % (run),'scenario.pkl'),'rb') as f:
+        world = pickle.load(f)
+    return world
+    
