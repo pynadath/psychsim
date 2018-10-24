@@ -119,7 +119,7 @@ if __name__ == '__main__':
         targets = {'CensusTable','PopulationTable','RegionalTable','ActorPreTable','ActorPostTable','HurricaneTable'}
     else:
         targets = {'InstanceVariableTable','RunDataTable','SummaryStatisticsDataTable',
-                   'QualitativeDataTable','RelationshipDataTable',}
+                   'QualitativeDataTable','RelationshipDataTable','QOITable'}
     
     with zipfile.ZipFile(args['output'],'w') as archive:
         if not args['ta2']:
