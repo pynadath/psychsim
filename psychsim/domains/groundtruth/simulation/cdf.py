@@ -350,7 +350,7 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                         writer.writerow(record)
             elif name == 'QualitativeData':
                 if len(table) > 1:
-                    population = sorted([a.name for a in world.agents.values() if isinstance(a,Actor)])
+                    population = sorted([name for name in world.agents if name[:5] == 'Actor'])
                     for key,value in table[-1].items():
                         delta = value - table[-2][key]
                         if delta > len(population)/10:
