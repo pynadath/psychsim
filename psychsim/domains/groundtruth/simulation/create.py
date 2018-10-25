@@ -11,10 +11,11 @@ try:
 except:
     __ui__ = False
 
-from .region import Region
-from .nature import Nature
-from .actor import Actor
-from .system import System
+from psychsim.domains.groundtruth.simulation.region import Region
+from psychsim.domains.groundtruth.simulation.nature import Nature
+from psychsim.domains.groundtruth.simulation.actor import Actor
+from psychsim.domains.groundtruth.simulation.system import System
+from psychsim.domains.groundtruth.simulation.group import Group
     
 if (sys.version_info > (3, 0)):
     from configparser import ConfigParser
