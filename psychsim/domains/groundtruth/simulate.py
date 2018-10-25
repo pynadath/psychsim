@@ -87,7 +87,7 @@ if __name__ == '__main__':
     level = getattr(logging, args['debug'].upper(), None)
     if not isinstance(level, int):
         raise ValueError('Invalid debug level: %s' % args['debug'])
-    logging.getLogger().setLevel(level)
+    logging.basicConfig(level=level)
 
     # Initialize visualization
     global vm

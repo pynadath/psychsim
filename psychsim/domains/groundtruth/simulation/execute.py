@@ -25,6 +25,9 @@ from .actor import Actor
 from .cdf import *
 from .create import *
 
+preSurveyRecords = []
+postSurveyRecords = []
+
 def runInstance(instance,args,config,rerun=True):
     for run in range(args['runs']):
         # Verify directory structure
@@ -45,7 +48,10 @@ def runInstance(instance,args,config,rerun=True):
             os.remove(logfile)
         except OSError:
             pass
-        logging.basicConfig(filename=logfile)
+        l = logging.getLogger()
+        for h in l.handlers:
+            l.removeHandler(h)
+        l.addHandler(logging.FileHandler(logfile,'w'))
 
         logging.info('Running Instance %d' % (instance))
         print('Running instance %d, run %d' % (instance,run))
@@ -58,6 +64,8 @@ def runInstance(instance,args,config,rerun=True):
         regions = {agent.name: {'agent': agent,
                                 'inhabitants': [a for a in population if a.home == agent.name]}
                    for agent in world.agents.values() if isinstance(agent,Region)}
+        del preSurveyRecords[:]
+        del postSurveyRecords[:]
         # Write definition files
         if args['write']:
             defDir = os.path.join(os.path.dirname(__file__),'SimulationDefinition')
@@ -506,7 +514,6 @@ demographics = {'Gender': 'gender',
                 'Wealth': 'resources',
                 'Residence': None}
 
-preSurveyRecords = []
 preSurveyFields = ['Timestep','Participant','Hurricane']
 preSurveyFields += sorted(list(demographics.keys()))
 preSurveyQuestions = {'At Shelter': ('location','=shelter'),
@@ -582,7 +589,6 @@ def preSurvey(actor,dirName,hurricane):
             writer.writerow(record)
 
 history = {}
-postSurveyRecords = []
 postSurveyFields = ['Timestep','Participant','Hurricane']
 postSurveyFields += sorted(list(demographics.keys()))
 postSurveyQuestions = {'At Shelter': ('location','=shelter'),
