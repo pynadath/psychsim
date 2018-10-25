@@ -1027,16 +1027,23 @@ class Agent(object):
                                     keySubset=beliefs.keys())
                     # Condition on actual observations
                     for omega in Omega:
-                        beliefs[omega] = vector[keys.makeFuture(omega)]
-                        if len(beliefs) == 0:
+                        value = vector[keys.makeFuture(omega)]
+                        for b in beliefs.distributions[beliefs.keyMap[omega]].domain():
+                            if b[omega] == value:
+                                break
+                        else:
                             logging.error('Impossible observation %s=%s' % \
                                           (omega,vector[keys.makeFuture(omega)]))
-#                            self.world.printState(trueState)
-#                            self.world.printState(beliefs)
-                            print('full omega')
-                            self.world.printVector(vector)
-                            raise ValueError('Impossible observation %s=%s' % \
-                                             (omega,vector[keys.makeFuture(omega)]))
+                            logging.error('Beliefs:\n%s' %
+                                          (beliefs.distributions[beliefs.keyMap[omega]]))
+                            continue
+# #                            self.world.printState(trueState)
+# #                            self.world.printState(beliefs)
+#                             print('full omega')
+#                             self.world.printVector(vector)
+#                             raise ValueError('Impossible observation %s=%s' % \
+#                                              (omega,vector[keys.makeFuture(omega)]))
+                        beliefs[omega] = vector[keys.makeFuture(omega)]
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
                     for dist in beliefs.distributions.values():
