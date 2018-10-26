@@ -1,3 +1,4 @@
+import csv
 import os
 import pickle
 import random
@@ -147,4 +148,49 @@ def loadPickle(instance,run):
                            'Runs','run-%d' % (run),'scenario.pkl'),'rb') as f:
         world = pickle.load(f)
     return world
+    
+def loadHurricanes(instance,run):
+    hurricanes = []
+    inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
+                          'Runs','run-%d' % (run),'HurricaneTable.tsv')
+    with open(inFile,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        for row in reader:
+            hurricane = int(row['Name'])
+            if len(hurricanes) < hurricane:
+                hurricanes.append({'Hurricane': hurricane,
+                                   'Predicted Location': row['Location'],
+                                   'Media Coverage': 'yes',
+                                   'Actual Track': [],
+                                   'Official Announcements': 'none',
+                                   'Start': int(row['Timestep']),
+                                   })
+            elif row['Landed'] == 'yes':
+                if row['Location'] == 'leaving':
+                    hurricanes[-1]['End'] = int(row['Timestep'])
+                else:
+                    if not 'Actual Severity' in hurricanes[-1]:
+                        hurricanes[-1]['Actual Severity'] = row['Category']
+                    if len(hurricanes[-1]['Actual Track']) == 0 or \
+                       hurricanes[-1]['Actual Track'][-1] != row['Location']:
+                        hurricanes[-1]['Actual Track'].append(row['Location'])
+    if 'End' not in hurricanes[-1]:
+        # Incomplete hurricane (probably just showed up on the last day)
+        hurricanes.pop()
+    return hurricanes
+    
+def loadRunData(instance,run):
+    inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
+                          'Runs','run-%d' % (run),'RunDataTable.tsv')
+    data = {}
+    with open(inFile,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        for row in reader:
+            if not row['EntityIdx'] in data:
+                data[row['EntityIdx']] = [{}]
+            t = int(row['Timestep'])
+            if len(data[row['EntityIdx']]) < t:
+                data[row['EntityIdx']].append({})
+            data[row['EntityIdx']][t-1][row['VariableName']] = row['Value']
+    return data
     
