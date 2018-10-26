@@ -3,14 +3,9 @@ import csv
 import logging
 import os.path
 
-if __name__ == '__main__':
-    from simulation.data import mapFromTandE,reverseLikert
-    from simulation.create import getConfig
-    from simulation.execute import runInstance
-else:
-    from .simulation.data import mapFromTandE,reverseLikert
-    from .simulation.create import getConfig
-    from .simulation.execute import runInstance
+from psychsim.domains.groundtruth.simulation.data import mapFromTandE,reverseLikert
+from psychsim.domains.groundtruth.simulation.create import getConfig
+from psychsim.domains.groundtruth.simulation.execute import runInstance
 
 def addToIndividualList(entry):
     vm.individualList.append(viz.Individual(entry['x'], entry['y'], viz.SimColor.GRAY,

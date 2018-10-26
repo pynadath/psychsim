@@ -4,8 +4,8 @@ from psychsim.pwl import *
 from psychsim.action import *
 from psychsim.agent import Agent
         
-from .data import likert
-from .region import Region
+from psychsim.domains.groundtruth.simulation.data import likert
+from psychsim.domains.groundtruth.simulation.region import Region
 
 class Group(Agent):
     def __init__(self,name,world,config):

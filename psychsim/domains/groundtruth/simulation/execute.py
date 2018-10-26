@@ -16,14 +16,14 @@ from psychsim.action import powerset
 from psychsim.reward import *
 from psychsim.agent import Agent
     
-from .data import *
-from .region import Region
-from .nature import Nature
-from .system import System
-from .group import Group
-from .actor import Actor
-from .cdf import *
-from .create import *
+from psychsim.domains.groundtruth.simulation.data import *
+from psychsim.domains.groundtruth.simulation.region import Region
+from psychsim.domains.groundtruth.simulation.nature import Nature
+from psychsim.domains.groundtruth.simulation.system import System
+from psychsim.domains.groundtruth.simulation.group import Group
+from psychsim.domains.groundtruth.simulation.actor import Actor
+from psychsim.domains.groundtruth.simulation.cdf import *
+from psychsim.domains.groundtruth.simulation.create import *
 
 preSurveyRecords = []
 postSurveyRecords = []

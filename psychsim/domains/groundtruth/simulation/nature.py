@@ -1,7 +1,7 @@
 from psychsim.pwl import *
 from psychsim.agent import Agent
-from .data import likert
-from .region import Region
+from psychsim.domains.groundtruth.simulation.data import likert
+from psychsim.domains.groundtruth.simulation.region import Region
 
 class Nature(Agent):
     def __init__(self,world,config):

@@ -8,8 +8,8 @@ from psychsim.pwl import *
 from psychsim.action import *
 from psychsim.reward import *
 from psychsim.agent import Agent
-from .data import likert,toLikert,sampleNormal
-from .region import Region
+from psychsim.domains.groundtruth.simulation.data import likert,toLikert,sampleNormal
+from psychsim.domains.groundtruth.simulation.region import Region
 
 
 if (sys.version_info > (3, 0)):
@@ -661,25 +661,25 @@ class Actor(Agent):
         if config.getboolean('Actors','beliefs'):
             # Observations
             evolve = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
-            omega = self.defineObservation('phase',domain=list,codePtr=True,
+            omega = self.defineObservation('perceivedPhase',domain=list,codePtr=True,
                                            lo=self.world.variables['Nature\'s phase']['elements'],
                                            description='Perception of Nature\'s phase')
-            self.setO('phase',None,
+            self.setO('perceivedPhase',None,
                       makeTree(setToFeatureMatrix(omega,stateKey('Nature','phase'))))
-            self.setState('phase','none')
-            omega = self.defineObservation('days',domain=int,codePtr=True,
+            self.world.setFeature(omega,'none')
+            omega = self.defineObservation('perceivedDays',domain=int,codePtr=True,
                                            description='Perception of Nature\'s days')
-            self.setO('days',None,
+            self.setO('perceivedDays',None,
                       makeTree(setToFeatureMatrix(omega,stateKey('Nature','days'))))
-            self.setState('days',0)
-            omega = self.defineObservation('center',domain=list,codePtr=True,
+            self.world.setFeature(omega,0)
+            omega = self.defineObservation('perceivedCenter',domain=list,codePtr=True,
                                            lo=self.world.variables['Nature\'s location']['elements'],
                                            description='Perception of Nature\'s location')
-            self.setO('center',None,
+            self.setO('perceivedCenter',None,
                       makeTree(setToFeatureMatrix(omega,stateKey('Nature','location'))))
-            self.setState('center','none')
+            self.world.setFeature(omega,'none')
 
-            omega = self.defineObservation('category',domain=int,codePtr=True,
+            omega = self.defineObservation('perceivedCategory',domain=int,codePtr=True,
                                            description='Perception of Nature\'s category')
             distortion = Distribution({'over': likert[5][config.getint('Actors','category_over')-1],
                                        'under': likert[5][config.getint('Actors','category_under')-1]})
@@ -702,9 +702,9 @@ class Actor(Agent):
                         False: {'distribution': [(setToFeatureMatrix(omega,real),distortionProb),
                                                  (setToFeatureMatrix(omega,real,shift=-1),
                                                   1.-distortionProb)]}}
-            self.setO('category',evolve,makeTree(tree))
-            self.setO('category',None,makeTree(setToConstantMatrix(omega,0)))
-            self.setState('category',0)
+            self.setO('perceivedCategory',evolve,makeTree(tree))
+            self.setO('perceivedCategory',None,makeTree(setToConstantMatrix(omega,0)))
+            self.setState('perceivedCategory',0)
             
             omega = self.defineObservation('perceivedHealth',codePtr=True,
                                            description='Perception of Actor\'s health')
