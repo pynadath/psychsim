@@ -12,7 +12,7 @@
 \usepackage{times}%
 \usepackage{hyperref}%
 \hypersetup{colorlinks}%
-\title{USC Ground Truth Documentation}%
+\title{USC Ground Truth}%
 \date{\today}%
 %
 \begin{document}%
@@ -28,7 +28,7 @@ We use influence diagrams as the underlying graph structure for our ground truth
 
 \begin{figure}[ht]%
 \centering%
-\includegraphics[width=0.4\textwidth]{/home/david/psychsim/tools/simple.png}%
+\includegraphics[width=0.4\textwidth]{/home/david/psychsim/psychsim/tools/simple.png}%
 \caption{Simple influence diagram}%
 \end{figure}
 
@@ -63,7 +63,7 @@ Any real values (e.g., initial values of variables, conditional probability tabl
 Integer%
 \end{description}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:66|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:80|%
 \end{flushleft}
 
 %
@@ -75,12 +75,12 @@ Boolean%
 \end{description}%
 \includegraphics[width=\textwidth]{images/aliveOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:191|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:205|%
 \end{flushleft}%
 \subsubsection{Default change in Actor's alive}%
 \label{ssubsec:Default change in Actor's alive}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:466|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:491|%
 \linebreak%
 IF %
 \textbf{Actor's alive}%
@@ -131,83 +131,7 @@ String%
 \end{description}%
 \includegraphics[width=\textwidth]{images/attachmentOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:101|%
-\end{flushleft}
-
-%
-\subsection{Actor's category}%
-\label{subsec:Actor's category}%
-\begin{description}%
-\item[Type:]%
-Integer%
-\end{description}%
-\begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:650|%
-\end{flushleft}%
-\subsubsection{Observation function of Actor's category when Nature{-}evolve}%
-\label{ssubsec:Observation function of Actor's category when Nature{-}evolve}%
-\begin{flushleft}%
-IF %
-\textbf{Nature's category}%
-$\in$%
-\{0,5\}%
-\linebreak%
-\hspace*{2em}%
-THEN %
-: %
-$\mbox{\textbf{Actor's category}} '$%
-$\leftarrow$%
-\textbf{Nature's category}%
-\linebreak%
-\hspace*{2em}%
-ELSE %
-: %
-\linebreak%
-\hspace*{4em}%
-80\%%
-: %
-$\mbox{\textbf{Actor's category}} '$%
-$\leftarrow$%
-\textbf{Nature's category}%
-\linebreak%
-\hspace*{4em}%
-19\%%
-: %
-$\mbox{\textbf{Actor's category}} '$%
-$\leftarrow$%
-\textbf{Nature's category}%
-${-}1$%
-\end{flushleft}
-
-%
-\subsubsection{Default observation of Actor's category}%
-\label{ssubsec:Default observation of Actor's category}%
-\begin{flushleft}%
-$\mbox{\textbf{Actor's category}} '$%
-$\leftarrow$%
-0%
-\end{flushleft}
-
-%
-\subsection{Actor's center}%
-\label{subsec:Actor's center}%
-\begin{description}%
-\item[Type:]%
-String%
-\item[Values:]%
-\textbf{Region01}%
-, %
-\textbf{none}%
-\end{description}%
-\begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:645|%
-\end{flushleft}%
-\subsubsection{Default observation of Actor's center}%
-\label{ssubsec:Default observation of Actor's center}%
-\begin{flushleft}%
-$\mbox{\textbf{Actor's center}} '$%
-$\leftarrow$%
-\textbf{Nature's location}%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:115|%
 \end{flushleft}
 
 %
@@ -220,7 +144,7 @@ Real%
 \end{description}%
 \includegraphics[width=\textwidth]{images/childrenOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:75|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:89|%
 \end{flushleft}
 
 %
@@ -233,12 +157,12 @@ Real%
 \end{description}%
 \includegraphics[width=\textwidth]{images/childrenHealthOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:213|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:230|%
 \end{flushleft}%
-\subsubsection{Default change in Actor's childrenHealth}%
-\label{ssubsec:Default change in Actor's childrenHealth}%
+\subsubsection{Effect of Actor on Actor's childrenHealth}%
+\label{ssubsec:Effect of Actor on Actor's childrenHealth}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:457|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:480|%
 \linebreak%
 IF %
 \textbf{Actor's alive}%
@@ -258,7 +182,10 @@ $\leftarrow$%
 60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
-+0.24%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's healthMax}%
 \linebreak%
 \hspace*{4em}%
 (0.2,0.4{]}%
@@ -281,7 +208,10 @@ $\leftarrow$%
 60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
-+0.24%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's healthMax}%
 \linebreak%
 \hspace*{4em}%
 (0.4,0.6{]}%
@@ -304,7 +234,10 @@ $\leftarrow$%
 60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
-+0.24%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's healthMax}%
 \linebreak%
 \hspace*{4em}%
 (0.6,0.8{]}%
@@ -327,7 +260,10 @@ $\leftarrow$%
 60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
-+0.24%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's healthMax}%
 \linebreak%
 \hspace*{4em}%
 (0.8,1.0{]}%
@@ -350,7 +286,10 @@ $\leftarrow$%
 60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
-+0.24%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's healthMax}%
 \linebreak%
 \hspace*{4em}%
 (1.0,1{]}%
@@ -373,7 +312,10 @@ $\leftarrow$%
 60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
-+0.24%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's healthMax}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
@@ -381,24 +323,6 @@ ELSE %
 $\mbox{\textbf{Actor's childrenHealth}} '$%
 $\leftarrow$%
 0.00%
-\end{flushleft}
-
-%
-\subsection{Actor's days}%
-\label{subsec:Actor's days}%
-\begin{description}%
-\item[Type:]%
-Integer%
-\end{description}%
-\begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:640|%
-\end{flushleft}%
-\subsubsection{Default observation of Actor's days}%
-\label{ssubsec:Default observation of Actor's days}%
-\begin{flushleft}%
-$\mbox{\textbf{Actor's days}} '$%
-$\leftarrow$%
-\textbf{Nature's days}%
 \end{flushleft}
 
 %
@@ -411,7 +335,7 @@ Boolean%
 \end{description}%
 \includegraphics[width=\textwidth]{images/employedOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:83|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:97|%
 \end{flushleft}
 
 %
@@ -427,7 +351,7 @@ String%
 \textbf{minority}%
 \end{description}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:39|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:53|%
 \end{flushleft}
 
 %
@@ -442,7 +366,7 @@ String%
 \textbf{male}%
 \end{description}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:58|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:72|%
 \end{flushleft}
 
 %
@@ -455,12 +379,12 @@ Real%
 \end{description}%
 \includegraphics[width=\textwidth]{images/grievanceOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:249|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:266|%
 \end{flushleft}%
 \subsubsection{Effect of System{-}allocate{-}Region01 on Actor's grievance}%
 \label{ssubsec:Effect of System{-}allocate{-}Region01 on Actor's grievance}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/system.py:53|%
+\verb|psychsim/domains/groundtruth/simulation/system.py:53|%
 \linebreak%
 IF %
 \textbf{Actor's region}%
@@ -497,12 +421,12 @@ Real%
 \end{description}%
 \includegraphics[width=\textwidth]{images/healthOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:195|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:209|%
 \end{flushleft}%
-\subsubsection{Default change in Actor's health}%
-\label{ssubsec:Default change in Actor's health}%
+\subsubsection{Effect of Actor on Actor's health}%
+\label{ssubsec:Effect of Actor on Actor's health}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:444|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:464|%
 \linebreak%
 IF %
 \textbf{Actor's alive}%
@@ -522,7 +446,10 @@ $\leftarrow$%
 60\%%
 $\cdot$%
 \textbf{Actor's health}%
-+0.24%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's healthMax}%
 \linebreak%
 \hspace*{4em}%
 (0.2,0.4{]}%
@@ -545,7 +472,10 @@ $\leftarrow$%
 60\%%
 $\cdot$%
 \textbf{Actor's health}%
-+0.24%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's healthMax}%
 \linebreak%
 \hspace*{4em}%
 (0.4,0.6{]}%
@@ -568,7 +498,10 @@ $\leftarrow$%
 60\%%
 $\cdot$%
 \textbf{Actor's health}%
-+0.24%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's healthMax}%
 \linebreak%
 \hspace*{4em}%
 (0.6,0.8{]}%
@@ -591,7 +524,10 @@ $\leftarrow$%
 60\%%
 $\cdot$%
 \textbf{Actor's health}%
-+0.24%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's healthMax}%
 \linebreak%
 \hspace*{4em}%
 (0.8,1.0{]}%
@@ -614,7 +550,10 @@ $\leftarrow$%
 60\%%
 $\cdot$%
 \textbf{Actor's health}%
-+0.24%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's healthMax}%
 \linebreak%
 \hspace*{4em}%
 (1.0,1{]}%
@@ -637,7 +576,10 @@ $\leftarrow$%
 60\%%
 $\cdot$%
 \textbf{Actor's health}%
-+0.24%
++%
+40\%%
+$\cdot$%
+\textbf{Actor's healthMax}%
 \linebreak%
 \hspace*{2em}%
 ELSE %
@@ -645,6 +587,19 @@ ELSE %
 $\mbox{\textbf{Actor's health}} '$%
 $\leftarrow$%
 0.00%
+\end{flushleft}
+
+%
+\subsection{Actor's healthMax}%
+\label{subsec:Actor's healthMax}%
+Maximum level of physical wellbeing%
+\begin{description}%
+\item[Type:]%
+Real%
+\end{description}%
+\includegraphics[width=\textwidth]{images/healthMaxOfActor.png}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:224|%
 \end{flushleft}
 
 %
@@ -663,12 +618,12 @@ String%
 \end{description}%
 \includegraphics[width=\textwidth]{images/locationOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:188|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:202|%
 \end{flushleft}%
 \subsubsection{Effect of Actor{-}evacuate on Actor's location}%
 \label{ssubsec:Effect of Actor{-}evacuate on Actor's location}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:401|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:420|%
 \linebreak%
 $\mbox{\textbf{Actor's location}} '$%
 $\leftarrow$%
@@ -679,7 +634,7 @@ $\leftarrow$%
 \subsubsection{Effect of Actor{-}moveTo{-}Region01 on Actor's location}%
 \label{ssubsec:Effect of Actor{-}moveTo{-}Region01 on Actor's location}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:408|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:427|%
 \linebreak%
 $\mbox{\textbf{Actor's location}} '$%
 $\leftarrow$%
@@ -690,7 +645,7 @@ $\leftarrow$%
 \subsubsection{Effect of Actor{-}moveTo{-}shelter1 on Actor's location}%
 \label{ssubsec:Effect of Actor{-}moveTo{-}shelter1 on Actor's location}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:398|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:417|%
 \linebreak%
 $\mbox{\textbf{Actor's location}} '$%
 $\leftarrow$%
@@ -698,14 +653,69 @@ $\leftarrow$%
 \end{flushleft}
 
 %
+\subsection{Actor's perceivedCategory}%
+\label{subsec:Actor's perceivedCategory}%
+Perception of Nature's category%
+\begin{description}%
+\item[Type:]%
+Integer%
+\end{description}%
+\includegraphics[width=\textwidth]{images/perceivedCategoryOfActor.png}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:683|%
+\end{flushleft}%
+\subsubsection{Observation function of Actor's perceivedCategory when Nature{-}evolve}%
+\label{ssubsec:Observation function of Actor's perceivedCategory when Nature{-}evolve}%
+\begin{flushleft}%
+$\mbox{\textbf{Actor's perceivedCategory}} '$%
+$\leftarrow$%
+\textbf{Nature's category}%
+\end{flushleft}
+
+%
+\subsubsection{Default observation of Actor's perceivedCategory}%
+\label{ssubsec:Default observation of Actor's perceivedCategory}%
+\begin{flushleft}%
+$\mbox{\textbf{Actor's perceivedCategory}} '$%
+$\leftarrow$%
+0%
+\end{flushleft}
+
+%
+\subsection{Actor's perceivedCenter}%
+\label{subsec:Actor's perceivedCenter}%
+Perception of Nature's location%
+\begin{description}%
+\item[Type:]%
+String%
+\item[Values:]%
+\textbf{Region01}%
+, %
+\textbf{none}%
+\end{description}%
+\includegraphics[width=\textwidth]{images/perceivedCenterOfActor.png}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:677|%
+\end{flushleft}%
+\subsubsection{Default observation of Actor's perceivedCenter}%
+\label{ssubsec:Default observation of Actor's perceivedCenter}%
+\begin{flushleft}%
+$\mbox{\textbf{Actor's perceivedCenter}} '$%
+$\leftarrow$%
+\textbf{Nature's location}%
+\end{flushleft}
+
+%
 \subsection{Actor's perceivedChildrenHealth}%
 \label{subsec:Actor's perceivedChildrenHealth}%
+Perception of Actor's childrenHealth%
 \begin{description}%
 \item[Type:]%
 Real%
 \end{description}%
+\includegraphics[width=\textwidth]{images/perceivedChildrenHealthOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:681|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:716|%
 \end{flushleft}%
 \subsubsection{Default observation of Actor's perceivedChildrenHealth}%
 \label{ssubsec:Default observation of Actor's perceivedChildrenHealth}%
@@ -716,14 +726,36 @@ $\leftarrow$%
 \end{flushleft}
 
 %
+\subsection{Actor's perceivedDays}%
+\label{subsec:Actor's perceivedDays}%
+Perception of Nature's days%
+\begin{description}%
+\item[Type:]%
+Integer%
+\end{description}%
+\includegraphics[width=\textwidth]{images/perceivedDaysOfActor.png}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:671|%
+\end{flushleft}%
+\subsubsection{Default observation of Actor's perceivedDays}%
+\label{ssubsec:Default observation of Actor's perceivedDays}%
+\begin{flushleft}%
+$\mbox{\textbf{Actor's perceivedDays}} '$%
+$\leftarrow$%
+\textbf{Nature's days}%
+\end{flushleft}
+
+%
 \subsection{Actor's perceivedHealth}%
 \label{subsec:Actor's perceivedHealth}%
+Perception of Actor's health%
 \begin{description}%
 \item[Type:]%
 Real%
 \end{description}%
+\includegraphics[width=\textwidth]{images/perceivedHealthOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:676|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:710|%
 \end{flushleft}%
 \subsubsection{Default observation of Actor's perceivedHealth}%
 \label{ssubsec:Default observation of Actor's perceivedHealth}%
@@ -731,6 +763,32 @@ Real%
 $\mbox{\textbf{Actor's perceivedHealth}} '$%
 $\leftarrow$%
 \textbf{Actor's health}%
+\end{flushleft}
+
+%
+\subsection{Actor's perceivedPhase}%
+\label{subsec:Actor's perceivedPhase}%
+Perception of Nature's phase%
+\begin{description}%
+\item[Type:]%
+String%
+\item[Values:]%
+\textbf{active}%
+, %
+\textbf{approaching}%
+, %
+\textbf{none}%
+\end{description}%
+\includegraphics[width=\textwidth]{images/perceivedPhaseOfActor.png}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:666|%
+\end{flushleft}%
+\subsubsection{Default observation of Actor's perceivedPhase}%
+\label{ssubsec:Default observation of Actor's perceivedPhase}%
+\begin{flushleft}%
+$\mbox{\textbf{Actor's perceivedPhase}} '$%
+$\leftarrow$%
+\textbf{Nature's phase}%
 \end{flushleft}
 
 %
@@ -743,12 +801,12 @@ Boolean%
 \end{description}%
 \includegraphics[width=\textwidth]{images/petOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:88|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:102|%
 \end{flushleft}%
 \subsubsection{Effect of Actor{-}moveTo{-}shelter1 on Actor's pet}%
 \label{ssubsec:Effect of Actor{-}moveTo{-}shelter1 on Actor's pet}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:579|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:608|%
 \linebreak%
 IF %
 $\mbox{\textbf{Actor's location}} '$%
@@ -784,30 +842,6 @@ $\leftarrow$%
 \end{flushleft}
 
 %
-\subsection{Actor's phase}%
-\label{subsec:Actor's phase}%
-\begin{description}%
-\item[Type:]%
-String%
-\item[Values:]%
-\textbf{active}%
-, %
-\textbf{approaching}%
-, %
-\textbf{none}%
-\end{description}%
-\begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:636|%
-\end{flushleft}%
-\subsubsection{Default observation of Actor's phase}%
-\label{ssubsec:Default observation of Actor's phase}%
-\begin{flushleft}%
-$\mbox{\textbf{Actor's phase}} '$%
-$\leftarrow$%
-\textbf{Nature's phase}%
-\end{flushleft}
-
-%
 \subsection{Actor's region}%
 \label{subsec:Actor's region}%
 Region of residence%
@@ -819,7 +853,7 @@ String%
 \end{description}%
 \includegraphics[width=\textwidth]{images/regionOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:150|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:164|%
 \end{flushleft}
 
 %
@@ -837,7 +871,7 @@ String%
 \textbf{none}%
 \end{description}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:47|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:61|%
 \end{flushleft}
 
 %
@@ -850,17 +884,17 @@ Real%
 \end{description}%
 \includegraphics[width=\textwidth]{images/resourcesOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:217|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:234|%
 \end{flushleft}%
 \subsubsection{Effect of Actor{-}evacuate on Actor's resources}%
 \label{ssubsec:Effect of Actor{-}evacuate on Actor's resources}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:503|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:532|%
 \linebreak%
 IF %
 \textbf{Actor's resources}%
 $>$%
-0.20%
+0.40%
 \linebreak%
 \hspace*{2em}%
 THEN %
@@ -868,7 +902,7 @@ THEN %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
-${-}0.20$%
+${-}0.40$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
@@ -882,7 +916,7 @@ $\leftarrow$%
 \subsubsection{Effect of Actor{-}moveTo{-}Region01 on Actor's resources}%
 \label{ssubsec:Effect of Actor{-}moveTo{-}Region01 on Actor's resources}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:495|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:520|%
 \linebreak%
 IF %
 \textbf{Actor's alive}%
@@ -898,10 +932,10 @@ THEN %
 : %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
-80\%%
+60\%%
 $\cdot$%
 \textbf{Actor's resources}%
-+0.20%
++0.40%
 \linebreak%
 \hspace*{4em}%
 ELSE %
@@ -919,10 +953,23 @@ $\leftarrow$%
 \end{flushleft}
 
 %
+\subsubsection{Effect of Actor{-}moveTo{-}shelter1 on Actor's resources}%
+\label{ssubsec:Effect of Actor{-}moveTo{-}shelter1 on Actor's resources}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:524|%
+\linebreak%
+$\mbox{\textbf{Actor's resources}} '$%
+$\leftarrow$%
+0\%%
+$\cdot$%
+\textbf{Actor's resources}%
+\end{flushleft}
+
+%
 \subsubsection{Effect of Actor{-}stayInLocation on Actor's resources}%
 \label{ssubsec:Effect of Actor{-}stayInLocation on Actor's resources}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:484|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:509|%
 \linebreak%
 IF %
 \textbf{Actor's alive}%
@@ -939,17 +986,17 @@ THEN %
 IF %
 \textbf{Actor's location}%
 $=$%
-\textbf{\{'evacuated', 'Region01'\}}%
+\textbf{\{'Region01', 'evacuated'\}}%
 \linebreak%
 \hspace*{6em}%
 THEN %
 : %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
-80\%%
+60\%%
 $\cdot$%
 \textbf{Actor's resources}%
-+0.20%
++0.40%
 \linebreak%
 \hspace*{6em}%
 ELSE %
@@ -977,7 +1024,7 @@ $\leftarrow$%
 \subsubsection{Effect of Actor{-}takeResources{-}Region01 on Actor's resources}%
 \label{ssubsec:Effect of Actor{-}takeResources{-}Region01 on Actor's resources}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:546|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:575|%
 \linebreak%
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
@@ -997,13 +1044,47 @@ Real%
 \end{description}%
 \includegraphics[width=\textwidth]{images/riskOfActor.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:237|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:254|%
 \end{flushleft}%
 \subsubsection{Effect of Actor{-}decreaseRisk{-}Region01 on Actor's risk}%
 \label{ssubsec:Effect of Actor{-}decreaseRisk{-}Region01 on Actor's risk}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:528|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:557|%
 \linebreak%
+IF %
+\textbf{Actor memberOf Group}%
+\linebreak%
+\hspace*{2em}%
+THEN %
+: %
+IF %
+\textbf{Group's \_\_ACTION\_\_}%
+$=$%
+\textbf{Group{-}decreaseRisk}%
+\linebreak%
+\hspace*{4em}%
+THEN %
+: %
+$\mbox{\textbf{Actor's risk}} '$%
+$\leftarrow$%
+92\%%
+$\cdot$%
+\textbf{Actor's risk}%
++0.08%
+\linebreak%
+\hspace*{4em}%
+ELSE %
+: %
+$\mbox{\textbf{Actor's risk}} '$%
+$\leftarrow$%
+80\%%
+$\cdot$%
+\textbf{Actor's risk}%
++0.20%
+\linebreak%
+\hspace*{2em}%
+ELSE %
+: %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
 80\%%
@@ -1016,7 +1097,7 @@ $\cdot$%
 \subsubsection{Effect of Actor{-}takeResources{-}Region01 on Actor's risk}%
 \label{ssubsec:Effect of Actor{-}takeResources{-}Region01 on Actor's risk}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:553|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:582|%
 \linebreak%
 IF %
 \textbf{Nature's phase}%
@@ -1048,7 +1129,7 @@ $\cdot$%
 \subsubsection{Default change in Actor's risk}%
 \label{ssubsec:Default change in Actor's risk}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:431|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:450|%
 \linebreak%
 IF %
 \textbf{Actor's alive}%
@@ -1090,7 +1171,7 @@ ELSE %
 : %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
-\textbf{Region01's risk}%
+$\mbox{\textbf{Region01's risk}} '$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
@@ -1098,40 +1179,6 @@ ELSE %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
 0.00%
-\end{flushleft}
-
-%
-\subsection{Group's size}%
-\label{subsec:Group's size}%
-\begin{description}%
-\item[Type:]%
-Integer%
-\end{description}%
-\includegraphics[width=\textwidth]{images/sizeOfGroup.png}%
-\begin{flushleft}%
-\verb|psychsim/domains/groundtruth/group.py:24|%
-\end{flushleft}%
-\subsubsection{Effect of Actor{-}join{-}Group on Group's size}%
-\label{ssubsec:Effect of Actor{-}join{-}Group on Group's size}%
-\begin{flushleft}%
-\verb|psychsim/domains/groundtruth/group.py:112|%
-\linebreak%
-$\mbox{\textbf{Group's size}} '$%
-$\leftarrow$%
-\textbf{Group's size}%
-+1%
-\end{flushleft}
-
-%
-\subsubsection{Effect of Actor{-}leave{-}Group on Group's size}%
-\label{ssubsec:Effect of Actor{-}leave{-}Group on Group's size}%
-\begin{flushleft}%
-\verb|psychsim/domains/groundtruth/group.py:123|%
-\linebreak%
-$\mbox{\textbf{Group's size}} '$%
-$\leftarrow$%
-\textbf{Group's size}%
-${-}1$%
 \end{flushleft}
 
 %
@@ -1143,12 +1190,12 @@ Integer%
 \end{description}%
 \includegraphics[width=\textwidth]{images/categoryOfNature.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/nature.py:26|%
+\verb|psychsim/domains/groundtruth/simulation/nature.py:26|%
 \end{flushleft}%
 \subsubsection{Effect of Nature{-}evolve on Nature's category}%
 \label{ssubsec:Effect of Nature{-}evolve on Nature's category}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/nature.py:80|%
+\verb|psychsim/domains/groundtruth/simulation/nature.py:80|%
 \linebreak%
 IF %
 $\mbox{\textbf{Nature's phase}} '$%
@@ -1303,12 +1350,12 @@ Integer%
 \end{description}%
 \includegraphics[width=\textwidth]{images/daysOfNature.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/nature.py:18|%
+\verb|psychsim/domains/groundtruth/simulation/nature.py:18|%
 \end{flushleft}%
 \subsubsection{Effect of Nature{-}evolve on Nature's days}%
 \label{ssubsec:Effect of Nature{-}evolve on Nature's days}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/nature.py:54|%
+\verb|psychsim/domains/groundtruth/simulation/nature.py:54|%
 \linebreak%
 IF %
 \textbf{Nature's phase}%
@@ -1344,12 +1391,12 @@ String%
 \end{description}%
 \includegraphics[width=\textwidth]{images/locationOfNature.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/nature.py:23|%
+\verb|psychsim/domains/groundtruth/simulation/nature.py:23|%
 \end{flushleft}%
 \subsubsection{Effect of Nature{-}evolve on Nature's location}%
 \label{ssubsec:Effect of Nature{-}evolve on Nature's location}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/nature.py:111|%
+\verb|psychsim/domains/groundtruth/simulation/nature.py:113|%
 \linebreak%
 IF %
 $\mbox{\textbf{Nature's phase}} '$%
@@ -1380,17 +1427,43 @@ $\leftarrow$%
 $= \mbox{\textbf{active}}$%
 : %
 IF %
-\textbf{Nature's location}%
+\textbf{Nature's phase}%
+$=$%
+\textbf{approaching}%
 \linebreak%
 \hspace*{4em}%
-OTHERWISE %
+THEN %
 : %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{Nature's location}%
 \linebreak%
 \hspace*{4em}%
+ELSE %
+: %
+IF %
+\textbf{Nature's location}%
+\linebreak%
+\hspace*{6em}%
+OTHERWISE %
+: %
+$\mbox{\textbf{Nature's location}} '$%
+$\leftarrow$%
+\textbf{Nature's location}%
+\linebreak%
+\hspace*{6em}%
 $= \mbox{\textbf{Region01}}$%
+: %
+\linebreak%
+\hspace*{8em}%
+20\%%
+: %
+$\mbox{\textbf{Nature's location}} '$%
+$\leftarrow$%
+\textbf{Region01}%
+\linebreak%
+\hspace*{8em}%
+48\%%
 : %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
@@ -1419,12 +1492,12 @@ String%
 \end{description}%
 \includegraphics[width=\textwidth]{images/phaseOfNature.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/nature.py:16|%
+\verb|psychsim/domains/groundtruth/simulation/nature.py:16|%
 \end{flushleft}%
 \subsubsection{Effect of Nature{-}evolve on Nature's phase}%
 \label{ssubsec:Effect of Nature{-}evolve on Nature's phase}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/nature.py:49|%
+\verb|psychsim/domains/groundtruth/simulation/nature.py:49|%
 \linebreak%
 IF %
 \textbf{Nature's phase}%
@@ -1435,21 +1508,21 @@ $= \mbox{\textbf{none}}$%
 IF %
 \textbf{Nature's days}%
 $>$%
-1%
+2%
 \linebreak%
 \hspace*{4em}%
 THEN %
 : %
 \linebreak%
 \hspace*{6em}%
-80\%%
+60\%%
 : %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{approaching}%
 \linebreak%
 \hspace*{6em}%
-19\%%
+40\%%
 : %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
@@ -1468,21 +1541,21 @@ $= \mbox{\textbf{approaching}}$%
 IF %
 \textbf{Nature's days}%
 $>$%
-1%
+2%
 \linebreak%
 \hspace*{4em}%
 THEN %
 : %
 \linebreak%
 \hspace*{6em}%
-80\%%
+60\%%
 : %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{active}%
 \linebreak%
 \hspace*{6em}%
-19\%%
+40\%%
 : %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
@@ -1527,7 +1600,7 @@ Current economic level of region%
 Real%
 \end{description}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/region.py:77|%
+\verb|psychsim/domains/groundtruth/simulation/region.py:83|%
 \end{flushleft}
 
 %
@@ -1540,25 +1613,50 @@ Real%
 \end{description}%
 \includegraphics[width=\textwidth]{images/riskOfRegion01.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/region.py:51|%
+\verb|psychsim/domains/groundtruth/simulation/region.py:51|%
 \end{flushleft}%
 \subsubsection{Effect of Actor{-}decreaseRisk{-}Region01 on Region01's risk}%
 \label{ssubsec:Effect of Actor{-}decreaseRisk{-}Region01 on Region01's risk}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:523|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:552|%
 \linebreak%
+IF %
+\textbf{Group's \_\_ACTION\_\_}%
+$=$%
+\textbf{Group{-}decreaseRisk}%
+\linebreak%
+\hspace*{2em}%
+THEN %
+: %
+$\mbox{\textbf{Region01's risk}} '$%
+$\leftarrow$%
+68\%%
+$\cdot$%
+\textbf{Region01's risk}%
++%
+31\%%
+$\cdot$%
+\textbf{Region01's riskMin}%
+\linebreak%
+\hspace*{2em}%
+ELSE %
+: %
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
 80\%%
 $\cdot$%
 \textbf{Region01's risk}%
++%
+20\%%
+$\cdot$%
+\textbf{Region01's riskMin}%
 \end{flushleft}
 
 %
 \subsubsection{Effect of Nature{-}evolve on Region01's risk}%
 \label{ssubsec:Effect of Nature{-}evolve on Region01's risk}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/nature.py:129|%
+\verb|psychsim/domains/groundtruth/simulation/nature.py:132|%
 \linebreak%
 IF %
 $\mbox{\textbf{Nature's phase}} '$%
@@ -1579,6 +1677,10 @@ $\leftarrow$%
 80\%%
 $\cdot$%
 \textbf{Region01's risk}%
++%
+20\%%
+$\cdot$%
+\textbf{Region01's riskMin}%
 \linebreak%
 \hspace*{4em}%
 $= \mbox{\textbf{Region01}}$%
@@ -1644,19 +1746,36 @@ $\leftarrow$%
 80\%%
 $\cdot$%
 \textbf{Region01's risk}%
++%
+20\%%
+$\cdot$%
+\textbf{Region01's riskMin}%
 \end{flushleft}
 
 %
 \subsubsection{Effect of System{-}allocate{-}Region01 on Region01's risk}%
 \label{ssubsec:Effect of System{-}allocate{-}Region01 on Region01's risk}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/system.py:41|%
+\verb|psychsim/domains/groundtruth/simulation/system.py:41|%
 \linebreak%
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
 80\%%
 $\cdot$%
 \textbf{Region01's risk}%
+\end{flushleft}
+
+%
+\subsection{Region01's riskMin}%
+\label{subsec:Region01's riskMin}%
+Minimum level of risk in this region%
+\begin{description}%
+\item[Type:]%
+Real%
+\end{description}%
+\includegraphics[width=\textwidth]{images/riskMinOfRegion01.png}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/simulation/region.py:66|%
 \end{flushleft}
 
 %
@@ -1668,7 +1787,7 @@ Level of law enforcement in region%
 Real%
 \end{description}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/region.py:64|%
+\verb|psychsim/domains/groundtruth/simulation/region.py:70|%
 \end{flushleft}
 
 %
@@ -1680,7 +1799,7 @@ Boolean%
 \end{description}%
 \includegraphics[width=\textwidth]{images/shelterPetsOfRegion01.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/region.py:88|%
+\verb|psychsim/domains/groundtruth/simulation/region.py:94|%
 \end{flushleft}
 
 %
@@ -1692,12 +1811,12 @@ Real%
 \end{description}%
 \includegraphics[width=\textwidth]{images/shelterRiskOfRegion01.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/region.py:82|%
+\verb|psychsim/domains/groundtruth/simulation/region.py:88|%
 \end{flushleft}%
 \subsubsection{Effect of Nature{-}evolve on Region01's shelterRisk}%
 \label{ssubsec:Effect of Nature{-}evolve on Region01's shelterRisk}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/nature.py:144|%
+\verb|psychsim/domains/groundtruth/simulation/nature.py:147|%
 \linebreak%
 IF %
 $\mbox{\textbf{Nature's phase}} '$%
@@ -1723,7 +1842,10 @@ $= \mbox{\textbf{1}}$%
 : %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
+80\%%
+$\cdot$%
 \textbf{Region01's shelterRisk}%
++0.20%
 \linebreak%
 \hspace*{6em}%
 $= \mbox{\textbf{2}}$%
@@ -1740,30 +1862,30 @@ $= \mbox{\textbf{3}}$%
 : %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
-60\%%
+80\%%
 $\cdot$%
 \textbf{Region01's shelterRisk}%
-+0.40%
++0.20%
 \linebreak%
 \hspace*{6em}%
 $= \mbox{\textbf{4}}$%
 : %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
-39\%%
+80\%%
 $\cdot$%
 \textbf{Region01's shelterRisk}%
-+0.60%
++0.20%
 \linebreak%
 \hspace*{6em}%
 $= \mbox{\textbf{5}}$%
 : %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
-19\%%
+80\%%
 $\cdot$%
 \textbf{Region01's shelterRisk}%
-+0.80%
++0.20%
 \linebreak%
 \hspace*{4em}%
 ELSE %
@@ -1791,12 +1913,12 @@ Integer%
 \end{description}%
 \includegraphics[width=\textwidth]{images/resourcesOfSystem.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/system.py:20|%
+\verb|psychsim/domains/groundtruth/simulation/system.py:20|%
 \end{flushleft}%
 \subsubsection{Effect of System{-}allocate{-}Region01 on System's resources}%
 \label{ssubsec:Effect of System{-}allocate{-}Region01 on System's resources}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/system.py:43|%
+\verb|psychsim/domains/groundtruth/simulation/system.py:43|%
 \linebreak%
 $\mbox{\textbf{System's resources}} '$%
 $\leftarrow$%
@@ -1812,12 +1934,12 @@ Integer%
 \end{description}%
 \includegraphics[width=\textwidth]{images/day.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/__main__.py:710|%
+\verb|psychsim/domains/groundtruth/simulation/create.py:45|%
 \end{flushleft}%
 \subsubsection{Effect of Nature{-}evolve on day}%
 \label{ssubsec:Effect of Nature{-}evolve on day}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/nature.py:149|%
+\verb|psychsim/domains/groundtruth/simulation/nature.py:152|%
 \linebreak%
 $\mbox{\textbf{day}} '$%
 $\leftarrow$%
@@ -1835,7 +1957,7 @@ $\leftarrow$%
 Boolean%
 \end{description}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:724|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:748|%
 \end{flushleft}
 
 %
@@ -1847,7 +1969,7 @@ Boolean%
 \end{description}%
 \includegraphics[width=\textwidth]{images/ActormemberOf->Group.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/group.py:93|%
+\verb|psychsim/domains/groundtruth/simulation/group.py:88|%
 \end{flushleft}%
 \subsubsection{Effect of Actor{-}join{-}Group on Actor memberOf Group}%
 \label{ssubsec:Effect of Actor{-}join{-}Group on Actor memberOf Group}%
@@ -1873,7 +1995,7 @@ $\leftarrow$%
 \label{subsec:Nature evolve}%
 \includegraphics[width=\textwidth]{images/Nature-evolve.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/nature.py:14|%
+\verb|psychsim/domains/groundtruth/simulation/nature.py:14|%
 \end{flushleft}%
 \subsubsection{Effect on Nature's category of Nature evolve}%
 \label{ssubsec:Effect on Nature's category of Nature evolve}%
@@ -2080,17 +2202,43 @@ $\leftarrow$%
 $= \mbox{\textbf{active}}$%
 : %
 IF %
-\textbf{Nature's location}%
+\textbf{Nature's phase}%
+$=$%
+\textbf{approaching}%
 \linebreak%
 \hspace*{4em}%
-OTHERWISE %
+THEN %
 : %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
 \textbf{Nature's location}%
 \linebreak%
 \hspace*{4em}%
+ELSE %
+: %
+IF %
+\textbf{Nature's location}%
+\linebreak%
+\hspace*{6em}%
+OTHERWISE %
+: %
+$\mbox{\textbf{Nature's location}} '$%
+$\leftarrow$%
+\textbf{Nature's location}%
+\linebreak%
+\hspace*{6em}%
 $= \mbox{\textbf{Region01}}$%
+: %
+\linebreak%
+\hspace*{8em}%
+20\%%
+: %
+$\mbox{\textbf{Nature's location}} '$%
+$\leftarrow$%
+\textbf{Region01}%
+\linebreak%
+\hspace*{8em}%
+48\%%
 : %
 $\mbox{\textbf{Nature's location}} '$%
 $\leftarrow$%
@@ -2117,21 +2265,21 @@ $= \mbox{\textbf{none}}$%
 IF %
 \textbf{Nature's days}%
 $>$%
-1%
+2%
 \linebreak%
 \hspace*{4em}%
 THEN %
 : %
 \linebreak%
 \hspace*{6em}%
-80\%%
+60\%%
 : %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{approaching}%
 \linebreak%
 \hspace*{6em}%
-19\%%
+40\%%
 : %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
@@ -2150,21 +2298,21 @@ $= \mbox{\textbf{approaching}}$%
 IF %
 \textbf{Nature's days}%
 $>$%
-1%
+2%
 \linebreak%
 \hspace*{4em}%
 THEN %
 : %
 \linebreak%
 \hspace*{6em}%
-80\%%
+60\%%
 : %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
 \textbf{active}%
 \linebreak%
 \hspace*{6em}%
-19\%%
+40\%%
 : %
 $\mbox{\textbf{Nature's phase}} '$%
 $\leftarrow$%
@@ -2223,6 +2371,10 @@ $\leftarrow$%
 80\%%
 $\cdot$%
 \textbf{Region01's risk}%
++%
+20\%%
+$\cdot$%
+\textbf{Region01's riskMin}%
 \linebreak%
 \hspace*{4em}%
 $= \mbox{\textbf{Region01}}$%
@@ -2288,6 +2440,10 @@ $\leftarrow$%
 80\%%
 $\cdot$%
 \textbf{Region01's risk}%
++%
+20\%%
+$\cdot$%
+\textbf{Region01's riskMin}%
 \end{flushleft}
 
 %
@@ -2318,7 +2474,10 @@ $= \mbox{\textbf{1}}$%
 : %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
+80\%%
+$\cdot$%
 \textbf{Region01's shelterRisk}%
++0.20%
 \linebreak%
 \hspace*{6em}%
 $= \mbox{\textbf{2}}$%
@@ -2335,30 +2494,30 @@ $= \mbox{\textbf{3}}$%
 : %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
-60\%%
+80\%%
 $\cdot$%
 \textbf{Region01's shelterRisk}%
-+0.40%
++0.20%
 \linebreak%
 \hspace*{6em}%
 $= \mbox{\textbf{4}}$%
 : %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
-39\%%
+80\%%
 $\cdot$%
 \textbf{Region01's shelterRisk}%
-+0.60%
++0.20%
 \linebreak%
 \hspace*{6em}%
 $= \mbox{\textbf{5}}$%
 : %
 $\mbox{\textbf{Region01's shelterRisk}} '$%
 $\leftarrow$%
-19\%%
+80\%%
 $\cdot$%
 \textbf{Region01's shelterRisk}%
-+0.80%
++0.20%
 \linebreak%
 \hspace*{4em}%
 ELSE %
@@ -2392,7 +2551,7 @@ $\leftarrow$%
 \label{subsec:Actor decreaseRisk Region01}%
 \includegraphics[width=\textwidth]{images/Actor-decreaseRisk-Region01.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:326|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:345|%
 \end{flushleft}%
 \subsubsection{Applicability of Actor decreaseRisk Region01}%
 \label{ssubsec:Applicability of Actor decreaseRisk Region01}%
@@ -2428,6 +2587,40 @@ ELSE %
 \subsubsection{Effect on Actor's risk of Actor decreaseRisk Region01}%
 \label{ssubsec:Effect on Actor's risk of Actor decreaseRisk Region01}%
 \begin{flushleft}%
+IF %
+\textbf{Actor memberOf Group}%
+\linebreak%
+\hspace*{2em}%
+THEN %
+: %
+IF %
+\textbf{Group's \_\_ACTION\_\_}%
+$=$%
+\textbf{Group{-}decreaseRisk}%
+\linebreak%
+\hspace*{4em}%
+THEN %
+: %
+$\mbox{\textbf{Actor's risk}} '$%
+$\leftarrow$%
+92\%%
+$\cdot$%
+\textbf{Actor's risk}%
++0.08%
+\linebreak%
+\hspace*{4em}%
+ELSE %
+: %
+$\mbox{\textbf{Actor's risk}} '$%
+$\leftarrow$%
+80\%%
+$\cdot$%
+\textbf{Actor's risk}%
++0.20%
+\linebreak%
+\hspace*{2em}%
+ELSE %
+: %
 $\mbox{\textbf{Actor's risk}} '$%
 $\leftarrow$%
 80\%%
@@ -2440,11 +2633,36 @@ $\cdot$%
 \subsubsection{Effect on Region01's risk of Actor decreaseRisk Region01}%
 \label{ssubsec:Effect on Region01's risk of Actor decreaseRisk Region01}%
 \begin{flushleft}%
+IF %
+\textbf{Group's \_\_ACTION\_\_}%
+$=$%
+\textbf{Group{-}decreaseRisk}%
+\linebreak%
+\hspace*{2em}%
+THEN %
+: %
+$\mbox{\textbf{Region01's risk}} '$%
+$\leftarrow$%
+68\%%
+$\cdot$%
+\textbf{Region01's risk}%
++%
+31\%%
+$\cdot$%
+\textbf{Region01's riskMin}%
+\linebreak%
+\hspace*{2em}%
+ELSE %
+: %
 $\mbox{\textbf{Region01's risk}} '$%
 $\leftarrow$%
 80\%%
 $\cdot$%
 \textbf{Region01's risk}%
++%
+20\%%
+$\cdot$%
+\textbf{Region01's riskMin}%
 \end{flushleft}
 
 %
@@ -2452,7 +2670,7 @@ $\cdot$%
 \label{subsec:Actor evacuate}%
 \includegraphics[width=\textwidth]{images/Actor-evacuate.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:308|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:327|%
 \end{flushleft}%
 \subsubsection{Applicability of Actor evacuate}%
 \label{ssubsec:Applicability of Actor evacuate}%
@@ -2513,7 +2731,7 @@ $\leftarrow$%
 IF %
 \textbf{Actor's resources}%
 $>$%
-0.20%
+0.40%
 \linebreak%
 \hspace*{2em}%
 THEN %
@@ -2521,7 +2739,7 @@ THEN %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
 \textbf{Actor's resources}%
-${-}0.20$%
+${-}0.40$%
 \linebreak%
 \hspace*{2em}%
 ELSE %
@@ -2536,7 +2754,7 @@ $\leftarrow$%
 \label{subsec:Actor join Group}%
 \includegraphics[width=\textwidth]{images/Actor-join-Group.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/group.py:108|%
+\verb|psychsim/domains/groundtruth/simulation/group.py:103|%
 \end{flushleft}%
 \subsubsection{Applicability of Actor join Group}%
 \label{ssubsec:Applicability of Actor join Group}%
@@ -2576,21 +2794,11 @@ $\leftarrow$%
 \end{flushleft}
 
 %
-\subsubsection{Effect on Group's size of Actor join Group}%
-\label{ssubsec:Effect on Group's size of Actor join Group}%
-\begin{flushleft}%
-$\mbox{\textbf{Group's size}} '$%
-$\leftarrow$%
-\textbf{Group's size}%
-+1%
-\end{flushleft}
-
-%
 \subsection{Actor leave Group}%
 \label{subsec:Actor leave Group}%
 \includegraphics[width=\textwidth]{images/Actor-leave-Group.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/group.py:119|%
+\verb|psychsim/domains/groundtruth/simulation/group.py:114|%
 \end{flushleft}%
 \subsubsection{Applicability of Actor leave Group}%
 \label{ssubsec:Applicability of Actor leave Group}%
@@ -2630,21 +2838,11 @@ $\leftarrow$%
 \end{flushleft}
 
 %
-\subsubsection{Effect on Group's size of Actor leave Group}%
-\label{ssubsec:Effect on Group's size of Actor leave Group}%
-\begin{flushleft}%
-$\mbox{\textbf{Group's size}} '$%
-$\leftarrow$%
-\textbf{Group's size}%
-${-}1$%
-\end{flushleft}
-
-%
 \subsection{Actor moveTo Region01}%
 \label{subsec:Actor moveTo Region01}%
 \includegraphics[width=\textwidth]{images/Actor-moveTo-Region01.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:315|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:334|%
 \end{flushleft}%
 \subsubsection{Applicability of Actor moveTo Region01}%
 \label{ssubsec:Applicability of Actor moveTo Region01}%
@@ -2652,7 +2850,7 @@ ${-}1$%
 IF %
 \textbf{Actor's location}%
 $=$%
-\textbf{\{'shelter1', 'evacuated'\}}%
+\textbf{\{'evacuated', 'shelter1'\}}%
 \linebreak%
 \hspace*{2em}%
 THEN %
@@ -2692,10 +2890,10 @@ THEN %
 : %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
-80\%%
+60\%%
 $\cdot$%
 \textbf{Actor's resources}%
-+0.20%
++0.40%
 \linebreak%
 \hspace*{4em}%
 ELSE %
@@ -2717,7 +2915,7 @@ $\leftarrow$%
 \label{subsec:Actor moveTo shelter1}%
 \includegraphics[width=\textwidth]{images/Actor-moveTo-shelter1.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:298|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:317|%
 \end{flushleft}%
 \subsubsection{Applicability of Actor moveTo shelter1}%
 \label{ssubsec:Applicability of Actor moveTo shelter1}%
@@ -2809,11 +3007,22 @@ $\leftarrow$%
 \end{flushleft}
 
 %
+\subsubsection{Effect on Actor's resources of Actor moveTo shelter1}%
+\label{ssubsec:Effect on Actor's resources of Actor moveTo shelter1}%
+\begin{flushleft}%
+$\mbox{\textbf{Actor's resources}} '$%
+$\leftarrow$%
+0\%%
+$\cdot$%
+\textbf{Actor's resources}%
+\end{flushleft}
+
+%
 \subsection{Actor stayInLocation}%
 \label{subsec:Actor stayInLocation}%
 \includegraphics[width=\textwidth]{images/Actor-stayInLocation.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:259|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:277|%
 \end{flushleft}%
 \subsubsection{Effect on Actor's resources of Actor stayInLocation}%
 \label{ssubsec:Effect on Actor's resources of Actor stayInLocation}%
@@ -2833,17 +3042,17 @@ THEN %
 IF %
 \textbf{Actor's location}%
 $=$%
-\textbf{\{'evacuated', 'Region01'\}}%
+\textbf{\{'Region01', 'evacuated'\}}%
 \linebreak%
 \hspace*{6em}%
 THEN %
 : %
 $\mbox{\textbf{Actor's resources}} '$%
 $\leftarrow$%
-80\%%
+60\%%
 $\cdot$%
 \textbf{Actor's resources}%
-+0.20%
++0.40%
 \linebreak%
 \hspace*{6em}%
 ELSE %
@@ -2872,7 +3081,7 @@ $\leftarrow$%
 \label{subsec:Actor takeResources Region01}%
 \includegraphics[width=\textwidth]{images/Actor-takeResources-Region01.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/actor.py:361|%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:380|%
 \end{flushleft}%
 \subsubsection{Applicability of Actor takeResources Region01}%
 \label{ssubsec:Applicability of Actor takeResources Region01}%
@@ -2951,7 +3160,7 @@ $\cdot$%
 \label{subsec:System allocate Region01}%
 \includegraphics[width=\textwidth]{images/System-allocate-Region01.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/system.py:37|%
+\verb|psychsim/domains/groundtruth/simulation/system.py:37|%
 \end{flushleft}%
 \subsubsection{Effect on Actor's grievance of System allocate Region01}%
 \label{ssubsec:Effect on Actor's grievance of System allocate Region01}%
@@ -3006,51 +3215,7 @@ $\leftarrow$%
 \label{subsec:Group decreaseRisk}%
 \includegraphics[width=\textwidth]{images/Group-decreaseRisk.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/group.py:34|%
-\end{flushleft}%
-\subsubsection{Applicability of Group decreaseRisk}%
-\label{ssubsec:Applicability of Group decreaseRisk}%
-\begin{flushleft}%
-IF %
-\textbf{Group's size}%
-$>$%
-0%
-\linebreak%
-\hspace*{2em}%
-THEN %
-: %
-\textbf{true}%
-\linebreak%
-\hspace*{2em}%
-ELSE %
-: %
-\textbf{false}%
-\end{flushleft}
-
-%
-\subsection{Group evacuate}%
-\label{subsec:Group evacuate}%
-\includegraphics[width=\textwidth]{images/Group-evacuate.png}%
-\begin{flushleft}%
-\verb|psychsim/domains/groundtruth/group.py:61|%
-\end{flushleft}%
-\subsubsection{Applicability of Group evacuate}%
-\label{ssubsec:Applicability of Group evacuate}%
-\begin{flushleft}%
-IF %
-\textbf{Nature's phase}%
-$=$%
-\textbf{none}%
-\linebreak%
-\hspace*{2em}%
-THEN %
-: %
-\textbf{false}%
-\linebreak%
-\hspace*{2em}%
-ELSE %
-: %
-\textbf{true}%
+\verb|psychsim/domains/groundtruth/simulation/group.py:31|%
 \end{flushleft}
 
 %
@@ -3058,41 +3223,7 @@ ELSE %
 \label{subsec:Group noDecision}%
 \includegraphics[width=\textwidth]{images/Group-noDecision.png}%
 \begin{flushleft}%
-\verb|psychsim/domains/groundtruth/group.py:64|%
-\end{flushleft}
-
-%
-\subsection{Group returnHome}%
-\label{subsec:Group returnHome}%
-\includegraphics[width=\textwidth]{images/Group-returnHome.png}%
-\begin{flushleft}%
-\verb|psychsim/domains/groundtruth/group.py:62|%
-\end{flushleft}
-
-%
-\subsection{Group takeResources}%
-\label{subsec:Group takeResources}%
-\includegraphics[width=\textwidth]{images/Group-takeResources.png}%
-\begin{flushleft}%
-\verb|psychsim/domains/groundtruth/group.py:55|%
-\end{flushleft}%
-\subsubsection{Applicability of Group takeResources}%
-\label{ssubsec:Applicability of Group takeResources}%
-\begin{flushleft}%
-IF %
-\textbf{Group's size}%
-$>$%
-0%
-\linebreak%
-\hspace*{2em}%
-THEN %
-: %
-\textbf{true}%
-\linebreak%
-\hspace*{2em}%
-ELSE %
-: %
-\textbf{false}%
+\verb|psychsim/domains/groundtruth/simulation/group.py:59|%
 \end{flushleft}
 
 %
@@ -3124,23 +3255,21 @@ $\leftarrow$%
 $\cdot$%
 \textbf{Actor memberOf Group}%
 +%
-40\%%
+60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
 +%
-60\%%
-$\cdot$%
 \textbf{Actor's health}%
 +%
 40\%%
 $\cdot$%
 \textbf{Actor's pet}%
 +%
-20\%%
+80\%%
 $\cdot$%
 \textbf{Actor's resources}%
 +%
-{-}60\%%
+{-}40\%%
 $\cdot$%
 \textbf{Region01's risk}%
 \linebreak%
@@ -3161,23 +3290,21 @@ $\leftarrow$%
 $\cdot$%
 \textbf{Actor memberOf Group}%
 +%
-40\%%
+60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
 +%
-60\%%
-$\cdot$%
 \textbf{Actor's health}%
 +%
 40\%%
 $\cdot$%
 \textbf{Actor's pet}%
 +%
-20\%%
+80\%%
 $\cdot$%
 \textbf{Actor's resources}%
 +%
-{-}60\%%
+{-}40\%%
 $\cdot$%
 \textbf{Region01's risk}%
 \linebreak%
@@ -3186,23 +3313,21 @@ ELSE %
 : %
 $R$%
 $\leftarrow$%
-40\%%
+60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
 +%
-60\%%
-$\cdot$%
 \textbf{Actor's health}%
 +%
 40\%%
 $\cdot$%
 \textbf{Actor's pet}%
 +%
-20\%%
+80\%%
 $\cdot$%
 \textbf{Actor's resources}%
 +%
-{-}60\%%
+{-}40\%%
 $\cdot$%
 \textbf{Region01's risk}%
 \linebreak%
@@ -3211,23 +3336,21 @@ ELSE %
 : %
 $R$%
 $\leftarrow$%
-40\%%
+60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
 +%
-60\%%
-$\cdot$%
 \textbf{Actor's health}%
 +%
 40\%%
 $\cdot$%
 \textbf{Actor's pet}%
 +%
-20\%%
+80\%%
 $\cdot$%
 \textbf{Actor's resources}%
 +%
-{-}60\%%
+{-}40\%%
 $\cdot$%
 \textbf{Region01's risk}%
 \end{flushleft}
@@ -3259,23 +3382,21 @@ $\leftarrow$%
 $\cdot$%
 \textbf{Actor memberOf Group}%
 +%
-40\%%
+60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
 +%
-60\%%
-$\cdot$%
 \textbf{Actor's health}%
 +%
 40\%%
 $\cdot$%
 \textbf{Actor's pet}%
 +%
-20\%%
+80\%%
 $\cdot$%
 \textbf{Actor's resources}%
 +%
-{-}60\%%
+{-}40\%%
 $\cdot$%
 \textbf{Region01's risk}%
 \linebreak%
@@ -3296,23 +3417,21 @@ $\leftarrow$%
 $\cdot$%
 \textbf{Actor memberOf Group}%
 +%
-40\%%
+60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
 +%
-60\%%
-$\cdot$%
 \textbf{Actor's health}%
 +%
 40\%%
 $\cdot$%
 \textbf{Actor's pet}%
 +%
-20\%%
+80\%%
 $\cdot$%
 \textbf{Actor's resources}%
 +%
-{-}60\%%
+{-}40\%%
 $\cdot$%
 \textbf{Region01's risk}%
 \linebreak%
@@ -3321,23 +3440,21 @@ ELSE %
 : %
 $R$%
 $\leftarrow$%
-40\%%
+60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
 +%
-60\%%
-$\cdot$%
 \textbf{Actor's health}%
 +%
 40\%%
 $\cdot$%
 \textbf{Actor's pet}%
 +%
-20\%%
+80\%%
 $\cdot$%
 \textbf{Actor's resources}%
 +%
-{-}60\%%
+{-}40\%%
 $\cdot$%
 \textbf{Region01's risk}%
 \linebreak%
@@ -3346,23 +3463,21 @@ ELSE %
 : %
 $R$%
 $\leftarrow$%
-40\%%
+60\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
 +%
-60\%%
-$\cdot$%
 \textbf{Actor's health}%
 +%
 40\%%
 $\cdot$%
 \textbf{Actor's pet}%
 +%
-20\%%
+80\%%
 $\cdot$%
 \textbf{Actor's resources}%
 +%
-{-}60\%%
+{-}40\%%
 $\cdot$%
 \textbf{Region01's risk}%
 \end{flushleft}
