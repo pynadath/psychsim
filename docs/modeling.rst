@@ -39,11 +39,6 @@ Of course, not everything that has a name is an agent. There are a number of rea
 
 State
 -----
-$\vec S$
-
-$$\vec S$$
-
-\(\vec S\)
 
 The *state* of a simulation captures the dynamic process by which it evolves. As in a *factored MDP*, we divide the state, :math:`\vec S`, into a set of orthogonal features, :math:`S_0\times S_1\times\cdots\times S_n`. Each feature captures a distinct aspect of the simulation state. 
 
