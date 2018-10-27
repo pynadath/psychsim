@@ -674,7 +674,10 @@ class Agent(object):
                                       description='Reward for %s in this state' % (self.name))
             self.world.setFeature(key,0.)
 
-    def getReward(self,model):
+    def getReward(self,model=None):
+        if model is None:
+            model = self.world.getModel(self.name,self.world.state)
+            return {m: self.getReward(m) for m in model.domain()}
         R = self.getAttribute('R',model)
         if R is None:
             # No reward components
@@ -955,6 +958,10 @@ class Agent(object):
             self.models[model]['level'] = level
 
     def setBelief(self,key,distribution,model=None):
+        if model is None:
+            dist = self.world.getModel(self.name,self.world.state)
+            for model in dist.domain():
+                self.setBelief(key,distribution,model)
         try:
             beliefs = self.models[model]['beliefs']
         except KeyError:
