@@ -1,0 +1,7 @@
+Time in the simulation is currently frozen and represents the present. 
+
+Actors cannot be surveyed in the past, but they can be asked questions about past events.
+
+Additional data-collection instruments can be introduced to gather missing information upon resuming the flow of simulation time.
+
+Additional data-collection instruments can be introduced from the beginning of a hurricane season in a different hurricane-affected area.

@@ -1,0 +1,17 @@
+Region	North	South	East	West
+Region01	Land	Region05	Region02	Water
+Region02	Land	Region06	Region03	Region01
+Region03	Land	Region07	Region04	Region02
+Region04	Land	Region08	Land	Region03
+Region05	Region01	Region09	Region06	Water
+Region06	Region02	Region10	Region07	Region05
+Region07	Region03	Region11	Region08	Region06
+Region08	Region04	Region12	Land	Region07
+Region09	Region05	Region13	Region10	Water
+Region10	Region06	Region14	Region11	Region09
+Region11	Region07	Region15	Region12	Region10
+Region12	Region08	Region16	Land	Region11
+Region13	Region09	Land	Region14	Water
+Region14	Region10	Land	Region15	Region13
+Region15	Region11	Land	Region16	Region14
+Region16	Region12	Land	Land	Region15
