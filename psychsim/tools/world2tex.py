@@ -151,7 +151,7 @@ def addTree(doc,tree,world,indent=0,prefix=None):
                         doc.append(Math(data=Command('lnot'),inline=True))
                     doc.append(key2tex(key))
                     done = True
-                elif variable['domain'] is set or variable['domain'] is list:
+                elif variable['domain'] in [set,list,ActionSet]:
                     assert comparison == 0
                     doc.append(key2tex(key))
                     if len(vector) == 1:

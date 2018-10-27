@@ -39,7 +39,7 @@ class DependencyGraph(dict):
             self.computeGraph()
         return dict.__getitem__(self,key)
 
-    def computeGraph(self,agents=None,state=None):
+    def computeGraph(self,agents=None,state=None,belief=False):
         # Process the unary state features
         if agents is None:
             agents = sorted(self.world.agents.keys())
@@ -85,6 +85,13 @@ class DependencyGraph(dict):
                                         'type': 'action',
                                         'parents': set(),
                                         'children': set()}
+                if agent.O is not True:
+                    # Process the agent observations
+                    for omega,table in agent.O.items():
+                        self[omega] = {'agent': name,
+                                       'type': 'observation',
+                                       'parents': set(),
+                                       'children': set()}
         # Create links from dynamics
         for key,dynamics in self.world.dynamics.items():
             if isTurnKey(key):
@@ -135,6 +142,18 @@ class DependencyGraph(dict):
                             # Link between prerequisite variable and action
                             dict.__getitem__(self,action)['parents'].add(parent)
                             dict.__getitem__(self,parent)['children'].add(action)
+                # Create links from observations
+                if agent.O is not True and not belief:
+                    # Process the agent observations
+                    for omega,table in agent.O.items():
+                        for action,tree in table.items():
+                            if action is not None:
+                                # Action affects observation probability
+                                dict.__getitem__(self,omega)['parents'].add(action)
+                                dict.__getitem__(self,action)['children'].add(omega)
+                            for parent in tree.getKeysIn() - {CONSTANT}:
+                                dict.__getitem__(self,omega)['parents'].add(parent)
+                                dict.__getitem__(self,parent)['children'].add(omega)
 
     def items(self):
         if len(self) == 0:
@@ -191,9 +210,19 @@ class DependencyGraph(dict):
         """
         self.getLayers()
         self.evaluation = []
+        # for key in self.world.variables:
+        #     while len(self.evaluation) <= self[key]['level']:
+        #         self.evaluation.append(set())
+        #     self.evaluation[self[key]['level']].add(makePresent(key))
+            
         for agent,variables in self.world.locals.items():
             for feature in variables.keys():
                 key = stateKey(agent,feature,True)
+                while len(self.evaluation) <= self[key]['level']:
+                    self.evaluation.append(set())
+                self.evaluation[self[key]['level']].add(makePresent(key))
+        for relation,variables in self.world.relations.items():
+            for key,table in variables.items():
                 while len(self.evaluation) <= self[key]['level']:
                     self.evaluation.append(set())
                 self.evaluation[self[key]['level']].add(makePresent(key))

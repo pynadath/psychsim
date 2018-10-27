@@ -60,7 +60,8 @@ class WorldView(QGraphicsScene):
         self.nodes = {'state pre': {},
                       'state post': {},
                       'action': {},
-                      'utility': {}}
+                      'utility': {},
+                      'observation': {}}
         self.edgesOut = {}
         self.edgesIn = {}
         self.agents = {}
@@ -97,9 +98,11 @@ class WorldView(QGraphicsScene):
         self.colorNodes()
         # Lay out edges
         for key,entry in self.graph.items():
-            node = self.nodes[entry['type']][key]
-            for child in entry['children']:
-                self.drawEdge(key,child)
+            if key in self.nodes[entry['type']]:
+                node = self.nodes[entry['type']][key]
+                for child in entry['children']:
+                    if child in self.nodes[self.graph[child]['type']]:
+                        self.drawEdge(key,child)
 
     def displayGroundTruth(self,agent=WORLD,x0=0,y0=0,maxRows=10,recursive=False,selfCycle=False):
         if agent == WORLD:
@@ -121,7 +124,7 @@ class WorldView(QGraphicsScene):
             g = graph.DependencyGraph(self.world)
             state = self.world.agents[agent].getBelief()
             assert len(state) == 1
-            g.computeGraph(state=next(iter(state.values())))
+            g.computeGraph(state=next(iter(state.values())),belief=True)
         layout = getLayout(g)
         if agent == WORLD:
             # Lay out the action nodes
@@ -136,6 +139,9 @@ class WorldView(QGraphicsScene):
             ykey = beliefKey(believer,'ypost')
         # Lay out the post variable nodes
         x = self.drawStateNodes(layout['state post'],g,x,y,xkey,ykey,believer,maxRows)
+        # Lay out the observation nodes
+        if agent == WORLD:
+            x = self.drawObservationNodes(x,0,self.graph,xkey,ykey)
         # Lay out the utility nodes
         if agent == WORLD:
             if recursive:
@@ -172,8 +178,9 @@ class WorldView(QGraphicsScene):
             for child in entry['children']:
                 if agent != WORLD and child in self.world.agents and not child in uNodes:
                     continue
-                if isStateKey(child) or isBinaryKey(child):
-                    if agent != WORLD:
+                if (isStateKey(child) or isBinaryKey(child)) and agent != WORLD:
+                    if isBinaryKey(child) or state2agent(child) == WORLD or \
+                       state2feature(child) not in self.world.agents[state2agent(child)].omega:
                         child = beliefKey(agent,child)
                 elif agent != WORLD and not child in uNodes:
                     continue
@@ -200,38 +207,45 @@ class WorldView(QGraphicsScene):
                 self.agents[agent]['box'].setBrush(QBrush(QColor(color)))
             self.addItem(self.agents[agent]['box'])
 
-        if self.xml:
-            for agent in self.world.agents.values():
-                if agent.O is not True:
-                    for omega,table in agent.O.items():
-                        oNode = self.xml.add_node(omega)
+        if agent == WORLD:
+            for observer in self.world.agents.values():
+                if observer.O is not True:
+                    for omega,table in observer.O.items():
+                        if self.xml:
+                            oNode = self.xml.add_node(omega)
                         for action,tree in table.items():
                             if action is not None:
-                                for aNode in self.xml.nodes():
-                                    if aNode['label'] == str(action):
-                                        break
-                                else:
-                                    raise ValueError('Unable to find node for %s' % (action))
-                                self.xml.add_edge(aNode,oNode,True)
+                                if self.xml:
+                                    for aNode in self.xml.nodes():
+                                        if aNode['label'] == str(action):
+                                            break
+                                    else:
+                                        raise ValueError('Unable to find node for %s' % (action))
+                                    self.xml.add_edge(aNode,oNode,True)
                             for key in tree.getKeysIn():
                                 if key != CONSTANT:
-                                    for sNode in self.xml.nodes():
-                                        if sNode['label'] == key:
-                                            break
-                                    else:
-                                        raise ValueError('Unable to find node for %s' % (key))
-                                    self.xml.add_edge(sNode,oNode,True)
-                                    label = '%sBeliefOf%s' % (agent.name,key)
-                                    for bNode in self.xml.nodes():
-                                        if bNode['label'] == label:
-                                            self.xml.add_edge(oNode,bNode,True)
-                                            break
-                                    else:
-                                        pass
-#                                        raise ValueError('Unable to find node for %s' % (label))
+                                    if self.xml:
+                                        for sNode in self.xml.nodes():
+                                            if sNode['label'] == key:
+                                                break
+                                        else:
+                                            raise ValueError('Unable to find node for %s' % (key))
+                                        self.xml.add_edge(sNode,oNode,True)
+                                        label = '%sBeliefOf%s' % (observer.name,key)
+                                        bNode = self.getGraphNode(label)
+                                        self.xml.add_edge(oNode,bNode,True)
+                                    if recursive:
+                                        self.drawEdge(omega,beliefKey(observer.name,makeFuture(key)))
             parser = GraphMLParser()
             parser.write(self.xml,'/tmp/GroundTruth-USC.graphml')
 
+    def getGraphNode(self,label):
+        for node in self.xml.nodes():
+            if node['label'] == label:
+                return node
+        else:
+            return(self.xml.add_node(label))
+        
     def drawStateNodes(self,nodes,graph,x0,y0,xkey,ykey,believer=None,maxRows=10):
         x = x0
         even = True
@@ -311,10 +325,57 @@ class WorldView(QGraphicsScene):
                     y += self.rowHeight
                     self.world.diagram.x[agent.name] = x
                     self.world.diagram.y[agent.name] = y
+                else:
+                    x = self.world.diagram.getX(agent.name)
+                    y = self.world.diagram.getY(agent.name)
                 node = UtilityNode(agent,x,y,scene=self)
                 self.nodes[graph[name]['type']][name] = node
                 if self.xml:
                     self.xml.add_node(name)
+                if self.xml:
+                    self.xml.add_edge(self.getGraphNode(stateKey(name,'horizon')),
+                                      self.getGraphNode(name))
+        x += self.colWidth
+        return x
+
+    def drawObservationNodes(self,x0,y0,graph,xkey,ykey,believer=None,maxRows=10):
+        omega = sorted(sum([[stateKey(name,omega) for omega in self.world.agents[name].omega]
+                            for name in self.world.agents],[]))
+        x = x0
+        y = y0
+        even = True
+        for key in omega:
+            if believer:
+                label = beliefKey(believer,key)
+                if self.xml:
+                    self.xml.add_node('%sBeliefOf%s' % (believer,makePresent(key)))
+            else:
+                label = key
+                if self.xml:
+                    self.xml.add_node(makePresent(key))
+            variable = self.world.variables[makePresent(key)]
+            if y >= y0+maxRows*self.rowHeight:
+                even = not even
+                if even:
+                    y = y0
+                else:
+                    y = y0+50
+                x += int(0.75*self.colWidth)
+            if not xkey in variable:
+                variable[xkey] = x
+                variable[ykey] = y
+            # Move on to next Y
+            y += self.rowHeight
+            agent = self.world.agents[state2agent(key)]
+            if isBinaryKey(key):
+                node = VariableNode(agent,key[len(agent.name)+1:],key,
+                                    variable[xkey],variable[ykey],
+                                    100,50,scene=self)
+            else:
+                node = VariableNode(agent,key[len(agent.name)+3:],key,
+                                    variable[xkey],variable[ykey],
+                                    100,50,scene=self)
+            self.nodes['observation'][label] = node
         x += self.colWidth
         return x
         
@@ -343,7 +404,8 @@ class WorldView(QGraphicsScene):
                 if nC['label'] == str(childVal):
                     break
             else:
-                raise RuntimeError('Unable to find GraphML node %s' % (childVal))
+                raise RuntimeError('Unable to find GraphML node %s (link from %s)' % \
+                                   (childVal,parentVal))
             self.xml.add_edge(nP,nC,True)
         if graph is None:
             graph = self.graph
@@ -451,7 +513,7 @@ class WorldView(QGraphicsScene):
 
     def updateEdges(self,key,rect):
         self.setDirty()
-        if self.edgesOut.has_key(key):
+        if key in self.edgesOut:
             for subkey,(edge,arrow) in self.edgesOut[key].items():
                 if self.center is None or self.center == key or self.center == subkey:
                     if isinstance(edge,QGraphicsLineItem):
@@ -464,7 +526,7 @@ class WorldView(QGraphicsScene):
                         del self.edgesOut[key][subkey]
                         del self.edgesIn[subkey][key]
                         self.drawEdge(key,subkey,rect0=rect)
-        if self.edgesIn.has_key(key):
+        if key in self.edgesIn:
             for subkey,(edge,arrow) in self.edgesIn[key].items():
                 if self.center is None or self.center == key or self.center == subkey:
                     if isinstance(edge,QGraphicsLineItem):
@@ -501,14 +563,14 @@ class WorldView(QGraphicsScene):
                         for outcome in outcomes:
                             # Update action probabilities
                             for name,distribution in outcome['actions'].items():
-                                if not cache.has_key(name):
+                                if name not in cache:
                                     cache[name] = Distribution()
                                 for action in distribution.domain():
                                     cache[name].addProb(action,outcome['probability']*distribution[action])
                             # Update state probabilities
                             for vector in outcome['new'].domain():
                                 for key,value in vector.items():
-                                    if not cache.has_key(key):
+                                    if key not in cache:
                                         cache[key] = Distribution()
                                     cache[key].addProb(value,outcome['probability']*outcome['new'][vector])
                     if category == 'state pre':
