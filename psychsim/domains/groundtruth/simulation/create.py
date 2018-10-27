@@ -166,6 +166,8 @@ def loadHurricanes(instance,run):
                                    'Start': int(row['Timestep']),
                                    })
             elif row['Landed'] == 'yes':
+                if 'Landfall' not in hurricanes[-1]:
+                    hurricanes[-1]['Landfall'] = int(row['Timestep'])
                 if row['Location'] == 'leaving':
                     hurricanes[-1]['End'] = int(row['Timestep'])
                 else:
@@ -191,6 +193,7 @@ def loadRunData(instance,run):
             t = int(row['Timestep'])
             if len(data[row['EntityIdx']]) < t:
                 data[row['EntityIdx']].append({})
-            data[row['EntityIdx']][t-1][row['VariableName']] = row['Value']
+            data[row['EntityIdx']][t-1][row['VariableName']] = {'Value': row['Value'],
+                                                                'Notes': row['Notes']}
     return data
     
