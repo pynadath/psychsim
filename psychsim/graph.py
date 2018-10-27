@@ -39,7 +39,7 @@ class DependencyGraph(dict):
             self.computeGraph()
         return dict.__getitem__(self,key)
 
-    def computeGraph(self,agents=None,state=None):
+    def computeGraph(self,agents=None,state=None,belief=False):
         # Process the unary state features
         if agents is None:
             agents = sorted(self.world.agents.keys())
@@ -143,7 +143,7 @@ class DependencyGraph(dict):
                             dict.__getitem__(self,action)['parents'].add(parent)
                             dict.__getitem__(self,parent)['children'].add(action)
                 # Create links from observations
-                if agent.O is not True:
+                if agent.O is not True and not belief:
                     # Process the agent observations
                     for omega,table in agent.O.items():
                         for action,tree in table.items():
