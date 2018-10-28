@@ -657,7 +657,7 @@ class Agent(object):
     """Reward methods"""
     """------------------"""
 
-    def setReward(self,tree,weight=0.,model=True):
+    def setReward(self,tree,weight=1.,model=True):
         """
         Adds/updates a goal weight within the reward function for the specified model.
         """
