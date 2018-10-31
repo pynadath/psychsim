@@ -90,7 +90,7 @@ int
    integer valued and discrete
 
 bool
-   a binary {\tt True}/{\tt False} value
+   a binary ``True``/``False`` value
 
 list/set
    an enumerated set of possible values (typically strings)
@@ -166,7 +166,7 @@ The fragment above illustrates one helpful shortcut for :py:class:`~psychsim.act
 Probability
 -----------
 
-Maybe you already know this, but uncertainty is everywhere in social interaction. As a result, :py:class:`~psychsim.probability.Distribution` objects are central to PsychSim's representations. Probability distributions can be treated as dictionaries, where the keys are the elements of the sample space, and the values are the probabilities associated with them. For example, we can represent a fair coin with the following distribution::
+I don't know whether you already know this, but uncertainty is everywhere in social interaction. As a result, :py:class:`~psychsim.probability.Distribution` objects are central to PsychSim's representations. Probability distributions can be treated as dictionaries, where the keys are the elements of the sample space, and the values are the probabilities associated with them. For example, we can represent a fair coin with the following distribution::
 
   coin = Distribution({'heads': 0.5, 'tails': 0.5})
   if coin.sample() == 'heads':
@@ -187,9 +187,25 @@ If you want to know the probability that the coin lands on its edge, ``coin['edg
 
 Piecewise Linear (PWL) Functions
 --------------------------------
-The world state is actually a :py:class:`~psychsim.probability.Distribution` over possible worlds. Thus, even though the above method call specificies a single value, the value is internally represented as a distribution with a single element (i.e., 40000) having 100% probability. We can also pass in a distribution of possible values for a state feature::
+The :py:class:`~psychsim.probability.Distribution` is sufficiently expressive for our needs, but it useful to impose additional structure on the sample space to facilitate authoring, simulation, and understanding. As already mentioned, PsychSim uses a factored representation, so that a state of the world is expressed a probability distribution over possible feature-value pairs. More precisely, instead of distributions over arbitrary elements, PsychSim represents distributions over :py:class:`~psychsim.pwl.vector.Keyedvector` instances, representing a set of feature-value pairs. The features are the same unique identifiers created by functions like :py:func:`~psychsim.pwl.keys.stateKey` and returned by methods like :py:meth:`~psychsim.world.World.defineState`::
 
-   free.setState('cost',Distribution({1000: 0.5, 2000: 0.5}))
+In particular, the state of the world is represented as a :py:class:`~psychsim.pwl.state.VectorDistributionSet` that represents a probability distribution over possible worlds::
+
+  world.setState(WORLD,'phase','engagement')
+  world.setState(WORLD,'winner',Distribution({'Sylvania': 0.25, 'Freedonia': 0.75}))
+  free.setState('troops',Distribution({10000: 0.25, 25000: 0.75}))
+
+These statements declare that the simulation is currently in the `engagement` phase, with a 75% chance that the winner is Freedonia vs. a 25% chance that it is Sylvania, and with Freedonia having a 75% chance of having 25000 troops vs. a 25% chance of having 10000. These three state features have independent distributions within the state. In this state, the probability that Freedonia is the winner with 25000 troops remaining is 56.25%.
+
+If we want to instead specify that Freedonia has 25000 troops if and only if it is the winner, then we specify a joint probability over `winner` and `troops`. To do so, we use a :py:class:`~psychsim.pwl.vector.KeyedVector` to represent elements of the joint sample space::
+
+  freeVictory = KeyedVector({stateKey(WORLD,'winner'): 'Freedonia',
+                             stateKey(free.name,'troops':): 25000})
+  sylvVictory = KeyedVector({stateKey(WORLD,'winner'): 'Sylvania',
+                             stateKey(free.name,'troops':): 10000})
+
+over possible worlds. Thus, even though the above method call specificies a single value, the value is internally represented as a distribution with a single element (i.e., 40000) having 100% probability. We can also pass in a distribution of possible values for a state feature::
+
 
 The :py:class:`~psychsim.probability.Distribution` constructor takes a dictionary whose keys constitute the distribution's sample space, and whose values constitte the probability mass of each element of that space. In the above example, the distribution over Freedonia's cost is 50-50 between 1000 and 2000. When you call the :py:meth:`~psychsim.world.World.setState` method with a probabilistic value, PsychSim *joins* the new distribution with the current state vector. After the previous two :py:meth:`~psychsim.world.World.setState` calls, there will be two possible worlds, each with 50% probability: one where Freedonia has 40000 troops and cost 1000, and a second where Freedonia has 40000 troops and cost 2000. Just as the second call doubles the number of possible worlds, a subsequent call to :py:meth:`~psychsim.world.World.setState` with a probabilistic value will similarly increase the number of possible worlds by a factor equal to the size of the distribution passed in. In other words, calling :py:meth:`~psychsim.world.World.setState` will generate worlds for all possible combinations of the individual values for the state features.
 
