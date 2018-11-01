@@ -393,7 +393,6 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 
 #    for point in WAYPOINTS[level]:
 #        robot.setReward(maximizeFeature(stateKey(point['symbol'],'scanned')),2.)
-    print(robot.getReward())
     world.setOrder([robot.name])
 
     # Robot beliefs
