@@ -56,8 +56,13 @@ if __name__ == '__main__':
                                     valid[field] = row
                 # Analyze QOI time series. Filter out those with nonzero variance.
                 for field in list(valid.keys()):
-                    if statistics.pvariance(values[instance][runFile][field]) < 1e-4:
-                        del valid[field]
+                    if statistics.pvariance(values[instance][runFile][field]) < 1e-8:
+                        print(field,instance,runFile)
+                        if field[:3] == 'All':
+                            del valid[field]
+                        else:
+                            for other in [f for f in valid if f[:6] == 'Region' and f[8:] == field[8:]]:
+                                del valid[other]
     for instance in instances:
         # Write QOI subset
         for runFile,table in values[instance].items():
