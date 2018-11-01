@@ -975,13 +975,13 @@ class World(object):
         :param state: the state distribution to modify (default is the current world state)
         :type state: L{VectorDistribution}
         """
-        if state is None or state is self.state:
-            for agent in self.agents.values():
-                for model in agent.models.values():
-                    if 'beliefs' in model and not model['beliefs'] is True and \
-                       not key in model['beliefs']:
-                        raise RuntimeError('Set all variable values before setting beliefs')
         assert key in self.variables,'Unknown element "%s"' % (key)
+#        if state is None or state is self.state:
+#            for agent in self.agents.values():
+#                for model in agent.models.values():
+#                    if 'beliefs' in model and not model['beliefs'] is True and \
+#                       not key in model['beliefs']:
+#                        raise RuntimeError('Set all variable values before setting beliefs')
         if state is None:
             state = self.state
         state.join(key,self.value2float(key,value),self.variables[key]['substate'])

@@ -591,7 +591,7 @@ class Agent(object):
             self.world.setFeature(key,new)
         return new
 
-    def getActions(self,vector,actions=None):
+    def getActions(self,vector=None,actions=None):
         """
         :param vector: the world in which to test legality
         :param actions: the set of actions to test legality of (default is all available actions)
@@ -599,6 +599,8 @@ class Agent(object):
 	:returns: the set of possible actions to choose from in the given state vector
         :rtype: {L{ActionSet}}
         """
+        if vector is None:
+            vector = self.world.state
         if actions is None:
             actions = self.actions
         if len(self.legal) == 0:
@@ -655,7 +657,7 @@ class Agent(object):
     """Reward methods"""
     """------------------"""
 
-    def setReward(self,tree,weight=0.,model=True):
+    def setReward(self,tree,weight=1.,model=True):
         """
         Adds/updates a goal weight within the reward function for the specified model.
         """
@@ -672,7 +674,10 @@ class Agent(object):
                                       description='Reward for %s in this state' % (self.name))
             self.world.setFeature(key,0.)
 
-    def getReward(self,model):
+    def getReward(self,model=None):
+        if model is None:
+            model = self.world.getModel(self.name,self.world.state)
+            return {m: self.getReward(m) for m in model.domain()}
         R = self.getAttribute('R',model)
         if R is None:
             # No reward components
@@ -731,8 +736,6 @@ class Agent(object):
             else:
                 tree = self.getAttribute('R',model)
             vector *= tree
-            if not rewardKey(self.name) in vector:
-                vector.join(rewardKey(self.name),0.)
             vector.rollback()
             total = vector[rewardKey(self.name)].expectation()
         else:
@@ -953,6 +956,10 @@ class Agent(object):
             self.models[model]['level'] = level
 
     def setBelief(self,key,distribution,model=None):
+        if model is None:
+            dist = self.world.getModel(self.name,self.world.state)
+            for model in dist.domain():
+                self.setBelief(key,distribution,model)
         try:
             beliefs = self.models[model]['beliefs']
         except KeyError:
@@ -1025,16 +1032,23 @@ class Agent(object):
                                     keySubset=beliefs.keys())
                     # Condition on actual observations
                     for omega in Omega:
-                        beliefs[omega] = vector[keys.makeFuture(omega)]
-                        if len(beliefs) == 0:
+                        value = vector[keys.makeFuture(omega)]
+                        for b in beliefs.distributions[beliefs.keyMap[omega]].domain():
+                            if b[omega] == value:
+                                break
+                        else:
                             logging.error('Impossible observation %s=%s' % \
                                           (omega,vector[keys.makeFuture(omega)]))
-#                            self.world.printState(trueState)
-#                            self.world.printState(beliefs)
-                            print('full omega')
-                            self.world.printVector(vector)
-                            raise ValueError('Impossible observation %s=%s' % \
-                                             (omega,vector[keys.makeFuture(omega)]))
+                            logging.error('Beliefs:\n%s' %
+                                          (beliefs.distributions[beliefs.keyMap[omega]]))
+                            continue
+# #                            self.world.printState(trueState)
+# #                            self.world.printState(beliefs)
+#                             print('full omega')
+#                             self.world.printVector(vector)
+#                             raise ValueError('Impossible observation %s=%s' % \
+#                                              (omega,vector[keys.makeFuture(omega)]))
+                        beliefs[omega] = vector[keys.makeFuture(omega)]
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
                     for dist in beliefs.distributions.values():

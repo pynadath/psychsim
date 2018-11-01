@@ -9,6 +9,7 @@ from __future__ import print_function
 import datetime
 import fileinput
 import os
+import pickle
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 import random
@@ -24,7 +25,7 @@ from psychsim.reward import *
 from psychsim.action import *
 import psychsim.probability
 
-from robotWaypoints import WAYPOINTS,DISTANCES
+from psychsim.domains.hri.robotWaypoints import WAYPOINTS,DISTANCES
 
 TEMPLATES = {
     # TODO: Positive/negative framing
@@ -376,25 +377,26 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                              True: setTrueMatrix(omega),
                              False: setFalseMatrix(omega)}))
 
+    assert len(robot.models) == 1
+    model = next(iter(robot.models.keys()))
+
     # Robot goals
     goal = makeTree(setToFeatureMatrix(stateKey(robot.name,REWARD),
                                        stateKey(WORLD,'time'),-1.))
 #    goal = minimizeFeature(stateKey(WORLD,'time'))
-    robot.setReward(goal,60.)
+    robot.setReward(goal,60.,model)
 
     goal = makeTree(setToFeatureMatrix(stateKey(robot.name,REWARD),
                                        stateKey(human.name,'alive')))
 #    goal = achieveGoal(stateKey(human.name,'alive'))
-    robot.setReward(goal,20.)
+    robot.setReward(goal,20.,model)
 
 #    for point in WAYPOINTS[level]:
 #        robot.setReward(maximizeFeature(stateKey(point['symbol'],'scanned')),2.)
-
     world.setOrder([robot.name])
 
     # Robot beliefs
     robot.resetBelief(ignore=[modelKey(robot.name)])
-    model = '%s0' % (robot.name)
 #    world.setModel(robot.name,model)
     value = 10./float(len(WAYPOINTS[level]))
     for index in range(len(WAYPOINTS[level])):
@@ -408,7 +410,10 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
     robot.setAttribute('horizon',1)
 
     filename = getFilename(username,level,ext,root)
-    world.save(filename,ext=='psy')
+    os.makedirs(os.path.dirname(filename),exist_ok=True)
+    with open(filename,'wb') as scenarioFile:
+        pickle.dump(world,scenarioFile)
+#    world.save(filename,ext=='psy')
     WriteLogData('%s user %s, level %d, ability %s, explanation %s, embodiment %s' % \
                      (CREATE_TAG,username,level,ability,explanation,embodiment),
                  username,level,root=root)
@@ -653,7 +658,9 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                   WAYPOINTS[level][robotIndex]['comment'],ack),
                  username,level,root)
     filename = getFilename(username,level,ext,root)
-    world.save(filename,ext=='psy')
+    with open(filename,'wb') as scenarioFile:
+        pickle.dump(world,scenarioFile)
+#    world.save(filename,ext=='psy') 
     return ack
 
 def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None):
@@ -817,19 +824,8 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
 #    pp.pprint(POMDP)
     WriteLogData('%s %s' % (MESSAGE_TAG,explanation),username,level,root=root)
 
-    # Save file in as synchronized a fashion as we can
-    with tempfile.NamedTemporaryFile('w',dir=os.path.dirname(filename),
-                                     delete=False) as tf:
-        tf.write(world.__xml__().toprettyxml())
-        tempname = tf.name
-    done = False
-    while not done:
-        try:
-            os.remove(filename)
-            os.rename(tempname, filename)
-            done = True
-        except WindowsError:
-            time.sleep(1)
+    with open(filename,'wb') as scenarioFile:
+        pickle.dump(world,scenarioFile)
     return explanation
 
 def explainDecision(decision,beliefs,mode):

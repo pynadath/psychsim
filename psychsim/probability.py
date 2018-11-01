@@ -3,15 +3,9 @@ from xml.dom.minidom import Document,Node
 
 class Distribution(dict):
     """
-    A probability distribution
-
-       - C{dist.L{domain}()}:   Returns the domain of possible values
-       - C{dist.L{items}()}:  Returns the list of all (value,prob) pairs
-       - C{dist[value]}:     Returns the probability of the given value
-       - C{dist[value] = x}: Sets the probability of the given value to x
-
-    The possible domain values are any objects
-    @warning: If you make the domain values mutable types, try not to change the values while they are inside the distribution.  If you must change a domain value, it is better to first delete the old value, change it, and then re-insert it.
+    A probability distribution over hashable objects
+    
+    .. warning:: If you make the domain values mutable types, try not to change their values while they are inside the distribution.  If you must change a domain value, it is better to first delete the old value, change it, and then re-insert it.
     """
     epsilon = 1e-8
 
@@ -22,10 +16,10 @@ class Distribution(dict):
         
     def __init__(self,args=None,rationality=None):
         """
-        @param args: the initial elements of the probability distribution
-        @type args: dict
-        @param rationality: if not C{None}, then use as a rationality parameter in a quantal response over the provided values
-        @type rationality: float
+        :param args: the initial elements of the probability distribution
+        :type args: dict
+        :param rationality: if not ``None``, then use as a rationality parameter in a quantal response over the provided values
+        :type rationality: float
         """
         dict.__init__(self)
 #        self._domain = {}
@@ -49,7 +43,7 @@ class Distribution(dict):
 
     def first(self):
         """
-        @return: the first element in this distribution's domain (most useful if there's only one element)
+        :returns: the first element in this distribution's domain (most useful if there's only one element)
         """
         return next(iter(self.domain()))
 
@@ -63,9 +57,9 @@ class Distribution(dict):
         
     def __setitem__(self,element,value):
         """
-        @param element: the domain element
-        @param value: the probability to associate with the given key
-        @type value: float
+        :param element: the domain element
+        :param value: the probability to associate with the given key
+        :type value: float
         """
         key = hash(element)
         self._domain[key] = element
@@ -113,14 +107,14 @@ class Distribution(dict):
         
     def domain(self):
         """
-        @return: the sample space of this probability distribution
-        @rtype: C{list}
+        :returns: the sample space of this probability distribution
+        :rtype: list
         """
         return list(self._domain.values())
 
     def normalize(self):
         """Normalizes the distribution so that the sum of values = 1
-        @note: Not sure if this is really necessary"""
+        """
         total = sum(self.values())
         if abs(total-1.) > self.epsilon:
             for key in self.domain():
@@ -131,17 +125,13 @@ class Distribution(dict):
     
     def expectation(self):
         """
-        @return: the expected value of this distribution
-        @rtype: float
-        @warning: As a side effect, the distribution will be normalized
+        :returns: the expected value of this distribution
+        :rtype: float
         """
         if len(self) == 1:
             # Shortcut if no uncertainty
             return self.domain()[0]
         else:
-            # I suppose we could just assume that the distribution is already
-            # normalized
-            self.normalize()
             total = None
             for element in self.domain():
                 if total is None:
@@ -152,8 +142,8 @@ class Distribution(dict):
 
     def sample(self,quantify=False):
         """
-        @param quantify: if C{True}, also returns the amount of mass by which the sampling crosssed the threshold of the generated sample's range
-        @return: an element from this domain, with a sample probability given by this distribution
+        :param quantify: if ``True``, also returns the amount of mass by which the sampling crosssed the threshold of the generated sample's range
+        :returns: an element from this domain, with a sample probability given by this distribution
         """
         import random
         selection = random.uniform(0.,sum(self.values()))
@@ -172,7 +162,7 @@ class Distribution(dict):
     def set(self,element):
         """
         Reduce distribution to be 100% for the given element
-        @param element: the element that will be the only one with nonzero probability
+        :param element: the element that will be the only one with nonzero probability
         """
         self.clear()
         self[element] = 1.
@@ -180,7 +170,7 @@ class Distribution(dict):
     def select(self):
         """
         Reduce distribution to a single element, sampled according to the given distribution
-        @return: the probability of the selection made
+        :returns: the probability of the selection made
         """
         element = self.sample()
         prob = self[element]
@@ -189,7 +179,7 @@ class Distribution(dict):
 
     def max(self):
         """
-        @return: the most probable element in this distribution (breaking ties by returning the highest-valued element)
+        :returns: the most probable element in this distribution (breaking ties by returning the highest-valued element)
         """
         return max([(self[element],element) for element in self.domain()])[1]
 
@@ -227,7 +217,7 @@ class Distribution(dict):
         
     def __xml__(self):
         """
-        @return: An XML Document object representing this distribution
+        :returns: An XML Document object representing this distribution
         """
         doc = Document()
         root = doc.createElement('distribution')
@@ -250,9 +240,9 @@ class Distribution(dict):
 
     def parse(self,element):
         """Extracts the distribution from the given XML element
-        @param element: The XML Element object specifying the distribution
-        @type element: Element
-        @return: This L{Distribution} object"""
+        :param element: The XML Element object specifying the distribution
+        :type element: Element
+        :returns: This L{Distribution} object"""
         assert element.tagName == 'distribution','Unexpected tag %s for %s' \
             % (element.tagName,self.__class__.__name__)
         self.clear()
