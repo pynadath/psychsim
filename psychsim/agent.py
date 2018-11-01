@@ -736,8 +736,6 @@ class Agent(object):
             else:
                 tree = self.getAttribute('R',model)
             vector *= tree
-            if not rewardKey(self.name) in vector:
-                vector.join(rewardKey(self.name),0.)
             vector.rollback()
             total = vector[rewardKey(self.name)].expectation()
         else:
