@@ -58,11 +58,15 @@ class Agent(object):
         self.parallel = False
         self.epsilon = 1e-6
 
+        self.table = {}
+        self.prev_state = None
+        self.old_decision = {}
+
     """------------------"""
     """Policy methods"""
     """------------------"""
 
-        
+
     def compileV(self,model=None):
         self.world.dependency.getEvaluation()
         if model is None:
@@ -99,7 +103,7 @@ class Agent(object):
             effects = self.world.deltaState(action,belief,belief.keys())
             model['V'][action] = collapseDynamics(copy.deepcopy(R),effects)
         return model['V']
-                            
+
     def decide(self,vector=None,horizon=None,others=None,model=None,selection=None,actions=None,
                keySet=None,debug={}):
         """
@@ -224,7 +228,7 @@ class Agent(object):
                 values[key] = entry['__EV__']
             result['action'] = Distribution(values,self.getAttribute('rationality',model))
         elif len(best) == 1:
-            # If there is only one best action, all of the selection mechanisms devolve 
+            # If there is only one best action, all of the selection mechanisms devolve
             # to the same unique choice
             result['action'] = best[0]
         elif selection == 'random':
@@ -284,7 +288,7 @@ class Agent(object):
                 V['__S__'].append(current)
             V['__beliefs__'] = current
         return V
-        
+
     def oldvalue(self,vector,action=None,horizon=None,others=None,model=None,keys=None):
         """
         Computes the expected value of a state vector (and optional action choice) to this agent
@@ -437,7 +441,7 @@ class Agent(object):
                                     Vrest = 0.
                                 else:
                                     Vrest = distribution[end]*future
-                                # Determine discount function 
+                                # Determine discount function
                                 # (should use belief about other agent, but doesn't yet)
                                 if agent.name == self.name:
                                     discount = agent.getAttribute('discount',model)
@@ -511,7 +515,7 @@ class Agent(object):
 
     def findAttribute(self,name,model):
         """
-        
+
 	:returns: the name of the nearest ancestor model (include the given model itself) that specifies a value for the named feature
         """
         if name in self.models[model]:
@@ -523,7 +527,7 @@ class Agent(object):
 
     def getAttribute(self,name,model):
         """
-        
+
 	:returns: the value for the specified parameter of the specified mental model
         """
         ancestor = self.findAttribute(name,model)
@@ -540,7 +544,7 @@ class Agent(object):
         """
         :param condition: optional legality condition
         :type condition: L{KeyedPlane}
-        
+
 	:returns: the action added
         :rtype: L{ActionSet}
         """
@@ -595,7 +599,7 @@ class Agent(object):
         """
         :param vector: the world in which to test legality
         :param actions: the set of actions to test legality of (default is all available actions)
-        
+
 	:returns: the set of possible actions to choose from in the given state vector
         :rtype: {L{ActionSet}}
         """
@@ -632,7 +636,7 @@ class Agent(object):
     def hasAction(self,atom):
         """
         :type atom: L{Action}
-        
+
 	:returns: ``True`` iff this agent has the given action (possibly in combination with other actions)
         :rtype: bool
         """
@@ -705,12 +709,12 @@ class Agent(object):
             return Rsum
         else:
             return R
-        
+
     def reward(self,vector=None,model=None,recurse=True):
         """
         :param recurse: ``True`` iff it is OK to recurse into another agent's reward (default is ``True``)
         :type recurse: bool
-        
+
 	:returns: the reward I derive in the given state (under the given model, default being the ``True`` model)
         :rtype: float
         """
@@ -735,9 +739,12 @@ class Agent(object):
                 tree = makeTree(tree).desymbolize(self.world.symbols)
             else:
                 tree = self.getAttribute('R',model)
-            vector *= tree
-            vector.rollback()
-            total = vector[rewardKey(self.name)].expectation()
+            if isinstance(tree, dict):
+                pass
+            else:
+                vector *= tree
+                vector.rollback()
+                total = vector[rewardKey(self.name)].expectation()
         else:
             R = self.getAttribute('R',model)
             if R is None:
@@ -807,7 +814,7 @@ class Agent(object):
 
         :param name: the label for this model
         :type name: sotr
-        
+
 	:returns: the model created
         :rtype: dict
         """
@@ -931,7 +938,7 @@ class Agent(object):
             print('%s\t\t\t----beliefs:----' % (prefix),file=buf)
             self.world.printState(model['beliefs'],buf,prefix+'\t\t\t',beliefs=True)
             print('%s\t\t\t----------------' % (prefix),file=buf)
-        
+
     """---------------------"""
     """Belief update methods"""
     """---------------------"""
@@ -947,7 +954,7 @@ class Agent(object):
             beliefs = self.world.state.copySubset(ignore,include)
         self.models[model]['beliefs'] = beliefs
         return beliefs
-        
+
     def setRecursiveLevel(self,level,model=None):
         if model is None:
             for model in self.models.values():
@@ -971,7 +978,7 @@ class Agent(object):
     def getBelief(self,vector=None,model=None):
         """
         :param model: the model of the agent to use, default is to use model specified in the state vector
-        
+
 	:returns: the agent's belief in the given world
         """
         if vector is None:
@@ -1073,7 +1080,7 @@ class Agent(object):
                     % (SE[oldModel][olabel]))
             distribution.addProb(vector,prob)
         return SE
-    
+
     def stateEstimator(self,oldReal,newReal,omega,model=True):
         # Extract belief vector (in minimal diff form)
         try:
@@ -1212,7 +1219,7 @@ class Agent(object):
         O = tree.desymbolize(self.world.symbols)
         self.O[stateKey(self.name,omega)][actions] = O
         return O
-        
+
     def getO(self,state,actions,model=True):
         if self.O is True:
             return {}
@@ -1244,10 +1251,10 @@ class Agent(object):
                 except KeyError:
                     pass
         return omega
-        
+
     def observe(self,vector,actions,model=True):
         """
-        
+
 	:returns: distribution over observations received by this agent in the given world when the given actions are performed
         :rtype: L{Distribution}
         """
@@ -1321,7 +1328,7 @@ class Agent(object):
     """------------------"""
     """Serialization methods"""
     """------------------"""
-            
+
     def __copy__(self):
         return self.__class__(self.self.__xml__())
 
@@ -1621,7 +1628,7 @@ class ValueFunction:
 
     def actionTable(self,name,state,horizon):
         """
-        
+
 	:returns: a table of values for actions for the given agent in the given state
         """
         V = self.table[horizon]
