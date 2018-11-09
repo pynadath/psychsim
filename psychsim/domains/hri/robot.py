@@ -953,12 +953,12 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
             #     print ('The previous action chosen was optimal. Hence, I became more confident with my prediction.')
             explanation += Template(TEMPLATES_MFree['convince'][robot.old_decision[str(omega)][-1]]).safe_substitute()
         conf = values_predicted[action_predicted]/np.sum(values_predicted)
-        robot.old_decision[str(omega)] = [list(values_predicted),conf,str(robotWaypoint['symbol'])]
+        robot.old_decision[str(omega)] = [list(values_predicted),conf,str(robotWaypoint['name'])]
 
 
         # print ('confidence of decision:',values_predicted[action_predicted]/np.sum(values_predicted))
         dict_temps['Confidence'] = round(100*conf,2)
-        dict_temps['waypoint'] = robotWaypoint['symbol']
+        dict_temps['waypoint'] = robotWaypoint['name']
         # return action_predicted
         actions_values = {}
         actions_values['recommend protected'] = values_predicted[0]
