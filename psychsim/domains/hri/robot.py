@@ -77,9 +77,9 @@ TEMPLATES = {
         '0': 'I have reinforced my action probabilities\n',
         '1': 'I have changed my action probabilities drastically to avoid error\n',
         # False positive
-        True: 'It seems that my assessment of the $waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
+        True: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
         # False negative
-        False: 'It seems that my assessment of the $waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
+        False: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
         None: '',
         'always': 'My Old probabilities were $old\nMy new probabilities are $new\n',
         },
