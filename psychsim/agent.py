@@ -734,7 +734,7 @@ class Agent(object):
                                  True: R,False: tree}
                 tree = makeTree(tree).desymbolize(self.world.symbols)
             else:
-                tree = self.getAttribute('R',model)
+                tree = self.getReward(model)
             vector *= tree
             vector.rollback()
             total = vector[rewardKey(self.name)].expectation()
