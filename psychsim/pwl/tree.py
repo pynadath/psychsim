@@ -168,12 +168,12 @@ class KeyedTree:
         @warning: may introduce redundant checks
         """
         if self.isLeaf():
-            tMatrix = self.children[None]
+            tMatrix = self.getLeaf()
             assert len(tMatrix) == 1,'Unable to handle dynamics of more than one feature'
-            assert key in tMatrix,'Are you sure you should be flooring me on a key I don\'t have?'
+            assert makeFuture(key) in tMatrix,'Are you sure you should be flooring me on a key I don\'t have?'
             del self.children[None]
             fMatrix = setToConstantMatrix(key,lo)
-            branch = KeyedPlane(KeyedVector(tMatrix[key]),lo)
+            branch = KeyedPlane(KeyedVector(tMatrix[makeFuture(key)]),lo)
             self.makeBranch(branch,{True: KeyedTree(tMatrix),
                                     False: KeyedTree(fMatrix)})
         elif self.branch:
@@ -194,10 +194,10 @@ class KeyedTree:
         if self.isLeaf():
             fMatrix = self.children[None]
             assert len(fMatrix) == 1,'Unable to handle dynamics of more than one feature'
-            assert key in fMatrix,'Are you sure you should be ceiling me on a key I don\'t have?'
+            assert makeFuture(key) in fMatrix,'Are you sure you should be ceiling me on a key I don\'t have?'
             del self.children[None]
             tMatrix = setToConstantMatrix(key,hi)
-            branch = KeyedPlane(KeyedVector(fMatrix[key]),hi)
+            branch = KeyedPlane(KeyedVector(fMatrix[makeFuture(key)]),hi)
             self.makeBranch(branch,{True: KeyedTree(tMatrix),
                                     False: KeyedTree(fMatrix)})
         elif self.branch:
@@ -672,7 +672,7 @@ def makeTree(table):
         return tree
     elif 'case' in table:
         # Non-binary deterministic branch
-        keys = table.keys()
+        keys = set(table.keys())
         keys.remove('case')
         if 'otherwise' in table:
             tree = table['otherwise']
