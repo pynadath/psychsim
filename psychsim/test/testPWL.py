@@ -1,3 +1,6 @@
+"""
+Verify correctness of PWL arithmetic
+"""
 import unittest
 import random
 
