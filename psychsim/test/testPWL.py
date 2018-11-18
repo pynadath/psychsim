@@ -63,7 +63,7 @@ class TestPWL(unittest.TestCase):
                 trueTree = KeyedTree()
                 falseTree = KeyedTree()
                 newEnvelope += [trueTree,falseTree]
-                node.makeBranch(self.makePlane(planecols,planegap),trueTree,falseTree)
+                node.makeBranch(self.makePlane(planecols,planegap),{True: trueTree,False: falseTree})
             oldEnvelope = newEnvelope
             currentDepth += 1
         # Make leaves
