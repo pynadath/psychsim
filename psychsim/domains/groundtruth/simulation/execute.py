@@ -512,7 +512,7 @@ demographics = {'Gender': 'gender',
                 'Fulltime Job': 'employed',
                 'Pets': 'pet',
                 'Wealth': 'resources',
-                'Residence': None}
+                'Residence': 'region'}
 
 preSurveyFields = ['Timestep','Participant','Hurricane']
 preSurveyFields += sorted(list(demographics.keys()))
@@ -588,7 +588,7 @@ def preSurvey(actor,dirName,hurricane):
                     record[field] = int(round(value.expectation()))
             writer.writerow(record)
 
-history = {}
+history = {} #TODO: This should reset after each hurricane
 postSurveyFields = ['Timestep','Participant','Hurricane']
 postSurveyFields += sorted(list(demographics.keys()))
 postSurveyQuestions = {'At Shelter': ('location','=shelter'),
