@@ -244,6 +244,7 @@ class VizMap:
 
     
     def update(self, currentDay):
+        
         ##print ("Rendering Day - ", currentDay)
         self._win.fill((0,0,0))
         for r in self.regionList:
@@ -259,6 +260,7 @@ class VizMap:
 
         if not 'hurricane' in self._simdata:
             return
+        currentDay += 1
         if (currentDay in self._simdata['hurricane']):
 
 #             Timestep	Name	Category	Location	Landed
