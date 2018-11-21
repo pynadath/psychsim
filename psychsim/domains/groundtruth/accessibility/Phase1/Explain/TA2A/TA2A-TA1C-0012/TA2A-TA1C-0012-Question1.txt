@@ -1,0 +1,34 @@
+
+
+TA2A-TA1C-0012-Question1.txt
+
+Specific question:
+We ask for the clarification of survey definition
+
+1. What does the Injured column mean in Post hurricane survey
+If one report injured to be yes in post hurricane 4 survey, does that mean that it gets injured in hurricane 4, or does that mean it gets injured before/in hurricane 4(which means 1,2,3,4)
+
+2. What does the Injured column mean in Pre hurricane survey
+If one report injured to be yes in pre hurricane 4 survey, does that mean that it gets injured in hurricane 3, or does that mean it gets injured before/in hurricane 3(which means 1,2,3)
+
+3. What does Casualties mean in RegionalTable
+If casualties is 1 at time(day) 10, does that mean we have 1 person get injured on day 10, or we have one people seeking hospitalization on day 10(which means they can be injured before day 10)
+
+4. What does Casualties mean in PopulationTable
+If casualties is 1 at time(day) 10, does that mean we have 1 person get injured on day 10, or we have one people seeking hospitalization on day 10(which means they can be injured before day 10)
+
+Other applicable detail:
+We find some strange facts that we cannot explain:
+Why one always reports injured to be yes in all later hurricane after it firstly get injured in one hurricane
+Two different people report Injured to be yes in post hurricane 4 survey, but regional table shows only 1 people get injured in region 9 during hurricane 4
+
+Answer:
+
+1. The latter. It would mean that the participant was in an injured state at some point during one of the hurricanes this season (1-4). The challenge description survey questions for the post-hurricane survey (5.d.i-v) should say "previous hurricanes", not just "previous hurricane".
+2. There should be no "Injured" column in the Pre hurricane survey.
+3. It means we have 1 person who is known to be in an injured state on day 10.
+4. It means we have 1 person who is known to be in an injured state on day 10.
+
+Other applicable detail:
+
+The answer to Question #1 should clarify these observations.
