@@ -45,9 +45,10 @@ class Individual:
             print ("Cant find region %s" %self.region)
             return
         ##print("Drawing circle %s at %f, %f in region %s current day %s individual name %s currentPropIndividual %s" %(self.id, r.x, r.y, self.region, currentDay, individualname, currentPropIndividual ) )
-        value = vm._simdata["actors"][currentDay][individualname][currentPropIndividual]
+        value = vm._simdata["Actor"][currentDay][individualname][currentPropIndividual]
 
-        color = SimColor.getColorForValue(float(value)) #1 to 5 => 0 to 1
+        fValue = float(value) if vm.invertActorProp is False else  1-float(value)
+        color = SimColor.getColorForValue(fValue) #1 to 5 => 0 to 1
 
         #print ("individual %s region %s x %f y %f value %f color %s"%(individualname, self.region, self.percentxpos, self.percentypos, float(value), color))
 
@@ -80,17 +81,19 @@ class Neighborhood:
         #    return
 
         try:
-            value = vm._simdata["regions"][currentDay][regionname][currentPropRegion]
+            value = vm._simdata["Region"][currentDay][regionname][currentPropRegion]
+            
             #print ("regions CURRENTDAY %d REGIONNAME %s PROPERTY %s VALUE %f" %(currentDay, regionname, currentPropRegion, float(value)))
 
         except:
             print ("error regions CURRENTDAY %d REGIONNAME %s PROPERTY %s" %(currentDay, regionname, currentPropRegion))
             return
+        fValue = float(value) if vm.invertRegionProp is False else  1-float(value)
         
         if vm._showActors == 1 :
             self.color = SimColor.DGRAY
         else:
-            self.color = SimColor.getColorForValue(1.0 - float(value)) #temp for inverting safety to risk
+            self.color = SimColor.getColorForValue(fValue)
 
         rect = pygame.draw.rect(vm._win, self.color, (self.x, self.y, self.width, self.height))
         #mouse over code below
@@ -139,7 +142,7 @@ class VizMap:
     def pygameInit(self):
         pygame.display.set_caption("Visualization")
 
-    def __init__(self, sWidth, sHeight, numxgrid, numygrid, simdata, showActors, displayTableFileName, win, currentPropRegion, currentPropIndividual):
+    def __init__(self, sWidth, sHeight, numxgrid, numygrid, simdata, showActors, displayTableFileName, win, currentPropRegion, currentPropIndividual, invertRegionProp=False, invertActorProp = False):
         
         self._sWidth = sWidth
         self._sHeight = sHeight 
@@ -161,7 +164,8 @@ class VizMap:
         self.hurricaneImages['cat3'] = pygame.image.load(os.path.join(os.path.dirname(__file__), 'images','hurricane_category_3.png'))
         self.hurricaneImages['cat4'] = pygame.image.load(os.path.join(os.path.dirname(__file__), 'images','hurricane_category_4.png'))
         self.hurricaneImages['cat5'] = pygame.image.load(os.path.join(os.path.dirname(__file__), 'images','hurricane_category_5.png'))
-
+        self.invertRegionProp = invertRegionProp
+        self.invertActorProp = invertActorProp
     def getRegion(self, name):
         # 
         # print ("Looking for region %s" %(name[0]))
@@ -245,16 +249,16 @@ class VizMap:
     
     def update(self, currentDay):
         
-        ##print ("Rendering Day - ", currentDay)
+        #print ("Rendering Day - ", currentDay)
         self._win.fill((0,0,0))
         for r in self.regionList:
-            ##print ("Rendering Region - ", r.id)
+        #    print ("Rendering Region - ", r.id)
 
             r.update(currentDay, self._currentPropRegion, self)
         
         if self._showActors > 0:
             for ind in self.individualList:
-                ##print ("Rendering Actor - ", ind.id)
+        #        print ("Rendering Actor - ", ind.id)
 
                 ind.update(currentDay, self._currentPropIndividual, self)
 
@@ -263,17 +267,11 @@ class VizMap:
         currentDay += 1
         if (currentDay in self._simdata['hurricane']):
 
-#             Timestep	Name	Category	Location	Landed
-
-# 4	1	1	Region05	no
-
-# 5	1	2	Region05	no
-
             for hName in self._simdata['hurricane'][currentDay]:
                 region = self._simdata['hurricane'][currentDay][hName]['Location']
                 category = int(self._simdata['hurricane'][currentDay][hName]['Category'])
                 bLanded = True if self._simdata['hurricane'][currentDay][hName]['Landed'] == 'yes' else False
-                bLeaving = True if region is 'leaving' else False
+                bLeaving = True if region == 'leaving' else False
 
                 imageDim = 20 + 10 * category
                 image = self.hurricaneImages['cat%d'%category]
@@ -291,6 +289,7 @@ class VizMap:
                         self._win.blit(image, (int(r.x + (r.width + imageDim) * -0.5), int(r.y + (r.height-imageDim) * 0.5)))
 
                     else :
+
                         # pygame.gfxdraw.filled_circle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 20+category, (165, 165, 165))
                         # pygame.gfxdraw.aacircle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 20+category, (0,0,0))
                         # pygame.gfxdraw.filled_circle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 2+category, (0, 0, 0))
@@ -333,18 +332,22 @@ def main(argv):
     parser.add_argument('-c','--cols',default=7,help='colums in grid')
     parser.add_argument('-r','--rows',default=7,type=int,help='rows in grid')
     parser.add_argument('-ap','--actorProperty',default='health',type=str,help='actor property to display')
-    parser.add_argument('-rp','--regionProperty',default='safety',type=str,help='region propery to display')
+    parser.add_argument('-api','--actorPropertyInverted', action='store_true',help='actor property to be inverted')
+    parser.add_argument('-rp','--regionProperty',default='safety',type=str,help='region propert y to display')
+    parser.add_argument('-rpi','--regionPropertyInverted',action='store_true',help='region property to be inverted')
+    
     parser.add_argument('-dl','--displayLayer',default=2,type=int,help='0 = regions, 1 = actors, 2 = both')
-    parser.add_argument('-fn','--fileName',default='d:/groundtruth/data/rundatatable',type=str,help='simulation file name')
+    parser.add_argument('-fn','--fileName',default='d:/groundtruth/data/rundatatable.tsv',type=str,help='simulation file name')
+    parser.add_argument('-hfn','--hurricaneFileName',default='d:/groundtruth/data/hurricanetable.tsv',type=str,help='simulation hurricane file name')
 
     args = vars(parser.parse_args())
 
 
 
-    usage = "python.exe .\\viz.py -w 1024 -h 768 -s 1 -c 7 -r 7 -rp safety -ap health -dl 0 -fn d:/groundtruth/data/rundatatable"
+    usage = "python.exe .\\viz.py -sw 1024 -sh 768 -s 1 -c 7 -r 7 -rp safety -ap health -dl 0 -fn rundatatable.tsv -hfn hurricanetable.tsv"
     print(usage)
 
-    currentDay = 1 
+    currentDay = 0
     numOfDays = 10
     showActors = 0
 
@@ -371,7 +374,12 @@ def main(argv):
     
     showActors = int(args['displayLayer'])
     combinedFileName = args['fileName']
+    hurricaneFileName = args['hurricaneFileName']
 
+    invertRegionProp = args['regionPropertyInverted']
+    invertActorProp = args['actorPropertyInverted']
+
+    print ("I = %s R = %s"%(invertActorProp,invertRegionProp) )
     # if len(argv) >= 3:
     #     sWidth = int(argv[1])
     #     sHeight = int(argv[2])
@@ -437,17 +445,24 @@ def main(argv):
     i = 0
     totalrecords = 0
     simdata = {}
-    simdata["Actor"] = []
-    simdata["Region"] = []
+    simdata["actors"] = []
+    simdata["regions"] = []
 
-    vm = VizMap(sWidth, sHeight, numxgrid, numygrid, simdata, showActors, displayTableFileName, win, currentPropRegion, currentPropIndividual)
+    vm = VizMap(sWidth, sHeight, numxgrid, numygrid, simdata, showActors, displayTableFileName, win, currentPropRegion, currentPropIndividual, invertRegionProp, invertActorProp)
 
     if not combinedFileName is "" :
         print ("Reading %s" %combinedFileName)
         numOfDays = readfile(combinedFileName, "")
     else:
-        print ("No file specified")
+        print ("No data file specified")
 
+    if not hurricaneFileName is "" :
+        print ("Reading %s" %hurricaneFileName)
+        readHurricaneFile(hurricaneFileName)
+    else:
+        print ("No data file specified")
+    print ("keys ",simdata.keys())
+    print ("Simdata: %d %d %d" %(len(simdata['Region']), len(simdata['Actor']), len(simdata['hurricane'])))
     # i  = 0
     # for daydata in simdata:
     #     i+=1
@@ -480,25 +495,83 @@ def main(argv):
 
         pygame.display.update()
 
+def readHurricaneFile(filename):
+    with open(filename) as f:
+        lines = f.readlines()
+        headervalues = []
+        isHeader = True
+        for line in lines:
+            entry =  line.rstrip('\n').split('\t')
+            #print(len(entry))
+            if len(entry) is 1:
+                #blank lines
+                continue
+            if isHeader:
+                headervalues = entry
+                isHeader = False
+                print (headervalues)
+            else:
+                values = entry
+                record = {}
+
+                for index in range(len(values)):
+                    record[headervalues[index]] = values[index]
+                #print(record)
+                addToVizData("hurricane", record)
+
+def addToVizData(keyname, entry):
+    print ("AddtoVizData - ", keyname, entry)
+
+    
+    if not keyname in vm._simdata:
+        vm._simdata[keyname] = {}
+        #vm._simdata[keyname].append({})
+
+    headervalues = list(entry.keys())
+    values = list(entry.values())
+    entityname = values[1]
+    simday = int(values[0])
+
+    #if len(vm._simdata[keyname]) == simday + 1:
+    #    vm._simdata[keyname].append({})
+
+    if not simday in vm._simdata[keyname]:
+        vm._simdata[keyname][simday] = {}
+    
+    if not entityname in vm._simdata[keyname][simday]:
+        vm._simdata[keyname][simday][entityname] = {}
+
+    #for h in range(2,len(headervalues)):
+    #    vm._simdata[keyname][simday][entityname][headervalues[h]] = []
+
+    entityname = list(entry.values())[1]
+    for cntr in range (2, len(entry)):
+        
+        #vm._simdata[keyname][simday][entityname][headervalues[cntr]].append(values[cntr])
+        vm._simdata[keyname][simday][entityname][headervalues[cntr]] = (values[cntr])
+        #print ("Adding KVP ", headervalues[cntr], values[cntr])
+
 def readfile(filename, keyname):
     simday = -1
 
     #read alternate sim file format
     with open(filename) as f:
-        daydata = {}
-        lines = f.readlines()
-        
+        lines = f.readlines()        
         totalrecords = len(lines)
         headervalues = []
         values = []
         isHeader = True
+        print ("#Num lines = ", len(lines))
         for line in lines:
+            entry = line.rstrip('\n').split('\t')
+            if len(entry) is 1:
+                continue
             if isHeader:
-                headervalues = line.rstrip('\n').split('\t')
+                headervalues = entry
                 isHeader = False
-                #print (headervalues)
+                print (headervalues)
             else:
-                values = line.rstrip('\n').split('\t')
+                values = entry
                 #print (values)
 
                 valueDay = values[0]
@@ -523,13 +596,14 @@ def readfile(filename, keyname):
 
                 keyname = valueKey
               
-                if  valueKey != "actors" and valueKey != "regions": #skipping everything but Actor and Region entries
+                if  valueKey != "Actor" and valueKey != "Region": #skipping everything but Actor and Region entries
                     #print ("Keyname is not Actor or Regiobootn ... skipping %s" %values)
                     continue
 
                 if simday != int(valueDay):
                     try:
                         simday = (int)(valueDay) - 1
+                        #simday = (int)(valueDay) - 1
                         #print ("Simday%d " %simday)
                     except:
                         #print ("Simday error %s" %values)
@@ -550,10 +624,10 @@ def readfile(filename, keyname):
 
                 simdata[valueKey][simday][valueEntityId][valueProp] = valueValue
 
-                # if (valueKey == 'regions' and valueProp == 'risk') or (valueKey == 'actors' and valueProp == 'health'):
-                #     print ("%s %d %s %s %f" %(valueKey, simday, valueEntityId, valueProp, float(valueValue)))
+                #if (valueKey == 'regions' and valueProp == 'risk') or (valueKey == 'actors' and valueProp == 'health'):
+                #print ("%s %d %s %s %s" %(valueKey, simday, valueEntityId, valueProp, (valueValue)))
                 
-                if valueKey == 'actors': # handle region, x, y changes and update actor list
+                if valueKey == 'Actor': # handle region, x, y changes and update actor list
                     if valueProp == 'region': 
                         vm.updateRegion(valueEntityId, valueValue)                            
 
