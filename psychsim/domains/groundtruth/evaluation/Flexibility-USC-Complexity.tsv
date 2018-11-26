@@ -1,0 +1,12 @@
+ParameterName	ControlInstance	TreatmentInstance	70	71	72	73	74	75	76	77	78	79	80
+altruism_neighbors	30	31	C 	T 	T	C 	C	T 	T	T 	T	T 	T
+horizon	34	35	C 	C 	C	T 	T	T 	T	T 	C	T 	T
+reward_health	60	36	C 	T 	C	T 	C	T 	C	T 	C	T 	C
+reward_wealth	64	37	C 	C 	T	C 	T	C 	T	C 	T	C 	T
+wealth	61	60	C 	T 	T	T 	T	C 	C	T 	T	T 	T
+health	62	60	C 	T 	T	T 	T	C 	T	T 	T	T 	T
+prorisk_cost_risk	63	60	C 	T 	T	T 	T	T 	T	T 	C	T 	T
+evacuation	65	60	C 	T 	T	T 	T	T 	T	C 	T	T 	T
+friend_trust	66	60	C 	T 	T	T 	T	T 	T	T 	T	T 	T
+Shelter	68	60	C 	T 	T	T 	T	T 	T	C 	T	T 	T
+Nature	69	60	C 	T 	T	T 	T	T 	T	T 	T	T 	T
