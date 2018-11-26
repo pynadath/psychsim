@@ -296,18 +296,47 @@ class VizMap:
                         # pygame.gfxdraw.aacircle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 2+category, (0,0,0))
                         self._win.blit(image, (int(r.x + (r.width - imageDim) * 0.5), int(r.y + (r.height - imageDim) * 0.5)))
 
-
                 else:
                     # if leaving find where it was previous day and turn green
                     region = self._simdata['hurricane'][currentDay - 1][hName]['Location']
                     r = self.getRegion(region)
-
+                    print (r.id)
+                    exitId = self.getExitRegion(int(r.id.replace("Region","")))
+                        
                     # pygame.gfxdraw.filled_circle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 20+category*2, (255, 255, 255))
                     # pygame.gfxdraw.aacircle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 20+category*2, (0,0,0))
                     # pygame.gfxdraw.filled_circle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 2+category, (0, 0, 0))
                     # pygame.gfxdraw.aacircle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 2+category, (0,0,0))
-                    self._win.blit(image, (int(r.x + (r.width - imageDim) * 0.5), int(r.y + (r.height - imageDim) * 0.5)))
 
+                    if exitId in [0,1,7]:
+                        self._win.blit(image, (int(r.x + (r.width - imageDim) * 0.5), int(r.y + (r.height + imageDim) * -0.5)))
+                    if exitId in [3,4,5]:
+                        self._win.blit(image, (int(r.x + (r.width - imageDim) * 0.5), int(r.y  + r.height + (r.height - imageDim) * 0.5)))
+                    if exitId in [2]:
+                        self._win.blit(image, (int(r.x + r.width + (r.width - imageDim) * 0.5), int(r.y + (r.height - imageDim) * 0.5)))
+                    if exitId in [6]:
+                        self._win.blit(image, (int(r.x + (r.width + imageDim) * - 0.5), int(r.y + (r.height - imageDim) * 0.5)))
+
+    def getExitRegion(self, id):
+        x = numxgrid - 2
+        y = numygrid - 2
+
+        if id == 1:
+            return 7 #NW
+        if id == x:
+            return 1 #NE
+        if id == x * y:
+            return 3 #SE
+        if id == x * (y - 1) + 1:
+            return 5 #SW
+        if id < x:
+            return 0 #N
+        if id % y == 0:
+            return 2 #E
+        if id % y == 1:
+            return 6 #W
+        if id > x * (y-1):
+            return 4
 
 def main(argv):
     global currentDay
