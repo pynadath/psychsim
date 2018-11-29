@@ -1,0 +1,37 @@
+**Specific Question**:
+We are interested in deploying research methods in additional hurricane stricken areas. 
+
+
+1. Would we be able to collect the data included in the initial data package, including 
+a) the pre-hurricane survey, 
+b) the post-hurricane survey, 
+c) census data, 
+d) hurricane table data?
+
+
+2. Would we be able to modify the pre-hurricane survey so that instead of asking whether the agent is currently evacuated or currently sheltered, we instead ask if they would plan to evacuate or shelter in the next hurricane?
+
+
+3. Would we be able to add the question, to the post hurricane survey, of whether the agent’s home suffered damage that needed repair?
+
+
+4. Would we be able to add the question, to the post hurricane survey, of whether the agent’s home suffered sufficient damage that rendered the structure non-habitable until repaired?
+
+
+5. Would we be able to obtain in the same RR the location data for the regions in the new area (i.e., which region is East, West, North, or South of any particular region)?
+
+
+6. Are there different limitations based on the way we ask for this new population to be sampled? In the initial data package we were able to obtain random samples of respondents in the surveys but there were little guarantees that the same respondent would answer a post hurricane survey for a sequence of multiple hurricanes. We’d like to enroll people into a longitudinal study. Would we be able to request 50 or more individuals to enroll in pre- and post-hurricane survey series? If not what are the limitations on number of people that may be surveyed when sampled at random versus when enrolled longitudinally?
+
+
+**Other applicable detail**:
+
+
+**Answer**:
+
+1. Yes to all.
+2. Yes
+3. Yes
+4. Yes
+5. Yes
+6. A longitudinal study is possible, but participation would be limited to at most 10% of households.
