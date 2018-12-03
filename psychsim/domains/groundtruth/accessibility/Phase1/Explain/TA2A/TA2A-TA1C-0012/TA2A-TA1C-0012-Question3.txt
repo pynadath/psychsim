@@ -1,0 +1,16 @@
+
+
+TA2A-TA1C-0012-Question3.txt
+
+Specific question:
+
+Please provide the collection time of the data found in the data response of the request TA2A-TA1C-0012-RR.txt
+Preferably, provide the specific time step which aligns with the initial data package, such as time step 5. If the initial data was collected before the timestep 0, it can be labelled as -4.
+If we are not able to receive precise cardinal timing information (which would be hard to understand, considering we fielded these surveys), please give us ordinal time in the following format: "Post hurricane 4" (which means before hurricane 5, and after hurricane 4), "During hurricane 5," or "Pre hurricane 4" (which means before hurricane 4, and after hurricane 3).
+
+Other applicable information:
+Because some variables are time-sensitive, we would like to know the collection time of the new data.
+
+Answer:
+
+82

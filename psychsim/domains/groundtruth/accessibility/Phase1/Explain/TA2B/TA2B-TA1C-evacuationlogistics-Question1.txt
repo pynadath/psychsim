@@ -1,0 +1,19 @@
+**Specific Question**:
+
+
+1. Your data shows no one evacuates prior to a hurricane hitting land. Does this mean that individuals may evacuate while a hurricane is currently in their region?
+
+
+2. When people are counted as evacuating according to the pop statistics table, does that mean they have already successfully left the region? If so, did they have to physically leave the day before?
+
+
+**Other applicable detail**: These questions relate to how questions were posed to surveyed people. It is not currently clear what people mean when they evacuate. The initial data package indicates that 0 people evacuate prior to most of the hurricanes making landfall. This is a puzzling result that led us to questions regarding what survey respondents considered their time of evacuation being? Are these survey respondents reporting that they can evacuate while a storm is upon them? 
+
+
+
+
+**Answer**:
+
+1. This question should be re-framed as a research request asking for specific data.
+
+2. Yes. No.

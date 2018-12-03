@@ -15,9 +15,9 @@ We ask the regional government officers about their resources, and registered in
  a.The measurements you take to:
 i. anticipate each hurricane
 ii. identify when a hurricane has arrived 
-	 b.The policy in your region for each hurricane, specifically:
-		i. Who do you evacuate first? What is the basis for you to determine the priority of evacuation.
-		ii.Do you have compensation for those who are evacuated, injured, or sheltered? If so, describe how to compensate and how much compensation is provided (as if you give higher compensation for sheltered people than injured people, etc.)
+     b.The policy in your region for each hurricane, specifically:
+        i. Who do you evacuate first? What is the basis for you to determine the priority of evacuation.
+        ii.Do you have compensation for those who are evacuated, injured, or sheltered? If so, describe how to compensate and how much compensation is provided (as if you give higher compensation for sheltered people than injured people, etc.)
 
 4. What is the maximum speed for evacuation in your region? Or how many people can you evacuate at most in one day? If not an exact number (e.g., number of persons), please tell us the number of cars or trucks, helicopters you have, and the evacuation personnel you have available on staff to provide us with an understanding of your ability to evacuate.
 
@@ -71,10 +71,11 @@ if __name__ == '__main__':
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
         writer.writeheader()
         for region in regions:
-        	record = {'Region': region}
-        	if stateKey(region,'shelterRisk') in world.variables:
-        		record['Shelter Capacity'] = len(actors)
-        	else:
-        		record['Shelter Capacity'] = 0
+            record = {'Region': region}
+            if stateKey(region,'shelterRisk') in world.variables:
+                record['Shelter Capacity'] = len(actors)
+            else:
+                record['Shelter Capacity'] = 0
+            writer.writerow(record)
 
 
