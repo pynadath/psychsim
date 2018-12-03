@@ -334,7 +334,7 @@ class WorldView(QGraphicsScene):
                     self.xml.add_node(name)
                 if self.xml:
                     self.xml.add_edge(self.getGraphNode(stateKey(name,'horizon')),
-                                      self.getGraphNode(name))
+                                      self.getGraphNode(name),True)
         x += self.colWidth
         return x
 

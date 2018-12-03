@@ -1185,7 +1185,7 @@ class World(object):
             # Otherwise, assume we're changing the model in the current state
             self.setFeature(key,distribution,state)
         
-    def setMentalModel(self,modeler,modelee,distribution,model=True):
+    def setMentalModel(self,modeler,modelee,distribution,model=None):
         """
         Sets the distribution over mental models one agent has of another entity
         @note: Normalizes the distribution given

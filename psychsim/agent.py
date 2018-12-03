@@ -657,7 +657,7 @@ class Agent(object):
     """Reward methods"""
     """------------------"""
 
-    def setReward(self,tree,weight=1.,model=True):
+    def setReward(self,tree,weight=0.,model=True):
         """
         Adds/updates a goal weight within the reward function for the specified model.
         """
@@ -734,8 +734,10 @@ class Agent(object):
                                  True: R,False: tree}
                 tree = makeTree(tree).desymbolize(self.world.symbols)
             else:
-                tree = self.getReward(model)
+                tree = self.getAttribute('R',model)
             vector *= tree
+            if not rewardKey(self.name) in vector:
+                vector.join(rewardKey(self.name),0.)
             vector.rollback()
             total = vector[rewardKey(self.name)].expectation()
         else:
