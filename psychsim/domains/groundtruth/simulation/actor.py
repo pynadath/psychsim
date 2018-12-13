@@ -502,7 +502,7 @@ class Actor(Agent):
                                   False: noChangeMatrix(wealth)},
                            False: None},
                     False: noChangeMatrix(wealth)}
-            if impactNoJob > 0:
+            if impactNoJob > 0: # TODO: Redundant
                 tree[True][False] = approachMatrix(wealth,likert[5][impactNoJob-1],0.)
             else:
                 tree[True][False] = noChangeMatrix(wealth)
@@ -513,11 +513,12 @@ class Actor(Agent):
                            True: approachMatrix(wealth,likert[5][impactJob-1],1.),
                            False: None},
                     False: noChangeMatrix(wealth)}
-            if impactNoJob > 0:
+            if impactNoJob > 0: # TODO: Redundant
                 tree[True][False] = approachMatrix(wealth,likert[5][impactNoJob-1],0.)
             else:
                 tree[True][False] = noChangeMatrix(wealth)
             world.setDynamics(wealth,goHome,makeTree(tree),codePtr=True)
+        # TODO: The following should be moved into the above if statement
         if not config.getboolean('Shelter','job'):
             for index,action in actShelter.items():
                 tree = makeTree(approachMatrix(wealth,likert[5][impactNoJob-1],0.))

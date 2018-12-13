@@ -29,13 +29,28 @@ preSurveyRecords = []
 postSurveyRecords = []
 
 def runInstance(instance,args,config,rerun=True):
-    for run in range(args['runs']):
+    if args['singlerun']:
+        runs = [args['runs']]
+    else:
+        runs = range(args['runs'])
+    for run in runs:
+        world = None
+        hurricanes = []
         # Verify directory structure
         dirName = os.path.join(os.path.dirname(__file__),'..','Instances',
                                'Instance%d' % (instance),'Runs','run-%d' % (run))
         if not os.path.exists(dirName):
             os.makedirs(dirName)
-        if not rerun and os.path.exists(os.path.join(dirName,'scenario.pkl')):
+        if args['reload']:
+            world = loadPickle(args['instance'],run,args['reload'])
+            hurricanes = readHurricanes(args['instance'],run)
+            population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
+            regions = {agent.name: {'agent': agent,
+                                    'inhabitants': [a for a in population if a.home == agent.name]}
+                       for agent in world.agents.values() if isinstance(agent,Region)}
+            cdfTables = makeCDFTables(population,[world.agents[r] for r in regions],regions)
+            preSurvey(world,None,dirName,0,args['TA2BTA1C10'])
+        elif os.path.exists(os.path.join(dirName,'scenario.pkl')) and not rerun:
             # Already ran this
             print('Skipping instance %d, run %d' % (instance,run))
             continue
@@ -55,58 +70,32 @@ def runInstance(instance,args,config,rerun=True):
 
         logging.info('Running Instance %d' % (instance))
         print('Running instance %d, run %d' % (instance,run))
-        # Initialize world
-        world = createWorld(config)
+        if world is None:
+            # Initialize new world
+            world = createWorld(config)
+            writeHurricane(world,0,dirName)
+            preSurvey(world,None,dirName,0,False)
+            postSurvey(None,dirName,0,False)
+            if args['TA2BTA1C10']:
+                preSurvey(world,None,dirName,0,True)
+                postSurvey(None,dirName,0,True)
+            population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
+            regions = {agent.name: {'agent': agent,
+                                    'inhabitants': [a for a in population if a.home == agent.name]}
+                       for agent in world.agents.values() if isinstance(agent,Region)}
+            writeCensus(world,regions,dirName)
+            cdfTables = makeCDFTables(population,[world.agents[r] for r in regions],regions)
+            toCDF(world,dirName,cdfTables)
+            # Write definition files
+            if args['write']:
+                defDir = os.path.join(os.path.dirname(__file__),'SimulationDefinition')
+                if not os.path.exists(defDir):
+                    os.makedirs(defDir)
+                writeDefinition(world,defDir)
         world.setParallel(args['multiprocessing'])
-        population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
-        living = population[:]
         groups = [agent for agent in world.agents.values() if isinstance(agent,Group)]
-        regions = {agent.name: {'agent': agent,
-                                'inhabitants': [a for a in population if a.home == agent.name]}
-                   for agent in world.agents.values() if isinstance(agent,Region)}
         del preSurveyRecords[:]
         del postSurveyRecords[:]
-        # Write definition files
-        if args['write']:
-            defDir = os.path.join(os.path.dirname(__file__),'SimulationDefinition')
-            if not os.path.exists(defDir):
-                os.makedirs(defDir)
-            writeDefinition(world,defDir)
-        writeCensus(world,regions,dirName)
-        writeHurricane(world,0,dirName)
-        preSurvey(None,dirName,0)
-        postSurvey(None,dirName,0)
-        # Setup entity lists for CDF tables
-        cdfTables = {'InstanceVariable': [],
-                     'RunData': [],
-                     'SummaryStatisticsData':
-                     [(population,'alive','count=False','Deaths'),
-                      (population,'health','count<0.2','Casualties'),
-                      (population,'location','count=evacuated','Evacuees'),
-                      (population,'location','count=shelter','Sheltered'),
-                      (population,'health','mean','Wellbeing'),
-                      (population,'resources','mean','Wealth'),
-                      ([world.agents[r] for r in regions],'risk','invert,mean','Safety'),
-                      (population,ACTION,'count=decreaseRisk','Prosocial'),
-                      (population,ACTION,'count=takeResources','Antisocial'),
-                      (regions,'health','mean','Regional Wellbeing'),
-                      (regions,'alive','count=False','Regional Deaths'),
-                      (regions,'health','count<0.2','Regional Casualties'),
-                      (regions,'location','count=shelter','Regional Sheltered'),
-                     ],
-                     'QualitativeData': [],
-                     'RelationshipData': [],
-                     'Population': {'Deaths': (population,'alive','count=False'),
-                                    'Casualties': (population,'health','count<0.2'),
-                                    'Evacuees': (population,'location','count=evacuated'),
-                                    'Sheltered': (population,'location','count=shelter'),
-                     },
-                     'Regional': {'Deaths': (regions,'alive','count=False'),
-                                  'Casualties': (regions,'health','count<0.2'),
-                                  'Sheltered': (regions,'location','count=shelter')
-                     },
-        }
-        toCDF(world,dirName,cdfTables)
         # Set up tables for visualization
         allTables = {'Region': {'fields': [('alive','casualties','invert'),
                                            ('location','evacuated','#evacuated'),
@@ -141,28 +130,100 @@ def runInstance(instance,args,config,rerun=True):
             for agent in population:
                 agent.compileV()
         random.seed(config.getint('Simulation','seedRun')+run)
-        endDay = None
         survey = set()
         oldPhase = world.getState('Nature','phase').first()
         start = time.time()
-        state = {'hurricanes': 0,
-                 'phase': world.getState('Nature','phase').first()}
-        while state['hurricanes'] < args['number'] or \
-              (args['number'] > 0 and state['phase'] == 'none' and
-               world.getState('Nature','days').first() <= config.getint('Disaster','phase_min_days')):
+        state = {'hurricanes': len(hurricanes),
+                 'phase': world.getState('Nature','phase').first(),
+                 'TA2BTA1C10': args['TA2BTA1C10'],
+                 'panels': {}, 'participants': {}}
+        if args['TA2BTA1C10']:
+            state['panels']['TA2BTA1C10pre'] = {}
+            state['panels']['TA2BTA1C10post'] = {}
+            state['participants']['TA2BTA1C10pre'] = set()
+            state['participants']['TA2BTA1C10post'] = set()
+        season = world.getState(WORLD,'day').first() // config.getint('Disaster','year_length')
+        terminated = False
+        while True:
+            if isinstance(args['number'],int):
+                if state['hurricanes'] >= args['number']:
+                    # Hurricane-based stopping condition is satisfied
+                    terminated = True
+            elif isinstance(args['days'],int):
+                if world.getState(WORLD,'day').first() >= args['days']:
+                    # Day-based stopping condition is satisfied
+                    terminated = True
+            elif isinstance(args['seasons'],int):
+                if season >= args['seasons']:
+                    # Season-based stopping condition is satisfied
+                    terminated = True
+            else:
+                # No stopping condition, so assume we don't even want to start
+                break
+            if terminated:
+                # Make sure we're not terminating in the middle of hurricane
+                if state['phase'] == 'none' and world.getState('Nature','days').first() > config.getint('Disaster','phase_min_days'):
+                    break
             try:
-                nextDay(world,living,groups,state,config,dirName,survey,start,cdfTables)
+                nextDay(world,groups,state,config,dirName,survey,start,cdfTables)
             except ValueError:
                 break
             if args['visualize']:
                 addState2tables(world,today,allTables,population,regions)
                 vizUpdateLoop(day)
             writeHurricane(world,state['hurricanes']+1,dirName)
+            newSeason = False
+            if world.getState(WORLD,'day').first() - season*config.getint('Disaster','year_length') > config.getint('Disaster','season_length'):
+                # Might be a new season
+                if world.getState('Nature','phase').first() == 'none' \
+                    and world.getState('Nature','days').first() > config.getint('Disaster','phase_min_days'):
+                    newSeason = True
+                elif world.getState('Nature','phase').first() == 'approaching' \
+                    and world.getState('Nature','days').first() == 0:
+                    world.setState('Nature','phase','none')
+                    world.setState('Nature','days',config.getint('Disaster','phase_min_days')+1)
+                    world.setState('Nature','location','none')
+                    world.setState('Nature','category',0)
+                    newSeason = True
+            if newSeason:
+                # Jump to new season
+                season += 1
+                if isinstance(args['seasons'],int) and season >= args['seasons']:
+                    # All done
+                    break
+                phase = stateKey('Nature','phase')
+                dayKey = stateKey('Nature','days')
+                evolution = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
+                treePhase = world.dynamics[phase][evolution]
+                world.setDynamics(phase,evolution,makeTree(setToConstantMatrix(phase,'none')))
+                treeDays = world.dynamics[dayKey][evolution]
+                world.setDynamics(dayKey,evolution,makeTree(setToConstantMatrix(dayKey,0)))
+                while world.getState(WORLD,'day').first() < season*config.getint('Disaster','year_length'):
+                    # Advance simulation to next season
+                    names = world.next()
+                    turn = world.agents[next(iter(names))].__class__.__name__
+                    print('Fast-forward:',world.getState(WORLD,'day').first(),turn)
+                    if turn == 'Actor':
+                        actions = {name: ActionSet([Action({'subject': name,'verb': 'moveTo', 'object': world.agents[name].home})]) for name in names}
+                        world.step(actions,select=True)
+                    elif turn == 'System':
+                        world.step(select=True)
+                    elif turn == 'Nature':
+                        world.step(select=True)
+                    else:
+                        raise NameError('Unknown default action for %s' % (turn))
+                # Reset to begin of next season
+                world.dynamics[phase][evolution] = treePhase
+                world.dynamics[dayKey][evolution] = treeDays
+                for name in world.agents:
+                    if name[:5] == 'Actor':
+                        world.agents[name].setState('resources',world.agents[name].wealth)
+                state['phase'] = world.getState('Nature','phase').first()
         logging.info('Total time: %f' % (time.time()-start))
         if args['pickle']:
             print('Pickling...')
             import pickle
-            with open(os.path.join(dirName,'scenario.pkl'),'wb') as outfile:
+            with open(os.path.join(dirName,'scenario%d.pkl' % (world.getState(WORLD,'day').first())),'wb') as outfile:
                 pickle.dump(world,outfile)
         elif args['xml']:
             print('Saving...')
@@ -178,12 +239,13 @@ def runInstance(instance,args,config,rerun=True):
             logging.critical(buf.getvalue())
             buf.close()
 
-def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfTables={},actions={}):
+def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={},actions={}):
     state['today'] = world.getState(WORLD,'day').first()
     logging.info('Day %d' % (state['today']))
     day = state['today']
     updateCDF(world,dirName,cdfTables)
     while day == state['today']:
+        living = [a for a in world.agents.values() if isinstance(a,Actor) and a.getState('alive').first()]
         agents = world.next()
         turn = world.agents[next(iter(agents))].__class__.__name__
         if start:
@@ -191,10 +253,12 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
         else:
             print(('Day %3d: %-6s %-11s' % (state['today'],turn,state['phase'] if state['phase'] != 'active' else world.getState('Nature','location').first())))
         if turn == 'Actor':
+            world.history[day] = {}
             if groups:
                 # Make group decisions
                 pass
             if config.getboolean('Actors','messages') and state['phase'] != 'none':
+                # Friends exchange messages
                 myScale = likert[5][config.getint('Actors','self_trust')-1]
                 if config.getint('Actors','friend_opt_trust') > 0:
                     optScale = likert[5][config.getint('Actors','friend_opt_trust')-1]
@@ -223,12 +287,41 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
                 while count < sampleLimit and remaining:
                     actor = world.agents[random.choice(list(remaining))]
                     remaining.remove(actor.name)
-                    if actor.getState('alive').first():
-                        preSurvey(actor,dirName,state['hurricanes']+1)
-                        survey.add(actor.name)
-                    else:
-                        living.remove(actor)
+                    preSurvey(world,actor,dirName,state['hurricanes']+1)
+                    survey.add(actor.name)
                     count += 1
+                if state['TA2BTA1C10']:
+                    # Augmented pre-hurricane survey
+                    surveyLimit = int(len(living)/10)
+                    oldSample = {name for name,entry in state['panels']['TA2BTA1C10pre'].items() 
+                        if state['hurricanes'] in entry and state['hurricanes']-1 not in entry}               
+                    newSample = {name for name,entry in state['panels']['TA2BTA1C10pre'].items() 
+                        if state['hurricanes']+1 in entry}
+                    # Initialize pool to be anyone first used in previous hurricane
+                    alive = {actor.name for actor in living}
+                    existing = (oldSample - newSample) & alive
+                    # Survey only part of the needed group today, unless we've already filled survey
+                    dailyLimit = min(surveyLimit-len(newSample),
+                        int(surveyLimit/config.getint('Disaster','phase_min_days')))
+                    for i in range(dailyLimit):
+                        if existing:
+                            # Draw from current pool
+                            name = random.choice(list(existing))
+                            existing.remove(name)
+                        else:
+                            # Reset pool to be anyone not used lately
+                            existing = alive - state['participants']['TA2BTA1C10pre']
+                            if not existing:
+                                # We've used everybody, so start over
+                                state['participants']['TA2BTA1C10pre'] = set()
+                                existing = alive - newSample
+                            name = random.choice(list(existing))
+                        if not name in state['panels']['TA2BTA1C10pre']:
+                            state['panels']['TA2BTA1C10pre'][name] = set()
+                        state['panels']['TA2BTA1C10pre'][name].add(state['hurricanes']+1)
+                        state['participants']['TA2BTA1C10pre'].add(name)
+                        newSample.add(name)
+                        preSurvey(world,world.agents[name],dirName,state['hurricanes']+1,True)
         elif state['phase'] == 'none':
             if turn == 'Actor' and survey is not None and state['hurricanes'] > 0:
                 # Post-hurricane survey
@@ -245,6 +338,38 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
                     else:
                         living.remove(actor)
                     count += 1
+                if state['TA2BTA1C10']:
+                    # Augmented pre-hurricane survey
+                    surveyLimit = int(len(living)/10)
+                    oldSample = {name for name,entry in state['panels']['TA2BTA1C10post'].items() 
+                        if state['hurricanes']-1 in entry and state['hurricanes']-2 not in entry}               
+                    newSample = {name for name,entry in state['panels']['TA2BTA1C10post'].items() 
+                        if state['hurricanes'] in entry}
+                    # Initialize pool to be anyone first used in previous hurricane
+                    alive = {actor.name for actor in living}
+                    existing = (oldSample - newSample) & alive
+                    # Survey only part of the needed group today, unless we've already filled survey
+                    dailyLimit = min(surveyLimit-len(newSample),
+                        int(surveyLimit/config.getint('Disaster','phase_min_days')))
+                    for i in range(dailyLimit):
+                        if existing:
+                            # Draw from current pool
+                            name = random.choice(list(existing))
+                            existing.remove(name)
+                        else:
+                            # Reset pool to be anyone not used lately
+                            existing = alive - state['participants']['TA2BTA1C10post']
+                            if not existing:
+                                # We've used everybody, so start over
+                                state['participants']['TA2BTA1C10post'] = set()
+                                existing = alive - newSample
+                            name = random.choice(list(existing))
+                        if not name in state['panels']['TA2BTA1C10post']:
+                            state['panels']['TA2BTA1C10post'][name] = set()
+                        state['panels']['TA2BTA1C10post'][name].add(state['hurricanes'])
+                        state['participants']['TA2BTA1C10post'].add(name)
+                        newSample.add(name)
+                        postSurvey(world.agents[name],dirName,state['hurricanes'],True)
         else:
             assert state['phase'] == 'active'
         debug = {}
@@ -264,6 +389,8 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
         logging.debug(buf.getvalue())
         buf.close()
         for actor in living:
+            if turn == 'Actor':
+                world.history[day][actor.name] = joint[actor.name].first()
             belief = actor.getBelief()
             for dist in belief.values():
                 for sdist in dist.distributions.values():
@@ -290,7 +417,7 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
                         belief = agent.getBelief()
                         assert len(belief) == 1,'Unable to store beliefs over uncertain models'
                         belief = next(iter(belief.values()))
-                        entry = {'action': action}
+                        entry = {'action': action, 'hurricane': state['hurricanes']}
                         for feature in ['location','risk','health','grievance']:
                             entry[feature] = agent.getState(feature,belief)
                             if feature == 'location':
@@ -316,7 +443,6 @@ def nextDay(world,living,groups,state,config,dirName,survey=None,start=None,cdfT
             if state['phase'] == 'active':
                 state['hurricanes'] += 1
                 logging.info('Completed Hurricane #%d' % (state['hurricanes']))
-                endDay = day
         state['phase'] = phase
     
 def addState2tables(world,day,tables,population,regions):
@@ -542,28 +668,48 @@ def getDemographics(actor):
             raise RuntimeError('Unable to process pre-survey field: %s' % (field))
     return record
     
-def preSurvey(actor,dirName,hurricane):
+def preSurvey(world,actor,dirName,hurricane,TA2BTA1C10=False):
     if actor is None:
         mode = 'w'
     else:
         mode = 'a'
-    with open(os.path.join(dirName,'ActorPreTable.tsv'),mode) as csvfile:
-        writer = csv.DictWriter(csvfile,preSurveyFields,delimiter='\t',extrasaction='ignore')
+    fields = preSurveyFields[:]
+    questions = dict(preSurveyQuestions)
+    if TA2BTA1C10:
+        fname = 'ActorPreNewTable'
+        fields += ['LastEvacuated','LastSheltered']
+        questions['LastEvacuated'] = (ACTION,'last=evacuate')
+        questions['LastSheltered'] = (ACTION,'last=moveTo-shelter')
+    else:
+        fname = 'ActorPreTable'
+    with open(os.path.join(dirName,'%s.tsv' % (fname)),mode) as csvfile:
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
         if actor is None:
             writer.writeheader()
         else:
             today = actor.world.getState(WORLD,'day').first()
             record = {'Timestep': today,
-                      'Hurricane': hurricane}
+                      'Hurricane': hurricane,
+                      'Actor': actor.name,
+                      'Survey': fname}
+            record['Participant'] = max([entry['Participant'] for entry in preSurveyRecords if enty['Survey'] == fname]) + 1
+            if TA2BTA1C10:
+                # Link participant IDs when applicable
+                prev = [entry for entry in preSurveyRecords if entry['Survey'] == fname and entry['Actor'] == actor.name]
+                if len(prev) % 2 == 1:
+                    record['Participant'] = prev[-1]['Participant']
+                if hurricane == 2:
+                    assert len(prev) == 1
+                    assert len(prev) % 2 == 1
+                    assert record['Participant'] < 17
             preSurveyRecords.append(record)
-            record['Participant'] = len(preSurveyRecords)
-            logging.info('PreSurvey %d, Participant %d: %s' % (hurricane,record['Participant'],actor.name))
+            logging.info('%s %d, Participant %d: %s' % (fname,hurricane,record['Participant'],actor.name))
             record.update(getDemographics(actor))
             # Answer questions
             belief = actor.getBelief()
             assert len(belief) == 1,'Unable to answer pre-survey with uncertain models'
             belief = next(iter(belief.values()))
-            for field,answer in preSurveyQuestions.items():
+            for field,answer in questions.items():
                 key,fun = answer
                 if not isStateKey(key):
                     if ',' in key:
@@ -572,7 +718,8 @@ def preSurvey(actor,dirName,hurricane):
                     else:
                         agent = actor.name
                     key = stateKey(agent,key)
-                value = actor.world.getFeature(key,belief)
+                if key != ACTION:
+                    value = actor.world.getFeature(key,belief)
                 if fun == 'max':
                     record[field] = value.max()
                 elif fun[0] == '=':
@@ -586,40 +733,73 @@ def preSurvey(actor,dirName,hurricane):
                     record[field] = toLikert(value.expectation())
                 elif fun == 'round':
                     record[field] = int(round(value.expectation()))
+                elif fun[:5] == 'last=':
+                    assert isActionKey(key)
+                    for t in range(today,0,-1):
+                        if fun[5:] in str(world.history.get(t,{}).get(actor.name,'')):
+                            record[field] = t
+                            break
+                    else:
+                        record[field] = 'NA'
             writer.writerow(record)
 
 history = {} #TODO: This should reset after each hurricane
 postSurveyFields = ['Timestep','Participant','Hurricane']
 postSurveyFields += sorted(list(demographics.keys()))
-postSurveyQuestions = {'At Shelter': ('location','=shelter'),
-                       'Evacuated': ('location','=evacuated'),
-                       'Risk': ('risk','max'),
-                       'Injured': ('health','<0.2'),
-                       'Dissatisfaction': ('grievance','likert'),
+postSurveyQuestions = {'At Shelter All Hurricanes': ('location','=shelter'),
+                       'Evacuated All Hurricanes': ('location','=evacuated'),
+                       'Risk All Hurricanes': ('risk','max'),
+                       'Injured All Hurricanes': ('health','<0.2'),
+                       'Dissatisfaction All Hurricanes': ('grievance','likert'),
                        }
 postSurveyFields += sorted(list(postSurveyQuestions.keys()))
 
-def postSurvey(actor,dirName,hurricane):
+def postSurvey(actor,dirName,hurricane,TA2BTA1C10=False):
     if actor is None:
         mode = 'w'
     else:
         mode = 'a'
-    with open(os.path.join(dirName,'ActorPostTable.tsv'),mode) as csvfile:
-        writer = csv.DictWriter(csvfile,postSurveyFields,delimiter='\t',extrasaction='ignore')
+    fields = postSurveyFields[:]
+    questions = dict(postSurveyQuestions)
+    if TA2BTA1C10:
+        fname = 'ActorPostNewTable'
+        fields += sorted(['At Shelter Previous Hurricane','Evacuated Previous Hurricane','Risk Previous Hurricane',
+            'Injured Previous Hurricane','Dissatisfaction Previous Hurricane'])
+        questions.update({'At Shelter Previous Hurricane': ('location','=shelter'),
+                       'Evacuated Previous Hurricane': ('location','=evacuated'),
+                       'Injured Previous Hurricane': ('health','<0.2'),
+#                       'Injury Adult Previous Hurricane': ('health','<0.2'),
+#                       'Injury Children Previous Hurricane': ('childrenHealth','<0.2count'),
+                       'Risk Previous Hurricane': ('risk','max'),
+                       'Dissatisfaction Previous Hurricane': ('grievance','delta'),
+#                       'Property Previous Hurricane': ('region,risk','max'),
+#                       'Assistance Previous Hurricane': ('System','likert'),
+                       })
+    else:
+        fname = 'ActorPostTable'
+    with open(os.path.join(dirName,'%s.tsv' % (fname)),mode) as csvfile:
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
         if actor is None:
             writer.writeheader()
         else:
             today = actor.world.getState(WORLD,'day').first()
             record = {'Timestep': today,
-                      'Hurricane': hurricane}
+                      'Hurricane': hurricane,
+                      'Actor': actor.name,
+                      'Survey': fname}
+            record['Participant'] = max([entry['Participant'] for entry in postSurveyRecords if entry['Survey'] == fname]) + 1
+            if TA2BTA1C10:
+                # Link participant IDs when applicable
+                prev = [entry for entry in postSurveyRecords if entry['Survey'] == fname and entry['Actor'] == actor.name]
+                if len(prev) % 2 == 1:
+                    record['Participant'] = prev[-1]['Participant']
             postSurveyRecords.append(record)
-            record['Participant'] = len(postSurveyRecords)
-            logging.info('PostSurvey %d, Participant %d: %s' % (hurricane,record['Participant'],actor.name))
+            logging.info('%s %d, Participant %d: %s' % (fname,hurricane,record['Participant'],actor.name))
             record.update(getDemographics(actor))
             belief = actor.getBelief()
             assert len(belief) == 1,'Unable to answer post-survey with uncertain models'
             belief = next(iter(belief.values()))
-            for field,answer in postSurveyQuestions.items():
+            for field,answer in questions.items():
                 feature,fun = answer
                 if fun == 'likert':
                     if ',' in feature:
@@ -633,12 +813,19 @@ def postSurvey(actor,dirName,hurricane):
                         record[field] = toLikert(value)
                 else:
                     for entry in history.get(actor.name,[]):
+                        if 'All Hurricanes' not in field and entry['hurricane']+1 != hurricane:
+                            continue
                         value = entry[feature]
                         if fun == 'max':
                             if field in record:
                                 record[field] = max(record[field],toLikert(value.expectation()))
                             else:
                                 record[field] = toLikert(value.expectation())
+                        elif fun == 'delta':
+                            if field in record:
+                                record[field]['new'] = toLikert(value.expectation())
+                            else:
+                                record[field] = {'old': toLikert(value.expectation())}
                         elif fun[0] == '=':
                             assert len(value) == 1,'Unable to answer question about uncertain %s:\n%s'\
                                 % (stateKey(actor.name,feature),value)
@@ -650,11 +837,20 @@ def postSurvey(actor,dirName,hurricane):
                         elif fun[0] == '<':
                             target = float(fun[1:])
                             if value.expectation() < target:
-                                record[field] = 'yes'
-                                break
+                                if fun[-5:] == 'count':
+                                    record[field] = record.get(field,0) + 1
+                                else:
+                                    record[field] = 'yes'
+                                    break
                         else:
                             raise ValueError('Unknown function: %s' % (fun))
                     else:
                         if not field in record:
-                            record[field] = 'no'
+                            if fun[-5:] == 'count':
+                                record[field] = 0
+                            else:
+                                record[field] = 'no'
+                    if isinstance(record[field],dict):
+                        delta = record[field]['new'] - record[field]['old']
+                        record[field] = toLikert((delta+1.)/2.)
             writer.writerow(record)

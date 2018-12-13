@@ -32,6 +32,7 @@ class System(Agent):
                            likert[5][config.getint('System','reward_health')-1])
             self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),
                            likert[5][config.getint('System','reward_grievance')-1])
+        self.addAction({'verb': 'doNothing'})
         allocation = config.getint('System','system_allocation')
         for region in populated:
             allocate = self.addAction({'verb': 'allocate','object': region},codePtr=True)
@@ -79,7 +80,7 @@ class System(Agent):
         population = {name: [a for a in self.world.agents.values() if isinstance(a,Actor) and a.home == name]
                       for name in self.world.agents if isinstance(self.world.agents[name],Region)}
         risks = [(state[stateKey(a['object'],'risk')].expectation()*len(population[a['object']]),a)
-                 for a in actions]
+                 for a in actions if a['object'] is not None]
         choice = max(risks)
         tree = makeTree(setToConstantMatrix(stateKey(self.name,ACTION),choice[1]))
         return {'policy': tree.desymbolize(self.world.symbols)}

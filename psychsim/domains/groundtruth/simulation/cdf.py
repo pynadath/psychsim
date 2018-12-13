@@ -25,6 +25,39 @@ fields = {'VariableDef': ['Name','LongName','Values','VarType','DataType','Notes
           'Regional': ['Timestep','Region','Deaths','Casualties','Sheltered'],
           }
 
+def makeCDFTables(population,regions,regionTable):
+    """Setup entity lists for CDF tables
+    """
+    return {'InstanceVariable': [],
+                 'RunData': [],
+                 'SummaryStatisticsData':
+                 [(population,'alive','count=False','Deaths'),
+                  (population,'health','count<0.2','Casualties'),
+                  (population,'location','count=evacuated','Evacuees'),
+                  (population,'location','count=shelter','Sheltered'),
+                  (population,'health','mean','Wellbeing'),
+                  (population,'resources','mean','Wealth'),
+                  (regions,'risk','invert,mean','Safety'),
+                  (population,ACTION,'count=decreaseRisk','Prosocial'),
+                  (population,ACTION,'count=takeResources','Antisocial'),
+                  (regionTable,'health','mean','Regional Wellbeing'),
+                  (regionTable,'alive','count=False','Regional Deaths'),
+                  (regionTable,'health','count<0.2','Regional Casualties'),
+                  (regionTable,'location','count=shelter','Regional Sheltered'),
+                 ],
+                 'QualitativeData': [],
+                 'RelationshipData': [],
+                 'Population': {'Deaths': (population,'alive','count=False'),
+                                'Casualties': (population,'health','count<0.2'),
+                                'Evacuees': (population,'location','count=evacuated'),
+                                'Sheltered': (population,'location','count=shelter'),
+                 },
+                 'Regional': {'Deaths': (regionTable,'alive','count=False'),
+                              'Casualties': (regionTable,'health','count<0.2'),
+                              'Sheltered': (regionTable,'location','count=shelter')
+                 },
+    }
+
 def processDatum(agent,feature,funs,world,data):
     key = stateKey(agent.name,feature)
     if key in world.variables:

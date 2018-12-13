@@ -3,6 +3,8 @@ import csv
 import os.path
 import random
 
+from psychsim.action import Action
+
 likert = {5: [0.2,0.4,0.6,0.8,1.],
           7: [0.14,0.28,0.42,0.56,0.70,0.84,1.],
           }
@@ -93,3 +95,72 @@ def readNetwork(instance,run=0):
             except KeyError:
                 networks[link][row['FromEntityId']] = {row['ToEntityId']}
     return networks
+
+def readParticipants(instance,run=0):
+    """
+    :returns: Mapping from participants to actor names for each survey
+    """
+    tables = {}
+    if isinstance(instance,int):
+        inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
+                              'Runs','run-%d' % (run),'psychsim.log')
+    else:
+        # Assume it's a directory
+        inFile = os.path.join(instance,'psychsim.log')
+    with open(inFile,'r') as logfile:
+        for line in logfile:
+            if 'Participant' in line:
+                elements = line.split()
+                survey = elements[0]
+                if not survey in tables:
+                    tables[survey] = {}
+                hurricane = int(elements[1][:-1])
+                participant = int(elements[3][:-1])
+                name = elements[4]
+                if participant in tables[survey]:
+                    assert name == tables[survey][participant],'Mismatch on paticipant %s in %s' % (participant,survey)
+                else:
+                    tables[survey][participant] = name
+    return tables
+
+def readActions(instance,run=0):
+    """
+    :returns: List of tables of actions by all agents
+    """
+    series = []
+    inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
+                          'Runs','run-%d' % (run),'RunDataTable.tsv')
+    with open(inFile,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        for row in reader:
+            if row['VariableName'][-6:] == 'action':
+                t = int(row['Timestep'])
+                while len(series) < t:
+                    series.append({})
+                name = row['EntityIdx']
+                action = Action(row['Value'])
+                series[t-1][name] = action
+    return series[1:]
+
+def readDeaths(instance,run=0):
+    """
+    :returns: a table of who died and when
+    """
+    deaths = {}
+    inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
+                          'Runs','run-%d' % (run),'RunDataTable.tsv')
+    with open(inFile,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        for row in reader:
+            if row['VariableName'] == 'Actor alive' and row['Value'] == 'False':
+                if row['EntityIdx'] not in deaths:
+                    deaths[row['EntityIdx']] = int(row['Timestep'])
+    return deaths  
+
+def readRunData(instance,run=0):
+    inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
+                          'Runs','run-%d' % (run),'RunDataTable.tsv')
+    with open(inFile,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        data = list(reader)
+    return data

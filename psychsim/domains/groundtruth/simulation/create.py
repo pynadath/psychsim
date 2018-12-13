@@ -26,6 +26,7 @@ else:
 def createWorld(config):
     random.seed(config.getint('Simulation','seedGen'))
     world = World()
+    world.history = {}
     if __ui__:
         world.diagram = Diagram()
         world.diagram.setColor(None,'deepskyblue')
@@ -143,9 +144,17 @@ def getConfig(instance):
     config.read(os.path.join(os.path.dirname(__file__),'..','config','%06d.ini' % (instance)))
     return config
 
-def loadPickle(instance,run):
-    with open(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
-                           'Runs','run-%d' % (run),'scenario.pkl'),'rb') as f:
+def loadPickle(instance,run=0,day=0):
+    """
+    Loads a PsychSim simulation object from the specified instance/run that has executed until the specified day and then been saved to a file
+    """
+    if day == 0:
+        dayStr = ''
+    else:
+        dayStr = '%d' % (day)
+    fname = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
+                           'Runs','run-%d' % (run),'scenario%s.pkl' % (dayStr))
+    with open(fname,'rb') as f:
         world = pickle.load(f)
     return world
     
