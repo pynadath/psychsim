@@ -1,0 +1,41 @@
+
+
+TA2A-TA1C-0002-Question1.txt
+
+(corresponds to initial "challenge description")
+
+
+Specific Questions:
+
+1. In ActorPostTable, we are told that the "Risk" is measured by the question:
+
+"The previous hurricane posed a significant risk to myself and my family. (Response on a 1-5 scale, ranging from 'strongly disagree' to 'strongly agree')"
+
+Can you verify that the phrase "The previous hurricane" is correct? Or do you mean "The previous hurricanes" which would indicate that experiences in all previous hurricanes matter? If it is indeed "The previous hurricane" can we assume that experiences prior to the closest hurricane have no effect on the "Risk" level?
+
+2. In ActorPostTable, we are told that the "At shelter" is measured by the question:
+
+"Did you stay at a public shelter at any point during the previous hurricane?"
+
+Can you verify that the phrase "The previous hurricane" is correct? Or do you mean "The previous hurricanes" which would indicate that experiences in all previous hurricanes matter? If it is indeed "The previous hurricane" can we assume that experiences prior to the closest hurricane have no effect on the "At shelter"?
+
+3. In ActorPostTable, we are told that the "Evacuated" is measured by the question:
+
+"Did you evacuate the area at any point during the previous hurricane?"
+
+Can you verify that the phrase "The previous hurricane" is correct? Or do you mean "The previous hurricanes" which would indicate that experiences in all previous hurricanes matter? If it is indeed "The previous hurricane" can we assume that experiences prior to the closest hurricane have no effect on the "Evacuated"?
+
+
+4. In ActorPostTable, we are told that the "Dissatisfaction" is measured by the question:
+
+"The government response was fair and adequate. (Response on a 1-5 scale, ranging from 'strongly disagree' to 'strongly agree')"
+
+Can you verify that the phrase "The previous hurricane" is correct? Or do you mean "The previous hurricanes" which would indicate that experiences in all previous hurricanes matter? If it is indeed "The previous hurricane" can we assume that experiences prior to the closest hurricane have no effect on the "Dissatisfaction" level?
+
+
+Other applicable information:
+In response to our previous clarification question, we were told that there is a mistake in the definition of "Injured," and you changed the definition from "Injured: Did you suffer any injuries during the previous hurricane?" to "Injured: Did you suffer any injuries during the previous hurricanes?" We would like to know if similar changes should be made in the definition of "Risk," "At shelter," and "Evacuated."
+
+Answer:
+
+Yes, as mentioned in that same response, the five items 5.d.i-v refer to all previous hurricanes.

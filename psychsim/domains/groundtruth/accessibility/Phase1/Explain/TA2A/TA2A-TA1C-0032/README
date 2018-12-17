@@ -1,0 +1,35 @@
+We surveyed all households in Regions 2, 6, and 9, which amounted to roughly 10% of all households in the area.
+
+0.a-h: Demographic fields
+0.i: # Hurricanes
+0.j: Most Damaging Hurricane
+0.k: There is no representation of housing in the simulation.
+1.a: Outside Acquaintances
+1.b: # Outside Acquaintances
+2.a: People at Shelter
+2.b: Make Acquaintances
+2.c: Talk at Shelter
+2.d: Conversation
+3: Friends
+4a-e: These is no representation of these specific contingencies in the simulation.
+4f: Problem 1-3
+5: Government 1-5
+6: Satisfied, Unsatisfied 1-3
+7: Fair, Unfair 1-3
+8: Adequate, Inadequate 1-3
+9a: Evacuate Family (NA if never evacuated)
+9b: Whom Not Evacuated (NA if not yes to 9a)
+9c: Why Not Evacuated (NA if not yes to 9b), Evacuate Pets (NA if not yes to 9a or no pets)
+9d: Children When Sheltered (NA if never sheltered or no children) [This seemed very similar to 10c, but it was different enough that we took it literally. Apologies if this was incorrect.]
+10a: Sheltered with Children (NA if never sheltered or no children)
+10b: Sheltered with Pets (NA if never sheltered or no pets)
+10c: Children If Not Sheltered (NA if not no to 10a)
+11a: Travel
+11b: Travel Where, When, Why, and with Whom (NA if no to 11a)
+12: Policy
+13-15: These items do not seem operational, even within an interview setting. Furthermore, the size of the items makes it implausible that participants would be able to answer these questions fully. It may be possible to answer a request that asked about only a small number of such hypothetical scenarios. Alternatively, a request could ask for time to resume in the area, with additional instruments added to gather relevant data about future hurricanes.
+16: Family Injured
+17: Acquaintances Injured (NA if no acquaintances)
+18: Evacuation Cost (NA if never evacuated)
+19. Region 11 Time: # of days
+20. Evacuation Time: # of days

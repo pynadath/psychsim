@@ -1,0 +1,19 @@
+**Specific Question**:
+
+In the Challenge Description.pdf for the initial data package, the 
+Post-Hurricane Survey question d.v. is worded:
+"v. Dissatisfaction: The government response was fair and adequate. (Response on a
+1-5 scale, ranging from “strongly disagree” to “strongly agree”)"
+
+Is it correct that the data you gave us actually corresponds to the question:
+"v. Dissatisfaction: The government response was *not* fair and adequate. (Response on a
+1-5 scale, ranging from “strongly disagree” to “strongly agree”)"
+
+Please confirm if the second version of the wording above was the version respondents 
+to the post-hurricane survey answered. 
+
+**Other applicable detail**:
+
+**Answer**:
+
+Yes, the second version and the label "Dissatisfaction" are correct. This correction was meant to be included in an earlier response, so we apologize for the omission.

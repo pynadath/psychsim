@@ -3,8 +3,15 @@ TA2A-TA1C-0002-survey.txt
 TA2A-TA1C-0012-Question1.txt
 TA2A-TA1C-0012-Question2.txt
 TA2A-TA1C-0012-Question3.txt
+TA2A-TA1C-0012-Question4.txt
+TA2A-TA1C-0022-Question1.txt
+TA2A-TA1C-0022-Question2.txt
+TA2A-TA1C-0002-Question1.txt
+TA2A-TA1C-0002-Question2.txt
 
 Research Requests
 TA2A-TA1C-0002-geo.tsv
 TA2A-TA1C-0012
 TA2A-TA1C-0022
+TA2A-TA1C-0032
+TA2A-TA1C-0042

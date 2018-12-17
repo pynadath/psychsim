@@ -1,0 +1,11 @@
+A2A-TA1C-0012-Question4.txt
+
+Specific question:
+1. For the answers to people's attitude towards evacuation (Attributes 7b), does people's attitude change by time?
+
+Other applicable information:
+In 2i (wealth), we were told "Respondents report quintile of wealth at time of survey," which tells us wealth can change by time. This made us consider whether people's attitudes towards evacuation also change based on time.
+
+Answer:
+
+The responses to all survey questions can be taken to hold at the time of the survey. We cannot directly answer a question as to whether those responses hold at other times.
