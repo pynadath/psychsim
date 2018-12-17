@@ -140,6 +140,9 @@ class Distribution(dict):
                     total += element*self[element]
             return total
 
+    def __float__(self):
+        return self.expectation()
+        
     def sample(self,quantify=False):
         """
         :param quantify: if ``True``, also returns the amount of mass by which the sampling crosssed the threshold of the generated sample's range
