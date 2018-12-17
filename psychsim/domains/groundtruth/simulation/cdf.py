@@ -1,6 +1,7 @@
 import csv
 import os.path
 
+from psychsim.probability import Distribution
 from psychsim.pwl.keys import *
 from psychsim.action import ActionSet
 from psychsim.domains.groundtruth.simulation.actor import Actor
@@ -24,6 +25,15 @@ fields = {'VariableDef': ['Name','LongName','Values','VarType','DataType','Notes
           'Population': ['Timestep','Deaths','Casualties','Evacuees','Sheltered'],
           'Regional': ['Timestep','Region','Deaths','Casualties','Sheltered'],
           }
+
+def value2dist(value,notes,cls):
+    try:
+        return cls(value)
+    except ValueError:
+        probs = [float(v) for v in value.split(',')]
+        domain = [cls(el[6:-1]) for el in notes.split(',')]
+        value = Distribution({domain[i]: probs[i] for i in range(len(domain))})
+        return value
 
 def makeCDFTables(population,regions,regionTable):
     """Setup entity lists for CDF tables

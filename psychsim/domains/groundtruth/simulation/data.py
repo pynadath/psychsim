@@ -40,6 +40,37 @@ mapFromTandE = {'Actor’s distribution over ethnicGroup\'': ('Actors','ethnic_m
                 'Region’s security distribution\'': ('Regions','security_value',None),
                 }
 
+demographics = {'Gender': 'gender',
+                'Age': 'age',
+                'Ethnicity': 'ethnicGroup',
+                'Religion': 'religion',
+                'Children': 'children',
+                'Fulltime Job': 'employed',
+                'Pets': 'pet',
+                'Wealth': 'resources',
+                'Residence': 'region'}
+
+def getDemographics(actor):
+    record = {}
+    # Demographic info
+    for field,answer in demographics.items():
+        if isinstance(answer,str):
+            value = actor.getState(answer).first()
+            if field == 'Wealth':
+                record[field] = int(value*5.1)
+            elif isinstance(value,bool):
+                if value:
+                    record[field] = 'yes'
+                else:
+                    record[field] = 'no'
+            else:
+                record[field] = value
+        elif field == 'Residence':
+            record[field] = actor.home
+        else:
+            raise RuntimeError('Unable to process pre-survey field: %s' % (field))
+    return record
+
 def readHurricanes(instance,run=0):
     """
     :returns: A list of attributes about the hurricanes so far

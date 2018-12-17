@@ -50,6 +50,7 @@ def runInstance(instance,args,config,rerun=True):
                        for agent in world.agents.values() if isinstance(agent,Region)}
             cdfTables = makeCDFTables(population,[world.agents[r] for r in regions],regions)
             preSurvey(world,None,dirName,0,args['TA2BTA1C10'])
+            postSurvey(None,dirName,0,args['TA2BTA1C10'])
         elif os.path.exists(os.path.join(dirName,'scenario.pkl')) and not rerun:
             # Already ran this
             print('Skipping instance %d, run %d' % (instance,run))
@@ -164,10 +165,7 @@ def runInstance(instance,args,config,rerun=True):
                 # Make sure we're not terminating in the middle of hurricane
                 if state['phase'] == 'none' and world.getState('Nature','days').first() > config.getint('Disaster','phase_min_days'):
                     break
-            try:
-                nextDay(world,groups,state,config,dirName,survey,start,cdfTables)
-            except ValueError:
-                break
+            nextDay(world,groups,state,config,dirName,survey,start,cdfTables)
             if args['visualize']:
                 addState2tables(world,today,allTables,population,regions)
                 vizUpdateLoop(day)
@@ -630,43 +628,12 @@ def writeCensus(world,regions,dirName,filename='CensusTable',fieldSubset=None):
                               'Count': count}
                     writer.writerow(record)
 
-demographics = {'Gender': 'gender',
-                'Age': 'age',
-                'Ethnicity': 'ethnicGroup',
-                'Religion': 'religion',
-                'Children': 'children',
-                'Fulltime Job': 'employed',
-                'Pets': 'pet',
-                'Wealth': 'resources',
-                'Residence': 'region'}
-
 preSurveyFields = ['Timestep','Participant','Hurricane']
 preSurveyFields += sorted(list(demographics.keys()))
 preSurveyQuestions = {'At Shelter': ('location','=shelter'),
                       'Evacuated': ('location','=evacuated'),
                       'Severity': ('Nature\'s category','round')}
 preSurveyFields += sorted(list(preSurveyQuestions.keys()))
-
-def getDemographics(actor):
-    record = {}
-    # Demographic info
-    for field,answer in demographics.items():
-        if isinstance(answer,str):
-            value = actor.getState(answer).first()
-            if field == 'Wealth':
-                record[field] = int(value*5.1)
-            elif isinstance(value,bool):
-                if value:
-                    record[field] = 'yes'
-                else:
-                    record[field] = 'no'
-            else:
-                record[field] = value
-        elif field == 'Residence':
-            record[field] = actor.home
-        else:
-            raise RuntimeError('Unable to process pre-survey field: %s' % (field))
-    return record
     
 def preSurvey(world,actor,dirName,hurricane,TA2BTA1C10=False):
     if actor is None:
@@ -692,7 +659,10 @@ def preSurvey(world,actor,dirName,hurricane,TA2BTA1C10=False):
                       'Hurricane': hurricane,
                       'Actor': actor.name,
                       'Survey': fname}
-            record['Participant'] = max([entry['Participant'] for entry in preSurveyRecords if enty['Survey'] == fname]) + 1
+            try:
+                record['Participant'] = max([entry['Participant'] for entry in preSurveyRecords if entry['Survey'] == fname]) + 1
+            except ValueError:
+                record['Participant'] = 1
             if TA2BTA1C10:
                 # Link participant IDs when applicable
                 prev = [entry for entry in preSurveyRecords if entry['Survey'] == fname and entry['Actor'] == actor.name]
@@ -787,7 +757,10 @@ def postSurvey(actor,dirName,hurricane,TA2BTA1C10=False):
                       'Hurricane': hurricane,
                       'Actor': actor.name,
                       'Survey': fname}
-            record['Participant'] = max([entry['Participant'] for entry in postSurveyRecords if entry['Survey'] == fname]) + 1
+            try:
+                record['Participant'] = max([entry['Participant'] for entry in postSurveyRecords if entry['Survey'] == fname]) + 1
+            except ValueError:
+                record['Participant'] = 1
             if TA2BTA1C10:
                 # Link participant IDs when applicable
                 prev = [entry for entry in postSurveyRecords if entry['Survey'] == fname and entry['Actor'] == actor.name]
