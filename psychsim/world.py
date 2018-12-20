@@ -868,6 +868,28 @@ class World(object):
             return self.getActions(vector,agents,newActions)
         else:
             return actions
+
+    def rotateTurn(self,name,state=None):
+        """
+        Changes the given state vector so that the named agent is up next, preserving the current turn sequence
+        """
+        if state is None:
+            state = self.state
+        keys = {k for k in state.keys() if isTurnKey(k)}
+        sub = state.substate(keys)
+        assert len(sub) == 1,'Currently unable to handle dispersed turn keys'
+        dist = state.distributions[next(iter(sub))]
+        assert len(dist) == 1,'Currently unable to handle uncertain turn state'
+        vector = dist.first()
+        del dist[vector]
+        hi = max(vector.values())
+        delta = vector[turnKey(name)]
+        for key,old in vector.items():
+            if old >= delta:
+                vector[key] = old - delta
+            else:
+                vector[key] = hi + old - delta + 1
+        dist[vector] = 1.
                     
     """-------------"""
     """State methods"""
