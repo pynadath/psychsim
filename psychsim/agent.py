@@ -1259,7 +1259,7 @@ class Agent(object):
         for key,table in O.items():
             try:
                 # Look up the observation function for the actions performed
-                tree = table[jointAction]
+                tree = table[actions]
             except KeyError:
                 # Maybe a tree that applies for all possible actions
                 try:
