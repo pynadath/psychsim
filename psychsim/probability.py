@@ -170,12 +170,15 @@ class Distribution(dict):
         self.clear()
         self[element] = 1.
 
-    def select(self):
+    def select(self,maximize=False):
         """
         Reduce distribution to a single element, sampled according to the given distribution
         :returns: the probability of the selection made
         """
-        element = self.sample()
+        if maximize:
+            element = self.max()
+        else:
+            element = self.sample()
         prob = self[element]
         self.set(element)
         return prob
