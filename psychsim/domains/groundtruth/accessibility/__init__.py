@@ -5,6 +5,9 @@ import os.path
 import pickle
 import random
 
+from psychsim.pwl import *
+
+from ..simulation.cdf import value2dist
 from ..simulation.create import loadPickle,getConfig
 from ..simulation.data import *
 
@@ -54,11 +57,67 @@ def loadFromArgs(args,world=False,hurricanes=False,participants=False,actions=Fa
 		values['run'] = readRunData(args['instance'],args['run'])
 	return values
 
-def writeOutput(args,data,fields=None):
+def writeOutput(args,data,fields=None,fname=None):
 	if fields is None:
 		fields = sorted(list(data[0].keys()))
-	with open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run'])),args['output']),'w') as csvfile:
+	if fname is None:
+		fname = args['output']
+	with open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run'])),fname),'w') as csvfile:
 		writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
 		writer.writeheader()
 		for record in data:
 			writer.writerow(record)
+
+def loadRunData(instance,run=0,end=None):
+    inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
+                          'Runs','run-%d' % (run),'RunDataTable.tsv')
+    data = {}
+    with open(inFile,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        for row in reader:
+        	t = int(row['Timestep'])
+        	if end is not None and t > end:
+        		break
+        	if 'BeliefOf' in row['VariableName']:
+        		if row['EntityIdx'] not in data:
+        			data[row['EntityIdx']] = {}
+        		if '__beliefs__' not in data[row['EntityIdx']]:
+        			data[row['EntityIdx']]['__beliefs__'] = {}
+        		try:
+	        		cls,feature = row['VariableName'][len('ActorBeliefOf'):].split()
+	        	except ValueError:
+	        		cls = WORLD
+	        		feature = row['VariableName'][len('ActorBeliefOf'):]
+        		if cls == 'Actor':
+        			key = stateKey(row['EntityIdx'],feature)
+        		else:
+        			key = stateKey(cls,feature)
+        		if key not in data[row['EntityIdx']]['__beliefs__']:
+        			data[row['EntityIdx']]['__beliefs__'][key] = {}
+        		data[row['EntityIdx']]['__beliefs__'][key][t] = value2dist(row['Value'],row['Notes'])
+        	else:
+        		words = row['VariableName'].split()
+        		if len(words) == 1:
+        			entity = WORLD
+        			feature = words[0]
+        			key = stateKey(entity,feature)
+        		elif len(words) == 4:
+        			entity = words[0]
+        			key = binaryKey(entity,words[3],words[2])
+        		else:
+        			assert len(words) == 2,row['VariableName']
+        			entity = row['EntityIdx']
+        			feature = words[1]
+        			if feature == 'action':
+        				if t == 1:
+        					continue
+        				else:
+        					t -= 1
+        					feature = ACTION
+        			key = stateKey(entity,feature)
+        		if entity not in data:
+        			data[entity] = {}
+        		if key not in data[entity]:
+        			data[entity][key] = {}
+        		data[entity][key][t] = value2dist(row['Value'],row['Notes'])
+    return data
