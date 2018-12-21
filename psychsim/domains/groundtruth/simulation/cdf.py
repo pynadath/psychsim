@@ -3,7 +3,7 @@ import os.path
 
 from psychsim.probability import Distribution
 from psychsim.pwl.keys import *
-from psychsim.action import ActionSet
+from psychsim.action import *
 from psychsim.domains.groundtruth.simulation.actor import Actor
 from psychsim.domains.groundtruth.simulation.region import Region
 
@@ -26,14 +26,31 @@ fields = {'VariableDef': ['Name','LongName','Values','VarType','DataType','Notes
           'Regional': ['Timestep','Region','Deaths','Casualties','Sheltered'],
           }
 
-def value2dist(value,notes,cls):
-    try:
-        return cls(value)
-    except ValueError:
+def value2dist(value,notes=None,cls=None):
+    if ',' in value:
         probs = [float(v) for v in value.split(',')]
-        domain = [cls(el[6:-1]) for el in notes.split(',')]
+        if cls is None:
+            domain = [value2dist(el[6:-1]) for el in notes.split(',')]
+        else:
+            domain = [cls(el[6:-1]) for el in notes.split(',')]
         value = Distribution({domain[i]: probs[i] for i in range(len(domain))})
         return value
+    elif cls is not None:
+        return cls(value)
+    elif value == 'True':
+        return True
+    elif value == 'False':
+        return False
+    elif '.' in value:
+        return float(value)
+    elif '-' in value:
+        return Action(value)
+    else:
+        try:
+            return int(value)
+        except ValueError:
+            return value
+
 
 def makeCDFTables(population,regions,regionTable):
     """Setup entity lists for CDF tables
