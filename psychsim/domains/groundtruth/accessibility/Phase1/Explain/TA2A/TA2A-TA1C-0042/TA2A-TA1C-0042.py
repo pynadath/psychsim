@@ -24,17 +24,17 @@ iii. All water purification/treatment plants
 4e.What is the maximum number of people this facility can serve (e.g., the power plant NP138 provides electricity for 20 individuals when in operation)
 
 5. Please provide an official weather report for each region in the following format:
-	5a) Pre_hurricane weather report (provided after hurricane has formed in the sea, but not yet landed):
-		5a.i) Timestep 
-		5a.ii) Predicted precipitation for the first day the hurricane would land (on a scale of 1 to 5, with 5 as maximum level of precipitation)
-		5a.iii) Predicted average wind speed for the first day hurricane would land (on a scale of 1 to 5, with 5 as the maximum level of wind speed)
-		5a.iv) Predicted severity of the first day hurricane landed
+    5a) Pre_hurricane weather report (provided after hurricane has formed in the sea, but not yet landed):
+        5a.i) Timestep 
+        5a.ii) Predicted precipitation for the first day the hurricane would land (on a scale of 1 to 5, with 5 as maximum level of precipitation)
+        5a.iii) Predicted average wind speed for the first day hurricane would land (on a scale of 1 to 5, with 5 as the maximum level of wind speed)
+        5a.iv) Predicted severity of the first day hurricane landed
 (on a scale of 1 to 5, with 5 as the maximum level of severity)
-	5b. During hurricane weather document.
-		5b.i) Timestep
-		5b.ii) Actual precipitation on the day of the hurricane (collected at the end of the day, on a scale of 1 to 5, with 5 as the maximum level of precipitation)
-		5b.iii) Actual average wind speed on the day of the hurricane (collected at the end of the day, on a scale of 1 to 5, with 5 as the maximum level of wind speed)
-		5b.iv) Actual overall severity on the day of the hurricane (collected at the end of the day, on a scale of 1 to 5, with 5 as the maximum level of severity)
+    5b. During hurricane weather document.
+        5b.i) Timestep
+        5b.ii) Actual precipitation on the day of the hurricane (collected at the end of the day, on a scale of 1 to 5, with 5 as the maximum level of precipitation)
+        5b.iii) Actual average wind speed on the day of the hurricane (collected at the end of the day, on a scale of 1 to 5, with 5 as the maximum level of wind speed)
+        5b.iv) Actual overall severity on the day of the hurricane (collected at the end of the day, on a scale of 1 to 5, with 5 as the maximum level of severity)
 
 6. Please report the predicted hurricane movement for each hurricane. (e.g., Hurricane 5 will land at T32 in region 1, stay until T37 and move to region 2, eventually leaving the area at T39)
 Please note that we desire to assess these predictions as generated before the specific hurricane hits. Please provide the timestep in which the prediction was originally generated.
@@ -61,3 +61,53 @@ None.
 Research request identifier:
 TA2A-TA1C-0042-RR.txt
 """
+import copy
+
+from psychsim.pwl.keys import *
+from psychsim.action import *
+from psychsim.domains.groundtruth.simulation.data import toLikert
+from psychsim.domains.groundtruth import accessibility
+
+if __name__ == '__main__':
+    parser = accessibility.createParser(output='TA2A-TA1C-0042',day=True,seed=True)
+    args = accessibility.parseArgs(parser)
+    data = accessibility.loadFromArgs(args,world=True,hurricanes=True)
+    data['hurricanes'] = data['hurricanes'][:6]
+    data['run'] = accessibility.loadRunData(args['instance'],args['run'],82)
+    # 7
+    regions = {name for name in data['world'].agents if name[:6] == 'Region'}
+    damage = []
+    for hurricane in data['hurricanes']:
+        start = int(hurricane['Landfall'])
+        end = int(hurricane['End'])
+        for name in sorted(regions):
+            series = [data['run'][name]['%s\'s risk' % (name)][t-1] for t in range(start,end+1)]
+            v0 = series[0]
+            v1 = max(series)
+            damage.append({'Hurricane': hurricane['Hurricane'],
+                'Region': name,
+                'Damage': toLikert(v1-v0)})
+    accessibility.writeOutput(args,damage,['Hurricane','Region','Damage'],'%sDamage.tsv' % (args['output']))
+    # 6
+    predictions = []
+    for hurricane in data['hurricanes']:
+        state = copy.deepcopy(data['world'].state)
+        data['world'].setState('Nature','phase','approaching',state)
+        location = hurricane['Actual Location'][0]
+        data['world'].setState('Nature','location',location,state)
+        data['world'].setState('Nature','days',1,state)
+        data['world'].setState(WORLD,'day',int(hurricane['Start']),state)
+        action = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
+        while location != 'none':
+            data['world'].rotateTurn('Nature',state)
+            data['world'].step({'Nature': action},state,updateBeliefs=False,select='max')
+            phase = data['world'].getState('Nature','phase',state).first()
+            location = data['world'].getState('Nature','location',state).first()
+            t = data['world'].getState(WORLD,'day',state).first()
+            if phase != 'approaching':
+                record = {'Timestep': int(hurricane['Start']),
+                    'Hurricane': hurricane['Hurricane'],
+                    'Predicted Timestep': t,
+                    'Location': location}
+                predictions.append(record)
+    accessibility.writeOutput(args,predictions,['Timestep','Hurricane','Predicted Timestep','Location'],'%sPrediction.tsv' % (args['output']))

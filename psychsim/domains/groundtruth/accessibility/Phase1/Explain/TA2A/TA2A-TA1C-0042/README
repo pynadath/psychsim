@@ -1,1 +1,13 @@
-1-4: There is no explicit representation of hospitals or other facilities in the simulation.
+1-4: These data are not available.
+5a.ii, 5a.iii, 5b.ii, 5b.iii: These data are not available.
+5a.iv, 5biv: HurricaneTable contains predictions of the hurricane (severity and location) before landing and then actual readings of the hurricane after landing.
+6: TA2A-TA1C-0042Prediction.tsv contains a new table with the following fields:
+	Timestep: The day the prediction is made
+	Hurricane: Which hurricane the prediction is of (same numbering as in HurricaneTable)
+	Predicted Timestep: The day that the prediction is for
+	Location: The region in which the hurricane is predicted to be on the Predicted Timestep ("none" if the hurricane is predicted to leave on that day)
+7: TA2A-TA1C-0042Damage.tsv contains a new table containing the aggregate damage sustained in each region. No other data are available.
+	Hurricane: Which hurricane the damage report pertains to
+	Region: The region whose damage is being reported
+	Damage: Amount of damage sustained on a scale of 1-5 (5 being the most damage)
+

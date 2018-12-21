@@ -8,6 +8,7 @@ TA2A-TA1C-0022-Question1.txt
 TA2A-TA1C-0022-Question2.txt
 TA2A-TA1C-0002-Question1.txt
 TA2A-TA1C-0002-Question2.txt
+TA2A-TA1C-0002-Question3.txt
 
 Research Requests
 TA2A-TA1C-0002-geo.tsv
