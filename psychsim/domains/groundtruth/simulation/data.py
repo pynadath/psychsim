@@ -86,6 +86,7 @@ def readHurricanes(instance,run=0):
                 hurricanes.append({'Hurricane': hurricane,
                                    'Predicted Location': row['Location'],
                                    'Media Coverage': 'yes',
+                                   'Actual Location': [],
                                    'Actual Track': [],
                                    'Official Announcements': 'none',
                                    'Start': int(row['Timestep']),
@@ -94,11 +95,14 @@ def readHurricanes(instance,run=0):
                 if row['Location'] == 'leaving':
                     hurricanes[-1]['End'] = int(row['Timestep'])
                 else:
+                    if not 'Landfall' in hurricanes[-1]:
+                        hurricanes[-1]['Landfall'] = int(row['Timestep'])
                     if not 'Actual Severity' in hurricanes[-1]:
                         hurricanes[-1]['Actual Severity'] = row['Category']
                     if len(hurricanes[-1]['Actual Track']) == 0 or \
                        hurricanes[-1]['Actual Track'][-1] != row['Location']:
                         hurricanes[-1]['Actual Track'].append(row['Location'])
+            hurricanes[-1]['Actual Location'].append(row['Location'])
     for record in hurricanes:
         record['Actual Track'] = ','.join(record['Actual Track'])
     if 'End' not in hurricanes[-1]:
