@@ -166,7 +166,7 @@ class ActionSet(frozenset):
 
     def __getitem__(self,key):
         elements = list(self)
-        result = elements[0][key]
+        result = elements[0].get(key,None)
         for atom in elements[1:]:
             if key in atom and atom[key] != result:
                 raise ValueError('Conflicting values for key: %s' % (key))

@@ -195,7 +195,7 @@ class VectorDistributionSet:
             vector.update(distribution.domain()[0])
         return vector
 
-    def select(self,incremental=False):
+    def select(self,maximize=False,incremental=False):
         """
         Reduce distribution to a single element, sampled according to the given distribution
         @param incremental: if C{True}, then select each key value in series (rather than picking out a joint vector all at once, default is C{False})
@@ -207,9 +207,9 @@ class VectorDistributionSet:
             prob = 1.
         for distribution in self.distributions.values():
             if incremental:
-                prob.update(distribution.select(incremental))
+                prob.update(distribution.select(maximize,incremental))
             else:
-                prob *= distribution.select(incremental)
+                prob *= distribution.select(maximize,incremental)
         return prob
 
     def substate(self,obj):

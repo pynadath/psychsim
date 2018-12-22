@@ -179,6 +179,9 @@ class KeyedVector(collections.MutableMapping):
             d += pow(self[key]-vector[key],2)
         return d
 
+    def __gt__(self,other):
+        return sorted(self.items()) > sorted(other.items())
+        
     def __str__(self):
         if self._string is None:
             mykeys = list(self.keys())
@@ -299,7 +302,7 @@ class VectorDistribution(Distribution):
                 result[row[key]] = self[row]
         return Distribution(result)
 
-    def select(self,incremental=False):
+    def select(self,maximize=False,incremental=False):
         """
         @param incremental: if C{True}, then select each key value in series (rather than picking out a joint vector all at once, default is C{False})
         """
@@ -327,7 +330,7 @@ class VectorDistribution(Distribution):
                 index += 1
             return sample
         else:
-            return Distribution.select(self)
+            return Distribution.select(self,maximize)
             
     def hasColumn(self,key):
         """

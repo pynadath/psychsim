@@ -159,13 +159,12 @@ class World(object):
         # The future becomes the present
         state.rollback()
 #        if select:
-#            prob = state.select()
-
+#            prob = state.select(select=='max')
         effect = self.effect(joint,state,updateBeliefs,keySubset,select)
         # The future becomes the present
         state.rollback()
         if select:
-            state.select()
+            state.select(select=='max')
         if self.memory:
             self.history.append(copy.deepcopy(state))
            # self.modelGC(False)
@@ -377,7 +376,7 @@ class World(object):
                 state *= cumulative
                 substate = state.keyMap[makeFuture(key)]
             if select and len(state.distributions[substate]) > 1:
-                state.distributions[substate].select()
+                state.distributions[substate].select(select=='max')
                 
     def effect(self,actions,state,updateBeliefs=True,keySubset=None,select=False):
         if not isinstance(state,VectorDistributionSet):
@@ -402,7 +401,7 @@ class World(object):
                 substate = result['new'].collapse(Omega|{key},False)
                 result['effect'].append(agent.updateBeliefs(result['new'],actions))
                 if select:
-                    result['new'].distributions[substate].select()
+                    result['new'].distributions[substate].select(select == 'max')
         return result
 
     def deltaState(self,actions,state,keySubset=None):
@@ -868,7 +867,32 @@ class World(object):
             return self.getActions(vector,agents,newActions)
         else:
             return actions
-                    
+
+    def rotateTurn(self,name,state=None):
+        """
+        Changes the given state vector so that the named agent is up next, preserving the current turn sequence
+        """
+        if state is None:
+            state = self.state
+        keys = {k for k in state.keys() if isTurnKey(k)}
+        sub = state.substate(keys)
+        if len(sub) > 1:
+            sub = state.merge(sub)
+        else:
+            sub = next(iter(sub))
+        dist = state.distributions[sub]
+        assert len(dist) == 1,'Currently unable to handle uncertain turn state'
+        vector = dist.first()
+        del dist[vector]
+        hi = max(vector.values())
+        delta = vector[turnKey(name)]
+        for key,old in vector.items():
+            if old >= delta:
+                vector[key] = old - delta
+            else:
+                vector[key] = hi + old - delta + 1
+        dist[vector] = 1.
+
     """-------------"""
     """State methods"""
     """-------------"""

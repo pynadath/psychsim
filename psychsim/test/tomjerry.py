@@ -41,9 +41,10 @@ class TestAgents(unittest.TestCase):
         self.world.setDynamics(stateKey(self.jerry.name,'health'),self.hit,tree,enforceMin=True)
 
     def addModels(self,rationality=1.):
-        self.tom.addModel('friend',rationality=rationality,parent=True)
+        model = next(iter(self.tom.models.keys()))
+        self.tom.addModel('friend',rationality=rationality,parent=model)
         self.tom.setReward(maximizeFeature(stateKey(self.jerry.name,'health'),self.jerry.name),1.,'friend')
-        self.tom.addModel('foe',rationality=rationality,parent=True)
+        self.tom.addModel('foe',rationality=rationality,parent=model)
         self.tom.setReward(minimizeFeature(stateKey(self.jerry.name,'health'),self.jerry.name),1.,'foe')
 
     def saveload(self):
@@ -80,22 +81,18 @@ class TestAgents(unittest.TestCase):
         self.addDynamics()
         self.world.setOrder([self.tom.name])
         self.tom.addModel('optimist')
+        self.tom.resetBelief('optimist')
         self.tom.setBelief(stateKey(self.jerry.name,'health'),20,'optimist')
         self.tom.addModel('pessimist')
         self.world.setModel(self.jerry.name,'%s0' % (self.jerry.name))
         self.world.setMentalModel(self.jerry.name,self.tom.name,{'optimist': 0.5,'pessimist': 0.5})
         actions = {self.tom.name: self.hit}
-        self.world.step(actions,updateBeliefs=False)
-        vector = self.world.state.domain()[0]
-        beliefs = self.jerry.getAttribute('beliefs',self.world.getModel(self.jerry.name,vector))
-        for belief in beliefs.domain():
-            model = self.world.getModel(self.tom.name,belief)
-            if self.tom.models[model].has_key('beliefs'):
-                nested = self.tom.models[model]['beliefs']
-                self.assertEqual(len(nested),1)
-                nested = nested.domain()[0]
-                self.assertEqual(len(nested),1)
-                self.assertAlmostEqual(nested[stateKey(self.jerry.name,'health')],10.,8)
+        self.world.step(actions,updateBeliefs=True)
+        beliefs = self.jerry.getAttribute('beliefs',self.world.getModel(self.jerry.name).first())
+        model = self.world.getModel(self.tom.name,beliefs).first()
+        if 'beliefs' in self.tom.models[model]:
+            nested = self.tom.models[model]['beliefs']
+            self.assertAlmostEqual(nested[stateKey(self.jerry.name,'health')].expectation(),10.,8)
 
     def testObservation(self):
         self.addStates()
@@ -204,29 +201,33 @@ class TestAgents(unittest.TestCase):
         self.assertGreater(prob1010,prob10)
 
     def testDynamics(self):
-        self.world.setOrder([self.tom.name])
         self.addStates()
         self.addActions()
         self.addDynamics()
+        self.world.setOrder([self.tom.name])
         key = stateKey(self.jerry.name,'health')
         self.assertEqual(len(self.world.state),1)
         self.assertTrue(stateKey(self.tom.name,'health') in self.world.state)
+        self.assertTrue(stateKey(self.jerry.name,'health') in self.world.state)
+        self.assertTrue(stateKey(self.tom.name,MODEL) in self.world.state)
+        self.assertTrue(stateKey(self.jerry.name,MODEL) in self.world.state)
+        self.assertTrue(stateKey(self.tom.name,ACTION) in self.world.state)
+        self.assertTrue(stateKey(self.jerry.name,ACTION) in self.world.state)
         self.assertTrue(turnKey(self.tom.name) in self.world.state)
-        self.assertTrue(key in self.world.state)
-        self.assertEqual(len(vector),4)
-        self.assertEqual(vector[stateKey(self.tom.name,'health')],50)
-        self.assertEqual(vector[key],50)
+        self.assertEqual(len(self.world.state.keys()),7)
+        self.assertEqual(self.world.state[stateKey(self.tom.name,'health')].expectation(),50)
+        self.assertEqual(self.world.state[stateKey(self.jerry.name,'health')].expectation(),50)
         outcome = self.world.step({self.tom.name: self.chase})
         for i in range(7):
             self.assertEqual(len(self.world.state),1)
             vector = self.world.state.domain()[0]
-            self.assertTrue(vector.has_key(stateKey(self.tom.name,'health')))
-            self.assertTrue(vector.has_key(turnKey(self.tom.name)))
-            self.assertTrue(vector.has_key(key))
-            self.assertTrue(vector.has_key(CONSTANT))
-            self.assertEqual(len(vector),4)
-            self.assertEqual(vector[stateKey(self.tom.name,'health')],50)
-            self.assertEqual(vector[key],max(50-10*i,0))
+            self.assertTrue(stateKey(self.tom.name,'health') in self.world.state)
+            self.assertTrue(turnKey(self.tom.name) in self.world.state)
+            self.assertTrue(key in self.world.state)
+            self.assertTrue(CONSTANT in self.world.state)
+            self.assertEqual(len(self.world.state.keys()),7)
+            self.assertEqual(self.world.state[stateKey(self.tom.name,'health')].expectation(),50)
+            self.assertEqual(self.world.state[key].expectation(),max(50-10*i,0))
             outcome = self.world.step({self.tom.name: self.hit})
             self.saveload()
 
@@ -322,12 +323,14 @@ class TestAgents(unittest.TestCase):
 #        self.world.setModel(self.jerry.name,True)
         self.world.setOrder([self.tom.name])
         self.world.setMentalModel(self.jerry.name,self.tom.name,{'friend': 0.5,'foe': 0.5})
-        vector = self.world.state.domain()[0]
-        model = self.world.getModel(self.jerry.name,vector)
+        model = self.world.getModel(self.jerry.name)
+        self.assertEqual(len(model),1)
+        model = model.first()
         belief0 = self.jerry.models[model]['beliefs']
         self.world.step()
-        vector = self.world.state.domain()[0]
-        model = self.world.getModel(self.jerry.name,vector)
+        model = self.world.getModel(self.jerry.name)
+        self.assertEqual(len(model),1)
+        model = model.first()
         belief1 = self.jerry.models[model]['beliefs']
         key = modelKey(self.tom.name)
         for vector in belief0.domain():
@@ -339,8 +342,9 @@ class TestAgents(unittest.TestCase):
         self.jerry.setAttribute('static',True,model)
         self.saveload()
         self.world.step()
-        vector = self.world.state.domain()[0]
-        model = self.world.getModel(self.jerry.name,vector)
+        model = self.world.getModel(self.jerry.name)
+        self.assertEqual(len(model),1)
+        model = model.first()
         belief2 = self.jerry.models[model]['beliefs']
         for vector in belief1.domain():
             self.assertAlmostEqual(belief1[vector],belief2[vector],8)
