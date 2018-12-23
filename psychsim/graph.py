@@ -152,8 +152,13 @@ class DependencyGraph(dict):
                                 dict.__getitem__(self,omega)['parents'].add(action)
                                 dict.__getitem__(self,action)['children'].add(omega)
                             for parent in tree.getKeysIn() - {CONSTANT}:
-                                dict.__getitem__(self,omega)['parents'].add(parent)
-                                dict.__getitem__(self,parent)['children'].add(omega)
+                                if isActionKey(parent):
+                                    for a in self.world.agents[state2agent(parent)].actions:
+                                        dict.__getitem__(self,omega)['parents'].add(a)
+                                        dict.__getitem__(self,a)['children'].add(omega)
+                                else:
+                                    dict.__getitem__(self,omega)['parents'].add(parent)
+                                    dict.__getitem__(self,parent)['children'].add(omega)
 
     def items(self):
         if len(self) == 0:
