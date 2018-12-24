@@ -39,6 +39,10 @@ class TestAgents(unittest.TestCase):
         tree = makeTree(incrementMatrix(stateKey(self.jerry.name,'health'),-10))
         self.world.setDynamics(stateKey(self.jerry.name,'health'),self.hit,tree,enforceMin=True)
 
+    def addReward(self):
+        self.tom.setReward(minimizeFeature(stateKey(self.jerry.name,'health'),self.tom.name),1.)
+        self.jerry.setReward(maximizeFeature(stateKey(self.jerry.name,'health'),self.jerry.name),1.)
+
     def addModels(self,rationality=1.):
         model = next(iter(self.tom.models.keys()))
         self.tom.addModel('friend',rationality=rationality,parent=model)
@@ -55,7 +59,34 @@ class TestAgents(unittest.TestCase):
         self.tom = self.world.agents[self.tom.name]
         self.jerry = self.world.agents[self.jerry.name]
 
-    def DONTtestEnumeratedState(self):
+    def testDecision(self):
+        self.addStates()
+        self.addActions()
+        self.addDynamics()
+        self.addReward()
+        self.world.setOrder([self.tom.name,self.jerry.name])
+        actions = self.tom.getActions()
+        self.assertEqual(len(actions),3)
+        R = self.tom.getReward('%s0' % (self.tom.name))
+        for action in actions:
+            s = copy.deepcopy(self.world.state)
+            trees = self.world.getDynamics(stateKey(self.jerry.name,'health'),action)
+            for tree in trees:
+                s *= tree
+                s.rollback()
+            s *= R
+            ER = s[makeFuture(rewardKey(self.tom.name))]
+            self.assertEqual(len(ER),1)
+            if action == self.hit:
+                self.assertEqual(ER.first(),-40)
+            else:
+                self.assertEqual(ER.first(),-50)
+        result = self.world.step()
+        action = self.world.getFeature(actionKey(self.tom.name))
+        self.assertEqual(len(action),1)
+        self.assertEqual(action.first(),self.hit)
+
+    def testEnumeratedState(self):
         self.addActions()
         self.world.defineState(self.tom.name,'status',list,['dead','injured','healthy'])
         self.world.setState(self.tom.name,'status','healthy')
@@ -205,7 +236,7 @@ class TestAgents(unittest.TestCase):
                 break
         self.assertGreater(prob1010,prob10)
 
-    def DONTtestDynamics(self):
+    def testDynamics(self):
         self.addStates()
         self.addActions()
         self.addDynamics()
@@ -291,9 +322,10 @@ class TestAgents(unittest.TestCase):
         reward =reward.first()
         self.assertEqual(reward,health*hiWeight)
 
-    def DONTtestTurnDynamics(self):
+    def testTurnDynamics(self):
         self.addStates()
         self.addActions()
+        self.addReward()
         self.world.setOrder([self.tom.name,self.jerry.name])
         self.assertEqual(self.world.maxTurn,1)
         self.saveload()
@@ -316,19 +348,27 @@ class TestAgents(unittest.TestCase):
         self.assertEqual(dist.first(),0)
         self.world.step()
         self.assertEqual(self.world.next(),{self.tom.name})
-        self.assertEqual(self.world.state[tTurn],0)
-        self.assertEqual(self.world.state[jTurn],1)
+        self.assertEqual(self.world.state[tTurn].first(),0)
+        self.assertEqual(self.world.state[jTurn].first(),1)
+
+    def DONTtestCustomTurnDynamics(self):
+        self.addStates()
+        self.addActions()
+        self.addReward()
+        self.world.setOrder([self.tom.name,self.jerry.name])
+        jTurn = turnKey(self.jerry.name)
+        tTurn = turnKey(self.tom.name)
         # Try some custom dynamics
         self.world.setTurnDynamics(self.tom.name,self.hit,makeTree(noChangeMatrix(tTurn)))
         self.world.setTurnDynamics(self.jerry.name,self.hit,makeTree(noChangeMatrix(tTurn)))
-        self.world.step()
+        self.world.step({self.tom.name: self.hit})
         self.assertEqual(self.world.next(),[self.tom.name])
-        self.assertEqual(self.world.state[tTurn],0)
-        self.assertEqual(self.world.state[jTurn],1)
+        self.assertEqual(self.world.state[tTurn].first(),0)
+        self.assertEqual(self.world.state[jTurn].first(),1)
         self.world.step({self.tom.name: self.chase})
         self.assertEqual(self.world.next(),[self.jerry.name])
-        self.assertEqual(self.world.state[tTurn],1)
-        self.assertEqual(self.world.state[jTurn],0)
+        self.assertEqual(self.world.state[tTurn].first(),1)
+        self.assertEqual(self.world.state[jTurn].first(),0)
 
     def DONTtestStatic(self):
         self.addStates()
