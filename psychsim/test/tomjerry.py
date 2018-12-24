@@ -268,22 +268,28 @@ class TestAgents(unittest.TestCase):
         vChase = self.tom.value(self.world.state,self.chase)['V']
         self.assertAlmostEqual(vHit,vChase+.1,8)
 
-    def DONTtestReward(self):
+    def testReward(self):
         self.addStates()
         key = stateKey(self.jerry.name,'health')
-        goal = makeTree({'if': thresholdRow(key,5),
-                         True: KeyedVector({key: -2}),
-                         False: KeyedVector({key: -1})})
+        threshold = 5
+        hiWeight = -2
+        loWeight = -1
+        goal = makeTree({'if': thresholdRow(key,threshold),
+                         True: setToFeatureMatrix(rewardKey(self.jerry.name),key,hiWeight),
+                         False: setToFeatureMatrix(rewardKey(self.jerry.name),key,loWeight)})
         self.jerry.setReward(goal,1.)
-        R = self.jerry.models['%s0' % (self.jerry.name)]['R']
-        self.assertEqual(len(R),1)
-        print(R)
-        self.assertEqual(next(iter(R.keys())),goal,'%s != %s' % (str(next(iter(R.keys()))),str(goal)))
-        self.assertAlmostEqual(R[goal],1.,8)
-        self.jerry.setReward(goal,2.)
-        self.assertEqual(len(R),1)
-        self.assertEqual(R.keys()[0],goal)
-        self.assertAlmostEqual(R[goal],2.,8)
+        R = self.jerry.getReward('%s0' % (self.jerry.name))
+        keys = R.keys()
+        self.assertEqual(len(keys),3)
+        self.world.state *= R
+        health = self.world.state[key]
+        self.assertEqual(len(health),1)
+        health = health.first()
+        self.assertGreater(health,threshold)
+        reward = self.world.state[makeFuture(rewardKey(self.jerry.name))]
+        self.assertEqual(len(reward),1)
+        reward =reward.first()
+        self.assertEqual(reward,health*hiWeight)
 
     def DONTtestTurnDynamics(self):
         self.addStates()
