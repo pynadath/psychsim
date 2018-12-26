@@ -3,8 +3,8 @@ from xml.dom.minidom import Document,Element,Node,NodeList,parseString
 
 class Action(dict):
     """
-    @cvar special: a list of keys that are reserved for system use
-    @type special: str[]
+    :cvar special: a list of keys that are reserved for system use
+    :type special: list(str)
     """
     special = ['subject','verb','object']
 
@@ -32,7 +32,7 @@ class Action(dict):
     def agentLess(self):
         """
         Utility method that returns a subject-independent version of this action
-        @rtype: L{Action}
+        :rtype: Action
         """
         args = dict(self)
         try:
@@ -43,8 +43,8 @@ class Action(dict):
 
     def getParameters(self):
         """
-        @return: list of special parameters for this action
-        @rtype: str[]
+        :return: list of special parameters for this action
+        :rtype: list(str)
         """
         return filter(lambda k: not k in self.special,self.keys())
 
@@ -58,8 +58,8 @@ class Action(dict):
 
     def root(self):
         """
-        @return: the base action table, with only special keys "subject", "verb", and "object"
-        @rtype: L{Action}
+        :return: the base action table, with only special keys "subject", "verb", and "object"
+        :rtype: Action
         """
         root = {}
         for key in self.special:
@@ -152,10 +152,10 @@ class ActionSet(frozenset):
 
     def match(self,pattern):
         """
-        @param pattern: a table of key-value patterns that the action must match
-        @type pattern: dict
-        @return: the first action that matches the given pattern, or C{None} if none
-        @rtype: L{Action}
+        :param pattern: a table of key-value patterns that the action must match
+        :type pattern: dict
+        :return: the first action that matches the given pattern, or C{None} if none
+        :rtype: Action
         """
         for action in self:
             if action.match(pattern):
@@ -190,7 +190,7 @@ class ActionSet(frozenset):
     def agentLess(self):
         """
         Utility method that returns a subject-independent version of this action set
-        @rtype: L{ActionSet}
+        :rtype: ActionSet
         """
         return self.__class__([a.agentLess() for a in self])
 
@@ -204,8 +204,8 @@ class ActionSet(frozenset):
 
 def filterActions(pattern,actions):
     """
-    @type pattern: dict
-    @return: the subset of given actions that match the given pattern
+    :type pattern: dict
+    :return: the subset of given actions that match the given pattern
     """
     return filter(lambda a: a.match(pattern),actions)
 

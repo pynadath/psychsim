@@ -57,8 +57,8 @@ class VectorDistributionSet:
 
     def __len__(self):
         """
-        @return: the number of elements in the implied joint distribution
-        @rtype: int
+        :return: the number of elements in the implied joint distribution
+        :rtype: int
         """
         prod = 1
         for dist in self.distributions.values():
@@ -71,7 +71,7 @@ class VectorDistributionSet:
     def __setitem__(self,key,value):
         """
         Computes a conditional probability of this distribution given the value for this key. To do so, it removes any elements from the distribution that are inconsistent with the given value and then normalizes.
-        @warning: If you want to overwrite any existing values for this key use L{join} (which computes a new joint probability)
+        .. warning:: If you want to overwrite any existing values for this key use L{join} (which computes a new joint probability)
         """
         dist = self.distributions[self.keyMap[key]]
         for vector in dist.domain():
@@ -129,8 +129,8 @@ class VectorDistributionSet:
             
     def split(self,key):
         """
-        @return: partitions this distribution into subsets corresponding to possible values for the given key
-        @rtype: strS{->}L{VectorDistributionSet}
+        :return: partitions this distribution into subsets corresponding to possible values for the given key
+        :rtype: dict(str,VectorDistributionSet)
         """
         destination = self.keyMap[key]
         original = self.distributions[destination]
@@ -165,16 +165,16 @@ class VectorDistributionSet:
         
     def uncertain(self):
         """
-        @return: C{True} iff this distribution has any uncertainty about the vector
-        @rtype: bool
+        :return: C{True} iff this distribution has any uncertainty about the vector
+        :rtype: bool
         """
         return sum(map(len,self.distributions.values())) > len(self.distributions)
 
     def findUncertainty(self,substates=None):
         """
-        @param substates: Consider only the given substates as candidates
-        @return: a substate containing an uncertain distribution if one exists; otherwise, None
-        @rtype: int
+        :param substates: Consider only the given substates as candidates
+        :return: a substate containing an uncertain distribution if one exists; otherwise, None
+        :rtype: int
         """
         if substates is None:
             substates = self.distributions.keys()
@@ -186,8 +186,8 @@ class VectorDistributionSet:
         
     def vector(self):
         """
-        @return: if this distribution contains only a single vector, return that vector; otherwise, throw exception
-        @rtype: L{KeyedVector}
+        :return: if this distribution contains only a single vector, return that vector; otherwise, throw exception
+        :rtype: KeyedVector
         """
         vector = KeyedVector()
         for substate,distribution in self.distributions.items():
@@ -198,8 +198,8 @@ class VectorDistributionSet:
     def select(self,maximize=False,incremental=False):
         """
         Reduce distribution to a single element, sampled according to the given distribution
-        @param incremental: if C{True}, then select each key value in series (rather than picking out a joint vector all at once, default is C{False})
-        @return: the probability of the selection made
+        :param incremental: if C{True}, then select each key value in series (rather than picking out a joint vector all at once, default is C{False})
+        :return: the probability of the selection made
         """
         if incremental:
             prob = KeyedVector()
@@ -214,7 +214,7 @@ class VectorDistributionSet:
 
     def substate(self,obj):
         """
-        @return: the substate referred to by all of the keys in the given object
+        :return: the substate referred to by all of the keys in the given object
         """
         if isinstance(obj,list) or isinstance(obj,set):
             return {self.keyMap[k] for k in obj if k != keys.CONSTANT}
@@ -225,7 +225,7 @@ class VectorDistributionSet:
 
     def merge(self,substates):
         """
-        @return: the substate into which they've all been merged
+        :return: the substate into which they've all been merged
         """
         try:
             destination = next(iter(substates))
@@ -251,10 +251,10 @@ class VectorDistributionSet:
     def join(self,key,value,substate=0):
         """
         Modifies the distribution over vectors to have the given value for the given key
-        @param key: the key to the column to modify
-        @type key: str
-        @param value: either a single value to apply to all vectors, or else a L{Distribution} over possible values
-        @substate: name of substate vector distribution to join with, ignored if the key already exists in this state
+        :param key: the key to the column to modify
+        :type key: str
+        :param value: either a single value to apply to all vectors, or else a L{Distribution} over possible values
+        :substate: name of substate vector distribution to join with, ignored if the key already exists in this state
         """
         assert not substate is None
         if key in self.keyMap:

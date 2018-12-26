@@ -1014,6 +1014,32 @@ class World(object):
             state = self.state
         state.join(key,self.value2float(key,value),self.variables[key]['substate'])
 
+    def setJoint(self,distribution,state=None):
+        """
+        Sets the state for a combination of state features
+        :param distribution: The joint distribution to join to the current state
+        :type distribution: VectorDistribution
+        :raises ValueError: if joint is over features already present in state
+        :raises ValueError: if joint is not over at least two features
+        """
+        keys = distribution.keys()
+        if len(keys) < 2:
+            raise ValueError('Use setFeature if not setting the value for multiple features')
+        if state is None:
+            state = self.state
+        for key in keys:
+            if key in state:
+                raise ValueError('Unable to add joint distribution over features already present in state')
+        hi = max(state.distributions.keys())
+        for key in keys:
+            if key != CONSTANT:
+                state.keyMap[key] = hi+1
+        value = copy.deepcopy(distribution)
+        if CONSTANT not in keys:
+            value.join(CONSTANT,1.)
+        state.distributions[hi+1] = value
+        return hi+1
+
     def encodeVariable(self,key,value):
         raise DeprecationWarning('Use value2float method instead')
 
