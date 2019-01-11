@@ -86,8 +86,11 @@ def isTurnKey(key):
 def turn2name(key):
     return key[:-(len(TURN)+3)]
 
-def actionKey(feature):    
+def actionFieldKey(feature):    
     return '__action__%s__' % (feature)
+
+def actionKey(name):
+    return stateKey(name,ACTION)
 
 def isActionKey(key):
     return isStateKey(key) and state2feature(key) == ACTION
