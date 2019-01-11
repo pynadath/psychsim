@@ -1,3 +1,7 @@
+"""
+Test general decision-making mechanics
+"""
+
 import pickle
 import unittest
 
@@ -60,6 +64,9 @@ class TestAgents(unittest.TestCase):
         self.jerry = self.world.agents[self.jerry.name]
 
     def testDecision(self):
+        """
+        Verify that agent chooses action with highest expected reward
+        """
         self.addStates()
         self.addActions()
         self.addDynamics()
@@ -87,6 +94,9 @@ class TestAgents(unittest.TestCase):
         self.assertEqual(action.first(),self.hit)
 
     def testEnumeratedState(self):
+        """
+        Verify that state features that use symbolic values are consistently mapped to numeric ones
+        """
         self.addActions()
         self.world.defineState(self.tom.name,'status',list,['dead','injured','healthy'])
         self.world.setState(self.tom.name,'status','healthy')
@@ -125,6 +135,9 @@ class TestAgents(unittest.TestCase):
             self.assertAlmostEqual(nested[stateKey(self.jerry.name,'health')].expectation(),10.,8)
 
     def testObservation(self):
+        """
+        Verify that update of uncertain beliefs is consistent with new observations
+        """
         self.addStates()
         self.addActions()
         self.addDynamics()
@@ -237,6 +250,9 @@ class TestAgents(unittest.TestCase):
         self.assertGreater(prob1010,prob10)
 
     def testDynamics(self):
+        """
+        Verify that PWL effect models cause desired change to state variables
+        """
         self.addStates()
         self.addActions()
         self.addDynamics()
@@ -300,6 +316,9 @@ class TestAgents(unittest.TestCase):
         self.assertAlmostEqual(vHit,vChase+.1,8)
 
     def testReward(self):
+        """
+        Verify that reward computation is correct
+        """
         self.addStates()
         key = stateKey(self.jerry.name,'health')
         threshold = 5
@@ -323,6 +342,9 @@ class TestAgents(unittest.TestCase):
         self.assertEqual(reward,health*hiWeight)
 
     def testTurnDynamics(self):
+        """
+        Verify that agent turn order changes correctly
+        """
         self.addStates()
         self.addActions()
         self.addReward()
