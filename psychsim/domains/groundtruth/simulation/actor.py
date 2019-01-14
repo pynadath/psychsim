@@ -519,7 +519,7 @@ class Actor(Agent):
                 tree[True][False] = noChangeMatrix(wealth)
             world.setDynamics(wealth,goHome,makeTree(tree),codePtr=True)
         # TODO: The following should be moved into the above if statement
-        if not config.getboolean('Shelter','job'):
+        if config.getboolean('Shelter','exists') and not config.getboolean('Shelter','job'):
             for index,action in actShelter.items():
                 tree = makeTree(approachMatrix(wealth,likert[5][impactNoJob-1],0.))
                 world.setDynamics(wealth,action,tree,codePtr=True)
