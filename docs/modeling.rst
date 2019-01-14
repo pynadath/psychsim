@@ -95,7 +95,7 @@ bool
 list/set
    an enumerated set of possible values (typically strings)
 
-By default, a variable is assumed to be float-valued, so the previous sections definitions of state features created only float-valued variables. Both the :py:meth:`~psychsim.world.World.defineState` and :py:meth:`~psychsim.world.World.defineRelation` methods take optional arguments to modify the domain of valid values of the feature. The following definition has the identical effect as the previous trust definition, but it makes the default values for the variable type and range of possible values explicit::
+By default, a variable is assumed to be float-valued, so the previous section's definitions of state features created only float-valued variables. Both the :py:meth:`~psychsim.world.World.defineState` and :py:meth:`~psychsim.world.World.defineRelation` methods take optional arguments to modify the domain of valid values of the feature. The following definition has the identical effect as the previous trust definition, but it makes the default values for the variable type and range of possible values explicit::
 
   freeTrustsSyl = world.defineRelation(free.name,'Sylvania','trusts',float,-1,-1)
 
@@ -166,7 +166,7 @@ The fragment above illustrates one helpful shortcut for :py:class:`~psychsim.act
 Probability
 -----------
 
-I don't know whether you already know this, but uncertainty is everywhere in social interaction. As a result, :py:class:`~psychsim.probability.Distribution` objects are central to PsychSim's representations. Probability distributions can be treated as dictionaries, where the keys are the elements of the sample space, and the values are the probabilities associated with them. For example, we can represent a fair coin with the following distribution::
+Maybe you already know this, but uncertainty is everywhere in social interaction. In particular, agents may not know what the true state of the world is, due to uncertain effects of actions and uncertain observations of those effects. As a result, :py:class:`~psychsim.probability.Distribution` objects are central to PsychSim's representations. Probability distributions can be treated as dictionaries, where the keys are the elements of the sample space, and the values are the probabilities associated with them. For example, we can represent a fair coin with the following distribution::
 
   coin = Distribution({'heads': 0.5, 'tails': 0.5})
   if coin.sample() == 'heads':
@@ -184,12 +184,9 @@ If you want to know the probability that the coin lands on its edge, ``coin['edg
   for element in coin.domain():
      print(coin[element])
 
-
-Piecewise Linear (PWL) Functions
---------------------------------
-The :py:class:`~psychsim.probability.Distribution` is sufficiently expressive for our needs, but it useful to impose additional structure on the sample space to facilitate authoring, simulation, and understanding. As already mentioned, PsychSim uses a factored representation, so that a state of the world is expressed a probability distribution over possible feature-value pairs. More precisely, instead of distributions over arbitrary elements, PsychSim represents distributions over :py:class:`~psychsim.pwl.vector.Keyedvector` instances, representing a set of feature-value pairs. The features are the same unique identifiers created by functions like :py:func:`~psychsim.pwl.keys.stateKey` and returned by methods like :py:meth:`~psychsim.world.World.defineState`::
-
-In particular, the state of the world is represented as a :py:class:`~psychsim.pwl.state.VectorDistributionSet` that represents a probability distribution over possible worlds::
+Possible Worlds
+---------------
+As already mentioned, PsychSim uses a factored representation, so that a state of the world is expressed as a probability distribution over possible feature-value pairs. More precisely, instead of distributions over arbitrary elements, the state of a PsychSim world is represented as a :py:class:`~psychsim.pwl.state.VectorDistributionSet` that represents a probability distribution over possible worlds::
 
   world.setState(WORLD,'phase','engagement')
   world.setState(WORLD,'winner',Distribution({'Sylvania': 0.25, 'Freedonia': 0.75}))
@@ -197,6 +194,17 @@ In particular, the state of the world is represented as a :py:class:`~psychsim.p
 
 These statements declare that the simulation is currently in the `engagement` phase, with a 75% chance that the winner is Freedonia vs. a 25% chance that it is Sylvania, and with Freedonia having a 75% chance of having 25000 troops vs. a 25% chance of having 10000. These three state features have independent distributions within the state. In this state, the probability that Freedonia is the winner with 25000 troops remaining is 56.25%.
 
+Alternatively, we may want to specify that Freedonia will have 25000 troops if and only if it is the winner; otherwise, it will have only 10000 troops left. Such a statement would look like the following::
+
+  winner = stateKey(WORLD,'winner')
+  troops = stateKey(free.name,'troops')
+  win = KeyedVector({winner: 'Freedonia',troops: 25000})
+  loss = KeyedVector({winner: 'Sylvania', troops: 10000})
+  world.setJoint(VectorDistribution({win: 0.75, loss: 0.25}))
+
+Piecewise Linear (PWL) Functions
+--------------------------------
+As already mentioned, the effects of actions and the observations of those actions are critical components of any agent model (the transition probability, *P*, and observation functions, *O*, respectively, from POMDPs). In theory, we could allow for arbitrary functions for action effects and obsevations, but we instead restrict the functions to be piecewise linear (PWL). As we see from examples like Algebraic Decision Diagrams in the literature, it is useful to impose additional structure on the sample space to facilitate authoring, simulation, and understanding. 
 If we want to instead specify that Freedonia has 25000 troops if and only if it is the winner, then we specify a joint probability over `winner` and `troops`. To do so, we use a :py:class:`~psychsim.pwl.vector.KeyedVector` to represent elements of the joint sample space::
 
   freeVictory = KeyedVector({stateKey(WORLD,'winner'): 'Freedonia',

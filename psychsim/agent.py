@@ -582,10 +582,11 @@ class Agent(object):
             except AttributeError:
                 self.world.extras[new] = '%s:%d' % (mod,frame[2])
         # Add to state vector
-        key = stateKey(self.name,keys.ACTION)
+        key = actionKey(self.name)
         if key in self.world.variables:
             self.world.symbols[new] = len(self.world.symbols)
             self.world.symbolList.append(new)
+            self.world.variables[key]['elements'].add(new)
         else:
             self.world.defineVariable(key,ActionSet,description='Action performed by %s' % (self.name))
             self.world.setFeature(key,new)
@@ -657,7 +658,7 @@ class Agent(object):
     """Reward methods"""
     """------------------"""
 
-    def setReward(self,tree,weight=1.,model=True):
+    def setReward(self,tree,weight=0.,model=True):
         """
         Adds/updates a goal weight within the reward function for the specified model.
         """
@@ -736,6 +737,8 @@ class Agent(object):
             else:
                 tree = self.getReward(model)
             vector *= tree
+            if not rewardKey(self.name) in vector:
+                vector.join(rewardKey(self.name),0.)
             vector.rollback()
             total = vector[rewardKey(self.name)].expectation()
         else:
@@ -996,40 +999,47 @@ class Agent(object):
         """
         oldModelKey = modelKey(self.name)
         newModelKey = makeFuture(oldModelKey)
+        # Find distribution over current belief models
         substate = trueState.keyMap[oldModelKey]
         trueState.keyMap[newModelKey] = substate
         distribution = trueState.distributions[substate]
+        # Find action that I performed
+        myAction = ActionSet({action for action in actions if action['subject'] == self.name})
         SE = {} # State estimator table
-        if self.O is True:
-            Omega = []
-        else:
-            Omega = sorted(self.O.keys())
-        assert isinstance(Omega,list)
+        Omega = sorted(self.O.keys())
         for vector in list(distribution.domain()):
-            prob = distribution[vector]
-            del distribution[vector]
             oldModel = self.world.float2value(oldModelKey,vector[oldModelKey])
+            original = self.getBelief(model=oldModel)
+            # These are actions I know that I've observed correctly
+            knownActions = actions.__class__({action for action in actions
+                if actionKey(action['subject']) in original and \
+                    self.world.variables.get(stateKey(self.name,'O_%s' % (action['subject'])),{'observable': True}).get('observable',False)})
+            # Identify label for overall observation
             label = ','.join(['%s' % (self.world.float2value(omega,vector[keys.makeFuture(omega)])) for omega in Omega])
             if not oldModel in SE:
                 SE[oldModel] = {}
             if not label in SE[oldModel]:
                 if self.getAttribute('static',oldModel) is True:
+                    # My beliefs (and my current mental model) never change
                     SE[oldModel][label] = vector[oldModelKey]
-                elif actions in self.models[oldModel]['SE'] and \
-                     label in self.models[oldModel]['SE'][actions]:
-                    newModel = self.models[oldModel]['SE'][actions][label]
-                    SE[oldModel][label] = self.models[newModel]['index']
+                elif myAction in self.models[oldModel]['SE'] and \
+                     label in self.models[oldModel]['SE'][myAction]:
+                    newModel = self.models[oldModel]['SE'][myAction][label]
+                    if newModel is None:
+                        # We're still processing
+                        SE[oldModel][label] = self.models[oldModel]['index']
+                    else:
+                        # We've finished processing this belief update
+                        SE[oldModel][label] = self.models[newModel]['index']
                 else:
-                    # Work to be done. Start by getting old belief state.
-                    beliefs = copy.deepcopy(self.getBelief(trueState,oldModel))
+                    # Work to be done. First, mark that we've started processing this transition
+                    if myAction not in self.models[oldModel]['SE']:
+                        self.models[oldModel]['SE'] = {myAction: {}}
+                    self.models[oldModel]['SE'][myAction][label] = None
+                    # Get old belief state.
+                    beliefs = copy.deepcopy(original)
                     # Project direct effect of the actions, including possible observations
-                    assert isinstance(actions,ActionSet)
-                    relevantActions = actions.__class__({action for action in actions
-                                                         if turnKey(action['subject']) in beliefs})
-                    if len(relevantActions) == 0:
-                        relevantActions = None
-                    self.world.step(relevantActions,beliefs,updateBeliefs=True,
-                                    keySubset=beliefs.keys())
+                    self.world.step(knownActions,beliefs,keySubset=beliefs.keys())
                     # Condition on actual observations
                     for omega in Omega:
                         value = vector[keys.makeFuture(omega)]
@@ -1062,10 +1072,11 @@ class Agent(object):
                                 dist.normalize()
                     newModel = self.belief2model(oldModel,beliefs)
                     SE[oldModel][label] = newModel['index']
-                    if not actions in self.models[oldModel]['SE']:
-                        self.models[oldModel]['SE'] = {actions: {}}
-                    self.models[oldModel]['SE'][actions][label] = newModel['name']
+                    beliefs.join(oldModelKey,newModel['index'])
+                    self.models[oldModel]['SE'][myAction][label] = newModel['name']
             # Insert new model into true state
+            prob = distribution[vector]
+            del distribution[vector]
             if isinstance(SE[oldModel][label],int) or isinstance(SE[oldModel][label],float):
                 vector[newModelKey] = SE[oldModel][label]
             else:
@@ -1213,7 +1224,7 @@ class Agent(object):
         self.O[stateKey(self.name,omega)][actions] = O
         return O
         
-    def getO(self,state,actions,model=True):
+    def getO(self,state,actions,model=None):
         if self.O is True:
             return {}
         else:
@@ -1245,10 +1256,31 @@ class Agent(object):
                     pass
         return omega
         
-    def observe(self,vector,actions,model=True):
+    def defineActionObservable(self,name,actions=None):
         """
-        
-	:returns: distribution over observations received by this agent in the given world when the given actions are performed
+        Specifies that some subset (possibly the entire set) of another agent's actions are observable to me
+        """
+        agent = self.world.agents[name]
+        if actions is None:
+            actions = agent.actions
+        key = actionKey(name)
+        omega = 'O_%s' % (name)
+        if actions == agent.actions:
+            # Completely observable
+            omegaKey = self.defineObservation(omega,domain=ActionSet,lo=actions)
+            self.setO(omega,None,makeTree(setToFeatureMatrix(omegaKey,key)))
+            self.world.variables[omegaKey]['observable'] = True
+        else:
+            self.defineObservation(omega,domain=ActionSet,lo=actions | {'__none__'})
+            self.setO(omega,None,makeTree({'if': equalRow(key,actions),
+                True: setToFeatureMatrix(omegaKey,key),
+                False: setToConstantMatrix(omegaKey,'__none__')}))
+        self.world.setFeature(omegaKey,next(iter(actions)))
+        return omegaKey
+
+    def observe(self,state,model=None):
+        """
+        :returns: distribution over observations received by this agent in the given world when the given actions are performed
         :rtype: L{Distribution}
         """
         O = self.getO(vector,actions,model)
@@ -1257,7 +1289,7 @@ class Agent(object):
         for key,table in O.items():
             try:
                 # Look up the observation function for the actions performed
-                tree = table[jointAction]
+                tree = table[actions]
             except KeyError:
                 # Maybe a tree that applies for all possible actions
                 try:

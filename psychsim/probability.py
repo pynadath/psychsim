@@ -140,6 +140,9 @@ class Distribution(dict):
                     total += element*self[element]
             return total
 
+    def __float__(self):
+        return self.expectation()
+        
     def sample(self,quantify=False):
         """
         :param quantify: if ``True``, also returns the amount of mass by which the sampling crosssed the threshold of the generated sample's range
@@ -167,12 +170,15 @@ class Distribution(dict):
         self.clear()
         self[element] = 1.
 
-    def select(self):
+    def select(self,maximize=False):
         """
         Reduce distribution to a single element, sampled according to the given distribution
         :returns: the probability of the selection made
         """
-        element = self.sample()
+        if maximize:
+            element = self.max()
+        else:
+            element = self.sample()
         prob = self[element]
         self.set(element)
         return prob
@@ -215,6 +221,22 @@ class Distribution(dict):
                 result.addProb(element*other,self[element])
             return result
         
+    def prune(self,epsilon=1e-8):
+        elements = self.domain()
+        i = 0
+        while i < len(self)-1:
+            el1 = elements[i]
+            j = i+1
+            while j < len(self):
+                el2 = elements[j]
+                if abs(el1-el2) < epsilon:
+                    self[el1] += self[el2]
+                    del self[el2]
+                    del elements[j]
+                else:
+                    j += 1
+            i += 1
+
     def __xml__(self):
         """
         :returns: An XML Document object representing this distribution

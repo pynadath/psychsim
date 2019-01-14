@@ -1,3 +1,6 @@
+"""
+Verify probabilistic decision-tree representation of state dynamics
+"""
 import unittest
 import random
 

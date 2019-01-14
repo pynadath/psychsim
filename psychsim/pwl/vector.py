@@ -7,10 +7,10 @@ from . import keys
 class KeyedVector(collections.MutableMapping):
     """
     Class for a compact, string-indexable vector
-    @cvar epsilon: the margin used for equality of vectors (as well as for testing hyperplanes in L{KeyedPlane})
-    @type epsilon: float
-    @ivar _string: the C{str} representation of this vector
-    @type _string: bool
+    :cvar epsilon: the margin used for equality of vectors (as well as for testing hyperplanes in L{KeyedPlane})
+    :type epsilon: float
+    :ivar _string: the C{str} representation of this vector
+    :type _string: bool
     """
     epsilon = 1e-8
 
@@ -120,7 +120,7 @@ class KeyedVector(collections.MutableMapping):
     def makeFuture(self,keyList=None):
         """
         Transforms this vector to refer to only future versions of its columns
-        @param keyList: If present, only references to these keys are made future
+        :param keyList: If present, only references to these keys are made future
         """
         return self.changeTense(True,keyList)
         
@@ -143,8 +143,8 @@ class KeyedVector(collections.MutableMapping):
         
     def filter(self,ignore):
         """
-        @return: a copy of me applying the given lambda expression to the keys (if a list is provided, then any keys in that list are dropped out)
-        @rtype: L{KeyedVector}
+        :return: a copy of me applying the given lambda expression to the keys (if a list is provided, then any keys in that list are dropped out)
+        :rtype: KeyedVector
         """
         if isinstance(ignore,list):
             test = lambda k: not k in ignore
@@ -157,8 +157,8 @@ class KeyedVector(collections.MutableMapping):
 
     def nearestNeighbor(self,vectors):
         """
-        @return: the vector in the given set that is closest to me
-        @rtype: L{KeyedVector}
+        :return: the vector in the given set that is closest to me
+        :rtype: KeyedVector
         """
         bestVector = None
         bestValue = None
@@ -171,14 +171,17 @@ class KeyedVector(collections.MutableMapping):
 
     def distance(self,vector):
         """
-        @return: the distance between the given vector and myself
-        @rtype: float
+        :return: the distance between the given vector and myself
+        :rtype: float
         """
         d = 0.
         for key in self.keys():
             d += pow(self[key]-vector[key],2)
         return d
 
+    def __gt__(self,other):
+        return sorted(self.items()) > sorted(other.items())
+        
     def __str__(self):
         if self._string is None:
             mykeys = list(self.keys())
@@ -229,7 +232,7 @@ class VectorDistribution(Distribution):
 
     def keys(self):
         """
-        @return: The keys of the vectors in the domain (assumed to be uniform),
+        :return: The keys of the vectors in the domain (assumed to be uniform),
         NOT the keys of the domain itself
         """
         if len(self) > 0:
@@ -240,9 +243,9 @@ class VectorDistribution(Distribution):
     def join(self,key,value):
         """
         Modifies the distribution over vectors to have the given value for the given key
-        @param key: the key to the column to modify
-        @type key: str
-        @param value: either a single value to apply to all vectors, or else a L{Distribution} over possible values
+        :param key: the key to the column to modify
+        :type key: str
+        :param value: either a single value to apply to all vectors, or else a L{Distribution} over possible values
         """
         original = dict(self)
         domain = self.domain()
@@ -262,11 +265,11 @@ class VectorDistribution(Distribution):
     def merge(self,other,inPlace=False):
         """
         Merge two distributions (the passed-in distribution takes precedence over this one in case of conflict)
-        @type other: L{VectorDistribution}
-        @param inPlace: if C{True}, modify this distribution directly; otherwise, return a new distribution (default is C{False})
-        @type inPlace: bool
-        @return: the merged distribution
-        @rtype: L{VectorDistribution}
+        :type other: VectorDistribution
+        :param inPlace: if C{True}, modify this distribution directly; otherwise, return a new distribution (default is C{False})
+        :type inPlace: bool
+        :return: the merged distribution
+        :rtype: VectorDistribution
         """
         if inPlace:
             result = self
@@ -299,9 +302,9 @@ class VectorDistribution(Distribution):
                 result[row[key]] = self[row]
         return Distribution(result)
 
-    def select(self,incremental=False):
+    def select(self,maximize=False,incremental=False):
         """
-        @param incremental: if C{True}, then select each key value in series (rather than picking out a joint vector all at once, default is C{False})
+        :param incremental: if C{True}, then select each key value in series (rather than picking out a joint vector all at once, default is C{False})
         """
         if incremental:
             # Sample each key and keep track how likely each individual choice was
@@ -327,12 +330,12 @@ class VectorDistribution(Distribution):
                 index += 1
             return sample
         else:
-            return Distribution.select(self)
+            return Distribution.select(self,maximize)
             
     def hasColumn(self,key):
         """
-        @return: C{True} iff the given key appears in all of the vectors of this distribution
-        @rtype: bool
+        :return: C{True} iff the given key appears in all of the vectors of this distribution
+        :rtype: bool
         """
         for vector in self.domain():
             if not key in vector:
