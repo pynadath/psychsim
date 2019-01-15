@@ -1,0 +1,16 @@
+﻿**Research method category**: Observational Data (government records)
+
+
+**Specific question**:
+
+
+For the second area, we would like to request records of government expenditures related to hurricanes over time, by hurricane. We would like the total amount spent and the category of expenditure (shelters; roads; rebuilding; monetary assistance to hurricane victims).
+
+
+**Sampling strategy**: N/A
+
+
+**Other applicable detail**: "We believe in the areas in which the government is active this data should be readily available from government records."
+
+
+**Research request identifier**: 13govtexpenses
