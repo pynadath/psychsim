@@ -25,6 +25,8 @@ from psychsim.domains.groundtruth.simulation.actor import Actor
 from psychsim.domains.groundtruth.simulation.cdf import *
 from psychsim.domains.groundtruth.simulation.create import *
 
+import psychsim.domains.groundtruth.simulation.visualize as visualize
+
 preSurveyRecords = []
 postSurveyRecords = []
 
@@ -167,8 +169,8 @@ def runInstance(instance,args,config,rerun=True):
                     break
             nextDay(world,groups,state,config,dirName,survey,start,cdfTables)
             if args['visualize']:
-                addState2tables(world,today,allTables,population,regions)
-                vizUpdateLoop(day)
+                addState2tables(world,world.getState(WORLD,'day').first()-1,allTables,population,regions)
+                visualize.vizUpdateLoop(world.getState(WORLD,'day').first()-1)
             writeHurricane(world,state['hurricanes']+1,dirName)
             newSeason = False
             if world.getState(WORLD,'day').first() - season*config.getint('Disaster','year_length') > config.getint('Disaster','season_length'):
@@ -492,7 +494,7 @@ def addState2tables(world,day,tables,population,regions):
                         entry[label] = toLikert(entry[label])
                 table['log'].append(entry)
                 #print("Region %s"%(entry))
-                addToVizData("regions", entry)
+                visualize.addToVizData("regions", entry)
         elif table['population'] is Actor:
             for actor in population:
                 belief = next(iter(actor.getBelief().values()))
@@ -517,8 +519,8 @@ def addState2tables(world,day,tables,population,regions):
                 #print("Actor %s"%(entry))
                 #print("Keys %s\nValues %s" %(entry.keys(), entry.values()))
                 if 'x' in list(entry.keys()) and 'y' in list(entry.keys()):
-                    addToIndividualList(entry)
-                addToVizData("actors", entry)
+                    visualize.addToIndividualList(entry)
+                visualize.addToVizData("actors", entry)
        
         
 def writeHurricane(world,hurricane,dirName):
