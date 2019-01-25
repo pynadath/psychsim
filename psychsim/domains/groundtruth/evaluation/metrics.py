@@ -180,7 +180,8 @@ if __name__ == '__main__':
                             hurricane = time2hurricane[t]
                         except IndexError:
                             hurricane = time2hurricane[-1]+1
-                    responses[agent][field] = responses[agent].get(field,set())|{hurricane}
+                    if hurricane <= 6:
+                        responses[agent][field] = responses[agent].get(field,set())|{hurricane}
     data = []
     for name in sorted(loadData['world'].agents):
         if name[:5] == 'Actor':
@@ -188,5 +189,7 @@ if __name__ == '__main__':
             row = {'Actor': name}
             for field in sorted(evacuate)+sorted(shelter):
                 row[field] = ';'.join(['%d' % (t) for t in sorted(responses[name].get(field,set()))])
+                row[field] = len((responses[name].get(field,set())))
+            row['%'] = (len(responses[name].get('Evacuated',set())|responses[name].get('Evacuated Previous Hurricane',set()))/6)
             data.append(row)
-    accessibility.writeOutput(args,data,['Actor']+sorted(evacuate)+sorted(shelter))
+    accessibility.writeOutput(args,data,['Actor','%']+sorted(evacuate)+sorted(shelter))
