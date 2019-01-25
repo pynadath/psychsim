@@ -1,4 +1,7 @@
-import pygame
+try:
+    import pygame
+except ModuleNotFoundError:
+    pass
 
 import psychsim.ui.viz as viz
 
