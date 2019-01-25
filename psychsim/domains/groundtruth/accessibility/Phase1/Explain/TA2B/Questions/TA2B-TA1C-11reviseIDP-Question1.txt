@@ -1,0 +1,10 @@
+﻿**Specific Question**:
+
+In your response to 11reviseIDP research request, you provided a file with a “Grievance” variable. Is this variable equivalent to the the “Dissatisfaction” variable from earlier datasets, with your clarification that high values indicate high levels of grievance / dissatisfaction, and low levels indicate low levels of grievance / dissatisfaction? If this variable is not the same as “Dissatisfaction”, can you please give us a definition of what the variable means?
+
+**Other applicable detail**:
+None
+
+**Answer**:
+
+Yes, it is equivalent to "Dissatisfaction".
