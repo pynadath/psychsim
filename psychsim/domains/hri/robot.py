@@ -173,7 +173,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                      True: setToConstantMatrix(key,'move'),
                      False: setToConstantMatrix(key,'scan')})
     world.setDynamics(key,True,tree)
-                     
+
     # Buildings
     threats = ['none','NBC','armed']
     for waypoint in WAYPOINTS[level]:
@@ -308,7 +308,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                         True: setToConstantMatrix(key,float(distance)/1000.),
                         False: tree}
         world.setDynamics(key,action,makeTree(tree))
-        
+
         # Observations from scanning this waypoint
         key = stateKey(symbol,'danger')
         omega = stateKey(robot.name,'microphone')
@@ -423,7 +423,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                                                   'armed': value/2.,
                                                   'none': 1.-value})
         robot.setBelief(key,dist,model)
-            
+
     robot.setAttribute('horizon',1)
 
     if learning == 'model-free':
@@ -467,7 +467,7 @@ def generateNBCO(world,key):
                    [(setFalseMatrix(omega),0.95),
                     (setTrueMatrix(omega),0.05)]},
             }
-    
+
 def generateCameraO(world,key,belief=False,falseNeg=0.05):
     """
     @return: a observation function specification for use in a PWL function
@@ -492,7 +492,7 @@ def generateCameraO(world,key,belief=False,falseNeg=0.05):
                             [(setToConstantMatrix(omega,False),0.95),
                              (setToConstantMatrix(omega,True),0.05)]},
                     }}
-    
+
 def getStart(level):
     """
     @return: the index of the starting waypoint for the given level
@@ -503,7 +503,7 @@ def getStart(level):
             return index
     else:
         return 0
-        
+
 def symbol2index(symbol,level=0):
     """
     @return: the waypoint index corresponding to the given symbol (not full) name in the given level
@@ -546,7 +546,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
                 autonomous=False):
     """
     @param parameters: ignored if request is provided
-    """ 
+    """
     print("***********************GetDecision********************")
 
     if sleep:
@@ -556,7 +556,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
         # Get the world from the scenario file
         world = World(filename)
     oldVector = world.state
-    
+
     robot = world.agents['robot']
 
     if 'robotWaypoint' in parameters:
@@ -579,7 +579,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
         command = int(parameters['commandWaypoint'])
         if command >= 0:
             world.setState(robot.name,'command',WAYPOINTS[level][int(command)]['symbol'])
-        else: 
+        else:
             command = None
     except KeyError:
         command = None
@@ -726,7 +726,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         assert len(world.getModel('robot')) == 1
         beliefState = list(world.agents['robot'].getBelief().values())[0]
         belief = world.getState(location,'danger',beliefState)
-                                
+
         real = world.getState(location,'danger')
         assert len(real) == 1
         assert len(belief) == 1
@@ -750,7 +750,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     filename = getFilename(username,level,ext,root)
     with open(filename,'wb') as scenarioFile:
         pickle.dump(world,scenarioFile)
-#    world.save(filename,ext=='psy') 
+#    world.save(filename,ext=='psy')
     return ack
 
 def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None):
@@ -770,7 +770,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     learning = world.getFeature('robot\'s learning')
     assert len(learning) == 1,'Unable to have uncertain setting for learning'
     learning = learning.first()
-    
+
     robot = world.agents['robot']
 
     if 'robotWaypoint' in parameters:
@@ -786,12 +786,12 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         robotWaypoint = WAYPOINTS[level][robotIndex]
         if not 'symbol'in robotWaypoint:
             robotWaypoint['symbol'] = robotWaypoint['name'].replace(' ','')
-    
+
     move = Action({'subject': robot.name,
                      'verb': 'moveto',
                      'object': robotWaypoint['symbol']})
     world.step(move)
-    # Process scripted observations 
+    # Process scripted observations
     key = stateKey(robotWaypoint['symbol'],'danger')
     ability = robot.getState('ability').domain()[0]
     if ability == 'badSensor':
@@ -1152,7 +1152,7 @@ def argmax(items):
     return max(range(len(items)),key=lambda i: items[i])
 
 def omega2index(omega):
-    return tuple(sorted(omega.items()))    
+    return tuple(sorted(omega.items()))
 
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
                acknowledgment='no',learning='none'):
@@ -1194,8 +1194,8 @@ if __name__ == '__main__':
     parser.add_argument('-k','--acknowledgment',action='store_const',
                         const='yes',default='no',
                         help='robot acknowledges mistakes [default: %(default)s]')
-    parser.add_argument('-l','--learning',action='store_const',
-                        const='yes',default='no',
+    parser.add_argument('-l','--learning',choices=['none','model-based','model-free'],
+                        type=str,default='none',
                         help='robot learns from mistakes [default: %(default)s]')
     parser.add_argument('-a','--ability',choices=['badSensor','good','badModel'],
                         default='badSensor',
