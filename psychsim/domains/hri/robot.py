@@ -74,25 +74,25 @@ TEMPLATES = {
         False: 'I think it will be dangerous for you to enter the $B_waypoint without protective gear. The protective gear will slow you down a little.'},
     'acknowledgment': {
         # Check if the person died 0 -- alive else 1 -- dead
-        '0': 'I have reinforced my action probabilities\n',
-        '1': 'I have changed my action probabilities drastically to avoid error\n',
+        '0': 'I have reinforced my action probabilities. ',
+        '1': 'I have changed my action probabilities drastically to avoid error. ',
         # False positive
         True: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
         # False negative
         False: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
         None: '',
-        'always': 'My Old probabilities were $old\nMy new probabilities are $new\n',
+        'always': 'My Old probabilities were $old. My new probabilities are $new.',
         },
     'ack_learning':{
-        'always':'It seems that my assessment of the $B_waypoint was incorrect.',
-        'update_info':'I have changed my FNprob of the camera sensor from $old_val to $new_val'
+        'always':'It seems that my assessment of the $B_waypoint was incorrect. ',
+        'update_info':'I have changed my FNprob of the camera sensor from $old_val to $new_val. '
         },
    'convince':{
-        'always':'I predicted $Action the last time I observed [microphone - $microphone, camera - $camera, NBCSensor - $NBCsensor] at $waypoint with confidence $Confidence%.\n',
-        'delay':'The actual state had no danger but caused delay. I updated my belief and also reliability of sensors.\n',
-        'died':'The actual state had danger and you were killed . I updated my belief drastically.\n',
-        'correct':'The previous action chosen was optimal. Hence, I became more confident with my prediction.\n',
-        'sensor reliability': 'I learn\'t that my $sensor1 is more realible than $sensor2\n',
+        'always':'I predicted $Action the last time I observed [microphone - $microphone, camera - $camera, NBCSensor - $NBCsensor] at $waypoint with confidence $Confidence%. ',
+        'delay':'The actual state had no danger but caused delay. I updated my belief and also reliability of sensors. ',
+        'died':'The actual state had danger and you were killed . I updated my belief drastically. ',
+        'correct':'The previous action chosen was optimal. Hence, I became more confident with my prediction. ',
+        'sensor reliability': 'I learn\'t that my $sensor1 is more realible than $sensor2. ',
 
         },
     }
@@ -601,9 +601,13 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
     elif command is None:
         # Move to next building in sequence
         index = robotIndex + 1
+        destination = index2symbol(index,level)
+        WriteLogData('%s %s' % (LOCATION_TAG,destination),username,level,root=root)
     else:
         # Commanded to move to specific building
         index = int(command)
+        destination = index2symbol(index,level)
+        WriteLogData('%s %s' % (LOCATION_TAG,destination),username,level,root=root)
     return index
 
 def GetAcknowledgment(user,recommendation,location,danger,username,level,parameters,
@@ -666,9 +670,15 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         probs_new = [V/Vtotal for V in Vnew]
 #        probs_old = np.array(np.array(copy_old_table[omega2index(robot.prev_state)])/sum(np.array(copy_old_table[omega2index(robot.prev_state)])))
 #        probs_new = np.array(np.array(robot.table[omega2index(robot.prev_state)])/sum(np.array(robot.table[omega2index(robot.prev_state)])))
-        action = Action({'subject': 'robot',
-                         'verb': 'recommend %s' % (recommendation),
-                         'object': location})
+        if user:
+            action = Action({'subject': 'robot',
+                             'verb': 'recommend %s' % ('protected'),
+                             'object': location})
+        else:
+            action = Action({'subject': 'robot',
+                             'verb': 'recommend %s' % ('unprotected'),
+                             'object': location})
+        print (action)
         world.step(action,select=True)
         ack += Template(TEMPLATES['acknowledgment'][str(enter_flag)]).safe_substitute()
         ack += Template(TEMPLATES['acknowledgment']['always']).substitute({'old':probs_old,'new':probs_new})
@@ -836,6 +846,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     # R = robot.getReward(model)
     # subset = set(R.getKeysIn()) - {CONSTANT}
     # R.children[None].makeFuture()
+    explanation = ''
     projection = {}
     if learning == 'model-free':
         global file
@@ -845,15 +856,15 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         print(values_predicted)
         action_predicted = argmax(values_predicted)
         act_verbs = ['recommend protected','recommend unprotected']
-        explanation = ''
-        # print (action_predicted)
 
-        if str(omega) in robot.old_decision:
+        # print (action_predicted)
+        if omega2index(omega) in robot.old_decision:
             temp_dict = {'waypoint':robot.old_decision[omega2index(omega)][2],
                          'Action':act_verbs[argmax(robot.old_decision[omega2index(omega)][0])],
                          'Confidence':round(100*robot.old_decision[omega2index(omega)][1],2)}
-            for key in omega:
-                temp_dict[key] = omega[key]
+            copy_omega = dict(omega)
+            for key_ in copy_omega:
+                temp_dict[key_] = copy_omega[key_]
             explanation += Template(TEMPLATES['convince']['always']).substitute(temp_dict)
 
             # print (omega)
@@ -985,7 +996,9 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     mode = world.getState(robot.name,'explanation').max()
     if mode == 'none':
         mode = ''
-    explanation = ' '.join(explainDecision(safety,POMDP,mode))
+    # explanation = explanation.join(explainDecision(safety,POMDP,mode))
+    for line in explainDecision(safety,POMDP,mode):
+        explanation += line
 #    pp.pprint(POMDP)
     WriteLogData('%s %s' % (MESSAGE_TAG,explanation),username,level,root=root)
 
@@ -1045,6 +1058,9 @@ def readLogData(username,level,root='.'):
     start = None
     for line in fileinput.input(filename):
         elements = line.split()
+        if len(elements) <= 1:
+            # print (elements)
+            continue
         if '%s %s' % (elements[2],elements[3]) == RECOMMEND_TAG:
             now = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
             log.insert(0,{'type': 'message','recommendation': elements[4],
@@ -1105,7 +1121,7 @@ def readLogData(username,level,root='.'):
 def allVisited(world,level):
     for index in range(len(WAYPOINTS[level])):
         waypoint = index2symbol(index,level)
-        visited = world.getState(waypoint,'entered').first()
+        visited = world.getState(waypoint,'scanned').first()
         if not visited:
             return False
     else:
