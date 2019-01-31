@@ -164,8 +164,11 @@ def runInstance(instance,args,config,rerun=True):
                 # No stopping condition, so assume we don't even want to start
                 break
             if terminated:
+                if state['hurricanes'] == 0:
+                    # We haven't run any hurricanes, so just exit
+                    break
                 # Make sure we're not terminating in the middle of hurricane
-                if state['phase'] == 'none' and world.getState('Nature','days').first() > config.getint('Disaster','phase_min_days'):
+                elif state['phase'] == 'none' and world.getState('Nature','days').first() > config.getint('Disaster','phase_min_days'):
                     break
             nextDay(world,groups,state,config,dirName,survey,start,cdfTables)
             if args['visualize']:
