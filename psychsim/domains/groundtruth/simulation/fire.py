@@ -1,3 +1,4 @@
+import logging
 import random
 from psychsim.probability import Distribution
 from psychsim.pwl.keys import *
@@ -10,13 +11,14 @@ if __name__ == '__main__':
 	population = [name for name in world.agents if name[:5] == 'Actor']
 	shelters = {name for name in world.agents if stateKey(name,'shelterPets') in world.variables}
 	data = []
-	samples = 40
+	samples = 160
 	while len(data) < samples:
 		# Choose participant
 		name = random.choice(population)
 		population.remove(name)
 		agent = world.agents[name]
 		record = {'Participant': len(data)+1}
+		logging.info('Participant %d: %s' % (record['Participant'],name))
 		record.update(accessibility.getDemographics(agent))
 		# Choose condition
 		allowsPets = len(data) < samples//2
