@@ -31,14 +31,16 @@ def createParser(output=None,day=None,seed=False,instances=False):
     parser.add_argument('-d','--debug',default='INFO',help='Level of logging detail')
     return parser
 
-def parseArgs(parser):
+def parseArgs(parser,logfile=None):
     args = vars(parser.parse_args())
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
     if not isinstance(level, int):
         raise ValueError('Invalid debug level: %s' % args['debug'])
-    logfile = '%s.log' % (os.path.splitext(__file__)[0])
-    logging.basicConfig(level=level,filename=logfile)
+    if logfile is None:
+        logging.basicConfig(level=level)
+    else:
+        logging.basicConfig(level=level,filename=logfile)
     if 'seed' in args:
         random.seed(args['seed'])
     if 'instances' in args:
