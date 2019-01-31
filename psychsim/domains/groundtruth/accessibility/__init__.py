@@ -52,7 +52,11 @@ def parseArgs(parser):
 def loadFromArgs(args,world=False,hurricanes=False,participants=False,actions=False,deaths=False,network=False,runData=False):
     values = {'directory': os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run']))}
     if world:
-        values['world'] = loadPickle(args['instance'],args['run'],args['day'])
+        try:
+            day = args['day']
+        except KeyError:
+            day = 0
+        values['world'] = loadPickle(args['instance'],args['run'],day)
     if participants:
         values['participants'] = readParticipants(args['instance'],args['run'])
     if actions:
@@ -131,3 +135,41 @@ def loadRunData(instance,run=0,end=None):
                     data[entity][key] = {}
                 data[entity][key][t] = value2dist(row['Value'],row['Notes'])
     return data
+
+def findHurricane(day,hurricanes):
+    for hurricane in hurricanes:
+        if day < hurricane['Start']:
+            return None
+        elif day <= hurricane['End']:
+            return hurricane
+    else:
+        return None
+
+
+def findMatches(record,world):
+    mismatch = {}
+    matches = set()
+    for name in sorted(world.agents.keys()):
+        if name[:5] == 'Actor':
+            for field,feature in sorted(demographics.items()):
+                key = stateKey(name,feature)
+                if world.variables[key]['domain'] is bool:
+                    value = {True: 'yes',False: 'no'}[world.agents[name].getState(feature).first()]
+                elif feature == 'resources':
+                    # Wealth has changed since beginning
+                    continue
+                else:
+                    value = str(world.agents[name].getState(feature).first())
+                if record[field] != value:
+                    try:
+                        mismatch[field].append(name)
+                    except KeyError:
+                        mismatch[field] = [name]
+                    break
+            else:
+                logging.info('Participant %s: %s' % (record['Participant'],name))
+                matches.add(name)
+    if matches:
+        return matches
+    else:
+        raise ValueError('No match for %s (mismatches: %s)' % (record['Participant'],mismatch))
