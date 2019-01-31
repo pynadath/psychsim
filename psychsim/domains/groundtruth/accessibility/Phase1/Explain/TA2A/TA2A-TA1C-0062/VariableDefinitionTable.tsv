@@ -1,0 +1,31 @@
+Name	LongName	Values	VarType	DataType	Notes
+Acquaintances	Number of Acquaintances 	[0-159]	dynamic	Integer	Includes friends
+Friend Serious Injury	Information on friends' serious injuries	[Yes,No]	fixed	Boolean	
+Friend Minor Injury	Information on friends' minor injuries	[Yes,No]	fixed	Boolean	
+Friend Wealth Loss	Information on friends' wealth loss	[Yes,No]	fixed	Boolean	
+Friend Hurricane	Information from friends on hurricane	[none,category,path,location]	fixed	String	
+Friend Aid	Information on friends’ aid	[Yes,No]fixed	fixed	Boolean	
+Friend Damage	Information on friends’ region’s damage	[Yes,No]fixed	fixed	Boolean	
+Friend Regional Aid	Information on friends’ region’s aid	[Yes,No]fixed	fixed	Boolean	
+Friend Frequency	Frequency of information from friends	[daily,weekly,monthly,yearly]	fixed	String	Empty if no such information
+Acquaintance Serious Injury	Information on acquaintances' serious injuries	[Yes,No]	fixed	Boolean	
+Acquaintance Minor Injury	Information on acquaintances' minor injuries	[Yes,No]	fixed	Boolean	
+Acquaintance Wealth Loss	Information on acquaintances' wealth loss	[Yes,No]	fixed	Boolean	
+Acquaintance Hurricane	Information from acquaintances on hurricane	[none,category,path,location]	fixed	String	
+Acquaintance Aid	Information on acquaintances’ aid	[Yes,No]fixed	fixed	Boolean	
+Acquaintance Damage	Information on acquaintances’ region’s damage	[Yes,No]fixed	fixed	Boolean	
+Acquaintance Regional Aid	Information on acquaintances’ region’s aid	[Yes,No]fixed	fixed	Boolean	
+Acquaintance Frequency	Frequency of information from acquaintances	[daily,weekly,monthly,yearly]	fixed	String	Empty if no such information
+Public Serious Injury	Public source information on serious injuries	[Yes,No]	fixed	Boolean	
+Public Minor Injury	Public source information on minor injuries	[Yes,No]	fixed	Boolean	
+Public Wealth Loss	Public source information on wealth loss	[Yes,No]	fixed	Boolean	
+Public Hurricane	Public source information on hurricane	[none,category,path,location]	fixed	String	
+Public Aid	Public source information on aid	[Yes,No]fixed	fixed	Boolean	
+Public Damage	Public source information on region’s damage	[Yes,No]fixed	fixed	Boolean	
+Public Regional Aid	Public source information on region’s aid	[Yes,No]fixed	fixed	Boolean	
+Public Frequency	Frequency of information from public sources	[daily,weekly,monthly,yearly]	fixed	String	Empty if no such information
+Friend Support	Support from friends	[Yes,No]fixed	fixed	Boolean	
+Friend Support Frequency	Frequency of support from friends	[daily,weekly,monthly,yearly]	fixed	String	Empty if no such support
+Acquuaintance Support	Support from acquaintances	[Yes,No]fixed	fixed	Boolean	
+Acquaintance Support Frequency	Frequency of support from acquaintances	[daily,weekly,monthly,yearly]	fixed	String	Empty if no such support
+Other Relationships	Other types of relationships		fixed	String	Empty if no such relationships
