@@ -94,7 +94,8 @@ if __name__ == '__main__':
 			else:
 				record['Acquaintance Support Frequency'] = 'daily'
 		# 7
-	fields = ['Participant']+sorted(accessibility.demographics.keys())+['Friend %s' % (q) for q in questions+['Frequency']]\
+	fields = ['Participant']+sorted(accessibility.demographics.keys())+['Acquaintances']\
+		+['Friend %s' % (q) for q in questions+['Frequency']]\
 		+['Acquaintance %s' % (q) for q in questions+['Frequency']]+['Public %s' % (q) for q in questions+['Frequency']]\
 		+['Friend Support','Friend Support Frequency','Acquaintance Support','Acquaintance Support Frequency','Other Relationships']
 	accessibility.writeOutput(args,survey,fields)
