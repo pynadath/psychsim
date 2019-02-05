@@ -6,12 +6,12 @@ from psychsim.domains.groundtruth import accessibility
 
 if __name__ == '__main__':
 	parser = accessibility.createParser(output='JoGT.tsv',seed=True,day=True)
-	args = accessibility.parseArgs(parser)
+	args = accessibility.parseArgs(parser,'%s.log' % (__file__))
 	world = accessibility.loadFromArgs(args,world=True)['world']
 	population = [name for name in world.agents if name[:5] == 'Actor']
 	shelters = {name for name in world.agents if stateKey(name,'shelterPets') in world.variables}
 	data = []
-	samples = 160
+	samples = 40
 	while len(data) < samples:
 		# Choose participant
 		name = random.choice(population)
@@ -22,7 +22,7 @@ if __name__ == '__main__':
 		record.update(accessibility.getDemographics(agent))
 		# Choose condition
 		allowsPets = len(data) < samples//2
-		record['Allows Pets'] = allowsPets
+		record['Allows Pets'] = 1 if allowsPets else 0
 		model,belief = next(iter(agent.getBelief().items()))
 		world.setState('Nature','category',3,belief)
 		world.setState('Nature','phase','active',belief)
@@ -35,9 +35,9 @@ if __name__ == '__main__':
 		result = agent.decide(selection='distribution')
 		V = {}
 		for action in agent.getActions(belief):
-			if action['verb'] in {'evacuate','stayInLocation'}:
-				V[action['verb']] = agent.value(belief,action,model)['__EV__']
+			V[action['verb']] = agent.value(belief,action,model)['__EV__']
 		action = Distribution(V,agent.getAttribute('rationality',model))
 		record['Evacuate'] = accessibility.toLikert(action['evacuate'])
+		record['Shelter'] = accessibility.toLikert(action['moveTo'])
 		data.append(record)
-	accessibility.writeOutput(args,data,['Participant']+sorted(accessibility.demographics)+['Allows Pets','Evacuate'])
+	accessibility.writeOutput(args,data,['Participant']+sorted(accessibility.demographics)+['Allows Pets','Evacuate','Shelter'])
