@@ -1,0 +1,41 @@
+Name	LongName	Values	VarType	DataType	Notes
+Wealth Decrease	Wealth Decrease	yes,no	dynamic	Boolean	
+Wealth Increase	Wealth Increase	yes,no	dynamic	Boolean	
+Wealth Change	Magnitude of Wealth Change	[1-5]	dynamic	Integer	“NA” if no decrease or increase
+Minor Injury	Minor Injury	yes,no	dynamic	Boolean	
+Minor Injury Severity	Minor Injury Severity	[1-5]	dynamic	Integer	“NA” if no minor injury
+Serious Injury	Serious Injury	yes,no	dynamic	Boolean	
+Serious Injury Severity	Serious Injury Severity	[1-5]	dynamic	Integer	“NA” if no serious injury
+Child Minor Injury	Child Minor Injury	yes,no	dynamic	Boolean	
+Child Minor Injury Severity	Child Minor Injury Severity	[1-5]	dynamic	Integer	“NA” if no children suffered minor injury
+Child Serious Injury	Child Serious Injury	yes,no	dynamic	Boolean	
+Child Serious Injury Severity	Child Serious Injury Severity	[1-5]	dynamic	Integer	“NA” if no children suffered serious injury
+Location	Location	shelter, own region, evacuated, hospital	dynamic	String	
+Injured Acquaintances	Injured Acquaintances	[0-]	dynamic	Integer	
+Injured Family	Injured Family	[0-]	dynamic	Integer	
+Injured Friends	Injured Friends	[0-]	dynamic	Integer	
+Injured People in Region	Injured People in Region	[0-]	dynamic	Integer	
+Injured Children of Acquaintances	Injured Children of Acquaintances	[0-]	dynamic	Integer	
+Injured Children of Family	Injured Children of Family	[0-]	dynamic	Integer	
+Injured Children of Friends	Injured Children of Friends	[0-]	dynamic	Integer	
+Injured Children of People in Region	Injured Children of People in Region	[0-]	dynamic	Integer	
+Acquaintances Wealth Loss	Acquaintances Wealth Loss	[0-]	dynamic	Integer	
+Family Wealth Loss	Family Wealth Loss	[0-]	dynamic	Integer	
+Friends Wealth Loss	Friends Wealth Loss	[0-]	dynamic	Integer	
+People in Region Wealth Loss	People in Region Wealth Loss	[0-]	dynamic	Integer	
+Acquaintances Wealth Gain	Acquaintances Wealth Gain	[0-]	dynamic	Integer	
+Family Wealth Gain	Family Wealth Gain	[0-]	dynamic	Integer	
+Friends Wealth Gain	Friends Wealth Gain	[0-]	dynamic	Integer	
+People in Region Wealth Gain	People in Region Wealth Gain	[0-]	dynamic	Integer	
+Acquaintances Evacuated	Acquaintances Evacuated	[0-]	dynamic	Integer	
+Family Evacuated	Family Evacuated	[0-]	dynamic	Integer	
+Friends Evacuated	Friends Evacuated	[0-]	dynamic	Integer	
+People in Region Evacuated	People in Region Evacuated	[0-]	dynamic	Integer	
+Acquaintances Sheltered	Acquaintances Sheltered	[0-]	dynamic	Integer	
+Family Sheltered	Family Sheltered	[0-]	dynamic	Integer	
+Friends Sheltered	Friends Sheltered	[0-]	dynamic	Integer	
+People in Region Sheltered	People in Region Sheltered	[0-]	dynamic	Integer	
+Dissatisfaction	Dissatisfaction	[1-5]	dynamic	Integer	
+Risk	Risk	[1-5]	dynamic	Integer	
+Severity	Severity	[1-5]	dynamic	Integer	
+Acquaintance Aid	Acquaintance Aid	yes,no	dynamic	Boolean	

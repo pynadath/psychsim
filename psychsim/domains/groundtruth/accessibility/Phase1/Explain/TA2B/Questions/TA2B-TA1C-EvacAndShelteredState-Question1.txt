@@ -1,0 +1,16 @@
+﻿**Specific question**:
+In our post-hurricane survey data in the original area and first season, a respondent always reports that they evacuated due to a particular hurricane any time they report sheltering for that same hurricane. This implied to us that sheltering is a type of an evacuation.
+
+
+However, this does not hold in the new area or in the second season of the original area. For example, in the new area participant 116 at timestep 365 reported at shelter in previous hurricane but *not* evacuated previous hurricane. 
+
+
+Please clarify the meaning of sheltered and evacuated and if a respondent can simultaneously be both sheltered and evacuated?
+
+
+**Other applicable detail**: N/A
+
+
+**Answer**:
+
+No, a person cannot be both sheltered and evacuated at the same time: evacuation means leaving the area completely, whereas being at the shelter is considered remaining within the area. 
