@@ -84,7 +84,7 @@ TEMPLATES = {
         # False negative
         False: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
         None: '',
-        'always': 'My Old probabilities were $old. My new probabilities are $new.',
+        'always': 'My Old confidence levels were [unsafe - $old_unsafe% , safe - $old_safe%]. My new confidence levels are [unsafe - $new_unsafe% , safe - $new_safe%].',
         },
     'ack_learning':{
         'always':'It seems that my assessment of the $B_waypoint was incorrect. ',
@@ -698,7 +698,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                         sensor1 = 'camera'
             ack += Template(TEMPLATES['convince']['sensor reliability']).substitute({'sensor1':sensor1,'sensor2':sensor2})
         ack += Template(TEMPLATES['acknowledgment']['required']).safe_substitute()
-        ack += Template(TEMPLATES['acknowledgment']['always']).substitute({'old':[ round(elem*100,2) for elem in probs_old ],'new':[ round(elem*100,2) for elem in probs_new ]})
+        ack += Template(TEMPLATES['acknowledgment']['always']).substitute({'old_unsafe': round(probs_old[0]*100,2), 'old_safe': round(probs_old[1]*100,2), 'new_unsafe': round(probs_new[0]*100,2) , 'new_safe': round(probs_new[1]*100,2)})
 
         # if enter_flag == 0:
         #     ack += 'I have reinforced my action probabilities\n'
