@@ -973,7 +973,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         world.setState(robotWaypoint['symbol'],'recommendation','protected')
         WriteLogData('%s: yes' % (RECOMMEND_TAG),username,level,root=root)
     if learning == 'model-free':
-        POMDP['B_waypoint'] = WAYPOINTS[level][symbol2index(world.getState('robot','waypoint').first())]['name']
+        POMDP['B_waypoint'] = WAYPOINTS[level][symbol2index(world.getState('robot','waypoint').first(),level)]['name']
         if action_predicted == 0:
             # Unsafe! TODO: This is really confidence, not a belif, so should be renamed
             POMDP['B_danger_not_none'] = int(100.*values_predicted[action_predicted]/sum(values_predicted))
