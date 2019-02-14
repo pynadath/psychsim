@@ -8,19 +8,19 @@ from psychsim.action import ActionSet
 class KeyedPlane:
     """
     String indexable hyperplane class
-    @ivar vector: the weights for the hyperplane
-    @type vector: L{KeyedVector}
-    @ivar threshold: the threshold for the hyperplane
-    @type threshold: float
-    @ivar comparison: if 1, value must be above hyperplane; if -1, below; if 0, equal (default is 1)
-    @type comparison: int
+    :ivar vector: the weights for the hyperplane
+    :type vector: L{KeyedVector}
+    :ivar threshold: the threshold for the hyperplane
+    :type threshold: float
+    :ivar comparison: if 1, value must be above hyperplane; if -1, below; if 0, equal (default is 1)
+    :type comparison: int
     """
     DEFAULT_THRESHOLD = 0.
     DEFAULT_COMPARISON = 1
 
     def __init__(self,planes,threshold=None,comparison=None):
         """
-        @warning: if S{planes} is a list, then S{threshold} and S{comparison} are ignored
+        :warning: if S{planes} is a list, then S{threshold} and S{comparison} are ignored
         """
         if isinstance(planes,Node):
             self.parse(planes)
@@ -48,7 +48,7 @@ class KeyedPlane:
 
     def __add__(self,other):
         """
-        @warning: Does not check for duplicate planes
+        :warning: Does not check for duplicate planes
         """
         assert self.isConjunction == other.isConjunction,'Planes must be both disjunctive or both conjunctive to be combined'
         result = self.__class__(self.planes+other.planes)
@@ -66,8 +66,8 @@ class KeyedPlane:
         """
         Tests whether the given vector passes or fails this test.
         Also accepts a numeric value, in lieu of doing a dot product.
-        @rtype: bool
-        @warning: If multiple planes are present, an AND over their results is assumed
+        :rtype: bool
+        :warning: If multiple planes are present, an AND over their results is assumed
         """
         result = None
         for plane,threshold,comparison in self.planes:
@@ -167,14 +167,14 @@ class KeyedPlane:
     def makeFuture(self,keyList=None):
         """
         Transforms this plane to refer to only future versions of its columns
-        @param keyList: If present, only references to these keys are made future
+        :param keyList: If present, only references to these keys are made future
         """
         self.changeTense(True,keyList)
 
     def makePresent(self,keyList=None):
         """
         Transforms this plane to refer to only current versions of its columns
-        @param keyList: If present, only references to these keys are made present
+        :param keyList: If present, only references to these keys are made present
         """
         self.changeTense(False,keyList)
 
@@ -221,8 +221,8 @@ class KeyedPlane:
     def compare(self,other,value):
         """
         Identifies any potential conflicts between two hyperplanes
-        @return: C{None} if no conflict was detected, C{True} if the tests are redundant, C{False} if the tests are conflicting
-        @warning: correct, but not complete
+        :return: C{None} if no conflict was detected, C{True} if the tests are redundant, C{False} if the tests are conflicting
+        :warning: correct, but not complete
         """
         assert len(self.planes) == 1,'Unable to compare branches with multiple tests'
         assert len(other.planes) == 1,'Unable to compare branches with multiple tests'
@@ -295,7 +295,7 @@ class KeyedPlane:
 
     def minimize(self):
         """
-        @return: an equivalent plane with no constant element in the weights
+        :return: an equivalent plane with no constant element in the weights
         """
         weights = self.vector.__class__(self.vector)
         if self.vector.has_key(CONSTANT):
@@ -360,36 +360,36 @@ class KeyedPlane:
 
 def thresholdRow(key,threshold):
     """
-    @return: a plane testing whether the given keyed value exceeds the given threshold
-    @rtype: L{KeyedPlane}
+    :return: a plane testing whether the given keyed value exceeds the given threshold
+    :rtype: L{KeyedPlane}
     """
     return KeyedPlane(KeyedVector({key: 1.}),threshold)
 def differenceRow(key1,key2,threshold):
     """
-    @return: a plane testing whether the difference between the first and second keyed values exceeds the given threshold
-    @rtype: L{KeyedPlane}
+    :return: a plane testing whether the difference between the first and second keyed values exceeds the given threshold
+    :rtype: L{KeyedPlane}
     """
     return KeyedPlane(KeyedVector({key1: 1.,key2: -1.}),threshold)
 def greaterThanRow(key1,key2):
     """
-    @return: a plane testing whether the first keyed value is greater than the second
-    @rtype: L{KeyedPlane}
+    :return: a plane testing whether the first keyed value is greater than the second
+    :rtype: L{KeyedPlane}
     """
     return differenceRow(key1,key2,0.)
 def trueRow(key):
     """
-    @return: a plane testing whether a boolean keyed value is True
-    @rtype: L{KeyedPlane}
+    :return: a plane testing whether a boolean keyed value is True
+    :rtype: L{KeyedPlane}
     """
     return thresholdRow(key,0.5)
 def andRow(trueKeys=[],falseKeys=[]):
     """
-    @param trueKeys: list of keys which must be C{True} (default is empty list)
-    @type trueKeys: str[]
-    @param falseKeys: list of keys which must be C{False} (default is empty list)
-    @type falseKeys: str[]
-    @return: a plane testing whether all boolean keyed values are set as desired
-    @rtype: L{KeyedPlane}
+    :param trueKeys: list of keys which must be C{True} (default is empty list)
+    :type trueKeys: str[]
+    :param falseKeys: list of keys which must be C{False} (default is empty list)
+    :type falseKeys: str[]
+    :return: a plane testing whether all boolean keyed values are set as desired
+    :rtype: L{KeyedPlane}
     """
     weights = {}
     for key in trueKeys:
@@ -399,13 +399,13 @@ def andRow(trueKeys=[],falseKeys=[]):
     return KeyedPlane(KeyedVector(weights),float(len(trueKeys))-0.5)
 def equalRow(key,value):
     """
-    @return: a plane testing whether the given keyed value equals the given target value
-    @rtype: L{KeyedPlane}
+    :return: a plane testing whether the given keyed value equals the given target value
+    :rtype: L{KeyedPlane}
     """
     return KeyedPlane(KeyedVector({key: 1.}),value,0)
 def equalFeatureRow(key1,key2):
     """
-    @return: a plane testing whether the values of the two given features are equal
-    @rtype: L{KeyedPlane}
+    :return: a plane testing whether the values of the two given features are equal
+    :rtype: L{KeyedPlane}
     """
     return KeyedPlane(KeyedVector({key1: 1.,key2: -1.}),0,0)

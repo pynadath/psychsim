@@ -40,16 +40,17 @@ TEMPLATES = {
         True: 'There is a $B_danger_not_none% chance that the building is dangerous.',
         # If a location is not safe...
         False: 'There is a $B_danger_not_none% chance that the building is dangerous.'},
+    'general': { 'desc' : 'I have finished surveying the $B_waypoint.'},
     'decision': {
         # If a location is safe...
-        True: 'I have finished surveying the $B_waypoint. I think the place is safe.',
+        True: ' I think the place is safe.',
         # If a location is not safe...
-        False: 'I have finished surveying the $B_waypoint. I think the place is dangerous.'},
+        False: ' I think the place is dangerous.'},
     'confidence': {
         # If a location is safe...
-        True: 'I am $B_danger_none% confident about this assessment.',
+        True: ' I am $B_danger_none% confident about this assessment.',
         # If a location is not safe...
-        False: 'I am $B_danger_not_none% confident about this assessment.'},
+        False: ' I am $B_danger_not_none% confident about this assessment.'},
     'NBC': {
         # If I observe NBC...
         False: 'My sensors have not detected any nuclear, biological or chemical weapons in here.',
@@ -74,25 +75,27 @@ TEMPLATES = {
         False: 'I think it will be dangerous for you to enter the $B_waypoint without protective gear. The protective gear will slow you down a little.'},
     'acknowledgment': {
         # Check if the person died 0 -- alive else 1 -- dead
-        '0': 'I have reinforced my action probabilities\n',
-        '1': 'I have changed my action probabilities drastically to avoid error\n',
+        'correct': 'It seems that my estimate of $waypoint was correct',
+        'delay': 'It seems that my estimate of $waypoint was incorrect',
+        'died': 'It seems that my estimate of $waypoint was incorrect',
+        'required': '. I\'ve adjusted my algorithm accordingly. ',
         # False positive
         True: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
         # False negative
         False: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
         None: '',
-        'always': 'My Old probabilities were $old\nMy new probabilities are $new\n',
+        'always': 'My Old confidence levels were [unsafe - $old_unsafe% , safe - $old_safe%]. My new confidence levels are [unsafe - $new_unsafe% , safe - $new_safe%].',
         },
     'ack_learning':{
-        'always':'It seems that my assessment of the $B_waypoint was incorrect.',
-        'update_info':'I have changed my FNprob of the camera sensor from $old_val to $new_val'
+        'always':'It seems that my assessment of the $B_waypoint was incorrect. ',
+        'update_info':'I have changed my FNprob of the camera sensor from $old_val to $new_val. '
         },
    'convince':{
-        'always':'I predicted $Action the last time I observed [microphone - $microphone, camera - $camera, NBCSensor - $NBCsensor] at $waypoint with confidence $Confidence%.\n',
-        'delay':'The actual state had no danger but caused delay. I updated my belief and also reliability of sensors.\n',
-        'died':'The actual state had danger and you were killed . I updated my belief drastically.\n',
-        'correct':'The previous action chosen was optimal. Hence, I became more confident with my prediction.\n',
-        'sensor reliability': 'I learn\'t that my $sensor1 is more realible than $sensor2\n',
+        'always':'My sensor readings are [microphone - $microphone, camera - $camera, NBCSensor - $NBCsensor]. Last time I had similar sensor reading was at $waypoint. I estimated that $waypoint was $Action with confidence $Confidence%. ',
+        'delay':'Since my previous estimate was incorrect, I have adjusted my algorithm so that I will estimate situations when my sensor readings are similar as $updated with $diff confidence. Thus after surveying the $waypoint,',
+        'died':'Since my previous estimate was incorrect, I have adjusted my algorithm so that I will estimate situations when my sensor readings are similar as $updated with $diff confidence. Thus after surveying the $waypoint,',
+        'correct':'Since my previous estimate was correct, I have adjusted my algorithm so that I will estimate situations when my sensor readings are similar as $updated with $diff confidence. Thus after surveying the $waypoint,',
+        'sensor reliability': '. It seems that my $sensor1 is more realible than $sensor2. ',
 
         },
     }
@@ -173,7 +176,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                      True: setToConstantMatrix(key,'move'),
                      False: setToConstantMatrix(key,'scan')})
     world.setDynamics(key,True,tree)
-                     
+
     # Buildings
     threats = ['none','NBC','armed']
     for waypoint in WAYPOINTS[level]:
@@ -308,7 +311,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                         True: setToConstantMatrix(key,float(distance)/1000.),
                         False: tree}
         world.setDynamics(key,action,makeTree(tree))
-        
+
         # Observations from scanning this waypoint
         key = stateKey(symbol,'danger')
         omega = stateKey(robot.name,'microphone')
@@ -423,7 +426,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                                                   'armed': value/2.,
                                                   'none': 1.-value})
         robot.setBelief(key,dist,model)
-            
+
     robot.setAttribute('horizon',1)
 
     if learning == 'model-free':
@@ -467,7 +470,7 @@ def generateNBCO(world,key):
                    [(setFalseMatrix(omega),0.95),
                     (setTrueMatrix(omega),0.05)]},
             }
-    
+
 def generateCameraO(world,key,belief=False,falseNeg=0.05):
     """
     @return: a observation function specification for use in a PWL function
@@ -492,7 +495,7 @@ def generateCameraO(world,key,belief=False,falseNeg=0.05):
                             [(setToConstantMatrix(omega,False),0.95),
                              (setToConstantMatrix(omega,True),0.05)]},
                     }}
-    
+
 def getStart(level):
     """
     @return: the index of the starting waypoint for the given level
@@ -503,7 +506,7 @@ def getStart(level):
             return index
     else:
         return 0
-        
+
 def symbol2index(symbol,level=0):
     """
     @return: the waypoint index corresponding to the given symbol (not full) name in the given level
@@ -546,7 +549,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
                 autonomous=False):
     """
     @param parameters: ignored if request is provided
-    """ 
+    """
     print("***********************GetDecision********************")
 
     if sleep:
@@ -556,7 +559,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
         # Get the world from the scenario file
         world = World(filename)
     oldVector = world.state
-    
+
     robot = world.agents['robot']
 
     if 'robotWaypoint' in parameters:
@@ -579,7 +582,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
         command = int(parameters['commandWaypoint'])
         if command >= 0:
             world.setState(robot.name,'command',WAYPOINTS[level][int(command)]['symbol'])
-        else: 
+        else:
             command = None
     except KeyError:
         command = None
@@ -601,9 +604,13 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
     elif command is None:
         # Move to next building in sequence
         index = robotIndex + 1
+        destination = index2symbol(index,level)
+        WriteLogData('%s %s' % (LOCATION_TAG,destination),username,level,root=root)
     else:
         # Commanded to move to specific building
         index = int(command)
+        destination = index2symbol(index,level)
+        WriteLogData('%s %s' % (LOCATION_TAG,destination),username,level,root=root)
     return index
 
 def GetAcknowledgment(user,recommendation,location,danger,username,level,parameters,
@@ -657,6 +664,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         elif recommendation == 'unprotected' and danger == 'none':
             robot.table[omega2index(robot.prev_state)][1] = robot.table[omega2index(robot.prev_state)][1] + LR*(20)
             robot.old_decision[omega2index(robot.prev_state)].append('correct')
+        robot.old_decision[omega2index(robot.prev_state)].append(list(robot.table[omega2index(robot.prev_state)]))
 
         Vold = copy_old_table[omega2index(robot.prev_state)]
         Vtotal = sum(Vold)
@@ -666,12 +674,17 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         probs_new = [V/Vtotal for V in Vnew]
 #        probs_old = np.array(np.array(copy_old_table[omega2index(robot.prev_state)])/sum(np.array(copy_old_table[omega2index(robot.prev_state)])))
 #        probs_new = np.array(np.array(robot.table[omega2index(robot.prev_state)])/sum(np.array(robot.table[omega2index(robot.prev_state)])))
-        action = Action({'subject': 'robot',
-                         'verb': 'recommend %s' % (recommendation),
-                         'object': location})
+        if user:
+            action = Action({'subject': 'robot',
+                             'verb': 'recommend %s' % ('protected'),
+                             'object': location})
+        else:
+            action = Action({'subject': 'robot',
+                             'verb': 'recommend %s' % ('unprotected'),
+                             'object': location})
+        print (action)
         world.step(action,select=True)
-        ack += Template(TEMPLATES['acknowledgment'][str(enter_flag)]).safe_substitute()
-        ack += Template(TEMPLATES['acknowledgment']['always']).substitute({'old':probs_old,'new':probs_new})
+        ack += Template(TEMPLATES['acknowledgment'][robot.old_decision[omega2index(robot.prev_state)][3]]).safe_substitute({'waypoint':robot.old_decision[omega2index(robot.prev_state)][2]})
         if len(WAYPOINTS[level])-1 == robotIndex:
             t = robot.table
             for key in t:
@@ -684,6 +697,9 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                         sensor2 = 'microphone'
                         sensor1 = 'camera'
             ack += Template(TEMPLATES['convince']['sensor reliability']).substitute({'sensor1':sensor1,'sensor2':sensor2})
+        ack += Template(TEMPLATES['acknowledgment']['required']).safe_substitute()
+        ack += Template(TEMPLATES['acknowledgment']['always']).substitute({'old_unsafe': round(probs_old[0]*100,2), 'old_safe': round(probs_old[1]*100,2), 'new_unsafe': round(probs_new[0]*100,2) , 'new_safe': round(probs_new[1]*100,2)})
+
         # if enter_flag == 0:
         #     ack += 'I have reinforced my action probabilities\n'
         #     # print ('I have reinforced my action probabilities')
@@ -726,7 +742,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         assert len(world.getModel('robot')) == 1
         beliefState = list(world.agents['robot'].getBelief().values())[0]
         belief = world.getState(location,'danger',beliefState)
-                                
+
         real = world.getState(location,'danger')
         assert len(real) == 1
         assert len(belief) == 1
@@ -750,7 +766,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     filename = getFilename(username,level,ext,root)
     with open(filename,'wb') as scenarioFile:
         pickle.dump(world,scenarioFile)
-#    world.save(filename,ext=='psy') 
+#    world.save(filename,ext=='psy')
     return ack
 
 def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None):
@@ -770,7 +786,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     learning = world.getFeature('robot\'s learning')
     assert len(learning) == 1,'Unable to have uncertain setting for learning'
     learning = learning.first()
-    
+
     robot = world.agents['robot']
 
     if 'robotWaypoint' in parameters:
@@ -786,12 +802,12 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         robotWaypoint = WAYPOINTS[level][robotIndex]
         if not 'symbol'in robotWaypoint:
             robotWaypoint['symbol'] = robotWaypoint['name'].replace(' ','')
-    
+
     move = Action({'subject': robot.name,
                      'verb': 'moveto',
                      'object': robotWaypoint['symbol']})
     world.step(move)
-    # Process scripted observations 
+    # Process scripted observations
     key = stateKey(robotWaypoint['symbol'],'danger')
     ability = robot.getState('ability').domain()[0]
     if ability == 'badSensor':
@@ -836,6 +852,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     # R = robot.getReward(model)
     # subset = set(R.getKeysIn()) - {CONSTANT}
     # R.children[None].makeFuture()
+    explanation = ''
     projection = {}
     if learning == 'model-free':
         global file
@@ -844,16 +861,17 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         values_predicted = robot.table[omega2index(omega)]
         print(values_predicted)
         action_predicted = argmax(values_predicted)
-        act_verbs = ['recommend protected','recommend unprotected']
-        explanation = ''
-        # print (action_predicted)
+        act_verbs = ['unsafe','safe']
+        diff_dict = {False:'higher',True:'lower'}
 
-        if str(omega) in robot.old_decision:
+        # print (action_predicted)
+        if omega2index(omega) in robot.old_decision:
             temp_dict = {'waypoint':robot.old_decision[omega2index(omega)][2],
                          'Action':act_verbs[argmax(robot.old_decision[omega2index(omega)][0])],
                          'Confidence':round(100*robot.old_decision[omega2index(omega)][1],2)}
-            for key in omega:
-                temp_dict[key] = omega[key]
+            copy_omega = dict(omega)
+            for key_ in copy_omega:
+                temp_dict[key_] = copy_omega[key_]
             explanation += Template(TEMPLATES['convince']['always']).substitute(temp_dict)
 
             # print (omega)
@@ -865,9 +883,10 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
             #     print ('The actual state had danger and you were killed . I updated my belief drastically.')
             # else:
             #     print ('The previous action chosen was optimal. Hence, I became more confident with my prediction.')
-            explanation += Template(TEMPLATES['convince'][robot.old_decision[omega2index(omega)][-1]]).safe_substitute()
+            upd_dict = {'updated':act_verbs[argmax(robot.old_decision[omega2index(omega)][4])],'diff':diff_dict[(robot.old_decision[omega2index(omega)][1]-robot.old_decision[omega2index(omega)][4][argmax(robot.old_decision[omega2index(omega)][4])])>0],'waypoint':robotWaypoint['name']}
+            explanation += Template(TEMPLATES['convince'][robot.old_decision[omega2index(omega)][3]]).safe_substitute(upd_dict)
         conf = values_predicted[action_predicted]/sum(values_predicted)
-        robot.old_decision[omega2index(omega)] = [list(values_predicted),conf,str(robotWaypoint['symbol'])]
+        robot.old_decision[omega2index(omega)] = [list(values_predicted),conf,str(robotWaypoint['name'])]
 
 
         # print ('confidence of decision:',values_predicted[action_predicted]/sum(values_predicted))
@@ -954,7 +973,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         world.setState(robotWaypoint['symbol'],'recommendation','protected')
         WriteLogData('%s: yes' % (RECOMMEND_TAG),username,level,root=root)
     if learning == 'model-free':
-        POMDP['B_waypoint'] = world.getState('robot','waypoint').first()
+        POMDP['B_waypoint'] = WAYPOINTS[level][symbol2index(world.getState('robot','waypoint').first(),level)]['name']
         if action_predicted == 0:
             # Unsafe! TODO: This is really confidence, not a belif, so should be renamed
             POMDP['B_danger_not_none'] = int(100.*values_predicted[action_predicted]/sum(values_predicted))
@@ -985,7 +1004,14 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     mode = world.getState(robot.name,'explanation').max()
     if mode == 'none':
         mode = ''
-    explanation = ' '.join(explainDecision(safety,POMDP,mode))
+    # explanation = explanation.join(explainDecision(safety,POMDP,mode))
+    cnt_temp = 0
+    for line in explainDecision(safety,POMDP,mode):
+        if cnt_temp == 0:
+            explanation = line+' '+explanation
+        else:
+            explanation += line
+        cnt_temp+=1
 #    pp.pprint(POMDP)
     WriteLogData('%s %s' % (MESSAGE_TAG,explanation),username,level,root=root)
 
@@ -1007,6 +1033,7 @@ def explainDecision(decision,beliefs,mode):
     @rtype: str[]
     """
     result = []
+    result.append(Template(TEMPLATES['general']['desc']).substitute(beliefs))
     result.append(Template(TEMPLATES['decision'][decision]).substitute(beliefs))
     if 'confidence' in mode:
         result.append(Template(TEMPLATES['confidence'][decision]).substitute(beliefs))
@@ -1045,6 +1072,9 @@ def readLogData(username,level,root='.'):
     start = None
     for line in fileinput.input(filename):
         elements = line.split()
+        if len(elements) <= 1:
+            # print (elements)
+            continue
         if '%s %s' % (elements[2],elements[3]) == RECOMMEND_TAG:
             now = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
             log.insert(0,{'type': 'message','recommendation': elements[4],
@@ -1105,7 +1135,7 @@ def readLogData(username,level,root='.'):
 def allVisited(world,level):
     for index in range(len(WAYPOINTS[level])):
         waypoint = index2symbol(index,level)
-        visited = world.getState(waypoint,'entered').first()
+        visited = world.getState(waypoint,'scanned').first()
         if not visited:
             return False
     else:
@@ -1152,7 +1182,7 @@ def argmax(items):
     return max(range(len(items)),key=lambda i: items[i])
 
 def omega2index(omega):
-    return tuple(sorted(omega.items()))    
+    return tuple(sorted(omega.items()))
 
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
                acknowledgment='no',learning='none'):
@@ -1194,8 +1224,8 @@ if __name__ == '__main__':
     parser.add_argument('-k','--acknowledgment',action='store_const',
                         const='yes',default='no',
                         help='robot acknowledges mistakes [default: %(default)s]')
-    parser.add_argument('-l','--learning',action='store_const',
-                        const='yes',default='no',
+    parser.add_argument('-l','--learning',choices=['none','model-based','model-free'],
+                        type=str,default='none',
                         help='robot learns from mistakes [default: %(default)s]')
     parser.add_argument('-a','--ability',choices=['badSensor','good','badModel'],
                         default='badSensor',
