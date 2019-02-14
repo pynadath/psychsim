@@ -1,0 +1,26 @@
+Name	LongName	Values	VarType	DataType	Notes
+Friends	Number of Friends	[0-]	dynamic	Integer	
+Acquaintances	Number of Acquaintances	[0-]	dynamic	Integer
+Injury Sensitivity	Sensitivity to Injury in Evacuation Decision	[1-5]	dynamic	Integer
+Asset Loss Sensitivity	Sensitivity to Asset Loss in Evacuation Decision	[1-5]	dynamic	Integer
+Aid if Wealth Loss	Government Should Provide Aid if I Suffer Wealth Loss	[1-5]	dynamic	Integer
+Aid if Minor Injury	Government Should Provide Aid if I Suffer Minor Injury		[1-5]	dynamic	Integer
+Aid if Serious Injury	Government Should Provide Aid if I Suffer Serious Injury	[1-5]	dynamic	Integer
+Aid if Children Minor Injury	Government Should Provide Aid if My Children Suffer Minor Injury	[1-5]	dynamic	Integer
+Aid if Children Serious Injury	Government Should Provide Aid if My Children Suffer Serious Injury	[1-5]	dynamic	Integer
+Provide Financial	Provide Financial Support to Acquaintances	[1-5]	dynamic	Integer
+Provide Non-Financial	Provide Non-Financial Support to Acquaintances	[1-5]	dynamic	Integer
+Ask for Support	Ask for Support from Acquaintances	[1-5]	dynamic	Integer
+Info from Social	Seek Information from Social Sources	[1-5]	dynamic	Integer
+Info from Friends	Seek Information from Friends	[1-5]	dynamic	Integer
+Preparedness	How Well Prepared	[1-5]	dynamic	Integer
+Category to Friend	Response to Friend's Question about Category	[1-5]	dynamic	Integer	N/A if there is currently no hurricane to ask about
+Evacuated	Currently Evacuated	[yes,no]	dynamic	Boolean
+Minor Injury	Minor Injury	[yes,no]	dynamic	Boolean
+Serious Injury	Serious Injury	[yes,no]	dynamic	Boolean
+Risk/Severity	Severity Pre-Hurricane Risk During-Hurricane	[1-5]	dynamic	Integer
+At Shelter	Currently At Shelter	[yes,no]	dynamic	Boolean
+Evacuation Spending	Current Spending on Evacuation	[1-15]	dynamic	Integer	N/A if no spending
+Hospitalization Spending	Current Spending on Hospitalization	[1-15]	dynamic	Integer	N/A if no spending
+Minor Injury Spending	Current Spending on Minory Injury	[1-15]	dynamic	Integer	N/A if no spending
+Asset Damage	Current Damage to Assets	[1-15]	dynamic	Integer	N/A if no spending

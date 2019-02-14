@@ -1,0 +1,36 @@
+We interpret this experiment as: bringing people in, presenting them with a vignette, and asking them questions about what they expect about their behavior and its outcome. However, the request often refers to a simulation, but the simulated researchers conducting this simulated experiment do not have access to the simulation itself. We therefore focused on the files in the request that could be presented to the participants and the questions which they are capable of answering themselves (without any simulated world to fill in the blanks for them). An item-by-item breakdown of the issues follows.
+
+The residents of Region06 and Region09 have just allowed embedded researchers, so it is unreasonable to now expect them all to participate in this experiment as well. We instead randomly sample 5% of the population.
+
+We then replaced any references to Region06 and Region09 in your files with Region01 and Region05, respectively, so as to refer to regions whose residents were included in our sample pool.
+
+We do not provide the names of specific individuals to the participants, only numbers (e.g., of injured). Therefore no unique IDs are recorded.
+
+1) It is not realistic to instruct people as to what levels of risk and dissatisfaction they should feel. 
+
+2) TA2A-TA1C-0082-Participants.tsv
+
+2i) Detailed salary information is not available.
+
+2iii) Confidentiality of such a study would preclude revealing the identities of the other participants.
+
+SimulatedAid
+2) It is not possible to specify the aid provider or recipients to the experiment participants, so we leave them to interpret the effect of aid as they will.
+
+SimulatedInjury
+We interpreted "Another single minor injury for an adult in Region06" to mean that there was an additional injury (so that there would be, for example, two injured adults in Region06 on Timestep 5). We assume that these counts do not include the participants themselves, so they are free to form their own injury expectations.
+
+Simulated Social Information
+This file has no effect. We assume that the Simulated Hurricane and Simulated Regional Damage files are already provided to the participants (otherwise, they would have no effect on the experiment). If the actual hurricane and damage values are provided to the participants, it is not clear what the intended effect of other sources of information about those values would be.
+
+4) Also in TA2A-TA1C-0082-Participants.tsv
+
+5)
+iv) Participants are unable to answer questions about salary.
+vii) We ask for the participants' expectations of injury without imposing a 1-day restriction, as it is not clear (to us or the participants) how they should form expectations under such an unnatural condition (e.g., do you want it to change their evacuation decisions? their spending? etc.).
+xiii) People will not be able to anticipate what friends/acquaintances they may gain or lose.
+
+6) 
+i) No individuals were selected (although the aggregate numbers were presented to the participants)
+
+ii) The participants were able to answer all the questions they were presented with, so they have nothing to add here.
