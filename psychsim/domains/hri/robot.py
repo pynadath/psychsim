@@ -121,7 +121,7 @@ TEMPLATES = {
         'delay':'Since my previous estimate was incorrect, I\'ve updated my algorithm to report safe with $diff confidence given the same sensor readings. Thus after surveying the $waypoint,',
         'died':'Since my previous estimate was incorrect, I\'ve updated my algorithm to report safe with $diff confidence given the same sensor readings. Thus after surveying the $waypoint,',
         'correct':'Since my previous estimate was correct, I\'ve updated my algorithm to report safe with $diff confidence given the same sensor readings. Thus after surveying the $waypoint,',
-        'sensor reliability': '. It seems that my $sensor1 is more realible than $sensor2. ',
+        'sensor reliability': '. It seems that my $sensor1 is more realible than $sensor2',
 
         },
     }
