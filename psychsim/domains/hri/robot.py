@@ -84,7 +84,7 @@ TEMPLATES = {
         # False negative
         False: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
         None: '',
-        'always': 'In the future, I will be $compare likely to report safe estimate when my sensors have the same readings.',
+        'always': 'In the future, I will be $compare likely to report a safe estimate when my sensors have the same readings.',
         },
     'ack_learning':{
         'always':'It seems that my assessment of the $B_waypoint was incorrect. ',
@@ -102,25 +102,25 @@ TEMPLATES = {
                                     },
                 'friendly':
                         {False:
-                                {False: 'My microphone has detected friendly conversation inside. My Camera and NBC sensor did not detect any threat. ',
-                                 True: 'My microphone has detected friendly conversation inside. My Camera did not pick up any threat but my NBC sensor has detected danger. '},
+                                {False: 'My microphone has detected a friendly conversation inside. My Camera and NBC sensor did not detect any threat. ',
+                                 True: 'My microphone has detected a friendly conversation inside. My Camera did not pick up any threat but my NBC sensor has detected danger. '},
                         True:
-                            {False: 'My microphone has detected friendly conversation inside. My NBC sensor did not pick up any threat but Camera has captured suspicious activity. ',
-                             True: 'My microphone has detected friendly conversation inside. My NBC sensor and camera have detected danger. '}
+                            {False: 'My microphone has detected a friendly conversation inside. My NBC sensor did not pick up any threat but Camera has captured suspicious activity. ',
+                             True: 'My microphone has detected a friendly conversation inside. My NBC sensor and camera have detected danger. '}
                                     },
                 'suspicious':
                         {False:
-                                {False: 'My microphone has detected suspicious conversation inside. My Camera and NBC sensor did not detect any threat. ',
-                                 True: 'My microphone has detected suspicious conversation inside. My Camera did not pick up any threat but my NBC sensor has detected danger. '},
+                                {False: 'My microphone has detected a suspicious conversation inside. My Camera and NBC sensor did not detect any threat. ',
+                                 True: 'My microphone has detected a suspicious conversation inside. My Camera did not pick up any threat but my NBC sensor has detected danger. '},
                         True:
-                            {False: 'My microphone has detected suspicious conversation inside. My NBC sensor did not pick up any threat but my Camera has captured suspicious activity. ',
-                             True: 'My microphone has detected suspicious conversation inside. My NBC sensor and camera have detected danger. '}
+                            {False: 'My microphone has detected a suspicious conversation inside. My NBC sensor did not pick up any threat but my Camera has captured suspicious activity. ',
+                             True: 'My microphone has detected a suspicious conversation inside. My NBC sensor and camera have detected danger. '}
                                     },
                 },
-        'always':'Last time I had similar sensor reading was at $waypoint. I estimated that $waypoint was $Action with confidence $Confidence%. ',
-        'delay':'Since my previous estimate was incorrect, I\'ve updated my algorithm to report safe with $diff confidence given the same sensor readings. Thus after surveying the $waypoint,',
-        'died':'Since my previous estimate was incorrect, I\'ve updated my algorithm to report safe with $diff confidence given the same sensor readings. Thus after surveying the $waypoint,',
-        'correct':'Since my previous estimate was correct, I\'ve updated my algorithm to report safe with $diff confidence given the same sensor readings. Thus after surveying the $waypoint,',
+        'always':'Last time I had similar sensor readings were at $waypoint. I estimated that the $waypoint was $Action with $Confidence% confidence. ',
+        'delay':'Since my previous estimate was incorrect, I\'ve updated my algorithm to report safe estimate with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
+        'died':'Since my previous estimate was incorrect, I\'ve updated my algorithm to safe estimate with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
+        'correct':'Since my previous estimate was correct, I\'ve updated my algorithm safe estimate with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
         'sensor reliability': '. It seems that my $sensor1 is more realible than $sensor2',
 
         },
