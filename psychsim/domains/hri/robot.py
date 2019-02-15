@@ -48,9 +48,9 @@ TEMPLATES = {
         False: ' I think the place is dangerous.'},
     'confidence': {
         # If a location is safe...
-        True: ' I am now $B_danger_none% confident about this assessment.',
+        True: ' I am$flag $B_danger_none% confident about this assessment.',
         # If a location is not safe...
-        False: ' I am now $B_danger_not_none% confident about this assessment.'},
+        False: ' I am$flag $B_danger_not_none% confident about this assessment.'},
     'NBC': {
         # If I observe NBC...
         False: 'My sensors have not detected any nuclear, biological or chemical weapons in here.',
@@ -75,9 +75,9 @@ TEMPLATES = {
         False: 'I think it will be dangerous for you to enter the $B_waypoint without protective gear. The protective gear will slow you down a little.'},
     'acknowledgment': {
         # Check if the person died 0 -- alive else 1 -- dead
-        'correct': 'It seems that my estimate of $waypoint was correct',
-        'delay': 'It seems that my estimate of $waypoint was incorrect',
-        'died': 'It seems that my estimate of $waypoint was incorrect',
+        'correct': 'It seems that my estimate of the $waypoint was correct',
+        'delay': 'It seems that my estimate of the $waypoint was incorrect',
+        'died': 'It seems that my estimate of the $waypoint was incorrect',
         'required': '. I\'ve updated my algorithm accordingly. ',
         # False positive
         True: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
@@ -119,8 +119,8 @@ TEMPLATES = {
                 },
         'always':'Last time I had similar sensor readings were at $waypoint. I estimated that the $waypoint was $Action with $Confidence% confidence. ',
         'delay':'Since my previous estimate was incorrect, I\'ve updated my algorithm to report safe estimate with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
-        'died':'Since my previous estimate was incorrect, I\'ve updated my algorithm to safe estimate with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
-        'correct':'Since my previous estimate was correct, I\'ve updated my algorithm safe estimate with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
+        'died':'Since my previous estimate was incorrect, I\'ve updated my algorithm to report safe estimate with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
+        'correct':'Since my previous estimate was correct, I\'ve updated my algorithm to report safe estimate with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
         'sensor reliability': '. It seems that my $sensor1 is more realible than $sensor2',
 
         },
@@ -802,7 +802,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     """
 
     print("**********************Get Recommendation********************")
-
+    temp_flag = ''
     if sleep:
         time.sleep(sleep)
     filename = getFilename(username,level,ext,root)
@@ -901,7 +901,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                 temp_dict[key_] = copy_omega[key_]
             explanation += Template(TEMPLATES['convince']['sensors'][temp_dict['microphone']][temp_dict['camera']][temp_dict['NBCsensor']]).safe_substitute()
             explanation += Template(TEMPLATES['convince']['always']).safe_substitute(temp_dict)
-
+            temp_flag = ' now'
             # print (omega)
             # print (robotWaypoint['symbol'])
             # print ('I predicted', act_verbs[argmax(robot.old_decision[str(omega)][0])] ,'the last time.')
@@ -1035,7 +1035,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         mode = ''
     # explanation = explanation.join(explainDecision(safety,POMDP,mode))
     cnt_temp = 0
-    for line in explainDecision(safety,POMDP,mode):
+    for line in explainDecision(safety,POMDP,mode,check_flag=temp_flag):
         if cnt_temp == 0:
             explanation = line+' '+explanation
         else:
@@ -1048,7 +1048,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         pickle.dump(world,scenarioFile)
     return explanation
 
-def explainDecision(decision,beliefs,mode):
+def explainDecision(decision,beliefs,mode,flag_check=''):
     """
     @param decision: the assessment of the safety of the given location (C{True} if safe, C{False} if dangerous)
     @type decision: bool
@@ -1065,6 +1065,7 @@ def explainDecision(decision,beliefs,mode):
     result.append(Template(TEMPLATES['general']['desc']).substitute(beliefs))
     result.append(Template(TEMPLATES['decision'][decision]).substitute(beliefs))
     if 'confidence' in mode:
+        beliefs['flag'] = flag_check
         result.append(Template(TEMPLATES['confidence'][decision]).substitute(beliefs))
     if 'ability' in mode:
         result.append(Template(TEMPLATES['NBC'][beliefs['omega_NBCsensor']]).substitute(beliefs))
