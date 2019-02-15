@@ -84,7 +84,7 @@ TEMPLATES = {
         # False negative
         False: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
         None: '',
-        'always': 'In the future, I will be $compare likely to report safe estimate when my sensors have the same readings',
+        'always': 'In the future, I will be $compare likely to report safe estimate when my sensors have the same readings.',
         },
     'ack_learning':{
         'always':'It seems that my assessment of the $B_waypoint was incorrect. ',
@@ -899,8 +899,8 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
             copy_omega = dict(omega)
             for key_ in copy_omega:
                 temp_dict[key_] = copy_omega[key_]
-            explanation += Template(TEMPLATES['convince'][temp_dict['microphone']][temp_dict['camera']][temp_dict['NBCsensor']])
-            explanation += Template(TEMPLATES['convince']['always']).substitute(temp_dict)
+            explanation += Template(TEMPLATES['convince']['sensors'][temp_dict['microphone']][temp_dict['camera']][temp_dict['NBCsensor']]).safe_substitute()
+            explanation += Template(TEMPLATES['convince']['always']).safe_substitute(temp_dict)
 
             # print (omega)
             # print (robotWaypoint['symbol'])
@@ -911,7 +911,8 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
             #     print ('The actual state had danger and you were killed . I updated my belief drastically.')
             # else:
             #     print ('The previous action chosen was optimal. Hence, I became more confident with my prediction.')
-            upd_dict = {'updated':act_verbs[argmax(robot.old_decision[omega2index(omega)][4])],'diff':diff_dict[(robot.old_decision[omega2index(omega)][0][1]-robot.old_decision[omega2index(omega)][4][1])>0],'waypoint':robotWaypoint['name']}
+            # print ('Assertion',robot.table[omega2index(omega)] == robot.old_decision[omega2index(omega)][4])
+            upd_dict = {'diff':diff_dict[(robot.old_decision[omega2index(omega)][0][1]-robot.table[omega2index(omega)][1])>0],'waypoint':robotWaypoint['name']}
             explanation += Template(TEMPLATES['convince'][robot.old_decision[omega2index(omega)][3]]).safe_substitute(upd_dict)
         conf = values_predicted[action_predicted]/sum(values_predicted)
         robot.old_decision[omega2index(omega)] = [list(values_predicted),conf,str(robotWaypoint['name'])]
