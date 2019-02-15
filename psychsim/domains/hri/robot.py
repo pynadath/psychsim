@@ -48,9 +48,9 @@ TEMPLATES = {
         False: ' I think the place is dangerous.'},
     'confidence': {
         # If a location is safe...
-        True: ' I am $B_danger_none% confident about this assessment.',
+        True: ' I am now $B_danger_none% confident about this assessment.',
         # If a location is not safe...
-        False: ' I am $B_danger_not_none% confident about this assessment.'},
+        False: ' I am now $B_danger_not_none% confident about this assessment.'},
     'NBC': {
         # If I observe NBC...
         False: 'My sensors have not detected any nuclear, biological or chemical weapons in here.',
@@ -78,23 +78,49 @@ TEMPLATES = {
         'correct': 'It seems that my estimate of $waypoint was correct',
         'delay': 'It seems that my estimate of $waypoint was incorrect',
         'died': 'It seems that my estimate of $waypoint was incorrect',
-        'required': '. I\'ve adjusted my algorithm accordingly. ',
+        'required': '. I\'ve updated my algorithm accordingly. ',
         # False positive
         True: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
         # False negative
         False: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
         None: '',
-        'always': 'My Old confidence levels were [unsafe - $old_unsafe% , safe - $old_safe%]. My new confidence levels are [unsafe - $new_unsafe% , safe - $new_safe%].',
+        'always': 'In the future, I will be $compare likely to report safe estimate when my sensors have the same readings',
         },
     'ack_learning':{
         'always':'It seems that my assessment of the $B_waypoint was incorrect. ',
         'update_info':'I have changed my FNprob of the camera sensor from $old_val to $new_val. '
         },
    'convince':{
-        'always':'My sensor readings are [microphone - $microphone, camera - $camera, NBCSensor - $NBCsensor]. Last time I had similar sensor reading was at $waypoint. I estimated that $waypoint was $Action with confidence $Confidence%. ',
-        'delay':'Since my previous estimate was incorrect, I have adjusted my algorithm so that I will estimate situations when my sensor readings are similar as $updated with $diff confidence. Thus after surveying the $waypoint,',
-        'died':'Since my previous estimate was incorrect, I have adjusted my algorithm so that I will estimate situations when my sensor readings are similar as $updated with $diff confidence. Thus after surveying the $waypoint,',
-        'correct':'Since my previous estimate was correct, I have adjusted my algorithm so that I will estimate situations when my sensor readings are similar as $updated with $diff confidence. Thus after surveying the $waypoint,',
+           'sensors':{
+                'nobody':
+                        {False:
+                                {False: 'None of my sensors has positively detected any threat. ',
+                                 True: 'My microphone and camera did not pick up any threat but my NBC sensor has detected danger. '},
+                        True:
+                            {False: 'My microphone and NBC sensor did not pick up any threat but Camera has captured suspicious activity. ',
+                             True: 'My microphone did not pick up any threat but my NBC sensor and camera have detected danger. '}
+                                    },
+                'friendly':
+                        {False:
+                                {False: 'My microphone has detected friendly conversation inside. My Camera and NBC sensor did not detect any threat. ',
+                                 True: 'My microphone has detected friendly conversation inside. My Camera did not pick up any threat but my NBC sensor has detected danger. '},
+                        True:
+                            {False: 'My microphone has detected friendly conversation inside. My NBC sensor did not pick up any threat but Camera has captured suspicious activity. ',
+                             True: 'My microphone has detected friendly conversation inside. My NBC sensor and camera have detected danger. '}
+                                    },
+                'suspicious':
+                        {False:
+                                {False: 'My microphone has detected suspicious conversation inside. My Camera and NBC sensor did not detect any threat. ',
+                                 True: 'My microphone has detected suspicious conversation inside. My Camera did not pick up any threat but my NBC sensor has detected danger. '},
+                        True:
+                            {False: 'My microphone has detected suspicious conversation inside. My NBC sensor did not pick up any threat but my Camera has captured suspicious activity. ',
+                             True: 'My microphone has detected suspicious conversation inside. My NBC sensor and camera have detected danger. '}
+                                    },
+                },
+        'always':'Last time I had similar sensor reading was at $waypoint. I estimated that $waypoint was $Action with confidence $Confidence%. ',
+        'delay':'Since my previous estimate was incorrect, I\'ve updated my algorithm to report safe with $diff confidence given the same sensor readings. Thus after surveying the $waypoint,',
+        'died':'Since my previous estimate was incorrect, I\'ve updated my algorithm to report safe with $diff confidence given the same sensor readings. Thus after surveying the $waypoint,',
+        'correct':'Since my previous estimate was correct, I\'ve updated my algorithm to report safe with $diff confidence given the same sensor readings. Thus after surveying the $waypoint,',
         'sensor reliability': '. It seems that my $sensor1 is more realible than $sensor2. ',
 
         },
@@ -698,7 +724,8 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                         sensor1 = 'camera'
             ack += Template(TEMPLATES['convince']['sensor reliability']).substitute({'sensor1':sensor1,'sensor2':sensor2})
         ack += Template(TEMPLATES['acknowledgment']['required']).safe_substitute()
-        ack += Template(TEMPLATES['acknowledgment']['always']).substitute({'old_unsafe': round(probs_old[0]*100,2), 'old_safe': round(probs_old[1]*100,2), 'new_unsafe': round(probs_new[0]*100,2) , 'new_safe': round(probs_new[1]*100,2)})
+        dec = {True:'more',False:'less'}
+        ack += Template(TEMPLATES['acknowledgment']['always']).substitute({'compare': dec[probs_new[1] - probs_old[1] > 0]})
 
         # if enter_flag == 0:
         #     ack += 'I have reinforced my action probabilities\n'
@@ -872,6 +899,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
             copy_omega = dict(omega)
             for key_ in copy_omega:
                 temp_dict[key_] = copy_omega[key_]
+            explanation += Template(TEMPLATES['convince'][temp_dict['microphone']][temp_dict['camera']][temp_dict['NBCsensor']])
             explanation += Template(TEMPLATES['convince']['always']).substitute(temp_dict)
 
             # print (omega)
@@ -883,7 +911,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
             #     print ('The actual state had danger and you were killed . I updated my belief drastically.')
             # else:
             #     print ('The previous action chosen was optimal. Hence, I became more confident with my prediction.')
-            upd_dict = {'updated':act_verbs[argmax(robot.old_decision[omega2index(omega)][4])],'diff':diff_dict[(robot.old_decision[omega2index(omega)][1]-robot.old_decision[omega2index(omega)][4][argmax(robot.old_decision[omega2index(omega)][4])])>0],'waypoint':robotWaypoint['name']}
+            upd_dict = {'updated':act_verbs[argmax(robot.old_decision[omega2index(omega)][4])],'diff':diff_dict[(robot.old_decision[omega2index(omega)][0][1]-robot.old_decision[omega2index(omega)][4][1])>0],'waypoint':robotWaypoint['name']}
             explanation += Template(TEMPLATES['convince'][robot.old_decision[omega2index(omega)][3]]).safe_substitute(upd_dict)
         conf = values_predicted[action_predicted]/sum(values_predicted)
         robot.old_decision[omega2index(omega)] = [list(values_predicted),conf,str(robotWaypoint['name'])]
