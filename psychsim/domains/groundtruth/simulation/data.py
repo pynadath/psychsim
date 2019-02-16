@@ -50,14 +50,17 @@ demographics = {'Gender': 'gender',
                 'Wealth': 'resources',
                 'Residence': 'region'}
 
-def getDemographics(actor):
+def getDemographics(actor,old=False):
     record = {}
     # Demographic info
     for field,answer in demographics.items():
         if isinstance(answer,str):
             value = actor.getState(answer).first()
             if field == 'Wealth':
-                record[field] = int(value*5.1)
+                if old:
+                    record[field] = int(value*5.1)
+                else:
+                    record[field] = toLikert(value)
             elif isinstance(value,bool):
                 if value:
                     record[field] = 'yes'
