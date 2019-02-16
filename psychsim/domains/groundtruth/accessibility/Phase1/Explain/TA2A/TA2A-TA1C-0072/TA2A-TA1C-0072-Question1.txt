@@ -1,0 +1,31 @@
+
+Specific question:
+
+1. Does the risk level stand for only the risk on that day, or the risk for all previous days? Does the risk reported in TA2A-TA1C-0072-RR contribute to the reported risk value in the post-hurricane survey (Or, in other words, all those two ‘risk’s are essentially the same thing, but one measured as the risk on one day, one measured as the risk on all previous days). If not, how are those two ‘risk’s related?
+
+2. We asked people to report things they heard from the government in our last but one question of TA2A-TA1C-0072-RR (As we were told government is able to spread information to the public/or someone), and the answer is not listed. Does that mean that all those people never heard from the government?
+
+3. We find that for all people at any time step, ‘Wealth Decrease’ and ‘Wealth Increase’ either are both ‘no’ or only one of them is ‘yes’. We want to know does ‘Wealth Decrease’ and ‘Wealth Increase’ only account for net wealth loss, or it represents all events causing wealth decrease and increase? (E.g. if A’s wealth decreases by 1 because of a hurricane strike, and it’s wealth increases by 1 because of aid from friends on the same day, what will be the value for ‘Wealth Decrease’ and  ‘Wealth Increase’?
+
+4. We ask people how many people they know get injured/suffers wealth loss...(etc), we want to know does the reported number only include the information people heard from the social source, or it is all the information people have(which include information retrieved by personal observation, social source, friends, and any other possible sources)
+
+5. In TA2A-TA1C-0032-RR, we asked whether people spend money on evacuation, and all the people who ever evacuated responded ‘yes’. However, in TA2A-TA1C-0072-RR, we see some people evacuate, but the ‘Wealth decrease’ value is ‘no’. So we want to know, does the ‘Wealth decrease’ include the money people spend on evacuation? And, does it include the money people spend on going to shelter? Does it include the money people spend on treating injury? Does it include the money people spend to help acquaintances?
+
+6. Is it true that the most severe minor injury (level 5) is still less severe than the level 1 serious injury?
+
+
+Other applicable detail:
+
+Answer:
+
+1. We interpreted the first #19 as "The current/incoming hurricane poses a serious risk to me." with a 1-5 level of agreement (5 being strong agreement) based on their feelings on that day. The relationship between these responses and those in the post-hurricane survey is not something we can directly reveal.
+
+2. Yes.
+
+3. Net wealth loss/gain. The participants are not able to attribute separate increases and decreases in wealth on a daily basis. 
+
+4. The items asked about what they "know", so information from any sources would be considered.
+
+5. See #3. The participants are asked about any increase/decrease, so all those income/expenditures would be considered.
+
+6. Yes.
