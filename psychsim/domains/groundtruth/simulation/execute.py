@@ -52,7 +52,7 @@ def runInstance(instance,args,config,rerun=True):
                        for agent in world.agents.values() if isinstance(agent,Region)}
             cdfTables = makeCDFTables(population,[world.agents[r] for r in regions],regions)
             preSurvey(world,None,dirName,0,args['TA2BTA1C10'])
-            postSurvey(None,dirName,0,args['TA2BTA1C10'])
+            postSurvey(None,dirName,0,args['TA2BTA1C10'],config.getboolean('Data','postprevious',fallback=False))
         elif os.path.exists(os.path.join(dirName,'scenario.pkl')) and not rerun:
             # Already ran this
             print('Skipping instance %d, run %d' % (instance,run))
@@ -78,7 +78,7 @@ def runInstance(instance,args,config,rerun=True):
             world = createWorld(config)
             writeHurricane(world,0,dirName)
             preSurvey(world,None,dirName,0,False)
-            postSurvey(None,dirName,0,False)
+            postSurvey(None,dirName,0,False,config.getboolean('Data','postprevious',fallback=False))
             if args['TA2BTA1C10']:
                 preSurvey(world,None,dirName,0,True)
                 postSurvey(None,dirName,0,True)
@@ -336,7 +336,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                     actor = world.agents[random.choice(list(remaining))]
                     remaining.remove(actor.name)
                     if actor.getState('alive').first():
-                        postSurvey(actor,dirName,state['hurricanes'])
+                        postSurvey(actor,dirName,state['hurricanes'],previous=config.getboolean('Data','postprevious',fallback=False))
                         survey.add(actor.name)
                     else:
                         living.remove(actor)
@@ -729,13 +729,16 @@ postSurveyQuestions = {'At Shelter All Hurricanes': ('location','=shelter'),
                        }
 postSurveyFields += sorted(list(postSurveyQuestions.keys()))
 
-def postSurvey(actor,dirName,hurricane,TA2BTA1C10=False):
+def postSurvey(actor,dirName,hurricane,TA2BTA1C10=False,previous=False):
     if actor is None:
         mode = 'w'
     else:
         mode = 'a'
     fields = postSurveyFields[:]
     questions = dict(postSurveyQuestions)
+    if previous:
+        fields = [field.replace('All Hurricanes','Previous Hurricane') for field in fields]
+        questions = {field.replace('All Hurricanes','Previous Hurricane'): fun for field,fun in questions.items()}
     if TA2BTA1C10:
         fname = 'ActorPostNewTable'
         fields += sorted(['At Shelter Previous Hurricane','Evacuated Previous Hurricane','Risk Previous Hurricane',
