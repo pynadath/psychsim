@@ -84,6 +84,9 @@ def writeOutput(args,data,fields=None,fname=None):
         for record in data:
             writer.writerow(record)
 
+def openFile(args,fname):
+    return open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run'])),fname),'r')
+
 def loadRunData(instance,run=0,end=None):
     inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
                           'Runs','run-%d' % (run),'RunDataTable.tsv')
@@ -148,21 +151,27 @@ def findHurricane(day,hurricanes):
         return None
 
 
-def findMatches(record,world):
+def findMatches(record,world=None,population={}):
     mismatch = {}
     matches = set()
-    for name in sorted(world.agents.keys()):
+    if world is None:
+        people = population
+    else:
+        people = world.agents
+    for name in sorted(people):
         if name[:5] == 'Actor':
             for field,feature in sorted(demographics.items()):
-                key = stateKey(name,feature)
-                if world.variables[key]['domain'] is bool:
-                    value = {True: 'yes',False: 'no'}[world.agents[name].getState(feature).first()]
-                elif feature == 'resources':
-                    # Wealth has changed since beginning
+                if field == 'Wealth':
                     continue
+                if name in population:
+                    value = population[name][field]
                 else:
-                    value = str(world.agents[name].getState(feature).first())
-                if record[field] != value:
+                    key = stateKey(name,feature)
+                    if world.variables[key]['domain'] is bool:
+                        value = {True: 'yes',False: 'no'}[world.agents[name].getState(feature).first()]
+                    else:
+                        value = str(world.agents[name].getState(feature).first())
+                if record[field] != value and record[field] != str(value):
                     try:
                         mismatch[field].append(name)
                     except KeyError:
@@ -175,3 +184,20 @@ def findMatches(record,world):
         return matches
     else:
         raise ValueError('No match for %s (mismatches: %s)' % (record['Participant'],mismatch))
+
+def readDemographics(data):
+    demos = {}
+    for name in data:
+        if name[:5] == 'Actor':
+            demos[name] = {}
+            for field,feature in demographics.items():
+                value = data[name][stateKey(name,feature)][1]
+                if value is True:
+                    value = 'yes'
+                elif value is False:
+                    value = 'no'
+                elif field == 'Wealth':
+                    value = int(value*5.1)
+                demos[name][field] = value
+    return demos
+
