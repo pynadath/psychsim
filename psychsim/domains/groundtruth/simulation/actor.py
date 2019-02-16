@@ -493,16 +493,17 @@ class Actor(Agent):
         # Effect on wealth
         impactJob = config.getint('Actors','job_impact')
         impactNoJob = config.getint('Actors','wealth_spend')
+        ceiling = config.getboolean('Actors','wealth_ceiling',fallback=False)
         if impactJob > 0:
             # Being at home or out of town, allows your job to make money
             tree = {'if': trueRow(alive),
                     True: {'if': trueRow(job),
                            True: {'if': equalRow(location,{self.home,'evacuated'}),
-                                  True: approachMatrix(wealth,likert[5][impactJob-1],1.),
+                                  True: approachMatrix(wealth,likert[5][impactJob-1],self.wealth if ceiling else 1.),
                                   False: noChangeMatrix(wealth)},
                            False: None},
                     False: noChangeMatrix(wealth)}
-            if impactNoJob > 0: # TODO: Redundant
+            if impactNoJob > 0: 
                 tree[True][False] = approachMatrix(wealth,likert[5][impactNoJob-1],0.)
             else:
                 tree[True][False] = noChangeMatrix(wealth)
@@ -513,7 +514,7 @@ class Actor(Agent):
                            True: approachMatrix(wealth,likert[5][impactJob-1],1.),
                            False: None},
                     False: noChangeMatrix(wealth)}
-            if impactNoJob > 0: # TODO: Redundant
+            if impactNoJob > 0: 
                 tree[True][False] = approachMatrix(wealth,likert[5][impactNoJob-1],0.)
             else:
                 tree[True][False] = noChangeMatrix(wealth)
@@ -572,7 +573,7 @@ class Actor(Agent):
             # Effect of doing bad
             benefit = likert[5][config.getint('Actors','antiresources_benefit')-1]
             for region,action in actBadResources.items():
-                tree = makeTree(approachMatrix(wealth,benefit,1.))
+                tree = makeTree(approachMatrix(wealth,benefit,self.wealth if ceiling else 1.))
                 world.setDynamics(wealth,action,tree,codePtr=True)
             cost = config.getint('Actors','antiresources_cost_risk')
             if cost > 0:
