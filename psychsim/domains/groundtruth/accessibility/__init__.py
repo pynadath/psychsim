@@ -185,7 +185,7 @@ def findMatches(record,world=None,population={}):
     else:
         raise ValueError('No match for %s (mismatches: %s)' % (record['Participant'],mismatch))
 
-def readDemographics(data):
+def readDemographics(data,old=False):
     demos = {}
     for name in data:
         if name[:5] == 'Actor':
@@ -197,7 +197,10 @@ def readDemographics(data):
                 elif value is False:
                     value = 'no'
                 elif field == 'Wealth':
-                    value = int(value*5.1)
+                    if old:
+                        value = int(value*5.1)
+                    else:
+                        value = toLikert(value)
                 demos[name][field] = value
     return demos
 
