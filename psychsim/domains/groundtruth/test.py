@@ -6,7 +6,7 @@ import pickle
 import random
 import unittest
 
-from psychsim.pwl.keys import WORLD
+from psychsim.pwl.keys import *
 if __name__ == '__main__':
     from simulation.region import Region
     from simulation.create import getConfig,createWorld
@@ -23,9 +23,8 @@ class TestWorlds(unittest.TestCase):
         """
         Verify that a pickled scenario in one run matches the logs of a scenario created in a different run
         """
-        dirName = os.path.join(os.path.dirname(__file__),'Instances',
-                               'Instance%d' % (instance),'Runs')
-        with open(os.path.join(dirName,'run-0','scenario.pkl'),'rb') as f:
+        dirName = os.path.join('Instances','Instance%d' % (instance),'Runs')
+        with open(os.path.join(dirName,'run-%d' % (run),'scenario552.pkl'),'rb') as f:
             world = pickle.load(f)
         inFile = os.path.join(dirName,'run-%d' % (run),'RunDataTable.tsv')
         with open(inFile,'r') as csvfile:
@@ -35,7 +34,8 @@ class TestWorlds(unittest.TestCase):
                     if row['VariableName'][:6] == 'Actor ':
                         feature = row['VariableName'].split()[1]
                         if feature != 'action':
-                            self.assertEqual(str(world.getState(row['EntityIdx'],feature).first()),
+                            key = stateKey(row['EntityIdx'],feature)
+                            self.assertEqual(str(world.getFeature(key).first()),
                                              row['Value'],
                                              'Scenario deviates on value for %s for %s' % \
                                              (feature,row['EntityIdx']))
@@ -46,7 +46,7 @@ class TestWorlds(unittest.TestCase):
         """
         Verify that all simulations created from the same instance are identical at time 1
         """
-        os.chdir('Instances')
+        os.chdir(os.path.join(os.path.dirname(__file__),'Instances'))
         for instance in os.listdir('.'):
             if instance[-2] == '3':
                 os.chdir(os.path.join(instance,'Runs'))
@@ -140,10 +140,12 @@ class TestDataPackage(unittest.TestCase):
             reader = csv.DictReader(csvfile,delimiter='\t')
             for row in reader:
                 t = int(row['Timestep'])
+                if t > 82:
+                    break
                 if t != last:
                     if last:
                         for field in total:
-                            self.assertEqual(total[field],int(totals[last-1][field]))
+                            self.assertEqual(total[field],int(totals[last-1][field]),'Disagreement on %s at time %d: %d vs. %d' % (field,t,total[field],int(totals[last-1][field])))
                     total.clear()
                     last = t
                 for field in totals[t-1]:
