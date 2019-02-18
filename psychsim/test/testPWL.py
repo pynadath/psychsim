@@ -10,9 +10,9 @@ class TestPWL(unittest.TestCase):
 
     def makeVector(self,size=8,gap=0.):
         """
-        @param size: the maximum length of the returned vector (default is 8)
-        @param gap: the probability that there will be gaps in the keys (default is 0)
-        @rtype: L{KeyedVector}
+        :param size: the maximum length of the returned vector (default is 8)
+        :param gap: the probability that there will be gaps in the keys (default is 0)
+        :rtype: L{KeyedVector}
         """
         vector = KeyedVector()
         for index in range(size):
@@ -23,11 +23,11 @@ class TestPWL(unittest.TestCase):
 
     def makeMatrix(self,rows=8,cols=8,rowgap=0.,colgap=0.):
         """
-        @param rows: the maximum rows in the returned matrix (default is 1)
-        @param cols: the maximum columns in the returned matrix (default is 8)
-        @param rowgap: the probability that there will be gaps in the row keys (default is 0)
-        @param colgap: the probability that there will be gaps in the column keys (default is 0)
-        @rtype: L{KeyedMatrix}
+        :param rows: the maximum rows in the returned matrix (default is 1)
+        :param cols: the maximum columns in the returned matrix (default is 8)
+        :param rowgap: the probability that there will be gaps in the row keys (default is 0)
+        :param colgap: the probability that there will be gaps in the column keys (default is 0)
+        :rtype: L{KeyedMatrix}
         """
         matrix = KeyedMatrix()
         for index in range(rows):
@@ -38,23 +38,23 @@ class TestPWL(unittest.TestCase):
 
     def makePlane(self,size=8,gap=0.,comparison=1):
         """
-        @param size: the maximum length of the plane vector (default is 8)
-        @param gap: the probability that there will be gaps in the column keys (default is 0)
-        @param comparison: if 1, value must be above hyperplane; if -1, below; if 0, equal (default is 1)
-        @rtype: L{KeyedPlane}
+        :param size: the maximum length of the plane vector (default is 8)
+        :param gap: the probability that there will be gaps in the column keys (default is 0)
+        :param comparison: if 1, value must be above hyperplane; if -1, below; if 0, equal (default is 1)
+        :rtype: L{KeyedPlane}
         """
         return KeyedPlane(self.makeVector(size,gap),random.random(),comparison)
 
     def makeTree(self,rows=8,cols=8,planecols=8,depth=3,rowgap=0.,colgap=0.,planegap=0.):
         """
-        @param rows: the maximum rows in the leaf matrices (default is 1)
-        @param cols: the maximum columns in the leaf matrices (default is 8)
-        @param planecols: the maximum columns in the hyperplanes (default is 4)
-        @param depth: the depth of the returned tree (default is 3)
-        @param rowgap: the probability that there will be gaps in the row keys (default is 0)
-        @param colgap: the probability that there will be gaps in the column keys (default is 0)       
-        @param colgap: the probability that there will be gaps in the hyperplane keys (default is 0)
-        @rtype: L{KeyedTree}
+        :param rows: the maximum rows in the leaf matrices (default is 1)
+        :param cols: the maximum columns in the leaf matrices (default is 8)
+        :param planecols: the maximum columns in the hyperplanes (default is 4)
+        :param depth: the depth of the returned tree (default is 3)
+        :param rowgap: the probability that there will be gaps in the row keys (default is 0)
+        :param colgap: the probability that there will be gaps in the column keys (default is 0)       
+        :param colgap: the probability that there will be gaps in the hyperplane keys (default is 0)
+        :rtype: L{KeyedTree}
         """
         root = KeyedTree()
         oldEnvelope = [root]

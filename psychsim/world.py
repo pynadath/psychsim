@@ -259,8 +259,8 @@ class World(object):
             for name,policy in list(actions.items()):
                 if isinstance(policy,ActionSet):
                     # Transfer fixed action into policy
-                    key = keys.stateKey(name,keys.ACTION)
-                    turn = turnKey(name)
+                    key = keys.actionKey(name)
+                    turn = keys.turnKey(name)
                     if turn in state.keyMap:
                         turns = state.domain(turn)
                         if len(turns) == 1:
@@ -392,16 +392,18 @@ class World(object):
             # Update agent models included in the original world
             # (after finding out possible new worlds)
             agentsModeled = [name for name in self.agents.keys()
-                             if modelKey(name) in result['new'].keyMap]
+                             if modelKey(name) in result['new'].keyMap and self.agents[name].O is not True]
             for name in agentsModeled:
                 key = modelKey(name)
                 agent = self.agents[name]
                 Omega = {keys.makeFuture(keys.stateKey(agent.name,omega)) \
                          for omega in agent.omega}
                 substate = result['new'].collapse(Omega|{key},False)
-                result['effect'].append(agent.updateBeliefs(result['new'],actions))
-                if select:
-                    result['new'].distributions[substate].select(select == 'max')
+                delta = agent.updateBeliefs(result['new'],actions)
+                if delta:
+                    result['effect'].append(delta)
+                    if select:
+                        result['new'].distributions[substate].select(select == 'max')
         return result
 
     def deltaState(self,actions,state,keySubset=None):
@@ -695,7 +697,7 @@ class World(object):
                         if tree:
                             table = {}
                             for field in atom.getParameters():
-                                table[actionKey(field)] = atom[field]
+                                table[actionFieldKey(field)] = atom[field]
                             dynamics.append(tree.desymbolize(table))
                     if len(dynamics) == 0:
                         # See whether there are key patterns that match this action
@@ -961,13 +963,15 @@ class World(object):
                     lo = self.agents[key].actions
                 else:
                     lo = self.agents[keys.state2agent(key)].actions
+            if description is None:
                 description = '; '.join([', '.join(['%s: %s' % (act,act.description) \
                                                     for act in actSet]) for actSet in lo])
             self.variables[key].update({'elements': lo,'lo': None,'hi': None,
                                         'description': description})
             for action in lo:
-                self.symbols[action] = len(self.symbols)
-                self.symbolList.append(action)
+                if action not in self.symbols:
+                    self.symbols[action] = len(self.symbols)
+                    self.symbolList.append(action)
         else:
             raise ValueError('Unknown domain type %s for %s' % (domain,key))
         self.variables[key]['key'] = key
@@ -1009,6 +1013,32 @@ class World(object):
         if state is None:
             state = self.state
         state.join(key,self.value2float(key,value),self.variables[key]['substate'])
+
+    def setJoint(self,distribution,state=None):
+        """
+        Sets the state for a combination of state features
+        :param distribution: The joint distribution to join to the current state
+        :type distribution: VectorDistribution
+        :raises ValueError: if joint is over features already present in state
+        :raises ValueError: if joint is not over at least two features
+        """
+        keys = distribution.keys()
+        if len(keys) < 2:
+            raise ValueError('Use setFeature if not setting the value for multiple features')
+        if state is None:
+            state = self.state
+        for key in keys:
+            if key in state:
+                raise ValueError('Unable to add joint distribution over features already present in state')
+        hi = max(state.distributions.keys())
+        for key in keys:
+            if key != CONSTANT:
+                state.keyMap[key] = hi+1
+        value = copy.deepcopy(distribution)
+        if CONSTANT not in keys:
+            value.join(CONSTANT,1.)
+        state.distributions[hi+1] = value
+        return hi+1
 
     def encodeVariable(self,key,value):
         raise DeprecationWarning('Use value2float method instead')
