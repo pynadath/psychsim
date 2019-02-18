@@ -26,7 +26,7 @@ else:
 def createWorld(config):
     random.seed(config.getint('Simulation','seedGen'))
     world = World()
-    world.history = {}
+#    world.history = {}
     if __ui__:
         world.diagram = Diagram()
         world.diagram.setColor(None,'deepskyblue')

@@ -168,7 +168,7 @@ def runInstance(instance,args,config,rerun=True):
                     # We haven't run any hurricanes, so just exit
                     break
                 # Make sure we're not terminating in the middle of hurricane
-                elif state['phase'] == 'none' and world.getState('Nature','days').first() > config.getint('Disaster','phase_min_days'):
+                elif state['phase'] == 'none' and world.getState('Nature','days').first() >= config.getint('Disaster','phase_min_days'):
                     break
             nextDay(world,groups,state,config,dirName,survey,start,cdfTables)
             if args['visualize']:
@@ -256,7 +256,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
         else:
             print(('Day %3d: %-6s %-11s' % (state['today'],turn,state['phase'] if state['phase'] != 'active' else world.getState('Nature','location').first())))
         if turn == 'Actor':
-            world.history[day] = {}
+#            world.history[day] = {}
             if groups:
                 # Make group decisions
                 pass
@@ -392,7 +392,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
         logging.debug(buf.getvalue())
         buf.close()
         for actor in living:
-            if turn == 'Actor':
+            if turn == 'Actor' and isinstance(world.history,dict):
                 world.history[day][actor.name] = joint[actor.name].first()
             belief = actor.getBelief()
             for dist in belief.values():
@@ -709,6 +709,7 @@ def preSurvey(world,actor,dirName,hurricane,TA2BTA1C10=False):
                 elif fun == 'round':
                     record[field] = int(round(value.expectation()))
                 elif fun[:5] == 'last=':
+                    assert isinstance(world.history,dict),'Relying on obsolete world history'
                     assert isActionKey(key)
                     for t in range(today,0,-1):
                         if fun[5:] in str(world.history.get(t,{}).get(actor.name,'')):
