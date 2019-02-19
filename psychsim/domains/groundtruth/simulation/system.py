@@ -32,7 +32,7 @@ class System(Agent):
                            likert[5][config.getint('System','reward_health')-1])
             self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),
                            likert[5][config.getint('System','reward_grievance')-1])
-        self.addAction({'verb': 'doNothing'})
+        self.addAction({'verb': 'doNothing'},codePtr=True)
         allocation = config.getint('System','system_allocation')
         for region in populated:
             allocate = self.addAction({'verb': 'allocate','object': region},codePtr=True)
