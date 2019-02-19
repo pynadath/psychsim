@@ -18,6 +18,8 @@ if __name__ == '__main__':
     parser.add_argument('-w','--write',action='store_true',help='Write simulation definition tables')
     parser.add_argument('-v','--visualize',default=None,help='Visualization feature')
     parser.add_argument('-m','--multiprocessing',action='store_true',help='Use multiprocessing')
+    parser.add_argument('--max',action='store_true',help='Select most likely outcomes')
+    parser.add_argument('--hurricane',help='File containing hurricane track(s)')
     parser.add_argument('--TA2BTA1C10',action='store_true',help='Generate surveys as specified in TA2B-TA1C-10')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-n','--number',default=None,type=int,help='Number of hurricanes to run')

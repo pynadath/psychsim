@@ -170,7 +170,7 @@ def runInstance(instance,args,config,rerun=True):
                 # Make sure we're not terminating in the middle of hurricane
                 elif state['phase'] == 'none' and world.getState('Nature','days').first() >= config.getint('Disaster','phase_min_days'):
                     break
-            nextDay(world,groups,state,config,dirName,survey,start,cdfTables)
+            nextDay(world,groups,state,config,dirName,survey,start,cdfTables,maximize=args['max'])
             if args['visualize']:
                 addState2tables(world,world.getState(WORLD,'day').first()-1,allTables,population,regions)
                 visualize.vizUpdateLoop(world.getState(WORLD,'day').first()-1)
@@ -208,9 +208,9 @@ def runInstance(instance,args,config,rerun=True):
                     print('Fast-forward:',world.getState(WORLD,'day').first(),turn)
                     if turn == 'Actor':
                         actions = {name: ActionSet([Action({'subject': name,'verb': 'moveTo', 'object': world.agents[name].home})]) for name in names}
-                        world.step(actions,select=True)
+                        world.step(actions,select='max' if args['max'] else True)
                     elif turn == 'System':
-                        world.step(select=True)
+                        world.step(select='max' if args['max'] else True)
                     elif turn == 'Nature':
                         world.step(select=True)
                     else:
@@ -242,7 +242,7 @@ def runInstance(instance,args,config,rerun=True):
             logging.critical(buf.getvalue())
             buf.close()
 
-def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={},actions={}):
+def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={},actions={},maximize=False):
     state['today'] = world.getState(WORLD,'day').first()
     logging.info('Day %d' % (state['today']))
     day = state['today']
@@ -380,7 +380,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
         #            for name in debug:
         #                for agent in world.agents[name].members():
         #                    debug[name][agent] = {}
-        newState = world.step(actions.get(turn,None),select=True,debug=debug)
+        newState = world.step(actions.get(turn,None),select='max' if maximize and turn != 'Nature' else True,debug=debug)
         buf = StringIO()
         joint = world.explainAction(newState,level=1,buf=buf)
         joint = {name: action for name,action in joint.items()
@@ -834,5 +834,8 @@ def postSurvey(actor,dirName,hurricane,TA2BTA1C10=False,previous=False):
                                 record[field] = 'no'
                     if isinstance(record[field],dict):
                         delta = record[field]['new'] - record[field]['old']
-                        record[field] = toLikert((delta+1.)/2.)
+                        if previous:
+                            record[field] = toLikert(4.*delta+0.5)
+                        else:
+                            record[field] = toLikert((delta+1.)/2.)
             writer.writerow(record)
