@@ -80,6 +80,9 @@ def readHurricanes(instance,run=0):
     """
     inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
                           'Runs','run-%d' % (run),'HurricaneTable.tsv')
+    return readHurricaneFile(inFile)
+    
+def readHurricaneFile(inFile):
     hurricanes = []
     with open(inFile,'r') as csvfile:
         reader = csv.DictReader(csvfile,delimiter='\t')

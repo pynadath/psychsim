@@ -31,6 +31,7 @@ preSurveyRecords = []
 postSurveyRecords = []
 
 def runInstance(instance,args,config,rerun=True):
+    # Determine what runs to do
     if args['singlerun']:
         runs = [args['runs']]
     else:
@@ -57,6 +58,7 @@ def runInstance(instance,args,config,rerun=True):
             # Already ran this
             print('Skipping instance %d, run %d' % (instance,run))
             continue
+        # Set up logging
         logfile = os.path.join(dirName,'psychsim.log')
         try:
             os.stat(dirName)
@@ -70,6 +72,11 @@ def runInstance(instance,args,config,rerun=True):
         for h in l.handlers:
             l.removeHandler(h)
         l.addHandler(logging.FileHandler(logfile,'w'))
+        # Load any pre-specified future hurricanes
+        if args['hurricane']:
+            future = readHurricaneFile(args['hurricane'])
+        else:
+            future = []
 
         logging.info('Running Instance %d' % (instance))
         print('Running instance %d, run %d' % (instance,run))
