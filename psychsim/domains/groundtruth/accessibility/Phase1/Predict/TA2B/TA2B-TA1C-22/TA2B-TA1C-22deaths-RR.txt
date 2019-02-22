@@ -1,0 +1,14 @@
+﻿**Research method category**: Government Data
+
+
+**Specific question**:
+We would like to collect government data about the demographics, location, and evacuation / sheltered status of all individuals who have died as a result of the hurricane, broken down by hurricane, for all of the data Instances in the Predict-IDP. Such data might be available via coroners’ or police reports, obituaries, death certificates, etc, but notionally might be identical across all these sources. 
+
+
+A previous data request on this topic was fulfilled and data were returned with the following variables: Timestep, Age, Children, Ethnicity, Fulltime Job, Gender, Pets, Religion, Residence, Wealth, Location. If possible, we would like to access the same variables plus evacuation, sheltering, injured, and risk status for the previous hurricane.
+
+
+**Other applicable detail**: Please provide whichever sources of relevant data on this that is available. 
+
+
+**Research request identifier**: 19Deaths_newarea

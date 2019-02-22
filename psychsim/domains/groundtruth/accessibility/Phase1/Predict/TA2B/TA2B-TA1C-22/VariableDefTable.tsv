@@ -1,0 +1,3 @@
+Name	LongName	Values	VarType	DataType	Notes
+Timestep	Timestep	[1-566]	static	Integer	Day on which actor died
+Location	Location	[Region01-16],evacuated,shelter	dynamic	String	Location at time of death
