@@ -1072,7 +1072,9 @@ class Agent(object):
                                 dist.normalize()
                     newModel = self.belief2model(oldModel,beliefs)
                     SE[oldModel][label] = newModel['index']
-                    beliefs.join(oldModelKey,newModel['index'])
+#                    if oldModelKey in beliefs:
+                        # Update the model value in my beliefs? I don't think so, but maybe there's a reason to?
+#                        beliefs.join(oldModelKey,newModel['index'])
                     self.models[oldModel]['SE'][myAction][label] = newModel['name']
             # Insert new model into true state
             prob = distribution[vector]
