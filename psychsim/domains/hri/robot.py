@@ -1035,7 +1035,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         mode = ''
     # explanation = explanation.join(explainDecision(safety,POMDP,mode))
     cnt_temp = 0
-    for line in explainDecision(safety,POMDP,mode,check_flag=temp_flag):
+    for line in explainDecision(safety,POMDP,mode,flag_check=temp_flag):
         if cnt_temp == 0:
             explanation = line+' '+explanation
         else:
