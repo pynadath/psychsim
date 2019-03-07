@@ -795,6 +795,8 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     with open(filename,'wb') as scenarioFile:
         pickle.dump(world,scenarioFile)
 #    world.save(filename,ext=='psy')
+    if world.getState(robot.name,'acknowledgment').first() == 'no':
+        ack = ''
     return ack
 
 def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None,observation_condition='randomize'):
