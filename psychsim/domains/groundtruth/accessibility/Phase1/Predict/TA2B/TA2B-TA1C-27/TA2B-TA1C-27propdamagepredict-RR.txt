@@ -1,0 +1,23 @@
+﻿# Research method category #
+Survey
+
+
+# Specific question #
+We would like to request the Property_Previous_Hurricane variable for the post-hurricane survey for the areas in the predict IDP. We paste the question below for convenience:
+
+
+Property: In the last hurricane, did your primary residence suffer significant property damage?
+(Response on a 1-5 scale, ranging from “strongly disagree” to “strongly agree”)
+
+
+# Sampling strategy #
+Same as for explain phase new area post actor survey, included below for convenience.
+For each of the surveys conducted either before or after a hurricane, sample 10% of the total population. Use an approach where respondents are revisited for the following hurricane. For example in the post-hurricane surveys, after hurricane 2 we resample the same respondents as for hurricane 1. After we have two _consecutive_ post-hurricane surveys from the same household, we move on to the not yet surveyed potential respondents in the population, in each case trying to create a pairing of a post-hurricane response in hurricane N and N+1. Once all households have been surveyed in 2 consecutive surveys, start over with a fully random sample.
+
+
+# Other applicable detail #
+Either this survey can be re-deployed on the predict IDP areas, or simply the questions pertaining to injuries, assistance, and property damage could be asked to the original area post-hurricane survey respondents. 
+
+
+# Research request identifier # 
+27propdamagepredict

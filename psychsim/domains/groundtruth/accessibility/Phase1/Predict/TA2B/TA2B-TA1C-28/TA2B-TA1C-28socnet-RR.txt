@@ -1,0 +1,20 @@
+﻿# Research method category #
+Survey
+
+
+# Specific question #
+We would like to survey 10% of the population in each area to give the Participant Identifiers (or, barring those, demographic profiles) of their top 20 friends. If these data change over time, then we would like it broken down at least by hurricane.
+
+
+
+
+# Sampling strategy #
+10% random sample of the population in each area in the predict IDP
+
+
+# Other applicable detail #
+N/A
+
+
+# Research request identifier #
+28socnet

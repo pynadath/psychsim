@@ -1,0 +1,14 @@
+﻿**Research method category**: Survey
+
+
+**Specific question**:
+1. We would like to survey the agents about any information they received from peers prior to making the decision to evacuate / shelter / stay, broken down by hurricane, for each of the five new areas
+
+
+**Sampling strategy**: 10% random sample of agents in each of the five new areas
+
+
+**Other applicable detail**: We are interested in all the various ways that peer share information or opinions with each other. This could be sharing weather predictions, sheltering advice, information about receiving government assistance, etc..  
+
+
+**Research request identifier**: 24peereffects
