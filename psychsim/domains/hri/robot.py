@@ -17,6 +17,7 @@ from string import Template
 import sys
 import tempfile
 import time
+import numpy as np
 
 from psychsim.pwl import *
 from psychsim.world import *
@@ -640,7 +641,7 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
     return index
 
 def GetAcknowledgment(user,recommendation,location,danger,username,level,parameters,
-                      world=None,ext='xml',root='.'):
+                      world=None,ext='xml',root='.',learning_rate = 1.0):
     print("**********************Get Acknowledgment*******************")
 
     if world is None:
@@ -671,7 +672,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         # Q Learning
         # Gamma not used
         #Learning rate
-        LR = 1.0
+        LR = learning_rate
         copy_old_table = copy.deepcopy(robot.table)
         enter_flag = 0
         global file
@@ -794,9 +795,11 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     with open(filename,'wb') as scenarioFile:
         pickle.dump(world,scenarioFile)
 #    world.save(filename,ext=='psy')
+    if world.getState(robot.name,'acknowledgment').first() == 'no':
+        ack = ''
     return ack
 
-def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None):
+def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None,observation_condition='randomize'):
     """
     Processes incoming observation and makes an assessment
     """
@@ -843,16 +846,50 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         sensorCorrect = True
     # Generate individual sensor readings
     omega = {}
+    readings = {'camera':[True,False],'microphone':['suspicious','friendly','nobody'],'NBCsensor':[True,False]}
+    dist = {'camera':[0.8,0.2],'microphone':[0.8,0.1,0.1],'NBCsensor':[0.8,0.2]}
     danger = world.getFeature(key,world.state)
     for sensor in robot.omega:
+        print (sensor)
         try:
-            omega[sensor] = robotWaypoint[sensor][sensorCorrect]
-        except KeyError:
-            # By default, don't sense anything
-            if sensor == 'microphone':
-                omega[sensor] = 'nobody'
+            if observation_condition == 'scripted':
+                print('Using scripted readings')
+                omega[sensor] = robotWaypoint[sensor][sensorCorrect]
             else:
-                omega[sensor] = False
+                # if randomize then sample a value from readings with given distribution
+                actual = robotWaypoint[sensor][sensorCorrect]
+                print('Using randomized readings1')
+                actual_ind = readings[sensor].index(actual)
+                lis = []
+                len_val = len(readings[sensor])
+                for _ in range(len_val):
+                    lis.append(readings[sensor][(actual_ind+_)%len_val])
+                omega[sensor] = np.random.choice(lis,p=dist[sensor])
+                print('actual:',actual,'randomized:',omega[sensor],'list:',lis)
+
+
+        except KeyError:
+            if observation_condition == 'scripted':
+                # By default, don't sense anything
+                if sensor == 'microphone':
+                    omega[sensor] = 'nobody'
+                else:
+                    omega[sensor] = False
+            else:
+                print('Using randomized readings2')
+                # if randomize then sample a value from readings with given distribution
+                if sensor == 'microphone':
+                    actual = 'nobody'
+                else:
+                    actual = False
+                actual_ind = readings[sensor].index(actual)
+                lis = []
+                len_val = len(readings[sensor])
+                for _ in range(len_val):
+                    lis.append(readings[sensor][(actual_ind+_)%len_val])
+                omega[sensor] = np.random.choice(lis,p=dist[sensor])
+                print('actual:',actual,'randomized:',omega[sensor],'list:',lis)
+
         omegaKey = stateKey(robot.name,sensor)
         world.state[omegaKey] = world.value2float(omegaKey,omega[sensor])
     model = world.getModel(robot.name)
@@ -1035,7 +1072,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         mode = ''
     # explanation = explanation.join(explainDecision(safety,POMDP,mode))
     cnt_temp = 0
-    for line in explainDecision(safety,POMDP,mode,check_flag=temp_flag):
+    for line in explainDecision(safety,POMDP,mode,flag_check=temp_flag):
         if cnt_temp == 0:
             explanation = line+' '+explanation
         else:
