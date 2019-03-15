@@ -1903,6 +1903,26 @@ $\leftarrow$%
 %
 \section{Relations}%
 \label{sec:Relations}%
+\subsection{Actor friendOf Actor}%
+\label{subsec:Actor friendOf Actor}%
+\begin{description}%
+\item[Type:]%
+Boolean%
+\end{description}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:750|%
+\end{flushleft}
+
+%
+\subsection{Actor neighbor Actor}%
+\label{subsec:Actor neighbor Actor}%
+\begin{description}%
+\item[Type:]%
+Boolean%
+\end{description}%
+\begin{flushleft}%
+\verb|psychsim/domains/groundtruth/simulation/actor.py:827|%
+\end{flushleft}
 
 %
 \section{Actions}%
@@ -3000,6 +3020,10 @@ $\leftarrow$%
 \begin{flushleft}%
 $R$%
 $\leftarrow$%
+0\%%
+$\cdot$%
+\textbf{Actor neighbor Actor}%
++%
 20\%%
 $\cdot$%
 \textbf{Actor's childrenHealth}%
@@ -3016,7 +3040,7 @@ $\cdot$%
 $\cdot$%
 \textbf{Actor's resources}%
 +%
-{-}40\%%
+{-}80\%%
 $\cdot$%
 \textbf{Region01's risk}%
 \end{flushleft}
