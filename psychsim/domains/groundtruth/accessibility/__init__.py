@@ -11,6 +11,15 @@ from ..simulation.cdf import value2dist
 from ..simulation.create import loadPickle,getConfig
 from ..simulation.data import *
 
+instances = [{'instance': 24,'run': 1,'span': 82},
+    {'instance': 27,'run': 0},
+    {'instance': 53,'run': 1,'span': 147},
+    {'instance': 52,'run': 1,'span': 135},
+    {'instance': 51,'run': 1,'span': 77},
+    {'instance': 55,'run': 1,'span': 181},
+    {'instance': 56,'run': 1,'span': 168},
+    {'instance': 54,'run': 1,'span': 172}]
+    
 def createParser(output=None,day=None,seed=False,instances=False):
     """
     :param instances: if True, then accept multiple instances
@@ -51,8 +60,11 @@ def parseArgs(parser,logfile=None):
                          for instance in instances],[])
     return args
 
+def getDirectory(args):
+    return os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run']))
+
 def loadFromArgs(args,world=False,hurricanes=False,participants=False,actions=False,deaths=False,network=False,runData=False):
-    values = {'directory': os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run']))}
+    values = {'directory': getDirectory(args)}
     if world:
         try:
             day = args['day']
@@ -73,12 +85,14 @@ def loadFromArgs(args,world=False,hurricanes=False,participants=False,actions=Fa
         values['run'] = readRunData(args['instance'],args['run'])
     return values
 
-def writeOutput(args,data,fields=None,fname=None):
+def writeOutput(args,data,fields=None,fname=None,dirName=None):
     if fields is None:
         fields = sorted(list(data[0].keys()))
     if fname is None:
         fname = args['output']
-    with open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run'])),fname),'w') as csvfile:
+    if dirName is None:
+        dirName = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run']))
+    with open(os.path.join(dirName,fname),'w') as csvfile:
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
         writer.writeheader()
         for record in data:
@@ -185,22 +199,31 @@ def findMatches(record,world=None,population={}):
     else:
         raise ValueError('No match for %s (mismatches: %s)' % (record['Participant'],mismatch))
 
-def readDemographics(data,old=False):
+def readDemographics(data,old=False,last=True,name=None):
     demos = {}
-    for name in data:
-        if name[:5] == 'Actor':
-            demos[name] = {}
-            for field,feature in demographics.items():
-                value = data[name][stateKey(name,feature)][1]
-                if value is True:
-                    value = 'yes'
-                elif value is False:
-                    value = 'no'
-                elif field == 'Wealth':
-                    if old:
-                        value = int(value*5.1)
-                    else:
-                        value = toLikert(value)
-                demos[name][field] = value
+    if name:
+        names = [name]
+    else:
+        names = [name for name in data if name[:5] == 'Actor']
+    for name in names:
+        demos[name] = {}
+        for field,feature in demographics.items():
+            series = data[name][stateKey(name,feature)]
+            if isinstance(last,int):
+                value = series[min(max(series),last)]
+            elif last:
+                value = series[max(series)]
+            else:
+                value = series[1]
+            if value is True:
+                value = 'yes'
+            elif value is False:
+                value = 'no'
+            elif field == 'Wealth':
+                if old:
+                    value = int(value*5.1)
+                else:
+                    value = toLikert(value)
+            demos[name][field] = value
     return demos
 
