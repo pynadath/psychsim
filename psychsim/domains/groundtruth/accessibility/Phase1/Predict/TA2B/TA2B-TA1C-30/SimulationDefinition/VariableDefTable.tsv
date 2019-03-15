@@ -1,0 +1,7 @@
+Name	LongName	Values	VarType	DataType	Notes
+Assistance Previous Hurricane	Received Assistance Previous Hurricane	[1-5]	dynamic	Integer	Q1
+Assistance Monetary	Assistance Purely Monetary	[1-5]	dynamic	Integer	Q2
+Assistance Lost Wages	Assistance to Make Up for Lost Wages	[1-5]	dynamic	Integer	Q3
+Assistance Property Loss	Assistance to Offset Property Loss	[1-5]	dynamic	Integer	Q4
+Assistance Injury	Assistance to Offset Injury Bills	[1-5]	dynamic	Integer	Q5
+Assistance Death	Assistance to Offset Death Bills	[1-5]	dynamic	Integer	Q6

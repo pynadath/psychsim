@@ -27,7 +27,7 @@ if __name__ == '__main__':
         	output.append(record)
         # Save Data
         fields = ['Timestep','Participant']+sorted(accessibility.demographics.keys())+['# Friends']
-        with open(os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance+1),'Runs','run-0','TA2B-TA1C-28.csv'),'w') as csvfile:
+        with open(os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance+1),'Runs','run-0','TA2B-TA1C-28.tsv'),'w') as csvfile:
             writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
             writer.writeheader()
             for record in output:

@@ -1,0 +1,22 @@
+﻿# Specific question #
+
+Since we are studying the populations of 6 new areas during the Predict challenge, we seek to understand the contextual information regarding how these populations may differ from the first population studied during the Explain challenge. 
+
+
+Q1. Which of the following aspects of the new populations or environments of each area can have changed between the explain and predict datasets? (mark all that apply)
+___ a. the hurricanes can have different physical effects on the landscape and human-made structures in the areas even when adjusting for strength (hurricane category)
+___ b. some of the new populations have different technologies such as social media communications technologies
+___ c. the actions that can be or are taken by the government differ in the new populations; that is, the government could play a role in recommending or mandating evacuation or installing audible warning systems, etc..
+___ d. some of the new populations face transportational challenges that the original population did not; that is, evacuation plans may be impeded by issues with roads or vehicles
+___ e. some of the new populations also have the complications of flooding issues associated with hurricanes
+___ f. some of the new populations also have the complications of communicable or mosquito-borne diseases that are exacerbated by hurricanes
+___ g. some of the new populations have differing economic conditions; levels of unemployment, inflation, etc..
+___ h. some of the new populations have distinctly different attitudes towards risk
+___ i. some of the new populations have culturally distinct tendencies towards collectivist versus individualistic philosophies
+
+# Other applicable details #
+Given that the predict IDP contains data on distinct population areas from the areas studied in the Explain challenge, we need to know the contextual correspondence between the explain and predict world in order to assess what conclusions or data from the explain test may be used during the predict test.
+
+# Answer #
+
+As per the FAQs provided to the TA2 teams, ground truth has not changed between the explain and predict challenges. Other questions should be answered through research.
