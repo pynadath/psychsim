@@ -564,7 +564,7 @@ class World(object):
             
             if len(agent.models) == 0:
                 # Default model settings
-                agent.addModel('%s0' % (agent.name),R={},horizon=2,level=2,rationality=1.,
+                agent.addModel('%s0' % (agent.name),R=None,horizon=2,level=2,rationality=1.,
                               discount=1.,selection='consistent',
                               beliefs=True,parent=None,projector=Distribution.expectation)
             if setModel:
