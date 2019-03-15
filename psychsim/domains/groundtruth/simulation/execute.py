@@ -77,7 +77,7 @@ def runInstance(instance,args,config,rerun=True):
             future = readHurricaneFile(args['hurricane'])
         else:
             future = []
-
+        # Let's get started
         logging.info('Running Instance %d' % (instance))
         print('Running instance %d, run %d' % (instance,run))
         if world is None:

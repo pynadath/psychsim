@@ -96,6 +96,7 @@ def readHurricaneFile(inFile):
                                    'Actual Track': [],
                                    'Official Announcements': 'none',
                                    'Start': int(row['Timestep']),
+                                   'Actual Category': [],
                                    })
             elif row['Landed'] == 'yes':
                 if row['Location'] == 'leaving':
@@ -108,6 +109,7 @@ def readHurricaneFile(inFile):
                     if len(hurricanes[-1]['Actual Track']) == 0 or \
                        hurricanes[-1]['Actual Track'][-1] != row['Location']:
                         hurricanes[-1]['Actual Track'].append(row['Location'])
+            hurricanes[-1]['Actual Category'].append(row['Category'])
             hurricanes[-1]['Actual Location'].append(row['Location'])
     for record in hurricanes:
         record['Actual Track'] = ','.join(record['Actual Track'])
