@@ -415,6 +415,7 @@ if __name__ == '__main__':
                     output.append(record)
                     record['Wealth'] = accessibility.toLikert(belief[stateKey(name,'resources')].expectation())
                     record['Dissatisfaction'] = accessibility.toLikert(belief[stateKey(name,'grievance')].expectation())
+                    raise NotImplementedError('There is a bug in the test of "approaching" that needs to be fixed')
                     if nature[t]['category'] == 'approaching':
                         record['Risk/Severity'] = record['Category to Friend']
                     else:
