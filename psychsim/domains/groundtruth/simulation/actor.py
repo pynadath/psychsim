@@ -481,7 +481,7 @@ class Actor(Agent):
             else:
                 world.setDynamics(kidHealth,evolve,tree,codePtr=True)
 
-        # Section 2.2.1: Effect on life
+        # Effect on life
         tree = makeTree({'if': trueRow(alive),
                          True: {'if': thresholdRow(makeFuture(health),
                                                    config.getfloat('Actors','life_threshold')),
@@ -763,6 +763,7 @@ class Actor(Agent):
     def _initializeRelations(self,config):
         population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
         friendMax = config.getint('Actors','friends')
+        friendMin = config.getint('Actors','friendMin',fallback=0)
         neighbors = {a.name for a in population if a.name != self.name and \
                      self.world.getState(a.name,'region').first() == self.home}
         if friendMax > 0:
@@ -775,7 +776,7 @@ class Actor(Agent):
                         self.friends.add(relation['object'])
                     else:
                         friendCount[relation['subject']] = friendCount.get(relation['subject'],0)+1
-            numFriends = random.randint(len(self.friends),friendMax)
+            numFriends = random.randint(max(friendMin,len(self.friends)),friendMax)
             possibles = [agent.name for agent in population
                          if friendCount.get(agent.name,0) < friendMax
                          and agent.name not in self.friends]
@@ -817,6 +818,17 @@ class Actor(Agent):
         population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
         neighbors = {a.name for a in population if a.name != self.name and \
                      self.world.getState(a.name,'region').first() == self.home}
+        if config.getboolean('Simulation','graph',fallback=False):
+            for name in self.friends:
+                print(name)
+            if len(population) == 1:
+                neighbors.add(self.name)
+            for name in neighbors:
+                key = self.world.defineRelation(self.name,name,'neighbor',bool,codePtr=True)
+                self.world.setFeature(key,True)
+                if self.Rweights['neighbors'] > 0.:
+                    self.setReward(maximizeFeature(key,self.name),1.)
+
         regions = [n for n in self.world.agents if isinstance(self.world.agents[n],Region)]
         shelters = {int(region) for region in config.get('Shelter','region').split(',')}
 
@@ -830,17 +842,25 @@ class Actor(Agent):
                 agent = state2agent(key)
             if agent == self.name:
                 if not isModelKey(key):
-                    include.add(key)
+                    if not config.getboolean('Simulation','graph',fallback=False):
+                        include.add(key)
+                    elif state2feature(key) == 'risk':
+                        include.add(key)
             elif agent == 'Nature':
                 if not isModelKey(key):
-                    include.add(key)
+                    if not config.getboolean('Simulation','graph',fallback=False):
+                        include.add(key)
+                    elif state2feature(key) in {'category','days'}:
+                        include.add(key)
             elif agent[:5] == 'Group' and self.name in self.world.agents[agent].potentials:
                 include.add(key)
                 self.groups.add(agent)
             elif agent[:6] == 'System':
-                include.add(key)
+                if not config.getboolean('Simulation','graph',fallback=False):
+                    include.add(key)
             elif agent == WORLD:
-                include.add(key)
+                if not config.getboolean('Simulation','graph',fallback=False):
+                    include.add(key)
             # elif isinstance(self.world.agents[agent],Actor):
             #     if altNeighbor > 0 and agent in neighbors:
             #         # I care about my neighbors' health
@@ -854,10 +874,14 @@ class Actor(Agent):
             elif isinstance(self.world.agents[agent],Region):
                 if agent == self.home:
                     if not isModelKey(key):
-                        include.add(key)
+                        if not config.getboolean('Simulation','graph',fallback=False):
+                            include.add(key)
+                        elif state2feature(key) == 'risk':
+                            include.add(key)
                 elif self.world.agents[agent].number in shelters:
                     if state2feature(key)[:7] == 'shelter':
-                        include.add(key)
+                        if not config.getboolean('Simulation','graph',fallback=False):
+                            include.add(key)
         beliefs = self.resetBelief(include=include)
 
     def memberOf(self,state):

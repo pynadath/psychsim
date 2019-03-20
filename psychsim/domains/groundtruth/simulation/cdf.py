@@ -309,7 +309,6 @@ def writeDefinition(world,dirName):
                          
                 
 def toCDF(world,dirName,tables,unobservable=set()):
-    day = world.getState(WORLD,'day').first()
     for name,table in tables.items():
         with open(os.path.join(dirName,'%sTable.tsv' % (name)),'w') as csvfile:
             writer = csv.DictWriter(csvfile,fields[name],delimiter='\t',extrasaction='ignore')
@@ -328,7 +327,7 @@ def toCDF(world,dirName,tables,unobservable=set()):
                                       'Data': value.first()
                                       }
                             if key in world.dynamics:
-                                record['Timestep'] = day
+                                record['Timestep'] = world.getState(WORLD,'day').first()
                             writer.writerow(record)
                 neighbors = {}
                 for name1 in world.agents:

@@ -44,8 +44,9 @@ def createWorld(config):
         n = Region(region+1,world,config,index)
         regions[n.name] = {'agent': n, 'inhabitants': [], 'number': region+1}
 
-    world.defineState(WORLD,'day',int,lo=1,codePtr=True)
-    world.setState(WORLD,'day',1)
+    if not config.getboolean('Simulation','graph',fallback=False):
+        world.defineState(WORLD,'day',int,lo=1,codePtr=True)
+        world.setState(WORLD,'day',1)
 
     nature = Nature(world,config)
 

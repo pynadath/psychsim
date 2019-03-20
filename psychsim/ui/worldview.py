@@ -121,7 +121,7 @@ class WorldView(QGraphicsScene):
             g = self.graph
             state = self.world.state
         else:
-            g = graph.DependencyGraph(self.world)
+            g = self.graph = graph.DependencyGraph(self.world)
             state = self.world.agents[agent].getBelief()
             assert len(state) == 1
             g.computeGraph(state=next(iter(state.values())),belief=True)
@@ -155,16 +155,15 @@ class WorldView(QGraphicsScene):
         if agent == WORLD:
             # Draw links from utility back to actions
             for name in self.world.agents:
-                if not recursive or \
-                   self.world.agents[name].getAttribute('beliefs','%s0' % (name)) is True:
-                    if name in g:
-                        actions = self.world.agents[name].actions
-                        for action in actions:
-                            if action in g:
-                                self.drawEdge(name,action,g)
-                else:
+                if recursive and \
+                   self.world.agents[name].getAttribute('beliefs','%s0' % (name)) is not True:
                     y += (maxRows+1) * self.rowHeight
                     self.displayGroundTruth(name,xPostAction,y,maxRows=maxRows,recursive=recursive)
+                if name in g:
+                    actions = self.world.agents[name].actions
+                    for action in actions:
+                        if action in g:
+                            self.drawEdge(name,action,g)
             self.colorNodes()
         # Draw links, reusing post nodes as pre nodes
         for key,entry in g.items():
@@ -212,7 +211,11 @@ class WorldView(QGraphicsScene):
                 if observer.O is not True:
                     for omega,table in observer.O.items():
                         if self.xml:
-                            oNode = self.xml.add_node(omega)
+                            for oNode in self.xml.nodes():
+                                if oNode['label'] == omega:
+                                    break
+                            else:
+                                raise ValueError('Unable to find node for %s' % (omega))
                         for action,tree in table.items():
                             if action is not None:
                                 if self.xml:
@@ -235,7 +238,18 @@ class WorldView(QGraphicsScene):
                                         bNode = self.getGraphNode(label)
                                         self.xml.add_edge(oNode,bNode,True)
                                     if recursive:
-                                        self.drawEdge(omega,beliefKey(observer.name,makeFuture(key)))
+                                        belief = beliefKey(observer.name,makeFuture(key))
+                                        if belief in self.graph:
+                                            self.drawEdge(omega,belief)
+            for name in self.world.agents:
+                # Draw links from non-belief reward components
+                model = '%s0' % (name)
+                R = self.world.agents[name].getReward(model)
+                if R:
+                    for parent in R.getKeysIn() - set([CONSTANT]):
+                        if beliefKey(name,makeFuture(parent) not in self.nodes['state post']):
+                            # Use real variable
+                            self.drawEdge(makeFuture(parent),name,g)
             parser = GraphMLParser()
             parser.write(self.xml,'/tmp/GroundTruth-USC.graphml')
 
@@ -276,11 +290,11 @@ class WorldView(QGraphicsScene):
                 if graph[key]['agent'] != WORLD and graph[key]['agent']:
                     agent = self.world.agents[graph[key]['agent']]
                     if isBinaryKey(key):
-                        node = VariableNode(agent,key[len(agent.name)+1:],key,
+                        node = VariableNode(agent,key[len(agent.name)+1:],label,
                                             variable[xkey],variable[ykey],
                                             100,50,scene=self)
                     else:
-                        node = VariableNode(agent,key[len(agent.name)+3:],key,
+                        node = VariableNode(agent,key[len(agent.name)+3:],label,
                                             variable[xkey],variable[ykey],
                                             100,50,scene=self)
                 else:
@@ -344,6 +358,7 @@ class WorldView(QGraphicsScene):
         x = x0
         y = y0
         even = True
+        oNodes = {}
         for key in omega:
             if believer:
                 label = beliefKey(believer,key)
@@ -352,7 +367,7 @@ class WorldView(QGraphicsScene):
             else:
                 label = key
                 if self.xml:
-                    self.xml.add_node(makePresent(key))
+                    oNodes[key] = self.xml.add_node(key)
             variable = self.world.variables[makePresent(key)]
             if y >= y0+maxRows*self.rowHeight:
                 even = not even
@@ -472,17 +487,17 @@ class WorldView(QGraphicsScene):
     def highlightEdges(self,center):
         """
         Hide any edges *not* originating or ending at the named node
-        @type center: str
+        :type center: {str}
         """
         self.center = center
         for key,table in list(self.edgesOut.items())+list(self.edgesIn.items()):
-            if key == center:
+            if center is None or key in center:
                 # All edges are important!
                 for edge,arrow in table.values():
                     edge.show()
             else:
                 for subkey,(edge,arrow) in table.items():
-                    if subkey == center:
+                    if center is None or subkey in center:
                         # This edge is important
                         edge.show()
                     else:
@@ -492,17 +507,17 @@ class WorldView(QGraphicsScene):
     def boldEdges(self,center):
         """
         Highlight any edges originating or ending at the named node
-        @type center: str
+        :type center: {str}
         """
         for key,table in self.edgesOut.items()+self.edgesIn.items():
-            if key == center:
+            if key in center:
                 # All edges are important!
                 for edge,arrow in table.values():
                     edge.setPen(QPen(QBrush(QColor('black')),5))
                     edge.setZValue(2.0)
             else:
                 for subkey,(edge,arrow) in table.items():
-                    if subkey == center:
+                    if subkey in center:
                         # This edge is important
                         edge.setPen(QPen(QBrush(QColor('black')),5))
                         edge.setZValue(2.0)
@@ -515,7 +530,7 @@ class WorldView(QGraphicsScene):
         self.setDirty()
         if key in self.edgesOut:
             for subkey,(edge,arrow) in self.edgesOut[key].items():
-                if self.center is None or self.center == key or self.center == subkey:
+                if self.center is None or key in self.center or subkey in self.center:
                     if isinstance(edge,QGraphicsLineItem):
                         line = edge.line()
                         line.setP1(QPointF(rect.x()+rect.width(),rect.y()+rect.height()/2))
@@ -528,7 +543,7 @@ class WorldView(QGraphicsScene):
                         self.drawEdge(key,subkey,rect0=rect)
         if key in self.edgesIn:
             for subkey,(edge,arrow) in self.edgesIn[key].items():
-                if self.center is None or self.center == key or self.center == subkey:
+                if self.center is None or key in self.center or subkey in self.center:
                     if isinstance(edge,QGraphicsLineItem):
                         line = edge.line()
                         line.setP2(QPointF(rect.x(),rect.y()+rect.height()/2))
@@ -639,7 +654,13 @@ class WorldView(QGraphicsScene):
         for nodeType,nodes in self.nodes.items():
             for key,node in nodes.items():
                 if not onlyConnected or key in self.edgesOut or key in self.edgesIn:
-                    self.highlightEdges(key)
+                    center = {key}
+                    if nodeType == 'state post':
+                        for agent in self.world.agents:
+                            subkey = beliefKey(agent,key)
+                            if subkey in nodes:
+                                center.add(subkey)
+                    self.highlightEdges(center)
                     if isinstance(key,ActionSet):
                         self.saveImage(os.path.join(dirName,'%s.png' % (str(key))))
                     else:
@@ -670,7 +691,7 @@ def initializeNode(node,label):
         rect.setHeight(myRect.height())
     # Vertical centering of label
     node.text.setPos(rect.x(),rect.y()+(rect.height()-myRect.height())/2.)
-    
+
 class VariableNode(QGraphicsEllipseItem):
     defaultWidth = 100
     defaultHeight = 50
@@ -690,13 +711,14 @@ class VariableNode(QGraphicsEllipseItem):
         else:
             initializeNode(self,feature)
         self.setToolTip(str(key))
+        self.key = key
 
     def mouseDoubleClickEvent(self,event):
         if self.agent:
             key = stateKey(self.agent.name,self.feature)
         else:
             key = stateKey(WORLD,self.feature)
-        self.scene().highlightEdges(key)
+        self.scene().highlightEdges({self.key})
 
     def itemChange(self,change,value):
         if change == QGraphicsItem.ItemPositionHasChanged:
@@ -739,7 +761,7 @@ class ActionNode(QGraphicsRectItem):
         self.setToolTip(str(action))
 
     def mouseDoubleClickEvent(self,event):
-        self.scene().highlightEdges(self.action)
+        self.scene().highlightEdges({self.action})
 
     def itemChange(self,change,value):
         if change == QGraphicsItem.ItemPositionHasChanged:
@@ -762,7 +784,7 @@ class UtilityNode(QGraphicsPolygonItem):
         self.setToolTip('%s\'s utility' % (self.agent.name))
 
     def mouseDoubleClickEvent(self,event):
-        self.scene().highlightEdges(self.agent.name)
+        self.scene().highlightEdges({self.agent.name})
 
     def itemChange(self,change,value):
         if change == QGraphicsItem.ItemPositionHasChanged:

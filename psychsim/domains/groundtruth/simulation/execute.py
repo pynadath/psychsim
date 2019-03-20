@@ -152,7 +152,8 @@ def runInstance(instance,args,config,rerun=True):
             state['panels']['TA2BTA1C10post'] = {}
             state['participants']['TA2BTA1C10pre'] = set()
             state['participants']['TA2BTA1C10post'] = set()
-        season = world.getState(WORLD,'day').first() // config.getint('Disaster','year_length')
+        if not config.getboolean('Simulation','graph',fallback=False):
+            season = world.getState(WORLD,'day').first() // config.getint('Disaster','year_length')
         terminated = False
         while True:
             if isinstance(args['number'],int):
@@ -233,7 +234,11 @@ def runInstance(instance,args,config,rerun=True):
         if args['pickle']:
             print('Pickling...')
             import pickle
-            with open(os.path.join(dirName,'scenario%d.pkl' % (world.getState(WORLD,'day').first())),'wb') as outfile:
+            if config.getboolean('Simulation','graph',fallback=False):
+                day = 1
+            else:
+                day = world.getState(WORLD,'day').first()
+            with open(os.path.join(dirName,'scenario%d.pkl' % (day)),'wb') as outfile:
                 pickle.dump(world,outfile)
         elif args['xml']:
             print('Saving...')
@@ -535,7 +540,6 @@ def addState2tables(world,day,tables,population,regions):
         
 def writeHurricane(world,hurricane,dirName):
     fields = ['Timestep','Name','Category','Location','Landed']
-    today = world.getState(WORLD,'day').first()
     if hurricane == 0:
         mode = 'w'
     else:
@@ -545,6 +549,7 @@ def writeHurricane(world,hurricane,dirName):
         if hurricane == 0:
             writer.writeheader()
         else:
+            today = world.getState(WORLD,'day').first()
             phase = world.getState('Nature','phase').first()
             if phase != 'none':
                 record = {}

@@ -7,7 +7,6 @@ class Nature(Agent):
     def __init__(self,world,config):
         Agent.__init__(self,'Nature')
         world.addAgent(self)
-
         if world.diagram:
             world.diagram.setColor(self.name,'red')
 
@@ -147,6 +146,7 @@ class Nature(Agent):
                     world.setDynamics(risk,evolution,tree,codePtr=True)
         self.setAttribute('static',True)
                                         
-        # Advance calendar after Nature moves
-        tree = makeTree(incrementMatrix(stateKey(WORLD,'day'),1))
-        world.setDynamics(stateKey(WORLD,'day'),evolution,tree,codePtr=True)
+        if not config.getboolean('Simulation','graph',fallback=False):
+            # Advance calendar after Nature moves
+            tree = makeTree(incrementMatrix(stateKey(WORLD,'day'),1))
+            world.setDynamics(stateKey(WORLD,'day'),evolution,tree,codePtr=True)
