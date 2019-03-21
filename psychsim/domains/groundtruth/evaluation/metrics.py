@@ -4,6 +4,8 @@ import logging
 import os
 import statistics
 
+from pygraphml import Graph,GraphMLParser
+
 from psychsim.pwl.keys import stateKey
 from psychsim.domains.groundtruth.simulation.data import demographics
 from psychsim.domains.groundtruth import accessibility
@@ -120,7 +122,7 @@ def findMatches(record,world):
     else:
         raise ValueError('No match for %s (mismatches: %s)' % (row['Participant'],mismatch))
 
-if __name__ == '__main__':
+def notAsOldMetric():
     parser = accessibility.createParser(output='metrics.tsv',day=True)
     args = accessibility.parseArgs(parser)
     loadData = accessibility.loadFromArgs(args,participants=True,world=True,hurricanes=True)
@@ -193,3 +195,19 @@ if __name__ == '__main__':
             row['%'] = (len(responses[name].get('Evacuated',set())|responses[name].get('Evacuated Previous Hurricane',set()))/6)
             data.append(row)
     accessibility.writeOutput(args,data,['Actor','%']+sorted(evacuate)+sorted(shelter))
+
+if __name__ == '__main__':
+    parser = accessibility.createParser(output='metrics.tsv',day=True)
+    args = accessibility.parseArgs(parser)
+    loadData = accessibility.loadFromArgs(args,participants=True,world=True,hurricanes=True)
+    parser = GraphMLParser()
+    g = parser.parse('/home/david/Downloads/GroundTruth-USC.graphml')
+    fields = ['Node1','Node2','Frequency','Description']
+    with open('graph.tsv','w') as csvfile:
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+        writer.writeheader()
+        for edge in g.edges():
+            record = {'Node1': edge.node1['label'],
+                'Node2': edge.node2['label'],
+            }
+            writer.writerow(record)
