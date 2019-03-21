@@ -1,0 +1,36 @@
+﻿# Research method category #
+Survey
+
+
+# Specific question #
+We wish to collect this post-SEASON survey on sheltering and evacuation (requested previously on the original area in RR21shelterandevac) by retrospectively asking respondents the following questions about ALL of the past hurricane season in all other areas (area 2 from explain phase, areas 3-8 from predict phase).
+
+
+6. ActorShelterEvacPostTable: Actor-level survey, conducted at the end of the hurricane season:
+a. Participant: ID for participant.
+b. Hurricane: Identifying number of last hurricane (see numbering notes in HurricaneTable).
+c. Demographics: gender, age, ethnicity (either majority or minority), religion (either
+majority, minority, or none), number of children, wealth (on a 0-5 scale, increasing
+from 0 to 5), pet owned or not, fulltime job or not, region of residence
+d. Survey questions:
+i. EverUsedShelter: Did you stay at a public shelter at any point during any previous hurricane this season?
+ii. WhichHurricanesSheltered: Which previous hurricanes this season caused you to go to a shelter?
+iii. EverEvacuated: Did you stay at a public shelter at any point during any previous hurricane this season?
+iv. WhichHurricanesEvacd: Which previous hurricanes this season caused you to evacuate your home?
+v. OrderingForBoth: For the past hurricanes where you both evacuated and sought shelter, which action did you do first? Please list these orderings for all hurricanes where you did both.
+vi. DaysSpentInShelter: For the past hurricanes where you sought shelter, how many days did you spend at the shelter before moving on? Please list the number of days spent in the shelter for all hurricanes where you sheltered.
+vii. DaysSpentInEvacd: For the past hurricanes where you evacuated, how many days did you spend evacuated before either returning home or going to a shelter? Please list the number of days spent evacuated for all hurricanes where you evacuated.
+viii. Dissatisfaction1: For the past hurricanes where you evacuated or sheltered, rate your dissatisfaction with the government after each evacuation or sheltering event.
+ix. Dissatisfaction2: For the past hurricanes where you did not evacuate nor shelter, rate your dissatisfaction with the government after each such hurricane.
+
+
+# Sampling strategy #
+Collect data for areas 2-8 at the end of each hurricane season for that area (i.e. at the end of the two seasons for area 2, and at the end of the single season for areas 3-8). Recruit 10% of the population to fill out each of the surveys. Note that the surveys are deployed retrospectively for all of the hurricanes in the past season. If possible, please recruit from the set of people who did shelter in the past season, and if that does not reach the total of 10% of the population then fill in respondents with non-sheltering households. 
+
+
+# Other applicable detail #
+None
+
+
+# Research request identifier #
+33moreshelterandevac

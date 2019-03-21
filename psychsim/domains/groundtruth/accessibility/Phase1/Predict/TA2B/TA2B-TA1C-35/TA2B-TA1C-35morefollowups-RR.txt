@@ -1,0 +1,51 @@
+# Research method category #
+Survey
+
+
+# Specific question #
+We would like to follow up on threads related to the size of the social circles of individuals, the peer effects of friends, the nature of government assistance, the accuracy and composition of weather predictions that are publicized through mainstream media sources, and the geographic extent of storm impacts over the 16-region areas. 
+
+
+Questions:
+
+
+Q1. How many friends do you currently have?
+Q2. What is the fewest number of friends you have had at any given time during the past hurricane season?
+Q3. What is the largest number of friends you have had at any given time during the past hurricane season?
+
+
+For the remaining questions, respond on a 1-5 scale, ranging from “strongly disagree” to “strongly agree”.
+
+
+Q4. I have formed new friendships in the recent past (recent being in the last year or so).
+Q5. I have discontinued social relationships in the recent past (recent being in the last year or so).
+Q6. I have shared with my friends my opinions regarding satisfaction or dissatisfaction with the government in the past.
+Q7. I have, in the past, updated my own opinion of the government after learning of my friend’s experiences or feelings regarding the government.
+Q8. I have shared, in the past, with my friends my estimates regarding the likelihoods of injury/death as a result of sheltering versus evacuating versus staying at home.
+Q9. I have you updated, in the past, my own preference for evacuating versus sheltering versus staying at home based on the information received from or preferences expressed by my friends.
+Q10. The government provides some assistance to citizens expressly to assist them in evacuating from an arriving hurricane.
+Q11. The government provides some assistance to citizens expressly to assist them in seeking shelter from an arriving hurricane.
+Q12. The government provides some assistance to citizens expressly to assist them in preparing to ride out arriving hurricanes in their usual residences.
+Q13. The media coverage of oncoming hurricanes accurately predicts the entire track that the hurricane will take.
+Q14. The media coverage of oncoming hurricanes accurately predicts the category that an oncoming hurricane will be when it makes landfall.
+Q15. The media coverage of oncoming hurricanes accurately predicts the category that an oncoming hurricane will be for the entire future track that the hurricane will take. 
+Q16. An arriving hurricane could affect any of the 16 regions in our area even though the eye of the storm tracks over only certain specific regions. 
+Q17. Hurricanes have significantly stronger impacts on populations and property in the region where the eye of the storm passes (as opposed to the other 16 regions).
+Q18. The weather predictions of my friends are accurate. 
+Q19. I have helped my friends evacuate or shelter. 
+Q20. My friends have helped me evacuate or shelter. 
+Q21. I have helped my friends when they have become injured. 
+Q22. My friends have helped me when I became injured. 
+Q23. I decide to evacuate based on weather conditions outside that day. 
+
+
+# Sampling strategy #
+Please sample as large a fraction (at least 10%) if every area (Areas 1, 2, 3, 4, 5, 6, 7, 8). Deploy this survey at the end of the latest season of hurricanes. 
+
+
+# Other applicable detail #
+None
+
+
+# Research request identifier #
+35morefollowups
