@@ -101,7 +101,7 @@ def writeOutput(args,data,fields=None,fname=None,dirName=None):
 def openFile(args,fname):
     return open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run'])),fname),'r')
 
-def loadRunData(instance,run=0,end=None):
+def loadRunData(instance,run=0,end=None,nature=False):
     inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
                           'Runs','run-%d' % (run),'RunDataTable.tsv')
     data = {}
@@ -153,6 +153,27 @@ def loadRunData(instance,run=0,end=None):
                 if key not in data[entity]:
                     data[entity][key] = {}
                 data[entity][key][t] = value2dist(row['Value'],row['Notes'])
+    if nature:
+        inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
+                              'Runs','run-%d' % (run),'InstanceVariableTable.tsv')
+        data['Nature'] = {}
+        with open(inFile,'r') as csvfile:
+            reader = csv.DictReader(csvfile,delimiter='\t')
+            for row in reader:
+                t = int(row['Timestep'])
+                if end is not None and t > end:
+                    break
+                entity,feature = row['Name'].split()
+                if feature == 'action':
+                    if t == 1:
+                        continue
+                    else:
+                        t -= 1
+                        feature = ACTION
+                key = stateKey(entity,feature)
+                if key not in data[entity]:
+                    data[entity][key] = {}
+                data[entity][key][t] = value2dist(row['Value'])
     return data
 
 def findHurricane(day,hurricanes):
