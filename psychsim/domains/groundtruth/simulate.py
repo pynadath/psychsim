@@ -2,11 +2,12 @@ from argparse import ArgumentParser
 import csv
 import logging
 import os.path
+from threading import Thread
 
 from psychsim.domains.groundtruth.simulation.data import mapFromTandE,reverseLikert
 from psychsim.domains.groundtruth.simulation.create import getConfig
 from psychsim.domains.groundtruth.simulation.execute import runInstance
-from psychsim.domains.groundtruth.simulation.visualize import initVisualization
+from psychsim.domains.groundtruth.simulation.visualize import initVisualization, vizUpdateLoop
     
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -44,6 +45,7 @@ if __name__ == '__main__':
 
     if args['visualize']:
         initVisualization(args)
+
 
     if args['samples']:
         with open(args['samples']) as csvfile:
@@ -107,8 +109,25 @@ if __name__ == '__main__':
                 with open(os.path.join(os.path.dirname(__file__),'config',
                                        '%06d.ini' % (instance)),'w') as csvfile:
                     config.write(csvfile)
-                runInstance(instance,args,config,args['rerun'])
+                if args['visualize']:
+                    t = Thread(target=runInstance, args=(instance,args,config,args['rerun']))
+                    t.daemon = True
+                    t.start()
+                else:
+                    
+                    runInstance(instance,args,config,args['rerun'])
     else:
         config = getConfig(args['instance'])
-        runInstance(args['instance'],args,config,args['rerun'])
+        if args['visualize']:
+            t = Thread(target=runInstance, args=(args['instance'],args,config,args['rerun']))
+            
+            t.daemon = True
+            t.start()
+        else:
+            runInstance(args['instance'],args,config,args['rerun'])
+    
+    if args['visualize']:
+        vizUpdateLoop()
+        exit()
+        
         
