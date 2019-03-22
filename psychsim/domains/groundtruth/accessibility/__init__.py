@@ -248,3 +248,21 @@ def readDemographics(data,old=False,last=True,name=None):
             demos[name][field] = value
     return demos
 
+def assistance(data,hurricane,region):
+    govt = [data['System'][actionKey('System')][t] for t in range(hurricane['Start'],hurricane['End'])]
+    count = len([a for a in govt if a['object'] == region])
+    return toLikert(float(count)/float(len(govt)))
+
+def propertyDamage(data,hurricane,region):
+    real = [float(data[region][stateKey(region,'risk')][t]) \
+        for t in range(hurricane['Start'],hurricane['End']+1)]
+    # Use real value to be consistent (but can compare against risk perception if desired)
+    return toLikert(max(real))
+
+def employment(data,name,hurricane):
+    employed = [data[name][stateKey(name,'employed')].get(t,data[name][stateKey(name,'employed')][1]) \
+        for t in range(hurricane['Landfall'],hurricane['End'])]
+    sheltered = [data[name][stateKey(name,'location')][t][:7] == 'shelter' for t in range(hurricane['Landfall'],hurricane['End'])]
+    possible = employed.count(True)
+    worked = [employed[t] and not sheltered[t] for t in range(len(employed))].count(True)
+    return worked,possible
