@@ -1,0 +1,8 @@
+Name	LongName	Values	VarType	DataType	Notes
+Property	Property Damage	[1-5]	dynamic	Integer	5.vi
+Assistance	Received Assistance	[1-5]	dynamic	Integer	5.vii
+Number of Friends	Number of Friends	0+	dynamic	Integer	5.viii
+Number of Friends Evacuated	Number of Friends Evacuated	0+	dynamic	Integer	5.ix
+Number of Friends Sheltered	Number of Friends Sheltered	0+	dynamic	Integer	5.x
+Missed Work 	Days Missed Work 	0+	dynamic	Integer	5.xi
+Days Worked	Days Worked 	0+	dynamic	Integer	5.xii

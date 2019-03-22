@@ -1,0 +1,37 @@
+﻿# Specific question #
+
+
+Q1. We would like to know if we are prohibited from all possible research methods that could uncover the specific social ties that exist in TA1C populations. That is to say, is there a specific directive to prohibit us from being able to discover the exact structure of who is friends with whom by any means? We ask this because we found during the explain phase that there was such a tacet rule regarding research that could allow for the linking of the identities of individuals in TA1B datasets and we spent undue amounts of time attempting to accomplish something we were prohibited from doing. We want to conserve time during this iteration and wish to check that there is or is not such a rule before requesting additional research methods that could give insight into social network structure.
+
+
+Q2. If there is no such rule prohibiting discovery of social network structure by any means, then we would like to know if we can collect this information via referral experiments. The idea would be offer an incentive to refer friends to some program so that we can observe the ties of sampled individuals. Perhaps the individual gets a bonus for referring each friend to our program. Alternately, we could surreptitiously collect this information by advertising a very attractive “honey pot”-style opportunity and see who shows up to the time and place specified. Would this sort of experiment be accessible in these populations?
+
+
+Q3. Could we ask for the average, maximum, and minimum values of each demographic aggregated over an individual’s full set of friends? This would look like, “Please provide the maximum, minimum and average number of people in the households of the people in your social circle.”
+
+
+Q4. Could we instrument locations with surveillance technology that is enabled with facial recognition so that we could collect dyadic interaction through either (a) outdoor interactions engaged in, or (b) indoor meetings based on people entering the domicile of another for a visit.
+
+
+Q5. Could we ask people about the characteristics of people in their network? For instance, 
+a. How many people do you know from location X? 
+b. How many people do you know that used a shelter? 
+c. Did you have any friends who either themselves died or had family members die due to a hurricane? If so, how many?
+d. How many pairs of friends do you have that do not know each other?
+e. Have you ever engaged in seeking shelter in response to a hurricane with a friend of yours? 
+f. Have you ever engaged in evacuating in response to a hurricane with a friend of yours? 
+g. Have you ever engaged in riding out a hurricane in your home region with a friend of yours? 
+
+
+# Other applicable details #
+We need to understand if certain research objectives will be fruitless due to concerted designs of the simulation creators. We do not want to waste large amounts of time trying to find a way to measure information that is being adversarially hidden from us. In addition to ascertaining whether efforts to recover social ties will be thwarted, we would like to know whether the other questions specified are accessible to research.
+
+
+# Answer #
+
+Q1. No, there are a number of research methods that could be used to collect and analyze social ties.
+Q2. No.
+Q3. Yes.
+Q4. No, such instrumentation is infeasible, due to all the hurricanes.
+Q5. Yes, all of those are feasible.
+
