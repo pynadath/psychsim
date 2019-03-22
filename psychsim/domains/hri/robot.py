@@ -667,6 +667,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     assert len(learning) == 1,'Unable to have uncertain setting for learning'
     learning = learning.first()
     ack = ''
+    robot = world.agents['robot']
     if learning == 'model-free':
         robot = world.agents['robot']
         # Q Learning
@@ -675,6 +676,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         LR = learning_rate
         copy_old_table = copy.deepcopy(robot.table)
         enter_flag = 0
+        dummy_placeholder = 0.2
         global file
         if recommendation == 'protected':
             if danger != 'none':
@@ -682,11 +684,11 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                 robot.old_decision[omega2index(robot.prev_state)].append('correct')
             if danger == 'none':
                 # Have to handle this case a better way
-                robot.table[omega2index(robot.prev_state)][0] = max(0,robot.table[omega2index(robot.prev_state)][0] + LR*(20-60*(0.25) - (10) )) # The -10 is for recommending protected when there is no danger
+                robot.table[omega2index(robot.prev_state)][0] = max(dummy_placeholder,robot.table[omega2index(robot.prev_state)][0] + LR*(20-60*(0.25) - (10) )) # The -10 is for recommending protected when there is no danger
                 robot.old_decision[omega2index(robot.prev_state)].append('delay')
         elif recommendation == 'unprotected' and danger != 'none':
             enter_flag = 1
-            robot.table[omega2index(robot.prev_state)][1] = max(0,robot.table[omega2index(robot.prev_state)][1] + LR*(-12))
+            robot.table[omega2index(robot.prev_state)][1] = max(dummy_placeholder,robot.table[omega2index(robot.prev_state)][1] + LR*(-12))
             robot.old_decision[omega2index(robot.prev_state)].append('died')
         elif recommendation == 'unprotected' and danger == 'none':
             robot.table[omega2index(robot.prev_state)][1] = robot.table[omega2index(robot.prev_state)][1] + LR*(20)
