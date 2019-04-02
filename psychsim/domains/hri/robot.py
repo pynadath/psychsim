@@ -801,7 +801,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         ack = ''
     return ack
 
-def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None,observation_condition='randomize'):
+def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None,observation_condition='randomize',distrib={'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}):
     """
     Processes incoming observation and makes an assessment
     """
@@ -849,7 +849,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     # Generate individual sensor readings
     omega = {}
     readings = {'camera':[True,False],'microphone':['suspicious','friendly','nobody'],'NBCsensor':[True,False]}
-    dist = {'camera':[0.8,0.2],'microphone':[0.8,0.1,0.1],'NBCsensor':[0.8,0.2]}
+    # distrib = {'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}
     danger = world.getFeature(key,world.state)
     for sensor in robot.omega:
         print (sensor)
@@ -866,7 +866,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                 len_val = len(readings[sensor])
                 for _ in range(len_val):
                     lis.append(readings[sensor][(actual_ind+_)%len_val])
-                omega[sensor] = np.random.choice(lis,p=dist[sensor])
+                omega[sensor] = np.random.choice(lis,p=distrib[sensor])
                 print('actual:',actual,'randomized:',omega[sensor],'list:',lis)
 
 
