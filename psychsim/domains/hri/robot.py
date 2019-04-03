@@ -703,14 +703,19 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         probs_new = [V/Vtotal for V in Vnew]
 #        probs_old = np.array(np.array(copy_old_table[omega2index(robot.prev_state)])/sum(np.array(copy_old_table[omega2index(robot.prev_state)])))
 #        probs_new = np.array(np.array(robot.table[omega2index(robot.prev_state)])/sum(np.array(robot.table[omega2index(robot.prev_state)])))
-        if user:
+        if user is None:
             action = Action({'subject': 'robot',
-                             'verb': 'recommend %s' % ('protected'),
+                             'verb': 'recommend %s' % (recommendation),
                              'object': location})
         else:
-            action = Action({'subject': 'robot',
-                             'verb': 'recommend %s' % ('unprotected'),
-                             'object': location})
+            if user:
+                action = Action({'subject': 'robot',
+                                 'verb': 'recommend %s' % ('protected'),
+                                 'object': location})
+            else:
+                action = Action({'subject': 'robot',
+                                 'verb': 'recommend %s' % ('unprotected'),
+                                 'object': location})
         print (action)
         world.step(action,select=True)
         ack += Template(TEMPLATES['acknowledgment'][robot.old_decision[omega2index(robot.prev_state)][3]]).safe_substitute({'waypoint':robot.old_decision[omega2index(robot.prev_state)][2]})
@@ -764,9 +769,20 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                     tree = makeTree(generateCameraO(world,stateKey(symbol,'danger'),
                                                     falseNeg=fnProb))
                     world.agents['robot'].setO('camera',action,tree)
-        action = Action({'subject': 'robot',
-                         'verb': 'recommend %s' % (recommendation),
-                         'object': location})
+        if user is None:
+            action = Action({'subject': 'robot',
+                             'verb': 'recommend %s' % (recommendation),
+                             'object': location})
+        else:
+            print ('User action is not None')
+            if user:
+                action = Action({'subject': 'robot',
+                                 'verb': 'recommend %s' % ('protected'),
+                                 'object': location})
+            else:
+                action = Action({'subject': 'robot',
+                                 'verb': 'recommend %s' % ('unprotected'),
+                                 'object': location})
         assert len(world.getModel('robot')) == 1
         world.step(action,select=True)
         assert len(world.getModel('robot')) == 1
