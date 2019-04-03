@@ -852,7 +852,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     # distrib = {'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}
     danger = world.getFeature(key,world.state)
     for sensor in robot.omega:
-        print (sensor)
+        print (sensor, '     reliabilities:',distrib[sensor] )
         try:
             if observation_condition == 'scripted':
                 print('Using scripted readings')
@@ -889,7 +889,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                 len_val = len(readings[sensor])
                 for _ in range(len_val):
                     lis.append(readings[sensor][(actual_ind+_)%len_val])
-                omega[sensor] = np.random.choice(lis,p=dist[sensor])
+                omega[sensor] = np.random.choice(lis,p=distrib[sensor])
                 print('actual:',actual,'randomized:',omega[sensor],'list:',lis)
 
         omegaKey = stateKey(robot.name,sensor)
@@ -1254,8 +1254,10 @@ def omega2index(omega):
     return tuple(sorted(omega.items()))
 
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
-               acknowledgment='no',learning='none'):
+               acknowledgment='no',learning='none',learning_rate=1,obs_condition='scripted',distribution={'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}):
     # Remove any existing log file
+    print ('distrbution:',distribution)
+    print ('observation_condition:',obs_condition)
     try:
         os.remove(getFilename(username,level,extension='log'))
     except OSError:
@@ -1270,13 +1272,13 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
     while not world.terminated():
         parameters = {'robotWaypoint': waypoint,
                       'level': level}
-        print(GetRecommendation(username,level,parameters,world))
+        print(GetRecommendation(username,level,parameters,world,observation_condition=obs_condition,distrib=distribution))
         # Was the robot right?
         location = world.getState('robot','waypoint').first()
         recommendation = world.getState(location,'recommendation').first()
         danger = world.getState(index2symbol(waypoint,level),'danger').first()
         print(GetAcknowledgment(None,recommendation,location,danger,username,level,
-                                parameters,world))
+                                parameters,world,learning_rate=learning_rate))
         if not world.terminated():
             # Continue onward
             waypoint = GetDecision(username,level,parameters,world)
@@ -1296,6 +1298,10 @@ if __name__ == '__main__':
     parser.add_argument('-l','--learning',choices=['none','model-based','model-free'],
                         type=str,default='none',
                         help='robot learns from mistakes [default: %(default)s]')
+    parser.add_argument('-lr','--learning_rate', type=int, default=1)
+    parser.add_argument('-o','--observation_condition',choices=['scripted','randomize'],
+                        type=str,default='scripted')
+    parser.add_argument('-d','--distribution', type=dict,default={'reliability':0.7,'NBC':0.95})
     parser.add_argument('-a','--ability',choices=['badSensor','good','badModel'],
                         default='badSensor',
                         help='robot ability [default: %(default)s]')
@@ -1322,5 +1328,10 @@ if __name__ == '__main__':
             runMission(username,level,ability,explanation,embodiment,acknowledgment,learning)
     else:
         for level in range(len(WAYPOINTS)):
+            temp_d = args['distribution']
+            rel, nbc = temp_d['reliability'], temp_d['NBC']
+            rel_mc = rel/nbc
+            rel_m = rel_c = round(np.sqrt(rel_mc),2)
+            feed_dict = {'camera':[rel_c,(1-rel_c)],'microphone':[rel_m,(1-rel_m)/2,(1-rel_m)/2],'NBCsensor':[nbc,round(1-nbc,2)]}
             runMission(username,level,args['ability'],args['explanation'],
-                       args['embodiment'],args['acknowledgment'],args['learning'])
+                       args['embodiment'],args['acknowledgment'],args['learning'],args['learning_rate'],args['observation_condition'],feed_dict)
