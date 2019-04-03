@@ -1253,6 +1253,13 @@ def argmax(items):
 def omega2index(omega):
     return tuple(sorted(omega.items()))
 
+def create_dict(inp):
+    rel, nbc = inp['reliability'], inp['NBC']
+    rel_mc = rel/nbc
+    rel_m = rel_c = round(np.sqrt(rel_mc),2)
+    feed_dict = {'camera':[rel_c,round((1-rel_c),2)],'microphone':[rel_m,round((1-rel_m)/2,2),round((1-rel_m)/2,2)],'NBCsensor':[nbc,round(1-nbc,2)]}
+    return feed_dict
+
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
                acknowledgment='no',learning='none',learning_rate=1,obs_condition='scripted',distribution={'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}):
     # Remove any existing log file
@@ -1328,10 +1335,6 @@ if __name__ == '__main__':
             runMission(username,level,ability,explanation,embodiment,acknowledgment,learning)
     else:
         for level in range(len(WAYPOINTS)):
-            temp_d = args['distribution']
-            rel, nbc = temp_d['reliability'], temp_d['NBC']
-            rel_mc = rel/nbc
-            rel_m = rel_c = round(np.sqrt(rel_mc),2)
-            feed_dict = {'camera':[rel_c,(1-rel_c)],'microphone':[rel_m,(1-rel_m)/2,(1-rel_m)/2],'NBCsensor':[nbc,round(1-nbc,2)]}
+            feed_dict = create_dict(args['distribution'])
             runMission(username,level,args['ability'],args['explanation'],
                        args['embodiment'],args['acknowledgment'],args['learning'],args['learning_rate'],args['observation_condition'],feed_dict)
