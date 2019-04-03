@@ -1257,7 +1257,7 @@ def create_dict(inp):
     rel, nbc = inp['reliability'], inp['NBC']
     rel_mc = rel/nbc
     rel_m = rel_c = round(np.sqrt(rel_mc),2)
-    feed_dict = {'camera':[rel_c,round((1-rel_c),2)],'microphone':[rel_m,round((1-rel_m)/2,2),round((1-rel_m)/2,2)],'NBCsensor':[nbc,round(1-nbc,2)]}
+    feed_dict = {'camera':[rel_c,(1-rel_c),],'microphone':[rel_m,(1-rel_m)/2,(1-rel_m)/2],'NBCsensor':[nbc,1-nbc]}
     return feed_dict
 
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
