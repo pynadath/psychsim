@@ -804,6 +804,8 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     #     old = world.getValue(key)
     #     world.setFeature(key,old+1)
     # world.setState('human','alive',True)
+    if world.getState(robot.name,'acknowledgment').first() == 'no':
+        ack = ''
     WriteLogData('%s %s %s %s %s %s (%s) (%s)' % \
                  (USER_TAG,user,location,danger,death,
                   WAYPOINTS[level][robotIndex]['image'],
@@ -813,8 +815,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     with open(filename,'wb') as scenarioFile:
         pickle.dump(world,scenarioFile)
 #    world.save(filename,ext=='psy')
-    if world.getState(robot.name,'acknowledgment').first() == 'no':
-        ack = ''
+
     return ack
 
 def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None,observation_condition='randomize',distrib={'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}):
