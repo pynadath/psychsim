@@ -139,17 +139,17 @@ def readNetwork(instance,run=0):
                 networks[link][row['FromEntityId']] = {row['ToEntityId']}
     return networks
 
-def readParticipants(instance,run=0):
+def readParticipants(instance,run=0,fname='psychsim.log'):
     """
     :returns: Mapping from participants to actor names for each survey
     """
     tables = {}
     if isinstance(instance,int):
         inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
-                              'Runs','run-%d' % (run),'psychsim.log')
+                              'Runs','run-%d' % (run),fname)
     else:
         # Assume it's a directory
-        inFile = os.path.join(instance,'psychsim.log')
+        inFile = os.path.join(instance,fname)
     with open(inFile,'r') as logfile:
         for line in logfile:
             if 'Participant' in line:
@@ -161,7 +161,7 @@ def readParticipants(instance,run=0):
                 participant = int(elements[3][:-1])
                 name = elements[4]
                 if participant in tables[survey]:
-                    assert name == tables[survey][participant],'Mismatch on paticipant %s in %s' % (participant,survey)
+                    assert name == tables[survey][participant],'Mismatch on participant %s in %s' % (participant,survey)
                 else:
                     tables[survey][participant] = name
     return tables

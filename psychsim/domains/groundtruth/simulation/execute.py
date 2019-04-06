@@ -181,8 +181,11 @@ def runInstance(instance,args,config,rerun=True):
             nextDay(world,groups,state,config,dirName,survey,start,cdfTables,maximize=args['max'])
             if args['visualize']:
                 addState2tables(world,world.getState(WORLD,'day').first()-1,allTables,population,regions)
-                visualize.vizUpdateLoop(world.getState(WORLD,'day').first()-1)
-            writeHurricane(world,state['hurricanes']+1,dirName)
+                visualize.addDayToQueue(world.getState(WORLD,'day').first()-1)
+            hurricaneEntry = writeHurricane(world,state['hurricanes']+1,dirName)
+            if args['visualize']:
+                if hurricaneEntry is not None:
+                    visualize.addToVizData("hurricane", hurricaneEntry)
             newSeason = False
             if world.getState(WORLD,'day').first() - season*config.getint('Disaster','year_length') > config.getint('Disaster','season_length'):
                 # Might be a new season
@@ -253,6 +256,8 @@ def runInstance(instance,args,config,rerun=True):
             profile.sort_stats('time').print_stats()
             logging.critical(buf.getvalue())
             buf.close()
+        if (args['visualize']):
+            visualize.closeViz()
 
 def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={},actions={},maximize=False):
     state['today'] = world.getState(WORLD,'day').first()
@@ -509,7 +514,7 @@ def addState2tables(world,day,tables,population,regions):
                         entry[label] = toLikert(entry[label])
                 table['log'].append(entry)
                 #print("Region %s"%(entry))
-                visualize.addToVizData("regions", entry)
+                visualize.addToVizData("Region", entry)
         elif table['population'] is Actor:
             for actor in population:
                 belief = next(iter(actor.getBelief().values()))
@@ -535,7 +540,7 @@ def addState2tables(world,day,tables,population,regions):
                 #print("Keys %s\nValues %s" %(entry.keys(), entry.values()))
                 if 'x' in list(entry.keys()) and 'y' in list(entry.keys()):
                     visualize.addToIndividualList(entry)
-                visualize.addToVizData("actors", entry)
+                visualize.addToVizData("Actor", entry)
        
         
 def writeHurricane(world,hurricane,dirName):
@@ -569,6 +574,7 @@ def writeHurricane(world,hurricane,dirName):
                         if record[field] == 'none':
                             record[field] = 'leaving'
                 writer.writerow(record)
+                return record                
                 
 def writeCensus(world,regions,dirName,filename='CensusTable',fieldSubset=None):
     census = {'Population': None,

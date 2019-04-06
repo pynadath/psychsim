@@ -663,23 +663,25 @@ class Actor(Agent):
         if config.getboolean('Actors','beliefs'):
             # Observations
             evolve = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
-            omega = self.defineObservation('perceivedPhase',domain=list,codePtr=True,
-                                           lo=self.world.variables['Nature\'s phase']['elements'],
-                                           description='Perception of Nature\'s phase')
-            self.setO('perceivedPhase',None,
-                      makeTree(setToFeatureMatrix(omega,stateKey('Nature','phase'))))
-            self.world.setFeature(omega,'none')
+            if not config.getboolean('Simulation','graph',fallback=False):
+                omega = self.defineObservation('perceivedPhase',domain=list,codePtr=True,
+                                               lo=self.world.variables['Nature\'s phase']['elements'],
+                                               description='Perception of Nature\'s phase')
+                self.setO('perceivedPhase',None,
+                          makeTree(setToFeatureMatrix(omega,stateKey('Nature','phase'))))
+                self.world.setFeature(omega,'none')
             omega = self.defineObservation('perceivedDays',domain=int,codePtr=True,
                                            description='Perception of Nature\'s days')
             self.setO('perceivedDays',None,
                       makeTree(setToFeatureMatrix(omega,stateKey('Nature','days'))))
             self.world.setFeature(omega,0)
-            omega = self.defineObservation('perceivedCenter',domain=list,codePtr=True,
-                                           lo=self.world.variables['Nature\'s location']['elements'],
-                                           description='Perception of Nature\'s location')
-            self.setO('perceivedCenter',None,
-                      makeTree(setToFeatureMatrix(omega,stateKey('Nature','location'))))
-            self.world.setFeature(omega,'none')
+            if not config.getboolean('Simulation','graph',fallback=False):
+                omega = self.defineObservation('perceivedCenter',domain=list,codePtr=True,
+                                               lo=self.world.variables['Nature\'s location']['elements'],
+                                               description='Perception of Nature\'s location')
+                self.setO('perceivedCenter',None,
+                          makeTree(setToFeatureMatrix(omega,stateKey('Nature','location'))))
+                self.world.setFeature(omega,'none')
 
             omega = self.defineObservation('perceivedCategory',domain=int,codePtr=True,
                                            description='Perception of Nature\'s category')
@@ -708,17 +710,18 @@ class Actor(Agent):
             self.setO('perceivedCategory',None,makeTree(setToConstantMatrix(omega,0)))
             self.setState('perceivedCategory',0)
             
-            omega = self.defineObservation('perceivedHealth',codePtr=True,
-                                           description='Perception of Actor\'s health')
-            self.setO('perceivedHealth',None,
-                      makeTree(setToFeatureMatrix(omega,stateKey(self.name,'health'))))
-            self.setState('perceivedHealth',self.health)
-            if self.kids > 0:
-                omega = self.defineObservation('perceivedChildrenHealth',domain=float,codePtr=True,
-                                           description='Perception of Actor\'s childrenHealth')
-                self.setO('perceivedChildrenHealth',None,
-                          makeTree(setToFeatureMatrix(omega,stateKey(self.name,'childrenHealth'))))
-                self.setState('perceivedChildrenHealth',self.health)
+            if not config.getboolean('Simulation','graph',fallback=False):
+                omega = self.defineObservation('perceivedHealth',codePtr=True,
+                                               description='Perception of Actor\'s health')
+                self.setO('perceivedHealth',None,
+                          makeTree(setToFeatureMatrix(omega,stateKey(self.name,'health'))))
+                self.setState('perceivedHealth',self.health)
+                if self.kids > 0:
+                    omega = self.defineObservation('perceivedChildrenHealth',domain=float,codePtr=True,
+                                               description='Perception of Actor\'s childrenHealth')
+                    self.setO('perceivedChildrenHealth',None,
+                              makeTree(setToFeatureMatrix(omega,stateKey(self.name,'childrenHealth'))))
+                    self.setState('perceivedChildrenHealth',self.health)
             if config.getboolean('Actors','infoseek'):
                 omega = self.defineObservation('categoryData',domain=int,codePtr=True,
                                            description='Information received from explicit seeking')
