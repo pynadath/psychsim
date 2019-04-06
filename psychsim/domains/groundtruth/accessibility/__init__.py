@@ -12,7 +12,7 @@ from ..simulation.create import loadPickle,getConfig
 from ..simulation.data import *
 
 instances = [{'instance': 24,'run': 1,'span': 82},
-    {'instance': 27,'run': 0},
+    {'instance': 27,'run': 0,'span': 565},
     {'instance': 53,'run': 1,'span': 147},
     {'instance': 52,'run': 1,'span': 135},
     {'instance': 51,'run': 1,'span': 77},
