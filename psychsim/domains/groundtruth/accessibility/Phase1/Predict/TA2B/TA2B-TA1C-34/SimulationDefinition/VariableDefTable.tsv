@@ -1,0 +1,4 @@
+Name	LongName	Values	VarType	DataType	Notes
+Number of Friends	Number of Friends	0+	dynamic	Integer	Q1
+Number of Friends Evacuated	Number of Friends Evacuated	0+	dynamic	Integer	Q2
+Number of Friends Sheltered	Number of Friends Sheltered	0+	dynamic	Integer	Q3

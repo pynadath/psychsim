@@ -1,0 +1,25 @@
+Name	LongName	Values	VarType	DataType	Notes
+Number of Friends	Number of Friends	0+	dynamic	Integer	Q1
+Fewest Friends	Smallest Number of Friends	0+	dynamic	Integer	Q2
+Most Friends	Largest Number of Friends	0+	dynamic	Integer	Q3
+New Friends	Formed New Friendships	[1-5]	dynamic	Integer	Q4
+Discontinued Friends 	Discontinued Social Relationships	[1-5]	dynamic	Integer	Q5
+Shared Satisfaction	Shared Opinions on Satisfaction	[1-5]	dynamic	Integer	Q6
+Updated Opinion on Government	Updated Opinion on Government	[1-5]	dynamic	Integer	Q7
+Shared Sheltering Injury	Shared Sheltering Injury	[1-5]	dynamic	Integer	Q8
+Updated Preference	Updated Evacuation Preference	[1-5]	dynamic	Integer	Q9
+Evacuation Assistance	Government Assistance for Evacuation	[1-5]	dynamic	Integer	Q10
+Shelter Assistance	Government Assistance for Sheltering	[1-5]	dynamic	Integer	Q11
+Riding Out Assistance	Government Assistance for Riding Out	[1-5]	dynamic	Integer	Q12
+Media Predicts Track	Media Predicts Track Accurately	[1-5]	dynamic	Integer	Q13
+Media Predicts Landfall Category	Media Predicts Landfall Category Accurately	[1-5]	dynamic	Integer	Q14
+Media Predicts Category Track	Media Predicts Category Track Accurately	[1-5]	dynamic	Integer	Q15
+Affect Any Region	Hurricane Affects Any Region	[1-5]	dynamic	Integer	Q16
+Impact of Eye	Stronger Impact at Eye	[1-5]	dynamic	Integer	Q17
+Friends Predictions	Friends Predictions Accurate 	[1-5]	dynamic	Integer	Q18
+Help Friends Evacuate	Help Friends Evacuate	[1-5]	dynamic	Integer	Q19
+Friends Helped Evacuate	Friends Helped Me to Evacuate	[1-5]	dynamic	Integer	Q20
+Help Injured Friends 	Help Injured Friends 	[1-5]	dynamic	Integer	Q21
+Friends Helped When Injured 	Friends Helped Me When Injured 	[1-5]	dynamic	Integer	Q22
+Evacuate From Weather 	Evacuate Based on Weather 	[1-5]	dynamic	Integer	Q23
+

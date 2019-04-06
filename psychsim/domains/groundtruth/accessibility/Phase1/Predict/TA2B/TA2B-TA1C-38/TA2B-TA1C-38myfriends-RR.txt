@@ -1,0 +1,90 @@
+# Research method category #
+Survey
+
+
+# Specific question #
+
+
+Along with demographics (Age, Children, Ethnicity, Fulltime_Job, Gender, Pets, Religion, Residence, Wealth), we would like to asking the following questions. 
+
+
+Questions: (For each of the questions 1-16, please give totals that include friends that you have had at the start of most recent hurricane season. All of these friends should be alive at the start of the recent hurricane season.)
+
+
+1. How many people are you friends with from location 1?
+2. How many people are you friends with from location 2?
+3. How many people are you friends with from location 3?
+4. How many people are you friends with from location 4?
+5. How many people are you friends with from location 5?
+6. How many people are you friends with from location 6?
+7. How many people are you friends with from location 7?
+8. How many people are you friends with from location 8?
+9. How many people are you friends with from location 9?
+10. How many people are you friends with from location 10?
+11. How many people are you friends with from location 11?
+12. How many people are you friends with from location 12?
+13. How many people are you friends with from location 13?
+14. How many people are you friends with from location 14?
+________________
+15. How many people are you friends with from location 15?
+16. How many people are you friends with from location 16?
+
+
+For questions 17-32, please repeat the above questions for the end of the most recent hurricane season. That is, do not include friends who died during the past hurricane season. 
+
+
+For questions 33-45, please answer with respect to those who were your friends at the beginning of the most recent hurricane season; i.e., include friends who may have died in your answers.
+
+
+33. How many people are you friends with that used a shelter in the past season?
+
+
+34. How many of your friends suffered a loss in their immediate family during a hurricane in the most recent season? That is, members of their family died, not including the head of household. 
+
+
+35. How many pairs of friends do you have that do not know each other? (Please answer this with respect to the start of the most recent hurricane season, providing a count that includes friends who may have passed on during this season)
+
+
+36. How many times during the past season have you engaged in assisting a friend of yours after they were injured?
+
+
+37. How many times during the past season has a friend of yours gone to the shelter due to a hurricane?
+
+
+38. How many times during the past season did you go to the shelter due to a hurricane?
+
+
+39. How many different friends of yours went to the shelter due to a hurricane this past season?
+
+
+40. How many times during the past season has a friend of yours evacuate due to a hurricane?
+
+
+41. How many different friends of yours evacuated due to a hurricane this past season?
+
+
+42. How many times during the past season did you evacuate due to a hurricane?
+
+
+43. How many of your friends are majority ethnicity?
+
+
+44. How many of your friends are male?
+
+
+45. How many of your friends are older than 50?
+
+
+46. How many of your friends are majority religion?
+
+
+# Sampling strategy #
+Please sample 10% in every area (Areas 1, 2, 3, 4, 5, 6, 7, 8), providing the unique identifiers for each participant. Deploy this survey at the end of the latest season of hurricanes. 
+
+
+# Other applicable detail #
+We would like to survey individuals to learn about the attributes of their friends without asking them to name specific friends. This will help us to assess what ways friendships affect behaviors and decision making in these populations.
+
+
+# Research request identifier #
+38myfriends

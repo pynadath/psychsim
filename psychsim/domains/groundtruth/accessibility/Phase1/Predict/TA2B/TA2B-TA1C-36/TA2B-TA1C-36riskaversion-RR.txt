@@ -1,0 +1,26 @@
+﻿# Research method category #
+Interview
+
+
+# Specific question #
+We wish to survey the risk aversion to risk seeking characteristics of participants in each area (areas 1-8). 
+
+
+0. Demographics: gender, age, ethnicity (either majority or minority), religion (either
+majority, minority, or none), number of children, wealth (on a 0-5 scale, increasing
+from 0 to 5), pet owned or not, fulltime job or not, region of residence
+
+
+1. Risk aversion to risk seeking scale metric. (To the interviewer, Please assess the level to which the participant is risk averse versus risk seeking when it comes to their decision making tendencies surrounding evacuation or sheltering decisions. Use the most natural psychometric instrument for assessing this and report a numerical scale for where the individual falls on the risk spectrum.)
+
+
+# Sampling strategy #
+We request the maximum number of respondents that may be interviewed in this manner, sampled uniformly at random from the populations of all areas. That is, Areas 1, 2, 3, 4, 5, 6, 7, and 8. Please report the unique identifiers of each of the respondents. 
+
+
+# Other applicable detail #
+None.
+
+
+# Research request identifier #
+36riskaversion

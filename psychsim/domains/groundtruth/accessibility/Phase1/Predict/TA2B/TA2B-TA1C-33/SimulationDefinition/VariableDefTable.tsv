@@ -1,0 +1,10 @@
+Name	LongName	Values	VarType	DataType	Notes
+EverUsedShelter	Ever Used Shelter	yes,no	dynamic	Boolean	
+WhichHurricanesSheltered	Which Hurricanes Sheltered	[1-30]*	dynamic	String	Comma-separated list of integers
+EverEvacuated	Ever Evacuated	yes,no	dynamic	Boolean	
+WhichHurricanesEvacd	Which Hurricanes Evacuated	[1-30]*	dynamic	String	Comma-separated list of integers
+OrderingForBoth	Ordering for Both	Evacuated,Sheltered	dynamic	String	Comma-separated list of strings
+DaysSpentInShelter	Days Spent in Shelter	[1-365]*	dynamic	String	Comma-separated list of integers
+DaysSpentInEvacd	Days Spent Evacuated	[1-365]*	dynamic	String	Comma-separated list of integers
+Dissatisfaction1	Dissatisfaction When Sheltered or Evacuated	[1-5]	dynamic	String	Comma-separated list of integers
+Dissatisfaction2	Dissatisfaction When Neither Sheltered nor Evacuated	[1-5]	dynamic	String	Comma-separated list of integers

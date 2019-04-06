@@ -1,0 +1,27 @@
+﻿# Research method category #
+Survey
+
+
+# Specific question #
+We wish to survey the education level for participants in each area (areas 1-8). 
+
+
+0. Demographics: gender, age, ethnicity (either majority or minority), religion (either
+majority, minority, or none), number of children, wealth (on a 0-5 scale, increasing
+from 0 to 5), pet owned or not, fulltime job or not, region of residence
+
+
+1. What is your highest education level you have achieved? 
+__ Less than high school, __ High school, __ College degree or professional degree (examples are bachelors degree, electrician certificate, chef certification, etc.), __ Graduate degree (post-bachelors degrees, examples, Masters degree, PhD, Law degree, Medical/Dental degree)
+
+
+# Sampling strategy #
+We request the maximum number of respondents that may be surveyed in this manner, sampled uniformly at random from the populations of all areas. That is, Areas 1, 2, 3, 4, 5, 6, 7, and 8. Please report the unique identifiers of each of the respondents. 
+
+
+# Other applicable detail #
+If a different taxonomy of educational levels is a better representation in these populations, please use that and note the new scale in the readme. 
+
+
+# Research request identifier #
+37education
