@@ -32,6 +32,15 @@ class PixiRenderer(Renderer):
     def DrawImage(self, x, y, name, dimx, dimy):
         super().DrawImage(x, y, name, dimx, dimy)
 
+    def preUpdate(self):
+        pass
+        #print("Pixi Pre Update")
+    def update(self):
+        #print("Pixi Update")
+        return True
+
+    def setCaption(self, caption):
+        print("Setting Caption %s" %caption)
 class PyGameRenderer(Renderer):
 
     def setCaption(self, caption):

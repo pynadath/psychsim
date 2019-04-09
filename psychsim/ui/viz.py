@@ -1,42 +1,27 @@
-#!/usr/bin/python
 import sys
 import os
-import pygame
 import random
-from pygame import gfxdraw
 from argparse import ArgumentParser
-
-def handleInput():
-
-    keys = pygame.key.get_pressed()
-    pass
+from psychsim.ui import gtrenderers
 
 class Individual:
-#day	participant	gender	age	ethnicity	#children	region	alive	shelter	evacuated	risk	health	grievance
-#0	0001	male	38	majority	2	Region01	True	False	False	5	5	2
-    def __init__(self, x, y, color, id, region = None):
+    def __init__(self, x, y, color, id, vm, region = None):
         self.id = id
         self.starcolor = color
-
         self.percentxpos = float(x)
         self.percentypos = float(y)
         self.region = region
+        self.vm = vm
         pass
 
-
-
-    def update(self, currentDay, currentPropIndividual, vm):
-        
+    def update(self, currentDay, currentPropIndividual):
         individualname = self.id
-
-        #if not individualname == 'Actor0001':        
-        #    return
-
         if self.region is None or self.percentxpos == -1 or self.percentypos == -1:
+            print ("Returning. Self.region %s %d %d "%(self.region, self.percentxpos, self.percentypos))
             return
 
         if self.region != '': 
-            r = vm.getRegion(self.region)
+            r = self.vm.getRegion(self.region)
         else:
             print ("No region")
             return
@@ -44,21 +29,16 @@ class Individual:
         if r is None:
             print ("Cant find region %s" %self.region)
             return
-        ##print("Drawing circle %s at %f, %f in region %s current day %s individual name %s currentPropIndividual %s" %(self.id, r.x, r.y, self.region, currentDay, individualname, currentPropIndividual ) )
-        value = vm._simdata["Actor"][currentDay][individualname][currentPropIndividual]
+        #print("Drawing circle %s at %f, %f in region %s current day %s individual name %s currentPropIndividual %s" %(self.id, r.x, r.y, self.region, currentDay, individualname, currentPropIndividual ) )
 
-        fValue = float(value) if vm.invertActorProp is False else  1-float(value)
+        value = self.vm._simdata["Actor"][currentDay][individualname][currentPropIndividual]
+
+        fValue = float(value) if self.vm.invertActorProp is False else  1-float(value)
         color = SimColor.getColorForValue(fValue) #1 to 5 => 0 to 1
+        self.vm.renderer.DrawCircle(int(r.x + r.width * self.percentxpos), int(r.y + r.height * self.percentypos), 6, color)
 
-        #print ("individual %s region %s x %f y %f value %f color %s"%(individualname, self.region, self.percentxpos, self.percentypos, float(value), color))
-
-        #hack to draw filled circle with black border
-        #pygame.draw.circle(vm._win, (0, 0, 0), (int(r.x + r.width * self.percentxpos), int(r.y + r.height * self.percentypos)), 7, 2)
-        #pygame.draw.circle(vm._win, color, (int(r.x + r.width * self.percentxpos), int(r.y + r.height * self.percentypos)), 6, 0)
-        pygame.gfxdraw.filled_circle(vm._win, int(r.x + r.width * self.percentxpos), int(r.y + r.height * self.percentypos), 6, color)
-        pygame.gfxdraw.aacircle(vm._win, int(r.x + r.width * self.percentxpos), int(r.y + r.height * self.percentypos), 6, (0,0,0))
 class Neighborhood:
-    def __init__(self, x, y, width, height, color, id):
+    def __init__(self, x, y, width, height, color, id, vm):
         self.id = id
         #self.props = {'casualties':[], 'risk':[]}
         self.startcolor = color
@@ -66,42 +46,28 @@ class Neighborhood:
         self.y = y + 1  
         self.width = width - 2
         self.height = height - 2
+        self.vm = vm
 
-        #for i in range(0, numOfDays):
-        #    self.props['casualties'].append(random.randrange(0,100,1)/100.0)
-        #    self.props['risk'].append(random.randrange(0,100,1) / 100.0 )
-        
-    def update(self, currentDay, currentPropRegion, vm):
-        
+    def update(self, currentDay, currentPropRegion):
         if self.id == '':
-            rect = pygame.draw.rect(vm._win, self.startcolor, (self.x, self.y, self.width, self.height))
+            self.vm.renderer.DrawRectangle(self.x, self.y, self.width, self.height, self.startcolor)
             return
         regionname = self.id
-        #if regionname == 'Region11':
-        #    return
 
         try:
-            value = vm._simdata["Region"][currentDay][regionname][currentPropRegion]
-            
+            value = self.vm._simdata["Region"][currentDay][regionname][currentPropRegion]
             #print ("regions CURRENTDAY %d REGIONNAME %s PROPERTY %s VALUE %f" %(currentDay, regionname, currentPropRegion, float(value)))
-
         except:
             print ("error regions CURRENTDAY %d REGIONNAME %s PROPERTY %s" %(currentDay, regionname, currentPropRegion))
             return
-        fValue = float(value) if vm.invertRegionProp is False else  1-float(value)
+        fValue = float(value) if self.vm.invertRegionProp is False else  1-float(value)
         
-        if vm._showActors == 1 :
+        if self.vm._showActors == 1 :
             self.color = SimColor.DGRAY
         else:
             self.color = SimColor.getColorForValue(fValue)
 
-        rect = pygame.draw.rect(vm._win, self.color, (self.x, self.y, self.width, self.height))
-        #mouse over code below
-        # if rect.collidepoint(pygame.mouse.get_pos()):
-        #     s = pygame.Surface((self.width,self.height), pygame.SRCALPHA)
-        #     s.set_alpha(127)
-        #     s.fill((127, 127, 127))                        
-        #     win.blit(s, (self.x, self.y))  
+        self.vm.renderer.DrawRectangle(self.x, self.y, self.width, self.height, self.color)
 
 class SimColor:
     RED = (255,0,0)
@@ -116,33 +82,18 @@ class SimColor:
     BLACK = (0, 0, 0)
     DGRAY = (65, 65, 65)
     LGRAY = (200, 200, 200)
-
     
     @classmethod
     def getColorForValue(cls,val):
         #test Green to Red
         #temp = float(numOfDays - currentDay) / float(numOfDays)
         #myColor = ( min(255, 255 * 2.0 * (1 - temp)),min(255,255 * 2.0 * temp), 0)
-        myColor = ( min(255, 255 * 2.0 * (val)),min(255,255 * 2.0 * (1-val)), 0)
+        myColor = ( min(255, 255 * 2.0 * (1 - val)),min(255,255 * 2.0 * (val)), 0)
         return myColor
-        # if val <= 0.2:
-        #     return cls.RED
-        # elif val <= 0.4:
-        #     return cls.ORANGE
-        # elif val <= 0.6:
-        #     return  cls.YELLOW
-        # elif val <= 0.8:
-        #     return cls.LGREEN
-        # elif val <= 1.0:
-        #     return cls.GREEN
 
 class VizMap:
 
-
-    def pygameInit(self):
-        pygame.display.set_caption("Visualization")
-
-    def __init__(self, sWidth, sHeight, numxgrid, numygrid, simdata, showActors, displayTableFileName, win, currentPropRegion, currentPropIndividual, invertRegionProp=False, invertActorProp = False):
+    def __init__(self, sWidth, sHeight, numxgrid, numygrid, simdata, showActors, currentPropRegion, currentPropIndividual, invertRegionProp=False, invertActorProp = False, renderer = 'pygame'):
         
         self._sWidth = sWidth
         self._sHeight = sHeight 
@@ -150,34 +101,22 @@ class VizMap:
         self._numygrid = numygrid
         self._simdata = simdata
         self._showActors = showActors
-        self._displayTableFileName = displayTableFileName
+#        self._displayTableFileName = displayTableFileName
         self._currentPropIndividual = currentPropIndividual
         self._currentPropRegion = currentPropRegion
-        self._win = win
-        self.pygameInit()
         self.regionList = self.getRegions() 
-        self.individualList = [] #self.getIndividuals()
-
-        self.hurricaneImages = {}
-        self.hurricaneImages['cat1'] = pygame.image.load(os.path.join(os.path.dirname(__file__), 'images','hurricane_category_1.png'))
-        self.hurricaneImages['cat2'] = pygame.image.load(os.path.join(os.path.dirname(__file__), 'images','hurricane_category_2.png'))
-        self.hurricaneImages['cat3'] = pygame.image.load(os.path.join(os.path.dirname(__file__), 'images','hurricane_category_3.png'))
-        self.hurricaneImages['cat4'] = pygame.image.load(os.path.join(os.path.dirname(__file__), 'images','hurricane_category_4.png'))
-        self.hurricaneImages['cat5'] = pygame.image.load(os.path.join(os.path.dirname(__file__), 'images','hurricane_category_5.png'))
+        self.individualList = [] 
         self.invertRegionProp = invertRegionProp
         self.invertActorProp = invertActorProp
+        self.renderer = gtrenderers.PyGameRenderer(sWidth, sHeight) if renderer == 'pygame' else gtrenderers.PixiRenderer(self) 
+
     def getRegion(self, name):
-        # 
         # print ("Looking for region %s" %(name[0]))
-
         for r in self.regionList:
-
             if r.id == name:
                 return r
-
         return None
                 
-              
     def getRegions(self):
         rl = []
         id = 0
@@ -186,27 +125,23 @@ class VizMap:
         for j in range(numcols):
             for i in range(numrows):
                 if i == 0:
-                    rl.append(Neighborhood(i*self._sWidth/numcols, j*self._sHeight/numrows, self._sWidth/numcols, self._sHeight/numrows, SimColor.LIGHTBLUE,''))
+                    rl.append(Neighborhood(i*self._sWidth/numcols, j*self._sHeight/numrows, self._sWidth/numcols, self._sHeight/numrows, SimColor.LIGHTBLUE,'', self))
                     continue
                 if j == 0 or i == numcols - 1 or j == numrows - 1:
-                    rl.append(Neighborhood(i*self._sWidth/numcols, j*self._sHeight/numrows, self._sWidth/numcols, self._sHeight/numrows, SimColor.BROWN, ''))
+                    rl.append(Neighborhood(i*self._sWidth/numcols, j*self._sHeight/numrows, self._sWidth/numcols, self._sHeight/numrows, SimColor.BROWN, '', self))
                     continue
                 id+=1
-                rl.append(Neighborhood(i*self._sWidth/numcols, j*self._sHeight/numrows, self._sWidth/numcols, self._sHeight/numrows, SimColor.GRAY, "Region%02d"%id))
+                rl.append(Neighborhood(i*self._sWidth/numcols, j*self._sHeight/numrows, self._sWidth/numcols, self._sHeight/numrows, SimColor.GRAY, "Region%02d"%id, self))
 
         return rl
 
-
     def updateXPos(self, actor, x):
-
         for i in self.individualList:
             if actor == i.id:
                 i.percentxpos = x
                 return
-        
         #reaching here indicates actor is not yet in the list
-        self.individualList.append(Individual(x, -1, SimColor.GRAY, actor))
-
+        self.individualList.append(Individual(x, -1, SimColor.GRAY, actor, self))
         
     def updateYPos(self, actor, y):
         for i in self.individualList:
@@ -214,112 +149,70 @@ class VizMap:
                 i.percentypos = y
                 return
         #reaching here indicates actor is not yet in the list
-
-        self.individualList.append(Individual(-1, y, SimColor.GRAY, actor))
-
+        self.individualList.append(Individual(-1, y, SimColor.GRAY, actor, self , None))
 
     def updateRegion(self, actor, region):
-
         for i in self.individualList:
             if actor == i.id:
                 i.region = region
                 return
         #reaching here indicates actor is not yet in the list
-        self.individualList.append(Individual(-1, -1, SimColor.GRAY, actor, region))
+        self.individualList.append(Individual(-1, -1, SimColor.GRAY, actor, self, region))
 
-    def getIndividuals(self):
-        iL = []
-#day	participant	gender	age	ethnicity	#children	region	alive	shelter	evacuated	risk	health	grievance
-#0	0001	male	38	majority	2	Region01	True	False	False	5	5	2
-        header = True
-        if not self._displayTableFileName == "":
-            with open(self._displayTableFileName) as f:
-                lines = f.readlines()
-                for line in lines:
-                    line = line.rstrip('\n')
-                    values = line.split('\t')
-                    if header == True:
-                        header = False
-                        headervalues = values
-                    #print ("Header created")
-                        continue
-                    iL.append(Individual(values[2], values[3], SimColor.GRAY, int(values[1])))
-        return iL
-
+    def updateTitle(self, title):
+        self.renderer.setCaption(title)
     
     def update(self, currentDay):
-        
-        #print ("Rendering Day - ", currentDay)
-        self._win.fill((0,0,0))
-        for r in self.regionList:
-        #    print ("Rendering Region - ", r.id)
+        self.renderer.preUpdate()
 
-            r.update(currentDay, self._currentPropRegion, self)
-        
-        if self._showActors > 0:
-            for ind in self.individualList:
-        #        print ("Rendering Actor - ", ind.id)
+        if currentDay is not -1:
+            for r in self.regionList:
+                #print (r.id)
+                r.update(currentDay, self._currentPropRegion)
 
-                ind.update(currentDay, self._currentPropIndividual, self)
+            if self._showActors > 0:
+                for ind in self.individualList:
+                    #print("Individual = %s %s " %( type(ind.id) , ind.id))
+                    ind.update(currentDay, self._currentPropIndividual)
+            currentDay += 1
+            try:
 
-        if not 'hurricane' in self._simdata:
-            return
-        currentDay += 1
-        if (currentDay in self._simdata['hurricane']):
+                if 'hurricane' in self._simdata:                 
+                    
+                    if (currentDay in self._simdata['hurricane']):
+                        for hName in self._simdata['hurricane'][currentDay]:
+                            region = self._simdata['hurricane'][currentDay][hName]['Location']
+                            category = int(self._simdata['hurricane'][currentDay][hName]['Category'])
+                            bLanded = True if self._simdata['hurricane'][currentDay][hName]['Landed'] == 'yes' else False
+                            bLeaving = True if region == 'leaving' else False
+                            imageDim = 20 + 10 * category
+                            r = self.getRegion(region)
+                            if not bLeaving:
+                                if not bLanded:
+                                    self.renderer.DrawImage(int(r.x + (r.width + imageDim) * -0.5), int(r.y + (r.height-imageDim) * 0.5), category, imageDim, imageDim)
+                                else :
+                                    self.renderer.DrawImage(int(r.x + (r.width - imageDim) * 0.5), int(r.y + (r.height - imageDim) * 0.5), category, imageDim, imageDim)
+                            else:
+                                # if leaving find where it was previous day and turn green
+                                region = self._simdata['hurricane'][currentDay - 1][hName]['Location']
+                                r = self.getRegion(region)
+                                exitId = self.getExitRegion(int(r.id.replace("Region","")))
+                                if exitId in [0,1,7]:
+                                    self.renderer.DrawImage(int(r.x + (r.width - imageDim) * 0.5), int(r.y + (r.height + imageDim) * -0.5), category, imageDim, imageDim)
+                                if exitId in [3,4,5]:
+                                    self.renderer.DrawImage(int(r.x + (r.width - imageDim) * 0.5), int(r.y  + r.height + (r.height - imageDim) * 0.5), category, imageDim, imageDim)
+                                if exitId in [2]:
+                                    self.renderer.DrawImage(int(r.x + r.width + (r.width - imageDim) * 0.5), int(r.y + (r.height - imageDim) * 0.5), category, imageDim, imageDim)
+                                if exitId in [6]:
+                                    self.renderer.DrawImage(int(r.x + (r.width + imageDim) * - 0.5), int(r.y + (r.height - imageDim) * 0.5), category, imageDim, imageDim)
+            except:
+                print("Exception - while rendering hurricane. %d %s " %(currentDay, self._simdata['hurricane']))
 
-            for hName in self._simdata['hurricane'][currentDay]:
-                region = self._simdata['hurricane'][currentDay][hName]['Location']
-                category = int(self._simdata['hurricane'][currentDay][hName]['Category'])
-                bLanded = True if self._simdata['hurricane'][currentDay][hName]['Landed'] == 'yes' else False
-                bLeaving = True if region == 'leaving' else False
-
-                imageDim = 20 + 10 * category
-                image = self.hurricaneImages['cat%d'%category]
-                image = pygame.transform.smoothscale(image, (imageDim, imageDim))
-
-                r = self.getRegion(region)
-                if not bLeaving:
-                    if not bLanded:
-
-                        # pygame.gfxdraw.filled_circle(self._win, int(r.x + r.width * -0.5), int(r.y + r.height * 0.5), 20+category, (70,70,70))
-                        # pygame.gfxdraw.aacircle(self._win, int(r.x + r.width * -0.5), int(r.y + r.height * 0.5), 20+category, (0,0,0))
-                        # pygame.gfxdraw.filled_circle(self._win, int(r.x + r.width * -0.5), int(r.y + r.height * 0.5), 2+category, (0,0,0))
-                        # pygame.gfxdraw.aacircle(self._win, int(r.x + r.width * -0.5), int(r.y + r.height * 0.5), 2+category, (0,0,0))
-
-                        self._win.blit(image, (int(r.x + (r.width + imageDim) * -0.5), int(r.y + (r.height-imageDim) * 0.5)))
-
-                    else :
-
-                        # pygame.gfxdraw.filled_circle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 20+category, (165, 165, 165))
-                        # pygame.gfxdraw.aacircle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 20+category, (0,0,0))
-                        # pygame.gfxdraw.filled_circle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 2+category, (0, 0, 0))
-                        # pygame.gfxdraw.aacircle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 2+category, (0,0,0))
-                        self._win.blit(image, (int(r.x + (r.width - imageDim) * 0.5), int(r.y + (r.height - imageDim) * 0.5)))
-
-                else:
-                    # if leaving find where it was previous day and turn green
-                    region = self._simdata['hurricane'][currentDay - 1][hName]['Location']
-                    r = self.getRegion(region)
-                    print (r.id)
-                    exitId = self.getExitRegion(int(r.id.replace("Region","")))
-                        
-                    # pygame.gfxdraw.filled_circle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 20+category*2, (255, 255, 255))
-                    # pygame.gfxdraw.aacircle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 20+category*2, (0,0,0))
-                    # pygame.gfxdraw.filled_circle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 2+category, (0, 0, 0))
-                    # pygame.gfxdraw.aacircle(self._win, int(r.x + r.width * 0.5), int(r.y + r.height * 0.5), 2+category, (0,0,0))
-
-                    if exitId in [0,1,7]:
-                        self._win.blit(image, (int(r.x + (r.width - imageDim) * 0.5), int(r.y + (r.height + imageDim) * -0.5)))
-                    if exitId in [3,4,5]:
-                        self._win.blit(image, (int(r.x + (r.width - imageDim) * 0.5), int(r.y  + r.height + (r.height - imageDim) * 0.5)))
-                    if exitId in [2]:
-                        self._win.blit(image, (int(r.x + r.width + (r.width - imageDim) * 0.5), int(r.y + (r.height - imageDim) * 0.5)))
-                    if exitId in [6]:
-                        self._win.blit(image, (int(r.x + (r.width + imageDim) * - 0.5), int(r.y + (r.height - imageDim) * 0.5)))
+        return self.renderer.update()
 
     def getExitRegion(self, id):
-        x = numxgrid - 2
-        y = numygrid - 2
+        x = self._numxgrid - 2
+        y = self._numygrid - 2
 
         if id == 1:
             return 7 #NW
@@ -373,7 +266,7 @@ def main(argv):
 
 
 
-    usage = "python.exe .\\viz.py -sw 1024 -sh 768 -s 1 -c 7 -r 7 -rp safety -ap health -dl 0 -fn rundatatable.tsv -hfn hurricanetable.tsv"
+    usage = "python.exe .\\viz.py -sw 1024 -sh 768 -s 1 -c 7 -r 7 -rp risk -ap health -dl 0 -fn rundatatable.tsv -hfn hurricanetable.tsv"
     print(usage)
 
     currentDay = 0
@@ -409,75 +302,23 @@ def main(argv):
     invertActorProp = args['actorPropertyInverted']
 
     print ("I = %s R = %s"%(invertActorProp,invertRegionProp) )
-    # if len(argv) >= 3:
-    #     sWidth = int(argv[1])
-    #     sHeight = int(argv[2])
-
-    # if len(argv) >= 4:
-    #     speed = float(argv[3])
-
-    # if len(argv) >=6:
-    #     numxgrid = int(argv[4])
-    #     numygrid = int(argv[5])
     
-    # if len(argv) >=7:
-    #     regionFileName = argv[6]
-    # else:
-    #     regionFileName = "data\RegionTable"
-    # if len(argv) >=8:
-    #     currentPropRegion = argv[7]
     
-        
-    # else:
-    #     currentPropRegion = 'safety'
-
-    # if len(argv) >=9:
-    #     individualFileName = argv[8]
-    # else:
-    #     regionFileName = "data\ActorsTable"
-
-    
-
-    # if len(argv) >=10:
-    #     currentPropIndividual = argv[9]
-    # else:
-    #     currentPropIndividual = 'risk'
-
-    # if len(argv) >=11:
-    #     displayTableFileName = argv[10]
-    # else:
-    #     displayTableFileName = ''
-    
-    displayTableFileName = ''
 
     if  showActors == 0:        
         displaylayer = "Regions"
-        displayproperty = currentPropRegion    
     if  showActors == 1:        
         displaylayer = "Actors"
-        displayproperty = currentPropIndividual
     if  showActors == 2:   
         displaylayer = "Regions and Actors"
-        displayproperty = currentPropIndividual
-        displayproperty = currentPropRegion
  
 
-    
-    # if len(argv) >= 13:
-    #     combinedFileName = argv[12]
-
-    win = pygame.display.set_mode((sWidth, sHeight))
-
-    pygame.init()
 
     run = True
     i = 0
-    totalrecords = 0
     simdata = {}
-    simdata["actors"] = []
-    simdata["regions"] = []
-
-    vm = VizMap(sWidth, sHeight, numxgrid, numygrid, simdata, showActors, displayTableFileName, win, currentPropRegion, currentPropIndividual, invertRegionProp, invertActorProp)
+    
+    vm = VizMap(sWidth, sHeight, numxgrid, numygrid, simdata, showActors, currentPropRegion, currentPropIndividual, invertRegionProp, invertActorProp, 'pygame')
 
     if not combinedFileName is "" :
         print ("Reading %s" %combinedFileName)
@@ -492,26 +333,14 @@ def main(argv):
         print ("No data file specified")
     print ("keys ",simdata.keys())
     print ("Simdata: %d %d %d" %(len(simdata['Region']), len(simdata['Actor']), len(simdata['hurricane'])))
-    # i  = 0
-    # for daydata in simdata:
-    #     i+=1
-    #     print("day ", i)
-    #     print (n_data)
-
-    pygame.time.delay(2000)
+  
     i = 0.0
     while run:
-        pygame.time.delay(100)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                run = False
-
-        handleInput()
+        
         vm.update(currentDay)        
+        vm.updateTitle("Visualization Day %d Layer: %s Actor Property: %s Region Property %s" % (currentDay, displaylayer , currentPropIndividual, currentPropRegion))
 
-        if i == 0.0:
-            pygame.display.set_caption("Visualization Day %d Layer: %s Actor Property: %s Region Property %s" % (currentDay, displaylayer , currentPropIndividual, currentPropRegion))
+        if i == 0.0:  
             if currentDay < numOfDays :
                 currentDay += 1
             else: 
@@ -522,7 +351,6 @@ def main(argv):
         else:
             i = 0.0
 
-        pygame.display.update()
 
 def readHurricaneFile(filename):
     with open(filename) as f:
@@ -554,15 +382,11 @@ def addToVizData(keyname, entry):
     
     if not keyname in vm._simdata:
         vm._simdata[keyname] = {}
-        #vm._simdata[keyname].append({})
 
     headervalues = list(entry.keys())
     values = list(entry.values())
     entityname = values[1]
     simday = int(values[0])
-
-    #if len(vm._simdata[keyname]) == simday + 1:
-    #    vm._simdata[keyname].append({})
 
     if not simday in vm._simdata[keyname]:
         vm._simdata[keyname][simday] = {}
@@ -570,15 +394,9 @@ def addToVizData(keyname, entry):
     if not entityname in vm._simdata[keyname][simday]:
         vm._simdata[keyname][simday][entityname] = {}
 
-    #for h in range(2,len(headervalues)):
-    #    vm._simdata[keyname][simday][entityname][headervalues[h]] = []
-
     entityname = list(entry.values())[1]
     for cntr in range (2, len(entry)):
-        
-        #vm._simdata[keyname][simday][entityname][headervalues[cntr]].append(values[cntr])
         vm._simdata[keyname][simday][entityname][headervalues[cntr]] = (values[cntr])
-        #print ("Adding KVP ", headervalues[cntr], values[cntr])
 
 def readfile(filename, keyname):
     simday = -1
@@ -626,13 +444,11 @@ def readfile(filename, keyname):
                 keyname = valueKey
               
                 if  valueKey != "Actor" and valueKey != "Region": #skipping everything but Actor and Region entries
-                    #print ("Keyname is not Actor or Regiobootn ... skipping %s" %values)
                     continue
 
                 if simday != int(valueDay):
                     try:
                         simday = (int)(valueDay) - 1
-                        #simday = (int)(valueDay) - 1
                         #print ("Simday%d " %simday)
                     except:
                         #print ("Simday error %s" %values)
@@ -642,8 +458,6 @@ def readfile(filename, keyname):
                     simdata[valueKey].append({})
                     #print ("DayChanged Simdata Keyname%s %s"%(valueKey,simdata[valueKey]))
 
-                #print ("Length of %s is %d " %(simdata[valueKey], len(simdata[valueKey])))
-                #print ("Simday is %d" % simday)
                 if valueEntityId in simdata[valueKey][simday].keys():
                     pass
                 else:
@@ -653,8 +467,8 @@ def readfile(filename, keyname):
 
                 simdata[valueKey][simday][valueEntityId][valueProp] = valueValue
 
-                #if (valueKey == 'regions' and valueProp == 'risk') or (valueKey == 'actors' and valueProp == 'health'):
-                #print ("%s %d %s %s %s" %(valueKey, simday, valueEntityId, valueProp, (valueValue)))
+#                if (valueKey == 'Region' and valueProp == 'risk') or (valueKey == 'Actor' and valueProp == 'health'):
+#                    print ("%s %d %s %s %s" %(valueKey, simday, valueEntityId, valueProp, (valueValue)))
                 
                 if valueKey == 'Actor': # handle region, x, y changes and update actor list
                     if valueProp == 'region': 
