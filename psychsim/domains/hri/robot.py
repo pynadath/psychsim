@@ -667,6 +667,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     assert len(learning) == 1,'Unable to have uncertain setting for learning'
     learning = learning.first()
     ack = ''
+    robot = world.agents['robot']
     if learning == 'model-free':
         robot = world.agents['robot']
         # Q Learning
@@ -675,6 +676,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         LR = learning_rate
         copy_old_table = copy.deepcopy(robot.table)
         enter_flag = 0
+        dummy_placeholder = 0.2
         global file
         if recommendation == 'protected':
             if danger != 'none':
@@ -682,11 +684,11 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                 robot.old_decision[omega2index(robot.prev_state)].append('correct')
             if danger == 'none':
                 # Have to handle this case a better way
-                robot.table[omega2index(robot.prev_state)][0] = max(0,robot.table[omega2index(robot.prev_state)][0] + LR*(20-60*(0.25) - (10) )) # The -10 is for recommending protected when there is no danger
+                robot.table[omega2index(robot.prev_state)][0] = max(dummy_placeholder,robot.table[omega2index(robot.prev_state)][0] + LR*(20-60*(0.25) - (10) )) # The -10 is for recommending protected when there is no danger
                 robot.old_decision[omega2index(robot.prev_state)].append('delay')
         elif recommendation == 'unprotected' and danger != 'none':
             enter_flag = 1
-            robot.table[omega2index(robot.prev_state)][1] = max(0,robot.table[omega2index(robot.prev_state)][1] + LR*(-12))
+            robot.table[omega2index(robot.prev_state)][1] = max(dummy_placeholder,robot.table[omega2index(robot.prev_state)][1] + LR*(-12))
             robot.old_decision[omega2index(robot.prev_state)].append('died')
         elif recommendation == 'unprotected' and danger == 'none':
             robot.table[omega2index(robot.prev_state)][1] = robot.table[omega2index(robot.prev_state)][1] + LR*(20)
@@ -701,14 +703,19 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         probs_new = [V/Vtotal for V in Vnew]
 #        probs_old = np.array(np.array(copy_old_table[omega2index(robot.prev_state)])/sum(np.array(copy_old_table[omega2index(robot.prev_state)])))
 #        probs_new = np.array(np.array(robot.table[omega2index(robot.prev_state)])/sum(np.array(robot.table[omega2index(robot.prev_state)])))
-        if user:
+        if user is None:
             action = Action({'subject': 'robot',
-                             'verb': 'recommend %s' % ('protected'),
+                             'verb': 'recommend %s' % (recommendation),
                              'object': location})
         else:
-            action = Action({'subject': 'robot',
-                             'verb': 'recommend %s' % ('unprotected'),
-                             'object': location})
+            if user:
+                action = Action({'subject': 'robot',
+                                 'verb': 'recommend %s' % ('protected'),
+                                 'object': location})
+            else:
+                action = Action({'subject': 'robot',
+                                 'verb': 'recommend %s' % ('unprotected'),
+                                 'object': location})
         print (action)
         world.step(action,select=True)
         ack += Template(TEMPLATES['acknowledgment'][robot.old_decision[omega2index(robot.prev_state)][3]]).safe_substitute({'waypoint':robot.old_decision[omega2index(robot.prev_state)][2]})
@@ -762,9 +769,20 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                     tree = makeTree(generateCameraO(world,stateKey(symbol,'danger'),
                                                     falseNeg=fnProb))
                     world.agents['robot'].setO('camera',action,tree)
-        action = Action({'subject': 'robot',
-                         'verb': 'recommend %s' % (recommendation),
-                         'object': location})
+        if user is None:
+            action = Action({'subject': 'robot',
+                             'verb': 'recommend %s' % (recommendation),
+                             'object': location})
+        else:
+            print ('User action is not None')
+            if user:
+                action = Action({'subject': 'robot',
+                                 'verb': 'recommend %s' % ('protected'),
+                                 'object': location})
+            else:
+                action = Action({'subject': 'robot',
+                                 'verb': 'recommend %s' % ('unprotected'),
+                                 'object': location})
         assert len(world.getModel('robot')) == 1
         world.step(action,select=True)
         assert len(world.getModel('robot')) == 1
@@ -786,6 +804,8 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     #     old = world.getValue(key)
     #     world.setFeature(key,old+1)
     # world.setState('human','alive',True)
+    if world.getState(robot.name,'acknowledgment').first() == 'no':
+        ack = ''
     WriteLogData('%s %s %s %s %s %s (%s) (%s)' % \
                  (USER_TAG,user,location,danger,death,
                   WAYPOINTS[level][robotIndex]['image'],
@@ -795,11 +815,10 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     with open(filename,'wb') as scenarioFile:
         pickle.dump(world,scenarioFile)
 #    world.save(filename,ext=='psy')
-    if world.getState(robot.name,'acknowledgment').first() == 'no':
-        ack = ''
+
     return ack
 
-def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None,observation_condition='randomize'):
+def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None,observation_condition='randomize',distrib={'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}):
     """
     Processes incoming observation and makes an assessment
     """
@@ -847,10 +866,10 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     # Generate individual sensor readings
     omega = {}
     readings = {'camera':[True,False],'microphone':['suspicious','friendly','nobody'],'NBCsensor':[True,False]}
-    dist = {'camera':[0.8,0.2],'microphone':[0.8,0.1,0.1],'NBCsensor':[0.8,0.2]}
+    # distrib = {'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}
     danger = world.getFeature(key,world.state)
     for sensor in robot.omega:
-        print (sensor)
+        print (sensor, '     reliabilities:',distrib[sensor] )
         try:
             if observation_condition == 'scripted':
                 print('Using scripted readings')
@@ -864,7 +883,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                 len_val = len(readings[sensor])
                 for _ in range(len_val):
                     lis.append(readings[sensor][(actual_ind+_)%len_val])
-                omega[sensor] = np.random.choice(lis,p=dist[sensor])
+                omega[sensor] = np.random.choice(lis,p=distrib[sensor])
                 print('actual:',actual,'randomized:',omega[sensor],'list:',lis)
 
 
@@ -887,7 +906,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                 len_val = len(readings[sensor])
                 for _ in range(len_val):
                     lis.append(readings[sensor][(actual_ind+_)%len_val])
-                omega[sensor] = np.random.choice(lis,p=dist[sensor])
+                omega[sensor] = np.random.choice(lis,p=distrib[sensor])
                 print('actual:',actual,'randomized:',omega[sensor],'list:',lis)
 
         omegaKey = stateKey(robot.name,sensor)
@@ -1251,9 +1270,18 @@ def argmax(items):
 def omega2index(omega):
     return tuple(sorted(omega.items()))
 
+def create_dict(inp):
+    rel, nbc = inp['reliability'], inp['NBC']
+    rel_mc = rel/nbc
+    rel_m = rel_c = round(np.sqrt(rel_mc),2)
+    feed_dict = {'camera':[rel_c,(1-rel_c),],'microphone':[rel_m,(1-rel_m)/2,(1-rel_m)/2],'NBCsensor':[nbc,1-nbc]}
+    return feed_dict
+
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
-               acknowledgment='no',learning='none'):
+               acknowledgment='no',learning='none',learning_rate=1,obs_condition='scripted',distribution={'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}):
     # Remove any existing log file
+    print ('distrbution:',distribution)
+    print ('observation_condition:',obs_condition)
     try:
         os.remove(getFilename(username,level,extension='log'))
     except OSError:
@@ -1268,13 +1296,13 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
     while not world.terminated():
         parameters = {'robotWaypoint': waypoint,
                       'level': level}
-        print(GetRecommendation(username,level,parameters,world))
+        print(GetRecommendation(username,level,parameters,world,observation_condition=obs_condition,distrib=distribution))
         # Was the robot right?
         location = world.getState('robot','waypoint').first()
         recommendation = world.getState(location,'recommendation').first()
         danger = world.getState(index2symbol(waypoint,level),'danger').first()
         print(GetAcknowledgment(None,recommendation,location,danger,username,level,
-                                parameters,world))
+                                parameters,world,learning_rate=learning_rate))
         if not world.terminated():
             # Continue onward
             waypoint = GetDecision(username,level,parameters,world)
@@ -1294,6 +1322,10 @@ if __name__ == '__main__':
     parser.add_argument('-l','--learning',choices=['none','model-based','model-free'],
                         type=str,default='none',
                         help='robot learns from mistakes [default: %(default)s]')
+    parser.add_argument('-lr','--learning_rate', type=int, default=1)
+    parser.add_argument('-o','--observation_condition',choices=['scripted','randomize'],
+                        type=str,default='scripted')
+    parser.add_argument('-d','--distribution', type=dict,default={'reliability':0.7,'NBC':0.95})
     parser.add_argument('-a','--ability',choices=['badSensor','good','badModel'],
                         default='badSensor',
                         help='robot ability [default: %(default)s]')
@@ -1320,5 +1352,6 @@ if __name__ == '__main__':
             runMission(username,level,ability,explanation,embodiment,acknowledgment,learning)
     else:
         for level in range(len(WAYPOINTS)):
+            feed_dict = create_dict(args['distribution'])
             runMission(username,level,args['ability'],args['explanation'],
-                       args['embodiment'],args['acknowledgment'],args['learning'])
+                       args['embodiment'],args['acknowledgment'],args['learning'],args['learning_rate'],args['observation_condition'],feed_dict)
