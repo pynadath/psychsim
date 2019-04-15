@@ -1,0 +1,20 @@
+﻿# Research method category #
+Survey
+
+
+# Specific question #
+
+
+We would like to augment the post actor survey for instance 1, season 1 with the same information as collected for instance 1, season 2 and instance 2 as part of RR 34explainsocialstats.
+
+
+# Sampling strategy #
+We request these questions be collected for all of the Participant IDs in the original area and new area explain phase paired-approach collections and with respect to the days of their responses to the post-hurricane surveys. We expect the participant IDs of respondents to match the ones collected previously in the original area in RR10currentareamoretime in the new area RR9newarea, in the corresponding actor post-hurricane surveys. 
+
+
+# Other applicable detail #
+N/A
+
+
+# Research request identifier #
+40explainsocialstatsinstance1ids
