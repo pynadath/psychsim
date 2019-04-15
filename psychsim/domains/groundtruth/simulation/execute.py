@@ -31,6 +31,8 @@ preSurveyRecords = []
 postSurveyRecords = []
 
 def runInstance(instance,args,config,rerun=True):
+    if args['visualize']:
+        visualize.initVisualization(args)
     # Determine what runs to do
     if args['singlerun']:
         runs = [args['runs']]

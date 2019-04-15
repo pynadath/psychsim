@@ -2,14 +2,18 @@ from argparse import ArgumentParser
 import csv
 import logging
 import os.path
-from threading import Thread
-
+from threading import Thread, current_thread
+import sys
 from psychsim.domains.groundtruth.simulation.data import mapFromTandE,reverseLikert
 from psychsim.domains.groundtruth.simulation.create import getConfig
 from psychsim.domains.groundtruth.simulation.execute import runInstance
 from psychsim.domains.groundtruth.simulation.visualize import initVisualization, vizUpdateLoop
-    
-if __name__ == '__main__':
+import queue
+
+
+
+def simulateMain(sysargs):
+    print(sysargs)
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
     parser.add_argument('-r','--runs',default=1,type=int,help='Number of runs to run')
@@ -35,17 +39,13 @@ if __name__ == '__main__':
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-i','--instance',default=None,type=int,help='Instance number')
     group.add_argument('-s','--samples',default=None,help='File of sample parameter settings')
-    
-    args = vars(parser.parse_args())
+    args = vars(parser.parse_args(sysargs))
+    print(args)
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
     if not isinstance(level, int):
         raise ValueError('Invalid debug level: %s' % args['debug'])
     logging.basicConfig(level=level)
-
-    if args['visualize']:
-        initVisualization(args)
-
 
     if args['samples']:
         with open(args['samples']) as csvfile:
@@ -110,24 +110,36 @@ if __name__ == '__main__':
                                        '%06d.ini' % (instance)),'w') as csvfile:
                     config.write(csvfile)
                 if args['visualize']:
-                    t = Thread(target=runInstance, args=(instance,args,config,args['rerun']))
+                    myname = current_thread().name.replace("-consumer","")
+                    
+                    t = Thread(name=myname, target=runInstance, args=(instance,args,config,args['rerun']))
                     t.daemon = True
                     t.start()
+                    #runInstance(instance,args,config,args['rerun'])
+                    print("Parent Thread name is %s Child Thread name is %s"%(current_thread().name, t.name))
                 else:
-                    
                     runInstance(instance,args,config,args['rerun'])
     else:
         config = getConfig(args['instance'])
         if args['visualize']:
-            t = Thread(target=runInstance, args=(args['instance'],args,config,args['rerun']))
             
+            myname = current_thread().name.replace("-consumer","")
+
+            t = Thread(name=myname,target=runInstance, args=(args['instance'],args,config,args['rerun']))
             t.daemon = True
             t.start()
+
+            #runInstance(args['instance'],args,config,args['rerun'])
+            print("Parent Thread name is %s Child Thread name is %s"%(current_thread().name, t.name))
+
         else:
             runInstance(args['instance'],args,config,args['rerun'])
     
     if args['visualize']:
         vizUpdateLoop()
-        exit()
+        #exit()
         
         
+if __name__ == '__main__':
+
+    simulateMain(sys.argv[1:])
