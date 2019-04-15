@@ -236,7 +236,7 @@ def readDemographics(data,old=False,last=True,name=None):
         demos[name] = {}
         for field,feature in demographics.items():
             series = data[name][stateKey(name,feature)]
-            if isinstance(last,int):
+            if not isinstance(last,bool):
                 value = series[min(max(series),last)]
             elif last:
                 value = series[max(series)]
