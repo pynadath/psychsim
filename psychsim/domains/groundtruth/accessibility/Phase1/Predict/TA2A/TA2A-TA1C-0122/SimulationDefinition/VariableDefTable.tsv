@@ -1,0 +1,13 @@
+Name	LongName	Values	VarType	DataType	Notes
+Evacuate: If there is a potential threat of some property damage	Evacuate: If there is a potential threat of some property damage	yes,no	dynamic	boolean	
+Evacuate: If there is a strong threat of some property damage	Evacuate: If there is a strong threat of some property damage	yes,no	dynamic	boolean	
+Evacuate: If there is a potential threat of some widespread property damage	Evacuate: If there is a potential threat of some widespread property damage	yes,no	dynamic	boolean	
+Evacuate: If there is a strong threat of widespread property damage	Evacuate: If there is a strong threat of widespread property damage	yes,no	dynamic	boolean	
+"Evacuate: If there is a potential threat of widespread injury (""casualty"")"	"Evacuate: If there is a potential threat of widespread injury (""casualty"")"	yes,no	dynamic	boolean	
+"Evacuate: If there is a strong threat of widespread injury(""casualty"")"	"Evacuate: If there is a strong threat of widespread injury(""casualty"")"	yes,no	dynamic	boolean	
+Evacuate: If there is a potential threat of some death	Evacuate: If there is a potential threat of some death	yes,no	dynamic	boolean	
+Evacuate: If there is a strong threat of some death	Evacuate: If there is a strong threat of some death	yes,no	dynamic	boolean	
+Evacuate: If there is a potential threat of widespread death	Evacuate: If there is a potential threat of widespread death	yes,no	dynamic	boolean	
+Evacuate: If there is a strong threat of widespread death	Evacuate: If there is a strong threat of widespread death	yes,no	dynamic	boolean	
+Evacuate: Should Have But Did Not	Evacuate: Should Have But Did Not	yes,no	dynamic	boolean	
+Evacuate: Perspective Change	Evacuate: Perspective Change	yes,no	dynamic	boolean	

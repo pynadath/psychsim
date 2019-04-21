@@ -272,3 +272,14 @@ def employment(data,name,hurricane):
     possible = employed.count(True)
     worked = [employed[t] and not sheltered[t] for t in range(len(employed))].count(True)
     return worked,possible
+
+def getTarget(instance,run=0):
+    actor = None
+    with open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (run),
+        'Input'),'TargetActor.tsv'),'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        for row in reader:
+            assert actor is None,'Multiple targets found'
+            actor = row['Participant']
+    assert actor is not None,'No target found'
+    return int(actor)

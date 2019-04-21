@@ -7,6 +7,58 @@ import sys
 from psychsim.pwl.keys import *
 from psychsim.domains.groundtruth import accessibility
 
+def conductSurvey(record,data,name,hurricanes):
+    sheltered = {}
+    evacuated = {}
+    for hurricane in hurricanes:
+        sheltered[hurricane['Hurricane']] = [t for t in range(hurricane['Start'],hurricane['End']+1) \
+            if data[name][stateKey(name,'location')][t][:7] == 'shelter']
+        evacuated[hurricane['Hurricane']] = [t for t in range(hurricane['Start'],hurricane['End']+1) \
+            if data[name][stateKey(name,'location')][t] == 'evacuated']
+    record['EverUsedShelter'] = 'yes' if max([len(days) for days in sheltered.values()]) else 'no'
+    hurrShelter = [h for h,days in sheltered.items() if len(days) > 0]
+    if hurrShelter:
+        record['WhichHurricanesSheltered'] = ','.join(['%d' % (h) for h in hurrShelter])
+    else:
+        record['WhichHurricanesSheltered'] = 'N/A'
+    record['EverEvacuated'] = 'yes' if max([len(days) for days in evacuated.values()]) else 'no'
+    hurrEvac = [h for h,days in evacuated.items() if len(days) > 0]
+    if hurrEvac:
+        record['WhichHurricanesEvacd'] = ','.join(['%d' % (h) for h in hurrEvac])
+    else:
+        record['WhichHurricanesEvacd'] = 'N/A'
+    seq = []
+    for hurricane in hurricanes:
+        if evacuated[hurricane['Hurricane']] and sheltered[hurricane['Hurricane']]:
+            if min(evacuated[hurricane['Hurricane']]) < min(sheltered[hurricane['Hurricane']]):
+                seq.append('Evacuated')
+            else:
+                seq.append('Sheltered')
+    if seq:
+        record['OrderingForBoth'] = ','.join(seq)
+    else:
+        record['OrderingForBoth'] = 'N/A'
+    if hurrShelter:
+        record['DaysSpentInShelter'] = ','.join(['%d' % (len(sheltered[h])) for h in hurrShelter])
+    else:
+        record['DaysSpentInShelter'] = 'N/A'
+    if hurrEvac:
+        record['DaysSpentInEvacd'] = ','.join(['%d' % (len(evacuated[h])) for h in hurrEvac])
+    else:
+        record['DaysSpentInEvacd'] = 'N/A'
+    values = [data[name][stateKey(name,'grievance')][hurricane['End']] for hurricane in hurricanes \
+        if hurricane['Hurricane'] in hurrEvac or hurricane['Hurricane'] in hurrShelter]
+    if values:
+        record['Dissatisfaction1'] = ','.join(['%d' % (accessibility.toLikert(v)) for v in values])
+    else:
+        record['Dissatisfaction1'] = 'N/A'
+    values = [data[name][stateKey(name,'grievance')][hurricane['End']] for hurricane in hurricanes \
+        if hurricane['Hurricane'] not in hurrEvac and hurricane['Hurricane'] not in hurrShelter]
+    if values:
+        record['Dissatisfaction2'] = ','.join(['%d' % (accessibility.toLikert(v)) for v in values])
+    else:
+        record['Dissatisfaction2'] = 'N/A'
+
 def survey(entry,data,hurricanes,start=1,end=None):
     if end is None:
         end = entry['span']
@@ -25,56 +77,7 @@ def survey(entry,data,hurricanes,start=1,end=None):
         output.append(record)
         record['Participant'] = len(output)
         logging.info('Participant %d: %s' % (record['Participant'],name))
-        sheltered = {}
-        evacuated = {}
-        for hurricane in hurricanes:
-            sheltered[hurricane['Hurricane']] = [t for t in range(hurricane['Start'],hurricane['End']+1) \
-                if data[name][stateKey(name,'location')][t][:7] == 'shelter']
-            evacuated[hurricane['Hurricane']] = [t for t in range(hurricane['Start'],hurricane['End']+1) \
-                if data[name][stateKey(name,'location')][t] == 'evacuated']
-        record['EverUsedShelter'] = 'yes' if max([len(days) for days in sheltered.values()]) else 'no'
-        hurrShelter = [h for h,days in sheltered.items() if len(days) > 0]
-        if hurrShelter:
-            record['WhichHurricanesSheltered'] = ','.join(['%d' % (h) for h in hurrShelter])
-        else:
-            record['WhichHurricanesSheltered'] = 'N/A'
-        record['EverEvacuated'] = 'yes' if max([len(days) for days in evacuated.values()]) else 'no'
-        hurrEvac = [h for h,days in evacuated.items() if len(days) > 0]
-        if hurrEvac:
-            record['WhichHurricanesEvacd'] = ','.join(['%d' % (h) for h in hurrEvac])
-        else:
-            record['WhichHurricanesEvacd'] = 'N/A'
-        seq = []
-        for hurricane in hurricanes:
-            if evacuated[hurricane['Hurricane']] and sheltered[hurricane['Hurricane']]:
-                if min(evacuated[hurricane['Hurricane']]) < min(sheltered[hurricane['Hurricane']]):
-                    seq.append('Evacuated')
-                else:
-                    seq.append('Sheltered')
-        if seq:
-            record['OrderingForBoth'] = ','.join(seq)
-        else:
-            record['OrderingForBoth'] = 'N/A'
-        if hurrShelter:
-            record['DaysSpentInShelter'] = ','.join(['%d' % (len(sheltered[h])) for h in hurrShelter])
-        else:
-            record['DaysSpentInShelter'] = 'N/A'
-        if hurrEvac:
-            record['DaysSpentInEvacd'] = ','.join(['%d' % (len(evacuated[h])) for h in hurrEvac])
-        else:
-            record['DaysSpentInEvacd'] = 'N/A'
-        values = [data[name][stateKey(name,'grievance')][hurricane['End']] for hurricane in hurricanes \
-            if hurricane['Hurricane'] in hurrEvac or hurricane['Hurricane'] in hurrShelter]
-        if values:
-            record['Dissatisfaction1'] = ','.join(['%d' % (accessibility.toLikert(v)) for v in values])
-        else:
-            record['Dissatisfaction1'] = 'N/A'
-        values = [data[name][stateKey(name,'grievance')][hurricane['End']] for hurricane in hurricanes \
-            if hurricane['Hurricane'] not in hurrEvac and hurricane['Hurricane'] not in hurrShelter]
-        if values:
-            record['Dissatisfaction2'] = ','.join(['%d' % (accessibility.toLikert(v)) for v in values])
-        else:
-            record['Dissatisfaction2'] = 'N/A'
+        conductSurvey(record,data,name,hurricanes)
     return output
 
 if __name__ == '__main__':
