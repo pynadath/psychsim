@@ -1,0 +1,124 @@
+﻿# Research method category #
+Survey
+
+
+# Specific question #
+We would like to survey individuals on their current perceptions of what they would do in the following situations.
+
+
+0. Collect the demographics of the respondent: (Age Children Ethnicity Fulltime_Job Gender Pets Religion Residence).
+
+
+Condition 1: Imagine a future where the shelter in your area permanently closed before the next hurricane.
+
+
+1. Under Condition 1 and if the next hurricane made landfall as a category 1 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+2. Under Condition 1 and if the next hurricane made landfall as a category 2 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+3. Under Condition 1 and if the next hurricane made landfall as a category 3 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+4. Under Condition 1 and if the next hurricane made landfall as a category 4 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+5. Under Condition 1 and if the next hurricane made landfall as a category 5 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+Condition 2: Imagine a future where the government levies a tax on everyone that decreases each household’s wealth by 10%, and then during the next hurricane season the government increases its amount of aid distributed by 50%? (Assume that the government’s method for deciding who to distribute aid to is unchanged, just each amount would be 1.5 times larger)
+
+
+6. Under Condition 2 and if the next hurricane made landfall as a category 1 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+7. Under Condition 2 and if the next hurricane made landfall as a category 2 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+8. Under Condition 2 and if the next hurricane made landfall as a category 3 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+9. Under Condition 2 and if the next hurricane made landfall as a category 4 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+10. Under Condition 2 and if the next hurricane made landfall as a category 5 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+Original conditions: Please answer the last set of question assuming no changes in shelter availability or taxes/aid.
+
+
+11. Under current conditions and if the next hurricane made landfall as a category 1 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+12. Under current conditions and if the next hurricane made landfall as a category 2 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+13. Under current conditions and if the next hurricane made landfall as a category 3 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+14. Under current conditions and if the next hurricane made landfall as a category 4 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+15. Under current conditions and if the next hurricane made landfall as a category 5 storm, what would your evac/shelter choices most likely be for the next hurricane?
+__ I would evacuate
+__ I would stay at home
+__ I would use the shelter
+
+
+# Sampling strategy #
+We would like to sample 10% of the populations. 
+For respondents recruited in areas 3, 4, and 5, recruit the 1st 10 respondents uniformly at random from actors that have used a shelter in the past season. If there is not 10 total, then recruit the remaining at random. Recruit the remaining 6 respondents to be distinct from those already recruited and uniformly at random from those that did not shelter. Include the persistent and unique userID’s for each respondent. Also include in the readme the list of which respondents were former shelterers and which had never sheltered during the past season.
+
+
+For respondents recruited in areas 6, 7, and 8, first recruit the target actor for that area, then recruit uniformly at random the remaining 15 unique respondents in each area.
+
+
+# Other applicable detail #
+N/A
+
+
+# Research request identifier #
+43WhatIfSurvey

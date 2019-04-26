@@ -1,0 +1,38 @@
+Name	LongName	Values	VarType	DataType	Notes
+Vulnerable	Vulnerable against Hurricane	[1-5]	dynamic	Integer	b
+# of Friends	Number of Friends	[0-160]	dynamic	Integer	c
+Aid if Wealth Loss	Should Get Aid if Wealth Loss	[0-6]	dynamic	Integer	d
+Aid if Injury	Should Get Aid if Injury	[0-6]	dynamic	Integer	e
+Aid if Evacuate	Should Get Aid if I Evacuate	[0-6]	dynamic	Integer	f
+New Friends	Made New Friends	yes,no 	dynamic 	Boolean	g1
+Hurricane Category	Hurricane Category	[1-5]	dynamic	Integer	1	N/A if no hurricane present
+Hurricane Location	Hurricane Location	[Region01-16]	dynamic	String	2	N/A if no hurricane present in any region
+Regional Damage	Regional Damage	[1-5]	dynamic	Integer	3
+Regional Aid	Regional Aid	[Region01-16]	dynamic	String	4
+Injury Likelihood	Injury Likelihood	[0-6]	dynamic	Integer	5
+Children Injury Likelihood	Children Injury Likelihood	[0-6]	dynamic	Integer	6	N/A if no children
+Wealth Loss Likelihood	Wealth Loss Likelihood	[0-6]	dynamic	Integer	7
+Shelter Likelihood	Shelter Likelihood	[0-6]	dynamic	Integer	8	N/A if already at shelter
+Minor Injury	Minor Injury	yes,no 	dynamic	Boolean	9
+Severe Injury	Severe Injury	yes,no 	dynamic	Boolean	10
+Minor Child Injury	Minor Child Injury	yes,no 	dynamic	Boolean	11	N/A if no children
+Severe Child Injury	Severe Child Injury	yes,no 	dynamic	Boolean	12	N/A if no children
+Dissatisfaction	Dissatisfaction	[1-5]	dynamic	Integer	13
+Location	Location	home,shelter,evacuated	dynamic	String	14
+Severity	Severity	[1-5]	dynamic	Integer	15	N/A if no hurricane present
+Risk	Risk	[1-5]	dynamic	Integer	16
+Received Govt Aid	Received Government Aid	yes,no 	dynamic	Boolean	17(1)
+Satisfied Aid Decision	Satisfied with Government Aid Decision	[1-5]	dynamic	Integer	18
+Satisfied Aid Distribution	Satisfied with Government Aid Distribution	[1-5]	dynamic	Integer	19	N/A if no aid distributed to this region
+Received Acquaintance Aid	Received Acquaintance Aid	yes,no 	dynamic	Boolean	20(1)
+Know Shelter Policy	Know Shelter Policy	yes,no 	dynamic	Boolean	21
+
+
+
+
+
+
+
+
+
+

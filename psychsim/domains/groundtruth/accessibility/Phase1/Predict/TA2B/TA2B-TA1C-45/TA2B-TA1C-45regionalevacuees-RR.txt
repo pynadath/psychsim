@@ -1,0 +1,19 @@
+﻿# Research method category #
+Government Records
+
+
+# Specific question #
+We would like information on the number of evacuees per region. 
+In essence, we would like to request an extension to the RegionalTable from the Predict-IDP that specifically includes the variable Evacuees for all predict area Instances 3-8 (like the PopulationTable does). 
+
+
+# Sampling strategy #
+All times in the original RegionalTable for Areas 3-8. 
+
+
+# Other applicable detail #
+N/A
+
+
+# Research request identifier #
+45regionalevacuees
