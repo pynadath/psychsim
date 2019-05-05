@@ -1,6 +1,9 @@
 #!/usr/bin/python
 import sys
-import pygame
+try:
+    import pygame
+except ModuleNotFoundError:
+    print('Visualization not initialized')
 import random
 
 def handleInput():
