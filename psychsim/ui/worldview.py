@@ -16,6 +16,19 @@ try:
 except:
     __graph__ = False
 
+import csv
+
+gtnodes = {}
+#with open('/home/david/Downloads/Annotated Graph USC v2.0 - graph.tsv','r') as csvfile:
+#    reader = csv.DictReader(csvfile,delimiter='\t')
+#    for row in reader:
+#        if row['Source'] not in gtnodes:
+#            gtnodes[row['Source']] = set()
+#        if row['Target'] not in gtnodes:
+#            gtnodes[row['Target']] = set()
+#        gtnodes[row['Source']].add(row['Target'])
+#print(sorted(gtnodes.keys()))
+
 def getLayout(graph):
     layout = {'state pre': [set()],
               'state post': [set()],
@@ -163,6 +176,8 @@ class WorldView(QGraphicsScene):
                     actions = self.world.agents[name].actions
                     for action in actions:
                         if action in g:
+                            if gtnodes and str(action) not in gtnodes:
+                                continue
                             self.drawEdge(name,action,g)
             self.colorNodes()
         # Draw links, reusing post nodes as pre nodes
@@ -174,6 +189,10 @@ class WorldView(QGraphicsScene):
                     key = beliefKey(agent,key)
             elif agent != WORLD:
                 continue
+            if gtnodes:
+                if (isFuture(key) and makePresent(key) not in gtnodes) or (not isFuture(key) and str(key) not in gtnodes):
+                    if not isBeliefKey(key):
+                        continue
             for child in entry['children']:
                 if agent != WORLD and child in self.world.agents and not child in uNodes:
                     continue
@@ -184,6 +203,8 @@ class WorldView(QGraphicsScene):
                 elif agent != WORLD and not child in uNodes:
                     continue
                 if child in self.world.agents and not child in uNodes:
+                    continue
+                if gtnodes and makePresent(child) not in gtnodes:
                     continue
                 if selfCycle or key != child:
                     self.drawEdge(key,child,g)
@@ -210,6 +231,8 @@ class WorldView(QGraphicsScene):
             for observer in self.world.agents.values():
                 if observer.O is not True:
                     for omega,table in observer.O.items():
+                        if gtnodes and omega not in gtnodes:
+                            continue
                         if self.xml:
                             for oNode in self.xml.nodes():
                                 if oNode['label'] == omega:
@@ -218,7 +241,7 @@ class WorldView(QGraphicsScene):
                                 raise ValueError('Unable to find node for %s' % (omega))
                         for action,tree in table.items():
                             if action is not None:
-                                if self.xml:
+                                if self.xml and (len(gtnodes) == 0 or str(action) in gtnodes):
                                     for aNode in self.xml.nodes():
                                         if aNode['label'] == str(action):
                                             break
@@ -239,8 +262,7 @@ class WorldView(QGraphicsScene):
                                         self.xml.add_edge(oNode,bNode,True)
                                     if recursive:
                                         belief = beliefKey(observer.name,makeFuture(key))
-                                        if belief in self.graph:
-                                            self.drawEdge(omega,belief)
+                                        self.drawEdge(omega,belief)
             for name in self.world.agents:
                 # Draw links from non-belief reward components
                 model = '%s0' % (name)
@@ -271,6 +293,8 @@ class WorldView(QGraphicsScene):
                     if self.xml:
                         self.xml.add_node('%sBeliefOf%s' % (believer,makePresent(key)))
                 else:
+                    if gtnodes and makePresent(key) not in gtnodes:
+                        continue
                     label = key
                     if self.xml:
                         self.xml.add_node(makePresent(key))
@@ -309,6 +333,8 @@ class WorldView(QGraphicsScene):
         x = x0
         y = y0
         for action in sorted(nodes):
+            if gtnodes and str(action) not in gtnodes:
+                continue
             if self.world.diagram.getX(action) is None:
                 self.setDirty()
                 self.world.diagram.x[action] = x
@@ -360,6 +386,8 @@ class WorldView(QGraphicsScene):
         even = True
         oNodes = {}
         for key in omega:
+            if gtnodes and makePresent(key) not in gtnodes:
+                continue
             if believer:
                 label = beliefKey(believer,key)
                 if self.xml:
