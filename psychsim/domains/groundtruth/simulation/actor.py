@@ -32,6 +32,9 @@ class Actor(Agent):
             elif number == 2:
                 world.diagram.setColor(self.name,'yellow')
 
+        if config.getint('Simulation','phase',fallback=1) > 1:
+            self.demographics = {}
+
         # Decision-making parameters
         minH = config.getint('Actors','min_horizon')
         maxH = config.getint('Actors','max_horizon')
@@ -49,53 +52,58 @@ class Actor(Agent):
         # States
 
         # Demographic info
-        ethnic = world.defineState(self.name,'ethnicGroup',list,['majority','minority'],
-                                   description='Ethnicity of actor',codePtr=True)
         if random.random() > likert[5][config.getint('Actors','ethnic_majority')-1]:
-            self.ethnicGroup = 'minority'
+            self.demographics['ethnicGroup'] = 'minority'
         else:
-            self.ethnicGroup = 'majority'
-        world.setFeature(ethnic,self.ethnicGroup)
+            self.demographics['ethnicGroup'] = 'majority'
+        if config.getint('Simulation','phase',fallback=1) == 1:
+            ethnic = world.defineState(self.name,'ethnicGroup',list,['majority','minority'],
+                                       description='Ethnicity of actor',codePtr=True)
+            world.setFeature(ethnic,self.demographics['ethnicGroup'])
 
-        religion = world.defineState(self.name,'religion',list,['majority','minority','none'],
-                                     description='Religious affiliation of actor',codePtr=True)
         if random.random() < likert[5][config.getint('Actors','religious_majority')-1]:
-            self.religion = 'majority'
+            self.demographics['religion'] = 'majority'
         else:
             atheistPct = config.getint('Actors','atheists')
             if atheistPct and random.random() < likert[5][atheistPct-1]:
-                self.religion = 'none'
+                self.demographics['religion'] = 'none'
             else:
-                self.religion = 'minority'
-        world.setFeature(religion,self.religion)
+                self.demographics['religion'] = 'minority'
+        if config.getint('Simulation','phase',fallback=1) == 1:
+            religion = world.defineState(self.name,'religion',list,['majority','minority','none'],
+                                         description='Religious affiliation of actor',codePtr=True)
+            world.setFeature(religion,self.demographics['religion'])
 
-        gender = world.defineState(self.name,'gender',list,['male','female'],codePtr=True)
         if random.random() < config.getfloat('Actors','male_prob'):
-            self.gender = 'male'
+            self.demographics['gender'] = 'male'
         else:
-            self.gender = 'female'
-        world.setFeature(gender,self.gender)
+            self.demographics['gender'] = 'female'
+        if config.getint('Simulation','phase',fallback=1) == 1:
+            gender = world.defineState(self.name,'gender',list,['male','female'],codePtr=True)
+            world.setFeature(gender,self.demographics['gender'])
 
         # Section 2.1
-        age = world.defineState(self.name,'age',int,codePtr=True)
         ageMin = config.getint('Actors','age_min')
         ageMax = config.getint('Actors','age_max')
-        self.age = random.randint(ageMin,ageMax)
-        ageInterval = toLikert(float(self.age-ageMin)/float(ageMax-ageMin),5)
-        world.setFeature(age,self.age)
+        self.demographics['age'] = random.randint(ageMin,ageMax)
+        ageInterval = toLikert(float(self.demographics['age']-ageMin)/float(ageMax-ageMin),5)
+        if config.getint('Simulation','phase',fallback=1) == 1:
+            age = world.defineState(self.name,'age',int,codePtr=True)
+            world.setFeature(age,self.demographics['age'])
 
         maxKids = config.getint('Actors','children_max')
-        kids = world.defineState(self.name,'children',float,lo=0,hi=float(maxKids),
-                                 description='Number of children',codePtr=True)
-        if self.age > config.getint('Actors','parent_max_age'):
-            self.kids = 0
+        if self.demographics['age'] > config.getint('Actors','parent_max_age'):
+            self.demographics['kids'] = 0
         else:
-            self.kids = random.randint(0,maxKids)
-        world.setFeature(kids,self.kids)
+            self.demographics['kids'] = random.randint(0,maxKids)
+        if config.getint('Simulation','phase',fallback=1) == 1:
+            kids = world.defineState(self.name,'children',float,lo=0,hi=float(maxKids),
+                                     description='Number of children',codePtr=True)
+            world.setFeature(kids,self.demographics['kids'])
 
         job = world.defineState(self.name,'employed',bool,description='Has a full-time job',
                                 codePtr=True)
-        threshold = likert[5][config.getint('Actors','job_%s' % (self.ethnicGroup))-1]
+        threshold = likert[5][config.getint('Actors','job_%s' % (self.demographics['ethnicGroup']))-1]
         self.job = random.random() < threshold
         world.setFeature(job,self.job)
 
@@ -103,6 +111,13 @@ class Actor(Agent):
         threshold = likert[5][config.getint('Actors','pet_prob')-1]
         self.pet = random.random() < threshold
         world.setFeature(pet,self.pet)
+
+        if config.getint('Actors','married',fallback=0) > 0:
+            threshold = likert[5][config.getint('Actors','married')-1]
+            if random.random() < threshold:
+                key = binaryKey(self.name,self.name,'marriedTo')
+                self.world.defineRelation(self.name,self.name,'marriedTo',bool,codePtr=True)
+                self.world.setFeature(key,True)
 
         # Psychological
         if config.getboolean('Actors','attachment'):
@@ -160,16 +175,17 @@ class Actor(Agent):
 
         regions = sorted([name for name in self.world.agents
                           if isinstance(self.world.agents[name],Region)])
-        region = world.defineState(self.name,'region',list,regions,description='Region of residence',
-                                   codePtr=True)
         if config.getboolean('Regions','random_population'):
-            self.home = random.choice(regions)
+            self.demographics['home'] = random.choice(regions)
         else:
             index = int((number-1)*config.getint('Regions','regions')/config.getint('Actors','population'))
-            self.home = regions[index]
-        world.setFeature(region,self.home)
+            self.demographics['home'] = regions[index]
+        if config.getint('Simulation','phase',fallback=1) == 1:
+            region = world.defineState(self.name,'region',list,regions,description='Region of residence',
+                                       codePtr=True)
+            world.setFeature(region,self.demographics['home'])
         neighbors = [a for a  in world.agents.values() if isinstance(a,Actor) and \
-                     not a.name == self.name and a.getState('location').first() == self.home]
+                     not a.name == self.name and a.getState('location').first() == self.demographics['home']]
 
         if config.getboolean('Simulation','visualize'):
             # For display use only
@@ -200,7 +216,7 @@ class Actor(Agent):
                     locationSet.append('shelter%s' % (index))
         location = world.defineState(self.name,'location',list,locationSet,
                                      description='Current location',codePtr=True)
-        world.setFeature(location,self.home)
+        world.setFeature(location,self.demographics['home'])
         # Section 2.2
         alive = world.defineState(self.name,'alive',bool,codePtr=True)
         world.setFeature(alive,True)
@@ -211,7 +227,7 @@ class Actor(Agent):
             self.health = float(config.get('Actors','health_value_age').split(',')[ageInterval-1])
         except configparser.NoOptionError:
             mean = int(config.get('Actors','health_mean_age').split(',')[ageInterval-1])
-            if self.ethnicGroup == 'minority':
+            if self.demographics['ethnicGroup'] == 'minority':
                 mean += config.getint('Actors','health_mean_ethnic_minority')
             mean = max(1,mean)
             sigma = config.getint('Actors','health_sigma')
@@ -220,11 +236,11 @@ class Actor(Agent):
             else:
                 self.health = likert[5][mean-1]
         world.setFeature(health,self.health)
-        healthMax = world.defineState(self.name,'healthMax',float,
-                                      description='Maximum level of physical wellbeing',codePtr=True)
-        world.setFeature(healthMax,self.health)
+#        healthMax = world.defineState(self.name,'healthMax',float,
+#                                      description='Maximum level of physical wellbeing',codePtr=True)
+#        world.setFeature(healthMax,self.health)
 
-        if self.kids > 0:
+        if self.demographics['kids'] > 0:
             kidHealth = world.defineState(self.name,'childrenHealth',float,
                                           description='Current level of children\'s physical wellbeing',
                                           codePtr=True)
@@ -236,11 +252,11 @@ class Actor(Agent):
             self.wealth = float(config.get('Actors','wealth_value_age').split(',')[ageInterval-1])
         except configparser.NoOptionError:
             mean = int(config.get('Actors','wealth_mean_age').split(',')[ageInterval-1])
-            if self.ethnicGroup == 'minority':
+            if self.demographics['ethnicGroup'] == 'minority':
                 mean += config.getint('Actors','wealth_mean_ethnic_minority')
-            if self.gender == 'female':
+            if self.demographics['gender'] == 'female':
                 mean += config.getint('Actors','wealth_mean_female')
-            if self.religion == 'minority':
+            if self.demographics['religion'] == 'minority':
                 mean += config.getint('Actors','wealth_mean_religious_minority')
             mean = max(1,mean)
             sigma = config.getint('Actors','wealth_sigma')
@@ -252,11 +268,11 @@ class Actor(Agent):
 
         risk = world.defineState(self.name,'risk',float,codePtr=True,
                                  description='Current level of risk from hurricane')
-        world.setFeature(risk,world.getState(self.home,'risk').expectation())
+        world.setFeature(risk,world.getState(self.demographics['home'],'risk').expectation())
 
-        mean = config.getint('Actors','grievance_ethnic_%s' % (self.ethnicGroup))
-        mean += config.getint('Actors','grievance_religious_%s' % (self.religion))
-        mean += config.getint('Actors','grievance_%s' % (self.gender))
+        mean = config.getint('Actors','grievance_ethnic_%s' % (self.demographics['ethnicGroup']))
+        mean += config.getint('Actors','grievance_religious_%s' % (self.demographics['religion']))
+        mean += config.getint('Actors','grievance_%s' % (self.demographics['gender']))
         if self.wealth > likert[5][config.getint('Actors','grievance_wealth_threshold')-1]:
             mean += config.getint('Actors','grievance_wealth_yes')
         else:
@@ -284,7 +300,7 @@ class Actor(Agent):
             for index in shelters:
                 region = Region.nameString % (int(index))
                 if region in self.world.agents:
-                    distances[index] = self.world.agents[region].distance(self.home)
+                    distances[index] = self.world.agents[region].distance(self.demographics['home'])
             shortest = min(distances.values())
             closest = [index for index in distances if distances[index] == shortest]
             for index in closest:
@@ -329,14 +345,14 @@ class Actor(Agent):
         if goHomeFrom:
             tree = makeTree({'if': equalRow(location,goHomeFrom),
                              True: True, False: False})
-            goHome = self.addAction({'verb': 'moveTo','object': self.home},
+            goHome = self.addAction({'verb': 'moveTo','object': self.demographics['home']},
                                     tree.desymbolize(world.symbols),
                                     'Return home',True)
         if config.getboolean('Actors','prorisk'):
             # Prosocial behavior
             actGoodRisk = {}
             for region in regions:
-                if config.getboolean('Actors','movement') or region == self.home:
+                if config.getboolean('Actors','movement') or region == self.demographics['home']:
                     tree = makeTree({'if': equalRow(location,region),
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
@@ -347,7 +363,7 @@ class Actor(Agent):
             # Prosocial behavior
             actGoodResources = {}
             for region in regions:
-                if config.getboolean('Actors','movement') or region == self.home:
+                if config.getboolean('Actors','movement') or region == self.demographics['home']:
                     tree = makeTree({'if': equalRow(location,region),
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
@@ -359,7 +375,7 @@ class Actor(Agent):
             # Antisocial behavior
             actBadRisk = {}
             for region in regions:
-                if config.getboolean('Actors','movement') or region == self.home:
+                if config.getboolean('Actors','movement') or region == self.demographics['home']:
                     tree = makeTree({'if': equalRow(location,region),
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
@@ -370,7 +386,7 @@ class Actor(Agent):
             # Antisocial behavior
             actBadResources = {}
             for region in regions:
-                if config.getboolean('Actors','movement') or region == self.home:
+                if config.getboolean('Actors','movement') or region == self.demographics['home']:
                     tree = makeTree({'if': equalRow(location,region),
                                      True: {'if': trueRow(alive),True: True, False: False},
                                      False: False})
@@ -423,14 +439,14 @@ class Actor(Agent):
                 tree = makeTree(setToConstantMatrix(location,region.name))
                 world.setDynamics(location,actMove[region.name],tree,codePtr=True)
         if goHomeFrom:
-            tree = makeTree(setToConstantMatrix(location,self.home))
+            tree = makeTree(setToConstantMatrix(location,self.demographics['home']))
             world.setDynamics(location,goHome,tree,codePtr=True)
 
         # Effect on my risk
         if config.getboolean('Actors','movement'):
             tree = noChangeMatrix(risk)
         else:
-            tree = setToFeatureMatrix(risk,makeFuture(stateKey(self.home,'risk')))
+            tree = setToFeatureMatrix(risk,makeFuture(stateKey(self.demographics['home'],'risk')))
         if config.getboolean('Actors','evacuation'):
             tree = {'if': equalRow(makeFuture(location),'evacuated'),
                     True: approachMatrix(risk,0.9,0.),
@@ -452,11 +468,11 @@ class Actor(Agent):
         # Effect on my health
         impact = likert[5][config.getint('Actors','health_impact')-1]
         tree = {'if': thresholdRow(makeFuture(risk),likert[5][:]),
-                0: approachMatrix(health,impact,1.,healthMax)}
+                0: approachMatrix(health,impact,self.health)}
         for level in range(1,6):
             value = likert[5][level-1]
             dist = [(approachMatrix(health,impact,0.),value),
-                    (approachMatrix(health,impact,1.,healthMax),1.-value)]
+                    (approachMatrix(health,impact,self.health),1.-value)]
             tree[level] = {'distribution': dist}
         tree = makeTree({'if': trueRow(alive),
                          True: tree, False: setToConstantMatrix(health,0.)})
@@ -465,14 +481,14 @@ class Actor(Agent):
         else:
             world.setDynamics(health,evolve,tree,codePtr=True)
 
-        if self.kids > 0:
+        if self.demographics['kids'] > 0:
             # Effect on kids' health
             tree = {'if': thresholdRow(makeFuture(risk),likert[5][:]),
-                    0: approachMatrix(kidHealth,impact,1.,healthMax)}
+                    0: approachMatrix(kidHealth,impact,self.health)}
             for level in range(1,6):
                 value = likert[5][level-1]
                 dist = [(approachMatrix(kidHealth,impact,0.),value),
-                        (approachMatrix(kidHealth,impact,1.,healthMax),1.-value)]
+                        (approachMatrix(kidHealth,impact,self.health),1.-value)]
                 tree[level] = {'distribution': dist}
             tree = makeTree({'if': trueRow(alive),
                              True: tree, False: setToConstantMatrix(kidHealth,0.)})
@@ -498,7 +514,7 @@ class Actor(Agent):
             # Being at home or out of town, allows your job to make money
             tree = {'if': trueRow(alive),
                     True: {'if': trueRow(job),
-                           True: {'if': equalRow(location,{self.home,'evacuated'}),
+                           True: {'if': equalRow(location,{self.demographics['home'],'evacuated'}),
                                   True: approachMatrix(wealth,likert[5][impactJob-1],self.wealth if ceiling else 1.),
                                   False: noChangeMatrix(wealth)},
                            False: None},
@@ -550,7 +566,7 @@ class Actor(Agent):
             benefit = likert[5][config.getint('Actors','prorisk_benefit')-1]
             for region,action in actGoodRisk.items():
                 key = stateKey(region,'risk')
-                tree = makeTree(approachMatrix(key,benefit,1.,stateKey(region,'riskMin')))
+                tree = makeTree(approachMatrix(key,benefit,self.world.agents[region].risk))
                 world.setDynamics(key,action,tree,codePtr=True)
             cost = config.getint('Actors','prorisk_cost_risk')
             if cost > 0:
@@ -611,7 +627,7 @@ class Actor(Agent):
 
         # Reward
         sigma = config.getint('Actors','reward_sigma')
-        mean = config.getint('Actors','reward_health_%s' % (self.gender))
+        mean = config.getint('Actors','reward_health_%s' % (self.demographics['gender']))
         self.Rweights = {'childrenHealth': 0.,'pet':0.}
         if mean > 0:
             if sigma > 0:
@@ -621,7 +637,7 @@ class Actor(Agent):
             self.setReward(maximizeFeature(health,self.name),self.Rweights['health'])
         else:
             self.Rweights['health'] = 0.
-        mean = config.getint('Actors','reward_wealth_%s' % (self.gender))
+        mean = config.getint('Actors','reward_wealth_%s' % (self.demographics['gender']))
         if mean > 0:
             if sigma > 0:
                 self.Rweights['resources'] = sampleNormal(mean,sigma)
@@ -630,8 +646,8 @@ class Actor(Agent):
             self.setReward(maximizeFeature(wealth,self.name),self.Rweights['resources'])
         else:
             self.Rweights['resources'] = 0.
-        if self.kids > 0:
-            mean = config.getint('Actors','reward_kids_%s' % (self.gender))
+        if self.demographics['kids'] > 0:
+            mean = config.getint('Actors','reward_kids_%s' % (self.demographics['gender']))
             if mean > 0:
                 if sigma > 0:
                     self.Rweights['childrenHealth'] = sampleNormal(mean,sigma)
@@ -646,7 +662,7 @@ class Actor(Agent):
                 else:
                     self.Rweights['pet'] = likert[5][mean-1]
                 self.setReward(maximizeFeature(pet,self.name),self.Rweights['pet'])
-        mean = config.getint('Actors','altruism_neighbors_%s' % (self.religion))
+        mean = config.getint('Actors','altruism_neighbors_%s' % (self.demographics['religion']))
         if mean > 0:
             if sigma > 0:
                 self.Rweights['neighbors'] = sampleNormal(mean,sigma)
@@ -656,7 +672,7 @@ class Actor(Agent):
                 self.Rweights['neighbors'] /= float(len(neighbors))
             except ZeroDivisionError:
                 pass
-            self.setReward(minimizeFeature(stateKey(self.home,'risk'),self.name),
+            self.setReward(minimizeFeature(stateKey(self.demographics['home'],'risk'),self.name),
                            self.Rweights['neighbors'])
         else:
             self.Rweights['neighbors'] = 0.
@@ -716,7 +732,7 @@ class Actor(Agent):
                 self.setO('perceivedHealth',None,
                           makeTree(setToFeatureMatrix(omega,stateKey(self.name,'health'))))
                 self.setState('perceivedHealth',self.health)
-                if self.kids > 0:
+                if self.demographics['kids'] > 0:
                     omega = self.defineObservation('perceivedChildrenHealth',domain=float,codePtr=True,
                                                description='Perception of Actor\'s childrenHealth')
                     self.setO('perceivedChildrenHealth',None,
@@ -767,8 +783,7 @@ class Actor(Agent):
         population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
         friendMax = config.getint('Actors','friends')
         friendMin = config.getint('Actors','friendMin',fallback=0)
-        neighbors = {a.name for a in population if a.name != self.name and \
-                     self.world.getState(a.name,'region').first() == self.home}
+        neighbors = {a.name for a in population if a.name != self.name and a.demographics['home'] == self.demographics['home']}
         if friendMax > 0:
             # Social network
             friendCount = {}
@@ -793,7 +808,7 @@ class Actor(Agent):
                 self.world.agents[friend].makeFriend(self,config)
 
         sigma = config.getint('Actors','reward_sigma')
-        mean = config.getint('Actors','altruism_friends_%s' % (self.religion))
+        mean = config.getint('Actors','altruism_friends_%s' % (self.demographics['religion']))
         if mean > 0 and self.friends:
             if sigma > 0:
                 self.Rweights['friends'] = sampleNormal(mean,sigma)
@@ -819,8 +834,7 @@ class Actor(Agent):
         # Beliefs
         friends = set()
         population = {a for a in self.world.agents.values() if isinstance(a,self.__class__)}
-        neighbors = {a.name for a in population if a.name != self.name and \
-                     self.world.getState(a.name,'region').first() == self.home}
+        neighbors = {a.name for a in population if a.name != self.name and a.demographics['home'] == self.demographics['home']}
         if config.getboolean('Simulation','graph',fallback=False):
             for name in self.friends:
                 print(name)
@@ -836,8 +850,8 @@ class Actor(Agent):
         shelters = {int(region) for region in config.get('Shelter','region').split(',')}
 
         include = set()
-        altNeighbor = config.getint('Actors','altruism_neighbors_%s' % (self.religion))
-        altFriend = config.getint('Actors','altruism_friends_%s' % (self.religion))
+        altNeighbor = config.getint('Actors','altruism_neighbors_%s' % (self.demographics['religion']))
+        altFriend = config.getint('Actors','altruism_friends_%s' % (self.demographics['religion']))
         for key in self.world.state.keys():
             if isBinaryKey(key):
                 agent = key2relation(key)['subject']
@@ -875,7 +889,7 @@ class Actor(Agent):
             #         if state2feature(key) in {'health','alive','risk'}:
             #             include.add(key)
             elif isinstance(self.world.agents[agent],Region):
-                if agent == self.home:
+                if agent == self.demographics['home']:
                     if not isModelKey(key):
                         if not config.getboolean('Simulation','graph',fallback=False):
                             include.add(key)
@@ -1001,10 +1015,14 @@ class Actor(Agent):
             decision = Agent.decide(self,state,horizon,others,model,'uniform',actions,
                                     belief.keys(),debug)
             if len(decision['action']) > 1:
-                if self.world.getState(self.name,'location',belief).first() == self.home:
+                try:
+                    home = self.demographics['home']
+                except AttributeError:
+                    home = self.world.getState(self.name,'region').first()
+                if self.world.getState(self.name,'location',belief).first() == home:
                     action = ActionSet(Action({'subject': self.name,'verb': 'stayInLocation'}))
                 else:
-                    action = ActionSet(Action({'subject': self.name, 'verb': 'moveTo','object': self.home}))
+                    action = ActionSet(Action({'subject': self.name, 'verb': 'moveTo','object': home}))
                 for choice in decision['action'].domain():
                     if action == choice:
                         decision['action'] = choice

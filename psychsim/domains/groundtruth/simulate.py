@@ -12,8 +12,8 @@ import queue
 
 
 
-def simulateMain(sysargs):
-    print(sysargs)
+def simulateMain(sysargs,debug=False):
+    if debug: print(sysargs)
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
     parser.add_argument('-r','--runs',default=1,type=int,help='Number of runs to run')
@@ -40,7 +40,7 @@ def simulateMain(sysargs):
     group.add_argument('-i','--instance',default=None,type=int,help='Instance number')
     group.add_argument('-s','--samples',default=None,help='File of sample parameter settings')
     args = vars(parser.parse_args(sysargs))
-    print(args)
+    if debug: print(args)
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
     if not isinstance(level, int):

@@ -29,6 +29,12 @@ class Group(Agent):
                 actGoodRisk = self.addAction({'verb': 'decreaseRisk','object': name},codePtr=True)
             else:
                 actGoodRisk = self.addAction({'verb': 'decreaseRisk'},codePtr=True)
+                name ='Region01'
+            # TODO: Scale by group size and amplification
+            key = stateKey(name,'risk')
+            benefit = likert[5][config.getint('Actors','prorisk_benefit')-1]
+            tree = makeTree(approachMatrix(key,benefit,self.world.agents[name].risk))
+            world.setDynamics(key,actGoodRisk,tree,codePtr=True)
         if config.getboolean('Groups','proresources'):
 #            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
             if name in regions:
@@ -56,7 +62,7 @@ class Group(Agent):
                                          codePtr=True)
             goHome = self.addAction({'verb': 'returnHome'},codePtr=True)
 
-        self.nop = self.addAction({'verb': 'noDecision'},codePtr=True)
+#        self.nop = self.addAction({'verb': 'noDecision'},codePtr=True)
         self.setAttribute('horizon',config.getint('Groups','horizon'))
         self.potentials = None
         # Belief aggregation
@@ -174,11 +180,11 @@ class Group(Agent):
         # Define reward function for this group as weighted sum of members
         if weights is None:
             weights = {a: 1. for a in agents}
-        for name,weight in weights.items():
-            agent = self.world.agents[name]
-            R = agent.getReward(self.world.getModel(name,self.world.state).first())
-            assert isinstance(R,KeyedTree)
-            self.setReward(R,weights[name],model)
+#        for name,weight in weights.items():
+#            agent = self.world.agents[name]
+#            R = agent.getReward(self.world.getModel(name,self.world.state).first())
+#            assert isinstance(R,KeyedTree)
+#            self.setReward(R,weights[name],model)
 #        self.setState('size',count)
 
     def members(self,state=None):

@@ -19,12 +19,12 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 55,'run': 1,'span': 181},
     {'instance': 56,'run': 1,'span': 168},
     {'instance': 54,'run': 1,'span': 172},
-    {'instance': 81,'run': 0,'span': None},
-    {'instance': 83,'run': 0,'span': None},
-    {'instance': 82,'run': 0,'span': None},
-    {'instance': 86,'run': 0,'span': None},
-    {'instance': 84,'run': 0,'span': None},
-    {'instance': 85,'run': 0,'span': None}]
+    {'instance': 81,'run': 1,'span': 79},
+    {'instance': 83,'run': 1,'span': 133},
+    {'instance': 82,'run': 1,'span': 130},
+    {'instance': 86,'run': 1,'span': 173},
+    {'instance': 84,'run': 1,'span': 176},
+    {'instance': 85,'run': 1,'span': 189}]
     
 def createParser(output=None,day=None,seed=False,instances=False):
     """

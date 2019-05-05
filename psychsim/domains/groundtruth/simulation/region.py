@@ -62,9 +62,9 @@ class Region(Agent):
                 else:
                     self.risk = likert[5][mean-1]
         world.setFeature(risk,self.risk)
-        riskMin = world.defineState(self.name,'riskMin',float,codePtr=True,
-                                    description='Minimum level of risk in this region')
-        world.setFeature(riskMin,self.risk)
+#        riskMin = world.defineState(self.name,'riskMin',float,codePtr=True,
+#                                    description='Minimum level of risk in this region')
+#        world.setFeature(riskMin,self.risk)
 
         security = world.defineState(self.name,'security',float,codePtr=True,
                                      description='Level of law enforcement in region')

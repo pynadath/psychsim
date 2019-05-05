@@ -27,7 +27,7 @@ class System(Agent):
 
         populated = set()
         for actor in population:
-            populated.add(world.getState(actor,'region').first())
+            populated.add(world.agents[actor].demographics['home'])
             self.setReward(maximizeFeature(stateKey(actor,'health'),self.name),
                            likert[5][config.getint('System','reward_health')-1])
             self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),
@@ -48,9 +48,10 @@ class System(Agent):
                 delta /= len(regions)
                 for actor in population:
                     grievance = stateKey(actor,'grievance')
-                    tree = makeTree({'if': equalRow(stateKey(actor,'region'),region),
-                                     True: approachMatrix(grievance,delta,0.),
-                                     False: approachMatrix(grievance,delta,1.)})
+                    if world.agents[actor].demographics['home'] == region:
+                        tree = makeTree(approachMatrix(grievance,delta,0.))
+                    else:
+                        tree = makeTree(approachMatrix(grievance,delta,1.))
                     world.setDynamics(grievance,allocate,tree,codePtr=True)
         self.setAttribute('horizon',config.getint('System','horizon'))
 

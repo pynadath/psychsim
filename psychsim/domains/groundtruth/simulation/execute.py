@@ -93,7 +93,7 @@ def runInstance(instance,args,config,rerun=True):
                 postSurvey(None,dirName,0,True)
             population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
             regions = {agent.name: {'agent': agent,
-                                    'inhabitants': [a for a in population if a.home == agent.name]}
+                                    'inhabitants': [a for a in population if a.demographics['home'] == agent.name]}
                        for agent in world.agents.values() if isinstance(agent,Region)}
             writeCensus(world,regions,dirName)
             cdfTables = makeCDFTables(population,[world.agents[r] for r in regions],regions)
@@ -590,7 +590,7 @@ def writeCensus(world,regions,dirName,filename='CensusTable',fieldSubset=None):
     with open(os.path.join(dirName,'%s.tsv' % (filename)),'w') as csvfile:
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
         writer.writeheader()
-        ages = [a.age for a in world.agents.values() if isinstance(a,Actor)]
+        ages = [a.demographics['age'] for a in world.agents.values() if isinstance(a,Actor)]
         limits = [18]+[i for i in range(25,max(ages),5)]
         labels = ['<%d' % (limits[0])]
         labels += ['%d-%d' % (limits[i],limits[i+1]-1) for i in range(len(limits)-1)]
@@ -607,16 +607,16 @@ def writeCensus(world,regions,dirName,filename='CensusTable',fieldSubset=None):
                     record = {'Region': name,
                               'Field': field,
                               'Count': len(table['inhabitants']) + \
-                              sum([a.kids for a in table['inhabitants']])}
+                              sum([a.demographics['kids'] for a in table['inhabitants']])}
                     writer.writerow(record)
                     total += record['Count']
                 elif field == 'Age':
                     histogram = [0 for limit in limits]
                     histogram.append(0)
                     for agent in table['inhabitants']:
-                        histogram[0] += agent.kids
+                        histogram[0] += agent.demographics['kids']
                         for i in range(len(limits)):
-                            if agent.age < limits[i]:
+                            if agent.demographics['age'] < limits[i]:
                                 histogram[i] += 1
                                 break
                         else:
@@ -631,7 +631,10 @@ def writeCensus(world,regions,dirName,filename='CensusTable',fieldSubset=None):
                 else:
                     histogram = {}
                     for agent in table['inhabitants']:
-                        value = agent.getState(feature).first()
+                        try:
+                            value = agent.demographics[feature]
+                        except KeyError:
+                            value = agent.getState(feature).first()
                         histogram[value] = histogram.get(value,0) + 1
                     for value,count in histogram.items():
                         total[value] = total.get(value,0) + count

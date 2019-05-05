@@ -55,7 +55,7 @@ def createWorld(config):
         agent = Actor(i+1,world,config)
         agent.epsilon = config.getfloat('Actors','likelihood_threshold')
         population.append(agent)
-        region = agent.getState('region').first()
+        region = agent.demographics['home']
         regions[region]['inhabitants'].append(agent)
 
     for region,entry in regions.items():

@@ -123,11 +123,11 @@ class Nature(Agent):
                                                         float(max(distance[i],1)),1.) \
                                     for cat in range(5)})         
             subtree = {'if': equalRow(makeFuture(location),regions[:]),
-                       None: approachMatrix(risk,base_decrease,1.,stateKey(region,'riskMin'))}
+                       None: approachMatrix(risk,base_decrease,world.agents[region].risk)}
             subtree.update({i: subtrees[i] for i in range(len(regions))})
             tree = makeTree({'if': equalRow(makeFuture(phase),'active'),
                              True: subtree,
-                             False: approachMatrix(risk,base_decrease,1.,stateKey(region,'riskMin'))})
+                             False: approachMatrix(risk,base_decrease,world.agents[region].risk)})
             world.setDynamics(risk,evolution,tree,codePtr=True)
         if config.getboolean('Shelter','exists'):
             for index in map(int,config.get('Shelter','region').split(',')):

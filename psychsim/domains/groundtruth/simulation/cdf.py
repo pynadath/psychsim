@@ -334,9 +334,9 @@ def toCDF(world,dirName,tables,unobservable=set()):
                     agent1 = world.agents[name1]
                     if isinstance(agent1,Actor):
                         try:
-                            neighbors[agent1.home].append(name1)
+                            neighbors[agent1.demographics['home']].append(name1)
                         except KeyError:
-                            neighbors[agent1.home] = [name1]
+                            neighbors[agent1.demographics['home']] = [name1]
                 for region,agents in neighbors.items():
                     for i in range(len(agents)-1):
                         for j in range(i+1,len(agents)):
