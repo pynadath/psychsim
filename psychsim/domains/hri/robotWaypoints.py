@@ -720,7 +720,7 @@ WAYPOINTS = [
          'NBC': True,
          'NBCsensor': {True: True,
                        False: True},
-         'symbol': 'FarmSupply',
+#         'symbol': 'FarmSupply',
         },
 	{'name': 'Community Center',
          'image': 'Wall-Table-Room',
@@ -1243,3 +1243,5 @@ if __name__ == '__main__':
 #    count = countBuildings()
 #    for key in sorted(count.keys()):
 #        print '\t',key,count[key]
+
+NEWWAYPOINTS = [sum(WAYPOINTS,[])]

@@ -26,7 +26,8 @@ from psychsim.reward import *
 from psychsim.action import *
 import psychsim.probability
 
-from psychsim.domains.hri.robotWaypoints import WAYPOINTS,DISTANCES
+from psychsim.domains.hri.robotWaypoints import NEWWAYPOINTS as WAYPOINTS
+from psychsim.domains.hri.robotWaypoints import DISTANCES
 
 TEMPLATES = {
     # TODO: Positive/negative framing
@@ -95,10 +96,10 @@ TEMPLATES = {
            'sensors':{
                 'nobody':
                         {False:
-                                {False: 'None of my sensors has positively detected any threat. ',
+                                {False: 'None of my sensors detected any threat. ',
                                  True: 'My microphone and camera did not pick up any threat but my NBC sensor has detected danger. '},
                         True:
-                            {False: 'My microphone and NBC sensor did not pick up any threat but Camera has captured suspicious activity. ',
+                            {False: 'My microphone and NBC sensor did not pick up any threat but my camera has captured suspicious activity. ',
                              True: 'My microphone did not pick up any threat but my NBC sensor and camera have detected danger. '}
                                     },
                 'friendly':
@@ -118,10 +119,10 @@ TEMPLATES = {
                              True: 'My microphone has detected a suspicious conversation inside. My NBC sensor and camera have detected danger. '}
                                     },
                 },
-        'always':'Last time I had similar sensor readings were at $waypoint. I estimated that the $waypoint was $Action with $Confidence% confidence. ',
-        'delay':'Since my previous estimate was incorrect, I\'ve updated my algorithm to report safe estimate with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
-        'died':'Since my previous estimate was incorrect, I\'ve updated my algorithm to report safe estimate with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
-        'correct':'Since my previous estimate was correct, I\'ve updated my algorithm to report safe estimate with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
+        'always':'The last time I had similar sensor readings was at the $waypoint. I estimated that the $waypoint was $Action with $Confidence% confidence. ',
+        'delay':'Because my previous estimate was incorrect, I\'ve updated my algorithm to report safety with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
+        'died':'Because my previous estimate was incorrect, I\'ve updated my algorithm to report safety with a $diff confidence in the future, given the same sensor readings. Thus after surveying the $waypoint,',
+        'correct':'Because my previous estimate was correct, I updated my algorithm to report safety with a $diff confidence, given the same sensor readings. Thus after surveying the $waypoint,',
         'sensor reliability': '. It seems that my $sensor1 is more realible than $sensor2',
 
         },
@@ -818,7 +819,8 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
 
     return ack
 
-def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None,observation_condition='randomize',distrib={'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}):
+def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None,observation_condition='randomize',
+    distrib={'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}):
     """
     Processes incoming observation and makes an assessment
     """
@@ -865,6 +867,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         sensorCorrect = True
     # Generate individual sensor readings
     omega = {}
+    nullReading = {'camera': False,'microphone': 'nobody','NBCsensor': False}
     readings = {'camera':[True,False],'microphone':['suspicious','friendly','nobody'],'NBCsensor':[True,False]}
     # distrib = {'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}
     danger = world.getFeature(key,world.state)
@@ -876,7 +879,10 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
                 omega[sensor] = robotWaypoint[sensor][sensorCorrect]
             else:
                 # if randomize then sample a value from readings with given distribution
-                actual = robotWaypoint[sensor][sensorCorrect]
+                if sensor in robotWaypoint:
+                    actual = robotWaypoint[sensor][sensorCorrect]
+                else:
+                    actual = nullReading[sensor]
                 print('Using randomized readings1')
                 actual_ind = readings[sensor].index(actual)
                 lis = []
@@ -951,7 +957,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         if omega2index(omega) in robot.old_decision:
             temp_dict = {'waypoint':robot.old_decision[omega2index(omega)][2],
                          'Action':act_verbs[argmax(robot.old_decision[omega2index(omega)][0])],
-                         'Confidence':round(100*robot.old_decision[omega2index(omega)][1],2)}
+                         'Confidence':int(round(100*robot.old_decision[omega2index(omega)][1]))}
             copy_omega = dict(omega)
             for key_ in copy_omega:
                 temp_dict[key_] = copy_omega[key_]
@@ -975,7 +981,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
 
 
         # print ('confidence of decision:',values_predicted[action_predicted]/sum(values_predicted))
-        dict_temps['Confidence'] = round(100*conf,2)
+        dict_temps['Confidence'] = int(round(100*conf))
         dict_temps['waypoint'] = robotWaypoint['symbol']
         # return action_predicted
         actions_values = {}
@@ -1187,8 +1193,10 @@ def readLogData(username,level,root='.'):
             now = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
             index = symbol2index(elements[3],level)
             waypoint = WAYPOINTS[level][index]
+            previous = sum([len(WAYPOINTS[prevLevel]) for prevLevel in range(level)])
             log.insert(0,{'type': 'location','destination': waypoint['name'],
                           'buildingNo': index+1,'buildingTotal': len(WAYPOINTS[level]),
+                          'cumBuilding': previous+index+1, 'cumTotal': sum([len(wp) for wp in WAYPOINTS]),
                           'time': now-start})
         elif elements[2] == CREATE_TAG:
             start = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
@@ -1275,6 +1283,8 @@ def create_dict(inp):
     rel_mc = rel/nbc
     rel_m = rel_c = round(np.sqrt(rel_mc),2)
     feed_dict = {'camera':[rel_c,(1-rel_c),],'microphone':[rel_m,(1-rel_m)/2,(1-rel_m)/2],'NBCsensor':[nbc,1-nbc]}
+    for dist in feed_dict.values():
+        assert min(dist) > -1e-8,'Negative probability in observation distribution'
     return feed_dict
 
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
