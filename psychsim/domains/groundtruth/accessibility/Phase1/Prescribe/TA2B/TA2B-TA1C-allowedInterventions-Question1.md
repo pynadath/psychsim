@@ -32,5 +32,9 @@ Q2. For actions related to financial interventions in Q1, is there a budget or t
 
 # Other applicable details #
 
+Q1. All of those types would be allowed.
+
+Q2. There is a budget, although it can be increased (e.g., by taxing).
+
 
 # Answer #
