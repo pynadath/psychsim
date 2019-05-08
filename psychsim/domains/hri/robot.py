@@ -137,7 +137,7 @@ RECOMMEND_TAG = 'Recommend protection:'
 VALUE_TAG = 'Value'
 
 CODES = {'ability': {'s': 'badSensor','g': 'good','m': 'badModel'},
-         'explanation': {'n': 'none','a': 'ability','c': 'confidence'},
+         'explanation': {'n': 'none','a': 'ability','c': 'confidence','b': 'abilityconfidence'},
          'embodiment': {'r': 'robot','d': 'dog'},
          'acknowledgment': {'n': 'no','y': 'yes'},
          'learning': {'n': 'none','b': 'model-based', 'f': 'model-free'},
@@ -1101,7 +1101,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         if cnt_temp == 0:
             explanation = line+' '+explanation
         else:
-            explanation += line
+            explanation += ' '+line
         cnt_temp+=1
 #    pp.pprint(POMDP)
     WriteLogData('%s %s' % (MESSAGE_TAG,explanation),username,level,root=root)
