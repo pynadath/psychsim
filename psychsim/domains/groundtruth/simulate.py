@@ -26,6 +26,8 @@ def simulateMain(sysargs,debug=False):
     parser.add_argument('--max',action='store_true',help='Select most likely outcomes')
     parser.add_argument('--hurricane',help='File containing hurricane track(s)')
     parser.add_argument('--TA2BTA1C10',action='store_true',help='Generate surveys as specified in TA2B-TA1C-10')
+    parser.add_argument('--phase1predictshort',action='store_true',help='Apply Phase 1 Short-term Prediction Counterfactual')
+    parser.add_argument('--phase1predictlong',action='store_true',help='Apply Phase 1 Long-term Prediction Counterfactual')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-n','--number',default=None,type=int,help='Number of hurricanes to run')
     group.add_argument('--seasons',default=None,type=int,help='Number of seasons to run')
