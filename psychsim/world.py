@@ -364,6 +364,7 @@ class World(object):
                 state *= tree
                 substate = state.keyMap[makeFuture(key)]
             else:
+#                raise RuntimeError('Parallel dynamics do not work')
                 cumulative = None
                 for tree in dynamics:
                     if cumulative is None:
@@ -376,7 +377,11 @@ class World(object):
                 state *= cumulative
                 substate = state.keyMap[makeFuture(key)]
             if select and len(state.distributions[substate]) > 1:
-                state.distributions[substate].select(select=='max')
+                if isinstance(select,dict):
+                    if key in select:
+                        state[makeFuture(key)] = select[key]
+                else:
+                    state.distributions[substate].select(select=='max')
                 
     def effect(self,actions,state,updateBeliefs=True,keySubset=None,select=False):
         if not isinstance(state,VectorDistributionSet):
