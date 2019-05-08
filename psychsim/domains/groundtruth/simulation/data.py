@@ -88,6 +88,8 @@ def readHurricaneFile(inFile):
         reader = csv.DictReader(csvfile,delimiter='\t')
         for row in reader:
             hurricane = int(row['Name'])
+            while len(hurricanes) < hurricane-1:
+                hurricanes.append(None)
             if len(hurricanes) < hurricane:
                 hurricanes.append({'Hurricane': hurricane,
                                    'Predicted Location': row['Location'],
@@ -112,7 +114,8 @@ def readHurricaneFile(inFile):
             hurricanes[-1]['Actual Category'].append(row['Category'])
             hurricanes[-1]['Actual Location'].append(row['Location'])
     for record in hurricanes:
-        record['Actual Track'] = ','.join(record['Actual Track'])
+        if record:
+            record['Actual Track'] = ','.join(record['Actual Track'])
     if 'End' not in hurricanes[-1]:
         # Ignore partial hurricane track
         return hurricanes[:-1]
