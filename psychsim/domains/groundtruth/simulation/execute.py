@@ -156,6 +156,23 @@ def runInstance(instance,args,config,rerun=True):
             state['participants']['TA2BTA1C10post'] = set()
         if not config.getboolean('Simulation','graph',fallback=False):
             season = world.getState(WORLD,'day').first() // config.getint('Disaster','year_length')
+        if args['phase1predictlong']:
+            for agent in population:
+                value = 0.9*agent.getState('resources').expectation()
+                agent.setState('resources',value)
+                beliefs = agent.getBelief()
+                model,myBelief = next(iter(beliefs.items()))
+                agent.setBelief(stateKey(agent.name,'resources'),value,model)
+            for region in regions:
+                risk = stateKey(region,'risk')
+                impact = 1.5*likert[5][config.getint('System','system_impact')-1]
+                tree = makeTree(approachMatrix(risk,impact,0.))
+                world.setDynamics(risk,{'verb': 'allocate','object': region},tree)
+        if args['phase1predictshort']:
+            for agent in population:
+                for action in list(agent.actions):
+                    if action['verb'] == 'moveTo' and action['object'][:7] == 'shelter':
+                        agent.actions.remove(action)
         terminated = False
         while True:
             if isinstance(args['number'],int):
@@ -180,7 +197,7 @@ def runInstance(instance,args,config,rerun=True):
                 # Make sure we're not terminating in the middle of hurricane
                 elif state['phase'] == 'none' and world.getState('Nature','days').first() >= config.getint('Disaster','phase_min_days'):
                     break
-            nextDay(world,groups,state,config,dirName,survey,start,cdfTables,maximize=args['max'])
+            nextDay(world,groups,state,config,dirName,survey,start,cdfTables,future=future,maximize=args['max'])
             if args['visualize']:
                 addState2tables(world,world.getState(WORLD,'day').first()-1,allTables,population,regions)
                 visualize.addDayToQueue(world.getState(WORLD,'day').first()-1)
@@ -261,7 +278,7 @@ def runInstance(instance,args,config,rerun=True):
         if (args['visualize']):
             visualize.closeViz()
 
-def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={},actions={},maximize=False):
+def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={},actions={},future={},maximize=False):
     state['today'] = world.getState(WORLD,'day').first()
     logging.info('Day %d' % (state['today']))
     day = state['today']
@@ -399,7 +416,20 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
         #            for name in debug:
         #                for agent in world.agents[name].members():
         #                    debug[name][agent] = {}
-        newState = world.step(actions.get(turn,None),select='max' if maximize and turn != 'Nature' else True,debug=debug)
+        if turn == 'Nature':
+            try:
+                hurr = future[state['hurricanes']]
+                if hurr:
+                    select = {stateKey('Nature')}
+                print(hurr)
+                raise RuntimeError
+            except IndexError:
+                select = True
+        elif maximize:
+            select = 'max'
+        else:
+            select = True            
+        newState = world.step(actions.get(turn,None),select=select,debug=debug)
         buf = StringIO()
         joint = world.explainAction(newState,level=1,buf=buf)
         joint = {name: action for name,action in joint.items()
