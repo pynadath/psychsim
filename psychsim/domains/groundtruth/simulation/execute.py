@@ -420,9 +420,35 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
             try:
                 hurr = future[state['hurricanes']]
                 if hurr:
-                    select = {stateKey('Nature')}
-                print(hurr)
-                raise RuntimeError
+                    select = {}
+                    key = stateKey('Nature','phase')
+                    if day+1 < hurr['Start']:
+                        setTrack = False
+                        select[key] = world.value2float(key,'none')
+                    elif day+1 < hurr['Landfall']:
+                        setTrack = True
+                        select[key] = world.value2float(key,'approaching')
+                    elif day+1 < hurr['End']:
+                        setTrack = True
+                        select[key] = world.value2float(key,'active')
+                    else:
+                        setTrack = False
+                        select[key] = world.value2float(key,'none')
+                    key = stateKey('Nature','location')
+                    if setTrack:
+                        if hurr['Actual Location'][day+1-hurr['Start']] == 'leaving':
+                            select[key] = world.value2float(key,'none')
+                        else:
+                            select[key] = world.value2float(key,hurr['Actual Location'][day+1-hurr['Start']])
+                    else:
+                        select[key] = world.value2float(key,'none')
+                    key = stateKey('Nature','category')
+                    if setTrack:
+                        select[key] = world.value2float(key,int(hurr['Actual Category'][day+1-hurr['Start']]))
+                    else:
+                        select[key] = world.value2float(key,0)
+                else:
+                    select = True
             except IndexError:
                 select = True
         elif maximize:
