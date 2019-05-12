@@ -377,9 +377,8 @@ class World(object):
                 state *= cumulative
                 substate = state.keyMap[makeFuture(key)]
             if select and len(state.distributions[substate]) > 1:
-                if isinstance(select,dict):
-                    if key in select:
-                        state[makeFuture(key)] = select[key]
+                if isinstance(select,dict) and key in select:
+                    state[makeFuture(key)] = select[key]
                 else:
                     state.distributions[substate].select(select=='max')
                 
