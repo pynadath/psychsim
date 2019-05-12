@@ -376,6 +376,10 @@ class World(object):
                 state *= cumulative
                 substate = state.keyMap[makeFuture(key)]
             if select and len(state.distributions[substate]) > 1:
+                if isinstance(select,dict) and key in select:
+                    state[makeFuture(key)] = select[key]
+                else:
+                    state.distributions[substate].select(select=='max')
                 state.distributions[substate].select(select=='max')
                 
     def effect(self,actions,state,updateBeliefs=True,keySubset=None,select=False):
