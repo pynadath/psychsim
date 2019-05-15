@@ -966,14 +966,18 @@ class Actor(Agent):
         else:
             myBelief = beliefs[model]
         dist = myBelief[key]
-        total = Distribution({el: myScale*dist[el] for el in dist.domain()})
-        for value in msg.domain():
-            if msg.expectation() > dist.expectation():
-                total.addProb(value,yrScaleOpt*msg[value])
-            else:
-                total.addProb(value,yrScalePess*msg[value])
-        total.normalize()
-        self.setBelief(key,total,model)
+        old = dist.expectation()
+        if old is None:
+            logging.error('%s [%s] has null belief on %s' % (self.name,model,key))
+        else:
+            total = Distribution({el: myScale*dist[el] for el in dist.domain()})
+            for value in msg.domain():
+                if msg.expectation() > old:
+                    total.addProb(value,yrScaleOpt*msg[value])
+                else:
+                    total.addProb(value,yrScalePess*msg[value])
+            total.normalize()
+            self.setBelief(key,total,model)
 
     def decide(self,state=None,horizon=None,others=None,model=None,selection='uniform',
                     actions=None,debug={}):
