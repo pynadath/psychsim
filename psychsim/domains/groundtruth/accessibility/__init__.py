@@ -107,59 +107,66 @@ def writeOutput(args,data,fields=None,fname=None,dirName=None):
 def openFile(args,fname):
     return open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run'])),fname),'r')
 
-def loadRunData(instance,run=0,end=None,nature=False):
-    inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
-                          'Runs','run-%d' % (run),'RunDataTable.tsv')
+def loadRunData(instance,run=0,end=None,nature=False,subs=[None]):
+    fields = None
     data = {}
-    with open(inFile,'r') as csvfile:
-        reader = csv.DictReader(csvfile,delimiter='\t')
-        for row in reader:
-            t = int(row['Timestep'])
-            if end is not None and t > end:
-                break
-            if 'BeliefOf' in row['VariableName']:
-                if row['EntityIdx'] not in data:
-                    data[row['EntityIdx']] = {}
-                if '__beliefs__' not in data[row['EntityIdx']]:
-                    data[row['EntityIdx']]['__beliefs__'] = {}
-                try:
-                    cls,feature = row['VariableName'][len('ActorBeliefOf'):].split()
-                except ValueError:
-                    cls = WORLD
-                    feature = row['VariableName'][len('ActorBeliefOf'):]
-                if cls == 'Actor':
-                    key = stateKey(row['EntityIdx'],feature)
+    for sub in subs:
+        inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (run))
+        if sub:
+            inFile = os.path.join(inFile,sub)
+        inFile = os.path.join(inFile,'RunDataTable.tsv')
+        with open(inFile,'r') as csvfile:
+            reader = csv.DictReader(csvfile,fields,delimiter='\t')
+            for row in reader:
+                if fields is None:
+                    fields = row.keys()
+                t = int(row['Timestep'])
+                if end is not None and t > end:
+                    break
+                if 'BeliefOf' in row['VariableName']:
+                    if row['EntityIdx'] not in data:
+                        data[row['EntityIdx']] = {}
+                    if '__beliefs__' not in data[row['EntityIdx']]:
+                        data[row['EntityIdx']]['__beliefs__'] = {}
+                    try:
+                        cls,feature = row['VariableName'][len('ActorBeliefOf'):].split()
+                    except ValueError:
+                        cls = WORLD
+                        feature = row['VariableName'][len('ActorBeliefOf'):]
+                    if cls == 'Actor':
+                        key = stateKey(row['EntityIdx'],feature)
+                    else:
+                        key = stateKey(cls,feature)
+                    if key not in data[row['EntityIdx']]['__beliefs__']:
+                        data[row['EntityIdx']]['__beliefs__'][key] = {}
+                    data[row['EntityIdx']]['__beliefs__'][key][t] = value2dist(row['Value'],row['Notes'])
                 else:
-                    key = stateKey(cls,feature)
-                if key not in data[row['EntityIdx']]['__beliefs__']:
-                    data[row['EntityIdx']]['__beliefs__'][key] = {}
-                data[row['EntityIdx']]['__beliefs__'][key][t] = value2dist(row['Value'],row['Notes'])
-            else:
-                words = row['VariableName'].split()
-                if len(words) == 1:
-                    entity = WORLD
-                    feature = words[0]
-                    key = stateKey(entity,feature)
-                elif len(words) == 4:
-                    entity = words[0]
-                    key = binaryKey(entity,words[3],words[2])
-                else:
-                    assert len(words) == 2,row['VariableName']
-                    entity = row['EntityIdx']
-                    feature = words[1]
-                    if feature == 'action':
-                        if t == 1:
-                            continue
-                        else:
-                            t -= 1
-                            feature = ACTION
-                    key = stateKey(entity,feature)
-                if entity not in data:
-                    data[entity] = {}
-                if key not in data[entity]:
-                    data[entity][key] = {}
-                data[entity][key][t] = value2dist(row['Value'],row['Notes'])
+                    words = row['VariableName'].split()
+                    if len(words) == 1:
+                        entity = WORLD
+                        feature = words[0]
+                        key = stateKey(entity,feature)
+                    elif len(words) == 4:
+                        entity = words[0]
+                        key = binaryKey(entity,words[3],words[2])
+                    else:
+                        assert len(words) == 2,row['VariableName']
+                        entity = row['EntityIdx']
+                        feature = words[1]
+                        if feature == 'action':
+                            if t == 1:
+                                continue
+                            else:
+                                t -= 1
+                                feature = ACTION
+                        key = stateKey(entity,feature)
+                    if entity not in data:
+                        data[entity] = {}
+                    if key not in data[entity]:
+                        data[entity][key] = {}
+                    data[entity][key][t] = value2dist(row['Value'],row['Notes'])
     if nature:
+        assert subs is None,'Have not yet implemented this'
         inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
                               'Runs','run-%d' % (run),'InstanceVariableTable.tsv')
         data['Nature'] = {}
