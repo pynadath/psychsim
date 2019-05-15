@@ -74,12 +74,14 @@ def getDemographics(actor,old=False):
             raise RuntimeError('Unable to process pre-survey field: %s' % (field))
     return record
 
-def readHurricanes(instance,run=0):
+def readHurricanes(instance,run=0,sub=None):
     """
     :returns: A list of attributes about the hurricanes so far
     """
-    inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
-                          'Runs','run-%d' % (run),'HurricaneTable.tsv')
+    inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (run))
+    if sub:
+        inFile = os.path.join(inFile,sub)
+    inFile = os.path.join(inFile,'HurricaneTable.tsv')
     return readHurricaneFile(inFile)
     
 def readHurricaneFile(inFile):
