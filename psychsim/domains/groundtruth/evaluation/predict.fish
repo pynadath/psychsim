@@ -23,7 +23,6 @@ if test (count $argv) -gt 0
 				mkdir Instances/Instance$instances[$instance]/Runs/run-$run
 			end
 			if not test -e  Instances/Instance$instances[$instance]/Runs/run-$run/$argv[2]
-				mkdir Instances/Instance$instances[$instance]/Runs/run-$run/$argv[2]
 				# Copy over original hurricanes
 				cp Instances/Instance$instances[$instance]/Runs/run-$runs[$instance]/Input/HurricaneTable.tsv Instances/Instance$instances[$instance]/Runs/run-$run
 				# Copy over original scenario file
@@ -51,6 +50,8 @@ if test (count $argv) -gt 0
 					diff -w Instances/Instance$instances[$instance]/Runs/run-$runs[$instance]/OutputMax/HurricaneTable.tsv Instances/Instance$instances[$instance]/Runs/run-$run
 				end
 				rm Instances/Instance$instances[$instance]/Runs/run-$run/scenario$span[$instance].pkl
+				bzip2 Instances/Instance$instances[$instance]/Runs/run-$run/*.pkl
+				mkdir Instances/Instance$instances[$instance]/Runs/run-$run/$argv[2]
 				mv Instances/Instance$instances[$instance]/Runs/run-$run/*.* Instances/Instance$instances[$instance]/Runs/run-$run/$argv[2]
 			end
 			# Move on to next instance
