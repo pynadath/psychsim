@@ -231,14 +231,20 @@ def runInstance(instance,args,config,rerun=True):
                 world.setDynamics(phase,evolution,makeTree(setToConstantMatrix(phase,'none')))
                 treeDays = world.dynamics[dayKey][evolution]
                 world.setDynamics(dayKey,evolution,makeTree(setToConstantMatrix(dayKey,0)))
+#                world.printState()
+                first = True
                 while world.getState(WORLD,'day').first() < season*config.getint('Disaster','year_length'):
                     # Advance simulation to next season
                     names = world.next()
                     turn = world.agents[next(iter(names))].__class__.__name__
                     print('Fast-forward:',world.getState(WORLD,'day').first(),turn)
                     if turn == 'Actor':
-                        actions = {name: ActionSet([Action({'subject': name,'verb': 'moveTo', 'object': world.agents[name].home})]) for name in names}
+                        if first:
+                            actions = {name: ActionSet([Action({'subject': name,'verb': 'moveTo', 'object': world.agents[name].home})]) for name in names}
+                        else:
+                            actions = {name: ActionSet([Action({'subject': name,'verb': 'stayInLocation'})]) for name in names}
                         world.step(actions,select='max' if args['max'] else True)
+                        first = False
                     elif turn == 'System':
                         world.step(select='max' if args['max'] else True)
                     elif turn == 'Nature':
@@ -252,6 +258,8 @@ def runInstance(instance,args,config,rerun=True):
                     if name[:5] == 'Actor':
                         world.agents[name].setState('resources',world.agents[name].wealth)
                 state['phase'] = world.getState('Nature','phase').first()
+#                print('Next season')
+#                world.printState()
         logging.info('Total time: %f' % (time.time()-start))
         if args['pickle']:
             print('Pickling...')
