@@ -50,3 +50,43 @@ Q3. For each of the interventions referenced, please provide the description for
 
 
 # Answer #
+
+Q1. The current budget is enough to increase each actor's wealth by a "unit intervention cost", defined as 25% of a wealth quintile, if distributed equally to the entire population. For example, if any actors who reported a wealth of "2" (on the 5-point scale used in the surveys) received four such payments, they would all subsequently report a wealth of "3". We'll refer to the this budget/population
+
+Q2. The budget increases dollar for dollar. Taxes can be expressed as a flat amount or as a percentage of wealth (same value as reported in surveys). More precise estimates may be requested. Subsidies or collection pools would operate with no overhead costs.
+
+Q3. 
+
+1.1-4. Aiding a particular set of actors divides the available budget among them uniformly, unless otherwise specified. 
+
+1.5-8. Taxation has no cost and simply increases the available budget and decreases the wealth of the taxed. 
+
+1.9. The subsidy would be a pre-specified fixed amount. If the budget is completely exhausted, no further subsidies will be given.
+
+1.10. The amount paid in and out would be a pre-specified fixed amount. If no money is in the pool, then no actors can collect.
+
+2.1. The actors cannot be forcibly moved.
+
+2.2. Actors have no access to areas other than their own.
+
+2.3. 10 units of intervention cost per region.
+
+2.4. 10 units of intervention cost per shelter.
+
+2.5. 40 units of intervention cost.
+
+3.1. 1 unit intervention cost per member of target audience.
+
+4.1. 40 units of intervention cost.
+
+4.2. 40 units of intervention cost.
+
+4.3. 20 units of intervention cost.
+
+5.1. 40 units of intervention cost.
+
+6.1. Absolute mandates of behavior are not allowed.
+
+7.1. One unit cost per actor to whom it is issued, but can be issued only once, with a negotiable decaying effect.
+
+8. Housing is not manipulable in this simulation.
