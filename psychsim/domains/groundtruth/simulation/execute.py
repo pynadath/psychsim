@@ -155,7 +155,7 @@ def runInstance(instance,args,config,rerun=True):
             state['participants']['TA2BTA1C10pre'] = set()
             state['participants']['TA2BTA1C10post'] = set()
         if not config.getboolean('Simulation','graph',fallback=False):
-            season = world.getState(WORLD,'day').first() // config.getint('Disaster','year_length')
+            season = world.getState(WORLD,'day').first() // config.getint('Disaster','year_length',fallback=365)
         if args['phase1predictlong']:
             for agent in population:
                 value = 0.9*agent.getState('resources').expectation()

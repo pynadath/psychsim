@@ -111,8 +111,14 @@ def loadRunData(instance,run=0,end=None,nature=False,subs=[None]):
     fields = None
     data = {}
     for sub in subs:
-        inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (run))
-        if sub:
+        if isinstance(sub,tuple):
+            useRun = sub[0]
+        else:
+            useRun = run
+        inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (useRun))
+        if isinstance(sub,tuple):
+            inFile = os.path.join(inFile,sub[1])
+        elif sub:
             inFile = os.path.join(inFile,sub)
         inFile = os.path.join(inFile,'RunDataTable.tsv')
         with open(inFile,'r') as csvfile:
@@ -290,3 +296,9 @@ def getTarget(instance,run=0):
             actor = row['Participant']
     assert actor is not None,'No target found'
     return int(actor)
+
+def getPopulation(data):
+    """
+    :return: list of names of actors who are still alive at the end of the simulation, represented by the given data
+    """
+    return [name for name in data if name[:5] == 'Actor' and data[name][stateKey(name,'alive')][max(data[name][stateKey(name,'alive')].keys())]]

@@ -10,7 +10,7 @@ if __name__ == '__main__':
 	random.seed(46)
 	logging.basicConfig(level=logging.INFO,filename=os.path.join(os.path.dirname(__file__),'TA2B-TA1C-46.log'))
 	fields = ['Timestep','Participant']+sorted(accessibility.demographics)+['Tax Frequency','Personal Assistance','Regional Assistance']
-	for instance in range(3,14):
+	for instance in range(2,14):
 		args = accessibility.instances[instance]
 		logging.info('Instance %d, Run %d' % (args['instance'],args['run']))
 		data = accessibility.loadRunData(args['instance'],args['run'],args['span'],subs=['Input'])
@@ -35,4 +35,4 @@ if __name__ == '__main__':
 			else:
 				record['Regional Assistance'] = 'no'
 		accessibility.writeOutput(args,output,fields,'TA2B-TA1C-46.tsv',
-			os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance),'Runs','run-0'))
+			os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance+1),'Runs','run-0'))

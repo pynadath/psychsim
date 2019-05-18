@@ -124,13 +124,16 @@ def readHurricaneFile(inFile):
     else:
         return hurricanes
 
-def readNetwork(instance,run=0):
+def readNetwork(instance,run=0,sub=None):
     """
     :returns: The social networks in the given run
     """
     networks = {}
     inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
-                          'Runs','run-%d' % (run),'RelationshipDataTable.tsv')
+                          'Runs','run-%d' % (run))
+    if sub:
+        inFile = os.path.join(inFile,sub)
+    inFile = os.path.join(inFile,'RelationshipDataTable.tsv')
     with open(inFile,'r') as csvfile:
         reader = csv.DictReader(csvfile,delimiter='\t')
         for row in reader:
