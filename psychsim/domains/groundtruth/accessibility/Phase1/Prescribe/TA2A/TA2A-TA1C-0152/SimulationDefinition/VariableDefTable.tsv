@@ -1,0 +1,91 @@
+Name	LongName	Values	VarType	DataType	Notes
+Received Aid Hurricane 1	Received Aid Hurricane 1	yes,no 	dynamic	Boolean	Q1
+Aid Timestep Hurricane 1	Aid Timestep Hurricane 1	[1-82]	dynamic	Integer	Q1.i (left blank if no aid received)
+Aid Description Hurricane 1	Aid Description Hurricane 1	 	dynamic	String	Q1.ii (left blank if no aid received)
+Aid Impact Hurricane 1	Aid Impact Hurricane 1		dynamic	String	Q1.iii (left blank if no aid received)
+Why Aid to Region Hurricane 1	Why Aid to Region Hurricane 1		dynamic	String	Q1.iv (left blank if no aid received)
+Should Have Been Aided Hurricane 1	Should Have Been Aided Hurricane 1	yes,no 	dynamic	Boolean	Q2
+Timestep Should Have Been Aided Hurricane 1	Timestep Should Have Been Aided Hurricane 1	[1-82]	dynamic	Integer	Q2.i
+Why Should Have Been Aided Hurricane 1	Why Should Have Been Aided Hurricane 1		dynamic	String	Q2.ii
+Aid for Experience Hurricane 1	Aid for Experience Hurricane 1	yes,no 	dynamic	Boolean	Q2.iii
+Dissatisfaction Change Hurricane 1	Dissatisfaction Change Hurricane 1	[-5-5]	dynamic	Integer	Q2.iv
+Unfair Aid Hurricane 1	Unfair Aid Hurricane 1	yes,no 	dynamic	Boolean	Q3
+Unfair Aid Timestep Hurricane 1	Unfair Aid Timestep Hurricane 1	[1-82]	dynamic	Integer	Q3.i
+Unfair Aid Region Hurricane 1	Unfair Aid Region Hurricane 1	[Region01-16]	dynamic	String	Q3.ii
+Unfair Aid Should Have Aided Hurricane 1	Unfair Aid Should Have Aided Hurricane 1	[Region01-16]	dynamic	String	Q3.iii
+Unfair Aid Why Should Have Aided Hurricane 1	Unfair Aid Why Should Have Aided Hurricane 1		dynamic	String	Q3.iv
+Received Aid Hurricane 2	Received Aid Hurricane 2	yes,no 	dynamic	Boolean	Q1
+Aid Timestep Hurricane 2	Aid Timestep Hurricane 2	[1-82]	dynamic	Integer	Q1.i (left blank if no aid received)
+Aid Description Hurricane 2	Aid Description Hurricane 2	 	dynamic	String	Q1.ii (left blank if no aid received)
+Aid Impact Hurricane 2	Aid Impact Hurricane 2		dynamic	String	Q1.iii (left blank if no aid received)
+Why Aid to Region Hurricane 2	Why Aid to Region Hurricane 2		dynamic	String	Q1.iv (left blank if no aid received)
+Should Have Been Aided Hurricane 2	Should Have Been Aided Hurricane 2	yes,no 	dynamic	Boolean	Q2
+Timestep Should Have Been Aided Hurricane 2	Timestep Should Have Been Aided Hurricane 2	[1-82]	dynamic	Integer	Q2.i
+Why Should Have Been Aided Hurricane 2	Why Should Have Been Aided Hurricane 2		dynamic	String	Q2.ii
+Aid for Experience Hurricane 2	Aid for Experience Hurricane 2	yes,no 	dynamic	Boolean	Q2.iii
+Dissatisfaction Change Hurricane 2	Dissatisfaction Change Hurricane 2	[-5-5]	dynamic	Integer	Q2.iv
+Unfair Aid Hurricane 2	Unfair Aid Hurricane 2	yes,no 	dynamic	Boolean	Q3
+Unfair Aid Timestep Hurricane 2	Unfair Aid Timestep Hurricane 2	[1-82]	dynamic	Integer	Q3.i
+Unfair Aid Region Hurricane 2	Unfair Aid Region Hurricane 2	[Region01-16]	dynamic	String	Q3.ii
+Unfair Aid Should Have Aided Hurricane 2	Unfair Aid Should Have Aided Hurricane 2	[Region01-16]	dynamic	String	Q3.iii
+Unfair Aid Why Should Have Aided Hurricane 2	Unfair Aid Why Should Have Aided Hurricane 2		dynamic	String	Q3.iv
+Received Aid Hurricane 3	Received Aid Hurricane 3	yes,no 	dynamic	Boolean	Q1
+Aid Timestep Hurricane 3	Aid Timestep Hurricane 3	[1-82]	dynamic	Integer	Q1.i (left blank if no aid received)
+Aid Description Hurricane 3	Aid Description Hurricane 3	 	dynamic	String	Q1.ii (left blank if no aid received)
+Aid Impact Hurricane 3	Aid Impact Hurricane 3		dynamic	String	Q1.iii (left blank if no aid received)
+Why Aid to Region Hurricane 3	Why Aid to Region Hurricane 3		dynamic	String	Q1.iv (left blank if no aid received)
+Should Have Been Aided Hurricane 3	Should Have Been Aided Hurricane 3	yes,no 	dynamic	Boolean	Q2
+Timestep Should Have Been Aided Hurricane 3	Timestep Should Have Been Aided Hurricane 3	[1-82]	dynamic	Integer	Q2.i
+Why Should Have Been Aided Hurricane 3	Why Should Have Been Aided Hurricane 3		dynamic	String	Q2.ii
+Aid for Experience Hurricane 3	Aid for Experience Hurricane 3	yes,no 	dynamic	Boolean	Q2.iii
+Dissatisfaction Change Hurricane 3	Dissatisfaction Change Hurricane 3	[-5-5]	dynamic	Integer	Q2.iv
+Unfair Aid Hurricane 3	Unfair Aid Hurricane 3	yes,no 	dynamic	Boolean	Q3
+Unfair Aid Timestep Hurricane 3	Unfair Aid Timestep Hurricane 3	[1-82]	dynamic	Integer	Q3.i
+Unfair Aid Region Hurricane 3	Unfair Aid Region Hurricane 3	[Region01-16]	dynamic	String	Q3.ii
+Unfair Aid Should Have Aided Hurricane 3	Unfair Aid Should Have Aided Hurricane 3	[Region01-16]	dynamic	String	Q3.iii
+Unfair Aid Why Should Have Aided Hurricane 3	Unfair Aid Why Should Have Aided Hurricane 3		dynamic	String	Q3.iv
+Received Aid Hurricane 4	Received Aid Hurricane 4	yes,no 	dynamic	Boolean	Q1
+Aid Timestep Hurricane 4	Aid Timestep Hurricane 4	[1-82]	dynamic	Integer	Q1.i (left blank if no aid received)
+Aid Description Hurricane 4	Aid Description Hurricane 4	 	dynamic	String	Q1.ii (left blank if no aid received)
+Aid Impact Hurricane 4	Aid Impact Hurricane 4		dynamic	String	Q1.iii (left blank if no aid received)
+Why Aid to Region Hurricane 4	Why Aid to Region Hurricane 4		dynamic	String	Q1.iv (left blank if no aid received)
+Should Have Been Aided Hurricane 4	Should Have Been Aided Hurricane 4	yes,no 	dynamic	Boolean	Q2
+Timestep Should Have Been Aided Hurricane 4	Timestep Should Have Been Aided Hurricane 4	[1-82]	dynamic	Integer	Q2.i
+Why Should Have Been Aided Hurricane 4	Why Should Have Been Aided Hurricane 4		dynamic	String	Q2.ii
+Aid for Experience Hurricane 4	Aid for Experience Hurricane 4	yes,no 	dynamic	Boolean	Q2.iii
+Dissatisfaction Change Hurricane 4	Dissatisfaction Change Hurricane 4	[-5-5]	dynamic	Integer	Q2.iv
+Unfair Aid Hurricane 4	Unfair Aid Hurricane 4	yes,no 	dynamic	Boolean	Q3
+Unfair Aid Timestep Hurricane 4	Unfair Aid Timestep Hurricane 4	[1-82]	dynamic	Integer	Q3.i
+Unfair Aid Region Hurricane 4	Unfair Aid Region Hurricane 4	[Region01-16]	dynamic	String	Q3.ii
+Unfair Aid Should Have Aided Hurricane 4	Unfair Aid Should Have Aided Hurricane 4	[Region01-16]	dynamic	String	Q3.iii
+Unfair Aid Why Should Have Aided Hurricane 4	Unfair Aid Why Should Have Aided Hurricane 4		dynamic	String	Q3.iv
+Received Aid Hurricane 5	Received Aid Hurricane 5	yes,no 	dynamic	Boolean	Q1
+Aid Timestep Hurricane 5	Aid Timestep Hurricane 5	[1-82]	dynamic	Integer	Q1.i (left blank if no aid received)
+Aid Description Hurricane 5	Aid Description Hurricane 5	 	dynamic	String	Q1.ii (left blank if no aid received)
+Aid Impact Hurricane 5	Aid Impact Hurricane 5		dynamic	String	Q1.iii (left blank if no aid received)
+Why Aid to Region Hurricane 5	Why Aid to Region Hurricane 5		dynamic	String	Q1.iv (left blank if no aid received)
+Should Have Been Aided Hurricane 5	Should Have Been Aided Hurricane 5	yes,no 	dynamic	Boolean	Q2
+Timestep Should Have Been Aided Hurricane 5	Timestep Should Have Been Aided Hurricane 5	[1-82]	dynamic	Integer	Q2.i
+Why Should Have Been Aided Hurricane 5	Why Should Have Been Aided Hurricane 5		dynamic	String	Q2.ii
+Aid for Experience Hurricane 5	Aid for Experience Hurricane 5	yes,no 	dynamic	Boolean	Q2.iii
+Dissatisfaction Change Hurricane 5	Dissatisfaction Change Hurricane 5	[-5-5]	dynamic	Integer	Q2.iv
+Unfair Aid Hurricane 5	Unfair Aid Hurricane 5	yes,no 	dynamic	Boolean	Q3
+Unfair Aid Timestep Hurricane 5	Unfair Aid Timestep Hurricane 5	[1-82]	dynamic	Integer	Q3.i
+Unfair Aid Region Hurricane 5	Unfair Aid Region Hurricane 5	[Region01-16]	dynamic	String	Q3.ii
+Unfair Aid Should Have Aided Hurricane 5	Unfair Aid Should Have Aided Hurricane 5	[Region01-16]	dynamic	String	Q3.iii
+Unfair Aid Why Should Have Aided Hurricane 5	Unfair Aid Why Should Have Aided Hurricane 5		dynamic	String	Q3.iv
+Received Aid Hurricane 6	Received Aid Hurricane 6	yes,no 	dynamic	Boolean	Q1
+Aid Timestep Hurricane 6	Aid Timestep Hurricane 6	[1-82]	dynamic	Integer	Q1.i (left blank if no aid received)
+Aid Description Hurricane 6	Aid Description Hurricane 6	 	dynamic	String	Q1.ii (left blank if no aid received)
+Aid Impact Hurricane 6	Aid Impact Hurricane 6		dynamic	String	Q1.iii (left blank if no aid received)
+Why Aid to Region Hurricane 6	Why Aid to Region Hurricane 6		dynamic	String	Q1.iv (left blank if no aid received)
+Should Have Been Aided Hurricane 6	Should Have Been Aided Hurricane 6	yes,no 	dynamic	Boolean	Q2
+Timestep Should Have Been Aided Hurricane 6	Timestep Should Have Been Aided Hurricane 6	[1-82]	dynamic	Integer	Q2.i
+Why Should Have Been Aided Hurricane 6	Why Should Have Been Aided Hurricane 6		dynamic	String	Q2.ii
+Aid for Experience Hurricane 6	Aid for Experience Hurricane 6	yes,no 	dynamic	Boolean	Q2.iii
+Dissatisfaction Change Hurricane 6	Dissatisfaction Change Hurricane 6	[-5-5]	dynamic	Integer	Q2.iv
+Unfair Aid Hurricane 6	Unfair Aid Hurricane 6	yes,no 	dynamic	Boolean	Q3
+Unfair Aid Timestep Hurricane 6	Unfair Aid Timestep Hurricane 6	[1-82]	dynamic	Integer	Q3.i
+Unfair Aid Region Hurricane 6	Unfair Aid Region Hurricane 6	[Region01-16]	dynamic	String	Q3.ii
+Unfair Aid Should Have Aided Hurricane 6	Unfair Aid Should Have Aided Hurricane 6	[Region01-16]	dynamic	String	Q3.iii
+Unfair Aid Why Should Have Aided Hurricane 6	Unfair Aid Why Should Have Aided Hurricane 6		dynamic	String	Q3.iv

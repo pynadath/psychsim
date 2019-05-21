@@ -51,9 +51,9 @@ Q3. For each of the interventions referenced, please provide the description for
 
 # Answer #
 
-Q1. The current budget is enough to increase each actor's wealth by a "unit intervention cost", defined as 25% of a wealth quintile, if distributed equally to the entire population. For example, if any actors who reported a wealth of "2" (on the 5-point scale used in the surveys) received four such payments, they would all subsequently report a wealth of "3". We'll refer to the this budget/population
+Q1. The current budget is enough to increase each actor's wealth by a "unit intervention cost" (defined as 25% of a wealth quintile), if distributed equally to the entire population. For example, if all actors who reported a wealth of "2" (on the 5-point scale used in the surveys) received four such payments, they would all subsequently report a wealth of "3".
 
-Q2. The budget increases dollar for dollar. Taxes can be expressed as a flat amount or as a percentage of wealth (same value as reported in surveys). More precise estimates may be requested. Subsidies or collection pools would operate with no overhead costs.
+Q2. The budget increases dollar for dollar. Taxes can be expressed as a flat amount or as a percentage of wealth (i.e., as reported in surveys). More precise estimates may be requested. Subsidies or collection pools would operate with no overhead costs.
 
 Q3. 
 
@@ -63,7 +63,7 @@ Q3.
 
 1.9. The subsidy would be a pre-specified fixed amount. If the budget is completely exhausted, no further subsidies will be given.
 
-1.10. The amount paid in and out would be a pre-specified fixed amount. If no money is in the pool, then no actors can collect.
+1.10. The amount paid in and out would be a pre-specified fixed amount. If the pool is ever exhausted, then no actors can collect.
 
 2.1. The actors cannot be forcibly moved.
 
@@ -89,4 +89,4 @@ Q3.
 
 7.1. One unit cost per actor to whom it is issued, but can be issued only once, with a negotiable decaying effect.
 
-8. Housing is not manipulable in this simulation.
+8. Housing is not manipulable.
