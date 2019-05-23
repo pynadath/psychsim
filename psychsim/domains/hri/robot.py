@@ -145,7 +145,7 @@ CODES = {'ability': {'s': 'badSensor','g': 'good','m': 'badModel'},
 
 def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                 embodiment='robot',acknowledgment='no',learning='none',fnProb=0.01,
-                sequence=False,root='.',ext='xml'):
+                sequence=False,root='.',ext='xml',reliability = 0.80):
     """
     Creates the initial PsychSim scenario and saves it
     @param username: name of user ID to use in filenames
@@ -457,6 +457,7 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 
     robot.setAttribute('horizon',1)
 
+    robot.random_indices = random.sample(range(0, len(WAYPOINTS[level])) , int(len(WAYPOINTS[level])*(1-reliability)))
     if learning == 'model-free':
         robot.table = {}
         populateTable(world,0,level)
@@ -819,8 +820,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
 
     return ack
 
-def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None,observation_condition='randomize',
-    distrib={'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}):
+def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sleep=None,observation_condition='randomize'):
     """
     Processes incoming observation and makes an assessment
     """
@@ -869,51 +869,73 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     omega = {}
     nullReading = {'camera': False,'microphone': 'nobody','NBCsensor': False}
     readings = {'camera':[True,False],'microphone':['suspicious','friendly','nobody'],'NBCsensor':[True,False]}
+
+    if robotIndex in robot.random_indices:
+        randomizing_flag = True
+        pick_sensor = np.random.choice(['microphone','camera'],p=[0.5,0.5])
+    else:
+        randomizing_flag = False
     # distrib = {'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}
     danger = world.getFeature(key,world.state)
     for sensor in robot.omega:
-        print (sensor, '     reliabilities:',distrib[sensor] )
-        try:
-            if observation_condition == 'scripted':
-                print('Using scripted readings')
+        if observation_condition == 'scripted':
+            print('Using scripted readings')
+            if sensor in robotWaypoint:
                 omega[sensor] = robotWaypoint[sensor][sensorCorrect]
             else:
-                # if randomize then sample a value from readings with given distribution
-                if sensor in robotWaypoint:
-                    actual = robotWaypoint[sensor][sensorCorrect]
-                else:
-                    actual = nullReading[sensor]
-                print('Using randomized readings1')
-                actual_ind = readings[sensor].index(actual)
-                lis = []
-                len_val = len(readings[sensor])
-                for _ in range(len_val):
-                    lis.append(readings[sensor][(actual_ind+_)%len_val])
-                omega[sensor] = np.random.choice(lis,p=distrib[sensor])
-                print('actual:',actual,'randomized:',omega[sensor],'list:',lis)
-
-
-        except KeyError:
-            if observation_condition == 'scripted':
-                # By default, don't sense anything
-                if sensor == 'microphone':
-                    omega[sensor] = 'nobody'
-                else:
-                    omega[sensor] = False
+                omega[sensor] = nullReading[sensor]
+        else:
+            # if randomize then sample a value from readings with given distribution
+            if sensor in robotWaypoint:
+                actual = robotWaypoint[sensor][True]
             else:
-                print('Using randomized readings2')
-                # if randomize then sample a value from readings with given distribution
-                if sensor == 'microphone':
-                    actual = 'nobody'
+                actual = nullReading[sensor]
+
+            if randomizing_flag:
+                print('Using randomized readings', pick_sensor)
+                if sensor == 'microphone' and sensor == pick_sensor:
+                    if actual == 'suspicious':
+                        omega[sensor] = np.random.choice(['friendly','nobody'],p=[0.5,0.5])
+                    else:
+                        omega[sensor] = 'suspicious'
+                elif sensor == 'camera' and sensor == pick_sensor:
+                    assert isinstance(actual,bool)
+                    omega[sensor] = not actual
                 else:
-                    actual = False
-                actual_ind = readings[sensor].index(actual)
-                lis = []
-                len_val = len(readings[sensor])
-                for _ in range(len_val):
-                    lis.append(readings[sensor][(actual_ind+_)%len_val])
-                omega[sensor] = np.random.choice(lis,p=distrib[sensor])
-                print('actual:',actual,'randomized:',omega[sensor],'list:',lis)
+                    omega[sensor] = actual
+                # actual_ind = readings[sensor].index(actual)
+                # lis = []
+                # len_val = len(readings[sensor])
+                # for _ in range(len_val):
+                #     lis.append(readings[sensor][(actual_ind+_)%len_val])
+                # omega[sensor] = np.random.choice(lis,p=distrib[sensor])
+                # print('actual:',actual,'randomized:',omega[sensor],'list:',lis)
+            else:
+                print ('Using actual readings')
+                omega[sensor] = actual
+
+
+        # except KeyError:
+        #     if observation_condition == 'scripted':
+        #         # By default, don't sense anything
+        #         if sensor == 'microphone':
+        #             omega[sensor] = 'nobody'
+        #         else:
+        #             omega[sensor] = False
+        #     else:
+        #         print('Using randomized readings2')
+        #         # if randomize then sample a value from readings with given distribution
+        #         if sensor == 'microphone':
+        #             actual = 'nobody'
+        #         else:
+        #             actual = False
+        #         actual_ind = readings[sensor].index(actual)
+        #         lis = []
+        #         len_val = len(readings[sensor])
+        #         for _ in range(len_val):
+        #             lis.append(readings[sensor][(actual_ind+_)%len_val])
+        #         omega[sensor] = np.random.choice(lis,p=distrib[sensor])
+        #         print('actual:',actual,'randomized:',omega[sensor],'list:',lis)
 
         omegaKey = stateKey(robot.name,sensor)
         world.state[omegaKey] = world.value2float(omegaKey,omega[sensor])
@@ -1288,9 +1310,8 @@ def create_dict(inp):
     return feed_dict
 
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
-               acknowledgment='no',learning='none',learning_rate=1,obs_condition='scripted',distribution={'camera':[0.85,0.15],'microphone':[0.9,0.05,0.05],'NBCsensor':[0.95,0.05]}):
+               acknowledgment='no',learning='none',learning_rate=1,obs_condition='scripted',reliable=0.8):
     # Remove any existing log file
-    print ('distrbution:',distribution)
     print ('observation_condition:',obs_condition)
     try:
         os.remove(getFilename(username,level,extension='log'))
@@ -1299,14 +1320,14 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
         pass
     # Create initial scenario
     world = createWorld(username,level,ability,explanation,embodiment,
-                        acknowledgment,learning)
+                        acknowledgment,learning,reliability=reliable)
     location = world.getState('robot','waypoint').first()
     waypoint = symbol2index(location,level)
     # Go through all the waypoints
     while not world.terminated():
         parameters = {'robotWaypoint': waypoint,
                       'level': level}
-        print(GetRecommendation(username,level,parameters,world,observation_condition=obs_condition,distrib=distribution))
+        print(GetRecommendation(username,level,parameters,world,observation_condition=obs_condition))
         # Was the robot right?
         location = world.getState('robot','waypoint').first()
         recommendation = world.getState(location,'recommendation').first()
@@ -1364,4 +1385,4 @@ if __name__ == '__main__':
         for level in range(len(WAYPOINTS)):
             feed_dict = create_dict(args['distribution'])
             runMission(username,level,args['ability'],args['explanation'],
-                       args['embodiment'],args['acknowledgment'],args['learning'],args['learning_rate'],args['observation_condition'],feed_dict)
+                       args['embodiment'],args['acknowledgment'],args['learning'],args['learning_rate'],args['observation_condition'])
