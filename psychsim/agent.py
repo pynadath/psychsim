@@ -664,7 +664,7 @@ class Agent(object):
         """
         if not model in self.models:
             model = '%s0' % (self.name)
-        if not 'R' in self.models[model]:
+        if self.models[model].get('R',None) is None:
             self.models[model]['R'] = {}
         if not isinstance(tree,str):
             tree = tree.desymbolize(self.world.symbols)
@@ -682,8 +682,8 @@ class Agent(object):
         R = self.getAttribute('R',model)
         if R is None:
             # No reward components
-            R = KeyedTree(setToConstantMatrix(rewardKey(self.name),0.))
-            self.setAttribute('R',R,model)
+#            R = KeyedTree(setToConstantMatrix(rewardKey(self.name),0.))
+#            self.setAttribute('R',R,model)
             return R
         elif isinstance(R,dict):
             Rsum = None

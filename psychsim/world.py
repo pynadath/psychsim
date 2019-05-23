@@ -380,7 +380,6 @@ class World(object):
                     state[makeFuture(key)] = select[key]
                 else:
                     state.distributions[substate].select(select=='max')
-                state.distributions[substate].select(select=='max')
                 
     def effect(self,actions,state,updateBeliefs=True,keySubset=None,select=False):
         if not isinstance(state,VectorDistributionSet):
@@ -568,7 +567,7 @@ class World(object):
             
             if len(agent.models) == 0:
                 # Default model settings
-                agent.addModel('%s0' % (agent.name),R={},horizon=2,level=2,rationality=1.,
+                agent.addModel('%s0' % (agent.name),R=None,horizon=2,level=2,rationality=1.,
                               discount=1.,selection='consistent',
                               beliefs=True,parent=None,projector=Distribution.expectation)
             if setModel:
