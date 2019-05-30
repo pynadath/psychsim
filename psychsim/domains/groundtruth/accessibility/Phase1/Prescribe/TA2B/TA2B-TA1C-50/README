@@ -1,0 +1,7 @@
+Questions treated as for TA2B-TA1C-29deathcircumstances.
+
+We generate records for all of the deaths (we assume the given 10% sampling strategy is just left over from a previous request).
+
+Some of the items are unanswerable because the actor of interest is now dead and unable to provide the requested information: 3 (second one), 4, 6, and 7. The first #3 is unanswerable because there is no official attribution of causality with respect to the hurricane.
+
+We provide the answers for #5, although this item should be answerable from the HurricaneTable provided in the IDP.
