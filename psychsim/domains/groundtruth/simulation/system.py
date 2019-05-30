@@ -38,7 +38,7 @@ class System(Agent):
             allocate = self.addAction({'verb': 'allocate','object': region},codePtr=True)
             risk = stateKey(region,'risk')
             tree = makeTree(approachMatrix(risk,likert[5][config.getint('System','system_impact')-1],
-                                           0.))
+                                           0. if config.getint('Simulation','phase',fallback=1) == 1 else world.agents[region].risk))
             world.setDynamics(risk,allocate,tree,codePtr=True)
             tree = makeTree(incrementMatrix(resources,-allocation))
             world.setDynamics(resources,allocate,tree,codePtr=True)
