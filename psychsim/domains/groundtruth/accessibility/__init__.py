@@ -302,3 +302,35 @@ def getPopulation(data):
     :return: list of names of actors who are still alive at the end of the simulation, represented by the given data
     """
     return [name for name in data if name[:5] == 'Actor' and data[name][stateKey(name,'alive')][max(data[name][stateKey(name,'alive')].keys())]]
+
+def setHurricane(world,category,location,actor,actions=None,locations=None,myStart=None,debug=False):
+    """
+    :param start: Initial location for actor (default is current location)
+    """
+    beliefs = world.agents[actor].getBelief()
+    model,myBelief = next(iter(beliefs.items()))
+    myBelief = copy.deepcopy(myBelief)
+    world.setState('Nature','category',category,myBelief)
+    world.setState('Nature','phase','approaching',myBelief)
+    world.setState('Nature','days',0,myBelief)
+    world.setState('Nature','location',location,myBelief)
+    if myStart:
+        world.setState(actor,'location',myStart,myBelief)
+    while world.getState('Nature','location',myBelief).first() != 'none':
+        if debug:
+            logging.info('%s: %s %s' % (world.next(myBelief),world.getState('Nature','phase',myBelief).first(),
+                world.getState('Nature','location',myBelief).first()))
+        result = world.step(state=myBelief,select=True,keySubset=myBelief.keys())
+        if actions is not None:
+            action = myBelief.marginal(actionKey(actor)).first()
+            actions.append(world.float2value(actionKey(actor),action))
+        if locations is not None:
+            locations.append(world.getState(actor,'location',myBelief).first())
+    return myBelief
+
+def getParticipantID(name,pool):
+    for num,actor in pool.items():
+        if name == actor:
+            return num
+    else:
+        raise ValueError('%s not found in pool' % (name))
