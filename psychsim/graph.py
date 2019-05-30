@@ -72,11 +72,13 @@ class DependencyGraph(dict):
             if name != WORLD:
                 # Create the agent reward node
                 agent = self.world.agents[name]
-                if agent.getAttribute('R','%s0' % (name)):
-                    self[name] = {'agent': name,
-                                  'type': 'utility',
-                                  'parents': set(),
-                                  'children': set()}
+                R = agent.getReward()
+                if R:
+                    if {reward for reward in R.values()} != {None}:
+                        self[name] = {'agent': name,
+                                      'type': 'utility',
+                                      'parents': set(),
+                                      'children': set()}
                 # Process the agent actions
                 for action in agent.actions:
                     action = ActionSet([a.root() for a in action])
@@ -120,7 +122,7 @@ class DependencyGraph(dict):
                         dict.__getitem__(self,makeFuture(key))['parents'].add(parent)
                         dict.__getitem__(self,parent)['children'].add(makeFuture(key))
         for name in agents:
-            if name != WORLD:
+            if name in self:
                 agent = self.world.agents[name]
                 # Create links from reward
                 model = '%s0' % (agent.name)
@@ -142,6 +144,7 @@ class DependencyGraph(dict):
                             # Link between prerequisite variable and action
                             dict.__getitem__(self,action)['parents'].add(parent)
                             dict.__getitem__(self,parent)['children'].add(action)
+            if name != WORLD:
                 # Create links from observations
                 if agent.O is not True and not belief:
                     # Process the agent observations
