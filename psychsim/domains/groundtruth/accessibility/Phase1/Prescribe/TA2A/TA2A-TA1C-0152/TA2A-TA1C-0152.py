@@ -63,13 +63,8 @@ if __name__ == '__main__':
 			else:
 				record['Dissatisfaction Change Hurricane %d' % (hurricane['Hurricane'])] = accessibility.toLikert(50*delta)
 			# 3
-			for t in range(hurricane['End'],hurricane['Start']-1,-1):
-				if aid[hurricane['Hurricane']-1][t] != demos[name]['Residence']:
-					break
-			else:
-				raise RuntimeError('%s received aid every day during hurricane %d' % (demos[name]['Residence'],hurricane['Hurricane']))
 			risks = [(data[demos[name]['Residence']][stateKey(demos[name]['Residence'],'risk')][t],t) \
-				for t in range(hurricane['Start'],hurricane['End']+1)]
+				for t in range(hurricane['Start'],hurricane['End']+1) if aid[hurricane['Hurricane']-1][t] != demos[name]['Residence']]
 			level,t = max(risks)
 			record['Unfair Aid Hurricane %d' % (hurricane['Hurricane'])] = 'yes'
 			record['Unfair Aid Timestep Hurricane %d' % (hurricane['Hurricane'])] = t

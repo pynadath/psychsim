@@ -51,15 +51,15 @@ Q3. For each of the interventions referenced, please provide the description for
 
 # Answer #
 
-Q1. The current budget is enough to increase each actor's wealth by a "unit intervention cost" (defined as 25% of a wealth quintile), if distributed equally to the entire population. For example, if all actors who reported a wealth of "2" (on the 5-point scale used in the surveys) received four such payments, they would all subsequently report a wealth of "3".
+Q1. There is no pre-specified budgetary limit, but all interventions must be socially plausible.
 
-Q2. The budget increases dollar for dollar. Taxes can be expressed as a flat amount or as a percentage of wealth (i.e., as reported in surveys). More precise estimates may be requested. Subsidies or collection pools would operate with no overhead costs.
+Q2. We're eliminating taxes as a possibility, as they complicate evaluation across the different instances (e.g., due to different wealth). You can assume that the government has sufficient funds to support any plausible prescription.
 
 Q3. 
 
 1.1-4. Aiding a particular set of actors divides the available budget among them uniformly, unless otherwise specified. 
 
-1.5-8. Taxation has no cost and simply increases the available budget and decreases the wealth of the taxed. 
+1.5-8. Taxation is now eliminated. 
 
 1.9. The subsidy would be a pre-specified fixed amount. If the budget is completely exhausted, no further subsidies will be given.
 
@@ -69,24 +69,20 @@ Q3.
 
 2.2. Actors have no access to areas other than their own.
 
-2.3. 10 units of intervention cost per region.
+2.3. Improvement is allowed up to a plausible limit.
 
-2.4. 10 units of intervention cost per shelter.
+2.4. Improvement is allowed up to a plausible limit.
 
-2.5. 40 units of intervention cost.
+2.5. Shelters can be built up to at most one shelter per region.
 
-3.1. 1 unit intervention cost per member of target audience.
+3.1. No budgetary limit.
 
-4.1. 40 units of intervention cost.
+4.1-3. No budgetary limit.
 
-4.2. 40 units of intervention cost.
-
-4.3. 20 units of intervention cost.
-
-5.1. 40 units of intervention cost.
+5.1. No budgetary limit.
 
 6.1. Absolute mandates of behavior are not allowed.
 
-7.1. One unit cost per actor to whom it is issued, but can be issued only once, with a negotiable decaying effect.
+7.1. No budgetary limit.
 
 8. Housing is not manipulable.
