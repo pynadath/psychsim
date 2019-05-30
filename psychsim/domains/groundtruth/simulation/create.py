@@ -145,7 +145,7 @@ def getConfig(instance):
     config.read(os.path.join(os.path.dirname(__file__),'..','config','%06d.ini' % (instance)))
     return config
 
-def loadPickle(instance,run=0,day=0):
+def loadPickle(instance,run=0,day=0,sub=None):
     """
     Loads a PsychSim simulation object from the specified instance/run that has executed until the specified day and then been saved to a file
     """
@@ -154,7 +154,10 @@ def loadPickle(instance,run=0,day=0):
     else:
         dayStr = '%d' % (day)
     fname = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),
-                           'Runs','run-%d' % (run),'scenario%s.pkl' % (dayStr))
+                           'Runs','run-%d' % (run))
+    if sub:
+        fname = os.path.join(fname,sub)
+    fname = os.path.join(fname,'scenario%s.pkl' % (dayStr))
     with open(fname,'rb') as f:
         world = pickle.load(f)
     return world
