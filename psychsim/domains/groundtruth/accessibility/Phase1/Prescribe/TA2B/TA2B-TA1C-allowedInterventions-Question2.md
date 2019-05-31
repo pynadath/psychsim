@@ -57,11 +57,11 @@ Q2. We're eliminating taxes as a possibility, as they complicate evaluation acro
 
 Q3. 
 
-1.1-4. Aiding a particular set of actors divides the available budget among them uniformly, unless otherwise specified. 
+1.1-4. Aiding a particular set of actors divides the available funds among them uniformly, unless otherwise specified. 
 
 1.5-8. Taxation is now eliminated. 
 
-1.9. The subsidy would be a pre-specified fixed amount. If the budget is completely exhausted, no further subsidies will be given.
+1.9. The subsidy would be a pre-specified fixed amount. If the pool is completely exhausted, no further subsidies will be given.
 
 1.10. The amount paid in and out would be a pre-specified fixed amount. If the pool is ever exhausted, then no actors can collect.
 

@@ -1,0 +1,3 @@
+Name	LongName	Values	VarType	DataType	Notes
+Aid To	Region Receiving Aid	[region1-16]	dynamic	String
+
