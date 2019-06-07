@@ -323,6 +323,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                         for friend in friends:
                             yrBelief = next(iter(world.agents[friend].getBelief().values()))
                             msg = yrBelief[key]
+                            logging.info('%s receives message %s from %s' % (actor,msg,friend))
                             actor.recvMessage(key,msg,myScale,optScale,pessScale)
         if state['phase'] == 'approaching':
             if turn == 'Actor' and survey is not None:
