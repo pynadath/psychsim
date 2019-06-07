@@ -429,7 +429,7 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                     if isStateKey(key) or isBinaryKey(key):
                         agent = state2agent(key)
                         if agent != 'Nature' and not isTurnKey(key) and not isModelKey(key) and not isRewardKey(key) and not isActionKey(key):
-                            if key not in world.dynamics and day > 1:
+                            if key not in world.dynamics and day > 1: # TODO: What about observations?
                                 continue
                             value = world.getFeature(key)
                             assert len(value) == 1
