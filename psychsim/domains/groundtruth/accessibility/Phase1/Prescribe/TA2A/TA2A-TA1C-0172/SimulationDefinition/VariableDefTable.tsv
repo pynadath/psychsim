@@ -1,0 +1,15 @@
+Name	LongName	Values	VarType	DataType	Notes
+Trusted Sources	Trusted Sources	abcde, ordered sequences	dynamic	String	Q5
+Ever Evacuated 	Have I Ever Evacuated 	yes,no 	dynamic	Boolean	Q7i
+Post-Evacuation Income 	Post-Evacuation Income 	yes,no 	dynamic	Boolean	Q7ii
+Post-Evacuation Income Source 	Post-Evacuation Income Source 	abcde, unordered subsets 	dynamic	String	Q7iii
+
+
+
+
+
+
+
+
+
+
