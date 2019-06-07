@@ -9,7 +9,7 @@ from psychsim.action import *
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,filename=os.path.join(os.path.dirname(__file__),'TA2B-TA1C-52.log'))
-    random.seed(52)
+    random.seed(53)
     responses = {1: 'I would be strongly satisfied',
         2: 'I would be somewhat satisfied',
         3: 'I would be neutral',
@@ -17,15 +17,17 @@ if __name__ == '__main__':
         5: 'I would be strongly dissatisfied'}
     fields = ['Timestep','Participant','Sheltered']+sorted(accessibility.demographics.keys())+['Condition 1 Satisfaction']+\
         sum([['Condition 1 Category %d Evacuate' % (category+1),'Condition 1 Category %d Stayed Home' % (category+1),
-            'Condition 1 Category %d Sheltered' % (category+1)] for category in range(5)],[])+['Original Conditions Satisfaction']+\
+            'Condition 1 Category %d Sheltered' % (category+1)] for category in range(5)],[])+['Condition 2 Satisfaction']+\
+        sum([['Condition 2 Category %d Evacuate' % (category+1),'Condition 2 Category %d Stayed Home' % (category+1),
+            'Condition 2 Category %d Sheltered' % (category+1)] for category in range(5)],[])+['Original Conditions New Shelter Satisfaction']+\
         sum([['Original Conditions Category %d Evacuate' % (category+1),'Original Conditions Category %d Stayed Home' % (category+1),
-            'Original Conditions Category %d Sheltered' % (category+1)] for category in range(5)],[])
+            'Original Conditions Category %d Sheltered' % (category+1)] for category in range(5)],[])+['Original Conditions Shelter Improvement Satisfaction']
     for instance in range(1,15):
         logging.info('Instance %d' % (instance))
         args = accessibility.instances[instance-1]
         config = accessibility.getConfig(args['instance'])
         data = accessibility.loadRunData(args['instance'],args['run'],args['span'],subs=['Input'] if instance > 2 else [None])
-        world = accessibility.loadPickle(args['instance'],args['run'],args['span']+(1 if instance > 1 else 0),
+        world = accessibility.loadPickle(args['instance'],args['run'],args['span']+(1 if instance == 2 or instance > 8 else 0),
             sub='Input' if instance > 2 else None)
         demos = accessibility.readDemographics(data,last=args['span'])
         hurricanes = [h for h in accessibility.readHurricanes(args['instance'],args['run'],'Input' if instance > 2 else None) 
@@ -36,6 +38,8 @@ if __name__ == '__main__':
         else:
             participants = accessibility.readParticipants(args['instance'],args['run'])['ActorPostTable']
         population = [name for name in accessibility.getPopulation(data) if name in participants.values()]
+        shelters = {name for name in world.agents if name[:6] == 'Region' and stateKey('Region','shelterRisk') in world.variables}
+        petBan = {name for name in shelters if not world.getState(name,'shelterPets').first()}
         shelterers = {name for name in population if len([t for t,loc in data[name][stateKey(name,'location')].items()
             if loc[:7] == 'shelter']) > 0}
         size = 6
@@ -58,28 +62,6 @@ if __name__ == '__main__':
                 newGrievance = data[name][stateKey(name,'grievance')][args['span']]
             except KeyError:
                 newGrievance = data[name][stateKey(name,'grievance')][args['span']-1]
-            tax = accessibility.likert[5][config.getint('Actors','grievance_delta')-1] / len([r for r in data if r[:6] == 'Region'])
-            response = newGrievance+tax*(1.-newGrievance)
-            if newGrievance > oldGrievance:
-                # Grievance went up
-                delta = (newGrievance-oldGrievance)/(1.-oldGrievance)
-                response += delta*(1.-response)
-            else:
-                # Grievance went down
-                delta = (newGrievance-oldGrievance)/oldGrievance
-                response += delta*response
-            record['Condition 1 Satisfaction'] = responses[accessibility.toLikert(response)]
-            # 2-6
-            world.agents['System'].TA2BTA1C52 = True
-            for category in range(5):
-                locations = []
-                belief = accessibility.setHurricane(world,category+1,hurricane['Actual Location'][0],name,locations=locations,myStart=demos[name]['Residence'],debug=True)
-                locations = set(locations)
-                record['Condition 1 Category %d Evacuate' % (category+1)] = 'yes' if 'evacuated' in locations else 'no'
-                record['Condition 1 Category %d Stayed Home' % (category+1)] = 'yes' if demos[name]['Residence'] in locations else 'no'
-                record['Condition 1 Category %d Sheltered' % (category+1)] = 'yes' if {loc for loc in locations if loc[:7] == 'shelter'} else 'no'
-            world.agents['System'].TA2BTA1C52 = False
-            # 7
             if newGrievance > oldGrievance:
                 # Grievance went up
                 delta = (newGrievance-oldGrievance)/(1.-oldGrievance)
@@ -88,20 +70,48 @@ if __name__ == '__main__':
                 # Grievance went down
                 delta = (newGrievance-oldGrievance)/oldGrievance
                 response = newGrievance+delta*newGrievance
-            record['Original Conditions Satisfaction'] = responses[accessibility.toLikert(response)]
-            # 8-12
+            record['Condition 1 Satisfaction'] = responses[accessibility.toLikert(response)]
+            # 2-6
             for category in range(5):
                 locations = []
                 belief = accessibility.setHurricane(world,category+1,hurricane['Actual Location'][0],name,locations=locations,myStart=demos[name]['Residence'],debug=True)
                 locations = set(locations)
-                record['Original Conditions Category %d Evacuate' % (category+1)] = 'yes' if 'evacuated' in locations else 'no'
-                record['Original Conditions Category %d Stayed Home' % (category+1)] = 'yes' if demos[name]['Residence'] in locations else 'no'
-                record['Original Conditions Category %d Sheltered' % (category+1)] = 'yes' if {loc for loc in locations if loc[:7] == 'shelter'} else 'no'
-                if record['Original Conditions Category %d Evacuate' % (category+1)] != record['Condition 1 Category %d Evacuate' % (category+1)] or \
-                    record['Original Conditions Category %d Stayed Home' % (category+1)] != record['Condition 1 Category %d Stayed Home' % (category+1)] or \
-                    record['Original Conditions Category %d Sheltered' % (category+1)] != record['Condition 1 Category %d Sheltered' % (category+1)] or \
-                    record['Original Conditions Satisfaction'] != record['Condition 1 Satisfaction']:
+                record['Condition 1 Category %d Evacuate' % (category+1)] = 'yes' if 'evacuated' in locations else 'no'
+                record['Condition 1 Category %d Stayed Home' % (category+1)] = 'yes' if demos[name]['Residence'] in locations else 'no'
+                record['Condition 1 Category %d Sheltered' % (category+1)] = 'yes' if {loc for loc in locations if loc[:7] == 'shelter'} else 'no'
+            # 7
+            record['Condition 2'] = record['Condition 1 Satisfaction']
+            # 8-12
+            for category in range(5):
+                if petBan and world.agents[name].pet:
+                    for region in petBan:
+                        world.setState(region,'shelterPets',True)
+                    locations = []
+                    belief = accessibility.setHurricane(world,category+1,hurricane['Actual Location'][0],name,locations=locations,myStart=demos[name]['Residence'],debug=True)
+                    locations = set(locations)
+                    record['Condition 2 Category %d Evacuate' % (category+1)] = 'yes' if 'evacuated' in locations else 'no'
+                    record['Condition 2 Category %d Stayed Home' % (category+1)] = 'yes' if demos[name]['Residence'] in locations else 'no'
+                    record['Condition 2 Category %d Sheltered' % (category+1)] = 'yes' if {loc for loc in locations if loc[:7] == 'shelter'} else 'no'
+                    for region in petBan:
+                        world.setState(region,'shelterPets',False)
+                else:
+                    # No pets or pets already allowed
+                    record['Condition 2 Category %d Evacuate' % (category+1)] = record['Condition 1 Category %d Evacuate' % (category+1)]
+                    record['Condition 2 Category %d Stayed Home' % (category+1)] = record['Condition 1 Category %d Stayed Home' % (category+1)]
+                    record['Condition 2 Category %d Sheltered' % (category+1)] = record['Condition 1 Category %d Sheltered' % (category+1)]
+            # 13
+            record['Original Conditions New Shelter Satisfaction'] = record['Condition 1 Satisfaction']
+            # 14-18
+            for category in range(5):
+                record['Original Conditions Category %d Evacuate' % (category+1)] = record['Condition 1 Category %d Evacuate' % (category+1)]
+                record['Original Conditions Category %d Stayed Home' % (category+1)] = record['Condition 1 Category %d Stayed Home' % (category+1)]
+                record['Original Conditions Category %d Sheltered' % (category+1)] = record['Condition 1 Category %d Sheltered' % (category+1)]
+                if record['Original Conditions Category %d Evacuate' % (category+1)] != record['Condition 2 Category %d Evacuate' % (category+1)] or \
+                    record['Original Conditions Category %d Stayed Home' % (category+1)] != record['Condition 2 Category %d Stayed Home' % (category+1)] or \
+                    record['Original Conditions Category %d Sheltered' % (category+1)] != record['Condition 2 Category %d Sheltered' % (category+1)]:
                     print('difference!')
             output.append(record)
-        accessibility.writeOutput(args,output,fields,'TA2B-TA1C-52TargetingAid.tsv',
+            # 19
+            record['Original Conditions Shelter Improvement Satisfaction'] = record['Original Conditions New Shelter Satisfaction']            
+        accessibility.writeOutput(args,output,fields,'TA2B-TA1C-53NewShelters.tsv',
             os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance),'Runs','run-0'))

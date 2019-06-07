@@ -20,12 +20,12 @@ if __name__ == '__main__':
             'Condition 1 Category %d Sheltered' % (category+1)] for category in range(5)],[])+['Original Conditions Satisfaction']+\
         sum([['Original Conditions Category %d Evacuate' % (category+1),'Original Conditions Category %d Stayed Home' % (category+1),
             'Original Conditions Category %d Sheltered' % (category+1)] for category in range(5)],[])
-    for instance in range(1,15):
+    for instance in range(9,15):
         logging.info('Instance %d' % (instance))
         args = accessibility.instances[instance-1]
         config = accessibility.getConfig(args['instance'])
         data = accessibility.loadRunData(args['instance'],args['run'],args['span'],subs=['Input'] if instance > 2 else [None])
-        world = accessibility.loadPickle(args['instance'],args['run'],args['span']+(1 if instance > 1 else 0),
+        world = accessibility.loadPickle(args['instance'],args['run'],args['span']+(1 if instance == 2 or instance > 8 else 0),
             sub='Input' if instance > 2 else None)
         demos = accessibility.readDemographics(data,last=args['span'])
         hurricanes = [h for h in accessibility.readHurricanes(args['instance'],args['run'],'Input' if instance > 2 else None) 
