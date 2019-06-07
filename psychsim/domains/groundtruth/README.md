@@ -15,7 +15,7 @@ USC Ground Truth simulation code.
       i. PYTHONPATH should be set to the directory where installed PsychSim in Step 2.
       ii. Change the final command to use "python2" if you did not install Python 3.
       iii. Change the path in the final command to point to the groundtruth directory you installed in Step 3a.
-4. Run "sh groundtruth/gt.sh -i 21 -n 1" to run the simulation for a single hurricane using configuration file "groundtruth/config/000021.ini"
+4. Run "sh groundtruth/gt.sh -i 51 -n 1" to run the simulation for a single hurricane using configuration file "groundtruth/config/000051.ini"
    a. Run "sh groundtruth/gt.sh --help" to see the list of possible execution options
 
 
