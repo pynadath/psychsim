@@ -54,6 +54,7 @@ class System(Agent):
                         tree = makeTree(approachMatrix(grievance,delta,1.))
                     world.setDynamics(grievance,allocate,tree,codePtr=True)
         self.setAttribute('horizon',config.getint('System','horizon'))
+        self.TA2BTA1C52 = False
 
     def reward(self,state=None,model=None,recurse=True):
         if state is None:
@@ -78,11 +79,26 @@ class System(Agent):
         state = self.world.state
         if actions is None:
             actions = self.getActions(state)
-        population = {name: [a for a in self.world.agents.values() if isinstance(a,Actor) and a.home == name]
-                      for name in self.world.agents if isinstance(self.world.agents[name],Region)}
-        risks = [(state[stateKey(a['object'],'risk')].expectation()*len(population[a['object']]),a)
-                 for a in actions if a['object'] is not None]
-        choice = max(risks)
+        try:
+            if self.TA2BTA1C52:
+                location = self.world.getState('Nature','location',state)
+                assert len(location) == 1
+                for action in actions:
+                    if action['object'] == location.first():
+                        choice = (None,action)
+                        break
+                else:
+                    choice = None
+            else:
+                choice = None
+        except AttributeError:
+            choice = None
+        if choice is None:
+            population = {name: [a for a in self.world.agents.values() if isinstance(a,Actor) and a.home == name]
+                          for name in self.world.agents if isinstance(self.world.agents[name],Region)}
+            risks = [(state[stateKey(a['object'],'risk')].expectation()*len(population[a['object']]),a)
+                     for a in actions if a['object'] is not None]
+            choice = max(risks)
         tree = makeTree(setToConstantMatrix(stateKey(self.name,ACTION),choice[1]))
         return {'policy': tree.desymbolize(self.world.symbols)}
             
