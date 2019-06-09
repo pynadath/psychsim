@@ -8,7 +8,7 @@ from psychsim.domains.groundtruth import accessibility
 from psychsim.action import *
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.INFO,filename=os.path.join(os.path.dirname(__file__),'TA2B-TA1C-52.log'))
+    logging.basicConfig(level=logging.INFO,filename=os.path.join(os.path.dirname(__file__),'TA2B-TA1C-53.log'))
     random.seed(53)
     responses = {1: 'I would be strongly satisfied',
         2: 'I would be somewhat satisfied',
@@ -22,7 +22,7 @@ if __name__ == '__main__':
             'Condition 2 Category %d Sheltered' % (category+1)] for category in range(5)],[])+['Original Conditions New Shelter Satisfaction']+\
         sum([['Original Conditions Category %d Evacuate' % (category+1),'Original Conditions Category %d Stayed Home' % (category+1),
             'Original Conditions Category %d Sheltered' % (category+1)] for category in range(5)],[])+['Original Conditions Shelter Improvement Satisfaction']
-    for instance in range(1,15):
+    for instance in range(4,15):
         logging.info('Instance %d' % (instance))
         args = accessibility.instances[instance-1]
         config = accessibility.getConfig(args['instance'])
