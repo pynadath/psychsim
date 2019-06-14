@@ -10,14 +10,15 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,filename=os.path.join(os.path.dirname(__file__),'TA2A-TA1C-0172.log'))
     random.seed(172)
     trustLevels = [(3,'a'),(1,'b'),(2,'d'),(4,'e')]
-    for instance in range(9,15):
+    for instance in [1,9,10,11,12,13,14]:
         args = accessibility.instances[instance-1]
         logging.info('Instance %d, run %d' % (args['instance'],args['run']))
         config = accessibility.getConfig(args['instance'])
-        network = accessibility.readNetwork(args['instance'],args['run'],'Input')        
+        network = accessibility.readNetwork(args['instance'],args['run'],'Input' if instance > 2 else None)
         friendTrust = config.getint('Actors','friend_opt_trust')+config.getint('Actors','friend_opt_trust')
-        world = accessibility.loadPickle(args['instance'],args['run'],args['span']+1,'Input')
-        data = accessibility.loadRunData(args['instance'],args['run'],args['span']+1,subs=['Input'])
+        world = accessibility.loadPickle(args['instance'],args['run'],args['span']+(1 if instance == 2 or instance > 8 else 0),
+            sub='Input' if instance > 2 else None)
+        data = accessibility.loadRunData(args['instance'],args['run'],args['span']+1,subs=['Input'] if instance > 2 else [None])
         population = accessibility.getPopulation(data)
         demos = accessibility.readDemographics(data,last=args['span'])
         pool = random.sample(population,16)

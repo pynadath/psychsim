@@ -1,0 +1,90 @@
+Name	LongName	Values	VarType	DataType	Notes
+Household Size	Household Size	[1-]	dynamic	Integer	I.1.k
+Income	Income	[0-5]	dynamic	Integer	I.1.l
+Pregnant	Pregnant	yes,no 	dynamic	Boolean	I.1.m
+Length of Stay	Length of Stay	[0-]	dynamic	Integer	I.1.n (in years)
+Acquaintances in Region	Acquaintances in Region	[0-]	dynamic	Integer	I.2.a
+Acquaintances outside Region	Acquaintances outside Region	[0-]	dynamic	Integer	I.2.b
+Acquaintances outside Area	Acquaintances outside Area	[0-]	dynamic	Integer	I.2.c
+Friends in Region	Friends in Region	[0-]	dynamic	Integer	I.2.d
+Friends outside Region	Friends outside Region	[0-]	dynamic	Integer	I.2.e
+Friends outside Area	Friends outside Area	[0-]	dynamic	Integer	I.2.f
+Family in Region	Family in Region	[0-]	dynamic	Integer	I.2.g
+Family outside Region	Family outside Region	[0-]	dynamic	Integer	I.2.h
+Family outside Area	Family outside Area	[0-]	dynamic	Integer	I.2.i
+Any Evacuation Request	Any Evacuation Request	yes,no 	dynamic	Boolean	II.1.a
+Voluntary Evacuation Request	Voluntary Evacuation Request	yes,no 	dynamic	Boolean	II.1.b
+Mandatory Evacuation Request	Mandatory Evacuation Request	yes,no 	dynamic	Boolean	II.1.c
+Family Aid Pre	Family Aid Pre	yes,no 	dynamic	Boolean	II.2
+Family Aid During	Family Aid During	yes,no 	dynamic	Boolean	II.2.a
+Family Aid Post	Family Aid Post	yes,no 	dynamic	Boolean	II.2.b
+Acquaintance Aid Pre	Acquaintance Aid Pre	yes,no 	dynamic	Boolean	II.2.c
+Acquaintance Aid During	Acquaintance Aid During	yes,no 	dynamic	Boolean	II.2.d
+Acquaintance Aid Post	Acquaintance Aid Post	yes,no 	dynamic	Boolean	II.2.e
+Friend Aid Pre	Friend Aid Pre	yes,no 	dynamic	Boolean	II.f
+Friend Aid During	Friend Aid During	yes,no 	dynamic	Boolean	II.2.g
+Friend Aid Post	Friend Aid Post	yes,no 	dynamic	Boolean	II.2.h
+Hurricane Prediction from Government	Hurricane Prediction from Government	yes,no 	dynamic	Boolean	II.3.a
+Hurricane Prediction from Friends	Hurricane Prediction from Friends	yes,no 	dynamic	Boolean	II.3.b
+Hurricane Prediction from Family	Hurricane Prediction from Family	yes,no 	dynamic	Boolean	II.3.c
+Hurricane Prediction from Acquaintances	Hurricane Prediction from Acquaintances	yes,no 	dynamic	Boolean	II.3.d
+Hurricane Prediction from Others	Hurricane Prediction from Others	yes,no 	dynamic	Boolean	II.3.e
+Hurricane Prediction from Social Media	Hurricane Prediction from Social Media	yes,no 	dynamic	Boolean	II.3.f
+Hurricane Category from Government	Hurricane Category from Government	yes,no 	dynamic	Boolean	II.3.g
+Hurricane Category from Friends	Hurricane Category from Friends	yes,no 	dynamic	Boolean	II.3.h
+Hurricane Category from Family	Hurricane Category from Family	yes,no 	dynamic	Boolean	II.3.i
+Hurricane Category from Acquaintances	Hurricane Category from Acquaintances	yes,no 	dynamic	Boolean	II.3.j
+Hurricane Category from Others	Hurricane Category from Others	yes,no 	dynamic	Boolean	II.3.k
+Hurricane Category from Social Media	Hurricane Category from Social Media	yes,no 	dynamic	Boolean	II.3.l
+Hurricane Location from Government	Hurricane Location from Government	yes,no 	dynamic	Boolean	II.3.m
+Hurricane Location from Friends	Hurricane Location from Friends	yes,no 	dynamic	Boolean	II.3.n
+Hurricane Location from Family	Hurricane Location from Family	yes,no 	dynamic	Boolean	II.3.o
+Hurricane Location from Acquaintances	Hurricane Location from Acquaintances	yes,no 	dynamic	Boolean	II.3.p
+Hurricane Location from Others	Hurricane Location from Others	yes,no 	dynamic	Boolean	II.3.q
+Hurricane Location from Social Media	Hurricane Location from Social Media	yes,no 	dynamic	Boolean	II.3.r
+Regional Damage from Government	Regional Damage from Government	yes,no 	dynamic	Boolean	II.3.s
+Regional Damage from Friends	Regional Damage from Friends	yes,no 	dynamic	Boolean	II.3.t
+Regional Damage from Family	Regional Damage from Family	yes,no 	dynamic	Boolean	II.3.u
+Regional Damage from Acquaintances	Regional Damage from Acquaintances	yes,no 	dynamic	Boolean	II.3.v
+Regional Damage from Others	Regional Damage from Others	yes,no 	dynamic	Boolean	II.3.w
+Regional Damage from Social Media	Regional Damage from Social Media	yes,no 	dynamic	Boolean	II.3.x
+Evacuation Factor Transportation	Evacuation Factor Transportation	yes,no 	dynamic	Boolean	II.4.a
+Evacuation Factor Lose Job	Evacuation Factor Lose Job	yes,no 	dynamic	Boolean	II.4.b
+Evacuation Factor Looters	Evacuation Factor Looters	yes,no 	dynamic	Boolean	II.4.c
+Evacuation Factor Home Safer	Evacuation Factor Home Safer	yes,no 	dynamic	Boolean	II.4.d
+Evacuation Factor Reduce Damage	Evacuation Factor Reduce Damage	yes,no 	dynamic	Boolean	II.4.e
+Evacuation Factor Lack of Money	Evacuation Factor Lack of Money	yes,no 	dynamic	Boolean	II.4.f
+Evacuation Factor Not Healthy	Evacuation Factor Not Healthy	yes,no 	dynamic	Boolean	II.4.g
+Evacuation Factor Elderly	Evacuation Factor Elderly	yes,no 	dynamic	Boolean	II.4.h
+Evacuation Factor Elderly	Evacuation Factor Elderly	yes,no 	dynamic	Boolean	II.4.i
+Evacuation Factor Children	Evacuation Factor Children	yes,no 	dynamic	Boolean	II.4.j
+Evacuation Factor Pets	Evacuation Factor Pets	yes,no 	dynamic	Boolean	II.4.k
+Evacuation Factor Health Condition	Evacuation Factor Health Condition	yes,no 	dynamic	Boolean	II.4.l
+Experience Affect Evacuation	Experience Affect Evacuation	yes,no 	dynamic 	Boolean	II.5.a
+Experience Affect Risk Perception	Experience Affect Risk Perception	yes,no 	dynamic 	Boolean	II.5.b
+Primary Damage Source	Primary Damage Source	don't know 	dynamic 	String	II.5.c
+Further Damage	Further Damage	yes,no 	dynamic 	Boolean	II.5.d
+Evacuate Home Same	Evacuate Home Same	yes,no 	dynamic 	Boolean	II.6.a
+Evacuate Home Different	Evacuate Home Different	yes,no 	dynamic 	Boolean	II.6.b
+Direct Injury	Direct Injury	yes,no 	dynamic 	Boolean	II.7.a
+Direct Mental Illness	Direct Mental Illness	yes,no 	dynamic 	Boolean	II.7.b
+Indirect Injury	Indirect Injury	yes,no 	dynamic 	Boolean	II.7.c
+Indirect Mental Illness	Indirect Mental Illness	yes,no 	dynamic 	Boolean	II.7.d
+Chronic Disease	Chronic Disease	yes,no 	dynamic 	Boolean	II.7.e
+Know Shelter Location	Know Shelter Location	yes,no 	dynamic 	Boolean	II.8.a
+Know Shelter Policy	Know Shelter Policy	yes,no 	dynamic 	Boolean	II.8.b
+Never Evacuate	Never Evacuate	yes,no 	dynamic 	Boolean	II.8.c
+Never Shelter	Never Shelter	yes,no 	dynamic 	Boolean	II.8.d
+Take Advantage	People Take Advantage	yes,no 	dynamic 	Boolean	III.1.a
+Trustworthy	People Can Be Trusted	yes,no 	dynamic 	Boolean	III.1.b
+Helpful	People Are Helpful	yes,no 	dynamic 	Boolean	III.1.c
+Civic Activities	Civic Activities	yes,no 	dynamic 	Boolean	III.1.d
+My Region Risk	My Region Risk	[1-5]	dynamic	Integer	III.2.a
+My House Risk	My House Risk	[1-5]	dynamic	Integer	III.2.b
+Trust in Friends	Trust in Friends	[0-6]	dynamic	Integer	III.3.a
+Trust in Family	Trust in Family	[0-6]	dynamic	Integer	III.3.b
+Trust in Acquaintances	Trust in Acquaintances	[0-6]	dynamic	Integer	III.3.c
+Trust in Others	Trust in Others	[0-6]	dynamic	Integer	III.3.d
+Trust in Government	Trust in Government	[0-6]	dynamic	Integer	III.3.e
+Trust in Social Media	Trust in Social Media	[0-6]	dynamic	Integer	III.3.f
+Geographical Features	Geographical Features	yes,no 	static	Boolean	IV.1

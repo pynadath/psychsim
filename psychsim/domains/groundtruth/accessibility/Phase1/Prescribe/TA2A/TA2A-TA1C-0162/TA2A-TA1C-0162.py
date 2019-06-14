@@ -9,16 +9,18 @@ from psychsim.domains.groundtruth import accessibility
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,filename=os.path.join(os.path.dirname(__file__),'TA2A-TA1C-0162.log'))
     random.seed(162)
-    for instance in range(9,15):
+    for instance in [1,9.10,11,12,13,14]:
         args = accessibility.instances[instance-1]
-        world = accessibility.loadPickle(args['instance'],args['run'],args['span']+1,'Input')
-        hurricanes = accessibility.readHurricanes(args['instance'],args['run'],'Input')
+        world = accessibility.loadPickle(args['instance'],args['run'],args['span']+(1 if instance == 2 or instance > 8 else 0),
+            sub='Input' if instance > 2 else None)
+        hurricanes = [h for h in accessibility.readHurricanes(args['instance'],args['run'],'Input' if instance > 2 else None) 
+            if h['End'] < args['span']]
         hurricane = hurricanes[-1]
         assert hurricane['End'] < args['span']
         dayFirst = hurricane['Start']-2
         dayLast = args['span']
 
-        data = accessibility.loadRunData(args['instance'],args['run'],args['span']+1,subs=['Input'])
+        data = accessibility.loadRunData(args['instance'],args['run'],args['span']+1,subs=['Input'] if instance > 2 else [None])
         population = {name for name in data if name[:5] == 'Actor' and data[name][stateKey(name,'alive')][dayFirst]}
         demos = accessibility.readDemographics(data,last=dayFirst)
         pool = random.sample(population,8)
@@ -27,7 +29,7 @@ if __name__ == '__main__':
             data[name][actionKey(name)][day]['verb'] == 'decreaseRisk'}
             for day in range(dayFirst,dayLast)}
 
-        network = accessibility.readNetwork(args['instance'],args['run'],'Input')
+        network = accessibility.readNetwork(args['instance'],args['run'],'Input' if instance > 2 else None)
         output = []
         fields = ['Participant','Timestep']+sorted(accessibility.demographics.keys())+['Vulnerable','# of Friends',
             'Aid if Wealth Loss','New Friends']

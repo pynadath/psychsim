@@ -16,7 +16,7 @@ if __name__ == '__main__':
             'Condition 1 Category %d Sheltered' % (category+1)] for category in range(5)],[])+['Original Conditions Satisfaction']+\
         sum([['Original Conditions Category %d Evacuate' % (category+1),'Original Conditions Category %d Stayed Home' % (category+1),
             'Original Conditions Category %d Sheltered' % (category+1)] for category in range(5)],[])
-    for instance in range(9,15):
+    for instance in [1]: # [9,10,11,12,13,14]:
         logging.info('Instance %d' % (instance))
         args = accessibility.instances[instance-1]
         config = accessibility.getConfig(args['instance'])
