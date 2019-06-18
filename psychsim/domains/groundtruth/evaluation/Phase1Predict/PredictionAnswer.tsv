@@ -1,0 +1,13 @@
+Instance	Outcome	Global Casualties/Deaths (Best)	Global Casualties/Deaths (Acceptable)	Global Evacuees (Best)	Global Evacuees (Acceptable)	Local Min Casualties/Deaths (Best)	Local Min Casualties/Deaths (Optional)	Local Max Casualties/Deaths (Best)	Local Max Casualties/Deaths (Optional)	Local Min Evacuees (Best)	Local Min Evacuees (Optional)	Local Max Evacuees (Best)	Local Max Evacuees (Optional)	Individual Casualty/Death	Individual Evacuation (Best)	Individual Evacuation (Acceptable)
+3	Actual	19-20	17-22	69	68-70	Region01,Region02,Region04,Region07	Region08,Region12,Region16	Region14	Region15	Region02		Region09		no	yes	
+3	Counterfactual	17	17-20	76	75-77	Region01,Region02,Region04,Region07,Region08	Region12	Region14	Region15	Region02		Region09		no	yes	
+4	Actual	16	14-19	15		Region12,Region16	Region01,Region07,Region09,Region10,Region11,Region15	Region05	Region03,Region08	Region02,Region05,Region06,Region08,Region10,Region13		Region03		no	no	
+4	Counterfactual	16-17	16-20	90		Region11,Region12,Region15,Region16	Region01,Region02,Region03,Region07,Region09,Region10	Region03,Region05	Region08	Region15		Region06		no	yes	
+5	Actual	18	12-20	85	85-86	Region01,Region02,Region03,Region04,Region06,Region07,Region08,Region09	Region05,Region12	Region14		Region02		Region09		no	yes	
+5	Counterfactual	16	13-20	85	85-86	Region01,Region02,Region03,Region04,Region07,Region08,Region09	Region05,Region06,Region12	Region14		Region02		Region09		no	yes	
+6	Actual	10	8-14	97-102		Region08,Region11	Region06,Region10,Region12	Region02	Region03,Region05	Region05	Region02,Region09	Region08	Region11	no	3	1-3
+6	Counterfactual	16	10-16	95	90-100	Region08,Region11	Region12	Region03,Region05	Region09	Region05	Region02,Region09	Region08	Region11	no	2	2-3
+7	Actual	9	0-9	90	89-92	Region03,Region07,Region08	Region06,Region11,Region14	Region09,Region15		Region15		Region03,Region06,Region07,Region08,Region11,Region14		no	9	8-9
+7	Counterfactual	5-6	4-10	90	88-92	Region07,Region08,Region14	Region03,Region11,Region06	Region09	Region15	Region15		Region03,Region06,Region07,Region08,Region11,Region14		no	9	8-10
+8	Actual	0	0-2	103	102-104	tie across all regions		tie across all regions		Region07		Region02,Region09		no	0	
+8	Counterfactual	0	0-2	100	98-100	tie across all regions		tie across all regions		Region07		Region09	Region02	no	0	
