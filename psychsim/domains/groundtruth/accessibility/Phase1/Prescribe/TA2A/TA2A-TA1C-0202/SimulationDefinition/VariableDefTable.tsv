@@ -1,0 +1,6 @@
+Name	LongName	Values	VarType	DataType	Notes
+Timestep	Timestep 	[1-]	dynamic	Integer	Day on which prediction was made
+Hurricane	Hurricane	[1-]	dynamic	Integer	The hurricane (as numbered in the HurricaneTable) for which the prediction is made
+Predicted Timestep	Predicted Timestep	[1-]	dynamic	Integer	Day for which this entry's prediction is relevant to
+Predicted Location	Predicted Location	[Region01-16]	dynamic	String	Region in which the hurricane is predicted to be on the Predicted Timestep
+Predicted Category	Predicted Category	[1-5]	dynamic	Integer	Predicted category of the hurricane on the Predicted Timestep

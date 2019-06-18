@@ -104,8 +104,14 @@ def writeOutput(args,data,fields=None,fname=None,dirName=None):
         for record in data:
             writer.writerow(record)
 
-def openFile(args,fname):
-    return open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run'])),fname),'r')
+def instanceFile(args,name,sub=None):
+    fname = os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run'])))
+    if sub:
+        fname = os.path.join(fname,sub)
+    return os.path.join(fname,name)
+
+def openFile(args,fname,sub=None):
+    return open(instanceFile(args,fname,sub),'r')
 
 def loadRunData(instance,run=0,end=None,nature=False,subs=[None]):
     fields = None
@@ -303,6 +309,26 @@ def getPopulation(data):
     """
     return [name for name in data if name[:5] == 'Actor' and data[name][stateKey(name,'alive')][max(data[name][stateKey(name,'alive')].keys())]]
 
+def setBelief(actor,world,data,t):
+    """
+    Sets the belief state of the given actor to be whatever its beliefs were at timestep t in the given run data
+    """
+    agent = world.agents[actor]
+    beliefs = agent.getBelief()
+    model,myBelief = next(iter(beliefs.items()))
+    newBelief = copy.deepcopy(myBelief)
+    for key,history in data[actor]['__beliefs'].items():
+        value = history[t]
+        name,feature = state2tuple(key)
+        if name == 'Actor':
+            key = stateKey(actor,feature)
+        elif name == 'Region':
+            key = stateKey(agent.home,feature)
+        else:
+            print(key)
+        world.setFeature(key,value,newBelief)
+    return newBelief
+
 def setHurricane(world,category,location,actor,actions=None,locations=None,myStart=None,debug=False):
     """
     :param start: Initial location for actor (default is current location)
@@ -334,3 +360,29 @@ def getParticipantID(name,pool):
             return num
     else:
         raise ValueError('%s not found in pool' % (name))
+
+def hurricanePrediction(world,hurricane,debug=False):
+    state = copy.deepcopy(world.state)
+    world.setState('Nature','phase','approaching',state)
+    location = hurricane['Actual Location'][0]
+    world.setState('Nature','location',location,state)
+    world.setState('Nature','category',int(hurricane['Actual Category'][0]),state)
+    world.setState('Nature','days',0,state)
+    world.setState(WORLD,'day',hurricane['Start'],state)
+    action = next(iter(world.agents['Nature'].actions))
+    predictions = []
+    while location != 'none':
+        world.rotateTurn('Nature',state)
+        world.step({'Nature': action},state,updateBeliefs=False,select=True)
+        phase = world.getState('Nature','phase',state).first()
+        location = world.getState('Nature','location',state).first()
+        if debug:
+            print(phase,location,world.getState(WORLD,'day',state).first())
+        if phase == 'active':
+            record = {'Timestep': hurricane['Start'],
+                'Hurricane': hurricane['Hurricane'],
+                'Predicted Timestep': world.getState(WORLD,'day',state).first(),
+                'Predicted Location': location,
+                'Predicted Category': world.getState('Nature','category',state).first()}
+            predictions.append(record)
+    return predictions
