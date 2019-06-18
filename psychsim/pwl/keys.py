@@ -51,6 +51,17 @@ def state2agent(key):
         return None
     else:
         return key[:index]
+
+def state2tuple(key):
+    """
+    :returns: the separated agent name and feature from the given key
+    :rtype: (str,str)
+    """
+    index = key.find("'")
+    if index < 0:
+        return None
+    else:
+        return key[:index],key[index+3:]
     
 def makePresent(key):
     """
