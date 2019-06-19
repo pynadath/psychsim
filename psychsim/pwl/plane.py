@@ -252,6 +252,16 @@ class KeyedPlane:
                             if value is False:
                                 return False
                         return None
+                    elif isinstance(yrThresh,list):
+                        try:
+                            return yrThresh.index(myThresh)
+                        except ValueError:
+                            return None
+                    elif isinstance(myThresh,list):
+                        try:
+                            return myThresh.index(yrThresh)
+                        except ValueError:
+                            return None
                     elif abs(myThresh - yrThresh) < myVec.epsilon:
                         # Values are the same, so test results must be the same
                         return value

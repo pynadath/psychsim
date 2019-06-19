@@ -3,7 +3,7 @@ from xml.dom.minidom import Document,Node
 from psychsim.probability import Distribution
 from psychsim.action import Action
 
-from psychsim.pwl.keys import CONSTANT,makeFuture,makePresent
+from psychsim.pwl.keys import CONSTANT,makeFuture,makePresent,isFuture
 from psychsim.pwl.vector import KeyedVector
 from psychsim.pwl.matrix import KeyedMatrix,setToConstantMatrix
 from psychsim.pwl.plane import KeyedPlane,equalRow
@@ -292,7 +292,8 @@ class KeyedTree:
             elif self.isProbabilistic():
                 dist = {}
                 for child in self.children.domain():
-                    dist[other*child] = self.children[child]
+                    prod = other*child
+                    dist[prod] = dist.get(prod,0.)+self.children[child]
                 tree.makeProbabilistic(TreeDistribution(dist))
             else:
                 tree.makeBranch(self.branch,
@@ -485,10 +486,18 @@ class KeyedTree:
             for tree in self.children.domain():
                 prob = self.children[tree]
                 child = tree.prune(path)
-                try:
-                    distribution[child] += prob
-                except KeyError:
-                    distribution[child] = prob
+                if child.isProbabilistic():
+                    for grandchild in child.children.domain():
+                        subprob = child.children[grandchild]
+                        try:
+                            distribution[grandchild] += prob*subprob
+                        except KeyError:
+                            distribution[grandchild] = prob*subprob
+                else:
+                    try:
+                        distribution[child] += prob
+                    except KeyError:
+                        distribution[child] = prob
             if len(distribution) == 1:
                 result.graft(child)
             else:

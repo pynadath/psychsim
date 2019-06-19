@@ -10,10 +10,10 @@ TURN = '__TURN__'
 
 def stateKey(name,feature,future=False):
     """
-    @param future: if C{True}, then this refers to the projected value of this feature (default is C{False})
-    @type future: bool
-    @return: a key representation of a given entity's state feature
-    @rtype: str
+    :param future: if C{True}, then this refers to the projected value of this feature (default is C{False})
+    :type future: bool
+    :returns: a key representation of a given entity's state feature
+    :rtype: str
     """
     if future:
         return stateKey(name,feature)+"'"
@@ -25,15 +25,15 @@ TERMINATED = stateKey(WORLD,'__END__')
 
 def isStateKey(key):
     """
-    @return: C{True} iff this key refers to a state feature
-    @rtype: bool
+    :returns: C{True} iff this key refers to a state feature
+    :rtype: bool
     """
     return '\'s ' in key
 
 def state2feature(key):
     """
-    @return: the feature string from the given key
-    @rtype: str
+    :returns: the feature string from the given key
+    :rtype: str
     """
     index = key.find("'")
     if index < 0:
@@ -43,19 +43,30 @@ def state2feature(key):
 
 def state2agent(key):
     """
-    @return: the agent name from the given key
-    @rtype: str
+    :returns: the agent name from the given key
+    :rtype: str
     """
     index = key.find("'")
     if index < 0:
         return None
     else:
         return key[:index]
+
+def state2tuple(key):
+    """
+    :returns: the separated agent name and feature from the given key
+    :rtype: (str,str)
+    """
+    index = key.find("'")
+    if index < 0:
+        return None
+    else:
+        return key[:index],key[index+3:]
     
 def makePresent(key):
     """
-    @return: a reference to the given state features' current value
-    @rtype: str
+    :returns: a reference to the given state features' current value
+    :rtype: str
     """
     if isinstance(key,set):
         return {makePresent(k) for k in key}
@@ -66,8 +77,8 @@ def makePresent(key):
 
 def makeFuture(key):
     """
-    @return: a reference to the given state features' projected future value
-    @rtype: str
+    :returns: a reference to the given state features' projected future value
+    :rtype: str
     """
     if key[-1] == "'":
         raise ValueError('%s is already a future key' % (key))
@@ -105,13 +116,13 @@ def model2name(key):
     return key[:-(len(MODEL)+3)]
 
 def binaryKey(subj,obj,relation):
-    return '%s %s -> %s' % (subj,relation,obj)
+    return '%s %s -- %s' % (subj,relation,obj)
 
 def isBinaryKey(key):
-    return ' -> ' in key
+    return ' -- ' in key
 
 def key2relation(key):
-    sides = key.split(' -> ')
+    sides = key.split(' -- ')
     first = sides[0].split()
     return {'subject': ' '.join(first[:-1]),
             'object': sides[1],
@@ -121,7 +132,7 @@ def likesKey(subj,obj):
     return binaryKey(subj,obj,'likes')
 
 def isLikesKey(key):
-    return ' likes -> ' in key
+    return ' likes -- ' in key
 
 def rewardKey(name,future=False):
     return stateKey(name,REWARD,future)
@@ -143,10 +154,14 @@ def belief2key(key):
 
 def escapeKey(key):
     """
-    @return: filename-ready version of the key
+    :returns: filename-ready version of the key
     """
     if not isinstance(key,str):
         key = str(key)
+    if isBeliefKey(key):
+        believer = belief2believer(key)
+        subkey = belief2key(key)
+        return 'Belief(%s)Of%s' % (escapeKey(subkey),believer)
     future = isFuture(key)
     if future:
         key = makePresent(key)
