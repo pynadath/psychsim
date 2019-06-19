@@ -140,7 +140,7 @@ def runInstance(instance,args,config,rerun=True):
             prof.enable()
         if args['compile']:
             for agent in population:
-                print('Compiling: %s' % (agent))
+                print('Compiling: %s' % (agent.name))
                 agent.compileV()
         random.seed(config.getint('Simulation','seedRun')+run)
         survey = set()
