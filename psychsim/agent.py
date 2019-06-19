@@ -63,7 +63,7 @@ class Agent(object):
     """------------------"""
 
         
-    def compileV(self,model=None):
+    def compileV(self,model=None,debug=False):
         self.world.dependency.getEvaluation()
         if model is None:
             model = self.models['%s0' % (self.name)]
@@ -88,8 +88,9 @@ class Agent(object):
                     assert len(mentalModel) == 1,'Currently unable to compile policies for uncertain mental models'
                     mentalModel = mentalModel.first()
                 else:
-                    assert len(other.models) == 1,'Unable to compile policies without explicit mental model of %s' % (other.name)
-                    mentalModel = next(iter(other.models.keys()))
+                    models = [model for model in other.models.keys() if 'modelOf' not in model]
+                    assert len(models) == 1,'Unable to compile policies without explicit mental model of %s' % (other.name)
+                    mentalModel = models[0]
                 mentalModel = other.addModel('%s_modelOf_%s' % (self.name,mentalModel),
                                              parent=mentalModel,static=True)
                 action = next(iter(other.actions))
@@ -98,6 +99,7 @@ class Agent(object):
         for action in actions:
             effects = self.world.deltaState(action,belief,belief.keys())
             model['V'][action] = collapseDynamics(copy.deepcopy(R),effects)
+            if debug: print(self.name,action)
         return model['V']
                             
     def decide(self,vector=None,horizon=None,others=None,model=None,selection=None,actions=None,
@@ -196,13 +198,22 @@ class Agent(object):
             # Only one possible action
             return {'action': next(iter(actions))}
         # Keep track of value function
-        if self.parallel:
+        Vfun = self.getAttribute('V',model)
+        if Vfun:
+            # Use stored value function
+            V = {}
+            for action in actions:
+                b = copy.deepcopy(belief)
+                b *= Vfun[action]
+                V[action] = {'__EV__': b[rewardKey(self.name,True)].expectation()}
+        elif self.parallel:
             with multiprocessing.Pool() as pool:
                 results = [(action,pool.apply_async(self.value,
                                                     args=(belief,action,model,horizon,others,keySet)))
                            for action in actions]
                 V = {action: result.get() for action,result in results}
         else:
+            # Compute values in sequence
             V = {}
             for action in actions:
                 V[action] = self.value(belief,action,model,horizon,others,keySet)
