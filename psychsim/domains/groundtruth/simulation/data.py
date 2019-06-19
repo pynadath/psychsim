@@ -44,18 +44,18 @@ demographics = {'Gender': 'gender',
                 'Age': 'age',
                 'Ethnicity': 'ethnicGroup',
                 'Religion': 'religion',
-                'Children': 'children',
-                'Fulltime Job': 'employed',
+                'Children': 'kids',
+                'Fulltime Job': 'job',
                 'Pets': 'pet',
-                'Wealth': 'resources',
-                'Residence': 'region'}
+                'Wealth': 'wealth',
+                'Residence': 'home'}
 
 def getDemographics(actor,old=False):
     record = {}
     # Demographic info
     for field,answer in demographics.items():
         if isinstance(answer,str):
-            value = actor.getState(answer).first()
+            value = actor.demographics[answer]
             if field == 'Wealth':
                 if old:
                     record[field] = int(value*5.1)
@@ -69,7 +69,7 @@ def getDemographics(actor,old=False):
             else:
                 record[field] = value
         elif field == 'Residence':
-            record[field] = actor.home
+            record[field] = actor.demographics['home']
         else:
             raise RuntimeError('Unable to process pre-survey field: %s' % (field))
     return record

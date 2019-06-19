@@ -79,9 +79,9 @@ class Region(Agent):
                 self.security = likert[5][mean-1]
         world.setFeature(security,self.security)
 
-        economy = world.defineState(self.name,'economy',float,codePtr=True,
-                                    description='Current economic level of region')
-        world.setFeature(economy,1.)
+#        economy = world.defineState(self.name,'economy',float,codePtr=True,
+#                                    description='Current economic level of region')
+#        world.setFeature(economy,1.)
 
         if index is not None:
             # Shelter in this region
@@ -107,8 +107,8 @@ class Region(Agent):
     def setInhabitants(self,agents):
         self.inhabitants = agents
         total = sum([agent.getState('resources').expectation() for agent in agents])
-        if agents:
-            self.setState('economy',total/float(len(agents)))
-        else:
-            self.setState('economy',total)
+#        if agents:
+#            self.setState('economy',total/float(len(agents)))
+#        else:
+#            self.setState('economy',total)
         

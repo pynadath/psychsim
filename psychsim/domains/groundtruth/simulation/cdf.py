@@ -504,7 +504,7 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                                         regions[agent.name][field] = agent.getState(feature).first()
                                     else:
                                         residents = [a for a in world.agents.values() \
-                                                     if isinstance(a,Actor) and a.home == agent.name]
+                                                     if isinstance(a,Actor) and a.demographics['home'] == agent.name]
                                         data = {'total': 0,
                                                 'count': 0}
                                         for actor in residents:

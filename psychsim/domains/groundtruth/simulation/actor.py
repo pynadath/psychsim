@@ -104,13 +104,16 @@ class Actor(Agent):
         job = world.defineState(self.name,'employed',bool,description='Has a full-time job',
                                 codePtr=True)
         threshold = likert[5][config.getint('Actors','job_%s' % (self.demographics['ethnicGroup']))-1]
-        self.job = random.random() < threshold
-        world.setFeature(job,self.job)
+        self.demographics['job'] = random.random() < threshold
+        world.setFeature(job,self.demographics['job'])
 
-        pet = world.defineState(self.name,'pet',bool,description='Owns a pet',codePtr=True)
-        threshold = likert[5][config.getint('Actors','pet_prob')-1]
-        self.pet = random.random() < threshold
-        world.setFeature(pet,self.pet)
+        threshold = config.getint('Actors','pet_prob')
+        if threshold > 0:
+            pet = world.defineState(self.name,'pet',bool,description='Owns a pet',codePtr=True)
+            self.demographics['pet'] = random.random() < likert[5][threshold-1]
+            world.setFeature(pet,self.demographics['pet'])
+        else:
+            self.demographics['pet'] = False
 
         if config.getint('Actors','married',fallback=0) > 0:
             threshold = likert[5][config.getint('Actors','married')-1]
@@ -249,7 +252,7 @@ class Actor(Agent):
         wealth = world.defineState(self.name,'resources',float,codePtr=True,
                                    description='Material resources (wealth) currently owned')
         try:
-            self.wealth = float(config.get('Actors','wealth_value_age').split(',')[ageInterval-1])
+            self.demographics['wealth'] = float(config.get('Actors','wealth_value_age').split(',')[ageInterval-1])
         except configparser.NoOptionError:
             mean = int(config.get('Actors','wealth_mean_age').split(',')[ageInterval-1])
             if self.demographics['ethnicGroup'] == 'minority':
@@ -261,30 +264,31 @@ class Actor(Agent):
             mean = max(1,mean)
             sigma = config.getint('Actors','wealth_sigma')
             if sigma > 0:
-                self.wealth = sampleNormal(mean,sigma)
+                self.demographics['wealth'] = sampleNormal(mean,sigma)
             else:
-                self.wealth = likert[5][mean-1]
-        world.setFeature(wealth,self.wealth)
+                self.demographics['wealth'] = likert[5][mean-1]
+        world.setFeature(wealth,self.demographics['wealth'])
 
         risk = world.defineState(self.name,'risk',float,codePtr=True,
                                  description='Current level of risk from hurricane')
         world.setFeature(risk,world.getState(self.demographics['home'],'risk').expectation())
 
-        mean = config.getint('Actors','grievance_ethnic_%s' % (self.demographics['ethnicGroup']))
-        mean += config.getint('Actors','grievance_religious_%s' % (self.demographics['religion']))
-        mean += config.getint('Actors','grievance_%s' % (self.demographics['gender']))
-        if self.wealth > likert[5][config.getint('Actors','grievance_wealth_threshold')-1]:
-            mean += config.getint('Actors','grievance_wealth_yes')
-        else:
-            mean += config.getint('Actors','grievance_wealth_no')
-        sigma = config.getint('Actors','grievance_sigma')
-        grievance = world.defineState(self.name,'grievance',float,codePtr=True,
-                                      description='Current level of grievance felt toward system')
-        if sigma > 0:
-            self.grievance = sampleNormal(mean,sigma)
-        else:
-            self.grievance = likert[5][mean-1]
-        world.setFeature(grievance,self.grievance)
+        if config.getboolean('System','system'):
+            mean = config.getint('Actors','grievance_ethnic_%s' % (self.demographics['ethnicGroup']))
+            mean += config.getint('Actors','grievance_religious_%s' % (self.demographics['religion']))
+            mean += config.getint('Actors','grievance_%s' % (self.demographics['gender']))
+            if self.demographics['wealth'] > likert[5][config.getint('Actors','grievance_wealth_threshold')-1]:
+                mean += config.getint('Actors','grievance_wealth_yes')
+            else:
+                mean += config.getint('Actors','grievance_wealth_no')
+            sigma = config.getint('Actors','grievance_sigma')
+            grievance = world.defineState(self.name,'grievance',float,codePtr=True,
+                                          description='Current level of grievance felt toward system')
+            if sigma > 0:
+                self.grievance = sampleNormal(mean,sigma)
+            else:
+                self.grievance = likert[5][mean-1]
+            world.setFeature(grievance,self.grievance)
 
         # Actions and Dynamics
 
@@ -515,7 +519,7 @@ class Actor(Agent):
             tree = {'if': trueRow(alive),
                     True: {'if': trueRow(job),
                            True: {'if': equalRow(location,{self.demographics['home'],'evacuated'}),
-                                  True: approachMatrix(wealth,likert[5][impactJob-1],self.wealth if ceiling else 1.),
+                                  True: approachMatrix(wealth,likert[5][impactJob-1],self.demographics['wealth'] if ceiling else 1.),
                                   False: noChangeMatrix(wealth)},
                            False: None},
                     False: noChangeMatrix(wealth)}
@@ -589,7 +593,7 @@ class Actor(Agent):
             # Effect of doing bad
             benefit = likert[5][config.getint('Actors','antiresources_benefit')-1]
             for region,action in actBadResources.items():
-                tree = makeTree(approachMatrix(wealth,benefit,self.wealth if ceiling else 1.))
+                tree = makeTree(approachMatrix(wealth,benefit,self.demographics['wealth'] if ceiling else 1.))
                 world.setDynamics(wealth,action,tree,codePtr=True)
             cost = config.getint('Actors','antiresources_cost_risk')
             if cost > 0:
@@ -614,7 +618,7 @@ class Actor(Agent):
                     world.setDynamics(risk,action,tree,codePtr=True)
 
 
-        if self.pet and config.getboolean('Shelter','exists'):
+        if self.demographics.get('pet',False) and config.getboolean('Shelter','exists'):
             # Process shelters' pet policy
             for index,action in actShelter.items():
                     region = Region.nameString % (int(index))
@@ -654,7 +658,7 @@ class Actor(Agent):
                 else:
                     self.Rweights['childrenHealth'] = likert[5][mean-1]
                 self.setReward(maximizeFeature(kidHealth,self.name),self.Rweights['childrenHealth'])
-        if self.pet > 0:
+        if self.demographics.get('pet',False):
             mean = config.getint('Actors','reward_pets')
             if mean > 0:
                 if sigma > 0:
@@ -741,6 +745,7 @@ class Actor(Agent):
             if config.getboolean('Actors','infoseek'):
                 omega = self.defineObservation('categoryData',domain=int,codePtr=True,
                                            description='Information received from explicit seeking')
+                self.setState('categoryData',0)
                 if config.getint('Actors','info_reliability') == 5:
                     # 100% reliable information
                     self.setO('categoryData',infoseek,

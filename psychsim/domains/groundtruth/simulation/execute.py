@@ -140,6 +140,7 @@ def runInstance(instance,args,config,rerun=True):
             prof.enable()
         if args['compile']:
             for agent in population:
+                print('Compiling: %s' % (agent))
                 agent.compileV()
         random.seed(config.getint('Simulation','seedRun')+run)
         survey = set()
@@ -505,7 +506,10 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                         assert len(belief) == 1,'Unable to store beliefs over uncertain models'
                         belief = next(iter(belief.values()))
                         entry = {'action': action, 'hurricane': state['hurricanes']}
-                        for feature in ['location','risk','health','grievance']:
+                        features = ['location','risk','health']
+                        if config.getboolean('System','system'):
+                            features.append('grievance')
+                        for feature in features:
                             entry[feature] = agent.getState(feature,belief)
                             if feature == 'location':
                                 if entry[feature].first() == 'evacuated':
