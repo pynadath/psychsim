@@ -23,6 +23,13 @@ class KeyedMatrix(dict):
                 super(KeyedMatrix,self).__init__(arg)
             self._string = None
         
+    def __deepcopy__(self,memo):
+        result = self.__class__({key: copy.deepcopy(row) for key,row in self.items()})
+        result._keysIn = self._keysIn
+        result._keysOut = self._keysOut
+        result._string = self._string
+        return result
+
     def __eq__(self,other):
         return str(self) == str(other)
          # for key,vector in self.items():
