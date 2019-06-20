@@ -595,21 +595,24 @@ def addState2tables(world,day,tables,population,regions):
                 belief = next(iter(actor.getBelief().values()))
                 entry = {'day': day,'participant': actor.name[-4:]}
                 for feature,label,function in table['fields']:
-                    key = stateKey(actor.name,feature)
-                    if world.variables[key]['domain'] is bool:
-                        if function == 'invert':
-                            entry[label] = not values[actor.name][feature]
-                        else:
-                            entry[label] = values[actor.name][feature]
+                    if feature in actor.demographics:
+                        entry[label] = values[actor.name][feature]
                     else:
-                        if function == 'likert':
-                            entry[label] = toLikert(values[actor.name][feature])
-                        elif function and function[0] == '=':
-                            entry[label] = values[actor.name][feature] == function[1:]
-                        elif function == 'invert':
-                            entry[label] = 1.-values[actor.name][feature]
+                        key = stateKey(actor.name,feature)
+                        if world.variables[key]['domain'] is bool:
+                            if function == 'invert':
+                                entry[label] = not values[actor.name][feature]
+                            else:
+                                entry[label] = values[actor.name][feature]
                         else:
-                            entry[label] = values[actor.name][feature]
+                            if function == 'likert':
+                                entry[label] = toLikert(values[actor.name][feature])
+                            elif function and function[0] == '=':
+                                entry[label] = values[actor.name][feature] == function[1:]
+                            elif function == 'invert':
+                                entry[label] = 1.-values[actor.name][feature]
+                            else:
+                                entry[label] = values[actor.name][feature]
                 table['log'].append(entry)
                 #print("Actor %s"%(entry))
                 #print("Keys %s\nValues %s" %(entry.keys(), entry.values()))
