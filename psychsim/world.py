@@ -375,10 +375,7 @@ class World(object):
                     else:
                         cumulative = copy.deepcopy(cumulative)
                         cumulative.makeFuture([key])
-                        if select is True:
-                            cumulative.__imul__(tree,True)
-                        else:
-                            cumulative *= tree
+                        cumulative *= tree
                         cumulative = cumulative.prune()
                 if select is True:
                     state.__imul__(tree,True)
