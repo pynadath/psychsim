@@ -207,7 +207,7 @@ def runInstance(instance,args,config,rerun=True):
                 if hurricaneEntry is not None:
                     visualize.addToVizData("hurricane", hurricaneEntry)
             newSeason = False
-            if world.getState(WORLD,'day').first() - season*config.getint('Disaster','year_length') > config.getint('Disaster','season_length'):
+            if world.getState(WORLD,'day').first() - season*config.getint('Disaster','year_length',fallback=365) > config.getint('Disaster','season_length'):
                 # Might be a new season
                 if world.getState('Nature','phase').first() == 'none' \
                     and world.getState('Nature','days').first() > config.getint('Disaster','phase_min_days'):
@@ -234,7 +234,7 @@ def runInstance(instance,args,config,rerun=True):
                 world.setDynamics(dayKey,evolution,makeTree(setToConstantMatrix(dayKey,0)))
 #                world.printState()
                 first = True
-                while world.getState(WORLD,'day').first() < season*config.getint('Disaster','year_length'):
+                while world.getState(WORLD,'day').first() < season*config.getint('Disaster','year_length',fallback=365):
                     # Advance simulation to next season
                     names = world.next()
                     turn = world.agents[next(iter(names))].__class__.__name__
