@@ -193,7 +193,8 @@ class KeyedVector(collections.MutableMapping):
         return '%s(%r)' % (self.__class__.__name__,dict(self))
 
     def __hash__(self):
-        return hash(frozenset(self._data.items()))
+        return hash(tuple(self._data.items()))
+#        return hash(frozenset(self._data.items()))
 
     def __xml__(self):
         doc = Document()
