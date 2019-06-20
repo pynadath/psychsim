@@ -127,7 +127,7 @@ def runInstance(instance,args,config,rerun=True):
                                 'log': []},
                      'Display': {'fields': [('x','x',None),
                                             ('y','y',None),
-                                            ('region','region',None)],
+                                            ('region','home',None)],
                                  'population': Actor,
                                  'series': False,
                                  'log': []}
@@ -545,9 +545,12 @@ def addState2tables(world,day,tables,population,regions):
             if not table['population'] is Nature:
                 for feature,label,function in table['fields']:
                     if not feature in values[agent.name]:
-                        value = world.getState(agent.name,feature)
-                        assert len(value) == 1
-                        values[agent.name][feature] = value.first()
+                        try:
+                            values[agent.name][feature] = agent.demographics[feature]
+                        except KeyError:
+                            value = world.getState(agent.name,feature)
+                            assert len(value) == 1
+                            values[agent.name][feature] = value.first()
     # Create tables
     for table in tables.values():
         if table['population'] is Region:
