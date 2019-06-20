@@ -49,6 +49,15 @@ demographics = {'Gender': 'gender',
                 'Pets': 'pet',
                 'Wealth': 'wealth',
                 'Residence': 'home'}
+oldDemographics = {'Gender': 'gender',
+                'Age': 'age',
+                'Ethnicity': 'ethnicGroup',
+                'Religion': 'religion',
+                'Children': 'children',
+                'Fulltime Job': 'employed',
+                'Pets': 'pet',
+                'Wealth': 'resources',
+                'Residence': 'region'}
 
 def getDemographics(actor,old=False):
     record = {}
