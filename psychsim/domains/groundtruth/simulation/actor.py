@@ -32,8 +32,7 @@ class Actor(Agent):
             elif number == 2:
                 world.diagram.setColor(self.name,'yellow')
 
-        if config.getint('Simulation','phase',fallback=1) > 1:
-            self.demographics = {}
+        self.demographics = {}
 
         # Decision-making parameters
         minH = config.getint('Actors','min_horizon')
