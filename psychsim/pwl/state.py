@@ -227,25 +227,17 @@ class VectorDistributionSet:
         """
         :return: the substate into which they've all been merged
         """
-        try:
-            destination = next(iter(substates))
-        except StopIteration:
-            return None
-        for substate,distribution in list(self.distributions.items()):
-            if substate == destination:
-                pass
-                # if not inPlace:
-                #     self.distributions[substate] = copy.deepcopy(distribution)
-            elif substate in substates:
-                self.distributions[destination].merge(distribution,True)
+        destination = None
+        for substate in substates:
+            if destination is None:
+                destination = substate
+            else:
+                dist = self.distributions[substate]
+                self.distributions[destination].merge(dist,True)
                 del self.distributions[substate]
-            # elif not inPlace:
-            #     self.distributions[substate] = copy.deepcopy(distribution)
-        for key,substate in self.keyMap.items():
-            if substate in substates:
-                self.keyMap[key] = destination
-            # elif not inPlace:
-            #     self.keyMap[key] = substate
+                for key in dist.keys():
+                    if key != keys.CONSTANT:
+                        self.keyMap[key] = destination
         return destination
 
     def join(self,key,value,substate=0):
