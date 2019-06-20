@@ -358,7 +358,7 @@ class VectorDistributionSet:
         else:
             return NotImplemented
 
-    def __imul__(self,other):
+    def __imul__(self,other,select=False):
         if isinstance(other,KeyedMatrix):
             # Focus on subset that this matrix affects
             substates = self.substate(other.getKeysIn())
@@ -416,52 +416,56 @@ class VectorDistributionSet:
             if other.isLeaf():
                 self *= other.children[None]
             elif other.isProbabilistic():
-                oldKids = list(other.children.domain())
-                # Multiply out children, other than first-born
-                newKids = []
-                for child in oldKids[1:]:
-                    assert child.getKeysOut() == oldKids[0].getKeysOut()
-                    myChild = copy.deepcopy(self)
-                    myChild *= child
-                    newKids.append(myChild)
-                self *= oldKids[0]
-                subkeys = oldKids[0].getKeysOut()
-                # Compute first-born child
-                newKids.insert(0,self)
-                for index in range(len(oldKids)):
-                    prob = other.children[oldKids[index]]
-                    substates = newKids[index].substate(subkeys)
-                    if len(substates) > 1:
-                        substate = newKids[index].collapse(substates)
-                    else:
-                        substate = next(iter(substates))
-                    if index == 0:
-                        for vector in self.distributions[substate].domain():
-                            self.distributions[substate][vector] *= prob
-                        mySubstate = substate
-                    else:
-                        toCollapse = (subkeys,set())
-                        while len(toCollapse[0]) + len(toCollapse[1]) > 0:
-                            mySubstates = self.substate(toCollapse[1]|\
-                                                        set(self.distributions[mySubstate].keys()))
-                            if len(mySubstates) > 1:
-                                mySubstate = self.collapse(mySubstates,False)
-                            else:
-                                mySubstate = next(iter(mySubstates))
-                            substates = newKids[index].substate(toCollapse[0]|set(newKids[index].distributions[substate].keys()))
-                            if len(substates) > 1:
-                                substate = newKids[index].collapse(substates,False)
-                            else:
-                                substate = next(iter(substates))
-                            toCollapse = ({k for k in self.distributions[mySubstate].keys() \
-                                           if k != keys.CONSTANT and \
-                                           not k in newKids[index].distributions[substate].keys()},
-                                          {k for k in newKids[index].distributions[substate].keys() \
-                                           if k != keys.CONSTANT and \
-                                           not k in self.distributions[mySubstate].keys()})
-                        distribution = newKids[index].distributions[substate]
-                        for vector in distribution.domain():
-                            self.distributions[mySubstate].addProb(vector,distribution[vector]*prob)
+                if select:
+                    oldKid = other.children.sample()
+                    self *= oldKid
+                else:
+                    oldKids = list(other.children.domain())
+                    # Multiply out children, other than first-born
+                    newKids = []
+                    for child in oldKids[1:]:
+                        assert child.getKeysOut() == oldKids[0].getKeysOut()
+                        myChild = copy.deepcopy(self)
+                        myChild *= child
+                        newKids.append(myChild)
+                    self *= oldKids[0]
+                    subkeys = oldKids[0].getKeysOut()
+                    # Compute first-born child
+                    newKids.insert(0,self)
+                    for index in range(len(oldKids)):
+                        prob = other.children[oldKids[index]]
+                        substates = newKids[index].substate(subkeys)
+                        if len(substates) > 1:
+                            substate = newKids[index].collapse(substates)
+                        else:
+                            substate = next(iter(substates))
+                        if index == 0:
+                            for vector in self.distributions[substate].domain():
+                                self.distributions[substate][vector] *= prob
+                            mySubstate = substate
+                        else:
+                            toCollapse = (subkeys,set())
+                            while len(toCollapse[0]) + len(toCollapse[1]) > 0:
+                                mySubstates = self.substate(toCollapse[1]|\
+                                                            set(self.distributions[mySubstate].keys()))
+                                if len(mySubstates) > 1:
+                                    mySubstate = self.collapse(mySubstates,False)
+                                else:
+                                    mySubstate = next(iter(mySubstates))
+                                substates = newKids[index].substate(toCollapse[0]|set(newKids[index].distributions[substate].keys()))
+                                if len(substates) > 1:
+                                    substate = newKids[index].collapse(substates,False)
+                                else:
+                                    substate = next(iter(substates))
+                                toCollapse = ({k for k in self.distributions[mySubstate].keys() \
+                                               if k != keys.CONSTANT and \
+                                               not k in newKids[index].distributions[substate].keys()},
+                                              {k for k in newKids[index].distributions[substate].keys() \
+                                               if k != keys.CONSTANT and \
+                                               not k in self.distributions[mySubstate].keys()})
+                            distribution = newKids[index].distributions[substate]
+                            for vector in distribution.domain():
+                                self.distributions[mySubstate].addProb(vector,distribution[vector]*prob)
             else:
                 # Evaluate the hyperplane and split the state
                 branchKeys = set(other.branch.keys())-{keys.CONSTANT}

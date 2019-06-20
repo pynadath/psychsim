@@ -546,7 +546,8 @@ class KeyedTree:
             return sum([child.leaves() for child in self.children.values()],[])
     
     def __hash__(self):
-        return hash(str(self))
+        return hash(tuple(self.children.items()))
+#        return hash(str(self))
 
     def __str__(self):
         if self._string is None:

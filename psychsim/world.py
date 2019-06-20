@@ -361,9 +361,13 @@ class World(object):
                     dist[vector] = prob
             elif len(dynamics) == 1:
                 tree = dynamics[0]
-                state *= tree
+                if select is True:
+                    state.__imul__(tree,True)
+                else:
+                    state *= tree
                 substate = state.keyMap[makeFuture(key)]
             else:
+#                raise RuntimeError('Parallel dynamics do not work')
                 cumulative = None
                 for tree in dynamics:
                     if cumulative is None:
@@ -371,9 +375,15 @@ class World(object):
                     else:
                         cumulative = copy.deepcopy(cumulative)
                         cumulative.makeFuture([key])
-                        cumulative *= tree
+                        if select is True:
+                            cumulative.__imul__(tree,True)
+                        else:
+                            cumulative *= tree
                         cumulative = cumulative.prune()
-                state *= cumulative
+                if select is True:
+                    state.__imul__(tree,True)
+                else:
+                    state *= cumulative
                 substate = state.keyMap[makeFuture(key)]
             if select and len(state.distributions[substate]) > 1:
                 if isinstance(select,dict) and key in select:
