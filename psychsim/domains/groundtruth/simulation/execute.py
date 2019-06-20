@@ -127,13 +127,13 @@ def runInstance(instance,args,config,rerun=True):
                                 'log': []},
                      'Display': {'fields': [('x','x',None),
                                             ('y','y',None),
-                                            ('region','home',None)],
+                                            ('home','region',None)],
                                  'population': Actor,
                                  'series': False,
                                  'log': []}
         }
         if config.getboolean('System','system'):
-            allTables['Actors']['fields'].append(('grievance','grievance','invert'))
+            allTables['Actors']['fields'].append(('grievance','satisfaction','invert'))
         if args['visualize']:
             addState2tables(world,0,allTables,population,regions)
         if args['profile']:
