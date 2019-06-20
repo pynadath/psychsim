@@ -26,3 +26,16 @@ c. How about serious injury likelihood and death likelihood, does that fall into
 
 # Answer # 
 
+1. It is what the participants believed the level of regional damage to be on that day.
+
+2. It is what the participants believed the possibility to be on that day.
+
+3. The entries in TA2A-TA1C-0182-Information do not include communication from friends.
+
+4. a. Not necessarily
+
+	b. Yes.
+
+	c. b.
+
+5. The item was presented as the possibility of any injury, minor or serious.

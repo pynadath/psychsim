@@ -10,3 +10,4 @@ As in TA2A-TA1C-0052-RR, the government reported that they sent aid to region05 
 
 # Answer # 
 
+The "Received Government Aid" item was not answered accurately. We have uploaded a revised package (R2) that contains updated responses to that item in the journal table (all other items were answered as before).

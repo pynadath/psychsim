@@ -30,7 +30,7 @@ if __name__ == '__main__':
         'Civic Activities','My Region Risk','My House Risk']
     fields += ['Trust in %s' % (source) for source in sources]
     fields.append('Geographical Features')
-    for instance in [1,9,10,11,12,13,14]:
+    for instance in [1]: #9,10,11,12,13,14]:
         logging.info('Instance %d' % (instance))
         args = accessibility.instances[instance-1]
         config = accessibility.getConfig(args['instance'])
@@ -203,7 +203,12 @@ if __name__ == '__main__':
                 trust = {'over': config.getint('Actors','friend_opt_trust'),
                     'under': config.getint('Actors','friend_pess_trust')}
                 trust['none'] = (trust['over']+trust['under'])/2
-                record['Trust in Friends'] = int(round(sum([trust[world.agents[friend].distortion] for friend in friends])/len(friends)))
+                level = sum([trust[world.agents[friend].distortion] for friend in friends])/len(friends)
+                if level < record['Trust in Government']:
+                    record['Trust in Friends'] = 3
+                else:
+                    record['Trust in Friends'] = 4
+                    record['Trust in Government'] = 3
             else:
                 record['Trust in Friends'] = 'N/A'
             record['Trust in Others'] = 0

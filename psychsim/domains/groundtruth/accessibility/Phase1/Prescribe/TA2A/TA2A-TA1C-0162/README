@@ -1,3 +1,7 @@
+R2: The "Received Govt Aid" item is now answered accurately in the journal table.
+
+R1: Instance1 was added.
+
 No particular areas were specified, so we assumed that the targets were the Prescribe instances (9-14).
 
 We retroactively embedded researchers for the last hurricane on each instance's timeline (future hurricanes are inaccessible for the Prescribe Challenge). The researchers' report ends on the last day of the IDP timeline.

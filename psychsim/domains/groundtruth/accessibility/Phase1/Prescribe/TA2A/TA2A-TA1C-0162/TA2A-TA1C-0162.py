@@ -9,7 +9,7 @@ from psychsim.domains.groundtruth import accessibility
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,filename=os.path.join(os.path.dirname(__file__),'TA2A-TA1C-0162.log'))
     random.seed(162)
-    for instance in [1,9.10,11,12,13,14]:
+    for instance in [9,10,11,12,13,14]:
         args = accessibility.instances[instance-1]
         world = accessibility.loadPickle(args['instance'],args['run'],args['span']+(1 if instance == 2 or instance > 8 else 0),
             sub='Input' if instance > 2 else None)
@@ -116,7 +116,7 @@ if __name__ == '__main__':
                         record['Minor Child Injury'] = 'no'
                         record['Serious Child Injury'] = 'no'
                 # 16
-                record['Received Govt Aid'] = 'yes' if data['System'][actionKey('System')].get(day,{'object':None}) == demos[name]['Residence'] else 'no'
+                record['Received Govt Aid'] = 'yes' if data['System'][actionKey('System')].get(day,{'object':None})['object'] == demos[name]['Residence'] else 'no'
                 # 17
                 record['Received Acquaintance Aid'] = 'yes' if len([friend for friend in aid.get(day,[]) if demos[friend]['Residence'] == demos[name]['Residence']]) > 0 else 'no'
                 # 18

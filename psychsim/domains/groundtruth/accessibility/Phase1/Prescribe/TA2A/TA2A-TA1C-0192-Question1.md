@@ -15,3 +15,7 @@ But in the answers we get, all participants say their trust in government is at 
 
 # Answer # 
 
+1. We updated the participants' responses here, asking them to make uniqueness the highest priority and accurately reflecting the percentage of trust a lower one. We have uploaded new responses (R2).
+
+2. We cannot directly answer this question.
+
