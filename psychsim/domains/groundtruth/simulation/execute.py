@@ -121,7 +121,6 @@ def runInstance(instance,args,config,rerun=True):
                                            ('location','evacuated','=evacuated'),
                                            ('risk','safety','invert'),
                                            ('health','health',None),
-                                           ('grievance','grievance','invert'),
                      ],
                                 'population': Actor,
                                 'series': True,
@@ -133,6 +132,8 @@ def runInstance(instance,args,config,rerun=True):
                                  'series': False,
                                  'log': []}
         }
+        if config.getboolean('System','system'):
+            allTables['Actors']['fields'].append(('grievance','grievance','invert'))
         if args['visualize']:
             addState2tables(world,0,allTables,population,regions)
         if args['profile']:
