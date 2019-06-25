@@ -389,3 +389,9 @@ def hurricanePrediction(world,hurricane,debug=False):
                 'Predicted Category': world.getState('Nature','category',state).first()}
             predictions.append(record)
     return predictions
+
+def backwardDemographics(agent,demos):
+    agent.demographics = {}
+    for key,feature in demographics.items():
+        agent.demographics[feature] = demos[agent.name][key]
+        
