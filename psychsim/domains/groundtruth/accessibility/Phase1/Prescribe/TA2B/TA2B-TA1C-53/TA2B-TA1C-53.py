@@ -80,7 +80,7 @@ if __name__ == '__main__':
                 record['Condition 1 Category %d Stayed Home' % (category+1)] = 'yes' if demos[name]['Residence'] in locations else 'no'
                 record['Condition 1 Category %d Sheltered' % (category+1)] = 'yes' if {loc for loc in locations if loc[:7] == 'shelter'} else 'no'
             # 7
-            record['Condition 2'] = record['Condition 1 Satisfaction']
+            record['Condition 2 Satisfaction'] = record['Condition 1 Satisfaction']
             # 8-12
             for category in range(5):
                 if petBan and world.agents[name].pet:
