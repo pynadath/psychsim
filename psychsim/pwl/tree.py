@@ -28,8 +28,8 @@ class KeyedTree:
             self.makeLeaf(leaf)
             
     def isLeaf(self):
-        return len(self.children) == 1 and not isinstance(self.children,Distribution)
-    #        return self.leaf
+#        assert self.leaf == (len(self.children) == 1 and not isinstance(self.children,Distribution))
+        return self.leaf
 
     def getLeaf(self):
         return self.children[None]

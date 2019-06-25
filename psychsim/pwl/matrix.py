@@ -66,41 +66,56 @@ class KeyedMatrix(dict):
     def __sub__(self,other):
         return self + (-other)
 
+    def mulByMatrix(self,other):
+        result = KeyedMatrix()
+        result._keysOut = self._keysOut
+        result._keysIn = set()
+        for r1,v1 in self.items():
+            row = {}
+            for c1,value1 in v1.items():
+                try:
+                    col = other[c1].items()
+                except KeyError:
+                    continue
+                for c2,value2 in col:
+                    row[c2] = row.get(c2,0) + value1*value2
+                    result._keysIn.add(c2)
+            result[r1] = KeyedVector(row)
+        return result
+
+    def mulByVector(self,other):
+        result = KeyedVector()
+        for r1,v1 in self.items():
+            for c1,value1 in v1.items():
+                if c1 in other:
+                    try:
+                        result[r1] += value1*other[c1]
+                    except KeyError:
+                        result[r1] = value1*other[c1]
+        return result
+
+    def mulByDistribution(self,other):
+        result = VectorDistribution()
+        for vector in other.domain():
+            product = self*vector
+            try:
+                result[product] += other[vector]
+            except KeyError:
+                result[product] = other[vector]
+        return result
+
     def __mul__(self,other):
         """
         @warning: Muy destructivo for L{VectorDistributionSet}
         """
         if isinstance(other,KeyedMatrix):
-            result = KeyedMatrix()
-            for r1,v1 in self.items():
-                result[r1] = KeyedVector()
-                for c1,value1 in v1.items():
-                    if c1 in other:
-                        for c2,value2 in other[c1].items():
-                            try:
-                                result[r1][c2] += value1*value2
-                            except KeyError:
-                                result[r1][c2] = value1*value2
+            return self.mulByMatrix(other)
         elif isinstance(other,KeyedVector):
-            result = KeyedVector()
-            for r1,v1 in self.items():
-                for c1,value1 in v1.items():
-                    if c1 in other:
-                        try:
-                            result[r1] += value1*other[c1]
-                        except KeyError:
-                            result[r1] = value1*other[c1]
+            return self.mulByVector(other)
         elif isinstance(other,VectorDistribution):
-            result = VectorDistribution()
-            for vector in other.domain():
-                product = self*vector
-                try:
-                    result[product] += other[vector]
-                except KeyError:
-                    result[product] = other[vector]
+            return self.mulByDistribution(other)
         else:
             return NotImplemented
-        return result
 
     def __rmul__(self,other):
         if isinstance(other,KeyedVector):
