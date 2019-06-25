@@ -279,13 +279,13 @@ class KeyedTree:
             return self.compose(other,lambda x,y: x*y,lambda x,y: x*y)
         elif isinstance(other,KeyedVector):
             return self[other]*other
-        elif isinstance(other,float):
+        elif isinstance(other,float) or isinstance(other,int):
             return other*self
         else:
             return NotImplemented
         
     def __rmul__(self,other):
-        if isinstance(other,float):
+        if isinstance(other,float) or isinstance(other,int):
             tree = self.__class__()
             if self.isLeaf():
                 tree.makeLeaf(other*self.children[None])
