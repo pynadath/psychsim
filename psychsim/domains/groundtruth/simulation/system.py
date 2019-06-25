@@ -55,6 +55,7 @@ class System(Agent):
                     world.setDynamics(grievance,allocate,tree,codePtr=True)
         self.setAttribute('horizon',config.getint('System','horizon'))
         self.TA2BTA1C52 = False
+        self.TA2BTA1C54 = False
 
     def reward(self,state=None,model=None,recurse=True):
         if state is None:
@@ -89,6 +90,21 @@ class System(Agent):
                         break
                 else:
                     choice = None
+            elif self.TA2BTA1C54:
+                # allocate aid to the region with the most current people sheltering and evacuating.
+                inTrouble = {region: 0 for region in self.world.agents if region[:6] == 'Region'}
+                for actor in [name for name in self.world.agents if name[:5] == 'Actor']:
+                    if self.world.getState(actor,'alive',state).first():
+                        region = self.world.getState(actor,'region').first()
+                        if self.world.getState(actor,'location',state).first() != region:
+                            inTrouble[region] = inTrouble[region]+1
+                targets = sorted(list(inTrouble.items()),key=lambda t: t[1],reverse=True)
+                for action in actions:
+                    if action['object'] == targets[0][0]:
+                        choice = (None,action)
+                        break
+                else:
+                    raise RuntimeError('Unable to find allocation action for %s' % (targets[0][0]))
             else:
                 choice = None
         except AttributeError:
