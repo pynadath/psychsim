@@ -1,0 +1,48 @@
+Name	LongName	Values	VarType	DataType	Notes
+Friends Outside Region	Friends Outside Region	0+	dynamic	Integer	QI.2
+Friends Within Region	Friends Within Region	0+	dynamic	Integer	QI.3
+Hurricane Vulnerability	Hurricane Vulnerability	[1-5]	dynamic	Integer	QI.5
+Aid if Wealth Loss	Aid if Wealth Loss	[0-6]	dynamic	Integer	QI.6
+Acquaintance Aid Wealth Change	Acquaintance Aid Wealth Change	yes,no	dynamic	Boolean	QII.1
+Acquaintance Aid Wealth Direction	Acquaintance Aid Wealth Direction	increase,decrease,N/A	dynamic	String	QII.1
+Government Aid Wealth Change	Government Aid Wealth Change	yes,no	dynamic	Boolean	QII.2
+Government Aid Wealth Direction	Government Aid Wealth Direction	increase,decrease,N/A	dynamic	String	QII.2
+Acquaintance Aid Injury Change	Acquaintance Aid Injury Change	yes,no	dynamic	Boolean	QII.3
+Acquaintance Aid Injury Direction	Acquaintance Aid Injury Direction	increase,decrease,N/A	dynamic	String	QII.3
+Government Aid Injury Change	Government Aid Injury Change	yes,no	dynamic	Boolean	QII.4
+Government Aid Injury Direction	Government Aid Injury Direction	increase,decrease,N/A	dynamic	String	QII.4
+Acquaintance Aid Dissatisfaction Change	Acquaintance Aid Dissatisfaction Change	yes,no	dynamic	Boolean	QII.5
+Acquaintance Aid Dissatisfaction Direction	Acquaintance Aid Dissatisfaction Direction	increase,decrease,N/A	dynamic	String	QII.5
+Government Aid Dissatisfaction Change	Government Aid Dissatisfaction Change	yes,no	dynamic	Boolean	QII.6
+Government Aid Dissatisfaction Direction	Government Aid Dissatisfaction Direction	increase,decrease,N/A	dynamic	String	QII.6
+Acquaintance Aid Risk Change	Acquaintance Aid Risk Change	yes,no	dynamic	Boolean	QII.7
+Acquaintance Aid Risk Direction	Acquaintance Aid Risk Direction	increase,decrease,N/A	dynamic	String	QII.7
+Government Aid Risk Change	Government Aid Risk Change	yes,no	dynamic	Boolean	QII.8
+Government Aid Risk Direction	Government Aid Risk Direction	increase,decrease,N/A	dynamic	String	QII.8
+Hurricane Prediction	Hurricane Prediction	yes,no	dynamic	Boolean	QII.9
+My Aid Wealth Change	My Aid Wealth Change	yes,no	dynamic	Boolean	QII.10
+My Aid Wealth Direction	My Aid Wealth Direction	increase,decrease,N/A	dynamic	String	QII.10
+My Aid Injury Change	My Aid Injury Change	yes,no	dynamic	Boolean	QII.11
+My Aid Injury Direction	My Aid Injury Direction	increase,decrease,N/A	dynamic	String	QII.11
+My Aid Risk Change	My Aid Risk Change	yes,no	dynamic	Boolean	QII.12
+My Aid Risk Direction	My Aid Risk Direction	increase,decrease,N/A	dynamic	String	QII.12
+Aid to Acquaintances	Aid to Acquaintances	yes,no	dynamic	Boolean	QII.13
+Aid to Friends	Aid to Friends	yes,no	dynamic	Boolean	QII.14
+Aid to Strangers	Aid to Strangers	yes,no	dynamic	Boolean	QII.15
+Information Amount	Information Amount	friends,acquaintances,government,social media,strangers,other	dynamic	String	QIII.1
+Information Trust	Information Trust	friends,acquaintances,government,social media,strangers,other	dynamic	String	QIII.2
+Aid to Ethnicity	Aid to Ethnicity	[0-6]	dynamic	Integer	QIV.1
+Aid to Religion	Aid to Religion	[0-6]	dynamic	Integer	QIV.2
+Aid to Gender	Aid to Gender	[0-6]	dynamic	Integer	QIV.3
+Aid to Age	Aid to Age	[0-6]	dynamic	Integer	QIV.4
+Aid to Employed	Aid to Employed	[0-6]	dynamic	Integer	QIV.5
+Aid to Unemployed	Aid to Unemployed	[0-6]	dynamic	Integer	QIV.6
+Aid to Pets	Aid to Pets	[0-6]	dynamic	Integer	QIV.7
+Aid to No Pets	Aid to No Pets	[0-6]	dynamic	Integer	QIV.8
+Aid to Young	Aid to Young	[0-6]	dynamic	Integer	QIV.9
+Aid to Old	Aid to Old	[0-6]	dynamic	Integer	QIV.10
+Aid to Ethnic Minority	Aid to Ethnic Minority	[0-6]	dynamic	Integer	QIV.11
+Aid to Ethnic Majority	Aid to Ethnic Majority	[0-6]	dynamic	Integer	QIV.12
+Aid to No Religion	Aid to No Religion	[0-6]	dynamic	Integer	QIV.13
+Aid to Religious Majority	Aid to Religious Majority	[0-6]	dynamic	Integer	QIV.14
+Aid to Religious Minority	Aid to Religious Minority	[0-6]	dynamic	Integer	QIV.15

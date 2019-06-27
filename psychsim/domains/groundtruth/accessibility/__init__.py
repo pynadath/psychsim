@@ -276,9 +276,34 @@ def readDemographics(data,old=False,last=True,name=None):
             demos[name][field] = value
     return demos
 
+def prosocial(data):
+    """
+    :return: The actors who performed prosocial behavior on each day in each region
+    """
+    result = {name: {} for name in data if name[:6] == 'Region'}
+    actors = [name for name in data if name[:5] == 'Actor']
+    for name in actors:
+        for t,action in data[name][actionKey(name)].items():
+            if action['verb'] == 'decreaseRisk':
+                try:
+                    result[action['object']][t].add(name)
+                except KeyError:
+                    result[action['object']][t] = {name}
+    return result
+
+def aidTargets(data,start=None,end=None):
+    if end is None:
+        if start is None:
+            start = 1
+        return [data['System'][actionKey('System')][t+1]['object'] for t in range(start-1,len(data['System'][actionKey('System')]))]
+    else:
+        if start is None:
+            start = 1
+        return [data['System'][actionKey('System')][t]['object'] for t in range(start,end)]
+
 def assistance(data,hurricane,region):
-    govt = [data['System'][actionKey('System')][t] for t in range(hurricane['Start'],hurricane['End'])]
-    count = len([a for a in govt if a['object'] == region])
+    govt = aidTargets(data,hurricane['Start'],hurricane['End'])
+    count = len([obj for obj in govt if obj == region])
     return toLikert(float(count)/float(len(govt)))
 
 def propertyDamage(data,hurricane,region):
@@ -395,3 +420,27 @@ def backwardDemographics(agent,demos):
     for key,feature in demographics.items():
         agent.demographics[feature] = demos[agent.name][key]
         
+def writeVarDef(dirName,items):
+    fields = ['Name','LongName','Values','VarType','DataType','Notes']
+    output = []
+    for item in items:
+        if 'Values' not in item:
+            if item['DataType'] == 'Boolean':
+                item['Values'] = 'yes,no'
+            else:
+                raise ValueError('Values missing from item %s' % (item['Name']))
+        if 'LongName' not in item:
+            item['LongName'] = item['Name']
+        if 'VarType' not in item:
+            item['VarType'] = 'dynamic'
+    with open(os.path.join(dirName,'SimulationDefinition','VariableDefTable.tsv'),'w') as csvfile:
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+        writer.writeheader()
+        for record in items:
+            writer.writerow(record)
+
+def trustInFriends(config,world,friends):
+    trust = {'over': config.getint('Actors','friend_opt_trust'),
+        'under': config.getint('Actors','friend_pess_trust')}
+    trust['none'] = (trust['over']+trust['under'])/2
+    return sum([trust[world.agents[friend].distortion] for friend in friends])/len(friends)
