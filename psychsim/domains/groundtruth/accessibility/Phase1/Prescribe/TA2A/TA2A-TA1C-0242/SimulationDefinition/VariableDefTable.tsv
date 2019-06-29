@@ -1,0 +1,11 @@
+Name	LongName	Values	VarType	DataType	Notes
+Friends Outside Region	Friends Outside Region	0+	dynamic	Integer	QI.2
+Friends Within Region	Friends Within Region	0+	dynamic	Integer	QI.3
+Hurricane Vulnerability	Hurricane Vulnerability	[1-5]	dynamic	Integer	QI.5
+Aid if Wealth Loss	Aid if Wealth Loss	[0-6]	dynamic	Integer	QI.6
+My Dissatisfaction Effectiveness	My Dissatisfaction Effectiveness	a-h ordering	dynamic	String	QII.1
+My Injury Risk Effectiveness	My Injury Risk Effectiveness	a-h ordering	dynamic	String	QII.2
+Risk Effectiveness	Risk Effectiveness	a-h ordering	dynamic	String	QII.3
+My Injury Effectiveness	My Injury Effectiveness	a-h ordering	dynamic	String	QII.4
+Regional Dissatisfaction Effectiveness	Regional Dissatisfaction Effectiveness	a-h ordering	dynamic	String	QII.5
+Regional Injury Effectiveness	Regional Injury Effectiveness	a-h ordering	dynamic	String	QII.6
