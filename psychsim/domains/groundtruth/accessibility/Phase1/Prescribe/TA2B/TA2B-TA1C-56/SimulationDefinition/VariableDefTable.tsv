@@ -1,0 +1,17 @@
+Name	LongName	Values	VarType	DataType	Notes
+Original Conditions Satisfaction	Original Conditions Satisfaction	I would be strongly dissatisfied,I would be somewhat dissatisfied,I would be neutral,I would be somewhat satisfied,I would be strongly satisfied	dynamic	String	Q1
+Original Conditions Category 1 Evacuate	Original Conditions Category 1 Evacuate	yes,no	dynamic	Boolean	Q2
+Original Conditions Category 1 Stayed Home	Original Conditions Category 1 Stayed Home	yes,no	dynamic	Boolean	Q2
+Original Conditions Category 1 Sheltered	Original Conditions Category 1 Sheltered	yes,no	dynamic	Boolean	Q2
+Original Conditions Category 2 Evacuate	Original Conditions Category 2 Evacuate	yes,no	dynamic	Boolean	Q3
+Original Conditions Category 2 Stayed Home	Original Conditions Category 2 Stayed Home	yes,no	dynamic	Boolean	Q3
+Original Conditions Category 2 Sheltered	Original Conditions Category 2 Sheltered	yes,no	dynamic	Boolean	Q3
+Original Conditions Category 3 Evacuate	Original Conditions Category 3 Evacuate	yes,no	dynamic	Boolean	Q4
+Original Conditions Category 3 Stayed Home	Original Conditions Category 3 Stayed Home	yes,no	dynamic	Boolean	Q4
+Original Conditions Category 3 Sheltered	Original Conditions Category 3 Sheltered	yes,no	dynamic	Boolean	Q4
+Original Conditions Category 4 Evacuate	Original Conditions Category 4 Evacuate	yes,no	dynamic	Boolean	Q5
+Original Conditions Category 4 Stayed Home	Original Conditions Category 4 Stayed Home	yes,no	dynamic	Boolean	Q5
+Original Conditions Category 4 Sheltered	Original Conditions Category 4 Sheltered	yes,no	dynamic	Boolean	Q5
+Original Conditions Category 5 Evacuate	Original Conditions Category 5 Evacuate	yes,no	dynamic	Boolean	Q6
+Original Conditions Category 5 Stayed Home	Original Conditions Category 5 Stayed Home	yes,no	dynamic	Boolean	Q6
+Original Conditions Category 5 Sheltered	Original Conditions Category 5 Sheltered	yes,no	dynamic	Boolean	Q6

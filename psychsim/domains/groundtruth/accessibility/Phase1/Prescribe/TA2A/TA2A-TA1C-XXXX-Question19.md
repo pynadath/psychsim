@@ -8,3 +8,4 @@ In TA2A-TA1C-0042-RR, we were told the regional damage level is the maximum regi
 
 # Answer # 
 
+TA2A-TA1C-0042-RR asked for a "Brief from expert observer / Interview of government experts". TA2A-TA1C-0182-RR asked for a "Journal", so it is a survey of residents.
