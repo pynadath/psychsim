@@ -7,7 +7,7 @@ import random
 
 from psychsim.pwl import *
 
-from ..simulation.cdf import value2dist
+from ..simulation.cdf import *
 from ..simulation.create import loadPickle,getConfig
 from ..simulation.data import *
 
@@ -337,7 +337,7 @@ def getPopulation(data):
     """
     return [name for name in data if name[:5] == 'Actor' and data[name][stateKey(name,'alive')][max(data[name][stateKey(name,'alive')].keys())]]
 
-def setBelief(actor,world,data,t):
+def setBelief(actor,world,data,t,debug=False):
     """
     Sets the belief state of the given actor to be whatever its beliefs were at timestep t in the given run data
     """
@@ -345,15 +345,26 @@ def setBelief(actor,world,data,t):
     beliefs = agent.getBelief()
     model,myBelief = next(iter(beliefs.items()))
     newBelief = copy.deepcopy(myBelief)
-    for key,history in data[actor]['__beliefs'].items():
-        value = history[t]
-        name,feature = state2tuple(key)
-        if name == 'Actor':
-            key = stateKey(actor,feature)
-        elif name == 'Region':
-            key = stateKey(agent.home,feature)
-        else:
-            print(key)
+    for key in newBelief.keys():
+        if isActionKey(key):
+            continue
+        try:
+            value = data[actor]['__beliefs__'][key][t]
+            if debug: print('Found historical belief for %s' % (key))
+        except KeyError:
+            if isStateKey(key):
+                name = state2agent(key)
+            else:
+                continue
+#                terms = key.split()
+#                assert terms[2] == '->'
+#                name = terms[0]
+            try:
+                value = data[name][key][t]
+                if debug: print('Found historical value for %s' % (key))
+            except KeyError:
+                if debug: print('No new value for %s' % (key))
+                continue
         world.setFeature(key,value,newBelief)
     return newBelief
 
