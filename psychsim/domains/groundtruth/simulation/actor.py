@@ -189,7 +189,7 @@ class Actor(Agent):
         neighbors = [a for a  in world.agents.values() if isinstance(a,Actor) and \
                      not a.name == self.name and a.getState('location').first() == self.demographics['home']]
 
-        if config.getboolean('Simulation','visualize'):
+        if config.getboolean('Simulation','visualize',fallback=False):
             # For display use only
             tooClose = True
             xKey = world.defineState(self.name,'x',float,
