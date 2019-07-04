@@ -56,6 +56,7 @@ class System(Agent):
         self.setAttribute('horizon',config.getint('System','horizon'))
         self.TA2BTA1C52 = False
         self.TA2BTA1C54 = False
+        self.prescription = None
 
     def reward(self,state=None,model=None,recurse=True):
         if state is None:
@@ -105,6 +106,19 @@ class System(Agent):
                         break
                 else:
                     raise RuntimeError('Unable to find allocation action for %s' % (targets[0][0]))
+            elif self.prescription:
+                day = self.world.getState(WORLD,'day',state)
+                assert len(day) == 1
+                day = day.first()
+                if day in self.prescription and 'Region' in self.prescription[day]:
+                    for action in actions:
+                        if action['object'] == self.prescription[day]['Region']:
+                            choice = (None,action)
+                            break
+                    else:
+                        raise RuntimeError('Unable to find allocation action for %s' % (targets[0][0]))
+                else:
+                    choice = None
             else:
                 choice = None
         except AttributeError:
