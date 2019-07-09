@@ -82,31 +82,7 @@ class System(Agent):
         if actions is None:
             actions = self.getActions(state)
         try:
-            if self.TA2BTA1C52:
-                location = self.world.getState('Nature','location',state)
-                assert len(location) == 1
-                for action in actions:
-                    if action['object'] == location.first():
-                        choice = (None,action)
-                        break
-                else:
-                    choice = None
-            elif self.TA2BTA1C54:
-                # allocate aid to the region with the most current people sheltering and evacuating.
-                inTrouble = {region: 0 for region in self.world.agents if region[:6] == 'Region'}
-                for actor in [name for name in self.world.agents if name[:5] == 'Actor']:
-                    if self.world.getState(actor,'alive',state).first():
-                        region = self.world.getState(actor,'region').first()
-                        if self.world.getState(actor,'location',state).first() != region:
-                            inTrouble[region] = inTrouble[region]+1
-                targets = sorted(list(inTrouble.items()),key=lambda t: t[1],reverse=True)
-                for action in actions:
-                    if action['object'] == targets[0][0]:
-                        choice = (None,action)
-                        break
-                else:
-                    raise RuntimeError('Unable to find allocation action for %s' % (targets[0][0]))
-            elif self.prescription:
+            if self.prescription:
                 day = self.world.getState(WORLD,'day',state)
                 assert len(day) == 1
                 day = day.first()
@@ -123,6 +99,34 @@ class System(Agent):
                 choice = None
         except AttributeError:
             choice = None
+        if choice is None:
+            try:
+                if self.TA2BTA1C52:
+                    location = self.world.getState('Nature','location',state)
+                    assert len(location) == 1
+                    for action in actions:
+                        if action['object'] == location.first():
+                            choice = (None,action)
+                            break
+                    else:
+                        choice = None
+                elif self.TA2BTA1C54:
+                    # allocate aid to the region with the most current people sheltering and evacuating.
+                    inTrouble = {region: 0 for region in self.world.agents if region[:6] == 'Region'}
+                    for actor in [name for name in self.world.agents if name[:5] == 'Actor']:
+                        if self.world.getState(actor,'alive',state).first():
+                            region = self.world.getState(actor,'region').first()
+                            if self.world.getState(actor,'location',state).first() != region:
+                                inTrouble[region] = inTrouble[region]+1
+                    targets = sorted(list(inTrouble.items()),key=lambda t: t[1],reverse=True)
+                    for action in actions:
+                        if action['object'] == targets[0][0]:
+                            choice = (None,action)
+                            break
+                    else:
+                        raise RuntimeError('Unable to find allocation action for %s' % (targets[0][0]))
+            except AttributeError:
+                choice = None
         if choice is None:
             population = {name: [a for a in self.world.agents.values() if isinstance(a,Actor) and a.demographics['home'] == name]
                           for name in self.world.agents if isinstance(self.world.agents[name],Region)}
