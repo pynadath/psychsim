@@ -33,6 +33,7 @@ class Actor(Agent):
                 world.diagram.setColor(self.name,'yellow')
 
         self.demographics = {}
+        self.prescription = None
 
         # Decision-making parameters
         minH = config.getint('Actors','min_horizon')
@@ -470,19 +471,7 @@ class Actor(Agent):
         
         # Effect on my health
         impact = likert[5][config.getint('Actors','health_impact')-1]
-        tree = {'if': thresholdRow(makeFuture(risk),likert[5][:]),
-                0: approachMatrix(health,impact,self.health)}
-        for level in range(1,6):
-            value = likert[5][level-1]
-            dist = [(approachMatrix(health,impact,0.),value),
-                    (approachMatrix(health,impact,self.health),1.-value)]
-            tree[level] = {'distribution': dist}
-        tree = makeTree({'if': trueRow(alive),
-                         True: tree, False: setToConstantMatrix(health,0.)})
-        if self.horizon <= 2:
-            world.setDynamics(health,Action({'subject': self.name}),tree,codePtr=True)
-        else:
-            world.setDynamics(health,evolve,tree,codePtr=True)
+        self.setHealthDynamics(impact,impact)
 
         if self.demographics['kids'] > 0:
             # Effect on kids' health
@@ -763,7 +752,20 @@ class Actor(Agent):
                                                 False: {'distribution': [(setToFeatureMatrix(omega,real),trueProb),
                                                                          (setToFeatureMatrix(omega,real,shift=-1),(1.-trueProb)/2.),
                                                                          (setToFeatureMatrix(omega,real,shift=1),(1.-trueProb)/2.)]}}}))
-        
+    def setHealthDynamics(self,up,down,codePtr=True): 
+        tree = {'if': thresholdRow(makeFuture(stateKey(self.name,'risk')),likert[5][:]),
+                0: approachMatrix(stateKey(self.name,'health'),up,self.health)}
+        for level in range(1,6):
+            value = likert[5][level-1]
+            dist = [(approachMatrix(stateKey(self.name,'health'),down,0.),value),
+                    (approachMatrix(stateKey(self.name,'health'),up,self.health),1.-value)]
+            tree[level] = {'distribution': dist}
+        tree = makeTree({'if': trueRow(stateKey(self.name,'alive')),
+                         True: tree, False: setToConstantMatrix(stateKey(self.name,'health'),0.)})
+        if self.horizon <= 2:
+            self.world.setDynamics(stateKey(self.name,'health'),Action({'subject': self.name}),tree,codePtr=codePtr)
+        else:
+            self.world.setDynamics(stateKey(self.name,'health'),ActionSet([Action({'subject': 'Nature','verb': 'evolve'})]),tree,codePtr=codePtr)
 
     def makeFriend(self,friend,config):
         self.friends.add(friend.name)
@@ -1038,3 +1040,7 @@ class Actor(Agent):
                 else:
                     decision['action'] = decision['action'].first()
             return decision
+
+    def reinforceHome(self,config):
+        impact = likert[5][config.getint('Actors','health_impact')-1]
+        self.setHealthDynamics(impact,impact/2,False)
