@@ -113,6 +113,18 @@ def instanceFile(args,name,sub=None):
 def openFile(args,fname,sub=None):
     return open(instanceFile(args,fname,sub),'r')
 
+def loadMultiCSV(fname,instance,run=0,subs=[None]):
+    fields = None
+    data = []
+    for sub in subs:
+        with openFile({'instance': instance,'run': run},fname,sub) as csvfile:
+            reader = csv.DictReader(csvfile,fields,delimiter='\t')
+            for row in reader:
+                if fields is None:
+                    fields = row.keys()
+                else:
+                    yield row
+
 def loadRunData(instance,run=0,end=None,nature=False,subs=[None]):
     fields = None
     data = {}
