@@ -12,6 +12,29 @@ from psychsim.domains.groundtruth import accessibility
 fields = ['Instance','Question','Metric','Actual','A','A Delta','B','B Delta']
 
 targets = {9: 'Actor0066',10: 'Actor0044', 11: 'Actor0051', 12: 'Actor0072', 13: 'Actor0160', 14: 'Actor0132'}
+TA2Btargets = {
+    'UnconstrainedCasualties': {
+        9: {'Actor0078','Actor0131', 'Actor0078', 'Actor0021', 'Actor0028', 'Actor0016', 'Actor0096', 'Actor0126', 'Actor0160', 'Actor0014'},
+        10: {'Actor0083', 'Actor0160', 'Actor0063', 'Actor0103', 'Actor0033', 'Actor0094', 'Actor0144', 'Actor0006', 'Actor0021'},
+        11: {'Actor0111', 'Actor0154', 'Actor0008', 'Actor0146', 'Actor0089', 'Actor0051', 'Actor0059', 'Actor0032', 'Actor0127', 'Actor0104'}},
+    'UnconstrainedDissatisfaction': {
+        11: {'Actor0154','Actor0051','Actor0111','Actor0089','Actor0127','Actor0008', 'Actor0036', 'Actor0036', 'Actor0082', 'Actor0104'}},
+    'InSeasonCasualties': {
+        12: {'Actor0023','Actor0029', 'Actor0152', 'Actor0027', 'Actor0106', 'Actor0033', 'Actor0120', 'Actor0059', 'Actor0081', 'Actor0035'},
+        13: {'Actor0088', 'Actor0078', 'Actor0056', 'Actor0148', 'Actor0054', 'Actor0068', 'Actor0098', 'Actor0160', 'Actor0043', 'Actor0074'},
+        14: {'Actor0011', 'Actor0013', 'Actor0022', 'Actor0094', 'Actor0057', 'Actor0080', 'Actor0079', 'Actor0155', 'Actor0145', 'Actor0068'}},
+    'OffseasonCasualties': {
+        12: {'Region12','Region13','Region14'},
+        13: {'Region12','Region13','Region14'},
+        14: {'Region12','Region13','Region14'}},
+    'InSeasonDissatisfaction': {
+        12: {'tax': ['Actor0028', 'Actor0077', 'Actor0134', 'Actor0028', 'Actor0075', 'Actor0103', 'Actor0037', 'Actor0088', 'Actor0003', 'Actor0086'],
+            'aid': ['Region14','Region08','Region10','Region01','Region09','Region04','Region16','Region15','Region13','Region02']},
+        13: {'tax': ['Actor0124', 'Actor0062', 'Actor0148', 'Actor0042', 'Actor0092', 'Actor0007', 'Actor0148', 'Actor0134', 'Actor0138', 'Actor0054'],
+            'aid': ['Region01','Region07','Region08','Region15','Region04','Region09','Region12','Region06','Region02','Region03']},
+        14: {'tax': ['Actor0133', 'Actor0135', 'Actor0135', 'Actor0123', 'Actor0087', 'Actor0133', 'Actor0156', 'Actor0109', 'Actor0016', 'Actor0131'],
+            'aid': ['Region13','Region06','Region15','Region14','Region10','Region16','Region05','Region12','Region09','Region01']}}
+    }
 
 def scoreCasualties(args,label,data):
     total = set()
@@ -70,7 +93,8 @@ def runSimulation(label,instance,run,argv):
         if result.returncode == 0:
             # Successful simulation
             logging.info('Success')
-            subprocess.run(['bzip2',os.path.join(dirName,'*.pkl')],capture_output=True)
+            for name in  [name for name in os.listdir(dirName) if os.path.splitext(name)[1] == '.pkl']:
+                subprocess.run(['bzip2','"%s"' % (os.path.join(dirName,name))])
             os.mkdir(os.path.join(dirName,label))
             for name in os.listdir(dirName):
                 if os.path.isfile(os.path.join(dirName,name)):
@@ -86,6 +110,7 @@ if __name__ == '__main__':
     options = vars(parser.parse_args())
     logging.basicConfig(level=logging.INFO,filename=os.path.join(os.path.dirname(__file__),'prescribe.log'))
     output = {}
+    storage = {}
     for instance in range(9,15):
         # Initialize entries in final table
         for question in ['Constrained','Unconstrained','Individual'] if instance < 12 else ['Offseason','InSeason','Individual']:
@@ -105,14 +130,14 @@ if __name__ == '__main__':
         if options['evaluate']:
             # Load in baseline data
             try:
-                data = accessibility.loadRunData(args['instance'],args['run'],subs=['Input','Actual'])
+                storage[instance] = accessibility.loadRunData(args['instance'],args['run'],subs=['Input','Actual'])
             except FileNotFoundError:
                 logging.warning('No data for %d %d Actual' % (args['instance'],args['run']))
                 continue
             # Score baseline simulation
-            actual = {'Casualties': scoreCasualties(args,'Actual',data),
-                'Dissatisfaction': scoreGrievance(args,'Actual',data,hurricane['End'] if instance < 12 else None),
-                'Individual': scoreIndividual(args,'Actual',data,targets[instance],hurricane['Start'] if instance < 12 else 365,
+            actual = {'Casualties': scoreCasualties(args,'Actual',storage[instance]),
+                'Dissatisfaction': scoreGrievance(args,'Actual',storage[instance],hurricane['End'] if instance < 12 else None),
+                'Individual': scoreIndividual(args,'Actual',storage[instance],targets[instance],hurricane['Start'] if instance < 12 else 365,
                     hurricane['End'] if instance < 12 else None)}
         # Simulate prescriptions
         for team in ['A','B']:
@@ -121,45 +146,60 @@ if __name__ == '__main__':
                     logging.info('Instance %d, Team %s, Question %s, Metric %s' % (instance,team,question,metric))
                     label = '%s%s%s' % (team,question,metric)
                     # Generate prescription results
-                    if instance > 11:
-                        # Long term
-                        argv = ['--seasons','2','--prescription',
-                            os.path.join(os.path.dirname(__file__),team,'%d' % (instance),'%sPrescription%s.tsv' % (question,metric))]
-                        if question == 'Individual':
-                            argv[2] = '--target'
-                            argv.insert(3,targets[instance])
-                    else:
-                        argv = ['-n','7','--hurricane',os.path.join(dirName,'Input','HurricaneInput.tsv'),'--prescription',
-                            os.path.join(os.path.dirname(__file__),team,'%d' % (instance),'%sPrescription%s.tsv' % (question,metric))]
-                        if question == 'Individual':
-                            argv[4] = '--target'
-                            argv.insert(5,targets[instance])
-                    result = runSimulation(label,instance,args['run'],argv)
-                    if options['evaluate']:
-                        try:
-                            data = accessibility.loadRunData(args['instance'],args['run'],subs=['Input',label])
-                        except FileNotFoundError:
-                            logging.warning('No data for %d %d %s' % (args['instance'],args['run'],label))
-                            continue
-                        if question == 'Individual':
-                            score = scoreIndividual(args,label,data,targets[instance],hurricane['Start'] if instance < 12 else 365,
-                                hurricane['End'] if instance < 12 else None)
-                            output['%d%s%s' % (instance,question,metric)]['Actual'] = actual[question]
-                            output['%d%s%s' % (instance,question,metric)]['%s Delta' % (team)] = (actual[question]-score)/actual[question]
-                        elif metric == 'Casualties':
-                            score = scoreCasualties(args,label,data)
-                            output['%d%s%s' % (instance,question,metric)]['Actual'] = actual[metric]
-                            output['%d%s%s' % (instance,question,metric)]['%s Delta' % (team)] = (actual[metric]-score)/actual[metric]
-                        elif metric == 'Dissatisfaction':
-                            score = scoreGrievance(args,label,data,hurricane['End'] if instance < 12 else None)
-                            output['%d%s%s' % (instance,question,metric)]['Actual'] = actual[metric]
-                            output['%d%s%s' % (instance,question,metric)]['%s Delta' % (team)] = (actual[metric]-score)/actual[metric]
+                    prescription = os.path.join(os.path.dirname(__file__),team,'%d' % (instance),'%sPrescription%s.tsv' % (question,metric))
+                    if os.path.exists(prescription):
+                        if instance > 11:
+                            # Long term
+                            argv = ['--seasons','2']
                         else:
-                            raise NameError('Unknown question: %s %s' % (question,metric))
-                        if isinstance(score,float):
-                            logging.info('Score: %5.3f' % (score))
+                            argv = ['-n','7','--hurricane',os.path.join(dirName,'Input','HurricaneInput.tsv'),]
+                        if question == 'Individual':
+                            argv += ['--target',targets[instance],prescription]
+                        elif team == 'B' and '%s%s' % (question,metric) in TA2Btargets and instance in TA2Btargets['%s%s' % (question,metric)]:
+                            for target in TA2Btargets['%s%s' % (question,metric)][instance]:
+                                if target[:5] == 'Actor':
+                                    argv += ['--target',target,prescription]
+                                elif target[:6] == 'Region':
+                                    if instance not in storage:
+                                        storage[instance] = accessibility.loadRunData(args['instance'],args['run'],subs=['Input','Actual'])
+                                    for name in storage[instance]:
+                                        if stateKey(name,'region') in storage[instance][name]:
+                                            if storage[instance][name][stateKey(name,'region')][1] == target:
+                                                argv += ['--target',name,prescription]
+                                elif target == 'tax':
+                                    for name in TA2Btargets['%s%s' % (question,metric)][instance][target]:
+                                        argv += ['--tax',name]
+                                elif target == 'aid':
+                                    for name in TA2Btargets['%s%s' % (question,metric)][instance][target]:
+                                        argv += ['--aid',name]
                         else:
-                            logging.info('Score: %d' % (score))
-                        output['%d%s%s' % (instance,question,metric)][team] = score
+                            argv += ['--prescription',prescription]
+                        result = runSimulation(label,instance,args['run'],argv)
+                        if options['evaluate']:
+                            try:
+                                data = accessibility.loadRunData(args['instance'],args['run'],subs=['Input',label])
+                            except FileNotFoundError:
+                                logging.warning('No data for %d %d %s' % (args['instance'],args['run'],label))
+                                continue
+                            if question == 'Individual':
+                                score = scoreIndividual(args,label,data,targets[instance],hurricane['Start'] if instance < 12 else 365,
+                                    hurricane['End'] if instance < 12 else None)
+                                output['%d%s%s' % (instance,question,metric)]['Actual'] = actual[question]
+                                output['%d%s%s' % (instance,question,metric)]['%s Delta' % (team)] = (actual[question]-score)/actual[question]
+                            elif metric == 'Casualties':
+                                score = scoreCasualties(args,label,data)
+                                output['%d%s%s' % (instance,question,metric)]['Actual'] = actual[metric]
+                                output['%d%s%s' % (instance,question,metric)]['%s Delta' % (team)] = (actual[metric]-score)/actual[metric]
+                            elif metric == 'Dissatisfaction':
+                                score = scoreGrievance(args,label,data,hurricane['End'] if instance < 12 else None)
+                                output['%d%s%s' % (instance,question,metric)]['Actual'] = actual[metric]
+                                output['%d%s%s' % (instance,question,metric)]['%s Delta' % (team)] = (actual[metric]-score)/actual[metric]
+                            else:
+                                raise NameError('Unknown question: %s %s' % (question,metric))
+                            if isinstance(score,float):
+                                logging.info('Score: %5.3f' % (score))
+                            else:
+                                logging.info('Score: %d' % (score))
+                            output['%d%s%s' % (instance,question,metric)][team] = score
     if options['evaluate']:
         accessibility.writeOutput(args,output.values(),fields,'PrescribeResults.tsv',os.path.dirname(__file__))
