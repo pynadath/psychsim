@@ -83,14 +83,14 @@ def getDemographics(actor,old=False):
             raise RuntimeError('Unable to process pre-survey field: %s' % (field))
     return record
 
-def readHurricanes(instance,run=0,sub=None):
+def readHurricanes(instance,run=0,sub=None,fname='HurricaneTable.tsv'):
     """
     :returns: A list of attributes about the hurricanes so far
     """
     inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (run))
     if sub:
         inFile = os.path.join(inFile,sub)
-    inFile = os.path.join(inFile,'HurricaneTable.tsv')
+    inFile = os.path.join(inFile,fname)
     return readHurricaneFile(inFile)
     
 def readHurricaneFile(inFile):
@@ -224,3 +224,17 @@ def readRunData(instance,run=0):
         reader = csv.DictReader(csvfile,delimiter='\t')
         data = list(reader)
     return data
+
+def readPrescription(inFile):
+    prescription = {}
+    with open(inFile,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        for row in reader:
+            try:
+                prescription[int(row['Timestep'])] = row
+            except KeyError:
+                try:
+                    prescription.append(row)
+                except AttributeError:
+                    prescription = [row]
+    return prescription

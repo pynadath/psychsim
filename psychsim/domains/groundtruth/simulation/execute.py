@@ -50,6 +50,14 @@ def runInstance(instance,args,config,rerun=True):
             world = loadPickle(args['instance'],run,args['reload'])
             hurricanes = readHurricanes(args['instance'],run)
             population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
+            try:
+                population[0].demographics
+            except AttributeError:
+                for agent in population:
+                    agent.prescription = None
+                    agent.demographics = {}
+                    for key,feature in oldDemographics.items():
+                        agent.demographics[demographics[key]] = world.getState(agent.name,feature).first()
             regions = {agent.name: {'agent': agent,
                                     'inhabitants': [a for a in population if a.home == agent.name]}
                        for agent in world.agents.values() if isinstance(agent,Region)}
@@ -175,6 +183,47 @@ def runInstance(instance,args,config,rerun=True):
                 for action in list(agent.actions):
                     if action['verb'] == 'moveTo' and action['object'][:7] == 'shelter':
                         agent.actions.remove(action)
+        # Load any prescription
+        if args['prescription']:
+            world.agents['System'].prescription = readPrescription(args['prescription'])
+            if isinstance(world.agents['System'].prescription,list):
+                if 'Field' in world.agents['System'].prescription[0]:
+                    # In/Offseason prediction
+                    targets = set()
+                    for entry in world.agents['System'].prescription[:]:
+                        if entry['Action'].strip() == 'reinforce':
+                            if entry['Value'] == 'Old':
+                                assert entry['Field'].strip() == 'age'
+                                targets |= set([a.name for a in sorted(population,key=lambda a: a.demographics[entry['Field'].strip()],
+                                    reverse=True)[:int(round(len(population)/10))]])
+                            else:
+                                targets |= {agent.name for agent in population if agent.demographics[entry['Field'].strip()] == entry['Value'].strip()}
+                            world.agents['System'].prescription.remove(entry)
+                        elif entry['Action'].strip() == 'pay':
+                            pass
+                    for name in targets:
+                        world.agents[name].reinforceHome(config)
+        else:
+            world.agents['System'].prescription = None
+        if args['target']:
+            for name,prescription in args['target']:
+                world.agents[name].prescription = readPrescription(prescription)
+        if args['tax']:
+            total = 0.
+            for name in args['tax']:
+                # Tax time!
+                agent = world.agents[name]
+                if agent.getState('alive').first():
+                    value = agent.getState('resources')
+                    assert len(value) == 1
+                    value = value.first()
+                    delta = value/5.
+                    total += delta
+                    agent.setState('resources',value-delta)
+            world.agents['System'].resources = int(100*total)
+        if args['aid']:
+            world.agents['System'].prescription = args['aid'][:]
+            world.agents['System'].setAidDynamics([a.name for a in population])
         terminated = False
         while True:
             if isinstance(args['number'],int):
@@ -262,6 +311,13 @@ def runInstance(instance,args,config,rerun=True):
                 state['phase'] = world.getState('Nature','phase').first()
 #                print('Next season')
 #                world.printState()
+                if args['pickle']:
+                    # Save after fast-forwarding
+                    print('Pickling...')
+                    import pickle
+                    day = world.getState(WORLD,'day').first()
+                    with open(os.path.join(dirName,'scenario%d.pkl' % (day)),'wb') as outfile:
+                        pickle.dump(world,outfile)
         logging.info('Total time: %f' % (time.time()-start))
         if args['pickle']:
             print('Pickling...')
@@ -465,8 +521,102 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
         elif maximize:
             select = 'max'
         else:
-            select = True            
-        newState = world.step(actions.get(turn,None),select=select,debug=debug)
+            select = True
+        policy = actions.get(turn,None)
+        if policy:
+            policy = dict(policy)
+        if world.agents['System'].prescription:
+            # Anything to specify here?
+            if isinstance(world.agents['System'].prescription,list):
+                for entry in world.agents['System'].prescription:
+                    if isinstance(entry,dict):
+                        if turn == 'Actor':
+                            assert entry['Value'][0] == '<','Unknown value filter: %s' % (entry['Value'])
+                            targets = {actor for actor in living if float(actor.getState(entry['Field'])) < float(entry['Value'][1:])}
+                            if entry['Action'].strip() == 'pay':
+                                old = float(actor.getState('resources'))
+                                actor.setState('resources',old+(actor.demographics['wealth']-old)/10)
+                            elif entry['Action'].strip() == 'evacuate':
+                                for actor in targets:
+                                    for action in actor.actions:
+                                        if action['verb'] == 'evacuate':
+                                            if policy is None:
+                                                policy = {}
+                                            policy[actor.name] = action
+                                            break
+                                    else:
+                                        raise ValueError('Unable to find %s action for %s' % (verb,actor.name))
+                            else:
+                                raise NameError('Unknown prescription action: %s' % (entry['Action']))
+            elif day in world.agents['System'].prescription:
+                entry = world.agents['System'].prescription[day]
+                if 'Region(To issue mandatory evacuation)' in entry:
+                    if turn == 'Actor':
+                        region = entry['Region(To issue mandatory evacuation)']
+                        if region != 'Not applicable':
+                            if policy is None:
+                                policy = {}
+                            for actor in living:
+                                if actor.demographics['home'] == region:
+                                    if actor.getState('location').first() == 'evacuated':
+                                        verb = 'stayInLocation'
+                                    else:
+                                        verb = 'evacuate'
+                                    for action in actor.actions:
+                                        if action['verb'] == verb:
+                                            policy[actor.name] = action
+                                            break
+                                    else:
+                                        raise ValueError('Unable to find %s action for %s' % (verb,actor))
+                else:
+                    # Must be a System aid allocation policy
+                    assert 'Region' in entry,'Unknown policy type: %s' % (entry)
+        if turn == 'Actor':
+            for actor in living:
+                if actor.prescription is not None:
+                    verb = None
+                    if isinstance(actor.prescription,list):
+                        belief = actor.getBelief()
+                        for entry in actor.prescription:
+                            try:
+                                val = int(entry['Value1'])
+                            except ValueError:
+                                val = entry['Value1']
+                            if world.getFeature(entry['Field1']).get(val) < 0.5:
+                                continue
+                            if entry['Field2']:
+                                for val in entry['Value2'].split(','):
+                                    if world.getFeature(entry['Field2']).get(val) > 0.5:
+                                        break
+                                    else:
+                                        # Does not match
+                                        continue
+                            break
+                        else:
+                            logging.warning('No entry when %s=%s' % (entry['Field1'],world.getFeature(entry['Field1'])))
+                            continue
+                    elif day in actor.prescription:
+                        entry = actor.prescription[day]
+                    else:
+                        entry = None
+                    if entry:
+                        if policy is None:
+                            policy = {}
+                        for action in actor.actions:
+                            if entry['Action'] == 'shelter':
+                                if action['verb'] == 'moveTo' and action['object'][:7] == 'shelter':
+                                    policy[actor.name] = action
+                                    break
+                            elif entry['Action'] == 'moveTo':
+                                if action['verb'] == 'moveTo' and action['object'][:7] != 'shelter':
+                                    policy[actor.name] = action
+                                    break
+                            elif entry['Action'] == action['verb']:
+                                policy[actor.name] = action
+                                break
+                        else:
+                            raise ValueError('Unable to find action %s for %s' % (entry['Action'],actor.name))
+        newState = world.step(policy,select=select,debug=debug)
         buf = StringIO()
         joint = world.explainAction(newState,level=1,buf=buf)
         joint = {name: action for name,action in joint.items()
