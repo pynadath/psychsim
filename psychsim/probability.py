@@ -23,18 +23,17 @@ class Distribution(dict):
         """
         dict.__init__(self)
 #        self._domain = {}
-        if not args is None:
-            if isinstance(args,Node):
-                self.parse(args)
-            elif rationality is None:
-                if isinstance(args,Distribution):
-                    # Some other distribution given
-                    for key in args.domain():
-                        self[key] = args[key]
-                else:
-                    # Probability dictionary provided
-                    for key,value in args.items():
-                        self[key] = value
+        if isinstance(args,Node):
+            self.parse(args)
+        elif isinstance(args,Distribution):
+            # Some other distribution given
+            for key in args.domain():
+                self[key] = args[key]
+        elif isinstance(args,dict):
+            if rationality is None:
+                # Probability dictionary provided
+                for key,value in args.items():
+                    self[key] = value
             else:
                 # Do quantal response / softmax on table of values
                 for key,V in args.items():
@@ -64,6 +63,10 @@ class Distribution(dict):
         key = hash(element)
         self._domain[key] = element
         dict.__setitem__(self,key,value)
+
+    def items(self):
+        for key,value in dict.items(self):
+            yield self._domain[key],value
 
     def addProb(self,element,value):
         """
