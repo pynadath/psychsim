@@ -30,7 +30,7 @@ class System(Agent):
             self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),
                            likert[5][config.getint('System','reward_grievance')-1])
         self.addAction({'verb': 'doNothing'},codePtr=True)
-        self.setAidDynamics(population,populated)
+        self.setAidDynamics(population)
         self.setAttribute('horizon',config.getint('System','horizon'))
         self.TA2BTA1C52 = False
         self.TA2BTA1C54 = False
@@ -46,9 +46,12 @@ class System(Agent):
         regions = self.getPopulated(population)
         allocation = self.config.getint('System','system_allocation')
         try:
+            if self.resources is None:
+                self.resources = allocation
             resources = self.resources
         except AttributeError:
-            resources = self.resources = allocation
+            self.resources = allocation
+            resources = self.resources
         scale = resources/likert[5][max(allocation,1)]
         for region in regions:
             allocate = self.addAction({'verb': 'allocate','object': region},codePtr=True)
