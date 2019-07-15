@@ -12,16 +12,20 @@ class Nature(Agent):
 
         evolution = self.addAction({'verb': 'evolve'},codePtr=True)
 
+        #//GT: node 33; 1 of 1; next 2 lines
         phase = world.defineState(self.name,'phase',list,['none','approaching','active'],codePtr=True)
         world.setFeature(phase,'none')
+        #//GT: node 31; 1 of 1; next 2 lines
         days = world.defineState(self.name,'days',int,codePtr=True)
         world.setFeature(days,0)
 
+        #//GT: node 32; 1 of 1; next 4 lines
         regions = sorted([name for name in self.world.agents
                           if isinstance(self.world.agents[name],Region)])
         location = world.defineState(self.name,'location',list,regions+['none'],codePtr=True)
         world.setFeature(location,'none')
 
+        #//GT: node 30; 1 of 1; next 2 lines
         category = world.defineState(self.name,'category',int,codePtr=True)
         world.setFeature(category,0)
         
