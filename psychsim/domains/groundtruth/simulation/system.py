@@ -56,13 +56,14 @@ class System(Agent):
         scale = resources/likert[5][max(allocation,1)]
         for region in regions:
             allocate = self.addAction({'verb': 'allocate','object': region},codePtr=True)
+            # // GT: edge 60; from 37; to 24; 1 of 1; next 5 lines
             risk = stateKey(region,'risk')
             impact = 1-pow(1-likert[5][self.config.getint('System','system_impact')-1],scale)
             tree = makeTree(approachMatrix(risk,impact,
                                            0. if self.config.getint('Simulation','phase',fallback=1) == 1 else self.world.agents[region].risk))
             self.world.setDynamics(risk,allocate,tree,codePtr=True)
-#            tree = makeTree(incrementMatrix(resources,-allocation))
-#            self.world.setDynamics(resources,allocate,tree,codePtr=True)
+            # //GT: edge 24; from  23; to 12; 1 of 1; next 12 lines
+            # //GT: edge 59; from  37; to 12; 1 of 1; next 12 lines
             if self.config.getboolean('Actors','grievance') and \
                self.config.getint('Actors','grievance_delta') > 0:
                 delta = likert[5][self.config.getint('Actors','grievance_delta')-1]
@@ -152,6 +153,7 @@ class System(Agent):
                         raise RuntimeError('Unable to find allocation action for %s' % (targets[0][0]))
             except AttributeError:
                 choice = None
+        # // GT: edge 56; from 34; to 37; 1 of 1; next 8 lines
         if choice is None:
             population = {name: [a for a in self.world.agents.values() if isinstance(a,Actor) and a.demographics['home'] == name]
                           for name in self.world.agents if isinstance(self.world.agents[name],Region)}

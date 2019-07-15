@@ -30,6 +30,8 @@ class Nature(Agent):
         world.setFeature(category,0)
         
         # Phase dynamics
+        # //GT: edge 46; from 31; to 33; 1 of 1; next 20 lines
+        # //GT: edge 47; from 32; to 33; 1 of 1; next 20 lines
         prob = likert[5][config.getint('Disaster','phase_change_prob')-1]
         minDays = config.getint('Disaster','phase_min_days')
         tree = {'if': equalRow(phase,['none','approaching']),
@@ -51,11 +53,13 @@ class Nature(Agent):
                        False: setToConstantMatrix(phase,'active')}}
         world.setDynamics(phase,evolution,makeTree(tree),codePtr=True)
 
+        # //GT: edge 51; from 33; to 31; 1 of 1; next 4 lines
         tree = makeTree({'if': equalFeatureRow(phase,makeFuture(phase)),
                          True: incrementMatrix(days,1),
                          False: setToConstantMatrix(days,0)})
         world.setDynamics(days,evolution,tree,codePtr=True)
 
+        # //GT: edge 50; from 33; to 30; 1 of 1; next 25 lines
         if config.getint('Disaster','category_change') > 0:
             prob = likert[5][config.getint('Disaster','category_change')-1]
             subtree = {'if': equalRow(category,1),
@@ -86,6 +90,7 @@ class Nature(Agent):
         coastline = {r for r in regions if world.agents[r].x == 1}
         prob = 1./float(len(coastline))
         # For computing hurricane movement
+        # //GT: edge 52; from 33; to 32; 1 of 1; next 29 lines
         subtree = {'if': equalRow(location,regions[:]),
                    None: noChangeMatrix(location)}
         northProb = likert[5][config.getint('Disaster','move_north')-1]
@@ -116,6 +121,10 @@ class Nature(Agent):
         world.setDynamics(location,evolution,tree,codePtr=True)
 
         # Effect of disaster on risk
+        # //GT: edge 38; from 27; to 28; 1 of 1; next 17 lines
+        # //GT: edge 44; from 30; to 34; 1 of 1; next 17 lines
+        # //GT: edge 48; from 32; to 34; 1 of 1; next 17 lines
+        # //GT: edge 53; from 33; to 34; 1 of 1; next 17 lines
         base_increase = likert[5][config.getint('Disaster','risk_impact')-1]
         base_decrease = likert[5][config.getint('Disaster','risk_decay')-1]
         for region in regions:
@@ -133,6 +142,9 @@ class Nature(Agent):
                              True: subtree,
                              False: approachMatrix(risk,base_decrease,world.agents[region].risk)})
             world.setDynamics(risk,evolution,tree,codePtr=True)
+        # //GT: edge 39; from 27; to 29; 1 of 1; next 15 lines
+        # //GT: edge 49; from 32; to 29; 1 of 1; next 17 lines
+        # //GT: edge 54; from 33; to 29; 1 of 1; next 17 lines
         if config.getboolean('Shelter','exists'):
             for index in map(int,config.get('Shelter','region').split(',')):
                 region = Region.nameString % (index)

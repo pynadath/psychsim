@@ -362,6 +362,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
             if groups:
                 # Make group decisions
                 pass
+            # //GT: edge 1; from 1; to 27; 1 of 2; next 21 lines
             if config.getboolean('Actors','messages') and state['phase'] != 'none':
                 # Friends exchange messages
                 myScale = likert[5][config.getint('Actors','self_trust')-1]
