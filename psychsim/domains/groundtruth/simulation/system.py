@@ -43,6 +43,7 @@ class System(Agent):
         return populated
 
     def setAidDynamics(self,population):
+        #//GT: node 37; 1 of 1; next 12 lines        
         regions = self.getPopulated(population)
         allocation = self.config.getint('System','system_allocation')
         try:
