@@ -47,6 +47,7 @@ class Region(Agent):
 
         self.setAttribute('static',True)
         
+        #//GT: node 34; 1 of 1; next 15 lines
         risk = world.defineState(self.name,'risk',float,description='Level of risk from hurricane',
                                  codePtr=True)
         try:
@@ -66,23 +67,25 @@ class Region(Agent):
 #                                    description='Minimum level of risk in this region')
 #        world.setFeature(riskMin,self.risk)
 
-        security = world.defineState(self.name,'security',float,codePtr=True,
-                                     description='Level of law enforcement in region')
-        try:
-            self.security = config.getfloat('Regions','security_value')
-        except configparser.NoOptionError:
-            mean = config.getint('Regions','security_mean')
-            sigma = config.getint('Regions','security_sigma')
-            if sigma > 0:
-                self.security = sampleNormal(mean,sigma)
-            else:
-                self.security = likert[5][mean-1]
-        world.setFeature(security,self.security)
+        if config.getint('Simulation','phase',fallback=1) == 1:
+            security = world.defineState(self.name,'security',float,codePtr=True,
+                                         description='Level of law enforcement in region')
+            try:
+                self.security = config.getfloat('Regions','security_value')
+            except configparser.NoOptionError:
+                mean = config.getint('Regions','security_mean')
+                sigma = config.getint('Regions','security_sigma')
+                if sigma > 0:
+                    self.security = sampleNormal(mean,sigma)
+                else:
+                    self.security = likert[5][mean-1]
+            world.setFeature(security,self.security)
 
 #        economy = world.defineState(self.name,'economy',float,codePtr=True,
 #                                    description='Current economic level of region')
 #        world.setFeature(economy,1.)
 
+        #//GT: node 35; 1 of 1; next 8 lines
         if index is not None:
             # Shelter in this region
             world.defineState(self.name,'shelterRisk',float,codePtr=True)
@@ -92,6 +95,7 @@ class Region(Agent):
             else:
                 self.setState('shelterRisk',0.)
             world.defineState(self.name,'shelterPets',bool,codePtr=True)
+        #//GT: node 36; 1 of 1; next 4 lines
             if config.get('Shelter','pets').split(',')[index] == 'yes':
                 self.setState('shelterPets',True)
             else:
