@@ -1,0 +1,8 @@
+Field1	Value1	Field2	Value2	Field3	Value2	Action
+Nature's category	1					stayInLocation
+Nature's category	2					stayInLocation
+Nature's category	3					stayInLocation
+Nature's category	4	Nature's location	Region01,Region02,Region05			evacuate
+Nature's category	4	Nature's location	Region03,Region04,Region06,Region07,Region08,Region09,Region10,Region11,Region12,Region13,Region14,Region15,Region16			stayInLocation
+Nature's category	5	Nature's location	Region01,Region02,Region03,Region05,Region06,Region09			evacuate
+Nature's category	5	Nature's location	Region04,Region07,Region08,Region10,Region11,Region12,Region13,Region14,Region15,Region16			stayInLocation
