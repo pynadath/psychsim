@@ -75,7 +75,13 @@ class Agent(object):
         Rkey = rewardKey(self.name,True)
         actions = self.actions
         model['V'] = {}
-        for key in [k for k in belief.keys() if isTurnKey(k)]:
+        order = sorted([(belief[k].first(),k) for k in belief.keys() if isTurnKey(k)])
+        pi = {}
+        for i in range(len(order)-1):
+            assert order[i][0] < order[i+1][0],'Unable to project when actors act in parallel (%s and %s)' % \
+                (state2agent(order[i][1]),state2agent(order[i+1][1]))
+        order = [entry[1] for entry in order]
+        for key in order[:horizon]:
             other = self.world.agents[state2agent(key)]
             if other.name == self.name:
                 pass
@@ -96,10 +102,17 @@ class Agent(object):
                 action = next(iter(other.actions))
                 effects = self.world.deltaState(action,belief,belief.keys())
                 mentalModel['policy'] = collapseDynamics(copy.deepcopy(R),effects)
+                self.world.setModel(other.name,mentalModel['name'],belief)
+                if debug:
+                    print(action)
+                    print(mentalModel['policy'])
+                pi[other.name] = mentalModel['policy']
         for action in actions:
             effects = self.world.deltaState(action,belief,belief.keys())
             model['V'][action] = collapseDynamics(copy.deepcopy(R),effects)
-            if debug: print(self.name,action)
+            if debug: 
+                print(action)
+                print(model['V'][action])
         return model['V']
                             
     def decide(self,vector=None,horizon=None,others=None,model=None,selection=None,actions=None,
