@@ -76,7 +76,7 @@ class KeyedVector(collections.MutableMapping):
             return NotImplemented
 
     def __rmul__(self,other):
-        if isinstance(other,float):
+        if isinstance(other,float) or isinstance(other,int):
             result = self.__class__()
             for key,value in self.items():
                 result[key] = other*value
