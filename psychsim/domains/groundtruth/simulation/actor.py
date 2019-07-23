@@ -289,7 +289,7 @@ class Actor(Agent):
                                  description='Current level of risk from hurricane')
         world.setFeature(risk,world.getState(self.demographics['home'],'risk').expectation())
         # //GT: node 12; 1 of 1; next 17 lines
-        if config.getboolean('System','system'):
+        if config.getboolean('Actors','grievance'):
             mean = config.getint('Actors','grievance_ethnic_%s' % (self.demographics['ethnicGroup']))
             mean += config.getint('Actors','grievance_religious_%s' % (self.demographics['religion']))
             mean += config.getint('Actors','grievance_%s' % (self.demographics['gender']))
@@ -505,8 +505,14 @@ class Actor(Agent):
                 tree = {'if': equalRow(makeFuture(location),region.name),
                         True: setToFeatureMatrix(risk,stateKey(region.name,'risk')),
                         False: tree}
-        tree = {'if': trueRow(alive),True: tree, False: setToConstantMatrix(risk,0.)}
-        world.setDynamics(risk,True,makeTree(tree),codePtr=True)
+        tree = {'if': trueRow(alive if config.getint('Simulation','phase',fallback=1) else makeFuture(alive)),
+            True: tree, 
+            False: setToConstantMatrix(risk,0.)}
+        if config.getint('Simulation','phase',fallback=1) == 1:
+            world.setDynamics(risk,True,makeTree(tree),codePtr=True)
+        else:
+            for action in self.actions:
+                world.setDynamics(risk,action,makeTree(tree),codePtr=True)
         
         # Effect on my health
         impact = likert[5][config.getint('Actors','health_impact')-1]
@@ -524,10 +530,14 @@ class Actor(Agent):
                 tree[level] = {'distribution': dist}
             tree = makeTree({'if': trueRow(alive),
                              True: tree, False: setToConstantMatrix(kidHealth,0.)})
-            if self.horizon <= 2:
-                world.setDynamics(kidHealth,Action({'subject': self.name}),tree,codePtr=True)
+            if config.getint('Simulation','phase',fallback=1) == 1:
+                if self.horizon <= 2:
+                    world.setDynamics(kidHealth,Action({'subject': self.name}),tree,codePtr=True)
+                else:
+                    world.setDynamics(kidHealth,evolve,tree,codePtr=True)
             else:
-                world.setDynamics(kidHealth,evolve,tree,codePtr=True)
+                for action in self.actions:
+                    world.setDynamics(kidHealth,action,tree,codePtr=True)
 
         # Effect on life
         tree = makeTree({'if': trueRow(alive),
@@ -739,8 +749,9 @@ class Actor(Agent):
             self.Rweights['neighbors'] = 0.
         if config.getboolean('Actors','beliefs'):
             # Observations
-            self.uncertainKeys = {stateKey('Nature','location'),stateKey(self.name,'health'),stateKey(self.name,'childrenHealth')}
-
+            self.uncertainKeys = {stateKey('Nature','category'),stateKey(self.name,'risk'),stateKey(self.demographics['home'],'risk')}
+            for shelter in shelters:
+                self.uncertainKeys.add(stateKey('Region%s' % (shelter),'shelterRisk'))
             evolve = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
             if config.getint('Simulation','phase',fallback=1) == 1:
                 if not config.getboolean('Simulation','graph',fallback=False):
@@ -789,7 +800,7 @@ class Actor(Agent):
                                                  (setToFeatureMatrix(omega,real,shift=-1),
                                                   1.-distortionProb)]}}
             self.setO('perceivedCategory',evolve,makeTree(tree))
-            self.setO('perceivedCategory',None,makeTree(setToConstantMatrix(omega,0)))
+            self.setO('perceivedCategory',None,makeTree(setToConstantMatrix(omega,-1)))
             self.setState('perceivedCategory',0)
             if config.getint('Simulation','phase',fallback=1) == 1:        
                 if not config.getboolean('Simulation','graph',fallback=False):
@@ -837,7 +848,7 @@ class Actor(Agent):
             tree[level] = {'distribution': dist}
         tree = makeTree({'if': trueRow(stateKey(self.name,'alive')),
                          True: tree, False: setToConstantMatrix(stateKey(self.name,'health'),0.)})
-        if self.horizon <= 2:
+        if self.horizon <= 2 and self.config.getint('Simulation','phase',fallback=1) == 1:
             self.world.setDynamics(stateKey(self.name,'health'),Action({'subject': self.name}),tree,codePtr=codePtr)
         else:
             self.world.setDynamics(stateKey(self.name,'health'),ActionSet([Action({'subject': 'Nature','verb': 'evolve'})]),tree,codePtr=codePtr)
@@ -867,17 +878,19 @@ class Actor(Agent):
         #//GT: node 1; 1 of 2; next 25 lines
         friendMax = config.getint('Actors','friends')
         friendMin = config.getint('Actors','friendMin',fallback=0)
-        if friendMax > 0:
+        if len(self.friends) < friendMax:
             # Social network
-            friendCount = {}
             if 'friendOf' in self.world.relations:
                 # Backward compatibility with saved social network
+                friendCount = {}
                 for key in self.world.relations['friendOf']:
                     relation = key2relation(key)
                     if relation['subject'] == self.name:
                         self.friends.add(relation['object'])
                     else:
                         friendCount[relation['subject']] = friendCount.get(relation['subject'],0)+1
+            else:
+                friendCount = {agent.name: len(agent.friends) for agent in population}
             numFriends = random.randint(max(friendMin,len(self.friends)),friendMax)
             possibles = [agent.name for agent in population
                          if friendCount.get(agent.name,0) < friendMax
@@ -962,7 +975,7 @@ class Actor(Agent):
                 if not config.getboolean('Simulation','graph',fallback=False):
                     include.add(key)
             elif agent == WORLD:
-                if not config.getboolean('Simulation','graph',fallback=False):
+                if not config.getboolean('Simulation','graph',fallback=False) and config.getint('Simulation','phase',fallback=1) == 1:
                     include.add(key)
             # elif isinstance(self.world.agents[agent],Actor):
             #     if altNeighbor > 0 and agent in neighbors:
@@ -1057,20 +1070,40 @@ class Actor(Agent):
             knownActions = actions.__class__({action for action in actions if actionKey(action['subject']) in beliefs})
             self.world.step(knownActions,beliefs,keySubset=beliefs.keys(),updateBeliefs=False)
             omega = stateKey(self.name,'perceivedCategory')
+            omegaState = beliefs.keyMap[omega]
             real = trueState[makeFuture(omega)].first()
-            dist = beliefs.distributions[beliefs.keyMap[omega]]
-            if len(dist) > 1:
-                for vec in dist.domain():
-                    for key in vec.keys():
-                        if key == omega:
-                            if vec[key] != real:
-                                del dist[vec]
-                                break
-                        elif key in self.uncertainKeys or real == 0:
-                            if vec[key] != trueState[key].first():
-                                del dist[vec]
-                                break
-                dist.normalize()
+            debug = False
+            for substate,dist in beliefs.distributions.items():
+                if len(dist) > 1:
+                    change = False
+                    for vec in dist.domain():
+                        for key in vec.keys():
+                            if key == CONSTANT:
+                                pass
+                            elif key == omega:
+                                if vec[key] != real:
+                                    del dist[vec]
+                                    change = True
+                                    break
+                            elif key not in self.uncertainKeys or real == 0:
+                                # If this is not an uncertain key, or there is no hurricane
+                                if vec[key] != trueState[key].first():
+                                    del dist[vec]
+                                    change = True
+                                    break
+                    if change: 
+                        dist.normalize()
+                    change = False
+                    for vec in dist.domain():
+                        if dist[vec] < self.config.getfloat('Actors','likelihood_threshold',fallback=0.01):
+                            del dist[vec]
+                            change = True
+                    if change:
+                        dist.normalize()
+            if len(beliefs) > 5:
+                print(self.name,len(beliefs))
+#                self.world.printState(beliefs)
+#                raise RuntimeError
             self.setAttribute('beliefs',beliefs,model)
 
     def recvMessage(self,key,msg,myScale=1.,yrScaleOpt=1.,yrScalePess=1.,model=None):
@@ -1085,7 +1118,18 @@ class Actor(Agent):
         old = dist.expectation()
         if old is None:
             logging.error('%s [%s] has null belief on %s' % (self.name,model,key))
+        elif isinstance(msg,list):
+            # Phase 2 messages
+            total = Distribution({el: myScale*dist[el] for el in dist.domain()})
+            for bel in msg:
+                scale = yrScaleOpt if msg.expectation() > old else yrScalePess
+                for value in bel.domain():
+                    total.addProb(value,scale*bel[value])
+            total.normalize()
+            logging.info('%s new belief in %s: %s' % (self.name,key,total))
+            self.setBelief(key,total,model)
         else:
+            # Original Phase 1 messages
             total = Distribution({el: myScale*dist[el] for el in dist.domain()})
             for value in msg.domain():
                 if msg.expectation() > old:
