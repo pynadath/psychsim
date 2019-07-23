@@ -96,6 +96,8 @@ class DependencyGraph(dict):
                                        'children': set()}
         # Create links from dynamics
         for key,dynamics in self.world.dynamics.items():
+            if not isinstance(key,str):
+                continue
             if isTurnKey(key):
                 continue
             if isStateKey(key) and not state2agent(key) in agents:
