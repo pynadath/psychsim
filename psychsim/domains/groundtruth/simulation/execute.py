@@ -7,6 +7,7 @@ import csv
 import logging
 import os
 import os.path
+import pickle
 import pstats
 import random
 import time
@@ -112,6 +113,9 @@ def runInstance(instance,args,config,rerun=True):
                 if not os.path.exists(defDir):
                     os.makedirs(defDir)
                 writeDefinition(world,defDir)
+            if args['pickle']:
+                with open(os.path.join(dirName,'scenario0.pkl'),'wb') as outfile:
+                    pickle.dump(world,outfile)
         world.setParallel(args['multiprocessing'])
         groups = [agent for agent in world.agents.values() if isinstance(agent,Group)]
         del preSurveyRecords[:]
@@ -231,7 +235,7 @@ def runInstance(instance,args,config,rerun=True):
                     # Hurricane-based stopping condition is satisfied
                     terminated = True
             elif isinstance(args['days'],int):
-                if world.getState(WORLD,'day').first() >= args['days']:
+                if world.getState(WORLD,'day').first() > args['days']:
                     # Day-based stopping condition is satisfied
                     terminated = True
             elif isinstance(args['seasons'],int):
@@ -314,14 +318,12 @@ def runInstance(instance,args,config,rerun=True):
                 if args['pickle']:
                     # Save after fast-forwarding
                     print('Pickling...')
-                    import pickle
                     day = world.getState(WORLD,'day').first()
                     with open(os.path.join(dirName,'scenario%d.pkl' % (day)),'wb') as outfile:
                         pickle.dump(world,outfile)
         logging.info('Total time: %f' % (time.time()-start))
         if args['pickle']:
             print('Pickling...')
-            import pickle
             if config.getboolean('Simulation','graph',fallback=False):
                 day = 1
             else:
@@ -348,7 +350,8 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
     state['today'] = world.getState(WORLD,'day').first()
     logging.info('Day %d' % (state['today']))
     day = state['today']
-    updateCDF(world,dirName,cdfTables)
+    if config.getboolean('Data','livecdf',fallback=True):
+        updateCDF(world,dirName,cdfTables)
     while day == state['today']:
         living = [a for a in world.agents.values() if isinstance(a,Actor) and a.getState('alive').first()]
         agents = world.next()
@@ -362,7 +365,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
             if groups:
                 # Make group decisions
                 pass
-            # //GT: edge 1; from 1; to 27; 1 of 2; next 21 lines
+            # //GT: edge 1; from 1; to 27; 1 of 2; next 35 lines
             if config.getboolean('Actors','messages') and state['phase'] != 'none':
                 # Friends exchange messages
                 myScale = likert[5][config.getint('Actors','self_trust')-1]
@@ -374,109 +377,129 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                     pessScale = likert[5][config.getint('Actors','friend_pess_trust')-1]
                 else:
                     pessScale = 0.
-                for actor in living:
-                    friends = [friend for friend in actor.friends
-                               if world.agents[friend] in living]
-                    if friends:
-                        key = stateKey('Nature','category')
-                        for friend in friends:
-                            yrBelief = next(iter(world.agents[friend].getBelief().values()))
-                            msg = yrBelief[key]
-                            logging.info('%s receives message %s from %s' % (actor,msg,friend))
+                if config.getint('Simulation','phase',fallback=1) == 1:
+                    # Original phase 1 messages
+                    for actor in living:
+                        friends = [friend for friend in actor.friends
+                                   if world.agents[friend] in living]
+                        if friends:
+                            key = stateKey('Nature','category')
+                            for friend in friends:
+                                yrBelief = next(iter(world.agents[friend].getBelief().values()))
+                                msg = yrBelief[key]
+                                logging.info('%s receives message %s from %s' % (actor,msg,friend))
+                                actor.recvMessage(key,msg,myScale,optScale,pessScale)
+                else:
+                    # Phase 2 messages
+                    key = stateKey('Nature','category')
+                    beliefs = {actor.name: next(iter(actor.getBelief().values()))}
+                    messages = {}
+                    for actor in living:
+                        friends = [friend for friend in actor.friends
+                                   if world.agents[friend] in living]
+                        if friends:
+                            msg = [beliefs[friend][key] for friend in friends]
+                            messages[actor.name] = msg
+                            logging.info('%s receives message %s' % (actor,msg))
                             actor.recvMessage(key,msg,myScale,optScale,pessScale)
         if state['phase'] == 'approaching':
-            if turn == 'Actor' and survey is not None:
+            history.clear()
+            if turn == 'Actor' and survey is not None and config.getboolean('Data','presurvey',fallback=True):
                 # Pre-hurricane survey
-                count = 0
-                sampleLimit = int(float(len(living))*config.getfloat('Data','presample')/
-                                  float(config.getint('Disaster','phase_min_days')))
-                remaining = {actor.name for actor in living} - survey
-                while count < sampleLimit and remaining:
-                    actor = world.agents[random.choice(list(remaining))]
-                    remaining.remove(actor.name)
-                    preSurvey(world,actor,dirName,state['hurricanes']+1)
-                    survey.add(actor.name)
-                    count += 1
-                if state['TA2BTA1C10']:
-                    # Augmented pre-hurricane survey
-                    surveyLimit = int(len(living)/10)
-                    oldSample = {name for name,entry in state['panels']['TA2BTA1C10pre'].items() 
-                        if state['hurricanes'] in entry and state['hurricanes']-1 not in entry}               
-                    newSample = {name for name,entry in state['panels']['TA2BTA1C10pre'].items() 
-                        if state['hurricanes']+1 in entry}
-                    # Initialize pool to be anyone first used in previous hurricane
-                    alive = {actor.name for actor in living}
-                    existing = (oldSample - newSample) & alive
-                    # Survey only part of the needed group today, unless we've already filled survey
-                    dailyLimit = min(surveyLimit-len(newSample),
-                        int(surveyLimit/config.getint('Disaster','phase_min_days')))
-                    for i in range(dailyLimit):
-                        if existing:
-                            # Draw from current pool
-                            name = random.choice(list(existing))
-                            existing.remove(name)
-                        else:
-                            # Reset pool to be anyone not used lately
-                            existing = alive - state['participants']['TA2BTA1C10pre']
-                            if not existing:
-                                # We've used everybody, so start over
-                                state['participants']['TA2BTA1C10pre'] = set()
-                                existing = alive - newSample
-                            name = random.choice(list(existing))
-                        if not name in state['panels']['TA2BTA1C10pre']:
-                            state['panels']['TA2BTA1C10pre'][name] = set()
-                        state['panels']['TA2BTA1C10pre'][name].add(state['hurricanes']+1)
-                        state['participants']['TA2BTA1C10pre'].add(name)
-                        newSample.add(name)
-                        preSurvey(world,world.agents[name],dirName,state['hurricanes']+1,True)
-        elif state['phase'] == 'none':
-            if turn == 'Actor' and survey is not None and state['hurricanes'] > 0:
-                # Post-hurricane survey
-                count = 0
-                sampleLimit = int(float(len(living))*config.getfloat('Data','postsample')/
-                                  float(config.getint('Disaster','phase_min_days')))
-                remaining = {actor.name for actor in living} - survey
-                while count < sampleLimit and remaining:
-                    actor = world.agents[random.choice(list(remaining))]
-                    remaining.remove(actor.name)
-                    if actor.getState('alive').first():
-                        postSurvey(actor,dirName,state['hurricanes'],previous=config.getboolean('Data','postprevious',fallback=False))
+                surveyLimit = int(round(len(living)*config.getfloat('Data','presample')))
+                if len(survey) < surveyLimit:
+                    count = 0
+                    sampleLimit = int(float(len(living))*config.getfloat('Data','presample')/
+                                      float(config.getint('Disaster','phase_min_days')))
+                    remaining = {actor.name for actor in living} - survey
+                    while count < sampleLimit and remaining:
+                        actor = world.agents[random.choice(list(remaining))]
+                        remaining.remove(actor.name)
+                        preSurvey(world,actor,dirName,state['hurricanes']+1)
                         survey.add(actor.name)
-                    else:
-                        living.remove(actor)
-                    count += 1
-                if state['TA2BTA1C10']:
-                    # Augmented pre-hurricane survey
-                    surveyLimit = int(len(living)/10)
-                    oldSample = {name for name,entry in state['panels']['TA2BTA1C10post'].items() 
-                        if state['hurricanes']-1 in entry and state['hurricanes']-2 not in entry}               
-                    newSample = {name for name,entry in state['panels']['TA2BTA1C10post'].items() 
-                        if state['hurricanes'] in entry}
-                    # Initialize pool to be anyone first used in previous hurricane
-                    alive = {actor.name for actor in living}
-                    existing = (oldSample - newSample) & alive
-                    # Survey only part of the needed group today, unless we've already filled survey
-                    dailyLimit = min(surveyLimit-len(newSample),
-                        int(surveyLimit/config.getint('Disaster','phase_min_days')))
-                    for i in range(dailyLimit):
-                        if existing:
-                            # Draw from current pool
-                            name = random.choice(list(existing))
-                            existing.remove(name)
+                        count += 1
+                    if state['TA2BTA1C10']:
+                        # Augmented pre-hurricane survey
+                        surveyLimit = int(len(living)/10)
+                        oldSample = {name for name,entry in state['panels']['TA2BTA1C10pre'].items() 
+                            if state['hurricanes'] in entry and state['hurricanes']-1 not in entry}               
+                        newSample = {name for name,entry in state['panels']['TA2BTA1C10pre'].items() 
+                            if state['hurricanes']+1 in entry}
+                        # Initialize pool to be anyone first used in previous hurricane
+                        alive = {actor.name for actor in living}
+                        existing = (oldSample - newSample) & alive
+                        # Survey only part of the needed group today, unless we've already filled survey
+                        dailyLimit = min(surveyLimit-len(newSample),
+                            int(surveyLimit/config.getint('Disaster','phase_min_days')))
+                        for i in range(dailyLimit):
+                            if existing:
+                                # Draw from current pool
+                                name = random.choice(list(existing))
+                                existing.remove(name)
+                            else:
+                                # Reset pool to be anyone not used lately
+                                existing = alive - state['participants']['TA2BTA1C10pre']
+                                if not existing:
+                                    # We've used everybody, so start over
+                                    state['participants']['TA2BTA1C10pre'] = set()
+                                    existing = alive - newSample
+                                name = random.choice(list(existing))
+                            if not name in state['panels']['TA2BTA1C10pre']:
+                                state['panels']['TA2BTA1C10pre'][name] = set()
+                            state['panels']['TA2BTA1C10pre'][name].add(state['hurricanes']+1)
+                            state['participants']['TA2BTA1C10pre'].add(name)
+                            newSample.add(name)
+                            preSurvey(world,world.agents[name],dirName,state['hurricanes']+1,True)
+        elif state['phase'] == 'none':
+            if turn == 'Actor' and survey is not None and state['hurricanes'] > 0 and config.getboolean('Data','postsurvey',fallback=True):
+                # Post-hurricane survey
+                surveyLimit = int(round(len(living)*config.getfloat('Data','postsample')))
+                if len(survey) < surveyLimit:
+                    sampleLimit = int(float(len(living))*config.getfloat('Data','postsample')/
+                                      float(config.getint('Disaster','phase_min_days')))
+                    remaining = {actor.name for actor in living} - survey
+                    count = 0
+                    while count < sampleLimit and remaining:
+                        actor = world.agents[random.choice(list(remaining))]
+                        remaining.remove(actor.name)
+                        if actor.getState('alive').first():
+                            postSurvey(actor,dirName,state['hurricanes'],previous=config.getboolean('Data','postprevious',fallback=False))
+                            survey.add(actor.name)
                         else:
-                            # Reset pool to be anyone not used lately
-                            existing = alive - state['participants']['TA2BTA1C10post']
-                            if not existing:
-                                # We've used everybody, so start over
-                                state['participants']['TA2BTA1C10post'] = set()
-                                existing = alive - newSample
-                            name = random.choice(list(existing))
-                        if not name in state['panels']['TA2BTA1C10post']:
-                            state['panels']['TA2BTA1C10post'][name] = set()
-                        state['panels']['TA2BTA1C10post'][name].add(state['hurricanes'])
-                        state['participants']['TA2BTA1C10post'].add(name)
-                        newSample.add(name)
-                        postSurvey(world.agents[name],dirName,state['hurricanes'],True)
+                            living.remove(actor)
+                        count += 1
+                    if state['TA2BTA1C10']:
+                        # Augmented pre-hurricane survey
+                        surveyLimit = int(len(living)/10)
+                        oldSample = {name for name,entry in state['panels']['TA2BTA1C10post'].items() 
+                            if state['hurricanes']-1 in entry and state['hurricanes']-2 not in entry}               
+                        newSample = {name for name,entry in state['panels']['TA2BTA1C10post'].items() 
+                            if state['hurricanes'] in entry}
+                        # Initialize pool to be anyone first used in previous hurricane
+                        alive = {actor.name for actor in living}
+                        existing = (oldSample - newSample) & alive
+                        # Survey only part of the needed group today, unless we've already filled survey
+                        dailyLimit = min(surveyLimit-len(newSample),
+                            int(surveyLimit/config.getint('Disaster','phase_min_days')))
+                        for i in range(dailyLimit):
+                            if existing:
+                                # Draw from current pool
+                                name = random.choice(list(existing))
+                                existing.remove(name)
+                            else:
+                                # Reset pool to be anyone not used lately
+                                existing = alive - state['participants']['TA2BTA1C10post']
+                                if not existing:
+                                    # We've used everybody, so start over
+                                    state['participants']['TA2BTA1C10post'] = set()
+                                    existing = alive - newSample
+                                name = random.choice(list(existing))
+                            if not name in state['panels']['TA2BTA1C10post']:
+                                state['panels']['TA2BTA1C10post'][name] = set()
+                            state['panels']['TA2BTA1C10post'][name].add(state['hurricanes'])
+                            state['participants']['TA2BTA1C10post'].add(name)
+                            newSample.add(name)
+                            postSurvey(world.agents[name],dirName,state['hurricanes'],True)
         else:
             assert state['phase'] == 'active'
         debug = {}
@@ -618,46 +641,54 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                         else:
                             raise ValueError('Unable to find action %s for %s' % (entry['Action'],actor.name))
         newState = world.step(policy,select=select,debug=debug)
-        buf = StringIO()
-        joint = world.explainAction(newState,level=1,buf=buf)
-        joint = {name: action for name,action in joint.items()
-                 if world.agents[name].__class__.__name__ == turn}
-        logging.debug('\n'+buf.getvalue())
-        buf.close()
-        buf = StringIO()
-        world.printState(newState,buf)
-        logging.debug(buf.getvalue())
-        buf.close()
+        if config.getint('Simulation','phase',fallback=1) == 1:
+            buf = StringIO()
+            joint = world.explainAction(newState,level=1,buf=buf)
+            joint = {name: action for name,action in joint.items()
+                     if world.agents[name].__class__.__name__ == turn}
+            logging.debug('\n'+buf.getvalue())
+            buf.close()
+            buf = StringIO()
+            world.printState(newState,buf)
+            logging.debug(buf.getvalue())
+            buf.close()
+        else:
+            record = {agent.name: agent.getBelief() for agent in living}
+            record['__state__'] = world.state
+            with open(os.path.join(dirName,'state%d%s.pkl' % (day,turn)),'wb') as outfile:
+                pickle.dump(record,outfile)            
         for actor in living:
             if turn == 'Actor' and isinstance(world.history,dict):
-                world.history[day][actor.name] = joint[actor.name].first()
-            belief = actor.getBelief()
-            for dist in belief.values():
-                for sdist in dist.distributions.values():
-                    if len(sdist) > 3:
-#                        print(actor.name)
-#                        world.printState(sdist)
-#                        print(sorted([sdist[e] for e in sdist.domain()]))
-                        true = {}
-                        for key in sdist.keys():
-                            if key != CONSTANT:
-                                trueDist = world.state.distributions[world.state.keyMap[key]]
-                                assert len(trueDist) == 1
-                                true[key] = trueDist.first()[key]
-                        sdist.prune(actor.epsilon,true)
-#                        world.printState(sdist)
-        if state['phase'] == 'active':
+                world.history[day][actor.name] = world.getFeature(actionKey(actor.name),newState).first()
+            if config.getint('Simulation','phase',fallback=1) == 1:
+                belief = actor.getBelief()
+                for dist in belief.values():
+                    for sdist in dist.distributions.values():
+                        if len(sdist) > 3:
+    #                        print(actor.name)
+    #                        world.printState(sdist)
+    #                        print(sorted([sdist[e] for e in sdist.domain()]))
+                            true = {}
+                            for key in sdist.keys():
+                                if key != CONSTANT:
+                                    trueDist = world.state.distributions[world.state.keyMap[key]]
+                                    assert len(trueDist) == 1
+                                    true[key] = trueDist.first()[key]
+                            sdist.prune(actor.epsilon,true)
+    #                        world.printState(sdist)
+        if state['phase'] == 'active' and config.getint('Simulation','phase') == 1:
             # Record what these doomed souls did to postpone the inevitable
             evacuees = 0
             shelter = 0
-            for name,action in joint.items():
-                agent = world.agents[name]
-                if isinstance(agent,Actor):
-                    if agent.getState('alive').first():
+            for agent in living:
+#            for name,action in joint.items():
+#                agent = world.agents[name]
+#                if isinstance(agent,Actor):
+#                    if agent.getState('alive').first():
                         belief = agent.getBelief()
                         assert len(belief) == 1,'Unable to store beliefs over uncertain models'
                         belief = next(iter(belief.values()))
-                        entry = {'action': action, 'hurricane': state['hurricanes']}
+                        entry = {'action': world.getFeature(actionKey(actor.name),newState).first(), 'hurricane': state['hurricanes']}
                         features = ['location','risk','health']
                         if config.getboolean('System','system'):
                             features.append('grievance')
@@ -668,7 +699,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                                     evacuees += 1
                                 elif entry[feature].first()[:7] == 'shelter':
                                     shelter += 1
-                        history[name] = history.get(name,[])+[entry]
+                        history[agent.name] = history.get(agent.name,[])+[entry]
             if 'QualitativeData' in cdfTables:
                 qualData = cdfTables['QualitativeData'][-1]
                 qualData['evacuated'] = max(evacuees,qualData.get('evacuated',0))
