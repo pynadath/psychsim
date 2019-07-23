@@ -5,6 +5,7 @@ import logging
 import inspect
 import multiprocessing
 import os
+import time
 from xml.dom.minidom import Document,Node,parseString
 
 from psychsim.action import ActionSet,Action
@@ -362,7 +363,9 @@ class World(object):
             elif len(dynamics) == 1:
                 tree = dynamics[0]
                 if select is True:
-                    state.__imul__(tree,True)
+                    tree = tree.sample()
+                    state *= tree
+#                    state.__imul__(tree,True)
                 else:
                     state *= tree
                 substate = state.keyMap[makeFuture(key)]
@@ -429,14 +432,23 @@ class World(object):
                 keyOrder.append(keySet)
         if TERMINATED in state:
             keyOrder.append({TERMINATED})
+        count = 0
         effects = []
         for keySet in keyOrder:
-            dynamics = {}
+            dynamics = self.getActionEffects(actions,keySet)
+#            dynamics = {}
             for key in keySet:
-                dynamics[key] = self.getDynamics(key,actions)
-                if len(dynamics[key]) == 0:
-                    # No dynamics, no change
+                if key not in dynamics:
                     dynamics[key] = None
+#                count += 1
+#                if state is self.state:
+#                    start = time.time()
+#                dynamics[key] = self.getDynamics(key,actions)
+#                if len(dynamics[key]) == 0:
+#                    # No dynamics, no change
+#                    dynamics[key] = None
+#                if state is self.state:
+#                    print('Computing dynamics of %s' % (key),time.time()-start)
             effects.append(dynamics)
         return effects
 
@@ -653,6 +665,10 @@ class World(object):
         #             'Unknown action %s' % (atom)
         if not key in self.dynamics:
             self.dynamics[key] = {}
+        if action not in self.dynamics:
+            self.dynamics[action] = {}
+        if action is not True and len(action) == 1 and next(iter(action)) not in self.dynamics:
+            self.dynamics[next(iter(action))] = {}
         # Translate symbolic names into numeric values
         tree = tree.desymbolize(self.symbols)
         if enforceMin and self.variables[key]['domain'] in [int,float]:
@@ -662,6 +678,9 @@ class World(object):
             # Modify tree to enforce ceiling
             tree.ceil(key,self.variables[key]['hi'])
         self.dynamics[key][action] = tree
+        self.dynamics[action][key] = tree
+        if action is not True and len(action) == 1:
+            self.dynamics[next(iter(action))][key] = tree
         if codePtr:
             frame = inspect.getouterframes(inspect.currentframe())[1]
             try:
@@ -676,13 +695,11 @@ class World(object):
                 self.extras['%s %s' % (key,action)] = '%s:%d' % (mod,frame[2])
 
     def getDynamics(self,key,action,state=None):
-        if not state is None:
+        if state is not None:
             raise DeprecationWarning('There are no longer different dynamics functions depending on the state')
         if not key in self.dynamics:
             return []
-        if isinstance(action,Action):
-            return self.getDynamics(key,ActionSet([action]),state)
-        elif not isinstance(action,ActionSet) and not isinstance(action,list):
+        if isinstance(action,dict):
             # Table of actions by multiple agents
             return self.getDynamics(key,ActionSet(action),state)
         error = None
@@ -696,7 +713,9 @@ class World(object):
             dynamics = []
             for atom in action:
                 try:
-                    dynamics.append(self.dynamics[key][ActionSet([atom])])
+                    tree = self.dynamics[key][ActionSet([atom])]
+                    dynamics.append(tree)
+                    self.dynamics[key][atom] = tree
                 except KeyError:
                     if len(atom) > len(atom.special):
                         # Extra parameters
@@ -720,6 +739,20 @@ class World(object):
                 if True in self.dynamics[key]:
                     dynamics.append(self.dynamics[key][True])
             return dynamics
+
+    def getActionEffects(self,actions,keySubset):
+        dynamics = {}
+        for action in actions:
+            for key,tree in self.dynamics[action].items():
+                if key in keySubset:
+                    try:
+                        dynamics[key].append(tree)
+                    except KeyError:
+                        dynamics[key] = [tree]
+        for key,tree in self.dynamics[True].items():
+            if key in keySubset and key not in dynamics:
+                dynamics[key] = [tree]
+        return dynamics
 
     def getAncestors(self,keySubset,actions):
         """

@@ -471,6 +471,17 @@ class KeyedTree:
             # Leaf node (not a very smart use of graft, but who are we to judge)
             self.makeLeaf(root)
 
+    def sample(self):
+        result = self.__class__()
+        if self.isLeaf():
+            result.makeLeaf(self.getLeaf())
+        elif self.isProbabilistic():
+            child = self.children.sample()
+            result.graft(child.sample())
+        else:
+            result.makeBranch(self.branch,{value: self.children[value].sample() for value in self.children})
+        return result
+        
     def prune(self,path=[]):
         """
         Removes redundant branches
