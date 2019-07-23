@@ -25,10 +25,12 @@ class System(Agent):
 
         populated = self.getPopulated(population)
         for actor in population:
-            self.setReward(maximizeFeature(stateKey(actor,'health'),self.name),
-                           likert[5][config.getint('System','reward_health')-1])
-            self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),
-                           likert[5][config.getint('System','reward_grievance')-1])
+            if config.getint('System','reward_health') > 0:
+                self.setReward(maximizeFeature(stateKey(actor,'health'),self.name),
+                               likert[5][config.getint('System','reward_health')-1])
+            if config.getint('System','reward_grievance') > 0:
+                self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),
+                               likert[5][config.getint('System','reward_grievance')-1])
         self.addAction({'verb': 'doNothing'},codePtr=True)
         self.setAidDynamics(population)
         self.setAttribute('horizon',config.getint('System','horizon'))
