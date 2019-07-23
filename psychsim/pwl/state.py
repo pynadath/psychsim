@@ -212,16 +212,17 @@ class VectorDistributionSet:
                 prob *= distribution.select(maximize,incremental)
         return prob
 
-    def substate(self,obj):
+    def substate(self,obj,ignoreCertain=False):
         """
         :return: the substate referred to by all of the keys in the given object
         """
-        if isinstance(obj,list) or isinstance(obj,set):
-            return {self.keyMap[k] for k in obj if k != keys.CONSTANT}
-        elif isinstance(obj,bool):
+        if isinstance(obj,bool):
+            raise DeprecationWarning('If you really need this, please inform management.')
             return set()
+        elif ignoreCertain:
+            return {self.keyMap[k] for k in obj if k != keys.CONSTANT and len(self.distributions[self.keyMap[k]]) > 1}
         else:
-            return self.substate(list(obj.keys()))
+            return {self.keyMap[k] for k in obj if k != keys.CONSTANT}
 
     def merge(self,substates):
         """
@@ -298,12 +299,11 @@ class VectorDistributionSet:
                 if (key in self.keyMap and self.keyMap[key] == self.keyMap[newKey]) \
                    or other.keyMap[key] == other.keyMap[newKey]:
                     # This key is in the same joint
-#                    if len(self.distributions[self.keyMap[newKey]]) == 1 and \
-#                       len(other.distributions[other.keyMap[newKey]]) == 1:
-                        # Maybe this key's value collapses into certainty?
-#                        if self.marginal(newKey) == other.marginal(newKey):
-#                            continue
-                    toMerge.add(newKey)
+                    if len(self.distributions[self.keyMap[newKey]]) > 1 or \
+                       len(other.distributions[other.keyMap[newKey]]) > 1 or \
+                        self.marginal(newKey) != other.marginal(newKey):
+                        # If there's uncertainty
+                        toMerge.add(newKey)
         if len(toMerge) > 0: # If 0, no difference between self and other to begin with
             # Prepare myself to merge
             substates = {self.keyMap[k] for k in toMerge if k in self.keyMap}
@@ -353,7 +353,7 @@ class VectorDistributionSet:
     def __imul__(self,other,select=False):
         if isinstance(other,KeyedMatrix):
             # Focus on subset that this matrix affects
-            substates = self.substate(other.getKeysIn())
+            substates = self.substate(other.getKeysIn(),True)
             if substates:
                 destination = self.collapse(substates)
             else:
@@ -474,10 +474,12 @@ class VectorDistributionSet:
                     self *= other.children[other.branch.evaluate(vector)]
                 else:
                     assert len(other.branch.planes) == 1,'Unable to multiply by joint planes'
+                    # Apply the test to this tree
                     self *= other.branch.planes[0][0]
                     valSub = self.keyMap[keys.VALUE]
                     states = {}
                     del self.keyMap[keys.VALUE]
+                    # Iterate through possible test results
                     for vector in self.distributions[valSub].domain():
                         prob = self.distributions[valSub][vector]
                         del self.distributions[valSub][vector]
@@ -492,17 +494,20 @@ class VectorDistributionSet:
                                 first = test
                         if len(vector) > 1:
                             states[test].distributions[valSub].addProb(vector,prob)
-                    existingKeys = set(self.keyMap.keys())
                     assert states,'Empty result of multiplication'
                     if len(self.distributions[valSub].domain()) == 0:
                         del self.distributions[valSub]
                     self *= other.children[first]
+                    for key in other.getKeysOut():
+                        assert key in self.keyMap
                     for test,state in states.items():
                         if state is not self:
                             newKeys = set(other.getKeysOut())
                             assert len(state.distributions[valSub].domain()) > 0
                             state *= other.children[test]
-                            newSub = state.collapse(state.substate(other.children[test]),False)
+                            substates = state.substate(other.children[test].keys(),True)
+                            if substates:
+                                newSub = state.collapse(substates,False)
                             newSub = self.update(state,newKeys|branchKeys)
         elif isinstance(other,KeyedVector):
             substates = self.substate(other)
