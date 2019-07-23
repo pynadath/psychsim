@@ -130,7 +130,7 @@ class KeyedMatrix(dict):
                             result[col] = other[key]*self[key][col]
                 else:
                     result[key] = other[key]
-        elif isinstance(other,float):
+        elif isinstance(other,float) or isinstance(other,int):
             result = self.__class__()
             for key,value in self.items():
                 result[key] = other*value
