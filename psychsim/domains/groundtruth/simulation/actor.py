@@ -112,9 +112,10 @@ class Actor(Agent):
         # // GT: node 17; 1 of 1; next 7 lines
         threshold = config.getint('Actors','pet_prob')
         if threshold > 0:
-            pet = world.defineState(self.name,'pet',bool,description='Owns a pet',codePtr=True)
             self.demographics['pet'] = random.random() < likert[5][threshold-1]
-            world.setFeature(pet,self.demographics['pet'])
+            if self.demographics['pet']:
+                pet = world.defineState(self.name,'pet',bool,description='Owns a pet',codePtr=True)
+                world.setFeature(pet,self.demographics['pet'])
         else:
             self.demographics['pet'] = False
 
@@ -222,7 +223,10 @@ class Actor(Agent):
 
         # Dynamic states
         # //GT: node 15; 1 of 1; next 10 lines
-        locationSet = regions[:]
+        if config.getboolean('Actors','movement'):
+            locationSet = regions[:]
+        else:
+            locationSet = [self.demographics['home']]
         locationSet.append('evacuated')
         if config.getboolean('Shelter','exists'):
             for index in config.get('Shelter','region').split(','):
@@ -612,7 +616,7 @@ class Actor(Agent):
                                  False: noChangeMatrix(job)})
             else:
                 tree = makeTree(noChangeMatrix(job))
-                world.setDynamics(job,actEvacuate,tree,codePtr=True)
+            world.setDynamics(job,actEvacuate,tree,codePtr=True)
 
         if config.getboolean('Actors','prorisk'):
             # Effect of doing good
@@ -848,8 +852,12 @@ class Actor(Agent):
             tree[level] = {'distribution': dist}
         tree = makeTree({'if': trueRow(stateKey(self.name,'alive')),
                          True: tree, False: setToConstantMatrix(stateKey(self.name,'health'),0.)})
-        if self.horizon <= 2 and self.config.getint('Simulation','phase',fallback=1) == 1:
-            self.world.setDynamics(stateKey(self.name,'health'),Action({'subject': self.name}),tree,codePtr=codePtr)
+        if self.horizon <= 2:
+            if self.config.getint('Simulation','phase',fallback=1) == 1:
+                self.world.setDynamics(stateKey(self.name,'health'),Action({'subject': self.name}),tree,codePtr=codePtr)
+            else:
+                for action in self.actions:
+                    self.world.setDynamics(stateKey(self.name,'health'),action,tree,codePtr=codePtr)                    
         else:
             self.world.setDynamics(stateKey(self.name,'health'),ActionSet([Action({'subject': 'Nature','verb': 'evolve'})]),tree,codePtr=codePtr)
 
@@ -1095,7 +1103,7 @@ class Actor(Agent):
                         dist.normalize()
                     change = False
                     for vec in dist.domain():
-                        if dist[vec] < self.config.getfloat('Actors','likelihood_threshold',fallback=0.01):
+                        if dist[vec] < self.config.getfloat('Actors','likelihood_threshold',fallback=0.001):
                             del dist[vec]
                             change = True
                     if change:
