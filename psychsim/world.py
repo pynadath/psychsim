@@ -299,7 +299,6 @@ class World(object):
         else:
             for name in toDecide:
                 # This agent might have a turn now
-                logging.debug('%s deciding...' % (name))
                 agent = self.agents[name]
                 decision = self.agents[name].decide(state,horizon,actions,None,tiebreak,
                                                     agent.getActions(state),debug=debug.get(name,{}))

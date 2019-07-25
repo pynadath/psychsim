@@ -210,6 +210,7 @@ class Agent(object):
         elif len(actions) == 1:
             # Only one possible action
             return {'action': next(iter(actions))}
+        logging.debug('%s deciding...' % (self.name))
         # Keep track of value function
         Vfun = self.getAttribute('V',model)
         if Vfun:
@@ -219,6 +220,7 @@ class Agent(object):
                 b = copy.deepcopy(belief)
                 b *= Vfun[action]
                 V[action] = {'__EV__': b[rewardKey(self.name,True)].expectation()}
+                logging.debug('Evaluated %s (%d): %f' % (action,horizon,V[action]['__EV__']))
         elif self.parallel:
             with multiprocessing.Pool() as pool:
                 results = [(action,pool.apply_async(self.value,
@@ -230,6 +232,7 @@ class Agent(object):
             V = {}
             for action in actions:
                 V[action] = self.value(belief,action,model,horizon,others,keySet)
+                logging.debug('Evaluated %s (%d): %f' % (action,horizon,V[action]['__EV__']))
         best = None
         for action in actions:
             # Determine whether this action is the best
@@ -239,7 +242,6 @@ class Agent(object):
                 best.append(action)
             elif V[action]['__EV__'] > V[best[0]]['__EV__']:
                 best = [action]
-            logging.debug('Evaluated %s: %f' % (action,V[action]['__EV__']))
         result = {'V*': V[best[0]]['__EV__'],'V': V}
         # Make an action selection based on the value function
         if selection == 'distribution':
