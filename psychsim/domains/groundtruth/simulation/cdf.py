@@ -523,3 +523,295 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                 else:
                     for datum in table:
                         appendSummary(datum,world,writer,fields[name])
+
+def addRunDatum(world,name,feature,variable,t,table,state=None,agent=None):
+    if agent is None:
+        agent = name
+    if state is None:
+        state = world.state
+    key = stateKey(agent,feature)
+    if key in world.variables:
+        tables['RunData'].append({'Timestep': t, 'VariableName': variable, 'EntityIdx': name})
+        value = world.getFeature(key,state)
+        if len(value) == 1:
+            value = value.first()
+            if world.variables[key]['domain'] is bool:
+                tables['RunData'][-1]['Value'] = 'yes' if value else 'no'
+            elif feature == 'location' and name[:5] == 'Actor':
+                if value[:6] == 'Region':
+                    assert value == world.agents[name].demographics['home']
+                    tables['RunData'][-1]['Value'] = 'home'
+                elif value[:7] == 'shelter':
+                    tables['RunData'][-1]['Value'] = 'shelter'
+                else:
+                    tables['RunData'][-1]['Value'] = value
+            else:
+                tables['RunData'][-1]['Value'] = value
+        else:
+            tables['RunData'][-1]['Value'] = ','.join(['Pr(%s)=%5.2f%%' % (el,value[el]*100) for el in sorted(value.domain())])
+
+def addSummary(world,state,actors,regions,t,table):
+    living = {name for name in actors if world.getState(name,'alive',state).first()}
+    table.append({'Timestep': t,'VariableName': 'Deaths','EntityIdx': 'Actor[0001-%04d]' % (len(actors)),
+        'Value': len(actors)-len(living),'Metadata': 'Actor\'s health<0.01'})
+    table.append({'Timestep': t,'VariableName': 'Casualties','EntityIdx': 'Actor[0001-%04d]' % (len(actors)),
+        'Value': len([name for name in actors if float(world.getState(name,'health',state)) < 0.2]),'Metadata': 'Actor\'s health<0.2'})
+    table.append({'Timestep': t,'VariableName': 'Evacuees','EntityIdx': 'Actor[0001-%04d]' % (len(actors)),
+        'Value': len([name for name in living if world.getState(name,'location',state).first() == 'evacuated']),'Metadata': 'Actor\'s location=evacuated'})
+    table.append({'Timestep': t,'VariableName': 'Sheltered','EntityIdx': 'Actor[0001-%04d]' % (len(actors)),
+        'Value': len([name for name in living if world.getState(name,'location',state).first()[:7] == 'sheltered']),'Metadata': 'Actor\'s location=shelter*'})
+    table.append({'Timestep': t,'VariableName': 'Wellbeing','EntityIdx': 'Actor[0001-%04d]' % (len(actors)),
+        'Value': sum([float(world.getState(name,'health',state)) for name in living])/len(living),'Metadata': 'mean(Actor\'s health)'})
+    table.append({'Timestep': t,'VariableName': 'Wealth','EntityIdx': 'Actor[0001-%04d]' % (len(actors)),
+        'Value': sum([float(world.getState(name,'resources',state)) for name in living])/len(living),'Metadata': 'mean(Actor\'s resources)'})
+    table.append({'Timestep': t,'VariableName': 'Dissatisfaction','EntityIdx': 'Actor[0001-%04d]' % (len(actors)),
+        'Value': sum([float(world.getState(name,'grievance',state)) for name in living])/len(living),'Metadata': 'mean(Actor\'s grievance)'})
+    table.append({'Timestep': t,'VariableName': 'Safety','EntityIdx': 'Region[01-%02d]' % (len(regions)),
+        'Value': sum([1.-float(world.getState(name,'risk',state)) for name in regions])/len(regions),'Metadata': 'mean(1-Region\'s risk)'})
+    for region in regions:
+        residents = {name for name in actors if world.agents[name].demographics['home'] == region}
+        table.append({'Timestep': t,'VariableName': 'Regional Deaths','EntityIdx': ','.join(sorted(residents)),
+            'Value': len(residents-living),'Metadata': 'Actor\'s health<0.01'})
+        table.append({'Timestep': t,'VariableName': 'Regional Casualties','EntityIdx': ','.join(sorted(residents)),
+            'Value': len([name for name in residents if float(world.getState(name,'health',state)) < 0.2]),'Metadata': 'Actor\'s health<0.2'})
+        table.append({'Timestep': t,'VariableName': 'Regional Evacuees','EntityIdx': ','.join(sorted(residents)),
+            'Value': len([name for name in residents&living if world.getState(name,'location',state).first() == 'evacuated']),
+            'Metadata': 'Actor\'s location=evacuated'})
+        table.append({'Timestep': t,'VariableName': 'Regional Sheltered','EntityIdx': ','.join(sorted(residents)),
+            'Value': len([name for name in residents&living if world.getState(name,'location',state).first()[:7] == 'sheltered']),
+            'Metadata': 'Actor\'s location=shelter*'})
+        table.append({'Timestep': t,'VariableName': 'Regional Wellbeing','EntityIdx': ','.join(sorted(residents)),
+            'Value': sum([float(world.getState(name,'health',state)) for name in living&residents])/len(living&residents),
+            'Metadata': 'mean(Actor\'s health)'})
+
+if __name__ == '__main__':
+    from argparse import ArgumentParser
+    import csv
+    import logging
+    import pickle
+
+    from psychsim.domains.groundtruth import accessibility
+
+    parser = ArgumentParser()
+    parser.add_argument('-i','--instance',default=90,type=int,help='Number of instance to process')
+    parser.add_argument('-r','--run',default=0,type=int,help='Number of run to process')
+    parser.add_argument('--definition',action='store_true',help='Write simulation definition tables')
+    parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
+    args = vars(parser.parse_args())
+    # Extract logging level from command-line argument
+    level = getattr(logging, args['debug'].upper(), None)
+    if not isinstance(level, int):
+        raise ValueError('Invalid debug level: %s' % args['debug'])
+    logging.basicConfig(level=level)
+
+    config = accessibility.getConfig(args['instance'])
+    dirName = accessibility.getDirectory(args)
+    order = ['Actor','System','Nature']
+    tables = {'VariableDef': [],
+        'RelationshipDef': [],
+        'InstanceVariable': [],
+        'RunData': [],
+        'SummaryStatisticsData': [],
+        'QualitativeData': [],
+        'RelationshipData': []}
+    fields['RelationshipDef'] = ['Name','LongName','Values','RelType','DataType','Notes']
+    # Load in initial simulation
+    with open(os.path.join(dirName,'scenario0.pkl'),'rb') as f:
+        world = pickle.load(f)
+    actors = sorted([name for name in world.agents if name[:5] == 'Actor'])
+    for proto in actors:
+        if stateKey(proto,'childrenHealth') in world.variables and stateKey(proto,'pet') in world.variables:
+            break
+    else:
+        raise ValueError('Unable to find actor with children and pet')
+    living = actors
+    regions = sorted([name for name in world.agents if name[:6] == 'Region'])
+    shelters = [name for name in regions if stateKey(name,'shelterRisk') in world.variables]
+    # Fixed variables
+    variable = 'Actor\'s home'
+    tables['VariableDef'].append({'Name': variable,'LongName': 'Actor\'s region of residence',
+        'Values': ','.join(regions),'VarType': 'fixed','DataType': 'String'})
+    for name in actors:
+        tables['RunData'].append({'VariableName': variable,'EntityIdx': name,'Value': world.agents[name].demographics['home']})
+    variable = 'Actor\'s horizon'
+    tables['VariableDef'].append({'Name': variable,'LongName': 'Actor\'s short/farsightedness',
+        'Values': '[1,Inf)','VarType': 'fixed','DataType': 'Integer'})
+    for name in actors:
+        agent = world.agents[name]
+        tables['RunData'].append({'VariableName': variable,'EntityIdx': name,'Value': agent.getAttribute('horizon',next(iter(agent.models)))})
+    for feature in ['childrenHealth','health','neighbors','pet','resources']:
+        variable = 'Actor\'s priority of %s' % (feature)
+        tables['VariableDef'].append({'Name': variable,'LongName': variable,
+            'Values': '[0,1]','VarType': 'fixed','DataType': 'Real'})
+        for name in actors:
+            agent = world.agents[name]
+            tables['RunData'].append({'VariableName': variable,'EntityIdx': name,'Value': agent.Rweights[feature]})
+    variable = 'Region\'s shelterPets'
+    tables['VariableDef'].append({'Name': variable,'LongName': 'Region\'s shelter allows pets',
+        'Values': 'yes,no','VarType': 'fixed','DataType': 'Boolean'})
+    for name in shelters:
+        tables['RunData'].append({'VariableName': variable,'EntityIdx': name,'Value': 'yes' if world.getState(name,'shelterPets').first() else 'no'})
+    for variable in ['friendOf','neighborOf']:
+        tables['RelationshipDef'].append({'Name': variable,'LongName': 'Actor %s Actor' % (variable),'Values': 'yes,no','RelType': 'fixed',
+            'DataType': 'Boolean'})
+        for name in actors:
+            if variable == 'friendOf':
+                others = world.agents[name].friends
+            elif variable == 'neighborOf':
+                others = {other for other in actors if other != name and 
+                    world.agents[other].demographics['home'] == world.agents[name].demographics['home']}
+            else:
+                raise NameError('Unknown relationship: %s' % (variable))
+            for other in actors:
+                if other > name:
+                    tables['RelationshipData'].append({'RelationshipType': variable,'Directed': 'no','FromEntityId': name,'ToEntityId': other,'Data': 'yes'})
+    # Dynamic variables
+    for behaviors in world.agents['Actor0001'].actions:
+        action = Action(next(iter(behaviors)))
+        action['subject'] = 'Actor'
+        if 'object' in action:
+            action['object'] = action['object'][:-2]
+        tables['VariableDef'].append({'Name': str(action),'LongName': str(action),'Values': 'yes,no','VarType': 'dynamic','DataType': 'Boolean'})
+    action = next(iter(next(iter(world.agents['System'].actions))))
+    action['object'] = 'Region'
+    tables['VariableDef'].append({'Name': str(action),'LongName': str(action),'Values': ','.join(regions),'VarType': 'dynamic',
+        'DataType': 'String'})
+    # Expected Reward
+    tables['VariableDef'].append({'Name': 'Actor\'s Expected Reward','LongName': 'Actor\'s Expected Reward over Actions','Values': '(-Inf,Inf)',
+        'VarType': 'dynamic','DataType': 'Real','Notes': 'Table of Real values for each action'})
+    # Extract variables associated with true state
+    dynamic = {}
+    beliefs = {'Actor\'s risk','Nature\'s category','Region\'s risk','Region\'s shelterRisk'}
+    summary = {'alive'}
+    for key,definition in sorted(world.variables.items()):
+        name,feature = state2tuple(key)
+        if key not in world.dynamics and (world.agents[name].O is True or key not in world.agents[name].O):
+            # Static state feature or system state feature
+            continue        
+        if feature in summary or name == WORLD:
+            continue
+        assert not isModelKey(key) and not isTurnKey(key) and not isRewardKey(key) and not isActionKey(key)
+        if name in actors:
+            variable = stateKey('Actor',feature)
+            define = name == proto
+        elif name in regions:
+            variable = stateKey('Region',feature)
+            define = name == shelters[0]
+        else:
+            variable = key
+            define = True
+        if define:
+            # Set up variable definition for this state variable
+            dynamic[state2agent(variable)] = dynamic.get(state2agent(variable),[]) + [feature]
+            tables['VariableDef'].append({'Name': variable,'LongName': variable,'VarType': 'dynamic'})
+            if definition['domain'] is bool:
+                tables['VariableDef'][-1]['Values'] = 'yes,no'
+                tables['VariableDef'][-1]['DataType'] = 'Boolean'
+            elif definition['domain'] is float:
+                tables['VariableDef'][-1]['Values'] = '[0,1]'
+                tables['VariableDef'][-1]['DataType'] = 'Real'
+            elif definition['domain'] is int:
+                tables['VariableDef'][-1]['Values'] = '0,1,2,3,4,5'
+                tables['VariableDef'][-1]['DataType'] = 'Integer'
+            elif definition['domain'] is list:
+                tables['VariableDef'][-1]['Values'] = ','.join(definition['elements'])
+                if variable == 'Actor\'s location':
+                    tables['VariableDef'][-1]['Values'] = tables['VariableDef'][-1]['Values'].replace(world.agents[name].demographics['home'],'home')
+                    for region in shelters:
+                        tables['VariableDef'][-1]['Values'] = tables['VariableDef'][-1]['Values'].replace('shelter%s' % (region[-2:]),'shelter')
+                tables['VariableDef'][-1]['DataType'] = 'String'
+            else:
+                raise TypeError('Unknown variable domain: %s' % (definition['domain']))
+        # Initial values
+        if name == 'Nature':
+            tables['InstanceVariable'].append({'Name': variable,'Timestep': 1,'Value': world.getFeature(key).first()})
+        else:
+            addRunDatum(world,name,feature,variable,1,tables['RunData'])
+        # Define subjective perception variables
+        if variable in beliefs:
+            if define:
+                tables['VariableDef'].append({'Name': 'ActorBeliefOf%s' % (variable),'LongName': 'Actor\'s Subjective Perception of %s' % (variable),
+                    'Values': tables['VariableDef'][-1]['Values'],'VarType': 'dynamic', 'DataType': 'Real','Notes': 'Probability distribution over possible values'})
+    for features in dynamic.values():
+        features.sort()
+    # Initial beliefs
+    for name in living:
+        belief = next(iter(world.agents[name].getBelief().values()))
+        for variable in beliefs:
+            if variable[:5] == 'Actor':
+                addRunDatum(world,name,state2feature(variable),'ActorBeliefOf%s' % (variable),1,tables['RunData'],belief,name)
+            elif variable == 'Region\'s risk':
+                addRunDatum(world,name,state2feature(variable),'ActorBeliefOf%s' % (variable),1,tables['RunData'],
+                    belief,world.agents[name].demographics['home'])
+            elif variable == 'Region\'s shelterRisk':
+                assert len(shelters) == 1
+                addRunDatum(world,name,state2feature(variable),'ActorBeliefOf%s' % (variable),1,tables['RunData'],belief,shelters[0])
+            else:
+                assert variable[:6] == 'Nature'
+                addRunDatum(world,name,state2feature(variable),'ActorBeliefOf%s' % (variable),1,tables['RunData'],belief,'Nature')
+    # Initial summary stats
+    addSummary(world,world.state,actors,regions,1,tables['SummaryStatisticsData'])
+    t = 1
+    turn = 0
+
+    # Replay logged states and belief states
+    while True:
+        fname = os.path.join(dirName,'state%d%s.pkl' % (t,order[turn]))
+        if not os.path.exists(fname):
+            # Presumably we have gone past the end of the simulation
+            break
+        print(t,turn)
+        with open(fname,'rb') as f:
+            s = pickle.load(f)
+        if order[turn] == 'Actor':
+            for name in living:
+                for behaviors in world.agents[name].actions:
+                    match = world.getFeature(actionKey(name),s['__state__']).first() == behaviors
+                    action = Action(next(iter(behaviors)))
+                    action['subject'] = 'Actor'
+                    if 'object' in action:
+                        action['object'] = action['object'][:-2]
+                    tables['RunData'].append({'Timestep': t,'VariableName': str(action),'EntityIdx': name,'Value': 'yes' if match else 'no'})
+        elif order[turn] == 'System':
+            action = world.getFeature(actionKey('System'),s['__state__']).first()
+            tables['RunData'].append({'Timestep': t,'VariableName': 'System-allocate-Region','EntityIdx': 'System','Value': action['object']})
+        elif order[turn] == 'Nature':
+            for agent,features in dynamic.items():
+                for feature in features:
+                    variable = stateKey(agent,feature)
+                    if agent == 'Actor':
+                        for name in living:
+                            addRunDatum(world,name,feature,variable,t+1,tables['RunData'],s['__state__'])
+                    elif agent == 'Region':
+                        for name in regions:
+                            addRunDatum(world,name,feature,variable,t+1,tables['RunData'],s['__state__'])
+            # Beliefs
+            for name in living:
+                assert len(s[name]) == 1
+                belief = next(iter(s[name].values()))
+                for variable in beliefs:
+                    if variable[:5] == 'Actor':
+                        addRunDatum(world,name,state2feature(variable),'ActorBeliefOf%s' % (variable),1,tables['RunData'],belief,name)
+                    elif variable == 'Region\'s risk':
+                        addRunDatum(world,name,state2feature(variable),'ActorBeliefOf%s' % (variable),1,tables['RunData'],
+                            belief,world.agents[name].demographics['home'])
+                    elif variable == 'Region\'s shelterRisk':
+                        assert len(shelters) == 1
+                        addRunDatum(world,name,state2feature(variable),'ActorBeliefOf%s' % (variable),1,tables['RunData'],belief,shelters[0])
+                    else:
+                        assert variable[:6] == 'Nature'
+                        addRunDatum(world,name,state2feature(variable),'ActorBeliefOf%s' % (variable),1,tables['RunData'],belief,'Nature')
+        # Summary stats
+        addSummary(world,s['__state__'],actors,regions,t+1,tables['SummaryStatisticsData'])
+        living = [name for name in living if world.getState(name,'alive',s['__state__']).first()]
+        turn += 1
+        if turn == len(order):
+            turn = 0
+            t += 1
+    for label,data in tables.items():
+        if label[-3:] == 'Def':
+            if args['definition']:
+                accessibility.writeOutput(args,data,fields[label],'%sTable.tsv' % (label),
+                    os.path.join(os.path.dirname(__file__),'..','SimulationDefinition'))
+        else:
+            accessibility.writeOutput(args,data,fields[label],'%sTable.tsv' % (label))
