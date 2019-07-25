@@ -1,4 +1,3 @@
-Name	LongName	Values	Observable	VarType	DataType	Notes
-Actor friendOf Actor	Actor friendOf -> Actor	True,False		fixed	Boolean	
-Actor memberOf Group	Actor memberOf -> Group	True,False		dynamic	Boolean	
-Actor neighborOf Actor	Actor is neighbor of Actor	[['Region01']]			Boolean	
+Name	LongName	Values	RelType	DataType	Notes
+friendOf	Actor friendOf Actor	yes,no	fixed	Boolean	
+neighborOf	Actor neighborOf Actor	yes,no	fixed	Boolean	
