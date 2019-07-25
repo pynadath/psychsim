@@ -102,12 +102,14 @@ class TestRunData(unittest.TestCase):
                                             if self.turn[turn] == 'Actor':
                                                 if newValues[stateKey(agent,'alive')]:
                                                     if actions[agent]['verb'] == 'takeResources' and config.getint('Actors','antiresources_cost_risk') > 0:
+                                                        # //GT: edge 14
                                                         cost = config.getint('Actors','antiresources_cost_risk')
                                                         if phase == 'none':
                                                             self.assertAlmostEqual(oldValues[key]+(1.-oldValues[key])*accessibility.likert[5][3],newValues[key])
                                                         else:
                                                             self.assertAlmostEqual(oldValues[key]+(1.-oldValues[key])*accessibility.likert[5][cost-1],newValues[key])
                                                     elif actions[agent]['verb'] == 'decreaseRisk' and config.getint('Actors','prorisk_cost_risk') > 0:
+                                                        # //GT: edge 2
                                                         cost = config.getint('Actors','prorisk_cost_risk')
                                                         if phase == 'none':
                                                             self.assertAlmostEqual(oldValues[key]+(1.-oldValues[key])*accessibility.likert[5][3],newValues[key])
@@ -115,18 +117,19 @@ class TestRunData(unittest.TestCase):
                                                             self.assertAlmostEqual(oldValues[key]+(1.-oldValues[key])*accessibility.likert[5][cost-1],newValues[key])
                                                     else:
                                                         # Default risk dynamics
+                                                        # //GT: edge 27
                                                         if newValues[stateKey(agent,'location')] == 'evacuated':
                                                             # If evacuated, risk drops 90%
                                                             self.assertAlmostEqual(oldValues[key]*0.1,newValues[key])
                                                         elif newValues[stateKey(agent,'location')] == world.agents[agent].demographics['home']:
                                                             # If sheltering at home, risk equals regional risk
-                                                            if newValues[stateKey(world.agents[agent].demographics['home'],'risk')] != newValues[key]:
-                                                                print(world.getDynamics(key,actions[agent])[0])
+                                                            # //GT: edge 55
                                                             self.assertAlmostEqual(newValues[stateKey(world.agents[agent].demographics['home'],'risk')],
                                                                 newValues[key],msg='Personal risk (%s) != Regional risk (%s) for %s' % \
                                                                     (state[key],state[stateKey(world.agents[agent].demographics['home'],'risk')],agent))
                                                         elif newValues[stateKey(agent,'location')][:7] == 'shelter':
                                                             # If sheltering at shelter, risk equals shelter risk
+                                                            # //GT: edge 58
                                                             self.assertAlmostEqual(newValues[stateKey('Region%s' % (newValues[stateKey(agent,'location')][7:]),
                                                                 'shelterRisk')],newValues[key])
                                                         else:
@@ -139,15 +142,25 @@ class TestRunData(unittest.TestCase):
                                         else:
                                             # Regional risk
                                             if self.turn[turn] == 'Nature':
-                                                if phase == 'active':
-                                                    pass
+                                                # //GT: edge 48
+                                                # //GT: edge 53
+                                                if phase == 'active' and newValues[stateKey('Nature','location')] != 'none':
+                                                    distance = world.agents[agent].distance(world.agents[newValues[stateKey('Nature','location')]])
+                                                    self.assertAlmostEqual(oldValues[key]+(1.-oldValues[key])*base_increase*\
+                                                        float(newValues[stateKey('Nature','category')])/max(distance,1),newValues[key])
                                                 else:
                                                     self.assertAlmostEqual(oldValues[key]+base_decrease*(world.agents[agent].risk-oldValues[key]),
                                                         newValues[key])
                                             elif self.turn[turn] == 'Actor':
-                                                pass
+                                                # //GT: edge 3
+                                                count = len([action for action in actions.values() if action['verb'] == 'decreaseRisk' and action['object'] == agent])
+                                                if count > 0:
+                                                    self.assertGreater(oldValues[key],newValues[key])
+                                                else:
+                                                    self.assertAlmostEqual(oldValues[key],newValues[key])
                                             else:
                                                 # System allocation
+                                                # //GT: edge 60
                                                 if actions['System']['object'] == agent:
                                                     self.assertAlmostEqual(oldValues[key]+(world.agents[agent].risk-oldValues[key])*aidImpact,newValues[key])
                                                 else:
