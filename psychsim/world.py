@@ -366,7 +366,12 @@ class World(object):
                     state *= tree
 #                    state.__imul__(tree,True)
                 else:
-                    state *= tree
+                    try:
+                        state *= tree
+                    except StopIteration:
+                        self.printState(state)
+                        print(tree)
+                        raise RuntimeError
                 substate = state.keyMap[makeFuture(key)]
             else:
 #                raise RuntimeError('Parallel dynamics do not work')
