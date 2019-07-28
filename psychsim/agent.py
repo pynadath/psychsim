@@ -209,7 +209,10 @@ class Agent(object):
             raise RuntimeError(msg)
         elif len(actions) == 1:
             # Only one possible action
-            return {'action': next(iter(actions))}
+            if selection == 'distribution':
+                return {'action': Distribution({next(iter(actions)): 1.})}
+            else:
+                return {'action': next(iter(actions))}
         logging.debug('%s deciding...' % (self.name))
         # Keep track of value function
         Vfun = self.getAttribute('V',model)
