@@ -1084,7 +1084,8 @@ class Actor(Agent):
             for substate,dist in beliefs.distributions.items():
                 if len(dist) > 1:
                     change = False
-                    for vec in dist.domain():
+                    for key,prob in sorted(dict.items(dist),key=lambda i: i[1]):
+                        vec = dist._domain[key]
                         for key in vec.keys():
                             if key == CONSTANT:
                                 pass
@@ -1099,16 +1100,29 @@ class Actor(Agent):
                                     del dist[vec]
                                     change = True
                                     break
+                        if len(dist) == 1:
+                            break
                     if change: 
                         dist.normalize()
+                    # Delete any incorrect beliefs that are below threshold
                     change = False
-                    for vec in dist.domain():
-                        if dist[vec] < self.config.getfloat('Actors','likelihood_threshold',fallback=0.001):
-                            del dist[vec]
-                            change = True
+                    threshold = self.config.getfloat('Actors','likelihood_threshold',fallback=0.001)
+                    for key,prob in list(dict.items(dist)):
+                        if prob < threshold:
+                            vec = dist._domain[key]
+                            for subkey in vec.keys():
+                                if subkey != CONSTANT and vec[subkey] != trueState[subkey].first():
+                                    # This vector does not represent true state
+                                    dict.__delitem__(dist,key)
+                                    del dist._domain[key]
+                                    change = True
+                                    break
                     if change:
                         dist.normalize()
-            if len(beliefs) > 5:
+                    if len(dist.domain()) == 0:
+                        print(self.name,real)
+                        raise RuntimeError
+            if len(beliefs) > 2:
                 print(self.name,len(beliefs))
 #                self.world.printState(beliefs)
 #                raise RuntimeError
@@ -1151,6 +1165,8 @@ class Actor(Agent):
                     actions=None,debug={}):
         if state is None:
             state = self.world.state
+        if selection is None:
+            selection = 'uniform'
         if model is None:
             try:
                 model = self.world.getModel(self.name,state)
@@ -1187,9 +1203,9 @@ class Actor(Agent):
             # //GT: node 11; 1 of 1; next 20 lines
             # //GT: edges 17 to 22; from 11; to 3-8; next 19 lines
             # //GT: edges 25; from 14; to 11; next 18 lines
-            decision = Agent.decide(self,state,horizon,others,model,'uniform',actions,
+            decision = Agent.decide(self,state,horizon,others,model,selection,actions,
                                     belief.keys(),debug)
-            if len(decision['action']) > 1:
+            if len(decision['action']) > 1 and selection == 'uniform':
                 try:
                     home = self.demographics['home']
                 except AttributeError:

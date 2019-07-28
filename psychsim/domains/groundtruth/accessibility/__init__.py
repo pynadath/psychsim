@@ -467,3 +467,38 @@ def trustInFriends(config,world,friends):
         'under': config.getint('Actors','friend_pess_trust')}
     trust['none'] = (trust['over']+trust['under'])/2
     return sum([trust[world.agents[friend].distortion] for friend in friends])/len(friends)
+
+def getCurrentDemographics(name,world,states,config,t):
+    entry = {}
+    for field,key in demographics.items():
+        if field == 'Wealth':
+            entry[field] = toLikert(getInitialState(name,'resources',world,states,t).first(),7)
+        elif field == 'Fulltime Job':
+            entry[field] = 'yes' if getInitialState(name,'employed',world,states,t).first() else 'no'
+        elif field == 'Pets':
+            entry[field] = 'yes' if stateKey(name,'pet') in world.variables and \
+                getInitialState(name,'pet',world,states,t).first() else 'no'
+        elif field == 'Age':
+            entry[field] = world.agents[name].demographics[key] + int(t/config.getint('Disaster','year_length'))
+        else:
+            entry[field] = world.agents[name].demographics[key]
+    return entry
+
+def getInitialState(name,feature,world,states,t,believer=None):
+    if isinstance(t,int):
+        if believer is None:
+            return world.getState(name,feature,states[t-1]['Nature']['__state__'])
+        else:
+            return world.getState(name,feature,next(iter(states[t-1]['Nature'][believer].values())))
+    elif isinstance(t,tuple):
+        return [getInitialState(name,feature,world,states,day,believer) for day in range(t[0],t[1])]
+
+def getAction(name,world,states,t):
+    """
+    :rtype: ActionSet
+    """
+    if isinstance(t,int):
+        return world.getFeature(actionKey(name),states[t]['Actor' if name[:5] == 'Actor' else name]['__state__']).first()
+    elif isinstance(t,tuple):
+        return [getAction(name,world,states,day) for day in range(t[0],t[1])]
+        
