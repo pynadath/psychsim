@@ -570,19 +570,20 @@ def addSummary(world,state,actors,regions,t,table):
         'Value': sum([1.-float(world.getState(name,'risk',state)) for name in regions])/len(regions),'Metadata': 'mean(1-Region\'s risk)'})
     for region in regions:
         residents = {name for name in actors if world.agents[name].demographics['home'] == region}
-        table.append({'Timestep': t,'VariableName': 'Regional Deaths','EntityIdx': ','.join(sorted(residents)),
-            'Value': len(residents-living),'Metadata': 'Actor\'s health<0.01'})
-        table.append({'Timestep': t,'VariableName': 'Regional Casualties','EntityIdx': ','.join(sorted(residents)),
-            'Value': len([name for name in residents if float(world.getState(name,'health',state)) < 0.2]),'Metadata': 'Actor\'s health<0.2'})
-        table.append({'Timestep': t,'VariableName': 'Regional Evacuees','EntityIdx': ','.join(sorted(residents)),
+        table.append({'Timestep': t,'VariableName': 'Regional Deaths','EntityIdx': region,
+            'Value': len(residents-living),'Metadata': 'Actor\'s health<0.01 if Actor\'s home=%s' % (region)})
+        table.append({'Timestep': t,'VariableName': 'Regional Casualties','EntityIdx': region,
+            'Value': len([name for name in residents if float(world.getState(name,'health',state)) < 0.2]),
+            'Metadata': 'Actor\'s health<0.2 if Actor\'s home=%s' % (region)})
+        table.append({'Timestep': t,'VariableName': 'Regional Evacuees','EntityIdx': region,
             'Value': len([name for name in residents&living if world.getState(name,'location',state).first() == 'evacuated']),
-            'Metadata': 'Actor\'s location=evacuated'})
-        table.append({'Timestep': t,'VariableName': 'Regional Sheltered','EntityIdx': ','.join(sorted(residents)),
+            'Metadata': 'Actor\'s location=evacuated if Actor\'s home=%s' % (region)})
+        table.append({'Timestep': t,'VariableName': 'Regional Sheltered','EntityIdx': region,
             'Value': len([name for name in residents&living if world.getState(name,'location',state).first()[:7] == 'sheltered']),
-            'Metadata': 'Actor\'s location=shelter*'})
-        table.append({'Timestep': t,'VariableName': 'Regional Wellbeing','EntityIdx': ','.join(sorted(residents)),
+            'Metadata': 'Actor\'s location=shelter* if Actor\'s home=%s' % (region)})
+        table.append({'Timestep': t,'VariableName': 'Regional Wellbeing','EntityIdx': region,
             'Value': sum([float(world.getState(name,'health',state)) for name in living&residents])/len(living&residents),
-            'Metadata': 'mean(Actor\'s health)'})
+            'Metadata': 'mean(Actor\'s health) if Actor\'s home=%s' % (region)})
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
