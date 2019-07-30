@@ -620,7 +620,10 @@ if __name__ == '__main__':
         world = pickle.load(f)
     actors = sorted([name for name in world.agents if name[:5] == 'Actor'])
     for proto in actors:
-        if stateKey(proto,'childrenHealth') in world.variables and stateKey(proto,'pet') in world.variables:
+        if config.getint('Actors','pet_prob') > 0:
+            if stateKey(proto,'childrenHealth') in world.variables and stateKey(proto,'pet') in world.variables:
+                break
+        elif stateKey(proto,'childrenHealth') in world.variables:
             break
     else:
         raise ValueError('Unable to find actor with children and pet')
