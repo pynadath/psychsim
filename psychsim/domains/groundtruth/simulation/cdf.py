@@ -615,6 +615,7 @@ if __name__ == '__main__':
         'QualitativeData': [],
         'RelationshipData': []}
     fields['RelationshipDef'] = ['Name','LongName','Values','RelType','DataType','Notes']
+    ER = accessibility.readLog(args)
     # Load in initial simulation
     with open(os.path.join(dirName,'scenario0.pkl'),'rb') as f:
         world = pickle.load(f)
@@ -765,13 +766,20 @@ if __name__ == '__main__':
             s = pickle.load(f)
         if order[turn] == 'Actor':
             for name in living:
-                for behaviors in world.agents[name].actions:
+                # Action Choices
+                choices = sorted(world.agents[name].actions)
+                for behaviors in choices:
                     match = world.getFeature(actionKey(name),s['__state__']).first() == behaviors
                     action = Action(next(iter(behaviors)))
                     action['subject'] = 'Actor'
                     if 'object' in action:
                         action['object'] = action['object'][:-2]
                     tables['RunData'].append({'Timestep': t,'VariableName': str(action),'EntityIdx': name,'Value': 'yes' if match else 'no'})
+                if name in ER[t]:
+                    # Expected Reward (doesn't appear if there's only one possible action to choose from)
+                    tables['RunData'].append({'Timestep': t,'VariableName': 'Actor\'s Expected Reward','EntityIdx': name,
+                        'Value': ','.join(['%f' % (ER[t][name][behaviors]) for behaviors in choices if behaviors in ER[t][name]]),
+                        'Notes': ','.join(sorted(map(str,ER[t][name].keys())))})
         elif order[turn] == 'System':
             action = world.getFeature(actionKey('System'),s['__state__']).first()
             tables['RunData'].append({'Timestep': t,'VariableName': 'System-allocate-Region','EntityIdx': 'System','Value': action['object']})
@@ -801,8 +809,8 @@ if __name__ == '__main__':
                     else:
                         assert variable[:6] == 'Nature'
                         addRunDatum(world,name,state2feature(variable),'ActorBeliefOf%s' % (variable),1,tables['RunData'],belief,'Nature')
-        # Summary stats
-        addSummary(world,s['__state__'],actors,regions,t+1,tables['SummaryStatisticsData'])
+            # Summary stats
+            addSummary(world,s['__state__'],actors,regions,t+1,tables['SummaryStatisticsData'])
         living = [name for name in living if world.getState(name,'alive',s['__state__']).first()]
         turn += 1
         if turn == len(order):
