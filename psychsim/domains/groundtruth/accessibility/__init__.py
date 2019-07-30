@@ -24,7 +24,10 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 82,'run': 1,'span': 130},
     {'instance': 86,'run': 1,'span': 173},
     {'instance': 84,'run': 1,'span': 176},
-    {'instance': 85,'run': 1,'span': 189}]
+    {'instance': 85,'run': 1,'span': 189},
+    {'instance': 90,'run': 0,},
+    {'instance': 100,'run': 0,},
+    {'instance': 101,'run': 0,}]
     
 def createParser(output=None,day=None,seed=False,instances=False):
     """
@@ -468,37 +471,65 @@ def trustInFriends(config,world,friends):
     trust['none'] = (trust['over']+trust['under'])/2
     return sum([trust[world.agents[friend].distortion] for friend in friends])/len(friends)
 
-def getCurrentDemographics(name,world,states,config,t):
+def getCurrentDemographics(args,name,world,states,config,t):
     entry = {}
     for field,key in demographics.items():
         if field == 'Wealth':
-            entry[field] = toLikert(getInitialState(name,'resources',world,states,t).first(),7)
+            entry[field] = toLikert(getInitialState(args,name,'resources',world,states,t).first(),7)
         elif field == 'Fulltime Job':
-            entry[field] = 'yes' if getInitialState(name,'employed',world,states,t).first() else 'no'
+            entry[field] = 'yes' if getInitialState(args,name,'employed',world,states,t).first() else 'no'
         elif field == 'Pets':
             entry[field] = 'yes' if stateKey(name,'pet') in world.variables and \
-                getInitialState(name,'pet',world,states,t).first() else 'no'
+                getInitialState(args,name,'pet',world,states,t).first() else 'no'
         elif field == 'Age':
             entry[field] = world.agents[name].demographics[key] + int(t/config.getint('Disaster','year_length'))
         else:
             entry[field] = world.agents[name].demographics[key]
     return entry
 
-def getInitialState(name,feature,world,states,t,believer=None):
+def loadState(args,states,t,turn):
+    if t not in states:
+        states[t] = {}
+    if turn not in states[t]:
+        with open(instanceFile(args,'state%d%s.pkl' % (t,turn)),'rb') as f:
+            states[t][turn] = pickle.load(f)
+
+def getInitialState(args,name,feature,world,states,t,believer=None):
     if isinstance(t,int):
+        loadState(args,states,t-1,'Nature')
         if believer is None:
             return world.getState(name,feature,states[t-1]['Nature']['__state__'])
         else:
             return world.getState(name,feature,next(iter(states[t-1]['Nature'][believer].values())))
     elif isinstance(t,tuple):
-        return [getInitialState(name,feature,world,states,day,believer) for day in range(t[0],t[1])]
+        return [getInitialState(args,name,feature,world,states,day,believer) for day in range(t[0],t[1])]
 
-def getAction(name,world,states,t):
+def getAction(args,name,world,states,t):
     """
     :rtype: ActionSet
     """
     if isinstance(t,int):
-        return world.getFeature(actionKey(name),states[t]['Actor' if name[:5] == 'Actor' else name]['__state__']).first()
+        turn = 'Actor' if name[:5] == 'Actor' else name
+        loadState(args,states,t,turn)
+        return world.getFeature(actionKey(name),states[t][turn]['__state__']).first()
     elif isinstance(t,tuple):
-        return [getAction(name,world,states,day) for day in range(t[0],t[1])]
-        
+        return [getAction(args,name,world,states,day) for day in range(t[0],t[1])]
+
+def readLog(args):
+    """
+    Extracts expected reward tables from 'psychsim.log'
+    """
+    ER = [None]
+    with openFile(args,'psychsim.log') as logfile:
+        for line in logfile:
+            words = line.strip().split()
+            if words:
+                if words[0] == 'Day':
+                    t = int(words[1])
+                    ER.append({})
+                elif words[0] == 'Evaluated':
+                    action = Action(words[1])
+                    if action['subject'] not in ER[-1]:
+                        ER[-1][action['subject']] = {}
+                    ER[-1][action['subject']][action] = float(words[-1])
+    return ER
