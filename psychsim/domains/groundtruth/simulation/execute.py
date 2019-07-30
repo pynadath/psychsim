@@ -65,10 +65,12 @@ def runInstance(instance,args,config,rerun=True):
             cdfTables = makeCDFTables(population,[world.agents[r] for r in regions],regions)
             preSurvey(world,None,dirName,0,args['TA2BTA1C10'])
             postSurvey(None,dirName,0,args['TA2BTA1C10'],config.getboolean('Data','postprevious',fallback=False))
-        elif os.path.exists(os.path.join(dirName,'scenario.pkl')) and not rerun:
-            # Already ran this
-            print('Skipping instance %d, run %d' % (instance,run))
-            continue
+        else:
+            scenarios = [int(name[8:-4]) for name in os.listdir(dirName) if name[:8] == 'scenario' and name[-4:] == '.pkl']
+            if scenarios and not rerun:
+                # Already ran this
+                print('Skipping instance %d, run %d, through day %d' % (instance,run,max(scenarios)))
+                continue
         # Set up logging
         logfile = os.path.join(dirName,'psychsim.log')
         try:
