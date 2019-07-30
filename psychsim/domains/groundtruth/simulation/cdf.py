@@ -550,7 +550,7 @@ def addRunDatum(world,name,feature,variable,t,table,state=None,agent=None):
         else:
             tables['RunData'][-1]['Value'] = ','.join(['Pr(%s)=%5.2f%%' % (el,value[el]*100) for el in sorted(value.domain())])
 
-def addSummary(world,state,actors,regions,t,table):
+def addSummary(world,state,actors,regions,t,table,regional=False):
     living = {name for name in actors if world.getState(name,'alive',state).first()}
     table.append({'Timestep': t,'VariableName': 'Deaths','EntityIdx': 'Actor[0001-%04d]' % (len(actors)),
         'Value': len(actors)-len(living),'Metadata': 'Actor\'s health<0.01'})
@@ -568,22 +568,23 @@ def addSummary(world,state,actors,regions,t,table):
         'Value': sum([float(world.getState(name,'grievance',state)) for name in living])/len(living),'Metadata': 'mean(Actor\'s grievance)'})
     table.append({'Timestep': t,'VariableName': 'Safety','EntityIdx': 'Region[01-%02d]' % (len(regions)),
         'Value': sum([1.-float(world.getState(name,'risk',state)) for name in regions])/len(regions),'Metadata': 'mean(1-Region\'s risk)'})
-    for region in regions:
-        residents = {name for name in actors if world.agents[name].demographics['home'] == region}
-        table.append({'Timestep': t,'VariableName': 'Regional Deaths','EntityIdx': region,
-            'Value': len(residents-living),'Metadata': 'Actor\'s health<0.01 if Actor\'s home=%s' % (region)})
-        table.append({'Timestep': t,'VariableName': 'Regional Casualties','EntityIdx': region,
-            'Value': len([name for name in residents if float(world.getState(name,'health',state)) < 0.2]),
-            'Metadata': 'Actor\'s health<0.2 if Actor\'s home=%s' % (region)})
-        table.append({'Timestep': t,'VariableName': 'Regional Evacuees','EntityIdx': region,
-            'Value': len([name for name in residents&living if world.getState(name,'location',state).first() == 'evacuated']),
-            'Metadata': 'Actor\'s location=evacuated if Actor\'s home=%s' % (region)})
-        table.append({'Timestep': t,'VariableName': 'Regional Sheltered','EntityIdx': region,
-            'Value': len([name for name in residents&living if world.getState(name,'location',state).first()[:7] == 'sheltered']),
-            'Metadata': 'Actor\'s location=shelter* if Actor\'s home=%s' % (region)})
-        table.append({'Timestep': t,'VariableName': 'Regional Wellbeing','EntityIdx': region,
-            'Value': sum([float(world.getState(name,'health',state)) for name in living&residents])/len(living&residents),
-            'Metadata': 'mean(Actor\'s health) if Actor\'s home=%s' % (region)})
+    if regional:
+        for region in regions:
+            residents = {name for name in actors if world.agents[name].demographics['home'] == region}
+            table.append({'Timestep': t,'VariableName': 'Regional Deaths','EntityIdx': region,
+                'Value': len(residents-living),'Metadata': 'Actor\'s health<0.01 if Actor\'s home=%s' % (region)})
+            table.append({'Timestep': t,'VariableName': 'Regional Casualties','EntityIdx': region,
+                'Value': len([name for name in residents if float(world.getState(name,'health',state)) < 0.2]),
+                'Metadata': 'Actor\'s health<0.2 if Actor\'s home=%s' % (region)})
+            table.append({'Timestep': t,'VariableName': 'Regional Evacuees','EntityIdx': region,
+                'Value': len([name for name in residents&living if world.getState(name,'location',state).first() == 'evacuated']),
+                'Metadata': 'Actor\'s location=evacuated if Actor\'s home=%s' % (region)})
+            table.append({'Timestep': t,'VariableName': 'Regional Sheltered','EntityIdx': region,
+                'Value': len([name for name in residents&living if world.getState(name,'location',state).first()[:7] == 'sheltered']),
+                'Metadata': 'Actor\'s location=shelter* if Actor\'s home=%s' % (region)})
+            table.append({'Timestep': t,'VariableName': 'Regional Wellbeing','EntityIdx': region,
+                'Value': sum([float(world.getState(name,'health',state)) for name in living&residents])/len(living&residents),
+                'Metadata': 'mean(Actor\'s health) if Actor\'s home=%s' % (region)})
 
 if __name__ == '__main__':
     from argparse import ArgumentParser
@@ -594,7 +595,7 @@ if __name__ == '__main__':
     from psychsim.domains.groundtruth import accessibility
 
     parser = ArgumentParser()
-    parser.add_argument('-i','--instance',default=90,type=int,help='Number of instance to process')
+    parser.add_argument('instance',type=int,help='Number of instance to process')
     parser.add_argument('-r','--run',default=0,type=int,help='Number of run to process')
     parser.add_argument('--definition',action='store_true',help='Write simulation definition tables')
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
