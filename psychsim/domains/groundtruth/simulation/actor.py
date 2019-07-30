@@ -1203,8 +1203,8 @@ class Actor(Agent):
             # //GT: node 11; 1 of 1; next 20 lines
             # //GT: edges 17 to 22; from 11; to 3-8; next 19 lines
             # //GT: edges 25; from 14; to 11; next 18 lines
-            decision = Agent.decide(self,state,horizon,others,model,selection,actions,
-                                    belief.keys(),debug)
+            decision = Agent.decide(self,state,horizon,None if self.config.getint('Simulation','phase',fallback=1) > 1 else others,
+                model,selection,actions,belief.keys(),debug)
             if len(decision['action']) > 1 and selection == 'uniform':
                 try:
                     home = self.demographics['home']

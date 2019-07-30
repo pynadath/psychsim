@@ -275,6 +275,8 @@ class Agent(object):
               debug={}):
         if horizon is None:
             horizon = self.getAttribute('horizon',model)
+        if keySet is None:
+            keySet = belief.keys()
         # Compute value across possible worlds
         logging.debug('Considering %s' % (action))
         current = copy.deepcopy(belief)
