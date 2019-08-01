@@ -595,7 +595,7 @@ if __name__ == '__main__':
     from psychsim.domains.groundtruth import accessibility
 
     parser = ArgumentParser()
-    parser.add_argument('instances',type=int,nargs='+',help='Number(s) of instance to process')
+    parser.add_argument('instances',type=int,nargs='+',help='Number(s) of instance(s) to process')
     parser.add_argument('-r','--run',default=0,type=int,help='Number of run to process')
     parser.add_argument('--definition',action='store_true',help='Write simulation definition tables')
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
@@ -607,7 +607,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=level)
 
     for args['instance'] in args['instances']:
-        print(args['instance'],args['run'])
+        print('Instance %d, Run %d' % (args['instance'],args['run']))
         config = accessibility.getConfig(args['instance'])
         dirName = accessibility.getDirectory(args)
         order = ['Actor','System','Nature']
@@ -670,9 +670,10 @@ if __name__ == '__main__':
                         world.agents[other].demographics['home'] == world.agents[name].demographics['home']}
                 else:
                     raise NameError('Unknown relationship: %s' % (variable))
-                for other in actors:
-                    if other > name:
-                        tables['RelationshipData'].append({'RelationshipType': variable,'Directed': 'no','FromEntityId': name,'ToEntityId': other,'Data': 'yes'})
+                for other in others:
+                    tables['RelationshipData'].append({'RelationshipType': variable,'Directed': 'yes','FromEntityId': name,'ToEntityId': other,'Data': 'yes'})
+        accessibility.writeOutput(args,tables['RelationshipData'],fields['RelationshipData'],'%sTable.tsv' % ('RelationshipData'))
+        continue #TEMP
         # Dynamic variables
         for behaviors in world.agents['Actor0001'].actions:
             action = Action(next(iter(behaviors)))
