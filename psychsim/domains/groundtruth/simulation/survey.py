@@ -43,6 +43,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=level)
 
     for args['instance'] in args['instances']:
+        print(args['instance'],args['run'])
         config = accessibility.getConfig(args['instance'])
         dirName = accessibility.getDirectory(args)
         random.seed(args['instance']*100+args['run'])
