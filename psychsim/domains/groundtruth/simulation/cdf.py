@@ -672,8 +672,6 @@ if __name__ == '__main__':
                     raise NameError('Unknown relationship: %s' % (variable))
                 for other in others:
                     tables['RelationshipData'].append({'RelationshipType': variable,'Directed': 'yes','FromEntityId': name,'ToEntityId': other,'Data': 'yes'})
-        accessibility.writeOutput(args,tables['RelationshipData'],fields['RelationshipData'],'%sTable.tsv' % ('RelationshipData'))
-        continue #TEMP
         # Dynamic variables
         for behaviors in world.agents['Actor0001'].actions:
             action = Action(next(iter(behaviors)))
