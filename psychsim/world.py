@@ -747,13 +747,13 @@ class World(object):
     def getActionEffects(self,actions,keySubset):
         dynamics = {}
         for action in actions:
-            for key,tree in self.dynamics[action].items():
+            for key,tree in self.dynamics.get(action,{}).items():
                 if key in keySubset:
                     try:
                         dynamics[key].append(tree)
                     except KeyError:
                         dynamics[key] = [tree]
-        for key,tree in self.dynamics[True].items():
+        for key,tree in self.dynamics.get(True,{}).items():
             if key in keySubset and key not in dynamics:
                 dynamics[key] = [tree]
         return dynamics
