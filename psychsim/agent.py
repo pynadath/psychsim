@@ -86,7 +86,7 @@ class Agent(object):
             if other.name == self.name:
                 pass
             elif len(other.actions) > 1:
-                logging.warning('%s ignoring %s when compiling policy. Currently unable to generate policies in beliefs of others with multiple actions')
+                logging.warning('%s ignoring %s (%d actions) when compiling policy' % (self.name,other.name,len(other.actions)))
             else:
                 # Compile mental model of this agent's policy
                 if modelKey(other.name) in belief:
