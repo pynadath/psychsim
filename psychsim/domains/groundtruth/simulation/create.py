@@ -145,11 +145,11 @@ def getConfig(instance):
     config.read(os.path.join(os.path.dirname(__file__),'..','config','%06d.ini' % (instance)))
     return config
 
-def loadPickle(instance,run=0,day=0,sub=None):
+def loadPickle(instance,run=0,day=None,sub=None):
     """
     Loads a PsychSim simulation object from the specified instance/run that has executed until the specified day and then been saved to a file
     """
-    if day == 0:
+    if day is None:
         dayStr = ''
     else:
         dayStr = '%d' % (day)
