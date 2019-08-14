@@ -1,0 +1,202 @@
+Name	LongName	Values	VarType	DataType	Notes
+Participant	Participant	[1+]	fixed	Integer	
+Timestep	Timestep	[1+]	dynamic	Integer	
+Age	Age	[0-100]	dynamic	Integer	
+Children	Children	[0-10]	dynamic	Integer	
+Ethnicity	Ethnicity	majority,minority	fixed	String	
+Fulltime Job	Fulltime Job	yes,no	dynamic	Boolean	
+Gender	Gender	female,male	fixed	String	
+Pets	Pets	yes,no	dynamic	Boolean	
+Religion	Religion	majority,minority,none	fixed	String	
+Residence	Residence	Region[01-16]	fixed	String	
+Wealth	Wealth	[1-7]	dynamic	Integer	
+Out Friends	Out Friends	[0+]	dynamic	Integer	0.i.k
+In Friends	In Friends	[0+]	dynamic	Integer	0.i.l
+Acquaintances	Acquaintances	[0+]	dynamic	Integer	0.i.m: Friends not included
+Aid if Wealth Loss	Aid if Wealth Loss	[0-6]	dynamic	Integer	0.ii.a
+Hurricane Vulnerability	Hurricane Vulnerability	[0-6]	dynamic	Integer	0.ii.b
+Stay Home Willingness	Stay Home Willingness	[0-6]	dynamic	Integer	0.ii.c
+Aid Age<20	Aid Age<20	[0-6]	dynamic	Integer	0.ii.d
+Aid 20<=Age<30	Aid 20<=Age<30	[0-6]	dynamic	Integer	0.ii.e
+Aid 30<=Age<40	Aid 30<=Age<40	[0-6]	dynamic	Integer	0.ii.f
+Aid 40<=Age<50	Aid 40<=Age<50	[0-6]	dynamic	Integer	0.ii.g
+Aid 50<=Age<60	Aid 50<=Age<60	[0-6]	dynamic	Integer	0.ii.h
+Aid 60<=Age<70	Aid 60<=Age<70	[0-6]	dynamic	Integer	0.ii.i
+Aid 70<=Age<80	Aid 70<=Age<80	[0-6]	dynamic	Integer	0.ii.j
+Aid 80<=Age	Aid 80<=Age	[0-6]	dynamic	Integer	0.ii.k
+Aid Female	Aid Female	[0-6]	dynamic	Integer	0.ii.l
+Aid Male	Aid Male	[0-6]	dynamic	Integer	0.ii.m
+Aid Minority Ethnicity	Aid Minority Ethnicity	[0-6]	dynamic	Integer	0.ii.n
+Aid Majority Ethnicity	Aid Majority Ethnicity	[0-6]	dynamic	Integer	0.ii.o
+Aid Minority Religion	Aid Minority Religion	[0-6]	dynamic	Integer	0.ii.p
+Aid Majority Religion	Aid Majority Religion	[0-6]	dynamic	Integer	0.ii.q
+Aid None Religion	Aid None Religion	[0-6]	dynamic	Integer	0.ii.r
+Aid 0 Children	Aid 0 Children	[0-6]	dynamic	Integer	0.ii.s
+Aid 1 Children	Aid 1 Children	[0-6]	dynamic	Integer	0.ii.t
+Aid 2 Children	Aid 2 Children	[0-6]	dynamic	Integer	0.ii.u
+Aid with Job	Aid with Job	[0-6]	dynamic	Integer	0.ii.v
+Aid without Job	Aid without Job	[0-6]	dynamic	Integer	0.ii.w
+Aid with Pets	Aid with Pets	[0-6]	dynamic	Integer	0.ii.x
+Aid without Pets	Aid without Pets	[0-6]	dynamic	Integer	0.ii.y
+Aid Wealth 5	Aid Wealth 5	[0-6]	dynamic	Integer	0.ii.z
+Aid Wealth 4	Aid Wealth 4	[0-6]	dynamic	Integer	0.ii.aa
+Aid Wealth 3	Aid Wealth 3	[0-6]	dynamic	Integer	0.ii.bb
+Aid Wealth 2	Aid Wealth 2	[0-6]	dynamic	Integer	0.ii.cc
+Aid Wealth 1	Aid Wealth 1	[0-6]	dynamic	Integer	0.ii.dd
+Aid Wealth 0	Aid Wealth 0	[0-6]	dynamic	Integer	0.ii.ee
+Most Take Advantage	Most Take Advantage	[0-6]	dynamic	Integer	0.ii.ff
+People Can Be Trusted	People Can Be Trusted	[0-6]	dynamic	Integer	0.ii.ff
+Know Injured Friends	Know Injured Friends	yes,no	dynamic	Boolean	1.one.a
+Know Injured Friends from Social Media	Know Injured Friends from Social Media	yes,no	dynamic	Boolean	1.one.a.i
+Know Injured Friends from Government Broadcast	Know Injured Friends from Government Broadcast	yes,no	dynamic	Boolean	1.one.a.ii
+Know Injured Friends from Government Officials	Know Injured Friends from Government Officials	yes,no	dynamic	Boolean	1.one.a.iii
+Know Injured Friends from Friends	Know Injured Friends from Friends	yes,no	dynamic	Boolean	1.one.a.iv
+Know Injured Friends from Acquaintances	Know Injured Friends from Acquaintances	yes,no	dynamic	Boolean	1.one.a.v
+Know Injured Friends from Strangers	Know Injured Friends from Strangers	yes,no	dynamic	Boolean	1.one.a.vi
+Know Injured Friends from Observation	Know Injured Friends from Observation	yes,no	dynamic	Boolean	1.one.a.vii
+Know Evacuated Friends	Know Evacuated Friends	yes,no	dynamic	Boolean	1.one.b
+Know Evacuated Friends from Social Media	Know Evacuated Friends from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Evacuated Friends from Government Broadcast	Know Evacuated Friends from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Evacuated Friends from Government Officials	Know Evacuated Friends from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Evacuated Friends from Friends	Know Evacuated Friends from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Evacuated Friends from Acquaintances	Know Evacuated Friends from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Evacuated Friends from Strangers	Know Evacuated Friends from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Evacuated Friends from Observation	Know Evacuated Friends from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Sheltered Friends	Know Sheltered Friends	yes,no	dynamic	Boolean	1.one.b
+Know Sheltered Friends from Social Media	Know Sheltered Friends from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Sheltered Friends from Government Broadcast	Know Sheltered Friends from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Sheltered Friends from Government Officials	Know Sheltered Friends from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Sheltered Friends from Friends	Know Sheltered Friends from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Sheltered Friends from Acquaintances	Know Sheltered Friends from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Sheltered Friends from Strangers	Know Sheltered Friends from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Sheltered Friends from Observation	Know Sheltered Friends from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Injured Acquaintances	Know Injured Acquaintances	yes,no	dynamic	Boolean	1.one.b
+Know Injured Acquaintances from Social Media	Know Injured Acquaintances from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Injured Acquaintances from Government Broadcast	Know Injured Acquaintances from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Injured Acquaintances from Government Officials	Know Injured Acquaintances from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Injured Acquaintances from Friends	Know Injured Acquaintances from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Injured Acquaintances from Acquaintances	Know Injured Acquaintances from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Injured Acquaintances from Strangers	Know Injured Acquaintances from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Injured Acquaintances from Observation	Know Injured Acquaintances from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Evacuated Acquaintances	Know Evacuated Acquaintances	yes,no	dynamic	Boolean	1.one.b
+Know Evacuated Acquaintances from Social Media	Know Evacuated Acquaintances from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Evacuated Acquaintances from Government Broadcast	Know Evacuated Acquaintances from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Evacuated Acquaintances from Government Officials	Know Evacuated Acquaintances from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Evacuated Acquaintances from Friends	Know Evacuated Acquaintances from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Evacuated Acquaintances from Acquaintances	Know Evacuated Acquaintances from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Evacuated Acquaintances from Strangers	Know Evacuated Acquaintances from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Evacuated Acquaintances from Observation	Know Evacuated Acquaintances from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Sheltered Acquaintances	Know Sheltered Acquaintances	yes,no	dynamic	Boolean	1.one.b
+Know Sheltered Acquaintances from Social Media	Know Sheltered Acquaintances from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Sheltered Acquaintances from Government Broadcast	Know Sheltered Acquaintances from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Sheltered Acquaintances from Government Officials	Know Sheltered Acquaintances from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Sheltered Acquaintances from Friends	Know Sheltered Acquaintances from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Sheltered Acquaintances from Acquaintances	Know Sheltered Acquaintances from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Sheltered Acquaintances from Strangers	Know Sheltered Acquaintances from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Sheltered Acquaintances from Observation	Know Sheltered Acquaintances from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Injured Strangers	Know Injured Strangers	yes,no	dynamic	Boolean	1.one.g
+Know Injured Strangers from Social Media	Know Injured Strangers from Social Media	yes,no	dynamic	Boolean	1.one.g.i
+Know Injured Strangers from Government Broadcast	Know Injured Strangers from Government Broadcast	yes,no	dynamic	Boolean	1.one.g.ii
+Know Injured Strangers from Government Officials	Know Injured Strangers from Government Officials	yes,no	dynamic	Boolean	1.one.g.iii
+Know Injured Strangers from Friends	Know Injured Strangers from Friends	yes,no	dynamic	Boolean	1.one.g.iv
+Know Injured Strangers from Acquaintances	Know Injured Strangers from Acquaintances	yes,no	dynamic	Boolean	1.one.g.v
+Know Injured Strangers from Strangers	Know Injured Strangers from Strangers	yes,no	dynamic	Boolean	1.one.g.vi
+Know Injured Strangers from Observation	Know Injured Strangers from Observation	yes,no	dynamic	Boolean	1.one.g.vii
+Know Evacuated Strangers	Know Evacuated Strangers	yes,no	dynamic	Boolean	1.one.b
+Know Evacuated Strangers from Social Media	Know Evacuated Strangers from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Evacuated Strangers from Government Broadcast	Know Evacuated Strangers from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Evacuated Strangers from Government Officials	Know Evacuated Strangers from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Evacuated Strangers from Friends	Know Evacuated Strangers from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Evacuated Strangers from Acquaintances	Know Evacuated Strangers from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Evacuated Strangers from Strangers	Know Evacuated Strangers from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Evacuated Strangers from Observation	Know Evacuated Strangers from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Sheltered Strangers	Know Sheltered Strangers	yes,no	dynamic	Boolean	1.one.b
+Know Sheltered Strangers from Social Media	Know Sheltered Strangers from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Sheltered Strangers from Government Broadcast	Know Sheltered Strangers from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Sheltered Strangers from Government Officials	Know Sheltered Strangers from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Sheltered Strangers from Friends	Know Sheltered Strangers from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Sheltered Strangers from Acquaintances	Know Sheltered Strangers from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Sheltered Strangers from Strangers	Know Sheltered Strangers from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Sheltered Strangers from Observation	Know Sheltered Strangers from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Total Dead	Know Total Dead	yes,no	dynamic	Boolean	1.one.j
+Know Total Dead from Social Media	Know Total Dead from Social Media	yes,no	dynamic	Boolean	1.one.j.i
+Know Total Dead from Government Broadcast	Know Total Dead from Government Broadcast	yes,no	dynamic	Boolean	1.one.j.ii
+Know Total Dead from Government Officials	Know Total Dead from Government Officials	yes,no	dynamic	Boolean	1.one.j.iii
+Know Total Dead from Friends	Know Total Dead from Friends	yes,no	dynamic	Boolean	1.one.j.iv
+Know Total Dead from Acquaintances	Know Total Dead from Acquaintances	yes,no	dynamic	Boolean	1.one.j.v
+Know Total Dead from Strangers	Know Total Dead from Strangers	yes,no	dynamic	Boolean	1.one.j.vi
+Know Total Dead from Observation	Know Total Dead from Observation	yes,no	dynamic	Boolean	1.one.j.vii
+Know Total Injured	Know Total Injured	yes,no	dynamic	Boolean	1.one.b
+Know Total Injured from Social Media	Know Total Injured from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Total Injured from Government Broadcast	Know Total Injured from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Total Injured from Government Officials	Know Total Injured from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Total Injured from Friends	Know Total Injured from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Total Injured from Acquaintances	Know Total Injured from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Total Injured from Strangers	Know Total Injured from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Total Injured from Observation	Know Total Injured from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Total Evacuated	Know Total Evacuated	yes,no	dynamic	Boolean	1.one.b
+Know Total Evacuated from Social Media	Know Total Evacuated from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Total Evacuated from Government Broadcast	Know Total Evacuated from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Total Evacuated from Government Officials	Know Total Evacuated from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Total Evacuated from Friends	Know Total Evacuated from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Total Evacuated from Acquaintances	Know Total Evacuated from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Total Evacuated from Strangers	Know Total Evacuated from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Total Evacuated from Observation	Know Total Evacuated from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Total Sheltered	Know Total Sheltered	yes,no	dynamic	Boolean	1.one.b
+Know Total Sheltered from Social Media	Know Total Sheltered from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Total Sheltered from Government Broadcast	Know Total Sheltered from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Total Sheltered from Government Officials	Know Total Sheltered from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Total Sheltered from Friends	Know Total Sheltered from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Total Sheltered from Acquaintances	Know Total Sheltered from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Total Sheltered from Strangers	Know Total Sheltered from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Total Sheltered from Observation	Know Total Sheltered from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Regional Dead	Know Regional Dead	yes,no	dynamic	Boolean	1.one.j
+Know Regional Dead from Social Media	Know Regional Dead from Social Media	yes,no	dynamic	Boolean	1.one.j.i
+Know Regional Dead from Government Broadcast	Know Regional Dead from Government Broadcast	yes,no	dynamic	Boolean	1.one.j.ii
+Know Regional Dead from Government Officials	Know Regional Dead from Government Officials	yes,no	dynamic	Boolean	1.one.j.iii
+Know Regional Dead from Friends	Know Regional Dead from Friends	yes,no	dynamic	Boolean	1.one.j.iv
+Know Regional Dead from Acquaintances	Know Regional Dead from Acquaintances	yes,no	dynamic	Boolean	1.one.j.v
+Know Regional Dead from Strangers	Know Regional Dead from Strangers	yes,no	dynamic	Boolean	1.one.j.vi
+Know Regional Dead from Observation	Know Regional Dead from Observation	yes,no	dynamic	Boolean	1.one.j.vii
+Know Regional Injured	Know Regional Injured	yes,no	dynamic	Boolean	1.one.b
+Know Regional Injured from Social Media	Know Regional Injured from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Regional Injured from Government Broadcast	Know Regional Injured from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Regional Injured from Government Officials	Know Regional Injured from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Regional Injured from Friends	Know Regional Injured from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Regional Injured from Acquaintances	Know Regional Injured from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Regional Injured from Strangers	Know Regional Injured from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Regional Injured from Observation	Know Regional Injured from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Regional Evacuated	Know Regional Evacuated	yes,no	dynamic	Boolean	1.one.b
+Know Regional Evacuated from Social Media	Know Regional Evacuated from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Regional Evacuated from Government Broadcast	Know Regional Evacuated from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Regional Evacuated from Government Officials	Know Regional Evacuated from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Regional Evacuated from Friends	Know Regional Evacuated from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Regional Evacuated from Acquaintances	Know Regional Evacuated from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Regional Evacuated from Strangers	Know Regional Evacuated from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Regional Evacuated from Observation	Know Regional Evacuated from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Regional Sheltered	Know Regional Sheltered	yes,no	dynamic	Boolean	1.one.b
+Know Regional Sheltered from Social Media	Know Regional Sheltered from Social Media	yes,no	dynamic	Boolean	1.one.b.i
+Know Regional Sheltered from Government Broadcast	Know Regional Sheltered from Government Broadcast	yes,no	dynamic	Boolean	1.one.b.ii
+Know Regional Sheltered from Government Officials	Know Regional Sheltered from Government Officials	yes,no	dynamic	Boolean	1.one.b.iii
+Know Regional Sheltered from Friends	Know Regional Sheltered from Friends	yes,no	dynamic	Boolean	1.one.b.iv
+Know Regional Sheltered from Acquaintances	Know Regional Sheltered from Acquaintances	yes,no	dynamic	Boolean	1.one.b.v
+Know Regional Sheltered from Strangers	Know Regional Sheltered from Strangers	yes,no	dynamic	Boolean	1.one.b.vi
+Know Regional Sheltered from Observation	Know Regional Sheltered from Observation	yes,no	dynamic	Boolean	1.one.b.vii
+Know Hurricane Prediction	Know Hurricane Prediction	yes,no	dynamic	Boolean	1.one.r
+Know Hurricane Prediction from Social Media	Know Hurricane Prediction from Social Media	yes,no	dynamic	Boolean	1.one.r.i
+Know Hurricane Prediction from Government Broadcast	Know Hurricane Prediction from Government Broadcast	yes,no	dynamic	Boolean	1.one.r.ii
+Know Hurricane Prediction from Government Officials	Know Hurricane Prediction from Government Officials	yes,no	dynamic	Boolean	1.one.r.iii
+Know Hurricane Prediction from Friends	Know Hurricane Prediction from Friends	yes,no	dynamic	Boolean	1.one.r.iv
+Know Hurricane Prediction from Acquaintances	Know Hurricane Prediction from Acquaintances	yes,no	dynamic	Boolean	1.one.r.v
+Know Hurricane Prediction from Strangers	Know Hurricane Prediction from Strangers	yes,no	dynamic	Boolean	1.one.r.vi
+Know Hurricane Prediction from Observation	Know Hurricane Prediction from Observation	yes,no	dynamic	Boolean	1.one.r.vii
+Wealth Decrease Hurricane	Wealth Decrease Hurricane	yes,no,NA	dynamic	Boolean	1.two.i
+Wealth Decrease Serious Injury	Wealth Decrease Serious Injury	yes,no,NA	dynamic	Boolean	1.two.ii
+Wealth Decrease Minor Injury	Wealth Decrease Minor Injury	yes,no,NA	dynamic	Boolean	1.two.iii
+Wealth Increase Profiteering	Wealth Increase Profiteering	yes,no,NA	dynamic	Boolean	1.two.ii
+Alcoholic	Alcoholic	yes,no	dynamic	Boolean	1.three.i
+Training	Training	yes,no	dynamic	Boolean	1.three.ii
+Risky Hobbies	Risky Hobbies	yes,no	dynamic	Boolean	1.three.iii
+Comfort Home	Comfort Home	[0-6]	dynamic	Integer	2.i
+Comfort Evacuated	Comfort Evacuated	[0-6]	dynamic	Integer	2.ii
+Comfort Sheltered	Comfort Sheltered	[0-6]	dynamic	Integer	2.iii
