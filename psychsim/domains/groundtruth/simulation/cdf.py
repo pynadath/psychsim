@@ -26,6 +26,18 @@ fields = {'VariableDef': ['Name','LongName','Values','VarType','DataType','Notes
           'Regional': ['Timestep','Region','Deaths','Casualties','Sheltered'],
           }
 
+boilerPlate = [
+    {'Name': 'Timestep','Values': '[1+]','VarType': 'dynamic','DataType': 'Integer'},
+    {'Name': 'Age','Values': '[0-100]','VarType': 'dynamic','DataType': 'Integer'},
+    {'Name': 'Children','Values': '[0-10]','VarType': 'dynamic','DataType': 'Integer'},
+    {'Name': 'Ethnicity','Values': 'majority,minority','VarType': 'fixed','DataType': 'String'},
+    {'Name': 'Fulltime Job','Values': 'yes,no','VarType': 'dynamic','DataType': 'Boolean'},
+    {'Name': 'Gender','Values': 'female,male','VarType': 'fixed','DataType': 'String'},
+    {'Name': 'Pets','Values': 'yes,no','VarType': 'dynamic','DataType': 'Boolean'},
+    {'Name': 'Religion','Values': 'majority,minority,none','VarType': 'fixed','DataType': 'String'},
+    {'Name': 'Residence','Values': 'Region[01-16]','VarType': 'fixed','DataType': 'String'},
+    {'Name': 'Wealth','Values': '[1-7]','VarType': 'dynamic','DataType': 'Integer'},    
+    ]
 def value2dist(value,notes=None,cls=None):
     if ',' in value:
         probs = [float(v) for v in value.split(',')]
