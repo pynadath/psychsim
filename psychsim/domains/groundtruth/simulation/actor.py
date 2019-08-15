@@ -1225,3 +1225,15 @@ class Actor(Agent):
     def reinforceHome(self,config):
         impact = likert[5][config.getint('Actors','health_impact')-1]
         self.setHealthDynamics(impact,impact/2,False)
+
+    def getFriends(self):
+        return self.friends
+
+    def getNeighbors(self):
+        try:
+            return {a.name for a in self.world.agents.values() if isinstance(a,Actor) and \
+                not a.name == self.name and a.demographics['home'] == self.demographics['home']}
+        except AttributeError:
+            # Old school (i.e., terrible)
+            return {a.name for a in self.world.agents.values() if isinstance(a,Actor) and \
+                not a.name == self.name and a.home == self.home}
