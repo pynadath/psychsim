@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+import logging
 import os.path
 import random
 
@@ -6,6 +7,7 @@ from psychsim.pwl import *
 from psychsim.domains.groundtruth import accessibility
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.INFO,filename='%s%s' % (os.path.splitext(__file__)[0],'.log'))
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',action='store_true',help='Run without writing any files')
     cmd = vars(parser.parse_args())
@@ -13,9 +15,9 @@ if __name__ == '__main__':
     defined = False
     variables = accessibility.boilerPlate[:]
     for instance,args in accessibility.allArgs():
-        if instance < 15:
-            continue
-        print('Instance %d (%d,%d)' % (instance,args['instance'],args['run']))
+        if cmd['debug']:
+            print('Instance %d (%d,%d)' % (instance,args['instance'],args['run']))
+        logging.info('Instance %d (%d,%d)' % (instance,args['instance'],args['run']))
         config = accessibility.getConfig(args['instance'])
         world = accessibility.unpickle(instance)
         hurricanes = [h for h in accessibility.readHurricanes(args['instance'],args['run'],'Input' if 3 <= instance <= 14 else None)
@@ -53,6 +55,7 @@ if __name__ == '__main__':
             record = {'Participant': partID+1}
             output.append(record)
             name = participants[partID]
+            logging.info('Participant %d: %s' % (record['Participant'],name))
             agent = world.agents[name]
             # 0.i.a-i
             record.update(demos[name])
@@ -498,15 +501,16 @@ if __name__ == '__main__':
             var = 'Comfort Home'
             if not defined:
                 variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '2.i'})
-            locations = accessibility.getInitialState(args,name,'location',world,states,(1,args['span']))
+            locations = [loc if isinstance(loc,str) else loc.first() 
+                for loc in accessibility.getInitialState(args,name,'location',world,states,(1,args['span']))]
             risk = accessibility.getInitialState(args,name,'risk',world,states,(1,args['span'],name))
-            values = [1.-float(risk[t]) for t in range(len(locations)) if locations[t].first() == record['Residence']]
+            values = [1.-float(risk[t]) for t in range(len(locations)) if locations[t] == record['Residence']]
             record[var] = accessibility.toLikert(sum(values)/len(values),7)-1
             # 2.ii
             var = 'Comfort Evacuated'
             if not defined:
                 variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '2.ii'})
-            values = [1.-float(risk[t]) for t in range(len(locations)) if locations[t].first() == 'evacuated']
+            values = [1.-float(risk[t]) for t in range(len(locations)) if locations[t] == 'evacuated']
             if values:
                 record[var] = accessibility.toLikert(sum(values)/len(values),7)-1
             else:
@@ -515,7 +519,7 @@ if __name__ == '__main__':
             var = 'Comfort Sheltered'
             if not defined:
                 variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '2.iii'})
-            values = [1.-float(risk[t]) for t in range(len(locations)) if locations[t].first()[:7] == 'shelter']
+            values = [1.-float(risk[t]) for t in range(len(locations)) if locations[t][:7] == 'shelter']
             if values:
                 record[var] = accessibility.toLikert(sum(values)/len(values),7)-1
             else:
