@@ -59,6 +59,11 @@ def runInstance(instance,args,config,rerun=True):
                     agent.demographics = {}
                     for key,feature in oldDemographics.items():
                         agent.demographics[demographics[key]] = world.getState(agent.name,feature).first()
+            try:
+                population[0].config
+            except AttributeError:
+                for agent in population:
+                    agent.config = config
             regions = {agent.name: {'agent': agent,
                                     'inhabitants': [a for a in population if a.home == agent.name]}
                        for agent in world.agents.values() if isinstance(agent,Region)}
