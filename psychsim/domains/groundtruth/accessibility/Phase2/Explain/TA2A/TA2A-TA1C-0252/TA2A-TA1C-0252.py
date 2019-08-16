@@ -6,6 +6,178 @@ import random
 from psychsim.pwl import *
 from psychsim.domains.groundtruth import accessibility
 
+def aidWillingnessEtc(args,agent,record,world,states,demos,hurricanes,alive,variables=None):
+    """
+    :param args: The usual instance/run/span/etc. dictionary
+    :type args: dict
+    :param agent: The agent object that is being surveyed
+    :type agent: Agent
+    :param record: The response record being filled out (modified in place)
+    :type record: dict
+    :param world: The PsychSim object
+    :type world: World
+    :param states: the dictionary of pickled states (or run data if Phase 1)
+    :type states: dict
+    :param demos: Table of demographic data
+    :type demos: dict
+    :param hurricanes: List of hurricanes
+    :type hurricanes: list
+    :param alive: set of names of actors who are still alive
+    :type alive: set
+    :param variables: if provided, any new variables defined are appended (default is None)
+    :type variables: list
+    """
+    if variables:
+        variables.append({'Name': 'Out Friends','Values': '[0+]','VarType': 'dynamic','DataType': 'Integer','Notes': '0.i.k'})
+    friends = agent.getFriends() & alive # Dead friends don't count
+    neighbors = agent.getNeighbors() & alive # Dead neighbors don't count
+    record['Out Friends'] = len(friends - neighbors)
+    # 0.i.l
+    if variables:
+        variables.append({'Name': 'In Friends','Values': '[0+]','VarType': 'dynamic','DataType': 'Integer','Notes': '0.i.l'})
+    record['In Friends'] = len(friends & neighbors)
+    # 0.i.m
+    if variables:
+        variables.append({'Name': 'Acquaintances','Values': '[0+]','VarType': 'dynamic','DataType': 'Integer', 'Notes': '0.i.m: Friends not included'})
+    record['Acquaintances'] = len(neighbors - friends)
+    # 0.ii.a
+    if variables:
+        variables.append({'Name': 'Aid if Wealth Loss','Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.a'})
+    record['Aid if Wealth Loss'] = accessibility.toLikert(accessibility.aidIfWealthLoss(agent),7) - 1
+    # 0.ii.b
+    if variables:
+        variables.append({'Name': 'Hurricane Vulnerability','Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.b'})
+    beliefs = map(float,accessibility.getInitialState(args,agent.name,'risk',world,states,(1,args['span']),agent.name))
+    record['Hurricane Vulnerability'] = accessibility.toLikert(max(beliefs),7) - 1
+    # 0.ii.c
+    if variables:
+        variables.append({'Name': 'Stay Home Willingness','Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.c'})
+    count = 0
+    for hurricane in hurricanes:
+        locations = set(accessibility.getInitialState(args,agent.name,'location',world,states,(hurricane['Start'],hurricane['End']+1)))
+        if len(locations) == 1 and record['Residence'] in locations:
+            # Person stayed home the whole time
+            count += 1
+    record['Stay Home Willingness'] = accessibility.toLikert(count/len(hurricanes),7)-1
+    # 0.ii.d-k
+    altruism = agent.Rweights['neighbors']/sum(agent.Rweights.values())
+    for hi in range(20,100,10):
+        value = altruism*len([other for other in neighbors if hi-10 <= demos[other]['Age'] < hi])
+        if hi == 20:
+            value += altruism*sum([demos[other]['Children'] for other in neighbors])
+            # This includes my children!
+            value += demos[agent.name]['Children']*agent.Rweights['childrenHealth']/sum(agent.Rweights.values())
+        if hi-10 <= demos[agent.name]['Age'] < hi:
+            # This includes me!
+            value += agent.Rweights['health']/sum(agent.Rweights.values())
+        condition = 'Age'
+        if hi != 20:
+            condition = '%d<=%s' % (hi-10,condition)
+        if hi < 90:
+            condition = '%s<%d' % (condition,hi)
+        var = 'Aid %s' % (condition)
+        if variables:
+            variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer',
+                'Notes': '0.ii.%s' % (chr(ord('d')+(hi-20)//10))})
+        record[var] = accessibility.toLikert(value,7)-1
+    # 0.ii.l-m
+    for letter,target in {'l': 'female','m': 'male'}.items():
+        value = altruism*len([other for other in neighbors if demos[other]['Gender'] == target])
+        if demos[agent.name]['Gender'] == target:
+            # This includes me!
+            value += agent.Rweights['health']/sum(agent.Rweights.values())
+        var = 'Aid %s' % (target.capitalize())
+        if variables:
+            variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
+        record[var] = accessibility.toLikert(value,7)-1
+    # 0.ii.n-o
+    for letter,target in {'n': 'minority','o': 'majority'}.items():
+        value = altruism*len([other for other in neighbors if demos[other]['Ethnicity'] == target])
+        if demos[agent.name]['Ethnicity'] == target:
+            # This includes me!
+            value += agent.Rweights['health']/sum(agent.Rweights.values())
+        var = 'Aid %s Ethnicity' % (target.capitalize())
+        if variables:
+            variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
+        record[var] = accessibility.toLikert(value,7)-1
+    # 0.ii.p-r
+    for letter,target in {'p': 'minority','q': 'majority', 'r': 'none'}.items():
+        value = altruism*len([other for other in neighbors if demos[other]['Religion'] == target])
+        if demos[agent.name]['Religion'] == target:
+            # This includes me!
+            value += agent.Rweights['health']/sum(agent.Rweights.values())
+        var = 'Aid %s Religion' % (target.capitalize())
+        if variables:
+            variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
+        record[var] = accessibility.toLikert(value,7)-1
+    # 0.ii.s-u
+    for letter,target in {'s': 0,'t': 1, 'u': 2}.items():
+        value = altruism*len([other for other in neighbors if demos[other]['Children'] == target])
+        if demos[agent.name]['Children'] == target:
+            # This includes me!
+            value += agent.Rweights['health']/sum(agent.Rweights.values())
+        var = 'Aid %d Children' % (target)
+        if variables:
+            variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
+        record[var] = accessibility.toLikert(value,7)-1
+    # 0.ii.v-w
+    for letter,target in {'v': 'yes','w': 'no'}.items():
+        value = altruism*len([other for other in neighbors if demos[other]['Fulltime Job'] == target])
+        if demos[agent.name]['Fulltime Job'] == target:
+            # This includes me!
+            value += agent.Rweights['health']/sum(agent.Rweights.values())
+        var = 'Aid %s Job' % ('with' if target == 'yes' else 'without')
+        if variables:
+            variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
+        record[var] = accessibility.toLikert(value,7)-1
+    # 0.ii.x-y
+    for letter,target in {'x': 'yes','y': 'no'}.items():
+        value = altruism*len([other for other in neighbors if demos[other]['Pets'] == target])
+        if demos[agent.name]['Pets'] == target:
+            # This includes me!
+            value += agent.Rweights['health']/sum(agent.Rweights.values())
+        var = 'Aid %s Pets' % ('with' if target == 'yes' else 'without')
+        if variables:
+            variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
+        record[var] = accessibility.toLikert(value,7)-1
+    # 0.ii.z-ee
+    for letter,target in {'z': 5,'aa': 4,'bb': 3,'cc': 2,'dd': 1,'ee': 0}.items():
+        value = altruism*len([other for other in neighbors if demos[other]['Wealth'] == target])
+        if demos[agent.name]['Wealth'] == target:
+            # This includes me!
+            value += agent.Rweights['health']/sum(agent.Rweights.values())
+        var = 'Aid Wealth %d' % (target)
+        if variables:
+            variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
+        record[var] = accessibility.toLikert(value,7)-1
+    # 0.ii.ff
+    net = 0
+    for other in neighbors:
+        for hurricane in hurricanes:
+            actions = set([act['verb'] for act in accessibility.getAction(args,other,world,states,(hurricane['Start'],hurricane['End']+1))])
+            if 'decreaseRisk' in actions:
+                net -= 1
+            if 'takeResources' in actions:
+                net += 1
+    value = net/(len(neighbors)*len(hurricanes)) + 0.5
+    var = 'Most Take Advantage'
+    if variables:
+        variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.ff'})
+    record[var] = accessibility.toLikert(value,7)-1
+    # 0.ii.gg
+    config = accessibility.getConfig(args['instance'])
+    trust = {'over': config.getint('Actors','friend_opt_trust'),
+        'under': config.getint('Actors','friend_pess_trust')}
+    trust['none'] = (trust['over']+trust['under'])/2
+    if friends:
+        level = sum([trust[world.agents[friend].distortion] for friend in friends])/len(friends)/5
+    else:
+        level = 0.5
+    var = 'People Can Be Trusted'
+    if variables:
+        variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.gg'})
+    record[var] = accessibility.toLikert(level,7)-1
+
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,filename='%s%s' % (os.path.splitext(__file__)[0],'.log'))
     parser = ArgumentParser()
@@ -62,155 +234,7 @@ if __name__ == '__main__':
             # 0.i.j
             record['Timestep'] = args['span']
             # 0.i.k
-            if not defined:
-                variables.append({'Name': 'Out Friends','Values': '[0+]','VarType': 'dynamic','DataType': 'Integer','Notes': '0.i.k'})
-            friends = agent.getFriends() & pool # Dead friends don't count
-            neighbors = agent.getNeighbors() & pool # Dead neighbors don't count
-            record['Out Friends'] = len(friends - neighbors)
-            # 0.i.l
-            if not defined:
-                variables.append({'Name': 'In Friends','Values': '[0+]','VarType': 'dynamic','DataType': 'Integer','Notes': '0.i.l'})
-            record['In Friends'] = len(friends & neighbors)
-            # 0.i.m
-            if not defined:
-                variables.append({'Name': 'Acquaintances','Values': '[0+]','VarType': 'dynamic','DataType': 'Integer', 'Notes': '0.i.m: Friends not included'})
-            record['Acquaintances'] = len(neighbors - friends)
-            # 0.ii.a
-            if not defined:
-                variables.append({'Name': 'Aid if Wealth Loss','Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.a'})
-            record['Aid if Wealth Loss'] = accessibility.toLikert(accessibility.aidIfWealthLoss(agent),7) - 1
-            # 0.ii.b
-            if not defined:
-                variables.append({'Name': 'Hurricane Vulnerability','Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.b'})
-            beliefs = map(float,accessibility.getInitialState(args,name,'risk',world,states,(1,args['span']),name))
-            record['Hurricane Vulnerability'] = accessibility.toLikert(max(beliefs),7) - 1
-            # 0.ii.c
-            if not defined:
-                variables.append({'Name': 'Stay Home Willingness','Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.c'})
-            count = 0
-            for hurricane in hurricanes:
-                locations = set(accessibility.getInitialState(args,name,'location',world,states,(hurricane['Start'],hurricane['End']+1)))
-                if len(locations) == 1 and record['Residence'] in locations:
-                    # Person stayed home the whole time
-                    count += 1
-            record['Stay Home Willingness'] = accessibility.toLikert(count/len(hurricanes),7)-1
-            # 0.ii.d-k
-            altruism = agent.Rweights['neighbors']/sum(agent.Rweights.values())
-            for hi in range(20,100,10):
-                value = altruism*len([other for other in neighbors if hi-10 <= demos[other]['Age'] < hi])
-                if hi == 20:
-                    value += altruism*sum([demos[other]['Children'] for other in neighbors])
-                    # This includes my children!
-                    value += demos[name]['Children']*agent.Rweights['childrenHealth']/sum(agent.Rweights.values())
-                if hi-10 <= demos[name]['Age'] < hi:
-                    # This includes me!
-                    value += agent.Rweights['health']/sum(agent.Rweights.values())
-                condition = 'Age'
-                if hi != 20:
-                    condition = '%d<=%s' % (hi-10,condition)
-                if hi < 90:
-                    condition = '%s<%d' % (condition,hi)
-                var = 'Aid %s' % (condition)
-                if not defined:
-                    variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer',
-                        'Notes': '0.ii.%s' % (chr(ord('d')+(hi-20)//10))})
-                record[var] = accessibility.toLikert(value,7)-1
-            # 0.ii.l-m
-            for letter,target in {'l': 'female','m': 'male'}.items():
-                value = altruism*len([other for other in neighbors if demos[other]['Gender'] == target])
-                if demos[name]['Gender'] == target:
-                    # This includes me!
-                    value += agent.Rweights['health']/sum(agent.Rweights.values())
-                var = 'Aid %s' % (target.capitalize())
-                if not defined:
-                    variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
-                record[var] = accessibility.toLikert(value,7)-1
-            # 0.ii.n-o
-            for letter,target in {'n': 'minority','o': 'majority'}.items():
-                value = altruism*len([other for other in neighbors if demos[other]['Ethnicity'] == target])
-                if demos[name]['Ethnicity'] == target:
-                    # This includes me!
-                    value += agent.Rweights['health']/sum(agent.Rweights.values())
-                var = 'Aid %s Ethnicity' % (target.capitalize())
-                if not defined:
-                    variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
-                record[var] = accessibility.toLikert(value,7)-1
-            # 0.ii.p-r
-            for letter,target in {'p': 'minority','q': 'majority', 'r': 'none'}.items():
-                value = altruism*len([other for other in neighbors if demos[other]['Religion'] == target])
-                if demos[name]['Religion'] == target:
-                    # This includes me!
-                    value += agent.Rweights['health']/sum(agent.Rweights.values())
-                var = 'Aid %s Religion' % (target.capitalize())
-                if not defined:
-                    variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
-                record[var] = accessibility.toLikert(value,7)-1
-            # 0.ii.s-u
-            for letter,target in {'s': 0,'t': 1, 'u': 2}.items():
-                value = altruism*len([other for other in neighbors if demos[other]['Children'] == target])
-                if demos[name]['Children'] == target:
-                    # This includes me!
-                    value += agent.Rweights['health']/sum(agent.Rweights.values())
-                var = 'Aid %d Children' % (target)
-                if not defined:
-                    variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
-                record[var] = accessibility.toLikert(value,7)-1
-            # 0.ii.v-w
-            for letter,target in {'v': 'yes','w': 'no'}.items():
-                value = altruism*len([other for other in neighbors if demos[other]['Fulltime Job'] == target])
-                if demos[name]['Fulltime Job'] == target:
-                    # This includes me!
-                    value += agent.Rweights['health']/sum(agent.Rweights.values())
-                var = 'Aid %s Job' % ('with' if target == 'yes' else 'without')
-                if not defined:
-                    variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
-                record[var] = accessibility.toLikert(value,7)-1
-            # 0.ii.x-y
-            for letter,target in {'x': 'yes','y': 'no'}.items():
-                value = altruism*len([other for other in neighbors if demos[other]['Pets'] == target])
-                if demos[name]['Pets'] == target:
-                    # This includes me!
-                    value += agent.Rweights['health']/sum(agent.Rweights.values())
-                var = 'Aid %s Pets' % ('with' if target == 'yes' else 'without')
-                if not defined:
-                    variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
-                record[var] = accessibility.toLikert(value,7)-1
-            # 0.ii.z-ee
-            for letter,target in {'z': 5,'aa': 4,'bb': 3,'cc': 2,'dd': 1,'ee': 0}.items():
-                value = altruism*len([other for other in neighbors if demos[other]['Wealth'] == target])
-                if demos[name]['Wealth'] == target:
-                    # This includes me!
-                    value += agent.Rweights['health']/sum(agent.Rweights.values())
-                var = 'Aid Wealth %d' % (target)
-                if not defined:
-                    variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.%s' % (letter)})
-                record[var] = accessibility.toLikert(value,7)-1
-            # 0.ii.ff
-            net = 0
-            for other in neighbors:
-                for hurricane in hurricanes:
-                    actions = set([act['verb'] for act in accessibility.getAction(args,other,world,states,(hurricane['Start'],hurricane['End']+1))])
-                    if 'decreaseRisk' in actions:
-                        net -= 1
-                    if 'takeResources' in actions:
-                        net += 1
-            value = net/(len(neighbors)*len(hurricanes)) + 0.5
-            var = 'Most Take Advantage'
-            if not defined:
-                variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.ff'})
-            record[var] = accessibility.toLikert(value,7)-1
-            # 0.ii.gg
-            trust = {'over': config.getint('Actors','friend_opt_trust'),
-                'under': config.getint('Actors','friend_pess_trust')}
-            trust['none'] = (trust['over']+trust['under'])/2
-            if friends:
-                level = sum([trust[world.agents[friend].distortion] for friend in friends])/len(friends)/5
-            else:
-                level = 0.5
-            var = 'People Can Be Trusted'
-            if not defined:
-                variables.append({'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': '0.ii.ff'})
-            record[var] = accessibility.toLikert(level,7)-1
+            aidWillingnessEtc(args,agent,record,world,states,demos,hurricanes,pool,None if defined else variables)
             # 1.one
             sources = [('i','Social Media'),('ii','Government Broadcast'),('iii','Government Officials'),('iv','Friends'),('v','Acquaintances'),
                 ('vi','Strangers'),('vii','Observation')]
@@ -531,4 +555,4 @@ if __name__ == '__main__':
                     accessibility.writeVarDef(os.path.dirname(__file__),variables)
                 defined = True
         if not cmd['debug']:
-            accessibility.writeOutput(args,output,[var['Name'] for var in variables],'TA2A-TA1C-0272.tsv',os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance),'Runs','run-0'))
+            accessibility.writeOutput(args,output,[var['Name'] for var in variables],'TA2A-TA1C-0252.tsv',os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance),'Runs','run-0'))
