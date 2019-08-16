@@ -25,10 +25,26 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 86,'run': 1,'span': 173},
     {'instance': 84,'run': 1,'span': 176},
     {'instance': 85,'run': 1,'span': 189},
-    {'instance': 90,'run': 0,},
-    {'instance': 100,'run': 0,},
-    {'instance': 101,'run': 0,}]
+    {'instance': 90,'run': 0,'span': 123},
+    {'instance': 100,'run': 0,'span': 122},
+    {'instance': 101,'run': 0,'span': 135}]
     
+instanceMap = {'Phase1': {'Explain': [1], 'Predict': [3,4,5,6,7,8], 'Prescribe': [9,10,11,12,13,14]},
+    'Phase2': {'Explain': [15,16,17]},
+    'Phase3': {},
+    }
+def instanceArgs(phase,challenge):
+    return {instance: instances[instance-1] for instance in instanceMap[phase][challenge]}.items()
+def allArgs():
+    """
+    :warning: Skips Instance2, which was generated only for Team B's request
+    """
+    return {instance+1: instances[instance] for instance in range(len(instances)) if instance != 1}.items()
+def instancePhase(instance):
+    assert instance > 0,'First instance is 1'
+    assert instance <= len(instances),'Latest instance is %d' % (len(instances))
+    return 1 if instance < 15 else 2
+
 def createParser(output=None,day=None,seed=False,instances=False):
     """
     :param instances: if True, then accept multiple instances
@@ -101,6 +117,8 @@ def writeOutput(args,data,fields=None,fname=None,dirName=None):
         fname = args['output']
     if dirName is None:
         dirName = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run']))
+    if not os.path.exists(dirName):
+        os.makedirs(dirName)
     with open(os.path.join(dirName,fname),'w') as csvfile:
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
         writer.writeheader()
@@ -459,6 +477,8 @@ def writeVarDef(dirName,items):
             item['LongName'] = item['Name']
         if 'VarType' not in item:
             item['VarType'] = 'dynamic'
+    if not os.path.exists(os.path.join(dirName,'SimulationDefinition')):
+        os.makedirs(os.path.join(dirName,'SimulationDefinition'))
     with open(os.path.join(dirName,'SimulationDefinition','VariableDefTable.tsv'),'w') as csvfile:
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
         writer.writeheader()
@@ -471,21 +491,54 @@ def trustInFriends(config,world,friends):
     trust['none'] = (trust['over']+trust['under'])/2
     return sum([trust[world.agents[friend].distortion] for friend in friends])/len(friends)
 
+def getDeath(args,name,world,states,t):
+    for day in range(2,t+1):
+        if not getInitialState(args,name,'alive',world,states,day).first():
+            return day
+    else:
+        return None
+
+def getLivePopulation(args,world,states,t):
+    """
+    :return: dictionary of names of all actors, with the value being the day of their death (or None if they are still alive as of day t)
+    """
+    if 'Actor0001' in states:
+        # Backward compatibility with Phase 1
+        actors = {}
+        # Find day of death
+        for name in states:
+            if name[:5] == 'Actor':
+                if states[name][stateKey(name,'alive')][len(states[name][stateKey(name,'alive')])-1]:
+                    actors[name] = None
+                else:
+                    # Person died some time
+                    for t,value in states[name][stateKey(name,'alive')].items():
+                        if not value:
+                            actors[name] = t
+                            break
+        return actors
+    else:
+        return {name: getDeath(args,name,world,states,t) for name in world.agents if name[:5] == 'Actor'}
+
 def getCurrentDemographics(args,name,world,states,config,t):
-    entry = {}
-    for field,key in demographics.items():
-        if field == 'Wealth':
-            entry[field] = toLikert(getInitialState(args,name,'resources',world,states,t).first(),7)
-        elif field == 'Fulltime Job':
-            entry[field] = 'yes' if getInitialState(args,name,'employed',world,states,t).first() else 'no'
-        elif field == 'Pets':
-            entry[field] = 'yes' if stateKey(name,'pet') in world.variables and \
-                getInitialState(args,name,'pet',world,states,t).first() else 'no'
-        elif field == 'Age':
-            entry[field] = world.agents[name].demographics[key] + int(t/config.getint('Disaster','year_length'))
-        else:
-            entry[field] = world.agents[name].demographics[key]
-    return entry
+    if 'Actor0001' in states:
+        # Backward compatibility with Phase 1
+        return readDemographics(states,old=args['instance'] == 24,last=t,name=name)[name]
+    else:
+        entry = {}
+        for field,key in demographics.items():
+            if field == 'Wealth':
+                entry[field] = toLikert(getInitialState(args,name,'resources',world,states,t).first(),7)
+            elif field == 'Fulltime Job':
+                entry[field] = 'yes' if getInitialState(args,name,'employed',world,states,t).first() else 'no'
+            elif field == 'Pets':
+                entry[field] = 'yes' if stateKey(name,'pet') in world.variables and \
+                    getInitialState(args,name,'pet',world,states,t).first() else 'no'
+            elif field == 'Age':
+                entry[field] = world.agents[name].demographics[key] + int(t/config.getint('Disaster','year_length'))
+            else:
+                entry[field] = world.agents[name].demographics[key]
+        return entry
 
 def loadState(args,states,t,turn):
     if t not in states:
@@ -496,11 +549,27 @@ def loadState(args,states,t,turn):
 
 def getInitialState(args,name,feature,world,states,t,believer=None):
     if isinstance(t,int):
-        loadState(args,states,t-1,'Nature')
-        if believer is None:
-            return world.getState(name,feature,states[t-1]['Nature']['__state__'])
+        if 'Actor0001' in states:
+            # Backward compatibility with Phase 1
+            if believer is None:
+                return states[name][stateKey(name,feature)][t]
+            else:
+                return states[believer]['__beliefs__'][stateKey(name,feature)][t]
         else:
-            return world.getState(name,feature,next(iter(states[t-1]['Nature'][believer].values())))
+            if t == 1:
+                # Initial state
+                if believer is None:
+                    return world.getState(name,feature)
+                else:
+                    beliefs = world.agents[believer].getBelief()
+                    assert len(beliefs) == 1
+                    return world.getState(name,feature,next(iter(beliefs.values())))
+            else:
+                loadState(args,states,t-1,'Nature')
+                if believer is None:
+                    return world.getState(name,feature,states[t-1]['Nature']['__state__'])
+                else:
+                    return world.getState(name,feature,next(iter(states[t-1]['Nature'][believer].values())))
     elif isinstance(t,tuple):
         return [getInitialState(args,name,feature,world,states,day,believer) for day in range(t[0],t[1])]
 
@@ -509,11 +578,21 @@ def getAction(args,name,world,states,t):
     :rtype: ActionSet
     """
     if isinstance(t,int):
-        turn = 'Actor' if name[:5] == 'Actor' else name
-        loadState(args,states,t,turn)
-        return world.getFeature(actionKey(name),states[t][turn]['__state__']).first()
+        if 'Actor0001' in states:
+            # Backward compatibility with Phase 1
+            return states[name][actionKey(name)][t]
+        else:
+            turn = 'Actor' if name[:5] == 'Actor' else name
+            loadState(args,states,t,turn)
+            return world.getFeature(actionKey(name),states[t][turn]['__state__']).first()
     elif isinstance(t,tuple):
-        return [getAction(args,name,world,states,day) for day in range(t[0],t[1])]
+        if 'Actor0001' in states:
+            # Backward compatibility with Phase 1
+            return [getAction(args,name,world,states,day) for day in range(t[0],t[1]) if day == 1 or name == 'System' or \
+                getInitialState(args,name,'alive',world,states,day)]
+        else:
+            return [getAction(args,name,world,states,day) for day in range(t[0],t[1]) if day == 1 or name == 'System' or \
+                getInitialState(args,name,'alive',world,states,day).first()]
 
 def readLog(args):
     """
@@ -533,3 +612,20 @@ def readLog(args):
                         ER[-1][action['subject']] = {}
                     ER[-1][action['subject']][action] = float(words[-1])
     return ER
+
+def unpickle(instance,sub=None):
+    if instance == 1:
+        day = None
+    elif instance < 9:
+        day = instances[instance-1]['span']
+    elif instance < 15:
+        day = instances[instance-1]['span'] + 1
+    else:
+        day = 0
+    if sub is None:
+        if 3 <= instance <= 14:
+            sub = 'Input'
+    return loadPickle(instances[instance-1]['instance'],instances[instance-1]['run'],day,sub)
+
+def aidIfWealthLoss(agent):
+    return sum([agent.Rweights[k] for k in ['health','childrenHealth','neighbors']])/sum(agent.Rweights.values())
