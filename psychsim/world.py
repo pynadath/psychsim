@@ -744,6 +744,21 @@ class World(object):
                     dynamics.append(self.dynamics[key][True])
             return dynamics
 
+    def addActionEffects(self):
+        """
+        For backward compatibility with scenarios that didn't this from the beginning
+        """
+        for key,table in list(self.dynamics.items()):
+            for action,dynamics in table.items():
+                if action not in self.dynamics:
+                    self.dynamics[action] = {}
+                self.dynamics[action][key] = dynamics
+                if action is not True and len(action) == 1:
+                    atom = next(iter(action))
+                    if atom not in self.dynamics:
+                        self.dynamics[atom] = {}
+                    self.dynamics[atom][key] = dynamics
+
     def getActionEffects(self,actions,keySubset):
         dynamics = {}
         for action in actions:
