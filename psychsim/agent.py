@@ -61,7 +61,22 @@ class Agent(object):
     """------------------"""
     """Policy methods"""
     """------------------"""
-
+    def compilePi(self,model=None):
+        if model is None:
+            model = self.models['%s0' % (self.name)]
+        else:
+            model = self.models[model]
+        if 'V' not in model:
+            self.compileV(model['name'])
+        policy = None
+        for action,tree in model['V'].items():
+            actionTree = tree.map(leafOp=lambda matrix: {'vector': matrix[rewardKey(self.name,True)],'action': action})
+            if policy is None:
+                policy = actionTree
+            else:
+                policy = policy.max(actionTree)
+        model['policy'] = policy.map(leafOp=lambda table: table['action'])
+        print(model['policy'])
         
     def compileV(self,model=None,debug=False):
         self.world.dependency.getEvaluation()
