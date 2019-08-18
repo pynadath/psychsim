@@ -117,7 +117,7 @@ def writeOutput(args,data,fields=None,fname=None,dirName=None):
         fname = args['output']
     if dirName is None:
         dirName = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run']))
-    if not os.path.exists(dirName):
+    if dirName and not os.path.exists(dirName):
         os.makedirs(dirName)
     with open(os.path.join(dirName,fname),'w') as csvfile:
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
