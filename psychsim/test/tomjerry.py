@@ -43,6 +43,14 @@ class TestAgents(unittest.TestCase):
         tree = makeTree(incrementMatrix(stateKey(self.jerry.name,'health'),-10))
         self.world.setDynamics(stateKey(self.jerry.name,'health'),self.hit,tree,enforceMin=True)
 
+    def addProbabilisticDynamics(self):
+        tree = makeTree({'distribution': [(approachMatrix(stateKey(self.jerry.name,'health'),0.,.1),0.5),
+                                        (noChangeMatrix(stateKey(self.jerry.name,'health')),0.5)]})
+        self.world.setDynamics(stateKey(self.jerry.name,'health'),self.hit,tree)
+        tree = makeTree({'distribution': [(approachMatrix(stateKey(self.tom.name,'health'),0.,.1),0.5),
+                                        (noChangeMatrix(stateKey(self.tom.name,'health')),0.5)]})
+        self.world.setDynamics(stateKey(self.tom.name,'health'),self.hit,tree)
+
     def addReward(self):
         self.tom.setReward(minimizeFeature(stateKey(self.jerry.name,'health'),self.tom.name),1.)
         self.jerry.setReward(maximizeFeature(stateKey(self.jerry.name,'health'),self.jerry.name),1.)
@@ -62,6 +70,15 @@ class TestAgents(unittest.TestCase):
             self.world = pickle.load(f)
         self.tom = self.world.agents[self.tom.name]
         self.jerry = self.world.agents[self.jerry.name]
+
+    def testCompilation(self):
+        self.addStates()
+        self.addActions()
+        self.addProbabilisticDynamics()
+        self.addReward()
+        self.tom.setReward(maximizeFeature(stateKey(self.tom.name,'health'),self.tom.name),1.)
+        self.tom.setHorizon(1)
+        self.tom.compileV()
 
     def testDecision(self):
         """
