@@ -1,0 +1,775 @@
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: ../../gt.sh -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 83, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: ../../gt.sh -i 83 -r 1 --reload 134 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance83/Runs/run-1/Input/HurricaneInput.tsv --target Actor0033 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0006 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0063 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0094 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0144 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0103 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0083 B/10/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 11, Actual
+INFO:root:Instance 11, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 11, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 11, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 11, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 82, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: ../../gt.sh -i 82 -r 1 --reload 131 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance82/Runs/run-1/Input/HurricaneInput.tsv --target Actor0111 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0154 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0104 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0051 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0127 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0089 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0008 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0059 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0032 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0146 B/11/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 12, Actual
+INFO:root:Instance 12, Team A, Question Offseason, Metric Casualties
+INFO:root:Instance 12, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 12, Team A, Question InSeason, Metric Casualties
+INFO:root:Instance 12, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 12, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 12, Team B, Question Offseason, Metric Casualties
+INFO:root:Instance 12, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 12, Team B, Question InSeason, Metric Casualties
+INFO:root:Instance 12, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 12, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 13, Actual
+INFO:root:Instance 13, Team A, Question Offseason, Metric Casualties
+INFO:root:Instance 13, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 13, Team A, Question InSeason, Metric Casualties
+INFO:root:Instance 13, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 13, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 13, Team B, Question Offseason, Metric Casualties
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 83, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 83 -r 1 --reload 134 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance83/Runs/run-1/Input/HurricaneInput.tsv --target Actor0033 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0006 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0063 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0094 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0144 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0103 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0083 B/10/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 11, Actual
+INFO:root:Instance 11, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 11, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 11, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 11, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 82, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 82 -r 1 --reload 131 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance82/Runs/run-1/Input/HurricaneInput.tsv --target Actor0111 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0154 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0104 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0051 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0127 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0089 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0008 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0059 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0032 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0146 B/11/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 12, Actual
+INFO:root:Instance 12, Team A, Question Offseason, Metric Casualties
+INFO:root:Instance 12, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 12, Team A, Question InSeason, Metric Casualties
+INFO:root:Instance 12, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 12, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 12, Team B, Question Offseason, Metric Casualties
+INFO:root:Instance 12, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 12, Team B, Question InSeason, Metric Casualties
+INFO:root:Instance 12, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 12, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 13, Actual
+INFO:root:Instance 13, Team A, Question Offseason, Metric Casualties
+INFO:root:Instance 13, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 13, Team A, Question InSeason, Metric Casualties
+INFO:root:Instance 13, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 13, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 13, Team B, Question Offseason, Metric Casualties
+INFO:root:Instance 13, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 13, Team B, Question InSeason, Metric Casualties
+INFO:root:Instance 13, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 13, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 14, Actual
+INFO:root:Instance 14, Team A, Question Offseason, Metric Casualties
+INFO:root:Instance 14, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 14, Team A, Question InSeason, Metric Casualties
+INFO:root:Instance 14, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 14, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 14, Team B, Question Offseason, Metric Casualties
+INFO:root:Instance 14, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 14, Team B, Question InSeason, Metric Casualties
+INFO:root:Instance 14, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 14, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 83, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 83 -r 1 --reload 134 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance83/Runs/run-1/Input/HurricaneInput.tsv --target Actor0033 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0006 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0063 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0094 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0144 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0103 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0083 B/10/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 83, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 83 -r 1 --reload 134 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance83/Runs/run-1/Input/HurricaneInput.tsv --target Actor0033 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0006 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0063 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0094 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0144 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0103 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0083 B/10/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 83, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 83 -r 1 --reload 134 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance83/Runs/run-1/Input/HurricaneInput.tsv --target Actor0033 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0006 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0063 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0094 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0144 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0103 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0083 B/10/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 83, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 83 -r 1 --reload 134 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance83/Runs/run-1/Input/HurricaneInput.tsv --target Actor0033 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0006 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0063 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0094 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0144 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0103 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0083 B/10/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 83, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 83 -r 1 --reload 134 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance83/Runs/run-1/Input/HurricaneInput.tsv --target Actor0033 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0006 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0063 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0094 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0144 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0103 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0083 B/10/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 83, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 83 -r 1 --reload 134 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance83/Runs/run-1/Input/HurricaneInput.tsv --target Actor0033 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0006 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0063 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0094 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0144 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0103 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0083 B/10/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 11, Actual
+INFO:root:Instance 11, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 11, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 11, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 11, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 82, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 82 -r 1 --reload 131 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance82/Runs/run-1/Input/HurricaneInput.tsv --target Actor0111 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0154 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0104 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0051 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0127 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0089 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0008 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0059 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0032 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0146 B/11/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 83, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 83 -r 1 --reload 134 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance83/Runs/run-1/Input/HurricaneInput.tsv --target Actor0033 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0006 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0063 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0094 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0144 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0103 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0083 B/10/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 83, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 83 -r 1 --reload 134 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance83/Runs/run-1/Input/HurricaneInput.tsv --target Actor0033 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0006 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0063 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0094 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0144 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0103 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0083 B/10/UnconstrainedPrescriptionCasualties.tsv
+ERROR:root:None
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 11, Actual
+INFO:root:Instance 11, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 11, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 11, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 11, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 82, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 82 -r 1 --reload 131 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance82/Runs/run-1/Input/HurricaneInput.tsv --target Actor0111 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0154 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0104 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0051 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0127 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0089 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0008 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0059 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0032 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0146 B/11/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 81, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 81 -r 1 --reload 80 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance81/Runs/run-1/Input/HurricaneInput.tsv --target Actor0078 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0131 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0028 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0016 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0014 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0096 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0126 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/9/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/9/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Success
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 83, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 83 -r 1 --reload 134 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance83/Runs/run-1/Input/HurricaneInput.tsv --target Actor0033 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0006 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0063 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0094 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0144 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0160 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0103 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0021 B/10/UnconstrainedPrescriptionCasualties.tsv --target Actor0083 B/10/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Success
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 11, Actual
+INFO:root:Instance 11, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 11, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 11, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 11, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Running Instance 82, Run 1, Label BUnconstrainedCasualties
+INFO:root:Executing: python3 ../../simulate.py -i 82 -r 1 --reload 131 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance82/Runs/run-1/Input/HurricaneInput.tsv --target Actor0111 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0154 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0104 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0051 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0127 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0089 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0008 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0059 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0032 B/11/UnconstrainedPrescriptionCasualties.tsv --target Actor0146 B/11/UnconstrainedPrescriptionCasualties.tsv
+INFO:root:Success
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 12, Actual
+INFO:root:Instance 12, Team A, Question Offseason, Metric Casualties
+INFO:root:Instance 12, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 12, Team A, Question InSeason, Metric Casualties
+INFO:root:Instance 12, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 12, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 12, Team B, Question Offseason, Metric Casualties
+INFO:root:Instance 12, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 12, Team B, Question InSeason, Metric Casualties
+INFO:root:Instance 12, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 12, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 13, Actual
+INFO:root:Instance 13, Team A, Question Offseason, Metric Casualties
+INFO:root:Instance 13, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 13, Team A, Question InSeason, Metric Casualties
+INFO:root:Instance 13, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 13, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 13, Team B, Question Offseason, Metric Casualties
+INFO:root:Instance 13, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 13, Team B, Question InSeason, Metric Casualties
+INFO:root:Instance 13, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 13, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 14, Actual
+INFO:root:Instance 14, Team A, Question Offseason, Metric Casualties
+INFO:root:Instance 14, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 14, Team A, Question InSeason, Metric Casualties
+INFO:root:Instance 14, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 14, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 14, Team B, Question Offseason, Metric Casualties
+INFO:root:Instance 14, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 14, Team B, Question InSeason, Metric Casualties
+INFO:root:Instance 14, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 14, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Score: 52
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Score: 0.806
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Score: 48
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Score: 0.806
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Score: 0.407
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Score: 49
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Score: 0.808
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Score: 44
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Score: 0.808
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Score: 0.407
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Score: 67
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Score: 0.900
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Score: 67
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Score: 0.900
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Score: 0.025
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Score: 69
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Score: 0.901
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Score: 64
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Score: 0.901
+INFO:root:Instance 10, Team B, Question Individual, Metric Casualties
+INFO:root:Score: 0.025
+INFO:root:Instance 11, Actual
+INFO:root:Instance 11, Team A, Question Constrained, Metric Casualties
+INFO:root:Score: 67
+INFO:root:Instance 11, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Score: 0.907
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Score: 67
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Score: 0.907
+INFO:root:Instance 11, Team A, Question Individual, Metric Casualties
+INFO:root:Score: 0.784
+INFO:root:Instance 11, Team B, Question Constrained, Metric Casualties
+INFO:root:Score: 69
+INFO:root:Instance 11, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Score: 0.914
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Score: 68
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Dissatisfaction
+WARNING:root:No data for 82 1 BUnconstrainedDissatisfaction
+INFO:root:Instance 11, Team B, Question Individual, Metric Casualties
+INFO:root:Score: 0.408
+INFO:root:Instance 12, Actual
+INFO:root:Instance 12, Team A, Question Offseason, Metric Casualties
+INFO:root:Score: 95
+INFO:root:Instance 12, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Score: 0.954
+INFO:root:Instance 12, Team A, Question InSeason, Metric Casualties
+INFO:root:Score: 95
+INFO:root:Instance 12, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Score: 0.952
+INFO:root:Instance 12, Team A, Question Individual, Metric Casualties
+INFO:root:Score: 0.803
+INFO:root:Instance 12, Team B, Question Offseason, Metric Casualties
+INFO:root:Score: 97
+INFO:root:Instance 12, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 12, Team B, Question InSeason, Metric Casualties
+INFO:root:Score: 96
+INFO:root:Instance 12, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Score: 0.944
+INFO:root:Instance 12, Team B, Question Individual, Metric Casualties
+INFO:root:Score: 0.400
+INFO:root:Instance 13, Actual
+INFO:root:Instance 13, Team A, Question Offseason, Metric Casualties
+INFO:root:Score: 85
+INFO:root:Instance 13, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Score: 0.929
+INFO:root:Instance 13, Team A, Question InSeason, Metric Casualties
+INFO:root:Score: 86
+INFO:root:Instance 13, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Score: 0.930
+INFO:root:Instance 13, Team A, Question Individual, Metric Casualties
+INFO:root:Score: 0.616
+INFO:root:Instance 13, Team B, Question Offseason, Metric Casualties
+INFO:root:Score: 86
+INFO:root:Instance 13, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 13, Team B, Question InSeason, Metric Casualties
+INFO:root:Score: 86
+INFO:root:Instance 13, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Score: 0.950
+INFO:root:Instance 13, Team B, Question Individual, Metric Casualties
+INFO:root:Score: 0.520
+INFO:root:Instance 14, Actual
+INFO:root:Instance 14, Team A, Question Offseason, Metric Casualties
+INFO:root:Score: 74
+INFO:root:Instance 14, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Score: 0.938
+INFO:root:Instance 14, Team A, Question InSeason, Metric Casualties
+INFO:root:Score: 75
+INFO:root:Instance 14, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Score: 0.940
+INFO:root:Instance 14, Team A, Question Individual, Metric Casualties
+INFO:root:Score: 0.985
+INFO:root:Instance 14, Team B, Question Offseason, Metric Casualties
+INFO:root:Score: 69
+INFO:root:Instance 14, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 14, Team B, Question InSeason, Metric Casualties
+INFO:root:Score: 69
+INFO:root:Instance 14, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Score: 0.944
+INFO:root:Instance 14, Team B, Question Individual, Metric Casualties
+INFO:root:Score: 0.400
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 10, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 11, Actual
+INFO:root:Instance 11, Team A, Question Constrained, Metric Casualties
+INFO:root:Instance 11, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 11, Team B, Question Constrained, Metric Casualties
+INFO:root:Instance 11, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Running Instance 82, Run 1, Label BUnconstrainedDissatisfaction
+INFO:root:Executing: python3 ../../simulate.py -i 82 -r 1 --reload 131 --pickle -d INFO --singlerun -n 7 --hurricane ../../Instances/Instance82/Runs/run-1/Input/HurricaneInput.tsv --target Actor0111 B/11/UnconstrainedPrescriptionDissatisfaction.tsv --target Actor0036 B/11/UnconstrainedPrescriptionDissatisfaction.tsv --target Actor0154 B/11/UnconstrainedPrescriptionDissatisfaction.tsv --target Actor0104 B/11/UnconstrainedPrescriptionDissatisfaction.tsv --target Actor0051 B/11/UnconstrainedPrescriptionDissatisfaction.tsv --target Actor0127 B/11/UnconstrainedPrescriptionDissatisfaction.tsv --target Actor0089 B/11/UnconstrainedPrescriptionDissatisfaction.tsv --target Actor0008 B/11/UnconstrainedPrescriptionDissatisfaction.tsv --target Actor0082 B/11/UnconstrainedPrescriptionDissatisfaction.tsv
+INFO:root:Success
+INFO:root:Instance 11, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 12, Actual
+INFO:root:Instance 12, Team A, Question Offseason, Metric Casualties
+INFO:root:Instance 12, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 12, Team A, Question InSeason, Metric Casualties
+INFO:root:Instance 12, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 12, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 12, Team B, Question Offseason, Metric Casualties
+INFO:root:Instance 12, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 12, Team B, Question InSeason, Metric Casualties
+INFO:root:Instance 12, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 12, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 13, Actual
+INFO:root:Instance 13, Team A, Question Offseason, Metric Casualties
+INFO:root:Instance 13, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 13, Team A, Question InSeason, Metric Casualties
+INFO:root:Instance 13, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 13, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 13, Team B, Question Offseason, Metric Casualties
+INFO:root:Instance 13, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 13, Team B, Question InSeason, Metric Casualties
+INFO:root:Instance 13, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 13, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 14, Actual
+INFO:root:Instance 14, Team A, Question Offseason, Metric Casualties
+INFO:root:Instance 14, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 14, Team A, Question InSeason, Metric Casualties
+INFO:root:Instance 14, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 14, Team A, Question Individual, Metric Casualties
+INFO:root:Instance 14, Team B, Question Offseason, Metric Casualties
+INFO:root:Instance 14, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 14, Team B, Question InSeason, Metric Casualties
+INFO:root:Instance 14, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Instance 14, Team B, Question Individual, Metric Casualties
+INFO:root:Instance 9, Actual
+INFO:root:Instance 9, Team A, Question Constrained, Metric Casualties
+INFO:root:Score: 52
+INFO:root:Instance 9, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Score: 0.806
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Score: 48
+INFO:root:Instance 9, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Score: 0.806
+INFO:root:Instance 9, Team A, Question Individual, Metric Casualties
+INFO:root:Score: 0.407
+INFO:root:Instance 9, Team B, Question Constrained, Metric Casualties
+INFO:root:Score: 49
+INFO:root:Instance 9, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Score: 0.808
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Score: 44
+INFO:root:Instance 9, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Score: 0.808
+INFO:root:Instance 9, Team B, Question Individual, Metric Casualties
+INFO:root:Score: 0.407
+INFO:root:Instance 10, Actual
+INFO:root:Instance 10, Team A, Question Constrained, Metric Casualties
+INFO:root:Score: 67
+INFO:root:Instance 10, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Score: 0.900
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Score: 67
+INFO:root:Instance 10, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Score: 0.900
+INFO:root:Instance 10, Team A, Question Individual, Metric Casualties
+INFO:root:Score: 0.025
+INFO:root:Instance 10, Team B, Question Constrained, Metric Casualties
+INFO:root:Score: 69
+INFO:root:Instance 10, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Score: 0.901
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Score: 64
+INFO:root:Instance 10, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Score: 0.901
+INFO:root:Instance 10, Team B, Question Individual, Metric Casualties
+INFO:root:Score: 0.025
+INFO:root:Instance 11, Actual
+INFO:root:Instance 11, Team A, Question Constrained, Metric Casualties
+INFO:root:Score: 67
+INFO:root:Instance 11, Team A, Question Constrained, Metric Dissatisfaction
+INFO:root:Score: 0.907
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Casualties
+INFO:root:Score: 67
+INFO:root:Instance 11, Team A, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Score: 0.907
+INFO:root:Instance 11, Team A, Question Individual, Metric Casualties
+INFO:root:Score: 0.784
+INFO:root:Instance 11, Team B, Question Constrained, Metric Casualties
+INFO:root:Score: 69
+INFO:root:Instance 11, Team B, Question Constrained, Metric Dissatisfaction
+INFO:root:Score: 0.914
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Casualties
+INFO:root:Score: 68
+INFO:root:Instance 11, Team B, Question Unconstrained, Metric Dissatisfaction
+INFO:root:Score: 0.908
+INFO:root:Instance 11, Team B, Question Individual, Metric Casualties
+INFO:root:Score: 0.408
+INFO:root:Instance 12, Actual
+INFO:root:Instance 12, Team A, Question Offseason, Metric Casualties
+INFO:root:Score: 95
+INFO:root:Instance 12, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Score: 0.954
+INFO:root:Instance 12, Team A, Question InSeason, Metric Casualties
+INFO:root:Score: 95
+INFO:root:Instance 12, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Score: 0.952
+INFO:root:Instance 12, Team A, Question Individual, Metric Casualties
+INFO:root:Score: 0.803
+INFO:root:Instance 12, Team B, Question Offseason, Metric Casualties
+INFO:root:Score: 97
+INFO:root:Instance 12, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 12, Team B, Question InSeason, Metric Casualties
+INFO:root:Score: 96
+INFO:root:Instance 12, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Score: 0.944
+INFO:root:Instance 12, Team B, Question Individual, Metric Casualties
+INFO:root:Score: 0.400
+INFO:root:Instance 13, Actual
+INFO:root:Instance 13, Team A, Question Offseason, Metric Casualties
+INFO:root:Score: 85
+INFO:root:Instance 13, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Score: 0.929
+INFO:root:Instance 13, Team A, Question InSeason, Metric Casualties
+INFO:root:Score: 86
+INFO:root:Instance 13, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Score: 0.930
+INFO:root:Instance 13, Team A, Question Individual, Metric Casualties
+INFO:root:Score: 0.616
+INFO:root:Instance 13, Team B, Question Offseason, Metric Casualties
+INFO:root:Score: 86
+INFO:root:Instance 13, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 13, Team B, Question InSeason, Metric Casualties
+INFO:root:Score: 86
+INFO:root:Instance 13, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Score: 0.950
+INFO:root:Instance 13, Team B, Question Individual, Metric Casualties
+INFO:root:Score: 0.520
+INFO:root:Instance 14, Actual
+INFO:root:Instance 14, Team A, Question Offseason, Metric Casualties
+INFO:root:Score: 74
+INFO:root:Instance 14, Team A, Question Offseason, Metric Dissatisfaction
+INFO:root:Score: 0.938
+INFO:root:Instance 14, Team A, Question InSeason, Metric Casualties
+INFO:root:Score: 75
+INFO:root:Instance 14, Team A, Question InSeason, Metric Dissatisfaction
+INFO:root:Score: 0.940
+INFO:root:Instance 14, Team A, Question Individual, Metric Casualties
+INFO:root:Score: 0.985
+INFO:root:Instance 14, Team B, Question Offseason, Metric Casualties
+INFO:root:Score: 69
+INFO:root:Instance 14, Team B, Question Offseason, Metric Dissatisfaction
+INFO:root:Instance 14, Team B, Question InSeason, Metric Casualties
+INFO:root:Score: 69
+INFO:root:Instance 14, Team B, Question InSeason, Metric Dissatisfaction
+INFO:root:Score: 0.944
+INFO:root:Instance 14, Team B, Question Individual, Metric Casualties
+INFO:root:Score: 0.400

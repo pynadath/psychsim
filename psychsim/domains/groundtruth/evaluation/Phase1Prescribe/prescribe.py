@@ -9,7 +9,7 @@ import subprocess
 from psychsim.pwl import *
 from psychsim.domains.groundtruth import accessibility
 
-fields = ['Instance','Question','Metric','Actual','A','A Delta','B','B Delta']
+fields = ['Instance','Question','Metric','Actual','A','A Delta','B','B Delta','Null']
 
 targets = {9: 'Actor0066',10: 'Actor0044', 11: 'Actor0051', 12: 'Actor0072', 13: 'Actor0160', 14: 'Actor0132'}
 TA2Btargets = {
@@ -85,7 +85,7 @@ def runSimulation(label,instance,run,argv):
             day = args['span']+1
         shutil.copy(os.path.join(dirName,'Input','scenario%d.pkl' % (day)),dirName)
         # Execute simulation
-        cmd = [os.path.join(os.path.dirname(__file__),'..','..','gt.sh'),'-i','%d' % (args['instance']),'-r','%d' % (run),'--reload','%d' % (day),'--pickle','-d','INFO','--singlerun']+argv
+        cmd = ['python3',os.path.join(os.path.dirname(__file__),'..','..','simulate.py'),'-i','%d' % (args['instance']),'-r','%d' % (run),'--reload','%d' % (day),'--pickle','-d','INFO','--singlerun']+argv
         logging.info('Executing: %s',' '.join(cmd))
         result = subprocess.run(cmd)
         # Remove original scenario file
@@ -94,6 +94,7 @@ def runSimulation(label,instance,run,argv):
             # Successful simulation
             logging.info('Success')
             for name in  [name for name in os.listdir(dirName) if os.path.splitext(name)[1] == '.pkl']:
+                print('compressing %s' % (os.path.join(dirName,name)))
                 subprocess.run(['bzip2','"%s"' % (os.path.join(dirName,name))])
             os.mkdir(os.path.join(dirName,label))
             for name in os.listdir(dirName):
