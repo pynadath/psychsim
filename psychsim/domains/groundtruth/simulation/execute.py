@@ -49,6 +49,8 @@ def runInstance(instance,args,config,rerun=True):
             os.makedirs(dirName)
         if args['reload']:
             world = loadPickle(args['instance'],run,args['reload'])
+            if config.getint('Simulation','phase',fallback=1) == 1:
+                world.addActionEffects()
             hurricanes = readHurricanes(args['instance'],run)
             population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
             try:
@@ -683,7 +685,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                                     true[key] = trueDist.first()[key]
                             sdist.prune(actor.epsilon,true)
     #                        world.printState(sdist)
-        if state['phase'] == 'active' and config.getint('Simulation','phase') == 1:
+        if state['phase'] == 'active' and config.getint('Simulation','phase',fallback=1) == 1:
             # Record what these doomed souls did to postpone the inevitable
             evacuees = 0
             shelter = 0
