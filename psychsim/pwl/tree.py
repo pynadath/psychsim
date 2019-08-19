@@ -322,7 +322,12 @@ class KeyedTree:
             else:
                 # Assume vectors
                 weights = leaf1 - leaf2
-            result.makeBranch(KeyedPlane(weights,0.),{True: KeyedTree(leaf1),False: KeyedTree(leaf2)})
+            if CONSTANT in weights:
+                threshold = -weights[CONSTANT]
+                del weights[CONSTANT]
+            else:
+                threshold = 0.
+            result.makeBranch(KeyedPlane(weights,threshold),{True: KeyedTree(leaf1),False: KeyedTree(leaf2)})
         return result
 
     def compose(self,other,leafOp=None,planeOp=None):
