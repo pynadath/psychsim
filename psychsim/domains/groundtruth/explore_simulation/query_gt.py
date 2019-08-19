@@ -287,10 +287,10 @@ class LogParser:
                 s += ", ".join(attributes)
             else:
                 s = "At %s %d, %s has:\n" % (consts.DAY, p_day, actor_name)
+                att_to_printable_distrib_dict = dict()
                 for att in attributes:
-                    print(dict_for_actor[actor_name+"'s "+att])
-                    s += "%s: %.2f" % (att, float(1.0 * dict_for_actor[actor_name+"'s "+att])) + "\n"
-                s = s[:-1]
+                    att_to_printable_distrib_dict[att] = helper.str_distribution(dict_for_actor[actor_name+"'s "+att])
+                s += helper.str_aligned_values(att_to_printable_distrib_dict)
             print_with_buffer(s, buffer)
 
         else:
