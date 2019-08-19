@@ -76,7 +76,7 @@ class Agent(object):
             else:
                 policy = policy.max(actionTree)
         model['policy'] = policy.map(leafOp=lambda table: table['action'])
-        print(model['policy'])
+        return model['policy']
         
     def compileV(self,model=None,debug=False):
         self.world.dependency.getEvaluation()
