@@ -17,6 +17,7 @@ class KeyedPlane:
     """
     DEFAULT_THRESHOLD = 0.
     DEFAULT_COMPARISON = 1
+    COMPARISON_MAP = ['==','>','<']
 
     def __init__(self,planes,threshold=None,comparison=None):
         """
@@ -323,7 +324,7 @@ class KeyedPlane:
                 operator = '\nOR '
             self._string = operator.join(['%s %s %s' % (' + '.join(['%5.3f*%s' % (v,k)
                                                                     for k,v in vector.items()]),
-                                                        ['==','>','<'][comparison],threshold)
+                                                        self.COMPARISON_MAP[comparison],threshold)
                                           for vector,threshold,comparison in self.planes])
         return self._string
 
