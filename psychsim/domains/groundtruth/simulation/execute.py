@@ -198,24 +198,30 @@ def runInstance(instance,args,config,rerun=True):
                         agent.actions.remove(action)
         # Load any prescription
         if args['prescription']:
-            world.agents['System'].prescription = readPrescription(args['prescription'])
-            if isinstance(world.agents['System'].prescription,list):
-                if 'Field' in world.agents['System'].prescription[0]:
-                    # In/Offseason prediction
-                    targets = set()
-                    for entry in world.agents['System'].prescription[:]:
-                        if entry['Action'].strip() == 'reinforce':
-                            if entry['Value'] == 'Old':
-                                assert entry['Field'].strip() == 'age'
-                                targets |= set([a.name for a in sorted(population,key=lambda a: a.demographics[entry['Field'].strip()],
-                                    reverse=True)[:int(round(len(population)/10))]])
-                            else:
-                                targets |= {agent.name for agent in population if agent.demographics[entry['Field'].strip()] == entry['Value'].strip()}
-                            world.agents['System'].prescription.remove(entry)
-                        elif entry['Action'].strip() == 'pay':
-                            pass
-                    for name in targets:
-                        world.agents[name].reinforceHome(config)
+            if args['prescription'] == 'NULL':
+                # Remove aid possibility
+                world.agents['System'].actions = {action for action in world.agents['System'].actions if action['verb'] != 'allocate'}
+                world.agents['System'].prescription = None
+                world.agents['System'].setNullGrievance([a.name for a in population])
+            else:
+                world.agents['System'].prescription = readPrescription(args['prescription'])
+                if isinstance(world.agents['System'].prescription,list):
+                    if 'Field' in world.agents['System'].prescription[0]:
+                        # In/Offseason prediction
+                        targets = set()
+                        for entry in world.agents['System'].prescription[:]:
+                            if entry['Action'].strip() == 'reinforce':
+                                if entry['Value'] == 'Old':
+                                    assert entry['Field'].strip() == 'age'
+                                    targets |= set([a.name for a in sorted(population,key=lambda a: a.demographics[entry['Field'].strip()],
+                                        reverse=True)[:int(round(len(population)/10))]])
+                                else:
+                                    targets |= {agent.name for agent in population if agent.demographics[entry['Field'].strip()] == entry['Value'].strip()}
+                                world.agents['System'].prescription.remove(entry)
+                            elif entry['Action'].strip() == 'pay':
+                                pass
+                        for name in targets:
+                            world.agents[name].reinforceHome(config)
         else:
             world.agents['System'].prescription = None
         if args['target']:
@@ -326,7 +332,6 @@ def runInstance(instance,args,config,rerun=True):
 #                world.printState()
                 if args['pickle']:
                     # Save after fast-forwarding
-                    print('Pickling...')
                     day = world.getState(WORLD,'day').first()
                     with open(os.path.join(dirName,'scenario%d.pkl' % (day)),'wb') as outfile:
                         pickle.dump(world,outfile)

@@ -1,0 +1,21 @@
+Name	LongName	Values	VarType	DataType	Notes
+Age	Age	[0-100]	dynamic	Integer	
+Children	Children	[0-10]	dynamic	Integer	
+Ethnicity	Ethnicity	majority,minority	fixed	String	
+Fulltime Job	Fulltime Job	yes,no	dynamic	Boolean	
+Gender	Gender	female,male	fixed	String	
+Pets	Pets	yes,no	dynamic	Boolean	
+Religion	Religion	majority,minority,none	fixed	String	
+Residence	Residence	Region[01-16]	fixed	String	
+Wealth	Wealth	[1-7]	dynamic	Integer	
+Timestep	Timestep	[1-365]	static	Integer	1
+Location	Location	shelter,evacuated,home	dynamic	String	2
+Stayed Home Last Hurricane	Stayed Home Last Hurricane	yes,no	dynamic	Boolean	3
+Evacuated Last Hurricane	Evacuated Last Hurricane	yes,no	dynamic	Boolean	3
+Sheltered Last Hurricane	Sheltered Last Hurricane	yes,no	dynamic	Boolean	3
+Injured	Injured	yes,no	dynamic	Boolean	4
+Category	Category	[1-5]	dynamic	Integer	5
+Stayed Home Previous Hurricanes	Stayed Home Previous Hurricanes	yes,no	dynamic	Boolean	6
+Evacuated Previous Hurricanes	Evacuated Previous Hurricanes	yes,no	dynamic	Boolean	6
+Sheltered Previous Hurricanes	Sheltered Previous Hurricanes	yes,no	dynamic	Boolean	6
+Injured Previous Hurricanes	Injured Previous Hurricanes	yes,no	dynamic	Boolean	7
