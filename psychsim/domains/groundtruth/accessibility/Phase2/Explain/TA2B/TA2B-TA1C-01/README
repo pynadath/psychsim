@@ -1,0 +1,7 @@
+We provide death records from Instance 16 and 17, as the only Phase 2 Explain instances with any deaths (we assume it was safe to ignore the sampling strategy provided).
+
+#3 (first one): No such data are available.
+
+#5: If the hurricane never hit the actor's exact region of residence, we record the category when the hurricane came closest.
+
+#6, #7: We provide a comma-separated sequence of answers, a separate one for each hurricane (e.g., a response of "yes,no" to #7 would indicate that the actor was injured at the end of hurricane 1, but not injured at the end of hurricane 2). The responses span the hurricanes up to, but not including, the most recent one (which is covered by questions #3 and #4). The responses are empty if the most recent hurricane is the first one.
