@@ -42,7 +42,7 @@ def scoreCasualties(args,label,data):
     # Verify casualty count
     for row in accessibility.loadMultiCSV('PopulationTable.tsv',args['instance'],args['run'],['Input',label]):
         t = int(row['Timestep'])
-        casualties = {name for name in actors if data[name][stateKey(name,'health')][t] < 0.2}
+        casualties = {name for name in actors if data[name][stateKey(name,'health')].get(t,1.) < 0.2}
         if len(casualties) != int(row['Casualties']):
             logging.error('Instance %d, Run %d, Label %s, Timestep %d: Reported casualties=%d, Actual casualties=%s' % \
                 (args['instance'],args['run'],label,t,int(row['Casualties']),','.join(sorted(casualties))))
@@ -93,7 +93,9 @@ def runSimulation(label,instance,run,argv):
         if result.returncode == 0:
             # Successful simulation
             logging.info('Success')
-            for name in  [name for name in os.listdir(dirName) if os.path.splitext(name)[1] == '.pkl']:
+            pklFiles = [name for name in os.listdir(dirName) if os.path.splitext(name)[1] == '.pkl']
+            print(pklFiles)
+            for name in pklFiles:
                 print('compressing %s' % (os.path.join(dirName,name)))
                 subprocess.run(['bzip2','"%s"' % (os.path.join(dirName,name))])
             os.mkdir(os.path.join(dirName,label))
@@ -112,6 +114,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,filename=os.path.join(os.path.dirname(__file__),'prescribe.log'))
     output = {}
     storage = {}
+    actual = {}
     for instance in range(9,15):
         # Initialize entries in final table
         for question in ['Constrained','Unconstrained','Individual'] if instance < 12 else ['Offseason','InSeason','Individual']:
@@ -120,26 +123,39 @@ if __name__ == '__main__':
         args = accessibility.instances[instance-1]
         dirName = os.path.join(os.path.dirname(__file__),'..','..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run']))
         # Generate baseline results
-        logging.info('Instance %d, Actual' % (instance))
-        if instance > 11:
-            argv = ['--seasons','2'] # long-term
-            hurricane = None
-        else:
-            argv = ['-n','7','--hurricane',os.path.join(dirName,'Input','HurricaneInput.tsv')] # short-term
-            hurricane = accessibility.readHurricanes(args['instance'],args['run'],'Input','HurricaneInput.tsv')[-1]
-        result = runSimulation('Actual',instance,args['run'],argv)
-        if options['evaluate']:
-            # Load in baseline data
-            try:
-                storage[instance] = accessibility.loadRunData(args['instance'],args['run'],subs=['Input','Actual'])
-            except FileNotFoundError:
-                logging.warning('No data for %d %d Actual' % (args['instance'],args['run']))
-                continue
-            # Score baseline simulation
-            actual = {'Casualties': scoreCasualties(args,'Actual',storage[instance]),
-                'Dissatisfaction': scoreGrievance(args,'Actual',storage[instance],hurricane['End'] if instance < 12 else None),
-                'Individual': scoreIndividual(args,'Actual',storage[instance],targets[instance],hurricane['Start'] if instance < 12 else 365,
-                    hurricane['End'] if instance < 12 else None)}
+        for label in ['Actual','Null']:
+            logging.info('Instance %d, Actual' % (instance))
+            if instance > 11:
+                argv = ['--seasons','2'] # long-term
+                hurricane = None
+            else:
+                argv = ['-n','7','--hurricane',os.path.join(dirName,'Input','HurricaneInput.tsv')] # short-term
+                hurricane = accessibility.readHurricanes(args['instance'],args['run'],'Input','HurricaneInput.tsv')[-1]
+            if label == 'Null':
+                argv += ['--prescription','NULL']
+            result = runSimulation(label,instance,args['run'],argv)
+            if options['evaluate']:
+                # Load in baseline data
+                try:
+                    data = accessibility.loadRunData(args['instance'],args['run'],subs=['Input',label])
+                except FileNotFoundError:
+                    logging.warning('No data for %d %d %s' % (args['instance'],args['run'],label))
+                    continue
+                # Score baseline simulation
+                actual[label] = {'Casualties': scoreCasualties(args,label,data),
+                    'Dissatisfaction': scoreGrievance(args,label,data,hurricane['End'] if instance < 12 else None),
+                    'Individual': scoreIndividual(args,label,data,targets[instance],hurricane['Start'] if instance < 12 else 365,
+                        hurricane['End'] if instance < 12 else None)}
+                if label == 'Actual':
+                    storage[instance] = data
+                if label == 'Null':
+                    for name in data:
+                        if name[:5] == 'Actor':
+                            for t,value in data[name][stateKey(name,'grievance')].items():
+                                if t > accessibility.instances[instance-1]['span']+1:
+                                    if value < 1.0:
+                                        assert value > data[name][stateKey(name,'grievance')][t-1],'%s vs. %s (%d)' % \
+                                            (value,data[name][stateKey(name,'grievance')][t-1],t)
         # Simulate prescriptions
         for team in ['A','B']:
             for question in ['Constrained','Unconstrained','Individual'] if instance < 12 else ['Offseason','InSeason','Individual']:
@@ -182,19 +198,18 @@ if __name__ == '__main__':
                             except FileNotFoundError:
                                 logging.warning('No data for %d %d %s' % (args['instance'],args['run'],label))
                                 continue
+                            for label in ['Actual','Null']:
+                                output['%d%s%s' % (instance,question,metric)][label] = actual[label][question if question == 'Individual' else metric]
                             if question == 'Individual':
                                 score = scoreIndividual(args,label,data,targets[instance],hurricane['Start'] if instance < 12 else 365,
                                     hurricane['End'] if instance < 12 else None)
-                                output['%d%s%s' % (instance,question,metric)]['Actual'] = actual[question]
-                                output['%d%s%s' % (instance,question,metric)]['%s Delta' % (team)] = (actual[question]-score)/actual[question]
+                                output['%d%s%s' % (instance,question,metric)]['%s Delta' % (team)] = (actual['Actual'][question]-score)/actual['Actual'][question]
                             elif metric == 'Casualties':
                                 score = scoreCasualties(args,label,data)
-                                output['%d%s%s' % (instance,question,metric)]['Actual'] = actual[metric]
-                                output['%d%s%s' % (instance,question,metric)]['%s Delta' % (team)] = (actual[metric]-score)/actual[metric]
+                                output['%d%s%s' % (instance,question,metric)]['%s Delta' % (team)] = (actual['Actual'][metric]-score)/actual['Actual'][metric]
                             elif metric == 'Dissatisfaction':
                                 score = scoreGrievance(args,label,data,hurricane['End'] if instance < 12 else None)
-                                output['%d%s%s' % (instance,question,metric)]['Actual'] = actual[metric]
-                                output['%d%s%s' % (instance,question,metric)]['%s Delta' % (team)] = (actual[metric]-score)/actual[metric]
+                                output['%d%s%s' % (instance,question,metric)]['%s Delta' % (team)] = (actual['Actual'][metric]-score)/actual['Actual'][metric]
                             else:
                                 raise NameError('Unknown question: %s %s' % (question,metric))
                             if isinstance(score,float):
