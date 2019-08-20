@@ -35,8 +35,9 @@ COMMAND_GET_ATTRIBUTES = "get attributes", "get att", "get attribute"
 COMMAND_GET_NDAYS = "get ndays", "get days"
 COMMAND_GET_NACTORS = "get nactors", "get actors", "get a"
 COMMAND_SELECT_ACTORS = "select actors", "select a", "s a"
-COMMAND_DESELECT_ACTORS = "deselect actors", "del actors", "del a"
+COMMAND_RESET_SELECTION = "reset selection", "del actors", "del a", "reset s", "reset a", "r s"
 COMMAND_SHOW_SELECTION = "show selection", "show s", "show a", "show actors"
+
 
 
 HELP = {
@@ -67,8 +68,8 @@ HELP = {
                  optional: False}
             ]
         },
-        COMMAND_DESELECT_ACTORS: {
-            description: "Deselects the actors",
+        COMMAND_RESET_SELECTION: {
+            description: "Resets the selection / forgets selection criteria (selects all actors)",
             parameters: ""
         },
         COMMAND_SHOW_SELECTION: {

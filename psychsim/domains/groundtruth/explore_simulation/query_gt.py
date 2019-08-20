@@ -112,7 +112,6 @@ class LogParser:
         self.n_days = -1
         self.n_actors = -1
         self.logs_dir = "psychsim/domains/groundtruth/Instances/Instance"+instance+"/Runs/run-"+run
-        self.parse_logs(buffer)
 
         self.command = None
         self.query_param = dict()
@@ -122,6 +121,8 @@ class LogParser:
         self.selection_criteria = dict()
         self.selection_criteria[consts.empty] = True
 
+        self.parse_logs(buffer)
+
 
     def init_queryparams(self):
         self.query_param = dict()
@@ -130,6 +131,7 @@ class LogParser:
         self.query_param[consts.ATTRIBUTE] = None
         self.query_param[consts.NUMBER] = -1
         self.query_param[consts.MODE_SELECTION] = consts.random_str
+        self.query_param[consts.MODE_DISPLAY] = consts.actors_list
 
 
 
@@ -144,6 +146,7 @@ class LogParser:
         with open(file_name, 'rb') as f:
             content = pickle.load(f)
         self.actors_full_list = [key for key in content.keys() if "Actor" in key]
+        self.selected_agents = list(self.actors_full_list)
         self.n_actors = len(self.actors_full_list)
 
 
@@ -183,7 +186,7 @@ class LogParser:
                 print_with_buffer("ParameterError: missing value for query parameter %s" % args, buffer)
                 return False
             elif len(args_pair) > 2:
-                print_with_buffer("ParameterError: too many values for query parameter %s" % args, buffer)
+                # print_with_buffer("ParameterError: too many values for query parameter %s" % args, buffer)
                 return False
             else:
                 p_name, p_value = args_pair[0], args_pair[1]
@@ -195,6 +198,8 @@ class LogParser:
                     if param_ok is not True:
                         return False
         return True
+
+
 
     def set_param_value(self, p_name, p_val, buffer=None):
         if p_name in consts.QUERY_PARAM[consts.DAY]:
@@ -239,6 +244,14 @@ class LogParser:
                 values_in = " or ".join(consts.MODE_SELECTION_VALUES_IN)
                 print_with_buffer("ValueError: parameter %s should be %s, got %s" % (p_name, values_in, p_val), buffer)
                 return False
+        elif p_name in consts.QUERY_PARAM[consts.MODE_DISPLAY]:
+            if p_val in consts.MODE_DISPLAY_VALUES_IN:
+                self.query_param[consts.MODE_DISPLAY] = p_val
+                return True
+            else:
+                values_in = " or ".join(consts.MODE_DISPLAY_VALUES_IN)
+                print_with_buffer("ValueError: parameter %s should be %s, got %s" % (p_name, values_in, p_val), buffer)
+                return False
         else:
             print_with_buffer("ParamaterError: %s does not exists." % p_val, buffer)
             return False
@@ -261,7 +274,11 @@ class LogParser:
             elif self.command in consts.COMMAND_GET_ATTRIBUTES:
                 self.get_attributes(self.query_param[consts.ACTOR], p_day=self.query_param[consts.DAY], buffer=buffer)
             elif self.command in consts.COMMAND_SELECT_ACTORS:
-                self.select_actors(p_n=self.query_param[consts.NUMBER], p_actors=None, p_day=1, p_mode_select=self.query_param[consts.MODE_SELECTION], p_att_val_operator_tuples=None, buffer=buffer)
+                self.select_actors(p_n=self.query_param[consts.NUMBER], p_actors=None, p_day=1, p_mode_select=self.query_param[consts.MODE_SELECTION], buffer=buffer)
+            elif self.command in consts.COMMAND_SHOW_SELECTION:
+                self.display_actor_selection(p_display_mode=self.query_param[consts.MODE_DISPLAY], buffer=buffer)
+            elif self.command in consts.COMMAND_RESET_SELECTION:
+                self.reset_selection(buffer)
             else:
                 print_with_buffer("QueryError: \"%s\" command unknown" % self.command, buffer)
         else:
@@ -292,12 +309,12 @@ class LogParser:
             error_msg = "Your criteria are too restrictive go select %d actors. There are only %d actors that fulfil your criteria" % (self.n_actors, len(self.selected_agents))
         print_with_buffer(error_msg, buffer)
 
-    def select_actors(self, p_n=-1, p_actors=None, p_day=1, p_mode_select=consts.random_str, p_att_val_operator_tuples=None, buffer=None):
+    def select_actors(self, p_n=-1, p_actors=None, p_day=1, p_mode_select=consts.random_str, buffer=None):
         # Select by names
         if isinstance(p_actors, list):
-            self.selected_agents = [actor for actor in self.actors_full_list if actor in p_actors]
+            self.selected_agents = [actor for actor in self.selected_agents if actor in p_actors]
         else:
-            self.selected_agents = list(self.actors_full_list)
+            self.selected_agents = list(self.selected_agents)
 
         # Select by criteria
 
@@ -318,9 +335,14 @@ class LogParser:
 
 
     def display_actor_selection(self, p_display_mode=consts.actors_list, buffer=None):
+        if len(self.selected_agents) == self.n_actors:
+            print_with_buffer("All agents are selected", buffer)
         if p_display_mode == consts.actors_list:
-            print_with_buffer(", ".join(self.selected_agents))
+            print_with_buffer(", ".join(self.selected_agents), buffer)
 
+    def reset_selection(self, buffer):
+        self.selected_agents = self.actors_full_list
+        print_with_buffer("Reset selection.")
 
 
     ## ---------------------------------------   Query on one specific agent -------------------------------- ##
@@ -369,15 +391,6 @@ if __name__ == "__main__":
     argp.add_argument('-r', metavar='run', type=str, help='Run number to process.')
 
     args = argp.parse_args()
-
-    # fname = "psychsim/domains/groundtruth/Instances/Instance"+args.i+"/Runs/run-"+args.r+"/state2Actor.pkl"
-    #
-    #
-    # with open(fname,'rb') as f:
-    #     f.seek(0)
-    #     s = pickle.load(f)
-    #     # print(s['Actor0001']['Actor00010']["Nature's __ACTION__"][17])
-    #     print(s['Actor0001'])
 
     logparser = LogParser(args.i, args.r)
     logparser.query_log()
