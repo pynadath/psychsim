@@ -573,6 +573,7 @@ class Actor(Agent):
             else:
                 tree[True][False] = noChangeMatrix(wealth)
             world.setDynamics(wealth,self.nop,makeTree(tree),codePtr=True)
+            # TODO: What if you can work if you're at the shelter?
             # Going home allows you to work again
             # //GT: edge 8; from 5; to 24; 1 of 1; next 10 lines
             tree = {'if': trueRow(alive),
