@@ -234,14 +234,25 @@ def loadRunData(instance,run=0,end=None,nature=False,subs=[None]):
                 data[entity][key][t] = value2dist(row['Value'])
     return data
 
-def findHurricane(day,hurricanes):
+def findHurricane(day,hurricanes,includePrevious=False):
+    """
+    :param includePrevious: if True, then return the most recent hurricane if this day does not fall within any (otherwise, return None)
+    """
+    previous = None
     for hurricane in hurricanes:
         if day < hurricane['Start']:
-            return None
+            if includePrevious:
+                return previous
+            else:
+                return None
         elif day <= hurricane['End']:
             return hurricane
+        previous = hurricane
     else:
-        return None
+        if includePrevious:
+            return previous
+        else:
+            return None
 
 
 def findMatches(record,world=None,population={}):
