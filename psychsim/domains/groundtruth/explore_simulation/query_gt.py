@@ -3,6 +3,7 @@ import argparse
 import re
 from termcolor import colored
 import os
+import random
 
 import psychsim.domains.groundtruth.explore_simulation.query_gt_consts as consts
 import psychsim.domains.groundtruth.explore_simulation.helper_functions as helper
@@ -117,12 +118,18 @@ class LogParser:
         self.query_param = dict()
         self.init_queryparams()
 
+        self.selected_agents = list()
+        self.selection_criteria = dict()
+        self.selection_criteria[consts.empty] = True
+
 
     def init_queryparams(self):
         self.query_param = dict()
         self.query_param[consts.ACTOR] = None
         self.query_param[consts.DAY] = -1
         self.query_param[consts.ATTRIBUTE] = None
+        self.query_param[consts.NUMBER] = -1
+        self.query_param[consts.MODE_SELECTION] = consts.random_str
 
 
 
@@ -136,7 +143,8 @@ class LogParser:
         file_name = self.logs_dir + "/state1Actor.pkl"
         with open(file_name, 'rb') as f:
             content = pickle.load(f)
-        self.n_actors = len([key for key in content.keys() if "Actor" in key])
+        self.actors_full_list = [key for key in content.keys() if "Actor" in key]
+        self.n_actors = len(self.actors_full_list)
 
 
 
@@ -183,13 +191,12 @@ class LogParser:
                     print_with_buffer("ParameterError: unknown parameter %s" % p_name, buffer)
                     return False
                 else:
-                    if self.check_value_of_parameter(p_name, p_value, buffer):
-                        self.query_param[p_name] = p_value
-                    else:
+                    param_ok =  self.set_param_value(p_name, p_value, buffer)
+                    if param_ok is not True:
                         return False
         return True
 
-    def check_value_of_parameter(self, p_name, p_val, buffer=None):
+    def set_param_value(self, p_name, p_val, buffer=None):
         if p_name in consts.QUERY_PARAM[consts.DAY]:
             # print("in here")
             try:
@@ -216,20 +223,27 @@ class LogParser:
             except ValueError:
                 print_with_buffer("ValueError: parameter %s takes integers, got %s" % (p_name, p_val), buffer)
                 return False
-        # elif p_name == consts.AGENT:
-        #     if self.is_known(p_val):
-        #         self.query_param[consts.AGENT] = p_val
-        #         return True
-        #     else:
-        #         print >> buffer, "ParameterError: we have no agent named %s in the simulation." % p_val
-        #         return False
-        # elif p_name == consts.ACTION:
-        #     if p_val in self.actions_list:
-        #         self.query_param[consts.ACTION] = p_val
-        #         return True
-        #     else:
-        #         print >> buffer, "ParamaterError: %s does not exists." % p_val
-        #         return False
+        elif p_name in consts.QUERY_PARAM[consts.NUMBER]:
+            try:
+                i = int(p_val)
+                self.query_param[consts.NUMBER] = i
+                return True
+            except ValueError:
+                print_with_buffer("ValueError: parameter %s takes integers, got %s" % (p_name, p_val), buffer)
+                return False
+        elif p_name in consts.QUERY_PARAM[consts.MODE_SELECTION]:
+            if p_val in consts.MODE_SELECTION_VALUES_IN:
+                self.query_param[consts.MODE_SELECTION] = p_val
+                return True
+            else:
+                values_in = " or ".join(consts.MODE_SELECTION_VALUES_IN)
+                print_with_buffer("ValueError: parameter %s should be %s, got %s" % (p_name, values_in, p_val), buffer)
+                return False
+        else:
+            print_with_buffer("ParamaterError: %s does not exists." % p_val, buffer)
+            return False
+        print_with_buffer("DEBUG: set_param_value for param %s have returned something!" % p_name, buffer)
+
 
 
     def parse_query(self, query, buffer):
@@ -246,6 +260,8 @@ class LogParser:
                 self.get_nactors(buffer)
             elif self.command in consts.COMMAND_GET_ATTRIBUTES:
                 self.get_attributes(self.query_param[consts.ACTOR], p_day=self.query_param[consts.DAY], buffer=buffer)
+            elif self.command in consts.COMMAND_SELECT_ACTORS:
+                self.select_actors(p_n=self.query_param[consts.NUMBER], p_actors=None, p_day=1, p_mode_select=self.query_param[consts.MODE_SELECTION], p_att_val_operator_tuples=None, buffer=buffer)
             else:
                 print_with_buffer("QueryError: \"%s\" command unknown" % self.command, buffer)
         else:
@@ -257,11 +273,58 @@ class LogParser:
     ##                                              COMMANDS                                                  ##
     ############################################################################################################
 
+    ## ---------------------------------------       General queries         -------------------------------- ##
+
+
     def get_ndays(self, buffer):
         print_with_buffer("Simulation stopped after %d days" % self.n_days, buffer)
 
     def get_nactors(self, buffer):
         print_with_buffer("There are %d actors in the simulation" % self.n_actors, buffer)
+
+
+    ## ---------------------------------------       Select agents           -------------------------------- ##
+
+    def error_selection_not_enough_actors(self, p_n, buffer):
+        if self.selection_criteria[consts.empty] == True:
+            error_msg = "Selection Error: There are only %d actors in the simulation, we cannot select %d actors." % (self.n_actors, p_n)
+        else:
+            error_msg = "Your criteria are too restrictive go select %d actors. There are only %d actors that fulfil your criteria" % (self.n_actors, len(self.selected_agents))
+        print_with_buffer(error_msg, buffer)
+
+    def select_actors(self, p_n=-1, p_actors=None, p_day=1, p_mode_select=consts.random_str, p_att_val_operator_tuples=None, buffer=None):
+        # Select by names
+        if isinstance(p_actors, list):
+            self.selected_agents = [actor for actor in self.actors_full_list if actor in p_actors]
+        else:
+            self.selected_agents = list(self.actors_full_list)
+
+        # Select by criteria
+
+        # Shuffle list if random select
+        if p_mode_select == consts.random_str:
+            random.shuffle(self.selected_agents)
+
+        # Sample p_n agents
+        if p_n != -1:
+            n = len(self.selected_agents)
+            if p_n > n:
+                self.error_selection_not_enough_actors(p_n=p_n, buffer=buffer)
+            else:
+                self.selected_agents = self.selected_agents[:p_n]
+
+        print_with_buffer("Selected %d agents:" % len(self.selected_agents), buffer)
+        self.display_actor_selection(buffer=buffer)
+
+
+    def display_actor_selection(self, p_display_mode=consts.actors_list, buffer=None):
+        if p_display_mode == consts.actors_list:
+            print_with_buffer(", ".join(self.selected_agents))
+
+
+
+    ## ---------------------------------------   Query on one specific agent -------------------------------- ##
+
 
     def get_attributes(self, p_actor, p_day=-1, buffer=None):
         if p_actor == None:
