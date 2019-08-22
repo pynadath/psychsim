@@ -37,6 +37,15 @@ def str_distribution(distrib, tabs=""):
         s += tabs + "%s \t (certainty: %d%%)\n" % (str(el), 100*distrib[el])
     return s[:-1]
 
+def get_val(distrib):
+    elts = distrib._domain.values()
+    if len(elts) > 1:
+        print("ERROR: we should not try to get a single value when certainty is not 100%%!!!!!")
+    else:
+        for el in elts:
+            return el
+
+
 def str_aligned_values(dictionary, tabs=""):
     max_length_key = max(dictionary.keys(), key=len)
     max_length = len(max_length_key)

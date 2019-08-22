@@ -88,7 +88,10 @@ def print_help():
         s = helper.add_space_at_end("", max_len)
         s += arg_desc[consts.description]
         print(s)
-
+        if consts.values_in in arg_desc.keys():
+            s = helper.add_space_at_end("", max_len)
+            s += "Possible values: " + ", ".join(arg_desc[consts.values_in])
+            print(s)
     print("\n")
 
 def print_with_buffer(message, buffer=None):
@@ -132,6 +135,7 @@ class LogParser:
         self.query_param[consts.NUMBER] = -1
         self.query_param[consts.MODE_SELECTION] = consts.random_str
         self.query_param[consts.MODE_DISPLAY] = consts.actors_list
+        self.query_param[consts.ATTRIBUTE_VAL] = False
 
 
 
@@ -211,7 +215,7 @@ class LogParser:
                     print_with_buffer("ValueError: max for parameter %s is %d" % (p_name, self.n_days), buffer)
                     return False
                 else:
-                    self.query_param[consts.DAY] = i
+                    self.query_param[consts.DAY] = i.__str__()
                 return True
             except ValueError:
                 print_with_buffer("ValueError: parameter %s takes integers, got %s" % (p_name, p_val), buffer)
@@ -252,6 +256,17 @@ class LogParser:
                 values_in = " or ".join(consts.MODE_DISPLAY_VALUES_IN)
                 print_with_buffer("ValueError: parameter %s should be %s, got %s" % (p_name, values_in, p_val), buffer)
                 return False
+        elif p_name in consts.QUERY_PARAM[consts.ATTRIBUTE]:
+            self.query_param[consts.ATTRIBUTE] = p_val
+            return True
+        elif p_name in consts.QUERY_PARAM[consts.ATTRIBUTE_VAL]:
+            try:
+                i = float(p_val)
+                self.query_param[consts.ATTRIBUTE_VAL] = i
+                return True
+            except ValueError:
+                print_with_buffer("ValueError: parameter %s takes floats, got %s" % (p_name, p_val), buffer)
+                return False
         else:
             print_with_buffer("ParamaterError: %s does not exists." % p_val, buffer)
             return False
@@ -273,12 +288,14 @@ class LogParser:
                 self.get_nactors(buffer)
             elif self.command in consts.COMMAND_GET_ATTRIBUTES:
                 self.get_attributes(self.query_param[consts.ACTOR], p_day=self.query_param[consts.DAY], buffer=buffer)
-            elif self.command in consts.COMMAND_SELECT_ACTORS:
-                self.select_actors(p_n=self.query_param[consts.NUMBER], p_actors=None, p_day=1, p_mode_select=self.query_param[consts.MODE_SELECTION], buffer=buffer)
+            elif self.command in consts.COMMAND_SELECT_NACTORS:
+                self.select_nactors(p_n=self.query_param[consts.NUMBER], p_actors=None, p_mode_select=self.query_param[consts.MODE_SELECTION], buffer=buffer)
             elif self.command in consts.COMMAND_SHOW_SELECTION:
                 self.display_actor_selection(p_display_mode=self.query_param[consts.MODE_DISPLAY], buffer=buffer)
             elif self.command in consts.COMMAND_RESET_SELECTION:
                 self.reset_selection(buffer)
+            elif self.command in consts.COMMMAND_APPLY_FILTER:
+                self.apply_filter(p_day=self.query_param[consts.DAY], p_att=self.query_param[consts.ATTRIBUTE], p_val=self.query_param[consts.ATTRIBUTE_VAL], buffer=buffer )
             else:
                 print_with_buffer("QueryError: \"%s\" command unknown" % self.command, buffer)
         else:
@@ -309,7 +326,7 @@ class LogParser:
             error_msg = "Your criteria are too restrictive go select %d actors. There are only %d actors that fulfil your criteria" % (self.n_actors, len(self.selected_agents))
         print_with_buffer(error_msg, buffer)
 
-    def select_actors(self, p_n=-1, p_actors=None, p_day=1, p_mode_select=consts.random_str, buffer=None):
+    def select_nactors(self, p_n=-1, p_actors=None, p_mode_select=consts.random_str, buffer=None):
         # Select by names
         if isinstance(p_actors, list):
             self.selected_agents = [actor for actor in self.selected_agents if actor in p_actors]
@@ -338,6 +355,7 @@ class LogParser:
         if len(self.selected_agents) == self.n_actors:
             print_with_buffer("All agents are selected", buffer)
         if p_display_mode == consts.actors_list:
+            print_with_buffer("%d agents are selected:\n" % len(self.selected_agents), buffer)
             print_with_buffer(", ".join(self.selected_agents), buffer)
 
     def reset_selection(self, buffer):
@@ -382,7 +400,21 @@ class LogParser:
             print_with_buffer("ERROR - Missing file: %s" % file_name, buffer)
             return False
 
+    def get_att_val(self, actor_name, p_att, p_day):
+        file_name = self.logs_dir + "/state" + p_day  + "System.pkl"
+        if os.path.exists(file_name):
+            with open(file_name, 'rb') as f:
+                content = pickle.load(f)
+                distrib = content['__state__'][actor_name+"'s "+p_att]
+                return helper.get_val(distrib=distrib)
 
+
+    def apply_filter(self, p_day, p_att, p_val, p_operator=None, buffer=None):
+        self.selected_agents = [agent for agent in self.selected_agents if self.get_att_val(agent, p_att=p_att, p_day=p_day) == p_val]
+        print_with_buffer("After aoolying filter")
+        self.display_actor_selection()
+        # att_val = self.get_att_val("1", p_att, p_day)
+        # print(att_val)
 
 if __name__ == "__main__":
 
