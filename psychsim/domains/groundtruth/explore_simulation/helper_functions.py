@@ -61,3 +61,15 @@ def str_key_value_with_space_between(key, value, n_space=1, separator=":", tabs=
         s += " "
     s += "\t" + value
     return  s
+
+def compare(v1, v2, op):
+    if op == "=":
+        return  v1 == v2
+    elif op == '<':
+        return v1 < v2
+    elif op == '>':
+        return v1 > v2
+    elif op in ['<=', '=<']:
+        return v1 <= v2
+    elif op in ['>='. '=>']:
+        return v1 >= v2

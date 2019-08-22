@@ -409,9 +409,10 @@ class LogParser:
                 return helper.get_val(distrib=distrib)
 
 
-    def apply_filter(self, p_day, p_att, p_val, p_operator=None, buffer=None):
-        self.selected_agents = [agent for agent in self.selected_agents if self.get_att_val(agent, p_att=p_att, p_day=p_day) == p_val]
-        print_with_buffer("After aoolying filter")
+
+    def apply_filter(self, p_day, p_att, p_val, p_operator, buffer=None):
+        self.selected_agents = [agent for agent in self.selected_agents if helper.compare(v1=self.get_att_val(agent, p_att=p_att, p_day=p_day), v2=p_val, op=p_operator)]
+        print_with_buffer("After applying filter")
         self.display_actor_selection()
         # att_val = self.get_att_val("1", p_att, p_day)
         # print(att_val)
