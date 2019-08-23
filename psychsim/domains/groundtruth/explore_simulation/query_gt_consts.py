@@ -30,7 +30,8 @@ QUERY_PARAM = {
     MODE_SELECTION: ["mode_selection", "modeselect", "modeselection", "ms"],
     NUMBER: ["number", "n"],
     MODE_DISPLAY: ["mode_display", "mode display", "md"],
-    ATTRIBUTE_VAL: ["value", "att_value", "val", "att_val"]
+    ATTRIBUTE_VAL: ["value", "att_value", "val", "att_val"],
+    OPERATOR: ["operator", "op", "o"]
 }
 ALL_QUERY_PARAMS = [y for x in QUERY_PARAM.values() for y in x ]
 

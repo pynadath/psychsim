@@ -3,6 +3,12 @@ import operator
 import itertools
 import os
 
+def print_with_buffer(message, buffer=None):
+    if buffer:
+        print(message, buffer)
+    else:
+        print(message)
+
 def string_between_parentheses(s):
     return  s[s.find("(")+1:s.find(")")]
 
@@ -71,5 +77,5 @@ def compare(v1, v2, op):
         return v1 > v2
     elif op in ['<=', '=<']:
         return v1 <= v2
-    elif op in ['>='. '=>']:
+    elif op in ['>=', '=>']:
         return v1 >= v2
