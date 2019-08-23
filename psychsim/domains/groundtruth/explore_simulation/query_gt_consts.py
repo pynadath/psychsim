@@ -22,6 +22,7 @@ MODE_SELECTION_VALUES_IN = [random_str, ordered]
 MODE_DISPLAY = "mode_display"
 MODE_DISPLAY_VALUES_IN = [actors_list, criteria_list]
 NUMBER = "number"
+ENTITY = "entity"
 
 QUERY_PARAM = {
     DAY: ["day", "d"],
@@ -31,76 +32,106 @@ QUERY_PARAM = {
     NUMBER: ["number", "n"],
     MODE_DISPLAY: ["mode_display", "mode display", "md"],
     ATTRIBUTE_VAL: ["value", "att_value", "val", "att_val"],
-    OPERATOR: ["operator", "op", "o"]
+    OPERATOR: ["operator", "op", "o"],
+    ENTITY: ["entity", "e"]
 }
 ALL_QUERY_PARAMS = [y for x in QUERY_PARAM.values() for y in x ]
 
-
-COMMAND_GET_ATTRIBUTES = "get attributes", "get att", "get attribute"
-COMMAND_GET_NDAYS = "get ndays", "get days"
+# General info on simulation
+COMMAND_GET_NDAYS = "get ndays", "get days", "get d"
 COMMAND_GET_NACTORS = "get nactors", "get actors", "get a"
+COMMAND_GET_ENTITIES = "get entities", "get e"
+COMMAND_GET_ATTNAMES = "get attribute_names", "get attnames", "get att_n", "get att"
+
+# Selecting agents
 COMMAND_SELECT_NACTORS = "select actors", "select a", "s a", "select n", "s n"
 COMMAND_RESET_SELECTION = "reset selection", "del actors", "del a", "reset s", "reset a", "r s"
 COMMAND_SHOW_SELECTION = "show selection", "show s", "show a", "show actors"
-COMMMAND_APPLY_FILTER = "apply filter", "a f"
+COMMAND_APPLY_FILTER = "apply filter", "a f"
 
+# Getting info about a specific agent
+COMMAND_GET_VALUES = "get values", "get val", "get value", "get v"
+
+
+CATEGORY_GENERAL_INFO = "--> General information about the simulation"
+CATEGORY_SELECTING_ACTORS = "--> Selecting / deselecting actors"
+CATEGORY_ACTOR_SPECIFIC = "--> Getting information about a specific actor"
 
 
 HELP = {
     commands: {
-        COMMAND_GET_ATTRIBUTES: {
-            description: "Returns a list of attributes",
-            parameters: [
-                {name: DAY,
-                 optional: True},
-                {name: ATTRIBUTE,
-                 optional: True},
-                {name: ACTOR,
-                 optional: False}
-            ]
+        CATEGORY_GENERAL_INFO: {
+            COMMAND_GET_NDAYS: {
+                description: "Returns the number of days in the simulation",
+                parameters: []
+            },
+            COMMAND_GET_NACTORS: {
+                description: "Returns the number of actors in the simulation",
+                parameters: []
+            },
+            COMMAND_GET_ENTITIES: {
+                description: "Returns categories of entities present in the simulation (e.g. Actor)",
+                parameters: []
+            },
+            COMMAND_GET_ATTNAMES: {
+                description: "Returns the list of attributes attached to an entity",
+                parameters: [
+                    {name: ENTITY,
+                     optional: False}
+                ]
+            }
         },
-        COMMAND_SELECT_NACTORS: {
-            description: "Selects a group of actors to then execute queries on",
-            parameters: [
-                {name: ACTOR,
-                 optional: True},
-                {name: MODE_SELECTION,
-                 optional: True},
-                {name: NUMBER,
-                 optional: False}
-            ]
+
+        CATEGORY_SELECTING_ACTORS : {
+             COMMAND_SELECT_NACTORS: {
+                description: "Selects a group of actors to then execute queries on",
+                parameters: [
+                    {name: ACTOR,
+                     optional: True},
+                    {name: MODE_SELECTION,
+                     optional: True},
+                    {name: NUMBER,
+                     optional: False}
+                ]
+            },
+            COMMAND_RESET_SELECTION: {
+                description: "Resets the selection / forgets selection criteria (selects all actors)",
+                parameters: ""
+            },
+            COMMAND_SHOW_SELECTION: {
+                description: "Show the actors (mode actors_list) selected or the criteria (more criteria_list) used to selec the actors",
+                parameters: [
+                    {name: MODE_DISPLAY,
+                     optional: False}
+                ]
+            },
+            COMMAND_APPLY_FILTER: {
+                description: "Applies a filter a selection",
+                parameters : [
+                    {name: ATTRIBUTE,
+                     optional: False},
+                    {name: OPERATOR,
+                     optional: False},
+                    {name: ATTRIBUTE_VAL,
+                     optional: False},
+                    {name: DAY,
+                     optional: False}
+                ]
+            }
         },
-        COMMAND_RESET_SELECTION: {
-            description: "Resets the selection / forgets selection criteria (selects all actors)",
-            parameters: ""
-        },
-        COMMAND_SHOW_SELECTION: {
-            description: "Show the actors (mode actors_list) selected or the criteria (more criteria_list) used to selec the actors",
-            parameters: [
-                {name: MODE_DISPLAY,
-                 optional: False}
-            ]
-        },
-        COMMAND_GET_NDAYS: {
-            description: "Returns the number of days in the simulation",
-            parameters: []
-        },
-        COMMAND_GET_NACTORS: {
-            description: "Returns the number of actors in the simulation",
-            parameters: []
-        },
-        COMMMAND_APPLY_FILTER: {
-            description: "Applies a filter a selection",
-            parameters : [
-                {name: ATTRIBUTE,
-                 optional: False},
-                {name: OPERATOR,
-                 optional: False},
-                {name: ATTRIBUTE_VAL,
-                 optional: False},
-                {name: DAY,
-                 optional: False}
-            ]
+
+        CATEGORY_ACTOR_SPECIFIC: {
+            COMMAND_GET_VALUES: {
+                description: "Returns the beliefs of the agent at a specific day",
+                parameters: [
+                    {name: DAY,
+                     optional: False},
+                    {name: ACTOR,
+                     optional: False},
+                    {name: ATTRIBUTE,
+                     optional: True}
+                ]
+            }
         }
     },
     parameters: {
@@ -138,6 +169,10 @@ HELP = {
         NUMBER: {
             value_type: "int",
             description: "Integer"
+        },
+        ENTITY: {
+            value_type: "Name of an entity (str)",
+            description: "E.g. in GROUND TRUTH, Actor or Region"
         }
     }
 }

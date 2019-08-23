@@ -64,19 +64,24 @@ def preprocess(s):
     s = re.sub(' +', ' ', s)
     return s
 
-def print_help():
-    print(colored("Commands - optional arguments are between []", "yellow"))
-    for c_list, c_desc in consts.HELP[consts.commands].items():
-        s = c_list[0]
-        for arg in c_desc[consts.parameters]:
-            name, optional = arg[consts.name], arg[consts.optional]
-            optional_open = "[" if optional else ""
-            optional_close = "]" if optional else ""
-            s += " "+optional_open+"-" + arg[consts.name] + optional_close
-        print(s)
-        print(c_desc[consts.description]+"\n")
+BOLD = '\033[1m'
+END = '\033[0m'
 
-    print(colored("Arguments", "yellow"))
+def print_help():
+    print('{}{}{}{}'.format(BOLD, colored("COMMANDS", "yellow"), END, colored(" - optional arguments are between []", "yellow")))
+    for category in consts.HELP[consts.commands].keys():
+        print(colored(category, "yellow"))
+        for c_list, c_desc in consts.HELP[consts.commands][category].items():
+            s = c_list[0]
+            for arg in c_desc[consts.parameters]:
+                name, optional = arg[consts.name], arg[consts.optional]
+                optional_open = "[" if optional else ""
+                optional_close = "]" if optional else ""
+                s += " "+optional_open+"-" + arg[consts.name] + optional_close
+            print(s)
+            print(c_desc[consts.description]+"\n")
+
+    print('{}{}{}'.format(BOLD,colored("ARGUMENTS", "yellow"), END))
     args = consts.HELP[consts.parameters].keys()
     longest_str = max(args, key=len)
     max_len = len(longest_str) + 2
@@ -144,6 +149,7 @@ class LogParser:
         self.query_param[consts.MODE_SELECTION] = consts.random_str
         self.query_param[consts.MODE_DISPLAY] = consts.actors_list
         self.query_param[consts.ATTRIBUTE_VAL] = False
+        self.query_param[consts.ENTITY] = None
 
 
 
@@ -159,13 +165,36 @@ class LogParser:
         self.n_days = int((helper.count_files(self.logs_dir, ext="pkl") - 1) / 3)
 
         # get number of actors
-        file_name = self.logs_dir + "/state1Actor.pkl"
+        file_name = self.logs_dir + "/state1System.pkl"
         with open(file_name, 'rb') as f:
             content = pickle.load(f)
         self.actors_full_list = [key for key in content.keys() if "Actor" in key]
+
+        # get entities' attributes
+        self.entities_att_list = dict()
+        state = content["__state__"]
+        keys = state.keys()
+        for key in keys:
+            entity_category = self.get_entity_category(key) #e.g. Actor, Region, Nature, System
+            if entity_category not in self.entities_att_list.keys():
+                self.entities_att_list[entity_category] = list()
+            att_name = key.split(" ")[1]
+            if att_name not in self.entities_att_list[entity_category]:
+                self.entities_att_list[entity_category].append(att_name)
+
         self.selected_agents = list(self.actors_full_list)
         self.n_actors = len(self.actors_full_list)
 
+
+    def get_entity_category(self, entity_name):
+        """
+        Returns the category of an entity (e.g. Actor) -- assuming antity_name is base on category
+        :param entity_name: name of the entity (e.g. Actor0001)
+        :return: category (string)
+        """
+        s = entity_name.split("'")[0]
+        s = helper.remove_numbers_from_string(s)
+        return s
 
 
 
@@ -325,6 +354,13 @@ class LogParser:
         """
         return self.set_p_with_values_in(p_name=consts.OPERATOR, p_val=p_val, values_in_list=consts.OPERATOR_VALUES_IN, buffer=buffer)
 
+    def set_p_entity(self, p_val, buffer):
+        """
+        Set the value of the entity parameter
+        :return: True or False
+        """
+        return self.set_p_with_values_in(p_name=consts.ENTITY, p_val=p_val, values_in_list=self.entities_att_list.keys(), buffer=buffer)
+
     def set_p_attribute(self, p_val, buffer):
         self.query_param[consts.ATTRIBUTE] = p_val
         return True
@@ -354,6 +390,8 @@ class LogParser:
             return self.set_p_att_value(p_val, buffer)
         elif p_name in consts.QUERY_PARAM[consts.OPERATOR]:
             return self.set_p_operator(p_val, buffer)
+        elif p_name in consts.QUERY_PARAM[consts.ENTITY]:
+            return self.set_p_entity(p_val, buffer)
         else:
             print_with_buffer("ParamaterError: %s does not exists." % p_name, buffer)
             return False
@@ -384,20 +422,24 @@ class LogParser:
                 self.get_ndays(buffer)
             elif self.command in consts.COMMAND_GET_NACTORS:
                 self.get_nactors(buffer)
-            elif self.command in consts.COMMAND_GET_ATTRIBUTES:
-                self.get_attributes(self.query_param[consts.ACTOR], p_day=self.query_param[consts.DAY], buffer=buffer)
+            elif self.command in consts.COMMAND_GET_VALUES:
+                self.get_att_values(self.query_param[consts.ACTOR], p_day=self.query_param[consts.DAY], buffer=buffer)
             elif self.command in consts.COMMAND_SELECT_NACTORS:
                 self.select_nactors(p_n=self.query_param[consts.NUMBER], p_actors=None, p_mode_select=self.query_param[consts.MODE_SELECTION], buffer=buffer)
             elif self.command in consts.COMMAND_SHOW_SELECTION:
                 self.display_actor_selection(p_display_mode=self.query_param[consts.MODE_DISPLAY], buffer=buffer)
             elif self.command in consts.COMMAND_RESET_SELECTION:
                 self.reset_selection(buffer)
-            elif self.command in consts.COMMMAND_APPLY_FILTER:
+            elif self.command in consts.COMMAND_APPLY_FILTER:
                 self.apply_filter(p_day=self.query_param[consts.DAY], p_att=self.query_param[consts.ATTRIBUTE], p_val=self.query_param[consts.ATTRIBUTE_VAL], p_operator=self.query_param[consts.OPERATOR], buffer=buffer )
+            elif self.command in consts.COMMAND_GET_ENTITIES:
+                self.get_entities(buffer)
+            elif self.command in consts.COMMAND_GET_ATTNAMES:
+                self.get_attributes(p_entity=self.query_param[consts.ENTITY], buffer=buffer)
             else:
                 print_with_buffer("QueryError: \"%s\" command unknown" % self.command, buffer)
         else:
-            print_with_buffer("ERROR, cannot execute query: %s" % query, buffer)
+            print_with_buffer("ERROR, cannot execute query: %s." % query, buffer)
             return False
 
 
@@ -424,6 +466,22 @@ class LogParser:
         """
         print_with_buffer("There are %d actors in the simulation" % self.n_actors, buffer)
 
+    def get_entities(self, buffer):
+        """
+        Tells the user about which kind of entities are present in the simulation
+        :param buffer:
+        :return:
+        """
+        print_with_buffer("The categories of entities in the simulation are: %s" % ", ".join(self.entities_att_list.keys()), buffer)
+
+    def get_attributes(self, p_entity, buffer):
+        """
+        Tells the user about which attributes are associated with a kind of entity
+        :param p_entity: kind of entity (e.g. Actor)
+        :param buffer:
+        :return:
+        """
+        print_with_buffer("The attributes associated with the categoy %s are: %s." % (p_entity, " ,".join(self.entities_att_list[p_entity])))
 
     ## ---------------------------------------       Select agents           -------------------------------- ##
 
@@ -482,7 +540,7 @@ class LogParser:
         """
         if len(self.selected_agents) == self.n_actors:
             print_with_buffer("All agents are selected", buffer)
-        if p_display_mode == consts.actors_list:
+        elif p_display_mode == consts.actors_list:
             print_with_buffer("%d agents are selected:\n" % len(self.selected_agents), buffer)
             print_with_buffer(", ".join(self.selected_agents), buffer)
 
@@ -499,7 +557,7 @@ class LogParser:
     ## ---------------------------------------   Query on one specific agent -------------------------------- ##
 
 
-    def get_attributes(self, p_actor, p_day=-1, buffer=None):
+    def get_att_values(self, p_actor, p_day, buffer=None):
         """
         Displays the attributes (BELIEFS) of a specific agent. 2 modes:
             - a day is selected:    returns the list of attributes and their values for that day
@@ -514,9 +572,9 @@ class LogParser:
             return False
         p_day_not_set = False
         if p_day == -1:
+            print_with_buffer("ParameterError: missing parameter -%s for command \"get attibute(s)\"" % consts.DAY, buffer)
+            return False
             #read attributes for a random day
-            p_day = 1
-            p_day_not_set = True
 
         file_name = self.logs_dir + "/state" + p_day.__str__() + "Actor.pkl"
         if os.path.exists(file_name):
@@ -527,15 +585,11 @@ class LogParser:
             keys = dict_for_actor.keys()
             attributes = [key.split()[1] for key in keys if (actor_name in key and "__" not in key)]
 
-            if p_day_not_set:
-                s = "%s has attributes: " % actor_name
-                s += ", ".join(attributes)
-            else:
-                s = "At %s %d, %s has:\n" % (consts.DAY, p_day, actor_name)
-                att_to_printable_distrib_dict = dict()
-                for att in attributes:
-                    att_to_printable_distrib_dict[att] = helper.str_distribution(dict_for_actor[actor_name+"'s "+att])
-                s += helper.str_aligned_values(att_to_printable_distrib_dict)
+            s = "At %s %d, %s has:\n" % (consts.DAY, p_day, actor_name)
+            att_to_printable_distrib_dict = dict()
+            for att in attributes:
+                att_to_printable_distrib_dict[att] = helper.str_distribution(dict_for_actor[actor_name+"'s "+att])
+            s += helper.str_aligned_values(att_to_printable_distrib_dict)
             print_with_buffer(s, buffer)
 
         else:
@@ -569,8 +623,8 @@ class LogParser:
         :param buffer:
         :return:
         """
-        self.selected_agents = [agent for agent in self.selected_agents if helper.compare(v1=self.get_att_val(agent, p_att=p_att, p_day=p_day), v2=p_val, op=p_operator)]
         print_with_buffer("After applying filter", buffer=buffer)
+        self.selected_agents = [agent for agent in self.selected_agents if helper.compare(v1=self.get_att_val(agent, p_att=p_att, p_day=p_day), v2=p_val, op=p_operator)]
         self.display_actor_selection()
         # att_val = self.get_att_val("1", p_att, p_day)
         # print(att_val)

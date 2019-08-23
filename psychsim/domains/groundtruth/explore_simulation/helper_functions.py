@@ -3,6 +3,9 @@ import operator
 import itertools
 import os
 
+def remove_numbers_from_string(input_string):
+    return re.sub(r'\d+', '', input_string)
+
 def print_with_buffer(message, buffer=None):
     if buffer:
         print(message, buffer)
