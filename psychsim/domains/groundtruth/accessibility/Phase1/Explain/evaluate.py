@@ -56,22 +56,36 @@ if __name__ == '__main__':
         team,objs = sheet.title.split()
         row = 2
         if objs == 'Nodes':
-            for node in sorted(graphs[team].nodes(),key=lambda n: int(n['label'][1:])):
+            try:
+                nodes = sorted(graphs[team].nodes(),key=lambda n: int(n['label'][1:]))
+            except ValueError:
+                nodes = graphs[team].nodes()
+            for node in nodes:
                 sheet['A%d' % (row)] = node['label']
                 try:
                     sheet['B%d' % (row)] = node['v_name']
                 except:
-                    sheet['B%d' % (row)] = TA2A[node['label']]
+                    try:
+                        sheet['B%d' % (row)] = TA2A[node['label']]
+                    except KeyError:
+                        # PNNL version
+                        sheet['A%d' % (row)] = '%d' % (row-1)
+                        sheet['B%d' % (row)] = node.id
                 row += 1
         else:
             for edge in graphs[team].edges():
-                if team == 'TA2A':
-                    sheet['A%d' % (row)] = 'e%d' % (edge.id-34)
+#                if team == 'TA2A':
+#                    sheet['A%d' % (row)] = 'e%d' % (edge.id-34)
                 try:
                     sheet['B%d' % (row)] = edge.node1['v_name']
                     sheet['C%d' % (row)] = edge.node2['v_name']
                 except:
-                    sheet['B%d' % (row)] = TA2A[edge.node1['label']]
-                    sheet['C%d' % (row)] = TA2A[edge.node2['label']]
+                    try:
+                        sheet['B%d' % (row)] = TA2A[edge.node1['label']]
+                        sheet['C%d' % (row)] = TA2A[edge.node2['label']]
+                    except KeyError:
+                        # PNNL
+                        sheet['B%d' % (row)] = edge.node1.id
+                        sheet['C%d' % (row)] = edge.node2.id                        
                 row += 1
     wb.save('%s TA1C%s' % os.path.splitext(args['workbook']))
