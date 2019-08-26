@@ -24,7 +24,7 @@ HoloCane would be over a timeline into the future, starting from the current day
 
 "Is it possible that we invite 10 people to join HoloCane simulation, and we let HoloCane automatically simulate the behaviors of other people and government (work as NPC in the game), and we can be sure that the behaviors of those NPC individuals and government is generated the same way as they are generated in the ‘actual simulated world’?"
 
-Yes, the HoloCane simulation operates under the same ground truth.
+The behaviors will be generated the same way in the HoloCane as in the real world, but as with all laboratory experiments, not all real-world factors will be be included in the HoloCane simulation.
 
 "Is it possible that we invite 10 people to join HoloCane simulation, and we only let HoloCane automatically simulate government actions (even if we don’t know what actions government can do) or part of government actions (we will specify what action), and make the machine ignore the rest of people in the world. (So essentially we are dealing with a world with only 10 people, not 160 people)"
 
