@@ -27,7 +27,7 @@ def aidWillingnessEtc(args,agent,record,world,states,demos,hurricanes,alive,vari
     :param variables: if provided, any new variables defined are appended (default is None)
     :type variables: list
     """
-    if variables:
+    if variables is not None:
         variables.append({'Name': 'Out Friends','Values': '[0+]','VarType': 'dynamic','DataType': 'Integer','Notes': '0.i.k'})
     friends = agent.getFriends() & alive # Dead friends don't count
     neighbors = agent.getNeighbors() & alive # Dead neighbors don't count
