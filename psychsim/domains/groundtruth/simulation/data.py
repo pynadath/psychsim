@@ -156,7 +156,7 @@ def readNetwork(instance,run=0,sub=None):
                 networks[link][row['FromEntityId']] = {row['ToEntityId']}
     return networks
 
-def readParticipants(instance,run=0,fname='psychsim.log'):
+def readParticipants(instance,run=0,fname='psychsim.log',splitHurricanes=False):
     """
     :returns: Mapping from participants to actor names for each survey
     """
@@ -171,10 +171,13 @@ def readParticipants(instance,run=0,fname='psychsim.log'):
         for line in logfile:
             if 'Participant' in line:
                 elements = line.split()
-                survey = elements[0]
+                hurricane = int(elements[1][:-1])
+                if splitHurricanes:
+                    survey = '%s %d' % (elements[0],hurricane)
+                else:
+                    survey = elements[0]
                 if not survey in tables:
                     tables[survey] = {}
-                hurricane = int(elements[1][:-1])
                 participant = int(elements[3][:-1])
                 name = elements[4]
                 if participant in tables[survey]:
