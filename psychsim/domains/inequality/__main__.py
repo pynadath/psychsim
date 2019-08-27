@@ -69,7 +69,7 @@ def createWorld(domain,codebook,logger=logging.getLogger()):
     world = World()
     for name,field in domain.fields.items():
         if field['agent']:
-            if not world.agents.has_key(field['agent']):
+            if field['agent'] not in world.agents:
                 world.addAgent(field['agent'])
             agent = world.agents[field['agent']]
             model = '%s0' % (agent.name)
@@ -78,7 +78,7 @@ def createWorld(domain,codebook,logger=logging.getLogger()):
             agent = None
         if field['class'] == 'state':
             if field['type'] == 'list':
-                feature = world.defineState(agent,field['variable'],list,codebook[field['field']]['labels'].values())
+                feature = world.defineState(agent,field['variable'],list,list(codebook[field['field']]['labels'].values()))
             elif field['type'] == 'int':
                 feature = world.defineState(agent,field['variable'],int)
             logger.debug('New state feature: %s' % feature)
@@ -87,7 +87,7 @@ def createWorld(domain,codebook,logger=logging.getLogger()):
             action = Action({'subject': agent.name,'verb': field['variable']})
             agent.addAction(action)
             logger.debug('New action: %s' % (action))
-    world.setOrder(world.agents.keys())
+    world.setOrder([set(world.agents.keys())])
     return world
 
 def modelIndividual(domain,world,record,codebook,logger=logging.getLogger()):
@@ -136,14 +136,11 @@ if __name__ == '__main__':
     domain = Domain('afrobarometer')
     logging.debug('#records = %d' % (len(domain.data)))
     world = createWorld(domain,codebook)
-    for input in domain.fields:
-        print input
+    for inData in domain.fields:
         for field,histogram in domain.targetHistogram().items():
-            print field
             for key,matches in sorted(histogram.items(),key=lambda item: -len(item[1])):
-                print '\t%5d: %s' % (len(matches),codebook[field]['labels'][key])
-                table = tabulate([domain.data[ID] for ID in matches],input)
-                print table.keys()
-                print ', '.join(['%s: %4.1f%%' % (codebook[input]['labels'].get(k,k),table[k]*100.) for k in sorted(table.keys())])
+                print('\t%5d: %s=%s | %s' % (len(matches),field,codebook[field]['labels'][key],inData))
+                table = tabulate([domain.data[ID] for ID in matches],inData)
+                print(', '.join(['%s: %4.1f%%' % (codebook[inData]['labels'].get(k,k),pct*100.) for k,pct in sorted(table.items(),key=lambda i: i[1],reverse=True)]))
 #    for ID,record in domain.data.items():
 #        modelIndividual(domain,world,record,codebook)
