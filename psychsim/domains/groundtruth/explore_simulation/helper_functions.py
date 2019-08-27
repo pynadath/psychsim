@@ -3,6 +3,15 @@ import operator
 import itertools
 import os
 
+def remove_numbers_from_string(input_string):
+    return re.sub(r'\d+', '', input_string)
+
+def print_with_buffer(message, buffer=None):
+    if buffer:
+        print(message, buffer)
+    else:
+        print(message)
+
 def string_between_parentheses(s):
     return  s[s.find("(")+1:s.find(")")]
 
@@ -37,6 +46,15 @@ def str_distribution(distrib, tabs=""):
         s += tabs + "%s \t (certainty: %d%%)\n" % (str(el), 100*distrib[el])
     return s[:-1]
 
+def get_val(distrib):
+    elts = distrib._domain.values()
+    if len(elts) > 1:
+        print("ERROR: we should not try to get a single value when certainty is not 100%%!!!!!")
+    else:
+        for el in elts:
+            return el
+
+
 def str_aligned_values(dictionary, tabs=""):
     max_length_key = max(dictionary.keys(), key=len)
     max_length = len(max_length_key)
@@ -52,3 +70,15 @@ def str_key_value_with_space_between(key, value, n_space=1, separator=":", tabs=
         s += " "
     s += "\t" + value
     return  s
+
+def compare(v1, v2, op):
+    if op == "=":
+        return  v1 == v2
+    elif op == '<':
+        return v1 < v2
+    elif op == '>':
+        return v1 > v2
+    elif op in ['<=', '=<']:
+        return v1 <= v2
+    elif op in ['>=', '=>']:
+        return v1 >= v2
