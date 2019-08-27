@@ -6,7 +6,7 @@ import random
 from psychsim.pwl import *
 from psychsim.domains.groundtruth import accessibility
 
-def aidWillingnessEtc(args,agent,record,world,states,demos,hurricanes,alive,variables=None):
+def aidWillingnessEtc(args,agent,record,world,states,demos,hurricanes,alive,variables=None,network=None):
     """
     :param args: The usual instance/run/span/etc. dictionary
     :type args: dict
@@ -26,10 +26,13 @@ def aidWillingnessEtc(args,agent,record,world,states,demos,hurricanes,alive,vari
     :type alive: set
     :param variables: if provided, any new variables defined are appended (default is None)
     :type variables: list
+    :param network: social network must be provided for Phase 1 instances (otherwise, friends might be wrong)
     """
     if variables is not None:
         variables.append({'Name': 'Out Friends','Values': '[0+]','VarType': 'dynamic','DataType': 'Integer','Notes': '0.i.k'})
-    friends = agent.getFriends() & alive # Dead friends don't count
+    friends = agent.getFriends(network) & alive # Dead friends don't count
+    if agent.getFriends(network) != agent.getFriends():
+        logging.warning('Instance %d, run %d has different friend set for %s' % (args['instance'],args['run'],agent.name))
     neighbors = agent.getNeighbors() & alive # Dead neighbors don't count
     record['Out Friends'] = len(friends - neighbors)
     # 0.i.l
@@ -207,10 +210,12 @@ if __name__ == '__main__':
                     for t,value in states[name][stateKey(name,'alive')].items():
                         if not value:
                             actors[name] = t
-                            break        
+                            break
+            network = accessibility.readNetwork(args['instance'],args['run'],'Input' if 3 <= instance <= 14 else None)
         else:
             states = {}
             actors = accessibility.getLivePopulation(args,world,states,args['span'])
+            network = None
         pool = {name for name,death in actors.items() if death is None}
         demos = {name: accessibility.getCurrentDemographics(args,name,world,states,config,args['span']) for name in pool}
         participants = random.sample(pool,len(pool)//10)
@@ -234,7 +239,7 @@ if __name__ == '__main__':
             # 0.i.j
             record['Timestep'] = args['span']
             # 0.i.k
-            aidWillingnessEtc(args,agent,record,world,states,demos,hurricanes,pool,None if defined else variables)
+            aidWillingnessEtc(args,agent,record,world,states,demos,hurricanes,pool,None if defined else variables,network)
             # 1.one
             sources = [('i','Social Media'),('ii','Government Broadcast'),('iii','Government Officials'),('iv','Friends'),('v','Acquaintances'),
                 ('vi','Strangers'),('vii','Observation')]
@@ -554,5 +559,6 @@ if __name__ == '__main__':
                 if not cmd['debug']:
                     accessibility.writeVarDef(os.path.dirname(__file__),variables)
                 defined = True
+            raise RuntimeError
         if not cmd['debug']:
             accessibility.writeOutput(args,output,[var['Name'] for var in variables],'TA2A-TA1C-0252.tsv',os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance),'Runs','run-0'))

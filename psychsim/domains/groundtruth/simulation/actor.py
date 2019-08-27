@@ -1227,8 +1227,11 @@ class Actor(Agent):
         impact = likert[5][config.getint('Actors','health_impact')-1]
         self.setHealthDynamics(impact,impact/2,False)
 
-    def getFriends(self):
-        return self.friends
+    def getFriends(self,network=None):
+        if network is None:
+            return self.friends
+        else:
+            return network['friendOf'].get(self.name,set())
 
     def getNeighbors(self):
         try:
