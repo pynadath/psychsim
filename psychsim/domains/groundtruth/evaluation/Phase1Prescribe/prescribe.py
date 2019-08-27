@@ -152,10 +152,13 @@ if __name__ == '__main__':
                     for name in data:
                         if name[:5] == 'Actor':
                             for t,value in data[name][stateKey(name,'grievance')].items():
-                                if t > accessibility.instances[instance-1]['span']+1:
-                                    if value < 1.0:
-                                        assert value > data[name][stateKey(name,'grievance')][t-1],'%s vs. %s (%d)' % \
-                                            (value,data[name][stateKey(name,'grievance')][t-1],t)
+                                if instance < 12:
+                                    start = accessibility.instances[instance-1]['span']+1
+                                else:
+                                    start = 366
+                                if t > start and value < 1.0:
+                                    assert value > data[name][stateKey(name,'grievance')][t-1],'%s vs. %s (%d)' % \
+                                        (value,data[name][stateKey(name,'grievance')][t-1],t)
         # Simulate prescriptions
         for team in ['A','B']:
             for question in ['Constrained','Unconstrained','Individual'] if instance < 12 else ['Offseason','InSeason','Individual']:
