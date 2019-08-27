@@ -1,0 +1,5 @@
+We simplify this pairing by asking all of the original respondents of the pre- and post-hurricane surveys the same surveys for the subsequent hurricane. Thus, the participant IDs in the "Pre" response here are aligned with those from the original ActorPreTable files. The records in the "Post" response here include the original ActorPostTable entries (plus the additional fields requested), as well as the same participants' responses for the subsequent hurricane.
+
+We use 7-point scales to be consistent with the original surveys.
+
+4.iii: This is called Category in the Phase 2 version of the surveys, and we use the same label in this response as well.
