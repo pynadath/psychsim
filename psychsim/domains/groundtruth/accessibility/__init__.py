@@ -531,7 +531,10 @@ def getLivePopulation(args,world,states,t):
     else:
         return {name: getDeath(args,name,world,states,t) for name in world.agents if name[:5] == 'Actor'}
 
-def getCurrentDemographics(args,name,world,states,config,t):
+def getCurrentDemographics(args,name,world,states,config,t=None):
+    """
+    :param t: If None, read from the current world state
+    """
     if 'Actor0001' in states:
         # Backward compatibility with Phase 1
         return readDemographics(states,old=args['instance'] == 24,last=t,name=name)[name]
@@ -539,24 +542,55 @@ def getCurrentDemographics(args,name,world,states,config,t):
         entry = {}
         for field,key in demographics.items():
             if field == 'Wealth':
-                entry[field] = toLikert(getInitialState(args,name,'resources',world,states,t).first(),7)
+                if t is None:
+                    value = world.getState(name,'resources')
+                else:
+                    value = getInitialState(args,name,'resources',world,states,t)
+                entry[field] = toLikert(value.first(),7)
             elif field == 'Fulltime Job':
-                entry[field] = 'yes' if getInitialState(args,name,'employed',world,states,t).first() else 'no'
+                if t is None:
+                    value = world.getState(name,'employed')
+                else:
+                    value = getInitialState(args,name,'employed',world,states,t)
+                entry[field] = 'yes' if value.first() else 'no'
             elif field == 'Pets':
-                entry[field] = 'yes' if stateKey(name,'pet') in world.variables and \
-                    getInitialState(args,name,'pet',world,states,t).first() else 'no'
+                if stateKey(name,'pet') in world.variables:
+                    if t is None:
+                        value = world.getState(name,'pet')
+                    else:
+                        value = getInitialState(args,name,'pet',world,states,t)
+                    entry[field] = 'yes' if  value.first() else 'no'
+                else:
+                    entry[field] = 'no'
             elif field == 'Age':
-                entry[field] = world.agents[name].demographics[key] + int(t/config.getint('Disaster','year_length'))
+                if t is None:
+                    day = world.getState(WORLD,'day').first()
+                else:
+                    day = t
+                entry[field] = world.agents[name].demographics[key] + day//config.getint('Disaster','year_length')
             else:
                 entry[field] = world.agents[name].demographics[key]
         return entry
 
-def loadState(args,states,t,turn):
+def loadState(args,states,t,turn,world=None):
+    """
+    :param world: If provided, the state loaded will be applied to the world (clobbering the existing state and beliefs)
+    """
     if t not in states:
         states[t] = {}
     if turn not in states[t]:
         with open(instanceFile(args,'state%d%s.pkl' % (t,turn)),'rb') as f:
             states[t][turn] = pickle.load(f)
+    if world:
+        for name,state in states[t][turn].items():
+            if name == '__state__':
+                world.state = state
+            else:
+                agent = world.agents[name]
+                model = agent.getBelief().keys()
+                assert len(model) == 1
+                model = next(iter(model))
+                agent.models[model]['beliefs'] = state
 
 def getInitialState(args,name,feature,world,states,t,believer=None):
     if isinstance(t,int):
@@ -624,15 +658,16 @@ def readLog(args):
                     ER[-1][action['subject']][action] = float(words[-1])
     return ER
 
-def unpickle(instance,sub=None):
-    if instance == 1:
-        day = None
-    elif instance < 9:
-        day = instances[instance-1]['span']
-    elif instance < 15:
-        day = instances[instance-1]['span'] + 1
-    else:
-        day = 0
+def unpickle(instance,sub=None,day=None):
+    if day is None:
+        if instance == 1:
+            day = None
+        elif instance < 9:
+            day = instances[instance-1]['span']
+        elif instance < 15:
+            day = instances[instance-1]['span'] + 1
+        else:
+            day = 0
     if sub is None:
         if 3 <= instance <= 14:
             sub = 'Input'
@@ -640,3 +675,17 @@ def unpickle(instance,sub=None):
 
 def aidIfWealthLoss(agent):
     return sum([agent.Rweights[k] for k in ['health','childrenHealth','neighbors']])/sum(agent.Rweights.values())
+
+def holoCane(world,name,span):
+    belief = world.agents[name].getBelief().values()
+    assert len(belief) == 1
+    belief = next(iter(belief))
+    step = 3
+    phase = 'none'
+    history = [copy.deepcopy(belief)]
+    while step // 3 < span or phase != 'none':
+        world.step(state=belief,select='max',keySubset=belief.keys())
+        step += 1
+        phase = world.getState('Nature','phase',belief).first()
+        history.append(copy.deepcopy(belief))
+    return history
