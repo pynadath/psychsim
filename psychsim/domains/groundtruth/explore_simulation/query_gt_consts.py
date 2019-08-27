@@ -1,3 +1,5 @@
+THISISFALSE = "thisisfalse"
+
 description = "description"
 parameters = "param"
 commands = "commands"
@@ -8,8 +10,11 @@ values_in = "values in"
 empty = "empty"
 random_str = "random"
 ordered = "ordered"
-actors_list = "actors_list"
-filters_list = "filters_list"
+# actors_list = "actors_list"
+# filters_list = "filters_list"
+active = "active"
+true_values = ["true", "1", "t", "yes", "y"]
+false_values = ["false", "0", "f", "no", "n"]
 
 DAY = "day"
 ATTRIBUTE = "attribute"
@@ -19,10 +24,12 @@ OPERATOR_VALUES_IN = ["<", "<=", "=<", ">", ">=", "=>", "="]
 ACTOR = "actor"
 MODE_SELECTION = "mode_selection"
 MODE_SELECTION_VALUES_IN = [random_str, ordered]
-MODE_DISPLAY = "mode_display"
-MODE_DISPLAY_VALUES_IN = [actors_list, filters_list]
+# MODE_DISPLAY = "mode_display"
+# MODE_DISPLAY_VALUES_IN = [actors_list, filters_list]
 NUMBER = "number"
 ENTITY = "entity"
+NAME = "name"
+ACTIVE = "active"
 
 QUERY_PARAM = {
     DAY: ["day", "d"],
@@ -30,10 +37,12 @@ QUERY_PARAM = {
     ATTRIBUTE: ["attribute", "att"],
     MODE_SELECTION: ["mode_selection", "modeselect", "modeselection", "ms"],
     NUMBER: ["number", "n"],
-    MODE_DISPLAY: ["mode_display", "mode display", "md"],
+    # MODE_DISPLAY: ["mode_display", "mode display", "md"],
     ATTRIBUTE_VAL: ["value", "att_value", "val", "att_val"],
     OPERATOR: ["operator", "op", "o"],
-    ENTITY: ["entity", "e"]
+    ENTITY: ["entity", "e"],
+    NAME: ["name", "n"],
+    ACTIVE: ["active"]
 }
 ALL_QUERY_PARAMS = [y for x in QUERY_PARAM.values() for y in x ]
 
@@ -46,7 +55,8 @@ COMMAND_GET_ATTNAMES = "get attribute_names", "get attnames", "get att_n", "get 
 # Selecting agents
 COMMAND_SELECT_NACTORS = "select actors", "select a", "s a", "select n", "s n"
 COMMAND_RESET_SELECTION = "reset selection", "del actors", "del a", "reset s", "reset a", "r s"
-COMMAND_SHOW_SELECTION = "show selection", "show s", "show a", "show actors"
+COMMAND_SHOW_SELECTION = "show selection", "show s", "show a", "show actors", "display selection", "display s", "display a", "display actors"
+COMMAND_SHOW_FILTERS = "show filters", "show f", "s f", "display filters", "display f", "d f"
 COMMAND_APPLY_FILTER = "apply filter", "a f"
 
 # Getting info about a specific agent
@@ -82,8 +92,8 @@ HELP = {
             }
         },
 
-        CATEGORY_SELECTING_ACTORS : {
-             COMMAND_SELECT_NACTORS: {
+        CATEGORY_SELECTING_ACTORS: {
+            COMMAND_SELECT_NACTORS: {
                 description: "Selects a group of actors to then execute queries on",
                 parameters: [
                     {name: ACTOR,
@@ -99,15 +109,19 @@ HELP = {
                 parameters: ""
             },
             COMMAND_SHOW_SELECTION: {
-                description: "Show the actors (mode actors_list) selected or the criteria (more criteria_list) used to selec the actors",
+                description: "Show the actors selected (list of names)",
+                parameters: []
+            },
+            COMMAND_SHOW_FILTERS: {
+                description: "Shows the filters used for actor selection",
                 parameters: [
-                    {name: MODE_DISPLAY,
-                     optional: False}
+                    {name: ACTIVE,
+                     optional: True}
                 ]
             },
             COMMAND_APPLY_FILTER: {
                 description: "Applies a filter a selection",
-                parameters : [
+                parameters: [
                     {name: ATTRIBUTE,
                      optional: False},
                     {name: OPERATOR,
@@ -115,7 +129,9 @@ HELP = {
                     {name: ATTRIBUTE_VAL,
                      optional: False},
                     {name: DAY,
-                     optional: False}
+                     optional: False},
+                    {name: NAME,
+                     optional: True}
                 ]
             }
         },
@@ -161,11 +177,11 @@ HELP = {
             description: "Mode for selecting agents",
             values_in: MODE_SELECTION_VALUES_IN
         },
-        MODE_DISPLAY: {
-            value_type: "str",
-            description: "Mode for displaying selection",
-            values_in: MODE_DISPLAY_VALUES_IN
-        },
+        # MODE_DISPLAY: {
+        #     value_type: "str",
+        #     description: "Mode for displaying selection",
+        #     values_in: MODE_DISPLAY_VALUES_IN
+        # },
         NUMBER: {
             value_type: "int",
             description: "Integer"
@@ -173,6 +189,14 @@ HELP = {
         ENTITY: {
             value_type: "Name of an entity (str)",
             description: "E.g. in GROUND TRUTH, Actor or Region"
+        },
+        NAME: {
+            value_type: "str",
+            description: "Allows the user to set a name (e.g. for filters)"
+        },
+        ACTIVE: {
+            value_type: "bool (True or False)",
+            description: "By default is True."
         }
     }
 }

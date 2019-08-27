@@ -6,31 +6,38 @@ import os
 def remove_numbers_from_string(input_string):
     return re.sub(r'\d+', '', input_string)
 
+
 def print_with_buffer(message, buffer=None):
     if buffer:
         print(message, buffer)
     else:
         print(message)
 
+
 def string_between_parentheses(s):
     return  s[s.find("(")+1:s.find(")")]
+
 
 def extract_floats(s):
     return re.findall("\d+\.\d+", s)
 
+
 def sort_dic_by_values(x):
     return sorted(x.items(), key=operator.itemgetter(1))
+
 
 def add_space_at_end(s, n=1):
     for i in range(n):
         s += " "
     return s
 
+
 def get_list_of_files(mypath, ext=None):
     files = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
     if ext:
         files = [f for f in files if f.endswith('.'+ext)]
     return files
+
 
 def count_files(mypath, ext=None):
     return len(get_list_of_files(mypath, ext))
@@ -45,6 +52,7 @@ def str_distribution(distrib, tabs=""):
         len_el = len(str(el).expandtabs())
         s += tabs + "%s \t (certainty: %d%%)\n" % (str(el), 100*distrib[el])
     return s[:-1]
+
 
 def get_val(distrib):
     elts = distrib._domain.values()
@@ -64,21 +72,29 @@ def str_aligned_values(dictionary, tabs=""):
         s += str_key_value_with_space_between(key, value, n_space=spaces, tabs=tabs) + "\n"
     return s[:-1]
 
+
 def str_key_value_with_space_between(key, value, n_space=1, separator=":", tabs=""):
     s = tabs + key + separator
     for i in range(n_space):
         s += " "
     s += "\t" + value
-    return  s
+    return s
+
 
 def compare(v1, v2, op):
+    if (isinstance(v1, float) or isinstance(v1, int)) and (isinstance(v1, float) or isinstance(v1, int)):
+        all_operations_valid = True
+    else:
+        all_operations_valid = False
     if op == "=":
         return  v1 == v2
-    elif op == '<':
+    elif op == '<' and all_operations_valid:
         return v1 < v2
-    elif op == '>':
+    elif op == '>' and all_operations_valid:
         return v1 > v2
-    elif op in ['<=', '=<']:
+    elif op in ['<=', '=<'] and all_operations_valid:
         return v1 <= v2
-    elif op in ['>=', '=>']:
+    elif op in ['>=', '=>'] and all_operations_valid:
         return v1 >= v2
+    # print("ERROR: Cannot compare %s (%s) with %s (%s)" % (v1.__str__(), type(v1), v2.__str__(), type(v2)))
+    return False

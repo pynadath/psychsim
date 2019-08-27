@@ -4,6 +4,7 @@ import re
 from termcolor import colored
 import os
 import random
+import json
 
 import psychsim.domains.groundtruth.explore_simulation.query_gt_consts as consts
 import psychsim.domains.groundtruth.explore_simulation.helper_functions as helper
@@ -132,6 +133,7 @@ class LogParser:
         self.selected_agents = list()
         self.filter_list = list()
         self.selection_criteria_empty = True
+        self.filter_name_i = 1
 
         self.parse_logs(buffer)
 
@@ -147,9 +149,11 @@ class LogParser:
         self.query_param[consts.ATTRIBUTE] = None
         self.query_param[consts.NUMBER] = -1
         self.query_param[consts.MODE_SELECTION] = consts.random_str
-        self.query_param[consts.MODE_DISPLAY] = consts.actors_list
+        # self.query_param[consts.MODE_DISPLAY] = consts.actors_list
         self.query_param[consts.ATTRIBUTE_VAL] = False
         self.query_param[consts.ENTITY] = None
+        self.query_param[consts.NAME] = None
+        self.query_param[consts.ACTIVE] = True
 
 
 
@@ -160,7 +164,7 @@ class LogParser:
         :return:
         """
         if not os.path.isdir(self.logs_dir):
-            print("%s is not a directory. The instance or the run specified doesnot exists." % self.logs_dir, buffer)
+            print("%s is not a directory. The instance or the run specified does not exists." % self.logs_dir, buffer)
             exit(0)
         self.n_days = int((helper.count_files(self.logs_dir, ext="pkl") - 1) / 3)
 
@@ -202,13 +206,13 @@ class LogParser:
     ##                                     Loop: read and execute commands                                    ##
     ############################################################################################################
 
-    def query_log(self):
+    def query_log(self, text_intro="Ready to query log. "):
         """
         Main loop: read a query from the user and executes it.
         :return:
         """
         q= False
-        print(colored("Ready to query log. Use q to quit and h for help.", "red"))
+        print(colored(text_intro+"Use q to quit and h for help.", "red"))
         while(not q):
             query = input(colored("Query: ", "red"))
             if query == 'q':
@@ -305,6 +309,21 @@ class LogParser:
             print_with_buffer("ValueError: parameter %s takes integers, got %s" % (p_name, p_val), buffer)
             return False
 
+
+    def set_p_bool(self, p_name, p_val, buffer):
+        lower_case_val = p_val.lower()
+        if lower_case_val in consts.true_values:
+            self.query_param[p_name] = True
+            return True
+        elif lower_case_val in consts.false_values:
+            self.query_param[p_name] = False
+            return True
+        else:
+            s_true_and_false = ", ".join(consts.true_values) + ", " + ", ".join(consts.false_values)
+            print_with_buffer("ValueError: parameter %s takes booleans, got %s. Valid values are: %s" % (p_name, p_val, s_true_and_false), buffer)
+            return False
+
+
     def set_p_day(self, p_val, buffer):
         """
         Set the value of the DAY parameter
@@ -340,12 +359,12 @@ class LogParser:
         """
         return self.set_p_with_values_in(p_name=consts.MODE_SELECTION, p_val=p_val, values_in_list=consts.MODE_SELECTION_VALUES_IN, buffer=buffer)
 
-    def set_p_mode_display(self, p_val, buffer):
-        """
-        Set the value of the display mode parameter
-        :return: True or False
-        """
-        return self.set_p_with_values_in(p_name=consts.MODE_DISPLAY, p_val=p_val, values_in_list=consts.MODE_DISPLAY_VALUES_IN, buffer=buffer)
+    # def set_p_mode_display(self, p_val, buffer):
+    #     """
+    #     Set the value of the display mode parameter
+    #     :return: True or False
+    #     """
+    #     return self.set_p_with_values_in(p_name=consts.MODE_DISPLAY, p_val=p_val, values_in_list=consts.MODE_DISPLAY_VALUES_IN, buffer=buffer)
 
     def set_p_operator(self, p_val, buffer):
         """
@@ -365,6 +384,13 @@ class LogParser:
         self.query_param[consts.ATTRIBUTE] = p_val
         return True
 
+    def set_p_name(self, p_val, buffer):
+        self.query_param[consts.NAME] = p_val
+        return True
+
+    def set_p_active(self, p_val, buffer):
+        return self.set_p_bool(consts.ACTIVE, p_val, buffer)
+
 
     def set_param_value(self, p_name, p_val, buffer=None):
         """
@@ -382,8 +408,8 @@ class LogParser:
             return self.set_p_number(p_val, buffer)
         elif p_name in consts.QUERY_PARAM[consts.MODE_SELECTION]:
             return  self.set_p_mode_selection(p_val, buffer)
-        elif p_name in consts.QUERY_PARAM[consts.MODE_DISPLAY]:
-            return self.set_p_mode_display(p_val, buffer)
+        # elif p_name in consts.QUERY_PARAM[consts.MODE_DISPLAY]:
+        #     return self.set_p_mode_display(p_val, buffer)
         elif p_name in consts.QUERY_PARAM[consts.ATTRIBUTE]:
             return self.set_p_attribute(p_val, buffer)
         elif p_name in consts.QUERY_PARAM[consts.ATTRIBUTE_VAL]:
@@ -392,6 +418,10 @@ class LogParser:
             return self.set_p_operator(p_val, buffer)
         elif p_name in consts.QUERY_PARAM[consts.ENTITY]:
             return self.set_p_entity(p_val, buffer)
+        elif p_name in consts.QUERY_PARAM[consts.NAME]:
+            return self.set_p_name(p_val, buffer)
+        elif active in consts.QUERY_PARAM[consts.ACTIVE]:
+            return self.display_filters(p_val, buffer)
         else:
             print_with_buffer("ParamaterError: %s does not exists." % p_name, buffer)
             return False
@@ -427,11 +457,14 @@ class LogParser:
             elif self.command in consts.COMMAND_SELECT_NACTORS:
                 self.select_nactors(p_n=self.query_param[consts.NUMBER], p_actors=None, p_mode_select=self.query_param[consts.MODE_SELECTION], buffer=buffer)
             elif self.command in consts.COMMAND_SHOW_SELECTION:
-                self.display_actor_selection(p_display_mode=self.query_param[consts.MODE_DISPLAY], buffer=buffer)
+                self.display_actor_selection(buffer=buffer)
+            elif self.command in consts.COMMAND_SHOW_FILTERS:
+                self.display_filters(self.query_param[consts.ACTIVE], buffer)
             elif self.command in consts.COMMAND_RESET_SELECTION:
                 self.reset_selection(buffer)
             elif self.command in consts.COMMAND_APPLY_FILTER:
-                self.apply_filter(p_day=self.query_param[consts.DAY], p_att=self.query_param[consts.ATTRIBUTE], p_val=self.query_param[consts.ATTRIBUTE_VAL], p_operator=self.query_param[consts.OPERATOR], buffer=buffer )
+                p_day, p_att, p_val, p_op, p_name = self.query_param[consts.DAY], self.query_param[consts.ATTRIBUTE], self.query_param[consts.ATTRIBUTE_VAL], self.query_param[consts.OPERATOR], self.query_param[consts.NAME]
+                self.apply_filter(p_day=p_day, p_att=p_att, p_val=p_val, p_operator=p_op, p_name=p_name, buffer=buffer)
             elif self.command in consts.COMMAND_GET_ENTITIES:
                 self.get_entities(buffer)
             elif self.command in consts.COMMAND_GET_ATTNAMES:
@@ -481,7 +514,10 @@ class LogParser:
         :param buffer:
         :return:
         """
-        print_with_buffer("The attributes associated with the categoy %s are: %s." % (p_entity, " ,".join(self.entities_att_list[p_entity])))
+        if p_entity:
+            print_with_buffer("The attributes associated with the category %s are: %s." % (p_entity, " ,".join(self.entities_att_list[p_entity])), buffer)
+        else:
+            print_with_buffer("MssingParamterError: expecting an entity", buffer)
 
     ## ---------------------------------------       Select agents           -------------------------------- ##
 
@@ -532,7 +568,7 @@ class LogParser:
         self.display_actor_selection(buffer=buffer)
 
 
-    def display_actor_selection(self, p_display_mode=consts.actors_list, buffer=None):
+    def display_actor_selection(self, buffer=None):
         """
         Display the selection by by actors list (names) or filters list.
         :param p_display_mode: criteria or names.
@@ -541,15 +577,15 @@ class LogParser:
         """
         if len(self.selected_agents) == self.n_actors:
             print_with_buffer("All agents are selected", buffer)
-        elif p_display_mode == consts.actors_list:
+        else:
             print_with_buffer("%d agents are selected:\n" % len(self.selected_agents), buffer)
             print_with_buffer(", ".join(self.selected_agents), buffer)
-        elif p_display_mode == consts.filters_list:
-            filters_str_list = [f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " at " + consts.DAY + " " + f[consts.DAY] for f in self.filter_list]
-            filters_str = "\n\t- ".join(filters_str_list)
-            print_with_buffer("%d agents are selected:\n%d filter(s) are applied:\n\t- %s" % (len(self.selected_agents), len(self.filter_list), filters_str), buffer)
 
 
+    def display_filters(self, active=True, buffer=None):
+        filters_str_list = [f[consts.NAME] + ": " + f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " at " + consts.DAY + " " + f[consts.DAY] for f in self.filter_list if f[consts.active] is active]
+        filters_str = "\n\t- ".join(filters_str_list)
+        print_with_buffer("%d agents are selected:\n%d filter(s) are active:\n\t- %s" % (len(self.selected_agents), len(self.filter_list), filters_str), buffer)
 
 
     def reset_selection(self, buffer):
@@ -616,11 +652,15 @@ class LogParser:
         if os.path.exists(file_name):
             with open(file_name, 'rb') as f:
                 content = pickle.load(f)
-                distrib = content['__state__'][actor_name+"'s "+p_att]
-                return helper.get_val(distrib=distrib)
+                k = actor_name+"'s "+p_att
+                if k in content['__state__'].keys():
+                    distrib = content['__state__'][k]
+                    return helper.get_val(distrib=distrib)
+                else:
+                    return consts.THISISFALSE
 
 
-    def add_filter_to_filter_list(self, p_day, p_att, p_val, p_operator, buffer=None):
+    def add_filter_to_filter_list(self, p_day, p_att, p_val, p_operator, p_name, buffer=None):
         """
         Adds a new filter in our filter list to remember it.
         """
@@ -629,6 +669,16 @@ class LogParser:
         new_filter[consts.ATTRIBUTE] = p_att
         new_filter[consts.ATTRIBUTE_VAL] = p_val
         new_filter[consts.OPERATOR] = p_operator
+        new_filter[consts.active] = True
+        if p_name:
+            if p_name in [f[consts.NAME] for f in self.filter_list]:
+                forbidden_name = p_name
+                p_name = "filter" + self.filter_name_i.__str__()
+                print_with_buffer("There already is a filter named %s. Your filter is automatically renamed to %s." % (forbidden_name, p_name), buffer)
+            new_filter[consts.NAME] = p_name
+        else:
+            new_filter[consts.NAME] = "filter" + self.filter_name_i.__str__()
+            self.filter_name_i += 1
         self.filter_list.append(new_filter)
 
 
@@ -639,13 +689,13 @@ class LogParser:
         """
         for filter in self.filter_list:
             if filter[consts.DAY] == p_day and filter[consts.ATTRIBUTE] == p_att and filter[consts.ATTRIBUTE_VAL] == p_val and filter[consts.OPERATOR] == p_operator:
-                print_with_buffer("Filter already applied", buffer)
+                print_with_buffer("Filter already applied (%s)" % filter[consts.NAME], buffer)
                 return True
         return False
 
 
 
-    def apply_filter(self, p_day, p_att, p_val, p_operator, buffer=None):
+    def apply_filter(self, p_day, p_att, p_val, p_operator, p_name=None, buffer=None):
         """
         Applies a filter to the currently selected agents. A filter is for example "location = 2 at da 1" or "health > 0.6 at day 16"
         :param p_day: day for which the selection should be done.
@@ -661,19 +711,60 @@ class LogParser:
                 print_with_buffer("FilterError: Given the current selection, no agents fulfil your new criteria --> new filter CANNOT be applied.", buffer)
             else:
                 self.selected_agents = new_selection
-                self.add_filter_to_filter_list(p_day, p_att, p_val, p_operator, buffer)
+                self.add_filter_to_filter_list(p_day, p_att, p_val, p_operator, p_name, buffer)
                 print_with_buffer("After applying filter", buffer=buffer)
                 self.display_actor_selection()
         # att_val = self.get_att_val("1", p_att, p_day)
         # print(att_val)
+
+
+    def demo(self, autotest=False, buffer=None):
+        with open("psychsim/domains/groundtruth/explore_simulation/demo.json", 'rb') as f:
+            content = json.load(f)
+        for i, ex in enumerate(content):
+            query = ex["command"]
+            text = ex["explanations"]
+            if autotest:
+                print(colored("Wait while we execute predefined queries...", "red"))
+                print(colored(query, "green"))
+                self.execute_query(preprocess(query))
+            else:
+                if i == 0:
+                    next = input(colored("We thought we would make it easy for you :-)\nWe will walk you through an example with pre-written queries. You'll just have to press \"y\" execute the next query when you're ready.\nShould we start? (y: yes, q: quit) > ", "red"))
+                    if next.lower() == "q":
+                        exit(1)
+                print(colored(text, "blue"))
+                print(colored(query, "green"))
+                self.execute_query(preprocess(query))
+                if i < (len(content) - 1):
+                    next = input(colored("Next query? (y: yes, q: quit) > ", "red"))
+                    if next.lower() == "q":
+                        exit(1)
+        self.query_log(text_intro = "You can continue explore this simulation. ")
+
+
 
 if __name__ == "__main__":
 
     argp = argparse.ArgumentParser()
     argp.add_argument('-i', metavar='instance', type=str, help='Instance number to process.')
     argp.add_argument('-r', metavar='run', type=str, help='Run number to process.')
+    argp.add_argument("--autotest", help="Auto test using demo.json", action="store_true")
+    argp.add_argument("--test", help="Test the tool yourself", action="store_true")
+    argp.add_argument("--demo", help="Demo of the explore_simulation tool", action="store_true")
 
     args = argp.parse_args()
 
     logparser = LogParser(args.i, args.r)
-    logparser.query_log()
+    if (args.test):
+        logparser.query_log()
+    elif (args.autotest):
+        logparser.demo(autotest=True)
+    elif (args.demo):
+        logparser.demo(autotest=False)
+    else:
+        argp.print_help()
+        exit(0)
+
+
+
