@@ -1,0 +1,35 @@
+[
+    {
+        "command": "get entities",
+        "explanations": "What type of entities are there in the simulation?"
+    },
+    {
+        "command": "get attribute_names -entity Actor",
+        "explanations": "What attributes are attached to an Actor?"
+    },
+    {
+        "command": "get nactors",
+        "explanations": "How many Actors are there in the simulation?"
+    },
+    {
+        "command": "apply filter -attribute health -value 0.8 -operator >= -day 16",
+        "explanations": "Select Actors that are in good health on the last day of the simulation."
+
+    },
+    {
+        "command": "apply filter -attribute childrenHealth -value 0.8 -operator >= -day 16 -name healthychildren",
+        "explanations": "Refine search by selecting actors whose children are healthy as well on the last day."
+    },
+    {
+        "command": "apply filter -attribute employed -value 1 -operator = -day 1",
+        "explanations": "Out of those, get me the ones that were employed at the beginning of the simulation..."
+    },
+    {
+        "command": "apply filter -attribute employed -value 1 -operator = -day 16",
+        "explanations": "...and that are still employed at the end."
+    },
+    {
+        "command": "show filters",
+        "explanations": "Show me which filters are active."
+    }
+]
