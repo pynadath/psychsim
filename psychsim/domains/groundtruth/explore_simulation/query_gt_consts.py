@@ -9,7 +9,7 @@ empty = "empty"
 random_str = "random"
 ordered = "ordered"
 actors_list = "actors_list"
-criteria_list = "criteria_list"
+filters_list = "filters_list"
 
 DAY = "day"
 ATTRIBUTE = "attribute"
@@ -20,7 +20,7 @@ ACTOR = "actor"
 MODE_SELECTION = "mode_selection"
 MODE_SELECTION_VALUES_IN = [random_str, ordered]
 MODE_DISPLAY = "mode_display"
-MODE_DISPLAY_VALUES_IN = [actors_list, criteria_list]
+MODE_DISPLAY_VALUES_IN = [actors_list, filters_list]
 NUMBER = "number"
 ENTITY = "entity"
 

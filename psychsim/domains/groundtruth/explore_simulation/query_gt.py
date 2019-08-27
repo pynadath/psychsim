@@ -130,8 +130,8 @@ class LogParser:
         self.init_queryparams()
 
         self.selected_agents = list()
-        self.selection_criteria = dict()
-        self.selection_criteria[consts.empty] = True
+        self.filter_list = list()
+        self.selection_criteria_empty = True
 
         self.parse_logs(buffer)
 
@@ -491,8 +491,9 @@ class LogParser:
         :param p_n: number of actors the user wanted to select
         :param buffer:
         :return:
+        TODO: check this selection_criteria_empty thingy...
         """
-        if self.selection_criteria[consts.empty] == True:
+        if self.selection_criteria_empty == True:
             error_msg = "Selection Error: There are only %d actors in the simulation, we cannot select %d actors." % (self.n_actors, p_n)
         else:
             error_msg = "Your criteria are too restrictive go select %d actors. There are only %d actors that fulfil your criteria" % (self.n_actors, len(self.selected_agents))
@@ -533,7 +534,7 @@ class LogParser:
 
     def display_actor_selection(self, p_display_mode=consts.actors_list, buffer=None):
         """
-        Display the selection by by actors list (names) or (TODO) criteria list.
+        Display the selection by by actors list (names) or filters list.
         :param p_display_mode: criteria or names.
         :param buffer:
         :return:
@@ -543,6 +544,13 @@ class LogParser:
         elif p_display_mode == consts.actors_list:
             print_with_buffer("%d agents are selected:\n" % len(self.selected_agents), buffer)
             print_with_buffer(", ".join(self.selected_agents), buffer)
+        elif p_display_mode == consts.filters_list:
+            filters_str_list = [f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " at " + consts.DAY + " " + f[consts.DAY] for f in self.filter_list]
+            filters_str = "\n\t- ".join(filters_str_list)
+            print_with_buffer("%d agents are selected:\n%d filter(s) are applied:\n\t- %s" % (len(self.selected_agents), len(self.filter_list), filters_str), buffer)
+
+
+
 
     def reset_selection(self, buffer):
         """
@@ -570,7 +578,7 @@ class LogParser:
         if p_actor == None:
             print_with_buffer("ParameterError: missing parameter -%s for command \"get attibute(s)\"" % consts.ACTOR, buffer)
             return False
-        p_day_not_set = False
+
         if p_day == -1:
             print_with_buffer("ParameterError: missing parameter -%s for command \"get attibute(s)\"" % consts.DAY, buffer)
             return False
@@ -612,10 +620,34 @@ class LogParser:
                 return helper.get_val(distrib=distrib)
 
 
+    def add_filter_to_filter_list(self, p_day, p_att, p_val, p_operator, buffer=None):
+        """
+        Adds a new filter in our filter list to remember it.
+        """
+        new_filter = dict()
+        new_filter[consts.DAY] = p_day
+        new_filter[consts.ATTRIBUTE] = p_att
+        new_filter[consts.ATTRIBUTE_VAL] = p_val
+        new_filter[consts.OPERATOR] = p_operator
+        self.filter_list.append(new_filter)
+
+
+    def check_filter_already_applied(self, p_day, p_att, p_val, p_operator, buffer=None):
+        """
+        Checks weather the filter is already applied.
+        :return: True or False
+        """
+        for filter in self.filter_list:
+            if filter[consts.DAY] == p_day and filter[consts.ATTRIBUTE] == p_att and filter[consts.ATTRIBUTE_VAL] == p_val and filter[consts.OPERATOR] == p_operator:
+                print_with_buffer("Filter already applied", buffer)
+                return True
+        return False
+
+
+
     def apply_filter(self, p_day, p_att, p_val, p_operator, buffer=None):
         """
-        Applies a filter to the currently selected agents. A filter is for example "location = 2" of "health > 0.6"
-        TODO: Save filter as the selection criteria.
+        Applies a filter to the currently selected agents. A filter is for example "location = 2 at da 1" or "health > 0.6 at day 16"
         :param p_day: day for which the selection should be done.
         :param p_att: attribute on which we are filtering actors.
         :param p_val: value given by the user.
@@ -623,9 +655,15 @@ class LogParser:
         :param buffer:
         :return:
         """
-        print_with_buffer("After applying filter", buffer=buffer)
-        self.selected_agents = [agent for agent in self.selected_agents if helper.compare(v1=self.get_att_val(agent, p_att=p_att, p_day=p_day), v2=p_val, op=p_operator)]
-        self.display_actor_selection()
+        if not self.check_filter_already_applied(p_day, p_att, p_val, p_operator, buffer):
+            new_selection = [agent for agent in self.selected_agents if helper.compare(v1=self.get_att_val(agent, p_att=p_att, p_day=p_day), v2=p_val, op=p_operator)]
+            if len(new_selection) == 0:
+                print_with_buffer("FilterError: Given the current selection, no agents fulfil your new criteria --> new filter CANNOT be applied.", buffer)
+            else:
+                self.selected_agents = new_selection
+                self.add_filter_to_filter_list(p_day, p_att, p_val, p_operator, buffer)
+                print_with_buffer("After applying filter", buffer=buffer)
+                self.display_actor_selection()
         # att_val = self.get_att_val("1", p_att, p_day)
         # print(att_val)
 
