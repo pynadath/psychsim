@@ -67,7 +67,7 @@ class System(Agent):
     def setAidDynamics(self,population):
         regions = self.getPopulated(population)
         delta = self.grievanceDelta(regions)
-        if config.getboolean('System','aid',fallback=True):
+        if self.config.getboolean('System','aid',fallback=True):
             #//GT: node 37; 1 of 1; next 12 lines
             for region in regions:
                 allocate = self.addAction({'verb': 'allocate','object': region},codePtr=True)
