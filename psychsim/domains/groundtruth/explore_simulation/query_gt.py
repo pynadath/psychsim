@@ -132,7 +132,6 @@ class LogParser:
 
         self.selected_agents = list()
         self.filter_list = list()
-        self.selection_criteria_empty = True
         self.filter_name_i = 1
 
         self.parse_logs(buffer)
@@ -322,6 +321,13 @@ class LogParser:
 
 
     def set_p_bool(self, p_name, p_val, buffer):
+        """
+        Sets the value of a boolean query paramter in the self,query_param object
+        :param p_name: name of the parameter
+        :param p_val: value of the parameter (retrieved for the user's query)
+        :param buffer:
+        :return: True of False
+        """
         lower_case_val = p_val.lower()
         if lower_case_val in consts.true_values:
             self.query_param[p_name] = True
@@ -396,14 +402,26 @@ class LogParser:
         return True
 
     def set_p_name(self, p_val, buffer):
+        """
+        Sets the value of the name paramter
+        """
         self.query_param[consts.NAME] = p_val
         return True
 
     def set_p_type(self, p_val, buffer):
+        """
+        Sets the value of the TYPE parameter
+        """
         return self.set_p_with_values_in(p_name=consts.TYPE, p_val=p_val, values_in_list=consts.TYPE_VALUES_IN, buffer=buffer)
 
 
     def set_p_actors_list(self, numbers_list, buffer):
+        """
+        Sets the value of the actors_list parameter.
+        :param numbers_list:
+        :param buffer:
+        :return:
+        """
         param_ok = True
         for i in numbers_list:
             param_ok = self.set_p_int_or_float(p_name=consts.ACOTRS_LIST, p_val=i, p_type=int, p_max=self.n_actors, p_to_str=True, buffer=buffer)
@@ -443,6 +461,8 @@ class LogParser:
             return self.set_p_name(p_val, buffer)
         elif p_name in consts.QUERY_PARAM[consts.TYPE]:
             return self.set_p_type(p_val, buffer)
+        elif p_name in consts.QUERY_PARAM[consts.ACOTRS_LIST]:
+            return self.set_p_actors_list([p_val], buffer)
         else:
             print_with_buffer("ParamaterError: %s does not exists." % p_name, buffer)
             return False
@@ -554,12 +574,11 @@ class LogParser:
         :param p_n: number of actors the user wanted to select
         :param buffer:
         :return:
-        TODO: check this selection_criteria_empty thingy...
         """
-        if self.selection_criteria_empty == True:
+        if not self.filter_list:
             error_msg = "Selection Error: There are only %d actors in the simulation, we cannot select %d actors." % (self.n_actors, p_n)
         else:
-            error_msg = "Your criteria are too restrictive go select %d actors. There are only %d actors that fulfil your criteria" % (self.n_actors, len(self.selected_agents))
+            error_msg = "Your filters are too restrictive to select %d actors. With these filters, you can sample at most %d actors" % (self.n_actors, len(self.selected_agents))
         print_with_buffer(error_msg, buffer)
 
     def select_nactors(self, p_n=-1, p_mode_select=consts.random_str, buffer=None):

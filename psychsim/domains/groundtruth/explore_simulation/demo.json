@@ -46,7 +46,15 @@
         "explanations": "No, you changed your mind again, that was a mistake, reactivate the healthychildren filter!"
     },
     {
+        "command": "select n_actors -number 50",
+        "explanations": "You want to ramdomly select 50 agents that fulfil all your criteria (filters)."
+    },
+    {
         "command": "select actors_by_name -actors_list 22 45 67",
+        "explanations": "Among those actors, select 3. You want # 22, 45 and 76"
+    },
+    {
+        "command": "select actors_by_name -actors_list 28",
         "explanations": "Among those actors, select 3. You want # 22, 45 and 76"
     }
 ]
