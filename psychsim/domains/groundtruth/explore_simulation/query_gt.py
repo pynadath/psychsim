@@ -587,6 +587,11 @@ class LogParser:
 
 
     def filters_to_str(self, f):
+        """
+        Creates a string describing the filter.
+        :param f: filter object
+        :return: string
+        """
         active = "active" if f[consts.active] else "inactive"
         return f[consts.NAME] + ": " + f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " at " + consts.DAY + " " + f[consts.DAY] + "  (" + active + ")"
 
@@ -749,6 +754,12 @@ class LogParser:
 
 
     def get_filter(self, p_name, buffer):
+        """
+        Finds a filter given a filter name in the list of filters
+        :param p_name: name of the filter to look for
+        :param buffer:
+        :return: filter object
+        """
         for f in self.filter_list:
             if f[consts.NAME] == p_name:
                 return f
@@ -757,6 +768,12 @@ class LogParser:
 
 
     def deactivate_filter(self, p_name, buffer=None):
+        """
+        Deactivates a filter --> performs agent selection again after cancelling the filter.
+        :param p_name: name of filter to deactivate
+        :param buffer:
+        :return:
+        """
         filter = self.get_filter(p_name, buffer)
         if filter:
             filter[consts.active] = False
@@ -774,10 +791,19 @@ class LogParser:
 
 
     def reactivate_filter(self, p_name, buffer=None):
+        """
+        Reactivates an inactive filter --> re-selects the agents accordingly
+        :param p_name: filter name
+        :param buffer:
+        :return:
+        """
         f = self.get_filter(p_name, buffer)
         if f:
-            self.filter_list.remove(f)
-            self.apply_filter(p_day=f[consts.DAY], p_att=f[consts.ATTRIBUTE], p_val=f[consts.ATTRIBUTE_VAL], p_operator=f[consts.OPERATOR], p_name=f[consts.NAME])
+            if not f[consts.active]:
+                self.filter_list.remove(f)
+                self.apply_filter(p_day=f[consts.DAY], p_att=f[consts.ATTRIBUTE], p_val=f[consts.ATTRIBUTE_VAL], p_operator=f[consts.OPERATOR], p_name=f[consts.NAME])
+            else:
+                print_with_buffer("Filter %s is already active" % p_name, buffer)
 
 
 
