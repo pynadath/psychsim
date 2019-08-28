@@ -52,9 +52,5 @@
     {
         "command": "select actors_by_name -actors_list 22 45 67",
         "explanations": "Among those actors, select 3. You want # 22, 45 and 76"
-    },
-    {
-        "command": "select actors_by_name -actors_list 28",
-        "explanations": "Among those actors, select 3. You want # 22, 45 and 76"
     }
 ]

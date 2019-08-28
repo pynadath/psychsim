@@ -609,7 +609,13 @@ class LogParser:
 
 
     def select_actors_by_name(self, p_list_names, buffer=None):
-        print(colored("WARNING: all your filters are now deactivated because you selected agents by names!!!", "cyan"))
+        """
+        Selects actors by their number.
+        :param p_list_names: list of numbers (str, mapped to actors' names).
+        :param buffer:
+        :return:
+        """
+        print(colored("WARNING: all your filters are now deactivated because you selected agents by names!!!", "cyan"), buffer)
         for f in self.filter_list:
             f[consts.active] = False
         self.selected_agents = self.actors_full_list
