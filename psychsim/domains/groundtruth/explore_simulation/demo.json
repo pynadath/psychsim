@@ -18,7 +18,7 @@
     },
     {
         "command": "apply filter -attribute childrenHealth -value 0.8 -operator >= -day 16 -name healthychildren",
-        "explanations": "Refine search by selecting actors whose children are healthy as well on the last day."
+        "explanations": "Refine search by selecting actors whose children are healthy as well on the last day. Give a name to this filter: \"healthychildren\""
     },
     {
         "command": "apply filter -attribute employed -value 1 -operator = -day 1",
@@ -29,7 +29,20 @@
         "explanations": "...and that are still employed at the end."
     },
     {
-        "command": "show filters",
+        "command": "apply filter -attribute region -value 1 -operator = -day 16",
+        "explanations": "And out of those, who is in Region 1 at the end?"
+
+    },
+    {
+        "command": "show filters -type all",
         "explanations": "Show me which filters are active."
+    },
+    {
+        "command": "deactivate filter -name healthychildren",
+        "explanations": "Deactivate the healthychildren filter."
+    },
+    {
+        "command": "reactivate filter -name healthychildren",
+        "explanations": "No, you changed your mind again, that was a mistake, reactivate the healthychildren filter!"
     }
 ]

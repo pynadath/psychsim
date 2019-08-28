@@ -153,7 +153,7 @@ class LogParser:
         self.query_param[consts.ATTRIBUTE_VAL] = False
         self.query_param[consts.ENTITY] = None
         self.query_param[consts.NAME] = None
-        self.query_param[consts.ACTIVE] = True
+        self.query_param[consts.TYPE] = "all"
 
 
 
@@ -388,8 +388,8 @@ class LogParser:
         self.query_param[consts.NAME] = p_val
         return True
 
-    def set_p_active(self, p_val, buffer):
-        return self.set_p_bool(consts.ACTIVE, p_val, buffer)
+    def set_p_type(self, p_val, buffer):
+        return self.set_p_with_values_in(p_name=consts.TYPE, p_val=p_val, values_in_list=consts.TYPE_VALUES_IN, buffer=buffer)
 
 
     def set_param_value(self, p_name, p_val, buffer=None):
@@ -420,8 +420,8 @@ class LogParser:
             return self.set_p_entity(p_val, buffer)
         elif p_name in consts.QUERY_PARAM[consts.NAME]:
             return self.set_p_name(p_val, buffer)
-        elif active in consts.QUERY_PARAM[consts.ACTIVE]:
-            return self.display_filters(p_val, buffer)
+        elif p_name in consts.QUERY_PARAM[consts.TYPE]:
+            return self.set_p_type(p_val, buffer)
         else:
             print_with_buffer("ParamaterError: %s does not exists." % p_name, buffer)
             return False
@@ -459,7 +459,7 @@ class LogParser:
             elif self.command in consts.COMMAND_SHOW_SELECTION:
                 self.display_actor_selection(buffer=buffer)
             elif self.command in consts.COMMAND_SHOW_FILTERS:
-                self.display_filters(self.query_param[consts.ACTIVE], buffer)
+                self.display_filters(self.query_param[consts.TYPE], buffer)
             elif self.command in consts.COMMAND_RESET_SELECTION:
                 self.reset_selection(buffer)
             elif self.command in consts.COMMAND_APPLY_FILTER:
@@ -469,6 +469,10 @@ class LogParser:
                 self.get_entities(buffer)
             elif self.command in consts.COMMAND_GET_ATTNAMES:
                 self.get_attributes(p_entity=self.query_param[consts.ENTITY], buffer=buffer)
+            elif self.command in consts.COMMAND_DEACTIVATE_FILTER:
+                self.deactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
+            elif self.command in consts.COMMAND_REACTIVATE_FILTER:
+                self.reactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
             else:
                 print_with_buffer("QueryError: \"%s\" command unknown" % self.command, buffer)
         else:
@@ -570,7 +574,7 @@ class LogParser:
 
     def display_actor_selection(self, buffer=None):
         """
-        Display the selection by by actors list (names) or filters list.
+        Display the selection --> actors list (names).
         :param p_display_mode: criteria or names.
         :param buffer:
         :return:
@@ -582,10 +586,33 @@ class LogParser:
             print_with_buffer(", ".join(self.selected_agents), buffer)
 
 
-    def display_filters(self, active=True, buffer=None):
-        filters_str_list = [f[consts.NAME] + ": " + f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " at " + consts.DAY + " " + f[consts.DAY] for f in self.filter_list if f[consts.active] is active]
+    def filters_to_str(self, f):
+        active = "active" if f[consts.active] else "inactive"
+        return f[consts.NAME] + ": " + f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " at " + consts.DAY + " " + f[consts.DAY] + "  (" + active + ")"
+
+
+    def display_filters(self, type=consts.all_values[0], buffer=None):
+        """
+        Displays the filters (active or inactive)
+        :param active: if True displays the active filters only, if false displays the inactive filters only. Inactive filters are filters that the user set up at some point and then cancelled.
+        :param buffer:
+        :return:
+        """
+        if type in consts.all_values[0]:
+            filters_str_list = [self.filters_to_str(f) for f in self.filter_list]
+            s_intro = "All filters are"
+        else:
+            if type in consts.active_values:
+                filters_str_list = [self.filters_to_str(f) for f in self.filter_list if f[consts.active] is True]
+                s_intro = "%d filter(s) are active (%d agents selected)" % (len(filters_str_list), len(self.selected_agents))
+            elif type in consts.inactive_values:
+                filters_str_list = [self.filters_to_str(f) for f in self.filter_list if f[consts.active] is False]
+                s_intro = "%d filter(s) are inactive" % len(filters_str_list)
+            else:
+                print_with_buffer("Parameter error: Got %s for parameter %s. Was expecting values in %s" % (type, consts.TYPE, ", ".join(consts.TYPE_VALUES_IN)), buffer)
+                return False
         filters_str = "\n\t- ".join(filters_str_list)
-        print_with_buffer("%d agents are selected:\n%d filter(s) are active:\n\t- %s" % (len(self.selected_agents), len(self.filter_list), filters_str), buffer)
+        print_with_buffer("%s:\n\t- %s" % (s_intro, filters_str), buffer)
 
 
     def reset_selection(self, buffer):
@@ -660,7 +687,7 @@ class LogParser:
                     return consts.THISISFALSE
 
 
-    def add_filter_to_filter_list(self, p_day, p_att, p_val, p_operator, p_name, buffer=None):
+    def add_filter_to_filter_list(self, p_day, p_att, p_val, p_operator, p_name, p_active=True, buffer=None):
         """
         Adds a new filter in our filter list to remember it.
         """
@@ -669,7 +696,7 @@ class LogParser:
         new_filter[consts.ATTRIBUTE] = p_att
         new_filter[consts.ATTRIBUTE_VAL] = p_val
         new_filter[consts.OPERATOR] = p_operator
-        new_filter[consts.active] = True
+        new_filter[consts.active] = p_active
         if p_name:
             if p_name in [f[consts.NAME] for f in self.filter_list]:
                 forbidden_name = p_name
@@ -690,12 +717,12 @@ class LogParser:
         for filter in self.filter_list:
             if filter[consts.DAY] == p_day and filter[consts.ATTRIBUTE] == p_att and filter[consts.ATTRIBUTE_VAL] == p_val and filter[consts.OPERATOR] == p_operator:
                 print_with_buffer("Filter already applied (%s)" % filter[consts.NAME], buffer)
-                return True
+                return filter
         return False
 
 
 
-    def apply_filter(self, p_day, p_att, p_val, p_operator, p_name=None, buffer=None):
+    def apply_filter(self, p_day, p_att, p_val, p_operator, p_name=None, buffer=None, verbose=True):
         """
         Applies a filter to the currently selected agents. A filter is for example "location = 2 at da 1" or "health > 0.6 at day 16"
         :param p_day: day for which the selection should be done.
@@ -708,17 +735,59 @@ class LogParser:
         if not self.check_filter_already_applied(p_day, p_att, p_val, p_operator, buffer):
             new_selection = [agent for agent in self.selected_agents if helper.compare(v1=self.get_att_val(agent, p_att=p_att, p_day=p_day), v2=p_val, op=p_operator)]
             if len(new_selection) == 0:
-                print_with_buffer("FilterError: Given the current selection, no agents fulfil your new criteria --> new filter CANNOT be applied.", buffer)
+                self.add_filter_to_filter_list(p_day, p_att, p_val, p_operator, p_name, False, buffer)
+                if verbose:
+                    print_with_buffer("FilterError: Given the current selection, no agents fulfil your new criteria --> new filter CANNOT be applied. However your filter is saved in memory (it's just inactive)", buffer)
             else:
                 self.selected_agents = new_selection
-                self.add_filter_to_filter_list(p_day, p_att, p_val, p_operator, p_name, buffer)
-                print_with_buffer("After applying filter", buffer=buffer)
-                self.display_actor_selection()
+                self.add_filter_to_filter_list(p_day, p_att, p_val, p_operator, p_name, True, buffer)
+                if verbose:
+                    print_with_buffer("After applying filter", buffer=buffer)
+                    self.display_actor_selection()
         # att_val = self.get_att_val("1", p_att, p_day)
         # print(att_val)
 
 
+    def get_filter(self, p_name, buffer):
+        for f in self.filter_list:
+            if f[consts.NAME] == p_name:
+                return f
+        print_with_buffer("No filter with name %s" % p_name, buffer)
+        return False
+
+
+    def deactivate_filter(self, p_name, buffer=None):
+        filter = self.get_filter(p_name, buffer)
+        if filter:
+            filter[consts.active] = False
+            old_filter_list = self.filter_list
+            self.filter_list = list()
+            self.selected_agents = self.actors_full_list
+            for f in old_filter_list:
+                if f[consts.active]:
+                    self.apply_filter(p_day=f[consts.DAY], p_att=f[consts.ATTRIBUTE], p_val=f[consts.ATTRIBUTE_VAL], p_operator=f[consts.OPERATOR], p_name=f[consts.NAME], verbose=False)
+                else:
+                    self.add_filter_to_filter_list(p_day=f[consts.DAY], p_att=f[consts.ATTRIBUTE], p_val=f[consts.ATTRIBUTE_VAL], p_operator=f[consts.OPERATOR], p_name=f[consts.NAME], p_active=False)
+            # self.display_filters(buffer=buffer)
+            print_with_buffer("After deactivating filter %s" % p_name, buffer)
+            self.display_actor_selection(buffer=buffer)
+
+
+    def reactivate_filter(self, p_name, buffer=None):
+        f = self.get_filter(p_name, buffer)
+        if f:
+            self.filter_list.remove(f)
+            self.apply_filter(p_day=f[consts.DAY], p_att=f[consts.ATTRIBUTE], p_val=f[consts.ATTRIBUTE_VAL], p_operator=f[consts.OPERATOR], p_name=f[consts.NAME])
+
+
+
     def demo(self, autotest=False, buffer=None):
+        """
+        Demo function, helps the user understand the system by showing them example queries.
+        :param autotest: boolean, if True, demo is slow and pauses between every command, otherwise demo is fast, doesn't give explanations and doesn't pause between queries (--> it's kind of a developer mode)
+        :param buffer:
+        :return:
+        """
         with open("psychsim/domains/groundtruth/explore_simulation/demo.json", 'rb') as f:
             content = json.load(f)
         for i, ex in enumerate(content):
