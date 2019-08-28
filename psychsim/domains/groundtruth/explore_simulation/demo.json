@@ -44,5 +44,9 @@
     {
         "command": "reactivate filter -name healthychildren",
         "explanations": "No, you changed your mind again, that was a mistake, reactivate the healthychildren filter!"
+    },
+    {
+        "command": "select actors_by_name -actors_list 22 45 67",
+        "explanations": "Among those actors, select 3. You want # 22, 45 and 76"
     }
 ]

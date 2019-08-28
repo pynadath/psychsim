@@ -154,6 +154,7 @@ class LogParser:
         self.query_param[consts.ENTITY] = None
         self.query_param[consts.NAME] = None
         self.query_param[consts.TYPE] = "all"
+        self.query_param[consts.ACOTRS_LIST] = list()
 
 
 
@@ -252,8 +253,14 @@ class LogParser:
                 print_with_buffer("ParameterError: missing value for query parameter %s" % args, buffer)
                 return False
             elif len(args_pair) > 2:
-                print_with_buffer("ParameterError: too many values for query parameter %s" % args, buffer)
-                return False
+                p_name = args_pair[0]
+                if p_name == consts.ACOTRS_LIST:
+                    param_ok = self.set_p_actors_list(args_pair[1:], buffer)
+                    if param_ok is not True:
+                        return False
+                else:
+                    print_with_buffer("ParameterError: too many values for query parameter %s" % args, buffer)
+                    return False
             else:
                 p_name, p_value = args_pair[0], args_pair[1]
                 if p_name not in consts.ALL_QUERY_PARAMS:
@@ -301,9 +308,13 @@ class LogParser:
                 return False
             else:
                 if p_to_str:
-                    self.query_param[p_name] = i.__str__()
+                    param = i.__str__()
                 else:
-                    self.query_param[p_name] = i
+                    param = i
+                if isinstance(self.query_param[p_name], list):
+                    self.query_param[p_name].append(param)
+                else:
+                    self.query_param[p_name] = param
                 return True
         except ValueError:
             print_with_buffer("ValueError: parameter %s takes integers, got %s" % (p_name, p_val), buffer)
@@ -392,6 +403,16 @@ class LogParser:
         return self.set_p_with_values_in(p_name=consts.TYPE, p_val=p_val, values_in_list=consts.TYPE_VALUES_IN, buffer=buffer)
 
 
+    def set_p_actors_list(self, numbers_list, buffer):
+        param_ok = True
+        for i in numbers_list:
+            param_ok = self.set_p_int_or_float(p_name=consts.ACOTRS_LIST, p_val=i, p_type=int, p_max=self.n_actors, p_to_str=True, buffer=buffer)
+            if not param_ok:
+                return False
+        return True
+
+
+
     def set_param_value(self, p_name, p_val, buffer=None):
         """
         Sets the value p_val of parameter p_name in the self.query_param object for query execution
@@ -455,7 +476,7 @@ class LogParser:
             elif self.command in consts.COMMAND_GET_VALUES:
                 self.get_att_values(self.query_param[consts.ACTOR], p_day=self.query_param[consts.DAY], buffer=buffer)
             elif self.command in consts.COMMAND_SELECT_NACTORS:
-                self.select_nactors(p_n=self.query_param[consts.NUMBER], p_actors=None, p_mode_select=self.query_param[consts.MODE_SELECTION], buffer=buffer)
+                self.select_nactors(p_n=self.query_param[consts.NUMBER], p_mode_select=self.query_param[consts.MODE_SELECTION], buffer=buffer)
             elif self.command in consts.COMMAND_SHOW_SELECTION:
                 self.display_actor_selection(buffer=buffer)
             elif self.command in consts.COMMAND_SHOW_FILTERS:
@@ -473,6 +494,8 @@ class LogParser:
                 self.deactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
             elif self.command in consts.COMMAND_REACTIVATE_FILTER:
                 self.reactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
+            elif self.command in consts.COMMAND_SELECT_ACTORS_BY_NAME:
+                self.select_actors_by_name(p_list_names=self.query_param[consts.ACOTRS_LIST], buffer=buffer)
             else:
                 print_with_buffer("QueryError: \"%s\" command unknown" % self.command, buffer)
         else:
@@ -539,7 +562,7 @@ class LogParser:
             error_msg = "Your criteria are too restrictive go select %d actors. There are only %d actors that fulfil your criteria" % (self.n_actors, len(self.selected_agents))
         print_with_buffer(error_msg, buffer)
 
-    def select_nactors(self, p_n=-1, p_actors=None, p_mode_select=consts.random_str, buffer=None):
+    def select_nactors(self, p_n=-1, p_mode_select=consts.random_str, buffer=None):
         """
         Selects actors for the user.
         :param p_n: number of actors to select
@@ -548,12 +571,6 @@ class LogParser:
         :param buffer:
         :return:
         """
-        # Select by names
-        if isinstance(p_actors, list):
-            self.selected_agents = [actor for actor in self.selected_agents if actor in p_actors]
-        else:
-            self.selected_agents = list(self.selected_agents)
-
         # Select by criteria
 
         # Shuffle list if random select
@@ -570,6 +587,16 @@ class LogParser:
 
         print_with_buffer("Selected %d agents:" % len(self.selected_agents), buffer)
         self.display_actor_selection(buffer=buffer)
+
+
+    def select_actors_by_name(self, p_list_names, buffer=None):
+        print(colored("WARNING: all your filters are now deactivated because you selected agents by names!!!", "cyan"))
+        for f in self.filter_list:
+            f[consts.active] = False
+        self.selected_agents = self.actors_full_list
+        p_list_names = [helper.actor_number_to_name(i) for i in p_list_names]
+        self.selected_agents = [actor for actor in self.selected_agents if actor in p_list_names]
+        self.display_actor_selection()
 
 
     def display_actor_selection(self, buffer=None):
@@ -656,7 +683,8 @@ class LogParser:
         if os.path.exists(file_name):
             with open(file_name, 'rb') as f:
                 content = pickle.load(f)
-            actor_name = 'Actor000'+p_actor
+            # actor_name = 'Actor000'+p_actor
+            actor_name = helper.actor_number_to_name(p_actor)
             dict_for_actor = content[actor_name][actor_name+'0']
             keys = dict_for_actor.keys()
             attributes = [key.split()[1] for key in keys if (actor_name in key and "__" not in key)]
@@ -835,7 +863,7 @@ class LogParser:
                     next = input(colored("Next query? (y: yes, q: quit) > ", "red"))
                     if next.lower() == "q":
                         exit(1)
-        self.query_log(text_intro = "You can continue explore this simulation. ")
+        self.query_log(text_intro="You can continue explore this simulation. ")
 
 
 
