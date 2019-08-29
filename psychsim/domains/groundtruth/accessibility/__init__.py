@@ -679,7 +679,8 @@ def unpickle(instance,sub=None,day=None):
 def aidIfWealthLoss(agent):
     return sum([agent.Rweights[k] for k in ['health','childrenHealth','neighbors']])/sum(agent.Rweights.values())
 
-def holoCane(world,name,span):
+def holoCane(world,name,span,select=True):
+    home = world.getState(name,'location').first()
     belief = world.agents[name].getBelief().values()
     assert len(belief) == 1
     belief = next(iter(belief))
@@ -687,10 +688,19 @@ def holoCane(world,name,span):
     phase = 'none'
     history = [copy.deepcopy(belief)]
     while step // 3 < span or phase != 'none':
-        world.step(state=belief,select='max',keySubset=belief.keys())
+        if name in world.next(belief):
+            actions = {name: world.agents[name].decide(belief)['action']}
+        else:
+            actions = None
+        world.step(actions=actions,state=belief,select=select,keySubset=belief.keys())
         step += 1
         phase = world.getState('Nature','phase',belief).first()
         history.append(copy.deepcopy(belief))
+#        for dist in belief.distributions.values():
+#            for el in dist.domain():
+#                if dist[el] < .01:
+#                    del dist[el]
+#            dist.normalize()
     return history
 
 def findParticipants(fname,args,world,states,config,ignoreWealth=True):

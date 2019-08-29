@@ -34,12 +34,13 @@ if __name__ == '__main__':
             with open(os.path.join(accessibility.getDirectory(args),'scenario%d.pkl' % (day)),'wb') as outfile:
                 pickle.dump(world,outfile)
         actors = {name for name in world.agents if name[:5] == 'Actor' and world.getState(name,'alive').first()}
-        sample = random.sample(actors,5*len(actors)//50)
+        sample = random.sample(actors,5*len(actors)//100)
         output = []
         for partID in range(len(sample)):
             name = sample[partID]
             logging.info('Participant %d: %s' % (partID+1,name))
             agent = world.agents[name]
+            print(accessibility.getAction(args,name,world,states,(1,args['span'])))
             history = accessibility.holoCane(world,name,config.getint('Disaster','season_length'))
             for step in range(0,len(history),3):
                 record = {}
@@ -62,9 +63,10 @@ if __name__ == '__main__':
                 var = 'Location'
                 if not defined:
                     variables.append({'Name': var,'Values':'evacuated,shelter,home','DataType': 'String'})
+                assert len(world.getState(name,'location',history[step])) == 1
                 record[var] = world.getState(name,'location',history[step]).first()
                 if record[var][:7] == 'shelter':
-                    record[var] == 'shelter'
+                    record[var] = 'shelter'
                 elif record[var] == agent.demographics['home']:
                     record[var] = 'home'
                 var = 'Injured'
@@ -82,6 +84,26 @@ if __name__ == '__main__':
                 if not defined:
                     variables.append({'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'Degree of current level of property damage (7 being the most severe)'})
                 record[var] = accessibility.toLikert(world.getState(agent.demographics['home'],'risk',history[step]).expectation(),7)
+                var = 'Dissatisfaction'
+                if not defined:
+                    variables.append({'Name': var,'Values':'[1-7]','DataType': 'Integer'})
+                record[var] = accessibility.toLikert(world.getState(name,'grievance',history[step]).expectation(),7)
+                var = 'Government Aid'
+                if not defined:
+                    variables.append({'Name': var,'Values':'Region[01-16]','DataType': 'String'})
+                record[var] = world.getFeature(actionKey('System'),history[step]).first()['object']
+                var = 'Hurricane Phase'
+                if not defined:
+                    variables.append({'Name': var,'Values':'none,approaching,active','DataType': 'String'})
+                record[var] = world.getState('Nature','phase',history[step]).first()
+                var = 'Hurricane Location'
+                if not defined:
+                    variables.append({'Name': var,'Values':'Region[01-16],none','DataType': 'String'})
+                record[var] = world.getState('Nature','location',history[step]).first()
+                var = 'Hurricane Category'
+                if not defined:
+                    variables.append({'Name': var,'Values':'[0-5],none','DataType': 'String'})
+                record[var] = int(round(world.getState('Nature','category',history[step]).expectation()))
                 if cmd['debug']:
                     print(record)
                 if not defined:

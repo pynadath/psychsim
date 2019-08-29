@@ -1196,3 +1196,6 @@ def fastForward(world,config):
                     world.setFeature(key,value,beliefs[agent])
         else:
             assert agent == 'System'
+    for name,belief in beliefs.items():
+        model = next(iter(world.agents[name].getBelief().keys()))
+        world.agents[name].models[model]['beliefs'] = belief
