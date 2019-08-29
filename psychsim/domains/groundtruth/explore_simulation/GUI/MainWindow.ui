@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>646</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>20</y>
+      <width>451</width>
+      <height>80</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Query</string>
+    </property>
+    <widget class="QComboBox" name="queryBox">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>30</y>
+       <width>181</width>
+       <height>26</height>
+      </rect>
+     </property>
+     <item>
+      <property name="text">
+       <string>Select Query</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>select actors</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>get entities</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>get attribute_names</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>get nactors</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>apply filter</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>show filters</string>
+      </property>
+     </item>
+    </widget>
+    <widget class="QCommandLinkButton" name="executeButton">
+     <property name="geometry">
+      <rect>
+       <x>210</x>
+       <y>30</y>
+       <width>111</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Execute Query</string>
+     </property>
+    </widget>
+    <widget class="QCommandLinkButton" name="resetButton">
+     <property name="geometry">
+      <rect>
+       <x>340</x>
+       <y>30</y>
+       <width>91</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Reset State</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_2">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>100</y>
+      <width>321</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Number of Agents Selected</string>
+    </property>
+    <widget class="QLabel" name="numAgents">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>30</y>
+       <width>56</width>
+       <height>13</height>
+      </rect>
+     </property>
+     <property name="toolTip">
+      <string>Number of agents currently selected</string>
+     </property>
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QScrollArea" name="scrollArea">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>160</y>
+      <width>741</width>
+      <height>431</height>
+     </rect>
+    </property>
+    <property name="widgetResizable">
+     <bool>true</bool>
+    </property>
+    <widget class="QWidget" name="scrollAreaWidgetContents">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>739</width>
+       <height>429</height>
+      </rect>
+     </property>
+     <widget class="QPlainTextEdit" name="historyEdit">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>30</y>
+        <width>701</width>
+        <height>391</height>
+       </rect>
+      </property>
+      <property name="verticalScrollBarPolicy">
+       <enum>Qt::ScrollBarAlwaysOn</enum>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label">
+      <property name="geometry">
+       <rect>
+        <x>20</x>
+        <y>0</y>
+        <width>91</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Query History</string>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

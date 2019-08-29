@@ -1,0 +1,180 @@
+field,variable,class,agent,time,target,type,domain,description
+# QUESTION: Is the same RESPNO mean the same person over time, or are the RESPNOs generated fresh each ROUND?
+RESPNO,,id,,,,,,Round of surveys
+ROUND,,id,,,,,,Respondent number
+COUNTRY_ALPHA,,state,respondent,0,no,list,,Country in alphabetical order
+URBRUR,,state,respondent,0,no,list,,Urban or rural sample unit
+REGION,,state,respondent,0,no,list,,Province or region
+#DATEINTR
+#LENGTH
+Q1.Gender,,state,respondent,0,no,list,,Respondent’s gender
+#Q2.Age,,state,respondent,0,no,int,,How old are you?
+Q2A.Age,,state,respondent,0,no,int,,How old are you?
+Q3.Race,,state,respondent,0,no,list,,Respondent’s race
+#Q4.LanguageR5
+#Q4.LanguageR4
+#Q4.LanguageR3
+Q5.Tribe,,state,respondent,0,no,list,,What is your ethnic community cultural group or tribe?
+#Q5.TribeR5
+#Q5.TribeR4
+#Q5.TribeR3
+Q6.Education,,state,respondent,0,no,list,,What is the highest level of education you have completed?
+#Q6A.CAT
+Q7.Religion,,state,respondent,0,no,list,,What is your religion if any?
+#Q8.Imp_Religion
+#Q9.Close_Party
+#Q10.Which_PartyR5
+#Q10.Which_PartyR4
+#Q10.Which_PartyR3
+Q11A.Economy,,belief,respondent,0,no,list,,In general how would you describe – the present economic condition in this country?
+Q11B.Living_Conditions,,belief,respondent,0,no,list,,In general how would you describe – your own living conditions?
+Q12.LivingCon_Others,,reward,respondent,0,no,list,,In general how would you rate your general living conditions compare to those of other [country]?
+#Q13A.Economy_Ago
+#Q13B.LivingCon_Ago
+#Q14A.Economy_Time
+#Q14B.LivingCon_Time
+Q15.Employment,,reward,respondent,0,no,list,,Do you have a job that pays a cash income? If yes is it full-time or part-time? If no are you presently looking for a job?
+Q16A.No_Food,,reward,respondent,0,no,list,,Over the past year how often if ever have you or anyone in your family gone without: Enough food to eat?
+Q16B.No_Water,,reward,respondent,0,no,list,,Over the past year how often if ever have you or anyone in your family gone without: Enough clean water for home use?
+Q16C.No_Meds,,reward,respondent,0,no,list,,Over the past year how often if ever have you or anyone in your family gone without: Medicines or medical treatment?
+Q16D.No_Fuel,,reward,respondent,0,no,list,,Over the past year how often if ever have you or anyone in your family gone without: Enough fuel to cook your food?
+Q16E.No_Cash,,reward,respondent,0,no,list,,
+#Q17A.Own_Radio
+#Q17B.Own_Television
+#Q17C.Own_Motor
+#Q17D.Own_Mobile
+#Q18A.Perc_Unsafe
+#Q18B.Perc_Crime
+#Q19A.Stolen
+#Q19B.Attacked
+#Q20.Perc_PoliticalViolence
+#Q21A.News_Radio
+#Q21B.News_Television
+#Q21C.News_Newspaper
+#Q21D.News_Internet
+#Q22.Interest
+#Q23.Discuss
+#Q24A.Religious_Group
+#Q24B.Voluntary_Association
+#Q24C.R3.Trade_Union
+#Q24C.R3.Business_Ass
+#Q24C.R3.Development_Ass
+Q25A.Meeting,,action,respondent,0,no,list,,
+Q25B.Raise_Issue,,action,respondent,0,no,list,,
+Q25C.Demonstration,,action,respondent,0,yes,list,,
+Q25D.Refused,,action,respondent,0,no,list,,
+Q26.Voted,,action,respondent,0,no,list,,
+#Q27A.Contact_Councillor
+#Q27B.Contact_MP
+#Q27C.Contact_Agency
+#Q27D.Contact_Party
+#Q28A.Free_Say
+#Q28B.Free_Join
+#Q28C.Free_Vote
+#Q29.Fair_Elections
+#Q30A.OneParty
+#Q30B.Military
+#Q30C.OneMan
+#Q30D_ARB.IslamicLaw
+#Q31.Support_Democracy
+#Q32.Influence
+#Q33.Elections
+#Q34.Parties
+#Q35.Justification
+#Q36.Opposition
+#Q37.Media
+#Q38.Parlement
+#Q39.Laws
+#Q40.Constitution
+#Q41A_ARB.Teachings
+#Q41B_ARB.NonMuslims
+#Q41C_ARB.Leaders
+#Q41D_ARB.Positions
+#Q42.Extent_Democracy
+#Q43.Satisfaction_Democracy
+#Q43A_ARB.Economy
+#Q43B_ARB.Indecisive
+#Q43C_ARB.Stability
+#Q43D_ARB.System
+#Q43E_ARB.Values
+#Q44A.Courts
+#Q44B.Law
+#Q44C.Taxes
+#Q45A.Media_Abuse
+#Q45B.Opposition_Silenced
+#Q45C.Competition
+#Q45D.Unequally
+#Q45E.Careful
+#Q46A.President_Ignores1
+#Q46B.President_Ignores2
+#Q47.Media
+#Q48A.Vote_Reflect
+#Q48B.Vote_Remove
+#Q49A.Trust_Pres
+#Q49B.Trust_Parl
+#Q49C.Trust_Elect
+#Q49D.Trust_Tax
+#Q49E.Trust_Local
+#Q49F.Trust_RulingParty
+#Q49G.Trust_OppositionParties
+#Q49H.Trust_Police
+#Q49I.Trust_Army
+#Q49J.Trust_Courts
+#Q49K.Trust_TVgov
+#Q49L.Trust_TVind
+#Q49M.Trust_PaperGov
+#Q49N.Trust_PaperInd
+#Q50A.Corr_Pres
+#Q50B.Corr_Parl
+#Q50C.Corr_Officials
+#Q50D.Corr_Local
+#Q50E.Corr_Police
+#Q50F.Corr_Tax
+#Q50G.Corr_Judges
+#Q51A.Bribe_Permit
+#Q51B.Bribe_Sanitation
+#Q51C.Bribe_Treatment
+#Q51D.Bribe_Police
+#Q51E.Bribe_School
+#Q52A.MPs_Listen
+#Q52B.Local_Listen
+#Q53.Important_Problem
+#Q53A.Handling_Economy
+#Q53B.Handling_Living
+#Q53C.Handling_Jobs
+#Q53D.Handling_Prices
+#Q53E.Handling_Gap
+#Q53F.Handling_Crime
+#Q53G.Handling_Health
+#Q53H.Handling_Education
+#Q53I.Handling_Sanitation
+#Q53J.Handling_Eat
+#Q53K.Handling_Corruption
+#Q53L.Handling_HIV
+#Q53M.Handling_Roads
+#Q53N.Handling_Electricity
+#Q53O.Handling_Women
+#Q54A.Performance_Pres
+#Q54B.Performance_MP
+#Q54C.Performance_Local
+#Q55.Unfairly_Ethnic
+#Q55_ARB.Unfairly_Religious
+Q56.Ethnic_National,,state,respondent,0,no,list,,
+Q56_ARB.Religious_National,,state,respondent,0,no,list,,
+#Q57A.Computer_Use
+#Q57B.Internet_Use
+#Q57C.MPhone_UseOwn
+#Q57C.CPhone_Use
+#withinwt
+#combinwt
+#acrosswt
+#West.Africa.only
+#East.Africa.only
+#Southern.Africa.only
+#North.Africa.only
+#R3.only
+#R4.only
+#LivedPoverty
+#DemandDemo
+#SupplyDemo
+#filter_$

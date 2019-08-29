@@ -13,8 +13,9 @@ ordered = "ordered"
 # actors_list = "actors_list"
 # filters_list = "filters_list"
 active = "active"
-true_values = ["true", "1", "t", "yes", "y"]
-false_values = ["false", "0", "f", "no", "n"]
+active_values = ["active", "on"]
+inactive_values = ["inactive", "off"]
+all_values = ["all"]
 
 DAY = "day"
 ATTRIBUTE = "attribute"
@@ -29,7 +30,9 @@ MODE_SELECTION_VALUES_IN = [random_str, ordered]
 NUMBER = "number"
 ENTITY = "entity"
 NAME = "name"
-ACTIVE = "active"
+TYPE = "type"
+TYPE_VALUES_IN = active_values + inactive_values + all_values
+ACOTRS_LIST = "actors_list"
 
 QUERY_PARAM = {
     DAY: ["day", "d"],
@@ -42,7 +45,8 @@ QUERY_PARAM = {
     OPERATOR: ["operator", "op", "o"],
     ENTITY: ["entity", "e"],
     NAME: ["name", "n"],
-    ACTIVE: ["active"]
+    TYPE: ["type", "t"],
+    ACOTRS_LIST: [ACOTRS_LIST, "a_list"]
 }
 ALL_QUERY_PARAMS = [y for x in QUERY_PARAM.values() for y in x ]
 
@@ -53,11 +57,14 @@ COMMAND_GET_ENTITIES = "get entities", "get e"
 COMMAND_GET_ATTNAMES = "get attribute_names", "get attnames", "get att_n", "get att"
 
 # Selecting agents
-COMMAND_SELECT_NACTORS = "select actors", "select a", "s a", "select n", "s n"
+COMMAND_SELECT_NACTORS = "select n_actors", "select a", "s a", "select n", "s n"
+COMMAND_SELECT_ACTORS_BY_NAME = "select actors_by_name", "selection actors_by_name"
 COMMAND_RESET_SELECTION = "reset selection", "del actors", "del a", "reset s", "reset a", "r s"
 COMMAND_SHOW_SELECTION = "show selection", "show s", "show a", "show actors", "display selection", "display s", "display a", "display actors"
 COMMAND_SHOW_FILTERS = "show filters", "show f", "s f", "display filters", "display f", "d f"
 COMMAND_APPLY_FILTER = "apply filter", "a f"
+COMMAND_DEACTIVATE_FILTER = "deactivate filter", "cancel filter", "c f"
+COMMAND_REACTIVATE_FILTER = "reactivate filter", "r f"
 
 # Getting info about a specific agent
 COMMAND_GET_VALUES = "get values", "get val", "get value", "get v"
@@ -96,17 +103,22 @@ HELP = {
             COMMAND_SELECT_NACTORS: {
                 description: "Selects a group of actors to then execute queries on",
                 parameters: [
-                    {name: ACTOR,
-                     optional: True},
                     {name: MODE_SELECTION,
                      optional: True},
                     {name: NUMBER,
                      optional: False}
                 ]
             },
+            COMMAND_SELECT_ACTORS_BY_NAME: {
+                description: "Selects the actors listed by the user",
+                parameters: [
+                    {name: ACOTRS_LIST,
+                     optional: False}
+                ]
+            },
             COMMAND_RESET_SELECTION: {
                 description: "Resets the selection / forgets selection criteria (selects all actors)",
-                parameters: ""
+                parameters: []
             },
             COMMAND_SHOW_SELECTION: {
                 description: "Show the actors selected (list of names)",
@@ -115,8 +127,8 @@ HELP = {
             COMMAND_SHOW_FILTERS: {
                 description: "Shows the filters used for actor selection",
                 parameters: [
-                    {name: ACTIVE,
-                     optional: True}
+                    {name: TYPE,
+                     optional: False}
                 ]
             },
             COMMAND_APPLY_FILTER: {
@@ -132,6 +144,20 @@ HELP = {
                      optional: False},
                     {name: NAME,
                      optional: True}
+                ]
+            },
+            COMMAND_DEACTIVATE_FILTER: {
+                description: "Inactivates the filter",
+                parameters: [
+                    {name: NAME,
+                     optional: False}
+                ]
+            },
+            COMMAND_REACTIVATE_FILTER: {
+                description: "Reactivates the filter",
+                parameters: [
+                    {name: NAME,
+                     optional: False}
                 ]
             }
         },
@@ -194,9 +220,9 @@ HELP = {
             value_type: "str",
             description: "Allows the user to set a name (e.g. for filters)"
         },
-        ACTIVE: {
-            value_type: "bool (True or False)",
-            description: "By default is True."
+        TYPE: {
+            value_type: "string",
+            description: "Type of filter you want to display (active / inactive / all)"
         }
     }
 }

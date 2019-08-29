@@ -134,14 +134,14 @@ def instanceFile(args,name,sub=None):
 def openFile(args,fname,sub=None):
     return open(instanceFile(args,fname,sub),'r')
 
-def loadMultiCSV(fname,instance,run=0,subs=[None]):
+def loadMultiCSV(fname,instance,run=0,subs=[None],grabFields=True):
     fields = None
     data = []
     for sub in subs:
         with openFile({'instance': instance,'run': run},fname,sub) as csvfile:
             reader = csv.DictReader(csvfile,fields,delimiter='\t')
             for row in reader:
-                if fields is None:
+                if fields is None and grabFields:
                     fields = row.keys()
                 else:
                     yield row
@@ -255,7 +255,7 @@ def findHurricane(day,hurricanes,includePrevious=False):
             return None
 
 
-def findMatches(record,world=None,population={}):
+def findMatches(record,world=None,population={},ignoreWealth=True):
     mismatch = {}
     matches = set()
     if world is None:
@@ -265,7 +265,7 @@ def findMatches(record,world=None,population={}):
     for name in sorted(people):
         if name[:5] == 'Actor':
             for field,feature in sorted(demographics.items()):
-                if field == 'Wealth':
+                if field == 'Wealth' and ignoreWealth:
                     continue
                 if name in population:
                     value = population[name][field]
@@ -282,11 +282,14 @@ def findMatches(record,world=None,population={}):
                         mismatch[field] = [name]
                     break
             else:
-                logging.info('Participant %s: %s' % (record['Participant'],name))
+                logging.debug('Participant %s: %s' % (record['Participant'],name))
                 matches.add(name)
     if matches:
         return matches
     else:
+        for key,names in mismatch.items():
+            print(key)
+            print({name: population[name][key] for name in names})
         raise ValueError('No match for %s (mismatches: %s)' % (record['Participant'],mismatch))
 
 def readDemographics(data,old=False,last=True,name=None):
@@ -689,3 +692,22 @@ def holoCane(world,name,span):
         phase = world.getState('Nature','phase',belief).first()
         history.append(copy.deepcopy(belief))
     return history
+
+def findParticipants(fname,args,world,states,config,ignoreWealth=True):
+    oldSurvey = []
+    lastUpdate = 0
+    actors = [name for name in world.agents if name[:5] == 'Actor']
+    with open(fname,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        for entry in reader:
+            for key in ['Participant','Timestep', 'Hurricane', 'Age', 'Children', 'Wealth']:
+                entry[key] = int(entry[key])
+            t = entry['Timestep']
+            if t != lastUpdate:
+                current = {name: getCurrentDemographics(args,name,world,states,config,t) for name in actors}
+                lastUpdate = t
+            entry['Name'] = {name for name in findMatches(entry,population=current,ignoreWealth=ignoreWealth)
+                if getInitialState(args,name,'alive',world,states,t).first()}
+            assert entry['Name'],'No matches for: %s' % (entry)
+            oldSurvey.append(entry)
+    return oldSurvey
