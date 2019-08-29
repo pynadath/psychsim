@@ -98,3 +98,11 @@ def compare(v1, v2, op):
         return v1 >= v2
     # print("ERROR: Cannot compare %s (%s) with %s (%s)" % (v1.__str__(), type(v1), v2.__str__(), type(v2)))
     return False
+
+def actor_number_to_name(i):
+    len_i = len(i)
+    s = "Actor"
+    for j in range(4 - len_i):
+        s += '0'
+    s += i
+    return s

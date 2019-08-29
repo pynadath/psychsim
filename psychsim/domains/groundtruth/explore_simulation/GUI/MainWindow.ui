@@ -26,7 +26,7 @@
     <property name="title">
      <string>Query</string>
     </property>
-    <widget class="QComboBox" name="comboBox">
+    <widget class="QComboBox" name="queryBox">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -71,7 +71,7 @@
       </property>
      </item>
     </widget>
-    <widget class="QCommandLinkButton" name="commandLinkButton">
+    <widget class="QCommandLinkButton" name="executeButton">
      <property name="geometry">
       <rect>
        <x>210</x>
@@ -84,7 +84,7 @@
       <string>Execute Query</string>
      </property>
     </widget>
-    <widget class="QCommandLinkButton" name="commandLinkButton_2">
+    <widget class="QCommandLinkButton" name="resetButton">
      <property name="geometry">
       <rect>
        <x>340</x>
@@ -102,14 +102,30 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>110</y>
+      <y>100</y>
       <width>321</width>
-      <height>41</height>
+      <height>51</height>
      </rect>
     </property>
     <property name="title">
      <string>Number of Agents Selected</string>
     </property>
+    <widget class="QLabel" name="numAgents">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>30</y>
+       <width>56</width>
+       <height>13</height>
+      </rect>
+     </property>
+     <property name="toolTip">
+      <string>Number of agents currently selected</string>
+     </property>
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QScrollArea" name="scrollArea">
     <property name="geometry">
@@ -132,7 +148,7 @@
        <height>429</height>
       </rect>
      </property>
-     <widget class="QPlainTextEdit" name="plainTextEdit">
+     <widget class="QPlainTextEdit" name="historyEdit">
       <property name="geometry">
        <rect>
         <x>20</x>
