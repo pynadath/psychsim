@@ -45,7 +45,7 @@ Aid Wealth 2	Aid Wealth 2	[0-6]	dynamic	Integer	0.ii.cc
 Aid Wealth 1	Aid Wealth 1	[0-6]	dynamic	Integer	0.ii.dd
 Aid Wealth 0	Aid Wealth 0	[0-6]	dynamic	Integer	0.ii.ee
 Most Take Advantage	Most Take Advantage	[0-6]	dynamic	Integer	0.ii.ff
-People Can Be Trusted	People Can Be Trusted	[0-6]	dynamic	Integer	0.ii.ff
+People Can Be Trusted	People Can Be Trusted	[0-6]	dynamic	Integer	0.ii.gg
 Know Injured Friends	Know Injured Friends	yes,no	dynamic	Boolean	1.one.a
 Know Injured Friends from Social Media	Know Injured Friends from Social Media	yes,no	dynamic	Boolean	1.one.a.i
 Know Injured Friends from Government Broadcast	Know Injured Friends from Government Broadcast	yes,no	dynamic	Boolean	1.one.a.ii
