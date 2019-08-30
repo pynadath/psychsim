@@ -40,7 +40,6 @@ if __name__ == '__main__':
             name = sample[partID]
             logging.info('Participant %d: %s' % (partID+1,name))
             agent = world.agents[name]
-            print(accessibility.getAction(args,name,world,states,(1,args['span'])))
             history = accessibility.holoCane(world,name,config.getint('Disaster','season_length'))
             for step in range(0,len(history),3):
                 record = {}
@@ -113,4 +112,3 @@ if __name__ == '__main__':
         if not cmd['debug']:
             accessibility.writeOutput(args,output,[var['Name'] for var in variables],'%s.tsv' % (os.path.splitext(os.path.basename(__file__))[0]),
                 os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance),'Runs','run-0'))
-        break

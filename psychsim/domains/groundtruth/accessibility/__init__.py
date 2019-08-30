@@ -690,17 +690,14 @@ def holoCane(world,name,span,select=True):
     while step // 3 < span or phase != 'none':
         if name in world.next(belief):
             actions = {name: world.agents[name].decide(belief)['action']}
+        elif 'System' in world.next(belief):
+            actions = None
         else:
             actions = None
         world.step(actions=actions,state=belief,select=select,keySubset=belief.keys())
         step += 1
         phase = world.getState('Nature','phase',belief).first()
         history.append(copy.deepcopy(belief))
-#        for dist in belief.distributions.values():
-#            for el in dist.domain():
-#                if dist[el] < .01:
-#                    del dist[el]
-#            dist.normalize()
     return history
 
 def findParticipants(fname,args,world,states,config,ignoreWealth=True):
