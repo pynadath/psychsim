@@ -591,10 +591,12 @@ def loadState(args,states,t,turn,world=None):
                 world.state = state
             else:
                 agent = world.agents[name]
-                model = agent.getBelief().keys()
-                assert len(model) == 1
-                model = next(iter(model))
-                agent.models[model]['beliefs'] = state
+                for model,belief in state.items():
+                    agent.model[model]['beliefs'] = belief
+#                model = agent.getBelief().keys()
+#                assert len(model) == 1
+#                model = next(iter(model))
+#                agent.models[model]['beliefs'] = state[model]
 
 def getInitialState(args,name,feature,world,states,t,believer=None):
     if isinstance(t,int):
