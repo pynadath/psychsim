@@ -131,7 +131,8 @@ class System(Agent):
         
     def decide(self,state=None,horizon=None,others=None,model=None,selection=None,actions=None,
                debug={}):
-        state = self.world.state
+        if state is None:
+            state = self.world.state
         if actions is None:
             actions = self.getActions(state)
         if len(actions) == 1:
