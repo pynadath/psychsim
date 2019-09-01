@@ -1,4 +1,4 @@
-﻿# Specific question #
+# Specific question #
 
 
 According to the simulation description, Risk is on a 1-7 scale with 7 being the "Strongly Agree" with the hurricane posing a significant risk. However, upon basic analysis we've found that Risk is negatively correlated with variables like Anticipated Shelter (approx -0.38) and Anticipated Evacuation (approx -0.93).
@@ -17,3 +17,5 @@ None
 
 
 # Answer #
+
+No, the risk is not reported on a reverse scale. We cannot directly answer the other questions.
