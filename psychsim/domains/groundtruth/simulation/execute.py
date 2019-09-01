@@ -384,41 +384,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                 pass
             # //GT: edge 1; from 1; to 27; 1 of 2; next 35 lines
             if config.getboolean('Actors','messages') and state['phase'] != 'none':
-                # Friends exchange messages
-                myScale = likert[5][config.getint('Actors','self_trust')-1]
-                if config.getint('Actors','friend_opt_trust') > 0:
-                    optScale = likert[5][config.getint('Actors','friend_opt_trust')-1]
-                else:
-                    optScale = 0.
-                if config.getint('Actors','friend_pess_trust') > 0:
-                    pessScale = likert[5][config.getint('Actors','friend_pess_trust')-1]
-                else:
-                    pessScale = 0.
-                if config.getint('Simulation','phase',fallback=1) == 1:
-                    # Original phase 1 messages
-                    for actor in living:
-                        friends = [friend for friend in actor.friends
-                                   if world.agents[friend] in living]
-                        if friends:
-                            key = stateKey('Nature','category')
-                            for friend in friends:
-                                yrBelief = next(iter(world.agents[friend].getBelief().values()))
-                                msg = yrBelief[key]
-                                logging.info('%s receives message %s from %s' % (actor,msg,friend))
-                                actor.recvMessage(key,msg,myScale,optScale,pessScale)
-                else:
-                    # Phase 2 messages
-                    key = stateKey('Nature','category')
-                    beliefs = {actor.name: next(iter(actor.getBelief().values()))}
-                    messages = {}
-                    for actor in living:
-                        friends = [friend for friend in actor.friends
-                                   if world.agents[friend] in living]
-                        if friends:
-                            msg = [beliefs[friend][key] for friend in friends]
-                            messages[actor.name] = msg
-                            logging.info('%s receives message %s' % (actor,msg))
-                            actor.recvMessage(key,msg,myScale,optScale,pessScale)
+                exchangeMessages(world,config,world.state,living)
         if state['phase'] == 'approaching':
             history.clear()
             if turn == 'Actor' and survey is not None and config.getboolean('Data','presurvey',fallback=True):
@@ -1199,3 +1165,40 @@ def fastForward(world,config):
     for name,belief in beliefs.items():
         model = next(iter(world.agents[name].getBelief().keys()))
         world.agents[name].models[model]['beliefs'] = belief
+
+def exchangeMessages(world,config,state,living):
+    # Friends exchange messages
+    myScale = likert[5][config.getint('Actors','self_trust')-1]
+    if config.getint('Actors','friend_opt_trust') > 0:
+        optScale = likert[5][config.getint('Actors','friend_opt_trust')-1]
+    else:
+        optScale = 0.
+    if config.getint('Actors','friend_pess_trust') > 0:
+        pessScale = likert[5][config.getint('Actors','friend_pess_trust')-1]
+    else:
+        pessScale = 0.
+    if config.getint('Simulation','phase',fallback=1) == 1:
+        # Original phase 1 messages
+        for actor in living:
+            friends = [friend for friend in actor.friends
+                       if world.agents[friend] in living]
+            if friends:
+                key = stateKey('Nature','category')
+                for friend in friends:
+                    yrBelief = next(iter(world.agents[friend].getBelief(state).values()))
+                    msg = yrBelief[key]
+                    logging.info('%s receives message %s from %s' % (actor,msg,friend))
+                    actor.recvMessage(key,msg,myScale,optScale,pessScale)
+    else:
+        # Phase 2 messages
+        key = stateKey('Nature','category')
+        beliefs = {actor.name: next(iter(actor.getBelief(state).values()))}
+        messages = {}
+        for actor in living:
+            friends = [friend for friend in actor.friends
+                       if world.agents[friend] in living]
+            if friends:
+                msg = [beliefs[friend][key] for friend in friends]
+                messages[actor.name] = msg
+                logging.info('%s receives message %s' % (actor,msg))
+                actor.recvMessage(key,msg,myScale,optScale,pessScale)

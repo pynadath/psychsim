@@ -10,6 +10,7 @@ from psychsim.pwl import *
 from ..simulation.cdf import *
 from ..simulation.create import loadPickle,getConfig
 from ..simulation.data import *
+from ..simulation.execute import exchangeMessages
 
 instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 27,'run': 0,'span': 565},
@@ -679,25 +680,31 @@ def unpickle(instance,sub=None,day=None):
 def aidIfWealthLoss(agent):
     return sum([agent.Rweights[k] for k in ['health','childrenHealth','neighbors']])/sum(agent.Rweights.values())
 
-def holoCane(world,name,span,select=True):
-    home = world.getState(name,'location').first()
-    belief = world.agents[name].getBelief().values()
-    assert len(belief) == 1
-    belief = next(iter(belief))
+def holoCane(world,config,name,span,select=True,policy={}):
+    state = copy.deepcopy(world.state)
+    for key in list(state.keys()):
+        actor = state2agent(key)
+        if actor[:5] == 'Actor' and actor != name and actor not in policy:
+            del state[key]
+    if config.getboolean('Actors','messages'):
+        friends = world.agents[name].friends & set(policy.keys())
+    else:
+        friends = set()
     step = 3
     phase = 'none'
-    history = [copy.deepcopy(belief)]
+    history = [{'state': copy.deepcopy(state),'beliefs': copy.deepcopy(next(iter(world.agents[name].getBelief(state).values())))}]
     while step // 3 < span or phase != 'none':
-        if name in world.next(belief):
-            actions = {name: world.agents[name].decide(belief)['action']}
-        elif 'System' in world.next(belief):
-            actions = None
-        else:
-            actions = None
-        world.step(actions=actions,state=belief,select=select,keySubset=belief.keys())
+        if not world.getState(name,'alive',state).first():
+            # Actor has died
+            break
+        if name in world.next(state) and friends:
+            friends = {friend for friend in friends if world.getState(friend,'alive').first()}
+            exchangeMessages(world,config,state,friends|{name})
+        actions = {name: action for name,action in policy.items() if name in world.next(state)}
+        world.step(actions=actions,state=state,select=select,keySubset=state.keys())
         step += 1
-        phase = world.getState('Nature','phase',belief).first()
-        history.append(copy.deepcopy(belief))
+        phase = world.getState('Nature','phase',state).first()
+        history.append({'state': copy.deepcopy(state),'beliefs': copy.deepcopy(next(iter(world.agents[name].getBelief(state).values())))})
     return history
 
 def findParticipants(fname,args,world,states,config,ignoreWealth=True):
