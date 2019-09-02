@@ -27,56 +27,52 @@ class MainWindow(QMainWindow):
         self.ui.helpButton.clicked.connect(self.on_help)
         self.setupQueries()
         self.initSubWindows()
-        # self.ui.executeButton.clicked.connect(self.on_execute())
-        # self.graphicsView = pg.PlotWidget(self.ui.historyEdit)
-        # self.L = [1,2,3,4,5]
-        # self.graphicsView.plot(self.L) #this line doesn't work
-        # 
-        
-
-
+    
     def initSubWindows(self):
         self.setup_apply_filter()
         self.setup_select_nactors()
 
     def show_get_ndays(self):
-        logparser.get_ndays(buffer)
+        logparser.get_ndays(None)
 
     def show_get_nactors(self):
-        logparser.get_nactors(buffer)
+        logparser.get_nactors(None)
        
     def show_get_entities(self):    
-        logparser.get_entities(buffer)
+        logparser.get_entities(None)
 
     def show_reset_selection(self):
-        logparser.reset_selection(buffer)
+        logparser.reset_selection(buffer=sys.stdout)
 
     def show_show_selection(self):    
-        logparser.show_selection(buffer)
+        logparser.display_actor_selection()
 
     def show_show_filters(self):    
-        logparser.show_filters(buffer)
+        logparser.display_filters()
+        
         
 
         
     def setup_select_nactors(self):
+        self.SelectDialog = QtWidgets.QDialog()
         self.select_nactors = Ui_SelectDialog()
-        self.select_nactors.setupUi(self.select_nactors)
+        self.select_nactors.setupUi(self.SelectDialog)
         self.select_nactors.buttonBox.accepted.connect(self.on_select_nactors)
         #self.select_nactors.numberspinBox.
         self.select_nactors.selBox.addItems(consts.MODE_SELECTION_VALUES_IN)
     def on_select_nactors(self):
         print("#######################\n")
-        p_sel = self.apply_filter.selBox.currentText()
+        p_sel = self.select_nactors.selBox.currentText()
         p_n = self.select_nactors.numberspinBox.value()
-        logparser.select_nactors(p_n=str(p_n), p_mode_select=p_sel)
-    def show_select_nactors(self):
-        self.select_nactors.show()
+        logparser.select_nactors(p_n=p_n, p_mode_select=p_sel)
+    def show_select_n_actors(self):
+        self.SelectDialog.show()
 
         
     def setup_apply_filter(self):
+        self.FilterDialog = QtWidgets.QDialog()
         self.apply_filter = Ui_FilterDialog()
-        self.apply_filter.setupUi(self.apply_filter)
+        self.apply_filter.setupUi(self.FilterDialog)
         self.apply_filter.buttonBox.accepted.connect(self.on_apply_filter)
         self.apply_filter.attributeBox.addItems(logparser.entities_att_list['Actor'])
         self.apply_filter.operatorBox.addItems(['<','>','=','<=','>='])
@@ -89,12 +85,12 @@ class MainWindow(QMainWindow):
         p_name = self.apply_filter.nameLine.text()
         logparser.apply_filter(p_day=str(p_day), p_att=p_att, p_val=p_val, p_operator=p_op, p_name=p_name)
     def show_apply_filter(self):
-        self.apply_filter.show()
+        self.FilterDialog.show()
 
         
     def setupQueries(self):
         self.commands=consts.HELP['commands']
-        print(self.commands.keys())
+
         for self.cmds in self.commands[consts.CATEGORY_GENERAL_INFO].keys():
             self.cmd = self.cmds[0].replace(' ','_')
             self.switch[self.cmd] = self.cmd
@@ -120,7 +116,6 @@ class MainWindow(QMainWindow):
         
         
     def on_execute(self):
-        print("#######################\n")
         self.parse_execute_query()
 
     def on_help(self,selected):
@@ -128,8 +123,9 @@ class MainWindow(QMainWindow):
         q_gt.print_help()
 
     def on_Query(self,selected):
+        print("#######################")
         print(selected)
-        print("#############yooooohooo##########\n")
+        print("#######################")
         # if (selected == "apply filter"):
         #     self.filter.show()
         self.method = getattr(self, "show_" + selected, lambda: "No function")
@@ -138,7 +134,6 @@ class MainWindow(QMainWindow):
     def on_reset(self,selected):
         print(selected)
         logparser.reset_selection(None)
-        print("#############yooooohooo##########\n")
 
         
     def __del__(self):
@@ -193,9 +188,17 @@ if __name__ == "__main__":
 
         #sys.stdout = OutLog(uimw.ui.plainTextEdit, sys.stdout)
         sys.stdout = OutLog(uimw.ui.historyEdit)
+        uimw.filterList = OutLog(uimw.ui.filterText)
 
-        uimw.show()
         uimw.ui.historyEdit.setPlainText("Hi Stacy\n")
+        # uimw.ui.graphicsView = pg.PlotWidget(uimw.ui.plotView)
+        uimw.L = [1,2,3,4,5]
+        uimw.ui.plotView.plot(uimw.L) #this line doesn't work
+        uimw.show()
+        # self.graphicsView = pg.PlotWidget(self.ui.historyEdit)
+        # self.L = [1,2,3,4,5]
+        # self.graphicsView.plot(self.L) #this line doesn't work
+
         sys.exit(app.exec_())
     elif (args.autotest):
         logparser.demo(autotest=True)
