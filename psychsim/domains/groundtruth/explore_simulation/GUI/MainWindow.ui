@@ -37,41 +37,11 @@
      </property>
      <item>
       <property name="text">
-       <string>Select Query</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>select actors</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>get entities</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>get attribute_names</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>get nactors</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>apply filter</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>show filters</string>
+       <string/>
       </property>
      </item>
     </widget>
-    <widget class="QCommandLinkButton" name="executeButton">
+    <widget class="QCommandLinkButton" name="helpButton">
      <property name="geometry">
       <rect>
        <x>210</x>
@@ -81,13 +51,13 @@
       </rect>
      </property>
      <property name="text">
-      <string>Execute Query</string>
+      <string>Help</string>
      </property>
     </widget>
     <widget class="QCommandLinkButton" name="resetButton">
      <property name="geometry">
       <rect>
-       <x>320</x>
+       <x>310</x>
        <y>30</y>
        <width>91</width>
        <height>41</height>
@@ -152,9 +122,9 @@
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>30</y>
+        <y>250</y>
         <width>701</width>
-        <height>391</height>
+        <height>171</height>
        </rect>
       </property>
       <property name="verticalScrollBarPolicy">
@@ -172,6 +142,16 @@
       </property>
       <property name="text">
        <string>Query History</string>
+      </property>
+     </widget>
+     <widget class="PlotWidget" name="plotView">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>40</y>
+        <width>256</width>
+        <height>192</height>
+       </rect>
       </property>
      </widget>
     </widget>
@@ -241,6 +221,13 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

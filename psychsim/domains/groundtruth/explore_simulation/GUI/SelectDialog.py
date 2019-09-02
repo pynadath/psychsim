@@ -32,6 +32,8 @@ class Ui_SelectDialog(object):
         self.selBox.setObjectName("selBox")
         self.gridLayout.addWidget(self.selBox, 1, 1, 1, 1)
         self.numberspinBox = QtWidgets.QSpinBox(self.gridLayoutWidget)
+        self.numberspinBox.setMinimum(1)
+        self.numberspinBox.setMaximum(10000)
         self.numberspinBox.setObjectName("numberspinBox")
         self.gridLayout.addWidget(self.numberspinBox, 0, 1, 1, 1)
         self.label = QtWidgets.QLabel(self.gridLayoutWidget)
@@ -52,3 +54,13 @@ class Ui_SelectDialog(object):
         self.groupBox.setTitle(_translate("SelectDialog", "Select"))
         self.label.setText(_translate("SelectDialog", "Number"))
         self.label_2.setText(_translate("SelectDialog", "Select by"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    SelectDialog = QtWidgets.QDialog()
+    ui = Ui_SelectDialog()
+    ui.setupUi(SelectDialog)
+    SelectDialog.show()
+    sys.exit(app.exec_())

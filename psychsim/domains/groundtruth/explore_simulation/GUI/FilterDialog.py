@@ -10,13 +10,14 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_FilterDialog(QtWidgets.QDialog):
+class Ui_FilterDialog(object):
     def setupUi(self, FilterDialog):
         FilterDialog.setObjectName("FilterDialog")
         FilterDialog.setWindowModality(QtCore.Qt.WindowModal)
         FilterDialog.setEnabled(True)
-        FilterDialog.resize(497, 301)
+        FilterDialog.resize(497, 286)
         FilterDialog.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        FilterDialog.setModal(False)
         self.buttonBox = QtWidgets.QDialogButtonBox(FilterDialog)
         self.buttonBox.setGeometry(QtCore.QRect(170, 240, 161, 51))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
@@ -65,6 +66,7 @@ class Ui_FilterDialog(QtWidgets.QDialog):
         self.groupBox_7.setObjectName("groupBox_7")
         self.dayspinBox = QtWidgets.QSpinBox(self.groupBox_7)
         self.dayspinBox.setGeometry(QtCore.QRect(20, 30, 53, 24))
+        self.dayspinBox.setMinimum(1)
         self.dayspinBox.setObjectName("dayspinBox")
         self.gridLayout.addWidget(self.groupBox_7, 2, 0, 1, 1)
         self.groupBox_4 = QtWidgets.QGroupBox(self.gridLayoutWidget)
@@ -83,7 +85,7 @@ class Ui_FilterDialog(QtWidgets.QDialog):
 
     def retranslateUi(self, FilterDialog):
         _translate = QtCore.QCoreApplication.translate
-        FilterDialog.setWindowTitle(_translate("FilterDialog", "Dialog"))
+        FilterDialog.setWindowTitle(_translate("FilterDialog", "Apply Filter"))
         self.groupBox.setTitle(_translate("FilterDialog", "Apply Filter"))
         self.groupBox_3.setTitle(_translate("FilterDialog", "attribute"))
         self.attributeBox.setToolTip(_translate("FilterDialog", "What freatiure of the agent to fileter by"))
@@ -91,3 +93,13 @@ class Ui_FilterDialog(QtWidgets.QDialog):
         self.groupBox_2.setTitle(_translate("FilterDialog", "operator"))
         self.groupBox_7.setTitle(_translate("FilterDialog", "day"))
         self.groupBox_4.setTitle(_translate("FilterDialog", "name (optional)"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    FilterDialog = QtWidgets.QDialog()
+    ui = Ui_FilterDialog()
+    ui.setupUi(FilterDialog)
+    FilterDialog.show()
+    sys.exit(app.exec_())
