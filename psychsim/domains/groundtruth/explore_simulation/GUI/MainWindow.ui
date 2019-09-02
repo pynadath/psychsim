@@ -18,8 +18,8 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>20</y>
-      <width>451</width>
+      <y>10</y>
+      <width>421</width>
       <height>80</height>
      </rect>
     </property>
@@ -76,7 +76,7 @@
       <rect>
        <x>210</x>
        <y>30</y>
-       <width>111</width>
+       <width>101</width>
        <height>41</height>
       </rect>
      </property>
@@ -87,7 +87,7 @@
     <widget class="QCommandLinkButton" name="resetButton">
      <property name="geometry">
       <rect>
-       <x>340</x>
+       <x>320</x>
        <y>30</y>
        <width>91</width>
        <height>41</height>
@@ -173,6 +173,58 @@
       <property name="text">
        <string>Query History</string>
       </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_3">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>0</y>
+      <width>281</width>
+      <height>151</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Filters</string>
+    </property>
+    <widget class="QScrollArea" name="scrollArea_2">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>20</y>
+       <width>281</width>
+       <height>131</height>
+      </rect>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents_2">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>279</width>
+        <height>129</height>
+       </rect>
+      </property>
+      <widget class="QPlainTextEdit" name="filterText">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>271</width>
+         <height>131</height>
+        </rect>
+       </property>
+       <property name="undoRedoEnabled">
+        <bool>false</bool>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
      </widget>
     </widget>
    </widget>
