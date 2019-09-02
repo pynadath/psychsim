@@ -28,23 +28,68 @@ class MainWindow(QMainWindow):
         self.setupQueries()
         self.initSubWindows()
         # self.ui.executeButton.clicked.connect(self.on_execute())
+        # self.graphicsView = pg.PlotWidget(self.ui.historyEdit)
+        # self.L = [1,2,3,4,5]
+        # self.graphicsView.plot(self.L) #this line doesn't work
+        # 
+        
+
 
     def initSubWindows(self):
         self.setup_apply_filter()
+        self.setup_select_nactors()
 
+    def show_get_ndays(self):
+        logparser.get_ndays(buffer)
+
+    def show_get_nactors(self):
+        logparser.get_nactors(buffer)
+       
+    def show_get_entities(self):    
+        logparser.get_entities(buffer)
+
+    def show_reset_selection(self):
+        logparser.reset_selection(buffer)
+
+    def show_show_selection(self):    
+        logparser.show_selection(buffer)
+
+    def show_show_filters(self):    
+        logparser.show_filters(buffer)
+        
+
+        
+    def setup_select_nactors(self):
+        self.select_nactors = Ui_SelectDialog()
+        self.select_nactors.setupUi(self.select_nactors)
+        self.select_nactors.buttonBox.accepted.connect(self.on_select_nactors)
+        #self.select_nactors.numberspinBox.
+        self.select_nactors.selBox.addItems(consts.MODE_SELECTION_VALUES_IN)
+    def on_select_nactors(self):
+        print("#######################\n")
+        p_sel = self.apply_filter.selBox.currentText()
+        p_n = self.select_nactors.numberspinBox.value()
+        logparser.select_nactors(p_n=str(p_n), p_mode_select=p_sel)
+    def show_select_nactors(self):
+        self.select_nactors.show()
+
+        
     def setup_apply_filter(self):
         self.apply_filter = Ui_FilterDialog()
         self.apply_filter.setupUi(self.apply_filter)
         self.apply_filter.buttonBox.accepted.connect(self.on_apply_filter)
         self.apply_filter.attributeBox.addItems(logparser.entities_att_list['Actor'])
         self.apply_filter.operatorBox.addItems(['<','>','=','<=','>='])
-
-
-        # self.graphicsView = pg.PlotWidget(self.ui.historyEdit)
-        # self.L = [1,2,3,4,5]
-        # self.graphicsView.plot(self.L) #this line doesn't work
-        # 
-        
+    def on_apply_filter(self):
+        print("#######################\n")
+        p_att = self.apply_filter.attributeBox.currentText()
+        p_op = self.apply_filter.operatorBox.currentText()
+        p_day = self.apply_filter.dayspinBox.value()
+        p_val = self.apply_filter.valueSpinBox.value()
+        p_name = self.apply_filter.nameLine.text()
+        logparser.apply_filter(p_day=str(p_day), p_att=p_att, p_val=p_val, p_operator=p_op, p_name=p_name)
+    def show_apply_filter(self):
+        self.apply_filter.show()
 
         
     def setupQueries(self):
@@ -73,16 +118,6 @@ class MainWindow(QMainWindow):
         self.subwindowList.append('percent_filtered')
         self.ui.queryBox.addItem('percent_filtered')
         
-    def on_apply_filter(self):
-        print("#######################\n")
-        p_att = self.apply_filter.attributeBox.currentText()
-        p_op = self.apply_filter.operatorBox.currentText()
-        p_day = self.apply_filter.dayspinBox.value()
-        p_val = self.apply_filter.valueSpinBox.value()
-        p_name = self.apply_filter.nameLine.text()
-        logparser.apply_filter(p_day=str(p_day), p_att=p_att, p_val=p_val, p_operator=p_op, p_name=p_name)
-    def show_apply_filter(self):
-        self.apply_filter.show()
         
     def on_execute(self):
         print("#######################\n")
