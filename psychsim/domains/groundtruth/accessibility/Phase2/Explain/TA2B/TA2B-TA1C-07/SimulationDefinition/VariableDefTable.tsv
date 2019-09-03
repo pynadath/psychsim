@@ -1,0 +1,44 @@
+Name	LongName	Values	VarType	DataType	Notes
+Participant	Participant	[1+]	fixed	Integer	
+Hurricane	Hurricane	[1+]	dynamic	Integer	
+Timestep	Timestep	[1+]	dynamic	Integer	
+Age	Age	[0-100]	dynamic	Integer	
+Children	Children	[0-10]	dynamic	Integer	
+Ethnicity	Ethnicity	majority,minority	fixed	String	
+Fulltime Job	Fulltime Job	yes,no	dynamic	Boolean	
+Gender	Gender	female,male	fixed	String	
+Pets	Pets	yes,no	dynamic	Boolean	
+Religion	Religion	majority,minority,none	fixed	String	
+Residence	Residence	Region[01-16]	fixed	String	
+Wealth	Wealth	[1-7]	dynamic	Integer	
+Number of Friends	Number of Friends	[1-999]	dynamic	Integer	Q1
+Number of Friends Evacuated	Number of Friends Evacuated	[1-999]	dynamic	Integer	Q2
+Number of Friends Sheltered	Number of Friends Sheltered	[1-999]	dynamic	Integer	Q3
+Number of Friends Stayed Home	Number of Friends Stayed Home	[1-999]	dynamic	Integer	Q4
+Number of Friends Shared Category	Number of Friends Shared Category	[1-999]	dynamic	Integer	Q5
+Expected Category in Region	Expected Category in Region	[1-5],does not apply	dynamic	Integer	Q6
+Actual Category in Region	Actual Category in Region	[1-5],does not apply	dynamic	Integer	Q7
+Expected Category	Expected Category	[1-5],does not apply	dynamic	Integer	Q8
+Actual Category	Actual Category	[1-5],does not apply	dynamic	Integer	Q9
+Friends Region01	Friends Region01	[1-999]	dynamic	Integer	Q10
+Friends Region02	Friends Region02	[1-999]	dynamic	Integer	Q10
+Friends Region03	Friends Region03	[1-999]	dynamic	Integer	Q10
+Friends Region04	Friends Region04	[1-999]	dynamic	Integer	Q10
+Friends Region05	Friends Region05	[1-999]	dynamic	Integer	Q10
+Friends Region06	Friends Region06	[1-999]	dynamic	Integer	Q10
+Friends Region07	Friends Region07	[1-999]	dynamic	Integer	Q10
+Friends Region08	Friends Region08	[1-999]	dynamic	Integer	Q10
+Friends Region09	Friends Region09	[1-999]	dynamic	Integer	Q10
+Friends Region10	Friends Region10	[1-999]	dynamic	Integer	Q10
+Friends Region11	Friends Region11	[1-999]	dynamic	Integer	Q10
+Friends Region12	Friends Region12	[1-999]	dynamic	Integer	Q10
+Friends Region13	Friends Region13	[1-999]	dynamic	Integer	Q10
+Friends Region14	Friends Region14	[1-999]	dynamic	Integer	Q10
+Friends Region15	Friends Region15	[1-999]	dynamic	Integer	Q10
+Friends Region16	Friends Region16	[1-999]	dynamic	Integer	Q10
+Injured Friends	Injured Friends	[0+]	dynamic	Integer	Q11
+Friends' Loss	Friends' Loss	[0-999]	dynamic	Integer	Q12
+Ethnicity of Friends	Ethnicity of Friends	[0-999]	dynamic	Integer	Q13
+Gender of Friends	Gender of Friends	[0-999]	dynamic	Integer	Q14
+Age of Friends	Age of Friends	[0-999]	dynamic	Integer	Q15
+Religion of Friends	Religion of Friends	[0-999]	dynamic	Integer	Q16
