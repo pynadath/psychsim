@@ -9,6 +9,7 @@ import copy
 import matplotlib.pyplot as plt
 import numpy as np
 from collections import Counter
+import statistics
 
 import psychsim.domains.groundtruth.explore_simulation.query_gt_consts as consts
 import psychsim.domains.groundtruth.explore_simulation.helper_functions as helper
@@ -889,34 +890,48 @@ class LogParser:
             p_name = "stat" + self.stats_name_i.__str__() + "_" + p_fct
             self.stats_name_i += 1
         new_stat = self.create_new_stat_obj(p_fct, p_att, p_days, p_name)
+        stat_res = dict()
+        stat_res[consts.val_list] = dict()
+        stat_res[consts.mean] = dict()
         for day in p_days:
             values = self.get_att_val(self.selected_agents, p_att, day)
-            new_stat[consts.stat_res][day] = values
+            stat_res[consts.val_list][day] = values
+            stat_res[consts.mean][day] = statistics.mean(values)
         print_with_buffer(new_stat, buffer)
+        new_stat[consts.stat_res] = stat_res
 
         title = p_fct + " of " + p_att + " for the %d actors selected" % len(self.selected_agents)
         x_list, y_list = list(), list()
-        plotting_for_multiple_agents = isinstance(new_stat[consts.stat_res][p_days[0]], list)
-        if plotting_for_multiple_agents:
-            # for each agent
-            for i in range(len(new_stat[consts.stat_res][p_days[0]])):
-                list_values_y_for_agent_i = list()
-                list_values_x_for_agent_i = list()
-                # for each day
-                for day in new_stat[consts.stat_res].keys():
-                    list_values_x_for_agent_i.append(day)
-                    list_values_y_for_agent_i.append(new_stat[consts.stat_res][day][i])
-                x_list.append(list_values_x_for_agent_i)
-                y_list.append(list_values_y_for_agent_i)
-            # x_list = [item for sublist in x_list for item in sublist]
-            # y_list = [item for sublist in y_list for item in sublist]
-            self.plot_multiple_agents(x_lists=x_list, y_lists=y_list, y_label=p_att, title=title)
+
+        if p_fct == consts.val_list:
+            plotting_for_multiple_agents = isinstance(stat_res[consts.val_list][p_days[0]], list)
+            if plotting_for_multiple_agents:
+                # for each agent
+                for i in range(len(stat_res[consts.val_list][p_days[0]])):
+                    list_values_y_for_agent_i = list()
+                    list_values_x_for_agent_i = list()
+                    # for each day
+                    for day in stat_res[consts.val_list].keys():
+                        list_values_x_for_agent_i.append(day)
+                        list_values_y_for_agent_i.append(stat_res[consts.val_list][day][i])
+                    x_list.append(list_values_x_for_agent_i)
+                    y_list.append(list_values_y_for_agent_i)
+                # x_list = [item for sublist in x_list for item in sublist]
+                # y_list = [item for sublist in y_list for item in sublist]
+                self.plot_multiple_agents(x_lists=x_list, y_lists=y_list, y_label=p_att, title=title)
+
+            # else:
+            #     for x_elt, y_elt in stat_res[consts.val_list].items():
+            #         x_list.append(x_elt)
+            #         y_list.append(y_elt)
+            #     self.plot(x_list=x_list, y_list=y_list, y_label=p_att, title=title)
 
         else:
-            for x_elt, y_elt in new_stat[consts.stat_res].items():
+            for x_elt, y_elt in stat_res[p_fct].items():
                 x_list.append(x_elt)
                 y_list.append(y_elt)
             self.plot(x_list=x_list, y_list=y_list, y_label=p_att, title=title)
+
 
 
     def plot_multiple_agents(self, x_lists, y_lists, y_label, title):

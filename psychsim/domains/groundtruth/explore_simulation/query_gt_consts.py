@@ -17,6 +17,8 @@ active_values = ["active", "on"]
 inactive_values = ["inactive", "off"]
 all_values = ["all"]
 stat_res = "stat_res"
+mean = "mean"
+val_list = "list"
 
 DAYS = "days"
 ATTRIBUTE = "attribute"

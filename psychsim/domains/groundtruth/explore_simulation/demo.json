@@ -68,5 +68,9 @@
     {
         "command": "get stats -stat_function list -attribute health -days 1 to 16",
         "explanations": "What is their health through the simulation?"
+    },
+    {
+        "command": "get stats -stat_function mean -attribute health -days 1 to 16",
+        "explanations": "Okay, what about the mean value of health for those agents?"
     }
 ]
