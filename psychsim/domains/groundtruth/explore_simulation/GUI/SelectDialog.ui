@@ -55,7 +55,14 @@
       <widget class="QComboBox" name="selBox"/>
      </item>
      <item row="0" column="1">
-      <widget class="QSpinBox" name="numberspinBox"/>
+      <widget class="QSpinBox" name="numberspinBox">
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>10000</number>
+       </property>
+      </widget>
      </item>
      <item row="0" column="0">
       <widget class="QLabel" name="label">
