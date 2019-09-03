@@ -16,6 +16,7 @@ active = "active"
 active_values = ["active", "on"]
 inactive_values = ["inactive", "off"]
 all_values = ["all"]
+filter_mode = "filter_mode"
 
 DAY = "day"
 ATTRIBUTE = "attribute"
@@ -32,7 +33,9 @@ ENTITY = "entity"
 NAME = "name"
 TYPE = "type"
 TYPE_VALUES_IN = active_values + inactive_values + all_values
-ACOTRS_LIST = "actors_list"
+ACTORS_LIST = "actors_list"
+DAY_RANGE = "day_range"
+
 
 QUERY_PARAM = {
     DAY: ["day", "d"],
@@ -46,7 +49,8 @@ QUERY_PARAM = {
     ENTITY: ["entity", "e"],
     NAME: ["name", "n"],
     TYPE: ["type", "t"],
-    ACOTRS_LIST: [ACOTRS_LIST, "a_list"]
+    ACTORS_LIST: [ACTORS_LIST, "a_list"],
+    DAY_RANGE: [DAY_RANGE, "range", "dr"]
 }
 ALL_QUERY_PARAMS = [y for x in QUERY_PARAM.values() for y in x ]
 
@@ -112,7 +116,7 @@ HELP = {
             COMMAND_SELECT_ACTORS_BY_NAME: {
                 description: "Selects the actors listed by the user",
                 parameters: [
-                    {name: ACOTRS_LIST,
+                    {name: ACTORS_LIST,
                      optional: False}
                 ]
             },
@@ -141,7 +145,9 @@ HELP = {
                     {name: ATTRIBUTE_VAL,
                      optional: False},
                     {name: DAY,
-                     optional: False},
+                     optional: True},
+                    {name: DAY_RANGE,
+                     optional: True},
                     {name: NAME,
                      optional: True}
                 ]

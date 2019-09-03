@@ -46,11 +46,23 @@
         "explanations": "No, you changed your mind again, that was a mistake, reactivate the healthychildren filter!"
     },
     {
+        "command": "reset selection",
+        "explanations": "Let's reset the selection..."
+    },
+    {
+        "command": "apply filter -attribute health -value 0.7 -operator > -range 1 16 -name rangeFilter",
+        "explanations": "We're now interested in the actors that are in good health during the entire simulation."
+    },
+    {
         "command": "select n_actors -number 50",
         "explanations": "You want to ramdomly select 50 agents that fulfil all your criteria (filters)."
     },
     {
         "command": "select actors_by_name -actors_list 22 45 67",
         "explanations": "Among those actors, select 3. You want # 22, 45 and 76"
+    },
+    {
+        "command": "show filters -type all",
+        "explanations": "Check that filters are inactive."
     }
 ]
