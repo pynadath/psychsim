@@ -50,10 +50,6 @@
         "explanations": "Let's reset the selection..."
     },
     {
-        "command": "apply filter -attribute health -value 0.7 -operator > -range 1 16 -name rangeFilter",
-        "explanations": "We're now interested in the actors that are in good health during the entire simulation."
-    },
-    {
         "command": "select n_actors -number 50",
         "explanations": "You want to ramdomly select 50 agents that fulfil all your criteria (filters)."
     },

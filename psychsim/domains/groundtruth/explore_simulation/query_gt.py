@@ -5,7 +5,6 @@ from termcolor import colored
 import os
 import random
 import json
-import copy
 
 import psychsim.domains.groundtruth.explore_simulation.query_gt_consts as consts
 import psychsim.domains.groundtruth.explore_simulation.helper_functions as helper
@@ -126,39 +125,16 @@ class LogParser:
         self.n_days = -1
         self.n_actors = -1
         self.logs_dir = "psychsim/domains/groundtruth/Instances/Instance"+instance+"/Runs/run-"+run
-        self.selected_agents = list()
-        self.parse_logs(buffer)
 
         self.command = None
         self.query_param = dict()
         self.init_queryparams()
 
+        self.selected_agents = list()
         self.filter_list = list()
         self.filter_name_i = 1
 
-
-    def default_values_query_params(self):
-        query_param = dict()
-        query_param[consts.ACTOR] = None
-        query_param[consts.DAY] = -1
-        query_param[consts.ATTRIBUTE] = None
-        query_param[consts.NUMBER] = -1
-        query_param[consts.MODE_SELECTION] = consts.random_str
-        query_param[consts.ATTRIBUTE_VAL] = False
-        query_param[consts.ENTITY] = None
-        query_param[consts.NAME] = None
-        query_param[consts.TYPE] = "all"
-        query_param[consts.ACTORS_LIST] = list()
-        query_param[consts.DAY_RANGE] = [False, False]
-        query_param[consts.OPERATOR] = None
-        return query_param
-
-    def get_default_val(self, param):
-        defaults = self.default_values_query_params()
-        if param in defaults.keys():
-            return defaults[param]
-        else:
-            print_with_buffer("ParamError: Cannot get default value of %s, parameter does not exist" % param)
+        self.parse_logs(buffer)
 
 
     def init_queryparams(self):
@@ -166,7 +142,18 @@ class LogParser:
         Initiates the query_param object used to save the value of the parameters from the user command
         :return:
         """
-        self.query_param = self.default_values_query_params()
+        self.query_param = dict()
+        self.query_param[consts.ACTOR] = None
+        self.query_param[consts.DAY] = -1
+        self.query_param[consts.ATTRIBUTE] = None
+        self.query_param[consts.NUMBER] = -1
+        self.query_param[consts.MODE_SELECTION] = consts.random_str
+        # self.query_param[consts.MODE_DISPLAY] = consts.actors_list
+        self.query_param[consts.ATTRIBUTE_VAL] = False
+        self.query_param[consts.ENTITY] = None
+        self.query_param[consts.NAME] = None
+        self.query_param[consts.TYPE] = "all"
+        self.query_param[consts.ACOTRS_LIST] = list()
 
 
 
@@ -266,19 +253,9 @@ class LogParser:
                 return False
             elif len(args_pair) > 2:
                 p_name = args_pair[0]
-                if p_name in consts.QUERY_PARAM[consts.ACTORS_LIST]:
+                if p_name == consts.ACOTRS_LIST:
                     param_ok = self.set_p_actors_list(args_pair[1:], buffer)
                     if param_ok is not True:
-                        return False
-                elif p_name in consts.QUERY_PARAM[consts.DAY_RANGE]:
-                    # print("Param range")
-                    # print(len(args_pair))
-                    if len(args_pair) == 3:
-                        param_ok = self.set_p_dayrange(args_pair[1:], buffer)
-                        if param_ok is not True:
-                            return False
-                    else:
-                        print_with_buffer("ParameterError: too many values for query parameter %s" % args, buffer)
                         return False
                 else:
                     print_with_buffer("ParameterError: too many values for query parameter %s" % args, buffer)
@@ -334,8 +311,6 @@ class LogParser:
                 else:
                     param = i
                 if isinstance(self.query_param[p_name], list):
-                    if not any(self.query_param[p_name]):
-                        self.query_param[p_name] = list()
                     self.query_param[p_name].append(param)
                 else:
                     self.query_param[p_name] = param
@@ -439,6 +414,7 @@ class LogParser:
         """
         return self.set_p_with_values_in(p_name=consts.TYPE, p_val=p_val, values_in_list=consts.TYPE_VALUES_IN, buffer=buffer)
 
+
     def set_p_actors_list(self, numbers_list, buffer):
         """
         Sets the value of the actors_list parameter.
@@ -446,28 +422,20 @@ class LogParser:
         :param buffer:
         :return:
         """
+        param_ok = True
         for i in numbers_list:
-            param_ok = self.set_p_int_or_float(p_name=consts.ACTORS_LIST, p_val=i, p_type=int, p_max=self.n_actors, p_to_str=True, buffer=buffer)
+            param_ok = self.set_p_int_or_float(p_name=consts.ACOTRS_LIST, p_val=i, p_type=int, p_max=self.n_actors, p_to_str=True, buffer=buffer)
             if not param_ok:
                 return False
         return True
 
-    def set_p_dayrange(self, days_list, buffer):
-        if len(days_list) == 2:
-            for i in days_list:
-                param_ok = self.set_p_int_or_float(p_name=consts.DAY_RANGE, p_val=i, p_type=int, p_max=self.n_days, p_to_str=False, buffer=buffer)
-                if not param_ok:
-                    return False
-            return True
-        else:
-            print_with_buffer("ParameterError: parameter %s expects 2 values. Was given %d values." % (consts.DAY_RANGE, len(days_list)))
-            return False
+
 
     def set_param_value(self, p_name, p_val, buffer=None):
         """
         Sets the value p_val of parameter p_name in the self.query_param object for query execution
-        :param p_name: name of the parameter
-        :param p_val: value of the parameter
+        :param p_name: name of the paramter
+        :param p_val: value of the paramter
         :param buffer:
         :return: True or False
         """
@@ -493,7 +461,7 @@ class LogParser:
             return self.set_p_name(p_val, buffer)
         elif p_name in consts.QUERY_PARAM[consts.TYPE]:
             return self.set_p_type(p_val, buffer)
-        elif p_name in consts.QUERY_PARAM[consts.ACTORS_LIST]:
+        elif p_name in consts.QUERY_PARAM[consts.ACOTRS_LIST]:
             return self.set_p_actors_list([p_val], buffer)
         else:
             print_with_buffer("ParamaterError: %s does not exists." % p_name, buffer)
@@ -537,8 +505,7 @@ class LogParser:
                 self.reset_selection(buffer)
             elif self.command in consts.COMMAND_APPLY_FILTER:
                 p_day, p_att, p_val, p_op, p_name = self.query_param[consts.DAY], self.query_param[consts.ATTRIBUTE], self.query_param[consts.ATTRIBUTE_VAL], self.query_param[consts.OPERATOR], self.query_param[consts.NAME]
-                p_day_range = self.query_param[consts.DAY_RANGE]
-                self.apply_filter(p_day=p_day, p_day_range=p_day_range, p_att=p_att, p_val=p_val, p_operator=p_op, p_name=p_name, buffer=buffer)
+                self.apply_filter(p_day=p_day, p_att=p_att, p_val=p_val, p_operator=p_op, p_name=p_name, buffer=buffer)
             elif self.command in consts.COMMAND_GET_ENTITIES:
                 self.get_entities(buffer)
             elif self.command in consts.COMMAND_GET_ATTNAMES:
@@ -548,7 +515,7 @@ class LogParser:
             elif self.command in consts.COMMAND_REACTIVATE_FILTER:
                 self.reactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
             elif self.command in consts.COMMAND_SELECT_ACTORS_BY_NAME:
-                self.select_actors_by_name(p_list_names=self.query_param[consts.ACTORS_LIST], buffer=buffer)
+                self.select_actors_by_name(p_list_names=self.query_param[consts.ACOTRS_LIST], buffer=buffer)
             else:
                 print_with_buffer("QueryError: \"%s\" command unknown" % self.command, buffer)
         else:
@@ -611,13 +578,14 @@ class LogParser:
         if not self.filter_list:
             error_msg = "Selection Error: There are only %d actors in the simulation, we cannot select %d actors." % (self.n_actors, p_n)
         else:
-            error_msg = "Your filters are too restrictive to select %d actors. With these filters, you can sample at most %d actors" % (p_n, len(self.selected_agents))
+            error_msg = "Your filters are too restrictive to select %d actors. With these filters, you can sample at most %d actors" % (self.n_actors, len(self.selected_agents))
         print_with_buffer(error_msg, buffer)
 
     def select_nactors(self, p_n=-1, p_mode_select=consts.random_str, buffer=None):
         """
         Selects actors for the user.
         :param p_n: number of actors to select
+        :param p_actors: TODO: give the possibility to the user to select several actors by name.
         :param p_mode_select: selection mode (ordered (alphabetical order) or random. Default is random.
         :param buffer:
         :return:
@@ -677,12 +645,7 @@ class LogParser:
         :return: string
         """
         active = "active" if f[consts.active] else "inactive"
-        day_or_range = f[consts.filter_mode]
-        if day_or_range == consts.DAY:
-            day_or_range_str = " at " + consts.DAY + " " + f[consts.DAY]
-        else:
-            day_or_range_str = " over days " + f[consts.DAY_RANGE][0].__str__() + " to " + f[consts.DAY_RANGE][1].__str__()
-        return f[consts.NAME] + ": " + f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + day_or_range_str + "  (" + active + ")"
+        return f[consts.NAME] + ": " + f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " at " + consts.DAY + " " + f[consts.DAY] + "  (" + active + ")"
 
 
     def display_filters(self, type=consts.all_values[0], buffer=None):
@@ -716,11 +679,7 @@ class LogParser:
         :return:
         """
         self.selected_agents = self.actors_full_list
-        for filter in self.filter_list:
-            filter[consts.active] = False
-        print_with_buffer("Reset selection.", buffer)
-        if self.filter_list:
-            print_with_buffer("All filters deactivated", buffer)
+        print_with_buffer("Reset selection.")
 
 
     ## ---------------------------------------   Query on one specific agent -------------------------------- ##
@@ -786,16 +745,15 @@ class LogParser:
                     return consts.THISISFALSE
 
 
-    def add_filter_to_filter_list(self, p_day_or_range, p_att, p_val, p_operator, p_name, mode_select, p_active=True, buffer=None):
+    def add_filter_to_filter_list(self, p_day, p_att, p_val, p_operator, p_name, p_active=True, buffer=None):
         """
         Adds a new filter in our filter list to remember it.
         """
         new_filter = dict()
-        new_filter[mode_select] = p_day_or_range
+        new_filter[consts.DAY] = p_day
         new_filter[consts.ATTRIBUTE] = p_att
         new_filter[consts.ATTRIBUTE_VAL] = p_val
         new_filter[consts.OPERATOR] = p_operator
-        new_filter[consts.filter_mode] = mode_select
         new_filter[consts.active] = p_active
         if p_name:
             if p_name in [f[consts.NAME] for f in self.filter_list]:
@@ -808,84 +766,44 @@ class LogParser:
             self.filter_name_i += 1
         self.filter_list.append(new_filter)
 
-    def check_filter_already_applied(self, p_day_or_range, p_att, p_val, p_operator, mode_select, buffer=None):
+
+    def check_filter_already_applied(self, p_day, p_att, p_val, p_operator, buffer=None):
         """
         Checks weather the filter is already applied.
         :return: True or False
         """
         for filter in self.filter_list:
-            if filter[filter[consts.filter_mode]] == p_day_or_range and filter[consts.ATTRIBUTE] == p_att and filter[consts.ATTRIBUTE_VAL] == p_val and filter[consts.OPERATOR] == p_operator:
+            if filter[consts.DAY] == p_day and filter[consts.ATTRIBUTE] == p_att and filter[consts.ATTRIBUTE_VAL] == p_val and filter[consts.OPERATOR] == p_operator:
                 print_with_buffer("Filter already applied (%s)" % filter[consts.NAME], buffer)
                 return filter
         return False
 
-    def is_set(self, param_name, p_value):
-        """
-        Checks whether the user gave a value for a paramater. If the value received by the function is the default value, then the user did not give any
-        :param param_name: parameter name
-        :param p_value: value received by function
-        :return:
-        """
-        default_values_dict = self.default_values_query_params()
-        return default_values_dict[param_name] != p_value
 
 
-    def apply_filter(self, p_day, p_day_range, p_att, p_val, p_operator, p_name=None, buffer=None, verbose=True):
+    def apply_filter(self, p_day, p_att, p_val, p_operator, p_name=None, buffer=None, verbose=True):
         """
-        Applies a filter to the currently selected agents. A filter is for example "location = 2 at day 1" or "health > 0.6 over days 1 to 16"
-            |
-            ----> Actually just checks whether the filter should be applied to a unique day or to a range of days, and calls apply_filter_over_one_day_or_range_of_days
-        :param p_day: day for which the selection should be done --> exclusive with p_day_range
-        :param p_day_range: rande of days for which the selection should be done. --> exclusive with p_day
+        Applies a filter to the currently selected agents. A filter is for example "location = 2 at da 1" or "health > 0.6 at day 16"
+        :param p_day: day for which the selection should be done.
         :param p_att: attribute on which we are filtering actors.
         :param p_val: value given by the user.
         :param p_operator: operator to compare the actual value to the value given by the user.
         :param buffer:
         :return:
         """
-        p_day_is_set = self.is_set(consts.DAY, p_day)
-        p_day_range_is_set = self.is_set(consts.DAY_RANGE, p_day_range)
-
-        if p_day_is_set and p_day_range_is_set:
-            print_with_buffer("ParameterError: Parameters %s and %s are exclusive. Chose one or the other." % (consts.DAY, consts.DAY_RANGE), buffer)
-
-        elif p_day_is_set or p_day_range_is_set:
-            if p_day_is_set:
-                select_mode = consts.DAY
-                p_day_or_range = p_day
-            else:
-                select_mode = consts.DAY_RANGE
-                p_day_or_range = p_day_range
-            self.apply_filter_over_one_day_or_range_of_days(p_day_or_range, p_att, p_val, p_operator, select_mode, p_name, buffer, verbose)
-        else:
-            print_with_buffer("ParameterError: you must set a day or a range of days for your filter", buffer)
-
-    def apply_filter_over_one_day_or_range_of_days(self, p_day_or_range, p_att, p_val, p_operator, select_mode, p_name=None, buffer=None, verbose=True):
-        """
-        Applies a filter to the currently selected agents. A filter is for example "location = 2 at day 1" or "health > 0.6 over days 1 to 16"
-        :param p_day_or_range: day (type: str(int)) or range of days (type list(int))
-        :param select_mode: Filter mode: over just day OR a range of days?
-        """
-
-        if not self.check_filter_already_applied(p_day_or_range, p_att, p_val, p_operator, select_mode, buffer):
-            if select_mode == consts.DAY:
-                new_selection = [agent for agent in self.selected_agents if helper.compare(v1=self.get_att_val(agent, p_att=p_att, p_day=p_day_or_range), v2=p_val, op=p_operator)]
-            else:
-                new_selection = copy.deepcopy(self.selected_agents)
-                for i in range(p_day_or_range[0], p_day_or_range[1]):
-                    new_selection = [agent for agent in new_selection if helper.compare(v1=self.get_att_val(agent, p_att=p_att, p_day=i.__str__()), v2=p_val, op=p_operator)]
+        if not self.check_filter_already_applied(p_day, p_att, p_val, p_operator, buffer):
+            new_selection = [agent for agent in self.selected_agents if helper.compare(v1=self.get_att_val(agent, p_att=p_att, p_day=p_day), v2=p_val, op=p_operator)]
             if len(new_selection) == 0:
-                self.add_filter_to_filter_list(p_day_or_range, p_att, p_val, p_operator, p_name, select_mode, False, buffer)
+                self.add_filter_to_filter_list(p_day, p_att, p_val, p_operator, p_name, False, buffer)
                 if verbose:
                     print_with_buffer("FilterError: Given the current selection, no agents fulfil your new criteria --> new filter CANNOT be applied. However your filter is saved in memory (it's just inactive)", buffer)
             else:
                 self.selected_agents = new_selection
-                self.add_filter_to_filter_list(p_day_or_range, p_att, p_val, p_operator, p_name, select_mode, True, buffer)
+                self.add_filter_to_filter_list(p_day, p_att, p_val, p_operator, p_name, True, buffer)
                 if verbose:
                     print_with_buffer("After applying filter", buffer=buffer)
                     self.display_actor_selection()
-
-
+        # att_val = self.get_att_val("1", p_att, p_day)
+        # print(att_val)
 
 
     def get_filter(self, p_name, buffer):
@@ -916,12 +834,10 @@ class LogParser:
             self.filter_list = list()
             self.selected_agents = self.actors_full_list
             for f in old_filter_list:
-                mode_select = f[consts.filter_mode]
-                p_day_or_range = f[mode_select]
                 if f[consts.active]:
-                    self.apply_filter_over_one_day_or_range_of_days(p_day_or_range=p_day_or_range, p_att=f[consts.ATTRIBUTE], p_val=f[consts.ATTRIBUTE_VAL], p_operator=f[consts.OPERATOR], select_mode=mode_select, p_name=f[consts.NAME], verbose=False)
+                    self.apply_filter(p_day=f[consts.DAY], p_att=f[consts.ATTRIBUTE], p_val=f[consts.ATTRIBUTE_VAL], p_operator=f[consts.OPERATOR], p_name=f[consts.NAME], verbose=False)
                 else:
-                    self.add_filter_to_filter_list(p_day_or_range=p_day_or_range, p_att=f[consts.ATTRIBUTE], p_val=f[consts.ATTRIBUTE_VAL], p_operator=f[consts.OPERATOR], p_name=f[consts.NAME], mode_select=mode_select, p_active=False)
+                    self.add_filter_to_filter_list(p_day=f[consts.DAY], p_att=f[consts.ATTRIBUTE], p_val=f[consts.ATTRIBUTE_VAL], p_operator=f[consts.OPERATOR], p_name=f[consts.NAME], p_active=False)
             # self.display_filters(buffer=buffer)
             print_with_buffer("After deactivating filter %s" % p_name, buffer)
             self.display_actor_selection(buffer=buffer)
@@ -936,11 +852,9 @@ class LogParser:
         """
         f = self.get_filter(p_name, buffer)
         if f:
-            mode_select = f[consts.filter_mode]
-            p_day_or_range = f[mode_select]
             if not f[consts.active]:
                 self.filter_list.remove(f)
-                self.apply_filter_over_one_day_or_range_of_days(p_day_or_range=p_day_or_range,  p_att=f[consts.ATTRIBUTE], p_val=f[consts.ATTRIBUTE_VAL], p_operator=f[consts.OPERATOR], select_mode=mode_select, p_name=f[consts.NAME], buffer=buffer)
+                self.apply_filter(p_day=f[consts.DAY], p_att=f[consts.ATTRIBUTE], p_val=f[consts.ATTRIBUTE_VAL], p_operator=f[consts.OPERATOR], p_name=f[consts.NAME])
             else:
                 print_with_buffer("Filter %s is already active" % p_name, buffer)
 
@@ -989,7 +903,6 @@ if __name__ == "__main__":
 
     args = argp.parse_args()
 
-
     logparser = LogParser(args.i, args.r)
     if (args.test):
         logparser.query_log()
@@ -1000,6 +913,5 @@ if __name__ == "__main__":
     else:
         argp.print_help()
         exit(0)
-
 
 
