@@ -559,6 +559,6 @@ if __name__ == '__main__':
                 if not cmd['debug']:
                     accessibility.writeVarDef(os.path.dirname(__file__),variables)
                 defined = True
-            raise RuntimeError
         if not cmd['debug']:
-            accessibility.writeOutput(args,output,[var['Name'] for var in variables],'TA2A-TA1C-0252.tsv',os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance),'Runs','run-0'))
+            accessibility.writeOutput(args,output,[var['Name'] for var in variables],'TA2A-TA1C-0252-R1.tsv',os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance),'Runs','run-0'))
+        break

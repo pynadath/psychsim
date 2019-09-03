@@ -115,4 +115,6 @@ class Region(Agent):
 #            self.setState('economy',total/float(len(agents)))
 #        else:
 #            self.setState('economy',total)
-        
+
+    def configIndex(self):
+        return self.config.get('Shelter','region').split(',').index(self.name[-2:])

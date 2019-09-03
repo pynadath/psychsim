@@ -10,6 +10,7 @@ from psychsim.pwl import *
 from ..simulation.cdf import *
 from ..simulation.create import loadPickle,getConfig
 from ..simulation.data import *
+from ..simulation.execute import exchangeMessages
 
 instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 27,'run': 0,'span': 565},
@@ -134,14 +135,14 @@ def instanceFile(args,name,sub=None):
 def openFile(args,fname,sub=None):
     return open(instanceFile(args,fname,sub),'r')
 
-def loadMultiCSV(fname,instance,run=0,subs=[None]):
+def loadMultiCSV(fname,instance,run=0,subs=[None],grabFields=True):
     fields = None
     data = []
     for sub in subs:
         with openFile({'instance': instance,'run': run},fname,sub) as csvfile:
             reader = csv.DictReader(csvfile,fields,delimiter='\t')
             for row in reader:
-                if fields is None:
+                if fields is None and grabFields:
                     fields = row.keys()
                 else:
                     yield row
@@ -255,7 +256,7 @@ def findHurricane(day,hurricanes,includePrevious=False):
             return None
 
 
-def findMatches(record,world=None,population={}):
+def findMatches(record,world=None,population={},ignoreWealth=True):
     mismatch = {}
     matches = set()
     if world is None:
@@ -265,7 +266,7 @@ def findMatches(record,world=None,population={}):
     for name in sorted(people):
         if name[:5] == 'Actor':
             for field,feature in sorted(demographics.items()):
-                if field == 'Wealth':
+                if field == 'Wealth' and ignoreWealth:
                     continue
                 if name in population:
                     value = population[name][field]
@@ -282,11 +283,14 @@ def findMatches(record,world=None,population={}):
                         mismatch[field] = [name]
                     break
             else:
-                logging.info('Participant %s: %s' % (record['Participant'],name))
+                logging.debug('Participant %s: %s' % (record['Participant'],name))
                 matches.add(name)
     if matches:
         return matches
     else:
+        for key,names in mismatch.items():
+            print(key)
+            print({name: population[name][key] for name in names})
         raise ValueError('No match for %s (mismatches: %s)' % (record['Participant'],mismatch))
 
 def readDemographics(data,old=False,last=True,name=None):
@@ -531,7 +535,10 @@ def getLivePopulation(args,world,states,t):
     else:
         return {name: getDeath(args,name,world,states,t) for name in world.agents if name[:5] == 'Actor'}
 
-def getCurrentDemographics(args,name,world,states,config,t):
+def getCurrentDemographics(args,name,world,states,config,t=None):
+    """
+    :param t: If None, read from the current world state
+    """
     if 'Actor0001' in states:
         # Backward compatibility with Phase 1
         return readDemographics(states,old=args['instance'] == 24,last=t,name=name)[name]
@@ -539,24 +546,57 @@ def getCurrentDemographics(args,name,world,states,config,t):
         entry = {}
         for field,key in demographics.items():
             if field == 'Wealth':
-                entry[field] = toLikert(getInitialState(args,name,'resources',world,states,t).first(),7)
+                if t is None:
+                    value = world.getState(name,'resources')
+                else:
+                    value = getInitialState(args,name,'resources',world,states,t)
+                entry[field] = toLikert(value.first(),7)
             elif field == 'Fulltime Job':
-                entry[field] = 'yes' if getInitialState(args,name,'employed',world,states,t).first() else 'no'
+                if t is None:
+                    value = world.getState(name,'employed')
+                else:
+                    value = getInitialState(args,name,'employed',world,states,t)
+                entry[field] = 'yes' if value.first() else 'no'
             elif field == 'Pets':
-                entry[field] = 'yes' if stateKey(name,'pet') in world.variables and \
-                    getInitialState(args,name,'pet',world,states,t).first() else 'no'
+                if stateKey(name,'pet') in world.variables:
+                    if t is None:
+                        value = world.getState(name,'pet')
+                    else:
+                        value = getInitialState(args,name,'pet',world,states,t)
+                    entry[field] = 'yes' if  value.first() else 'no'
+                else:
+                    entry[field] = 'no'
             elif field == 'Age':
-                entry[field] = world.agents[name].demographics[key] + int(t/config.getint('Disaster','year_length'))
+                if t is None:
+                    day = world.getState(WORLD,'day').first()
+                else:
+                    day = t
+                entry[field] = world.agents[name].demographics[key] + day//config.getint('Disaster','year_length')
             else:
                 entry[field] = world.agents[name].demographics[key]
         return entry
 
-def loadState(args,states,t,turn):
+def loadState(args,states,t,turn,world=None):
+    """
+    :param world: If provided, the state loaded will be applied to the world (clobbering the existing state and beliefs)
+    """
     if t not in states:
         states[t] = {}
     if turn not in states[t]:
         with open(instanceFile(args,'state%d%s.pkl' % (t,turn)),'rb') as f:
             states[t][turn] = pickle.load(f)
+    if world:
+        for name,state in states[t][turn].items():
+            if name == '__state__':
+                world.state = state
+            else:
+                agent = world.agents[name]
+                for model,belief in state.items():
+                    agent.model[model]['beliefs'] = belief
+#                model = agent.getBelief().keys()
+#                assert len(model) == 1
+#                model = next(iter(model))
+#                agent.models[model]['beliefs'] = state[model]
 
 def getInitialState(args,name,feature,world,states,t,believer=None):
     if isinstance(t,int):
@@ -583,6 +623,8 @@ def getInitialState(args,name,feature,world,states,t,believer=None):
                     return world.getState(name,feature,next(iter(states[t-1]['Nature'][believer].values())))
     elif isinstance(t,tuple):
         return [getInitialState(args,name,feature,world,states,day,believer) for day in range(t[0],t[1])]
+    elif isinstance(t,list) or isinstance(t,set):
+        return [getInitialState(args,name,feature,world,states,day,believer) for day in t]
 
 def getAction(args,name,world,states,t):
     """
@@ -624,15 +666,16 @@ def readLog(args):
                     ER[-1][action['subject']][action] = float(words[-1])
     return ER
 
-def unpickle(instance,sub=None):
-    if instance == 1:
-        day = None
-    elif instance < 9:
-        day = instances[instance-1]['span']
-    elif instance < 15:
-        day = instances[instance-1]['span'] + 1
-    else:
-        day = 0
+def unpickle(instance,sub=None,day=None):
+    if day is None:
+        if instance == 1:
+            day = None
+        elif instance < 9:
+            day = instances[instance-1]['span']
+        elif instance < 15:
+            day = instances[instance-1]['span'] + 1
+        else:
+            day = 0
     if sub is None:
         if 3 <= instance <= 14:
             sub = 'Input'
@@ -640,3 +683,49 @@ def unpickle(instance,sub=None):
 
 def aidIfWealthLoss(agent):
     return sum([agent.Rweights[k] for k in ['health','childrenHealth','neighbors']])/sum(agent.Rweights.values())
+
+def holoCane(world,config,name,span,select=True,policy={}):
+    state = copy.deepcopy(world.state)
+    for key in list(state.keys()):
+        actor = state2agent(key)
+        if actor[:5] == 'Actor' and actor != name and actor not in policy:
+            del state[key]
+    if config.getboolean('Actors','messages'):
+        friends = world.agents[name].friends & set(policy.keys())
+    else:
+        friends = set()
+    step = 3
+    phase = 'none'
+    history = [{'state': copy.deepcopy(state),'beliefs': copy.deepcopy(next(iter(world.agents[name].getBelief(state).values())))}]
+    while step // 3 < span or phase != 'none':
+        if not world.getState(name,'alive',state).first():
+            # Actor has died
+            break
+        if name in world.next(state) and friends:
+            friends = {friend for friend in friends if world.getState(friend,'alive').first()}
+            exchangeMessages(world,config,state,friends|{name})
+        actions = {name: action for name,action in policy.items() if name in world.next(state)}
+        world.step(actions=actions,state=state,select=select,keySubset=state.keys())
+        step += 1
+        phase = world.getState('Nature','phase',state).first()
+        history.append({'state': copy.deepcopy(state),'beliefs': copy.deepcopy(next(iter(world.agents[name].getBelief(state).values())))})
+    return history
+
+def findParticipants(fname,args,world,states,config,ignoreWealth=True):
+    oldSurvey = []
+    lastUpdate = 0
+    actors = [name for name in world.agents if name[:5] == 'Actor']
+    with open(fname,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        for entry in reader:
+            for key in ['Participant','Timestep', 'Hurricane', 'Age', 'Children', 'Wealth']:
+                entry[key] = int(entry[key])
+            t = entry['Timestep']
+            if t != lastUpdate:
+                current = {name: getCurrentDemographics(args,name,world,states,config,t) for name in actors}
+                lastUpdate = t
+            entry['Name'] = {name for name in findMatches(entry,population=current,ignoreWealth=ignoreWealth)
+                if getInitialState(args,name,'alive',world,states,t).first()}
+            assert entry['Name'],'No matches for: %s' % (entry)
+            oldSurvey.append(entry)
+    return oldSurvey

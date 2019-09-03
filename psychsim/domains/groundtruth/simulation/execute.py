@@ -290,43 +290,46 @@ def runInstance(instance,args,config,rerun=True):
                     newSeason = True
             if newSeason:
                 # Jump to new season
-                season += 1
-                if isinstance(args['seasons'],int) and season >= args['seasons']:
-                    # All done
-                    break
-                phase = stateKey('Nature','phase')
-                dayKey = stateKey('Nature','days')
-                evolution = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
-                treePhase = world.dynamics[phase][evolution]
-                world.setDynamics(phase,evolution,makeTree(setToConstantMatrix(phase,'none')))
-                treeDays = world.dynamics[dayKey][evolution]
-                world.setDynamics(dayKey,evolution,makeTree(setToConstantMatrix(dayKey,0)))
-#                world.printState()
-                first = True
-                while world.getState(WORLD,'day').first() < season*config.getint('Disaster','year_length',fallback=365):
-                    # Advance simulation to next season
-                    names = world.next()
-                    turn = world.agents[next(iter(names))].__class__.__name__
-                    print('Fast-forward:',world.getState(WORLD,'day').first(),turn)
-                    if turn == 'Actor':
-                        if first:
-                            actions = {name: ActionSet([Action({'subject': name,'verb': 'moveTo', 'object': world.agents[name].home})]) for name in names}
+                if config.getint('Simulation','phase',fallback=1) == 1:
+                    season += 1
+                    if isinstance(args['seasons'],int) and season >= args['seasons']:
+                        # All done
+                        break
+                    phase = stateKey('Nature','phase')
+                    dayKey = stateKey('Nature','days')
+                    evolution = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
+                    treePhase = world.dynamics[phase][evolution]
+                    world.setDynamics(phase,evolution,makeTree(setToConstantMatrix(phase,'none')))
+                    treeDays = world.dynamics[dayKey][evolution]
+                    world.setDynamics(dayKey,evolution,makeTree(setToConstantMatrix(dayKey,0)))
+    #                world.printState()
+                    first = True
+                    while world.getState(WORLD,'day').first() < season*config.getint('Disaster','year_length',fallback=365):
+                        # Advance simulation to next season
+                        names = world.next()
+                        turn = world.agents[next(iter(names))].__class__.__name__
+                        print('Fast-forward:',world.getState(WORLD,'day').first(),turn)
+                        if turn == 'Actor':
+                            if first:
+                                actions = {name: ActionSet([Action({'subject': name,'verb': 'moveTo', 'object': world.agents[name].home})]) for name in names}
+                            else:
+                                actions = {name: ActionSet([Action({'subject': name,'verb': 'stayInLocation'})]) for name in names}
+                            world.step(actions,select='max' if args['max'] else True)
+                            first = False
+                        elif turn == 'System':
+                            world.step(select='max' if args['max'] else True)
+                        elif turn == 'Nature':
+                            world.step(select=True)
                         else:
-                            actions = {name: ActionSet([Action({'subject': name,'verb': 'stayInLocation'})]) for name in names}
-                        world.step(actions,select='max' if args['max'] else True)
-                        first = False
-                    elif turn == 'System':
-                        world.step(select='max' if args['max'] else True)
-                    elif turn == 'Nature':
-                        world.step(select=True)
-                    else:
-                        raise NameError('Unknown default action for %s' % (turn))
-                # Reset to begin of next season
-                world.dynamics[phase][evolution] = treePhase
-                world.dynamics[dayKey][evolution] = treeDays
-                for name in world.agents:
-                    if name[:5] == 'Actor':
-                        world.agents[name].setState('resources',world.agents[name].wealth)
+                            raise NameError('Unknown default action for %s' % (turn))
+                    # Reset to begin of next season
+                    world.dynamics[phase][evolution] = treePhase
+                    world.dynamics[dayKey][evolution] = treeDays
+                    for name in world.agents:
+                        if name[:5] == 'Actor':
+                            world.agents[name].setState('resources',world.agents[name].wealth)
+                else:
+                    fastForward(world,config)
                 state['phase'] = world.getState('Nature','phase').first()
 #                print('Next season')
 #                world.printState()
@@ -381,41 +384,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                 pass
             # //GT: edge 1; from 1; to 27; 1 of 2; next 35 lines
             if config.getboolean('Actors','messages') and state['phase'] != 'none':
-                # Friends exchange messages
-                myScale = likert[5][config.getint('Actors','self_trust')-1]
-                if config.getint('Actors','friend_opt_trust') > 0:
-                    optScale = likert[5][config.getint('Actors','friend_opt_trust')-1]
-                else:
-                    optScale = 0.
-                if config.getint('Actors','friend_pess_trust') > 0:
-                    pessScale = likert[5][config.getint('Actors','friend_pess_trust')-1]
-                else:
-                    pessScale = 0.
-                if config.getint('Simulation','phase',fallback=1) == 1:
-                    # Original phase 1 messages
-                    for actor in living:
-                        friends = [friend for friend in actor.friends
-                                   if world.agents[friend] in living]
-                        if friends:
-                            key = stateKey('Nature','category')
-                            for friend in friends:
-                                yrBelief = next(iter(world.agents[friend].getBelief().values()))
-                                msg = yrBelief[key]
-                                logging.info('%s receives message %s from %s' % (actor,msg,friend))
-                                actor.recvMessage(key,msg,myScale,optScale,pessScale)
-                else:
-                    # Phase 2 messages
-                    key = stateKey('Nature','category')
-                    beliefs = {actor.name: next(iter(actor.getBelief().values()))}
-                    messages = {}
-                    for actor in living:
-                        friends = [friend for friend in actor.friends
-                                   if world.agents[friend] in living]
-                        if friends:
-                            msg = [beliefs[friend][key] for friend in friends]
-                            messages[actor.name] = msg
-                            logging.info('%s receives message %s' % (actor,msg))
-                            actor.recvMessage(key,msg,myScale,optScale,pessScale)
+                exchangeMessages(world,config,world.state,living)
         if state['phase'] == 'approaching':
             history.clear()
             if turn == 'Actor' and survey is not None and config.getboolean('Data','presurvey',fallback=True):
@@ -1134,3 +1103,102 @@ def postSurvey(actor,dirName,hurricane,TA2BTA1C10=False,previous=False):
                         else:
                             record[field] = toLikert((delta+1.)/2.)
             writer.writerow(record)
+
+def fastForward(world,config):
+    beliefs = {name: next(iter(world.agents[name].getBelief().values())) for name in world.agents
+        if name[:5] == 'Actor' and world.getState(name,'alive').first()}
+    for key in world.state.keys():
+        agent,feature = state2tuple(key)
+        if feature[0] == '_':
+            # Special key (model, turn, action, reward)
+            continue
+        if agent == 'Nature':
+            if feature == 'category' or feature == 'days':
+                value = 0
+            elif feature == 'phase' or feature == 'location':
+                value = 'none'
+            else:
+                raise NameError('Unhandled key: %s' % (key))
+            world.setFeature(key,value)
+            for belief in beliefs.values():
+                world.setFeature(key,value,belief)
+        elif agent[:len('Region')] == 'Region':
+            if feature == 'risk':
+                value = world.agents[agent].risk
+            elif feature == 'shelterRisk':
+                riskLevel = int(config.get('Shelter','risk').split(',')[world.agents[agent].configIndex()])
+                if riskLevel > 0:
+                    value = likert[5][riskLevel-1]
+                else:
+                    value = 0.
+            else:
+                value = None
+            if value is not None:
+                world.setFeature(key,value)
+                for name,value in beliefs.items():
+                    if world.agents[name].demographics['home'] == 'agent':
+                        world.setFeature(key,value,beliefs[name].keys())
+        elif agent[:len(WORLD)] == WORLD:
+            if feature == 'day':
+                world.setFeature(key,config.getint('Disaster','year_length',fallback=365)+1)
+            else:
+                raise NameError('Unhandled key: %s' % (key))
+        elif agent[:len('Actor')] == 'Actor':
+            if world.getState(agent,'alive').first():
+                if feature == 'health' or feature == 'childrenHealth':
+                    value = world.agents[agent].health
+                elif feature == 'location':
+                    value = world.agents[agent].demographics['home']
+                elif feature == 'resources':
+                    value = world.agents[agent].demographics['wealth']
+                elif feature == 'employed':
+                    value = world.agents[agent].demographics['job']
+                elif feature == 'risk':
+                    value = world.getState(world.agents[agent].demographics['home'],'risk')
+                else:
+                    value = None
+                if value is not None:
+                    world.setFeature(key,value)
+                    world.setFeature(key,value,beliefs[agent])
+        else:
+            assert agent == 'System'
+    for name,belief in beliefs.items():
+        model = next(iter(world.agents[name].getBelief().keys()))
+        world.agents[name].models[model]['beliefs'] = belief
+
+def exchangeMessages(world,config,state,living):
+    # Friends exchange messages
+    myScale = likert[5][config.getint('Actors','self_trust')-1]
+    if config.getint('Actors','friend_opt_trust') > 0:
+        optScale = likert[5][config.getint('Actors','friend_opt_trust')-1]
+    else:
+        optScale = 0.
+    if config.getint('Actors','friend_pess_trust') > 0:
+        pessScale = likert[5][config.getint('Actors','friend_pess_trust')-1]
+    else:
+        pessScale = 0.
+    if config.getint('Simulation','phase',fallback=1) == 1:
+        # Original phase 1 messages
+        for actor in living:
+            friends = [friend for friend in actor.friends
+                       if world.agents[friend] in living]
+            if friends:
+                key = stateKey('Nature','category')
+                for friend in friends:
+                    yrBelief = next(iter(world.agents[friend].getBelief(state).values()))
+                    msg = yrBelief[key]
+                    logging.info('%s receives message %s from %s' % (actor,msg,friend))
+                    actor.recvMessage(key,msg,myScale,optScale,pessScale)
+    else:
+        # Phase 2 messages
+        key = stateKey('Nature','category')
+        beliefs = {actor.name: next(iter(actor.getBelief(state).values()))}
+        messages = {}
+        for actor in living:
+            friends = [friend for friend in actor.friends
+                       if world.agents[friend] in living]
+            if friends:
+                msg = [beliefs[friend][key] for friend in friends]
+                messages[actor.name] = msg
+                logging.info('%s receives message %s' % (actor,msg))
+                actor.recvMessage(key,msg,myScale,optScale,pessScale)

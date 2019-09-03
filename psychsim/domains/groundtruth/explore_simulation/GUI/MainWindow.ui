@@ -18,15 +18,15 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>20</y>
-      <width>451</width>
+      <y>10</y>
+      <width>421</width>
       <height>80</height>
      </rect>
     </property>
     <property name="title">
      <string>Query</string>
     </property>
-    <widget class="QComboBox" name="comboBox">
+    <widget class="QComboBox" name="queryBox">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -37,57 +37,27 @@
      </property>
      <item>
       <property name="text">
-       <string>Select Query</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>select actors</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>get entities</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>get attribute_names</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>get nactors</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>apply filter</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>show filters</string>
+       <string/>
       </property>
      </item>
     </widget>
-    <widget class="QCommandLinkButton" name="commandLinkButton">
+    <widget class="QCommandLinkButton" name="helpButton">
      <property name="geometry">
       <rect>
        <x>210</x>
        <y>30</y>
-       <width>111</width>
+       <width>101</width>
        <height>41</height>
       </rect>
      </property>
      <property name="text">
-      <string>Execute Query</string>
+      <string>Help</string>
      </property>
     </widget>
-    <widget class="QCommandLinkButton" name="commandLinkButton_2">
+    <widget class="QCommandLinkButton" name="resetButton">
      <property name="geometry">
       <rect>
-       <x>340</x>
+       <x>310</x>
        <y>30</y>
        <width>91</width>
        <height>41</height>
@@ -102,14 +72,30 @@
     <property name="geometry">
      <rect>
       <x>30</x>
-      <y>110</y>
+      <y>100</y>
       <width>321</width>
-      <height>41</height>
+      <height>51</height>
      </rect>
     </property>
     <property name="title">
      <string>Number of Agents Selected</string>
     </property>
+    <widget class="QLabel" name="numAgents">
+     <property name="geometry">
+      <rect>
+       <x>100</x>
+       <y>30</y>
+       <width>56</width>
+       <height>13</height>
+      </rect>
+     </property>
+     <property name="toolTip">
+      <string>Number of agents currently selected</string>
+     </property>
+     <property name="text">
+      <string>TextLabel</string>
+     </property>
+    </widget>
    </widget>
    <widget class="QScrollArea" name="scrollArea">
     <property name="geometry">
@@ -132,13 +118,13 @@
        <height>429</height>
       </rect>
      </property>
-     <widget class="QPlainTextEdit" name="plainTextEdit">
+     <widget class="QPlainTextEdit" name="historyEdit">
       <property name="geometry">
        <rect>
         <x>20</x>
-        <y>30</y>
+        <y>250</y>
         <width>701</width>
-        <height>391</height>
+        <height>171</height>
        </rect>
       </property>
       <property name="verticalScrollBarPolicy">
@@ -158,6 +144,68 @@
        <string>Query History</string>
       </property>
      </widget>
+     <widget class="PlotWidget" name="plotView">
+      <property name="geometry">
+       <rect>
+        <x>120</x>
+        <y>40</y>
+        <width>256</width>
+        <height>192</height>
+       </rect>
+      </property>
+     </widget>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_3">
+    <property name="geometry">
+     <rect>
+      <x>490</x>
+      <y>0</y>
+      <width>281</width>
+      <height>151</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Filters</string>
+    </property>
+    <widget class="QScrollArea" name="scrollArea_2">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>20</y>
+       <width>281</width>
+       <height>131</height>
+      </rect>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents_2">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>279</width>
+        <height>129</height>
+       </rect>
+      </property>
+      <widget class="QPlainTextEdit" name="filterText">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>0</y>
+         <width>271</width>
+         <height>131</height>
+        </rect>
+       </property>
+       <property name="undoRedoEnabled">
+        <bool>false</bool>
+       </property>
+       <property name="readOnly">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </widget>
     </widget>
    </widget>
   </widget>
@@ -173,6 +221,13 @@
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>PlotWidget</class>
+   <extends>QGraphicsView</extends>
+   <header>pyqtgraph</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

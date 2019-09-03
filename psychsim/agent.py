@@ -607,6 +607,7 @@ class Agent(object):
                 # Make me the subject of these actions
                 atom['subject'] = self.name
         new = ActionSet(actions)
+        assert new not in self.actions,'Action %s already defined' % (new)
         self.actions.add(new)
         if condition:
             self.legal[new] = condition
@@ -1020,8 +1021,7 @@ class Agent(object):
     def getBelief(self,vector=None,model=None):
         """
         :param model: the model of the agent to use, default is to use model specified in the state vector
-        
-	:returns: the agent's belief in the given world
+        :returns: the agent's belief in the given world
         """
         if vector is None:
             vector = self.world.state
@@ -1032,6 +1032,9 @@ class Agent(object):
                     for element in model.domain()}
         else:
             beliefs = self.getAttribute('beliefs',model)
+            if beliefs.__class__ is dict:
+                logging.warning('%s has extraneous layer of nesting in beliefs' % (self.name))
+                beliefs = beliefs[model]
             if beliefs is True:
                 world = copy.deepcopy(vector)
             else:

@@ -1,0 +1,1735 @@
+Codebook Afrobarometer 2000-2015
+Question: ROUND
+Variable Label: Round of surveys
+Value Labels: 3=Round 3, 4=Round 4, 5=Round 5, 6=Round 6
+
+Question: COUNTRY_ALPHA
+Variable Label: Country in alphabetical order
+Value Labels: 1=Algeria, 2=Benin, 3=Botswana, 4=Burkina Faso, 5=Burundi, 6=Cameroon, 7=Cape Verde, 8=Cote d‟Ivoire, 9=Egypt, 11=Ghana, 12=Guinea, 13=Kenya, 14=Lesotho, 15=Liberia,
+16=Madagascar, 17=Malawi, 18=Mali, 19=Mauritius, 20=Morocco, 21=Mozambique, 22=Namibia,
+23=Niger, 24=Nigeria, 25=Senegal, 26=Sierra Leone, 27=South Africa, 28=Sudan, 29=Swaziland,
+30=Tanzania, 31=Togo, 32=Tunisia, 33=Uganda, 34=Zambia, 35=Zimbabwe
+*Recoded for variable round 4 and 3.
+
+Question: RESPNO
+Variable Label: Respondent number
+Value Labels:
+
+Question: URBRUR
+Variable Label: Urban or rural sample unit
+Value Labels: 1=urban, 2=rural
+* Recoded for round 5 BOT & MAL (replace urbrur = 1 if urbrur = 3; WDI, urban population% was followed)
+
+Question: REGION
+Variable Label: Province or region
+Value Labels: 100=Alibori, 101=Atacora, 102=Atlantique, 103=Borgou, 104=Collines, 105=Couffo,
+106=Donga, 107=Littoral, 108=Mono, 109=Oueme, 110=Plateau, 111=Zou, 140=Barolong,
+141=Central, 146=Chobe, 147=Francistown, 148=Gaborone, 149=Ghanzi, 150=Jwaneng,
+151=Kgalagadi, 153=Kgatleng, 154=Kweneng, 156=Lobatse, 157=Ngamiland, 159=Ngwaketse,
+160=Ngwaketse West, 161=North East, 162=Seleibe Phikwe, 163=South East, 180=Boucle du Mouhoun,
+181=Cascades, 182=Centre, 183=Centre-Est, 184=Centre-Nord, 185=Centre-Ouest,
+186=Centre-Sud, 187=Est, 188=Hauts-Bassins, 189=Nord, 190=Plateau Central, 191=Sahel, 192=SudOuest, 220=S.Antão, 221=S.Vicente, 222=Santiago-Interior, 223=Santiago-Praia, 224=Fogo,
+260=Western, 2choi61=Central, 262=Greater Accra, 263=Volta, 264=Eastern, 265=Ashanti,
+266=Brong Ahafo, 267=Northern, 268=Upper East, 269=Upper West, 300=Nairobi, 301=Central,
+302=Eastern, 303=Rift Valley, 304=Nyanza, 305=Western, 306=North Eastern, 307=Coast,
+340=Maseru, 341=Mafeteng, 342=Mohale‟s Hoek, 343=Quthing, 344=Qacha‟s Nek,
+345=Mokhotlong, 346=Butha-Buthe, 347=Leribe, 348=Berea, 349=Thaba Tseka, 380=Bomi,
+381=Bong, 382=Gbarpolu, 383=Grand Bassa, 384=Grand Cape Mount, 385=Grand Gedeh, 386=Grand Kru,
+387=Lofa, 388=Margibi, 389=Maryland, 390=Montserrado, 391=Nimba, 392=River Cess,
+393=River Gee, 394=Sinoe, 420=Alaotra Mangoro, 421=Amoron'i Mania, 422=Analamanga,
+423=Analanjirofo, 424=Androy, 425=Anosy, 426=Atsimo Andrefana, 427=Atsimo Atsinanana,
+428=Atsinanana, 429=Betsiboka, 430=Boeny, 431=Bongolava, 432=Diana, 433=Haute Matsiatra,
+434=Ihorombe, 435=Itasy, 436=Melaky, 437=Menabe, 438=SAVA, 439=Sofia, 440=Vakinankaratra,
+441=Vatovavy Fitovinany, 460=Central, 461=North, 462=South, 501=Kayes, 502=Koulikoro,
+503=Sikasso, 504=Ségou, 505=Mopti, 509=Bamako, 540=Maputo Province, 541=Maputo City,
+542=Gaza, 543=Inhambane, 544=Sofala, 545=Tete, 546= Manica, 547=Zambezia, 548=Nampula,
+549=Cabo Delgado, 550=Niassa, 580=Caprivi, 581=Erongo, 582=Hardap, 583=Karas, 584=Kavango,
+585=Khomas, 586=Kunene, 587=Ohangwena, 588=Omaheke, 589=Omusati, 590=Oshana,
+591=Oshikoto, 592=Otjozondjupa, 620=Abia, 621=Adamawa, 622=Akwa-Ibom, 623=Anambra,
+624=Bauchi, 625=Bayelsa, 626=Benue, 627=Borno, 628=Cross-River, 629=Delta, 630=Ebonyi,
+631=Edo, 632=Ekiti, 633=Enugu, 634=FCT, 635=Gombe, 636=Imo, 637=Jigawa, 638=Kaduna,
+639=Kano, 640=Katsina, 641=Kebbi, 642=Kogi, 643=Kwara, 644=Lagos, 645=Nasarawa, 646=Niger,
+647=Ogun, 648=Ondo, 649=Osun, 650=Oyo, 651=Plateau, 652=Rivers, 653=Sokoto, 654=Taraba,
+655=Yobe, 656=Zamfara, 660=Dakar, 661=Diourbel, 662=Fatick, 663=Kaffrine, 664=Kaolack,
+665=Kédougou, 666=Kolda, 667=Louga, 668=Matam, 669=Saint-Louis, 670=Sédhiou,
+671=Tambacounda, 672=Thies, 673=Ziguinchor, 700=Eastern Cape, 701=Free State, 702=Gauteng,
+703=Kwazulu Natal, 704=Limpopo, 705=Mpumalanga, 706=North West, 707=Northern Cape,
+708=Western Cape, 740=Dodoma, 741=Arusha, 742=Kilimanjaro, 743=Tanga, 744=Morogoro,
+745=Pwani, 746=Dar es Salaam, 747=Lindi, 748=Mrwara, 749=Ruvuma, 750=Iringa, 751=Mbeya,
+752=Singida, 753=Tabora, 754=Rukwa, 755=Kigoma, 756=Shinyanga, 757=Kagera, 758=Mwanza, 759=Mara, 760=Manyara, 761=Unguja Kaskazini, 762=Unfuja Kusini,
+763=Mjini Magharibi, 764=Pemba Kaskazini, 765=Pemba Kusini, 780=Central, 781=West,
+782=North, 783=East, 784=Kampala, 820=Lusaka, 821=Central, 822=Copperbelt, 823=Eastern,
+824=Luapula, 825=Northern, 826=North-Western, 827=Southern, 828=Western, 829=Muchinga,
+860=Harare,
+861=Bulawayo,
+862=Midlands,
+863=Masvingo,
+864=Mashonaland East,
+865=Mashonaland West, 866=Mashonaland Central, 867=Matebeleland South, 868=Matebeleland North, 869=Manicaland, 900=Port Louis, 901=Pamplemousses, 902=Riviere du Rempart, 903=Flacq,
+904=Grand Port, 905=Savanne, 906=Plaines Wilhems, 907=Moka, 908=Black River, 909=Rodrigues,
+930=Western Area, 931=Southern Province, 932=Eastern Province, 933=Northern Province,
+1100=Agadez, 1101=Diffa, 1102=Dosso, 1103=Maradi, 1104=Tahoua, 1105=Tillabéri, 1106=Zinder,
+1107=Niamey, 1140=Lomé commune, 1141=Maritime, 1142=Plateaux, 1143=Centrale, 1144=Kara,
+1145=Savanes, 1180=Bubanza, 1181=Bujumbura, 1182=Bujumbura Mairie, 1183=Buriri,
+1184=Cankuzo, 1185=Cibitoke, 1186=Gitega, 1187=Karusi, 1188=Kayanza, 1189=Kirundo,
+1190=Makamba, 1191=Muramvya, 1192=Muyinga, 1193=Mwaro, 1194=Ngozi, 1195=Rutana,
+1196=Ruyigi, 1220=Yaounde, 1221=Douala, 1222=Adamawa, 1223=Centre, 1224=East,
+1225=Extreme-North, 1226=Littoral, 1227=North, 1228=North West, 1229=West, 1230=Sud,
+1231=Sud-Ouest, 1260=Agneby, 1261=Bafing, 1262=Bas Sassandra, 1263=Denguele,
+1264=Fromager,
+1265=Haut Sassandra,
+1266=Lacs,
+1267=Lagunes,
+1268=Marahoue,
+1269=Montagnes, 1270=Moyen Cavally, 1271=Moyen Comoe, 1272=N‟Zi Comoe, 1273=Savanes,
+1274=Sud Bandama, 1275=Sud Comoe, 1276=Vallee du Bandama, 1277=Ville d‟Abidjan,
+1278=Worodougou, 1279=Zanzan, 1300=Canakry, 1301=Boké, 1302=Kindia, 1303=Mamou,
+1304=Labé, 1305=Faranah, 1306=Kankan, 1307=N‟Zérékoré, 1420=Adrar, 1421=Chlef,
+1422=Laghouat, 1423=Oum el-Bouaghi, 1424=Batna, 1425=Bejaia, 1426=Biskra, 1427=Bechar,
+1428=Blida, 1429=Bouria, 1430=Tamanghasset, 1431=Tebessa, 1432=Tlemcen, 1433=Tiaret,
+1434=Tizi Ouzou, 1435=Algeris, 1436=Djelfa, 1437=Jijel, 1438=Setif, 1439=Saida, 1440=Skikda,
+1441=Sidi Bel Abbes, 1442=Annaba, 1443=Guelma, 1444=Constantine, 1445=Medea,
+1446=Mostaganem, 1447=M‟Sila, 1448=Mascara, 1449=Ouargla, 1450=Oran, 1451=El Bayadh,
+1452=Illizi, 1453=Bordj Bou Arreridj, 1454=Boumerdes, 1455=El Tarf, 1456=Tindouf,
+1457=Tissemsilt, 1458=El Oued, 1459=Khenchela, 1460=Cairo, 1461=Alexandira, 1462=Port Said,
+1463=Suez, 1464=Damietta, 1465=Dakahlia, 1466=Al-Sharqia, 1467=Qalyubia, 1468=Kafr el-Sheikh,
+1469=Gharbia, 1470=Monufia, 1471=Beheira, 1472=Ismailia, 1473=Giza, 1474=Beni Suef,
+1475=Faiyum, 1476=Minya, 1477=Asyut, 1478=Sohag, 1479=Qena, 1480=Luxor, 1481=Red Sea,
+1482=Al Bahr al Ahmar, 1500=Chaouia-Ouardigha, 1501=Doukkala-Abda, 1502=Fes-Boulemane,
+1503=Gharb-Charda-Beni Hssen, 1504=Grand Casablanca, 1505=Guelmim-Es Semara,
+1506=Laayoune-Boujdour-Sakia El Hamra, 1507=Marrakech-Tensift-El Haouz, 1508=MeknesTafilalet, 1509=Oriental, 1510=Oued Ed-Dahab-Lagouira, 1511=Rabat-Sale-Zemmour-Zaer,
+1512=Souss-Massa-Draa, 1513=Tadla-Azilal, 1514=Tangier-Tetouan, 1515=Taza-Al HoceimaTaounate, 1540=North, 1541=Nahr ALnil, 1542=Red Sea, 1543=Kassala, 1544=Gadarif,
+1545=Khartom, 1546=Gezira, 1547=White Nile, 1548=Sennar, 1549=Blue Nile, 1550=South
+Kordufan, 1551=North Kordufan, 1552=North Darfur, 1553=West Darfur, 1554=South Darfur,
+1580=Tunis, 1581=Ariana, 1582=Ben Arous, 1583=Manouba, 1584=Nabeul, 1585=Zaghouan,
+1586=Bizerte, 1587=Beja, 1588=Jendouba, 1589=Le Kef, 1590=Siliana, 1591=Sousse,
+1592=Monastir, 1593=Mahdia, 1594=Sfax, 1595=Kairouan, 1596=Kasserine, 1597=Sidi Bouzid,
+1598=Gabes, 1599=Mednine, 1600=Tataouine, 1601=Gafsa, 1602=Tozeur, 1603=Kebili,
+1620=Hhohho, 1621=Manzini, 1622=Shiselweni, 1623=Lubombo
+a Recoded
+
+Question: DATEINTR
+Variable Label: Date of interview
+Value Labels: day.month.year
+
+Question: LENGTH
+Variable Label: Length of interview
+
+Socio-Demographics
+Q1. Gender
+Question: Respondent’s gender
+Variable Label: Q1.Gender
+Value Labels: 1=Male, 2=Female
+* Note: Answered by interviewer
+
+Q2. Age
+Question: How old are you?
+Value Labels: 18-110; 998=Refused to answer, 999=Don’t know, -1=Missing
+* This variable is regrouped into Q2A.Age. The categories are 18-35, 36-50 and 51+. Recoding round 4 and 3 based on
+categories in round 5.
+
+Q2A. Age
+Question: How old are you?
+Value Labels: 18-110=int, 998=Refused to answer, 999=Don’t know, -1=Missing
+
+Q3. Race
+Question: Respondent’s race
+Value Labels: 1=Black/African, 2=White/European, 3=Colored/Mixed Race, 4=Arab/Lebanese/North
+African, 5=South Asian (Indian, Pakistani, etc.), 6=East Asian (Chinese, Korean, Indonesian, etc.),
+95=Other, -1=Missing
+* Note: Answered by interviewer
+
+Q4. LanguageR5
+Question: Which language is your home language?
+Value Labels: No recoding. The different value labels of each round are maintained. Assessing
+continuity over round is not possible.
+
+Q4. LanguageR4
+Question: Which language is your home language?
+Value Labels: No recoding. The different value labels of each round are maintained. Assessing
+continuity over round is not possible.
+
+Q4. LanguageR3
+Question: Which language is your home language?
+Value Labels: No recoding. The different value labels of each round are maintained. Assessing
+continuity over round is not possible.
+
+Q5. Tribe
+Question: What is your ethnic community, cultural group or tribe?
+Value Labels a: 1=English, 2=Afrikaaner, 3=Akan, 4=Arabe, 5=Bobo, 6=Chewa, 7=Coloured, 9=Adja,
+10=Fon, 11=Haoussa, 12=Hausa, 13=Kissi, 14=Konkomba, 15=Koro, 16=Kru, 17=Lomwe, 18=Lozi,
+19=Mada, 20=Malinké, 21=Maure, 22=Mende, 23=Ndau, 24=Ndebele, 25=Ngoni, 26=Nyanja,
+27=Peulh, 28=Sena, 29=Senga, 30=Tonga, 31=Tumbuka, 32=Vai, 33=Venda, 34=Yoruba,
+102=Bariba, 103=Dendi, 105=Ditamari/Otamari, 107=Yoa, 140=Mokgatla, 141=Mokwena,
+142=Mongwato, 143=Mongwaketse, 144=Motlokwa, 145=Moherero, 146=Morolong, 147=Mosarwa,
+148=Mokalaka/Mokalanga,
+149=Mosubeya/Mosobea,
+150=Motawana,
+151=Mokgalagadi,
+152=Moyeyi/Moyei, 153=Mo(k)hurutshe, 155=Mmirwa, 156=Mongologa, 157=Modamara,
+158=Mombukushu, 159=Molete, 160=Motswapong, 161=Motlharo, 162=Motlhaping, 163=Mokgothu,
+164=Motalaote, 165=Mopedi, 180=Mossi, 181=Dioula, 182=Peulh, 183=Goumantche,
+184=Gourounsi, 185=Bissa, 187=Birifor, 188=Dagari, 189=Lobi, 190=Samo, 191=Sénoufo,
+192=Bwaba, 193=Goin, 194=Yanan, 195=Marka, 196=Kassena, 197=Fulse, 201=Fulsé, 220=Related
+to regional origin (badio/sampadjudo), 221=African, 222=American or European, 223=Related to age,
+224=Related to gender, 225=Related to occupation, 226=Related to religion, 227=Related to class,
+228=Related to race, 261=Ewe/Anglo, 262=Ga/Adangbe, 263=Dagomba, 265=Waale, 266=Moshie/
+Mosi, 267=Mamprusi, 268=Sissala, 269=Kusasi, 270=Konkomba, 271=Gonja, 272=Frafra,
+273=Dagaaba/Dagarti, 274=Buzanga, 275=Kontonkoli, 276=Gruma,, 277=Bulsa,, 278=Basari,
+279=Talensi, 280=Kasina, 281=Nzema, 282=Other Northern tribes, 300=Kikuyu, 301=Luo,
+302=Luhya, 303=Kamba, 304=Kalenjin, 305=Kisii, 306=Meru/Embu, 307=Maasai / Samburu,
+308=Mijikenda, 309=Taita, 310=Somali, 311=Pokot, 312=Turkana, 314=Teso, 315=Sabaot,
+319=Kuria, 320=Borana, 322=Bajuni, 340=Mokoena, 341=Motaung, 342=Mohlakoana/Motebang,
+343=Mofokeng, 344=Mosiea, 345=Motsoeneng, 346=Motloung, 347=Lephuthing, 348=Mophuthi,
+349=Motlokoa, 350=Letebele, 351=Lekholokoe, 352=Lekhoakhoa, 353=Mokubung, 354=Mothepu,
+355=Mokhatla, 356=Lepele, 361=Monareng, 363=Molefe, 367=Leswati, 380=Bassa, 381=Belle,
+382=Dei, 383=Gbandi, 384=Gio, 385=Gola, 386=Grebo, 388=Kpelle, 389=Krahn, 391=Lorma,
+392=Mandingo, 393=Mano, 420=Antakarana, 421=Antambahoaka, 422=Antandroy, 423=Antanosy,
+424=Antefasy, 425=Antemoro, 426=Antesaka, 427=Bara, 428=Betsileo, 429=Betsimisaraka,
+430=Bezanozano, 431=Mahafaly, 432=Merina, 433=Sakalava, 434=Sihanaka, 435=Tanala,
+436=Tsimihety, 437=Vezo, 439=Sahafatra, 441=Zafisoro, 461=Nkhonde, 462=Lambya, 463=Chewa,
+464=Yao, 465=Ngoni, 467=Mang‟anja, 469=Sukwa, 472=Ndali, 501=Bambara, 502=Bella,
+504=Bozo, 505=Dafing, 506=Dogon, 508=Haoussa, 509=Kakolo, 510=Khassonké, 513=Mianka,
+514=Peulh/Fulfude,
+515=Samogo,
+516=Senufo,
+517=Soninké/Sarakollé,
+518=Sonrhaï,
+519=Tamasheq, 520=Mossi, 540=Makua, 544=Changana, 545=Chope, 546=Bitonga, 547=Makonde,
+548=Chuabo, 549=Ajaua, 551=Barue, 552=Marenge, 553=Nhungue, 554=Tewe, 555=Matswa,
+556=Tawala, 557=Muani, 559=Manhawa, 560=Ronga, 580=Wambo, 581=Herero, 582=Caprivian,
+583=Kavango (Rukwangali, Rumanyo, Hambukushu), 584=German, 587=Portuguese, 588=Nama,
+589=Damara, 591=Subia, 593=Tswana, 594=Baster, 595=San, 621=Igbo, 623=Efik, 624=Ebira,
+625=Fulani, 626=Isoko, 627=Ibibio, 628=Kanuri, 629=Tiv, 630=Nupe, 631=Ijaw, 632=Edo,
+633=Igala, 634=Urhobo, 635=Idoma, 636=Itsekiri, 637=Ikwere, 638=Awori, 639=Tapa,
+640=Kalabari, 641=Birom, 642=Shuwa-Arab, 643=Jukun, 644=Gwari, 645=Ogoni, 646=Anang, ,
+648=Okpella, 649=Tarok, 650=Igede, 652=Gbagyi, 653=Okrika, 660=Wolof, 661=Pulaar/Toucouleur,
+662=Serer, 663=Mandinka/Bambara, 664=Soninke, 665=Diola, 666=Manjack, 668=BAYNOUK,
+669=BALANTE, 670=Bassari, 703=Xhosa, 704=Pedi/Spedi/North Sotho, 705=Sesotho/Sotho/South
+Sotho, 706=Setswana/Tswana, 707=Shangaan, 708=Swazi, 710=Zulu, 711=White/European,
+713=Indian, 740=Kinyakyusa, 741=Kichaga, 742=Kihaya, 743=Kingoni, 744=Kikwere, 745=Kipare,
+746=Kihehe, 747=Kimakonde, 748=Kinyamwezi, 749=Kisukuma, 750=Kimasai, 751=Kimeru,
+752=Kikurya, 753=Kigogo, 754=Kiluguru, 755=Kifipa, 756=Kimanyema, 757=Kinyiramba,
+758=Kinyaturu, 759=Mbena, 760=Mha, 761=Mhangaza, 762=Muiraqi, 763=Mjaluo, 764=Mjita,
+765=Mkinga, 766=Mtongwe, 767=Mmwera, 768=Mndali, 769=Mndendeule, 770=Mnyambo,
+771=Mpogoro, 772=Msambaa, 773=Myao, 774=Mzaramo, 775=Mzigua, 776=Mzinza, 777=Mdoe,
+778=Muarusha, 779=Msumbwa, 780=Muganda, 781=Munyankole, 782=Munyoro, 783=Musoga,
+784=Mugishu, 785=Mukhonjo, 786=Munyole, 787=Ateso, 788=Acholi, 789=Alur, 790=Lugbara,
+791=Madi, 792=Japhadhola, 793=Musamia, 794=Mugwere, 795=Mukiga, 796=Mutooro, 797=Langi,
+798=Sabinyi, 799=Karamajong, 800=Mutagwenda, 801=Mufumbira, 802=Munyarwanda,
+803=Mululi, 804=Aringa, 805=Kumam, 806=Kakwa, 807=Mulamogi, 808=Aliba, 810=Mwamba,
+820=Bemba, 825=Nsenga, 827=Kaonde, 828=Luvale, 829=Namwanga, 830=Lunda, 831=Bisa,
+832=Nkoya, 833=Mambwe, 834=Lenje, 836=Soli, 837=Ila, 838=Ushi, 839=Chokwe, 840=Mbunda,
+841=Kunda, 842=Lala, 843=Lamba, 844=Lungu, 845=Nyika, 847=Tokaleya, 848=Bwile,
+849=Ngumbo, 851=Tabwa, 852=Goba, 853=Luchazi, 861=Shona, 862=Zezuru, 863=Korekore,
+864=Karanga, 865=Manyika, 868=Kalanga, 872=Nambya, 900=Afro-Mauritian (Creole),
+901=Chenese, 902=Euro-Mauritian (white), 903=Hindu, 904=Marathi, 905=Muslim, 906=Tamil,
+907=Telegu, 930=Creole, 931=Fulla, 933=Kono, 935=Kuranko, 936=Limba, 937=Loko,
+938=Madingo, 940=Sherbro, 941=Susu, 942=Temne, 944=Yalunka, 1101=Zarrma/Songhaï,
+1103=Touareg, 1104=Kanouri, 1105=Gourmatché, 1107=Toubou, 1140=Ewé, 1141=Mina (Guen),
+1142=Kabyè, 1143=Tem (Kotokoli), 1144=Ben (Moba), 1145=Nawdem (Losso), 1146=Lama
+(Lamba), 1147=Ifè (Ana), 1148=Ikposso (Akposso), 1149=N‟Tcha (Bassar), 1152=Ouatchi,
+1153=Akébou, 1154=Gourma, 1156=Ngam-Gam, 1157=Tchamba, 1159=Aklobo, 1160=Tchokossi
+(Anoufom), 1180=Hutu, 1181=Tutsi, 1182=Twa, 1220=Beti, 1221=Bameleké, 1222=Sawa,
+1224=Nso, 1225=Bakweri, 1226=Basa, 1227=Baya, 1228=Arabe choua, 1229=Bafia, 1230=Bafut,
+1231=Bakassi, 1232=Bakundu, 1233=Bali Gashu, 1235=Bamoun, 1236=Bangwa, 1237=Batanga,
+1238=Batibo, 1239=Bayangi, 1240=Daba, 1241=Dii, 1242=Fali, 1243=Foulbé, 1245=Guidar,
+1246=Guiziga, 1247=Hina, 1248=Kapsiki, 1249=Kotoko, 1251=Mafa, 1252=Maka, 1253=Mandara,
+1254=Mankon, 1255=Massa, 1256=Mbamois, 1257=Mbo, 1258=Mboum, 1259=Moudang,
+1260=Akan, 1261=Krou, 1262=Mandé du Nord, 1263=Mandé du Sud, 1264=Gur (Voltaïque),
+1300=Soussou, 1303=Guérzé, 1304=Kissien, 1305=Toma, 1306=Djalounké, 1307=Kouranko,
+1308=Landouma, 1309=Diakanké, 2220=Mousgoum, 2221=Njikwa, 2222=Oku, 2223=Peule,
+2224=Tikari, 2225=Toupouri, 2226=Wimbum, 2227=Yamba, 2740=Misubi, 2741=Misimbiti,
+2742=Mkerewe, 2743=Mmbulu, 2744=Msangu, 2745=Mmakua, 2746=Mkwaya, 2747=Msafwa,
+2748=Mrangi, 2749=Mpangwa, 2750=Mndengereko, 2751=Mngindo, 2752=Mnguu, 2753=Mnyiha,
+2754=Mnyamwanga,
+2755=Mtumbatu,
+2756=Mswahili,
+2757=Mshirazi,
+2758=Mpemba,
+2759=Mnyasa, 2760=Mgunya, 9990=National identity only, or "doesn't think of self in those terms",
+9995=Others, 9997=Not asked, 9998=Refused, 9999=Don't know, -1=Missing
+* Recoded entirely: codes of round 6-5 are used. Round 3 was recoded to have the same codes. Groups that occurred in more
+than one round are kept. Also groups that occurred in one round but contained +50 respondents were preserved. When groups
+were smaller but clearly part of a bigger group, we integrated those groups. Other groups (N<50) were added to the category
+‘others’. See appendix for syntax of recoding.
+a Red: ethnic groups used in more than one country
+
+Q5. TribeR3
+Question: What is your ethnic community, cultural group or tribe?
+Value Labels a: 1=English, 2=Afrikaaner, 3=Akan, 4=Arabe, 5=Bobo, 6=Chewa, 7=Coloured, 9=Adja,
+10=Fon, 11=Haoussa, 12=Hausa, 13=Kissi, 14=Konkomba, 15=Koro, 16=Kru, 17=Lomwe, 18=Lozi,
+19=Mada, 20=Malinké, 21=Maure, 22=Mende, 23=Ndau, 24=Ndebele, 25=Ngoni, 26=Nyanja,
+27=Peulh, 28=Sena, 29=Senga, 30=Tonga, 31=Tumbuka, 32=Vai, 33=Venda, 34=Yoruba,
+102=Bariba, 103=Dendi, 105=Ditamari/Otamari, 107=Yoa, 140=Mokgatla, 141=Mokwena,
+142=Mongwato, 143=Mongwaketse, 144=Motlokwa, 145=Moherero, 146=Morolong, 147=Mosarwa,
+148=Mokalaka/Mokalanga,
+149=Mosubeya/Mosobea,
+150=Motawana,
+151=Mokgalagadi,
+152=Moyeyi/Moyei, 153=Mo(k)hurutshe, 155=Mmirwa, 156=Mongologa, 157=Modamara,
+158=Mombukushu, 159=Molete, 160=Motswapong, 161=Motlharo, 162=Motlhaping, 163=Mokgothu,
+164=Motalaote, 165=Mopedi, 180=Mossi, 181=Dioula, 182=Peulh, 183=Goumantche,
+184=Gourounsi, 185=Bissa, 187=Birifor, 188=Dagari, 189=Lobi, 190=Samo, 191=Sénoufo,
+192=Bwaba, 193=Goin, 194=Yanan, 195=Marka, 196=Kassena, 197=Fulse, 201=Fulsé, 220=Related
+to regional origin (badio/sampadjudo), 221=African, 222=American or European, 223=Related to age,
+224=Related to gender, 225=Related to occupation, 226=Related to religion, 227=Related to class,
+228=Related to race, 261=Ewe/Anglo, 262=Ga/Adangbe, 263=Dagomba, 265=Waale, 266=Moshie/
+Mosi, 267=Mamprusi, 268=Sissala, 269=Kusasi, 270=Konkomba, 271=Gonja, 272=Frafra,
+273=Dagaaba/Dagarti, 274=Buzanga, 275=Kontonkoli, 276=Gruma,, 277=Bulsa,, 278=Basari,
+279=Talensi, 280=Kasina, 281=Nzema, 282=Other Northern tribes, 300=Kikuyu, 301=Luo,
+302=Luhya, 303=Kamba, 304=Kalenjin, 305=Kisii, 306=Meru/Embu, 307=Maasai / Samburu,
+308=Mijikenda, 309=Taita, 310=Somali, 311=Pokot, 312=Turkana, 314=Teso, 315=Sabaot,
+319=Kuria, 320=Borana, 322=Bajuni, 340=Mokoena, 341=Motaung, 342=Mohlakoana/Motebang,
+343=Mofokeng, 344=Mosiea, 345=Motsoeneng, 346=Motloung, 347=Lephuthing, 348=Mophuthi,
+349=Motlokoa, 350=Letebele, 351=Lekholokoe, 352=Lekhoakhoa, 353=Mokubung, 354=Mothepu,
+355=Mokhatla, 356=Lepele, 361=Monareng, 363=Molefe, 367=Leswati, 380=Bassa, 381=Belle,
+382=Dei, 383=Gbandi, 384=Gio, 385=Gola, 386=Grebo, 388=Kpelle, 389=Krahn, 391=Lorma,
+392=Mandingo, 393=Mano, 420=Antakarana, 421=Antambahoaka, 422=Antandroy, 423=Antanosy,
+424=Antefasy, 425=Antemoro, 426=Antesaka, 427=Bara, 428=Betsileo, 429=Betsimisaraka,
+430=Bezanozano, 431=Mahafaly, 432=Merina, 433=Sakalava, 434=Sihanaka, 435=Tanala,
+436=Tsimihety, 437=Vezo, 439=Sahafatra, 441=Zafisoro, 461=Nkhonde, 462=Lambya, 463=Chewa,
+464=Yao, 465=Ngoni, 467=Mang‟anja, 469=Sukwa, 472=Ndali, 501=Bambara, 502=Bella,
+504=Bozo, 505=Dafing, 506=Dogon, 508=Haoussa, 509=Kakolo, 510=Khassonké, 513=Mianka,
+514=Peulh/Fulfude,
+515=Samogo,
+516=Senufo,
+517=Soninké/Sarakollé,
+518=Sonrhaï,
+519=Tamasheq, 520=Mossi, 540=Makua, 544=Changana, 545=Chope, 546=Bitonga, 547=Makonde,
+548=Chuabo, 549=Ajaua, 551=Barue, 552=Marenge, 553=Nhungue, 554=Tewe, 555=Matswa,
+556=Tawala, 557=Muani, 559=Manhawa, 560=Ronga, 580=Wambo, 581=Herero, 582=Caprivian,
+583=Kavango (Rukwangali, Rumanyo, Hambukushu), 584=German, 587=Portuguese, 588=Nama,
+589=Damara, 591=Subia, 593=Tswana, 594=Baster, 595=San, 621=Igbo, 623=Efik, 624=Ebira,
+625=Fulani, 626=Isoko, 627=Ibibio, 628=Kanuri, 629=Tiv, 630=Nupe, 631=Ijaw, 632=Edo,
+633=Igala, 634=Urhobo, 635=Idoma, 636=Itsekiri, 637=Ikwere, 638=Awori, 639=Tapa,
+640=Kalabari, 641=Birom, 642=Shuwa-Arab, 643=Jukun, 644=Gwari, 645=Ogoni, 646=Anang, ,
+648=Okpella, 649=Tarok, 650=Igede, 652=Gbagyi, 653=Okrika, 660=Wolof, 661=Pulaar/Toucouleur,
+662=Serer, 663=Mandinka/Bambara, 664=Soninke, 665=Diola, 666=Manjack, 668=BAYNOUK,
+669=BALANTE, 670=Bassari, 703=Xhosa, 704=Pedi/Spedi/North Sotho, 705=Sesotho/Sotho/South
+Sotho, 706=Setswana/Tswana, 707=Shangaan, 708=Swazi, 710=Zulu, 711=White/European,
+713=Indian, 740=Kinyakyusa, 741=Kichaga, 742=Kihaya, 743=Kingoni, 744=Kikwere, 745=Kipare,
+746=Kihehe, 747=Kimakonde, 748=Kinyamwezi, 749=Kisukuma, 750=Kimasai, 751=Kimeru,
+752=Kikurya, 753=Kigogo, 754=Kiluguru, 755=Kifipa, 756=Kimanyema, 757=Kinyiramba,
+758=Kinyaturu, 759=Mbena, 760=Mha, 761=Mhangaza, 762=Muiraqi, 763=Mjaluo, 764=Mjita,
+765=Mkinga, 766=Mtongwe, 767=Mmwera, 768=Mndali, 769=Mndendeule, 770=Mnyambo,
+771=Mpogoro, 772=Msambaa, 773=Myao, 774=Mzaramo, 775=Mzigua, 776=Mzinza, 777=Mdoe,
+778=Muarusha, 779=Msumbwa, 780=Muganda, 781=Munyankole, 782=Munyoro, 783=Musoga,
+784=Mugishu, 785=Mukhonjo, 786=Munyole, 787=Ateso, 788=Acholi, 789=Alur, 790=Lugbara,
+791=Madi, 792=Japhadhola, 793=Musamia, 794=Mugwere, 795=Mukiga, 796=Mutooro, 797=Langi,
+798=Sabinyi, 799=Karamajong, 800=Mutagwenda, 801=Mufumbira, 802=Munyarwanda,
+803=Mululi, 804=Aringa, 805=Kumam, 806=Kakwa, 807=Mulamogi, 808=Aliba, 810=Mwamba,
+820=Bemba, 825=Nsenga, 827=Kaonde, 828=Luvale, 829=Namwanga, 830=Lunda, 831=Bisa,
+832=Nkoya, 833=Mambwe, 834=Lenje, 836=Soli, 837=Ila, 838=Ushi, 839=Chokwe, 840=Mbunda,
+841=Kunda, 842=Lala, 843=Lamba, 844=Lungu, 845=Nyika, 847=Tokaleya, 848=Bwile,
+849=Ngumbo, 851=Tabwa, 852=Goba, 853=Luchazi, 861=Shona, 862=Zezuru, 863=Korekore,
+864=Karanga, 865=Manyika, 868=Kalanga, 872=Nambya, 900=Afro-Mauritian (Creole),
+901=Chenese, 902=Euro-Mauritian (white), 903=Hindu, 904=Marathi, 905=Muslim, 906=Tamil,
+907=Telegu, 930=Creole, 931=Fulla, 933=Kono, 935=Kuranko, 936=Limba, 937=Loko,
+938=Madingo, 940=Sherbro, 941=Susu, 942=Temne, 944=Yalunka, 1101=Zarrma/Songhaï,
+1103=Touareg, 1104=Kanouri, 1105=Gourmatché, 1107=Toubou, 1140=Ewé, 1141=Mina (Guen),
+1142=Kabyè, 1143=Tem (Kotokoli), 1144=Ben (Moba), 1145=Nawdem (Losso), 1146=Lama
+(Lamba), 1147=Ifè (Ana), 1148=Ikposso (Akposso), 1149=N‟Tcha (Bassar), 1152=Ouatchi,
+1153=Akébou, 1154=Gourma, 1156=Ngam-Gam, 1157=Tchamba, 1159=Aklobo, 1160=Tchokossi
+(Anoufom), 1180=Hutu, 1181=Tutsi, 1182=Twa, 1220=Beti, 1221=Bameleké, 1222=Sawa,
+1224=Nso, 1225=Bakweri, 1226=Basa, 1227=Baya, 1228=Arabe choua, 1229=Bafia, 1230=Bafut,
+1231=Bakassi, 1232=Bakundu, 1233=Bali Gashu, 1235=Bamoun, 1236=Bangwa, 1237=Batanga,
+1238=Batibo, 1239=Bayangi, 1240=Daba, 1241=Dii, 1242=Fali, 1243=Foulbé, 1245=Guidar,
+1246=Guiziga, 1247=Hina, 1248=Kapsiki, 1249=Kotoko, 1251=Mafa, 1252=Maka, 1253=Mandara,
+1254=Mankon, 1255=Massa, 1256=Mbamois, 1257=Mbo, 1258=Mboum, 1259=Moudang,
+1260=Akan, 1261=Krou, 1262=Mandé du Nord, 1263=Mandé du Sud, 1264=Gur (Voltaïque),
+1300=Soussou, 1303=Guérzé, 1304=Kissien, 1305=Toma, 1306=Djalounké, 1307=Kouranko,
+1308=Landouma, 1309=Diakanké, 2220=Mousgoum, 2221=Njikwa, 2222=Oku, 2223=Peule,
+2224=Tikari, 2225=Toupouri, 2226=Wimbum, 2227=Yamba, 2740=Misubi, 2741=Misimbiti,
+2742=Mkerewe, 2743=Mmbulu, 2744=Msangu, 2745=Mmakua, 2746=Mkwaya, 2747=Msafwa,
+2748=Mrangi, 2749=Mpangwa, 2750=Mndengereko, 2751=Mngindo, 2752=Mnguu, 2753=Mnyiha,
+2754=Mnyamwanga,
+2755=Mtumbatu,
+2756=Mswahili,
+2757=Mshirazi,
+2758=Mpemba,
+2759=Mnyasa, 2760=Mgunya, 9990=National identity only, or "doesn't think of self in those terms",
+9995=Others, 9997=Not asked, 9998=Refused, 9999=Don't know, -1=Missing
+* Recoded entirely: codes of round 6-5 are used. Round 3 was recoded to have the same codes. Groups that occurred in more
+than one round are kept. Also groups that occurred in one round but contained +50 respondents were preserved. When groups
+were smaller but clearly part of a bigger group, we integrated those groups. Other groups (N<50) were added to the category
+‘others’. See appendix for syntax of recoding.
+a Red: ethnic groups used in more than one country
+
+Q5. TribeR4
+Question: What is your ethnic community, cultural group or tribe?
+Value Labels a: 1=English, 2=Afrikaaner, 3=Akan, 4=Arabe, 5=Bobo, 6=Chewa, 7=Coloured, 9=Adja,
+10=Fon, 11=Haoussa, 12=Hausa, 13=Kissi, 14=Konkomba, 15=Koro, 16=Kru, 17=Lomwe, 18=Lozi,
+19=Mada, 20=Malinké, 21=Maure, 22=Mende, 23=Ndau, 24=Ndebele, 25=Ngoni, 26=Nyanja,
+27=Peulh, 28=Sena, 29=Senga, 30=Tonga, 31=Tumbuka, 32=Vai, 33=Venda, 34=Yoruba,
+102=Bariba, 103=Dendi, 105=Ditamari/Otamari, 107=Yoa, 140=Mokgatla, 141=Mokwena,
+142=Mongwato, 143=Mongwaketse, 144=Motlokwa, 145=Moherero, 146=Morolong, 147=Mosarwa,
+148=Mokalaka/Mokalanga,
+149=Mosubeya/Mosobea,
+150=Motawana,
+151=Mokgalagadi,
+152=Moyeyi/Moyei, 153=Mo(k)hurutshe, 155=Mmirwa, 156=Mongologa, 157=Modamara,
+158=Mombukushu, 159=Molete, 160=Motswapong, 161=Motlharo, 162=Motlhaping, 163=Mokgothu,
+164=Motalaote, 165=Mopedi, 180=Mossi, 181=Dioula, 182=Peulh, 183=Goumantche,
+184=Gourounsi, 185=Bissa, 187=Birifor, 188=Dagari, 189=Lobi, 190=Samo, 191=Sénoufo,
+192=Bwaba, 193=Goin, 194=Yanan, 195=Marka, 196=Kassena, 197=Fulse, 201=Fulsé, 220=Related
+to regional origin (badio/sampadjudo), 221=African, 222=American or European, 223=Related to age,
+224=Related to gender, 225=Related to occupation, 226=Related to religion, 227=Related to class,
+228=Related to race, 261=Ewe/Anglo, 262=Ga/Adangbe, 263=Dagomba, 265=Waale, 266=Moshie/
+Mosi, 267=Mamprusi, 268=Sissala, 269=Kusasi, 270=Konkomba, 271=Gonja, 272=Frafra,
+273=Dagaaba/Dagarti, 274=Buzanga, 275=Kontonkoli, 276=Gruma,, 277=Bulsa,, 278=Basari,
+279=Talensi, 280=Kasina, 281=Nzema, 282=Other Northern tribes, 300=Kikuyu, 301=Luo,
+302=Luhya, 303=Kamba, 304=Kalenjin, 305=Kisii, 306=Meru/Embu, 307=Maasai / Samburu,
+308=Mijikenda, 309=Taita, 310=Somali, 311=Pokot, 312=Turkana, 314=Teso, 315=Sabaot,
+319=Kuria, 320=Borana, 322=Bajuni, 340=Mokoena, 341=Motaung, 342=Mohlakoana/Motebang,
+343=Mofokeng, 344=Mosiea, 345=Motsoeneng, 346=Motloung, 347=Lephuthing, 348=Mophuthi,
+349=Motlokoa, 350=Letebele, 351=Lekholokoe, 352=Lekhoakhoa, 353=Mokubung, 354=Mothepu,
+355=Mokhatla, 356=Lepele, 361=Monareng, 363=Molefe, 367=Leswati, 380=Bassa, 381=Belle,
+382=Dei, 383=Gbandi, 384=Gio, 385=Gola, 386=Grebo, 388=Kpelle, 389=Krahn, 391=Lorma,
+392=Mandingo, 393=Mano, 420=Antakarana, 421=Antambahoaka, 422=Antandroy, 423=Antanosy,
+424=Antefasy, 425=Antemoro, 426=Antesaka, 427=Bara, 428=Betsileo, 429=Betsimisaraka,
+430=Bezanozano, 431=Mahafaly, 432=Merina, 433=Sakalava, 434=Sihanaka, 435=Tanala,
+436=Tsimihety, 437=Vezo, 439=Sahafatra, 441=Zafisoro, 461=Nkhonde, 462=Lambya, 463=Chewa,
+464=Yao, 465=Ngoni, 467=Mang‟anja, 469=Sukwa, 472=Ndali, 501=Bambara, 502=Bella,
+504=Bozo, 505=Dafing, 506=Dogon, 508=Haoussa, 509=Kakolo, 510=Khassonké, 513=Mianka,
+514=Peulh/Fulfude,
+515=Samogo,
+516=Senufo,
+517=Soninké/Sarakollé,
+518=Sonrhaï,
+519=Tamasheq, 520=Mossi, 540=Makua, 544=Changana, 545=Chope, 546=Bitonga, 547=Makonde,
+548=Chuabo, 549=Ajaua, 551=Barue, 552=Marenge, 553=Nhungue, 554=Tewe, 555=Matswa,
+556=Tawala, 557=Muani, 559=Manhawa, 560=Ronga, 580=Wambo, 581=Herero, 582=Caprivian,
+583=Kavango (Rukwangali, Rumanyo, Hambukushu), 584=German, 587=Portuguese, 588=Nama,
+589=Damara, 591=Subia, 593=Tswana, 594=Baster, 595=San, 621=Igbo, 623=Efik, 624=Ebira,
+625=Fulani, 626=Isoko, 627=Ibibio, 628=Kanuri, 629=Tiv, 630=Nupe, 631=Ijaw, 632=Edo,
+633=Igala, 634=Urhobo, 635=Idoma, 636=Itsekiri, 637=Ikwere, 638=Awori, 639=Tapa,
+640=Kalabari, 641=Birom, 642=Shuwa-Arab, 643=Jukun, 644=Gwari, 645=Ogoni, 646=Anang, ,
+648=Okpella, 649=Tarok, 650=Igede, 652=Gbagyi, 653=Okrika, 660=Wolof, 661=Pulaar/Toucouleur,
+662=Serer, 663=Mandinka/Bambara, 664=Soninke, 665=Diola, 666=Manjack, 668=BAYNOUK,
+669=BALANTE, 670=Bassari, 703=Xhosa, 704=Pedi/Spedi/North Sotho, 705=Sesotho/Sotho/South
+Sotho, 706=Setswana/Tswana, 707=Shangaan, 708=Swazi, 710=Zulu, 711=White/European,
+713=Indian, 740=Kinyakyusa, 741=Kichaga, 742=Kihaya, 743=Kingoni, 744=Kikwere, 745=Kipare,
+746=Kihehe, 747=Kimakonde, 748=Kinyamwezi, 749=Kisukuma, 750=Kimasai, 751=Kimeru,
+752=Kikurya, 753=Kigogo, 754=Kiluguru, 755=Kifipa, 756=Kimanyema, 757=Kinyiramba,
+758=Kinyaturu, 759=Mbena, 760=Mha, 761=Mhangaza, 762=Muiraqi, 763=Mjaluo, 764=Mjita,
+765=Mkinga, 766=Mtongwe, 767=Mmwera, 768=Mndali, 769=Mndendeule, 770=Mnyambo,
+771=Mpogoro, 772=Msambaa, 773=Myao, 774=Mzaramo, 775=Mzigua, 776=Mzinza, 777=Mdoe,
+778=Muarusha, 779=Msumbwa, 780=Muganda, 781=Munyankole, 782=Munyoro, 783=Musoga,
+784=Mugishu, 785=Mukhonjo, 786=Munyole, 787=Ateso, 788=Acholi, 789=Alur, 790=Lugbara,
+791=Madi, 792=Japhadhola, 793=Musamia, 794=Mugwere, 795=Mukiga, 796=Mutooro, 797=Langi,
+798=Sabinyi, 799=Karamajong, 800=Mutagwenda, 801=Mufumbira, 802=Munyarwanda,
+803=Mululi, 804=Aringa, 805=Kumam, 806=Kakwa, 807=Mulamogi, 808=Aliba, 810=Mwamba,
+820=Bemba, 825=Nsenga, 827=Kaonde, 828=Luvale, 829=Namwanga, 830=Lunda, 831=Bisa,
+832=Nkoya, 833=Mambwe, 834=Lenje, 836=Soli, 837=Ila, 838=Ushi, 839=Chokwe, 840=Mbunda,
+841=Kunda, 842=Lala, 843=Lamba, 844=Lungu, 845=Nyika, 847=Tokaleya, 848=Bwile,
+849=Ngumbo, 851=Tabwa, 852=Goba, 853=Luchazi, 861=Shona, 862=Zezuru, 863=Korekore,
+864=Karanga, 865=Manyika, 868=Kalanga, 872=Nambya, 900=Afro-Mauritian (Creole),
+901=Chenese, 902=Euro-Mauritian (white), 903=Hindu, 904=Marathi, 905=Muslim, 906=Tamil,
+907=Telegu, 930=Creole, 931=Fulla, 933=Kono, 935=Kuranko, 936=Limba, 937=Loko,
+938=Madingo, 940=Sherbro, 941=Susu, 942=Temne, 944=Yalunka, 1101=Zarrma/Songhaï,
+1103=Touareg, 1104=Kanouri, 1105=Gourmatché, 1107=Toubou, 1140=Ewé, 1141=Mina (Guen),
+1142=Kabyè, 1143=Tem (Kotokoli), 1144=Ben (Moba), 1145=Nawdem (Losso), 1146=Lama
+(Lamba), 1147=Ifè (Ana), 1148=Ikposso (Akposso), 1149=N‟Tcha (Bassar), 1152=Ouatchi,
+1153=Akébou, 1154=Gourma, 1156=Ngam-Gam, 1157=Tchamba, 1159=Aklobo, 1160=Tchokossi
+(Anoufom), 1180=Hutu, 1181=Tutsi, 1182=Twa, 1220=Beti, 1221=Bameleké, 1222=Sawa,
+1224=Nso, 1225=Bakweri, 1226=Basa, 1227=Baya, 1228=Arabe choua, 1229=Bafia, 1230=Bafut,
+1231=Bakassi, 1232=Bakundu, 1233=Bali Gashu, 1235=Bamoun, 1236=Bangwa, 1237=Batanga,
+1238=Batibo, 1239=Bayangi, 1240=Daba, 1241=Dii, 1242=Fali, 1243=Foulbé, 1245=Guidar,
+1246=Guiziga, 1247=Hina, 1248=Kapsiki, 1249=Kotoko, 1251=Mafa, 1252=Maka, 1253=Mandara,
+1254=Mankon, 1255=Massa, 1256=Mbamois, 1257=Mbo, 1258=Mboum, 1259=Moudang,
+1260=Akan, 1261=Krou, 1262=Mandé du Nord, 1263=Mandé du Sud, 1264=Gur (Voltaïque),
+1300=Soussou, 1303=Guérzé, 1304=Kissien, 1305=Toma, 1306=Djalounké, 1307=Kouranko,
+1308=Landouma, 1309=Diakanké, 2220=Mousgoum, 2221=Njikwa, 2222=Oku, 2223=Peule,
+2224=Tikari, 2225=Toupouri, 2226=Wimbum, 2227=Yamba, 2740=Misubi, 2741=Misimbiti,
+2742=Mkerewe, 2743=Mmbulu, 2744=Msangu, 2745=Mmakua, 2746=Mkwaya, 2747=Msafwa,
+2748=Mrangi, 2749=Mpangwa, 2750=Mndengereko, 2751=Mngindo, 2752=Mnguu, 2753=Mnyiha,
+2754=Mnyamwanga,
+2755=Mtumbatu,
+2756=Mswahili,
+2757=Mshirazi,
+2758=Mpemba,
+2759=Mnyasa, 2760=Mgunya, 9990=National identity only, or "doesn't think of self in those terms",
+9995=Others, 9997=Not asked, 9998=Refused, 9999=Don't know, -1=Missing
+* Recoded entirely: codes of round 6-5 are used. Round 3 was recoded to have the same codes. Groups that occurred in more
+than one round are kept. Also groups that occurred in one round but contained +50 respondents were preserved. When groups
+were smaller but clearly part of a bigger group, we integrated those groups. Other groups (N<50) were added to the category
+‘others’. See appendix for syntax of recoding.
+a Red: ethnic groups used in more than one country
+
+Q5. TribeR5
+Question: What is your ethnic community, cultural group or tribe?
+Value Labels a: 1=English, 2=Afrikaaner, 3=Akan, 4=Arabe, 5=Bobo, 6=Chewa, 7=Coloured, 9=Adja,
+10=Fon, 11=Haoussa, 12=Hausa, 13=Kissi, 14=Konkomba, 15=Koro, 16=Kru, 17=Lomwe, 18=Lozi,
+19=Mada, 20=Malinké, 21=Maure, 22=Mende, 23=Ndau, 24=Ndebele, 25=Ngoni, 26=Nyanja,
+27=Peulh, 28=Sena, 29=Senga, 30=Tonga, 31=Tumbuka, 32=Vai, 33=Venda, 34=Yoruba,
+102=Bariba, 103=Dendi, 105=Ditamari/Otamari, 107=Yoa, 140=Mokgatla, 141=Mokwena,
+142=Mongwato, 143=Mongwaketse, 144=Motlokwa, 145=Moherero, 146=Morolong, 147=Mosarwa,
+148=Mokalaka/Mokalanga,
+149=Mosubeya/Mosobea,
+150=Motawana,
+151=Mokgalagadi,
+152=Moyeyi/Moyei, 153=Mo(k)hurutshe, 155=Mmirwa, 156=Mongologa, 157=Modamara,
+158=Mombukushu, 159=Molete, 160=Motswapong, 161=Motlharo, 162=Motlhaping, 163=Mokgothu,
+164=Motalaote, 165=Mopedi, 180=Mossi, 181=Dioula, 182=Peulh, 183=Goumantche,
+184=Gourounsi, 185=Bissa, 187=Birifor, 188=Dagari, 189=Lobi, 190=Samo, 191=Sénoufo,
+192=Bwaba, 193=Goin, 194=Yanan, 195=Marka, 196=Kassena, 197=Fulse, 201=Fulsé, 220=Related
+to regional origin (badio/sampadjudo), 221=African, 222=American or European, 223=Related to age,
+224=Related to gender, 225=Related to occupation, 226=Related to religion, 227=Related to class,
+228=Related to race, 261=Ewe/Anglo, 262=Ga/Adangbe, 263=Dagomba, 265=Waale, 266=Moshie/
+Mosi, 267=Mamprusi, 268=Sissala, 269=Kusasi, 270=Konkomba, 271=Gonja, 272=Frafra,
+273=Dagaaba/Dagarti, 274=Buzanga, 275=Kontonkoli, 276=Gruma,, 277=Bulsa,, 278=Basari,
+279=Talensi, 280=Kasina, 281=Nzema, 282=Other Northern tribes, 300=Kikuyu, 301=Luo,
+302=Luhya, 303=Kamba, 304=Kalenjin, 305=Kisii, 306=Meru/Embu, 307=Maasai / Samburu,
+308=Mijikenda, 309=Taita, 310=Somali, 311=Pokot, 312=Turkana, 314=Teso, 315=Sabaot,
+319=Kuria, 320=Borana, 322=Bajuni, 340=Mokoena, 341=Motaung, 342=Mohlakoana/Motebang,
+343=Mofokeng, 344=Mosiea, 345=Motsoeneng, 346=Motloung, 347=Lephuthing, 348=Mophuthi,
+349=Motlokoa, 350=Letebele, 351=Lekholokoe, 352=Lekhoakhoa, 353=Mokubung, 354=Mothepu,
+355=Mokhatla, 356=Lepele, 361=Monareng, 363=Molefe, 367=Leswati, 380=Bassa, 381=Belle,
+382=Dei, 383=Gbandi, 384=Gio, 385=Gola, 386=Grebo, 388=Kpelle, 389=Krahn, 391=Lorma,
+392=Mandingo, 393=Mano, 420=Antakarana, 421=Antambahoaka, 422=Antandroy, 423=Antanosy,
+424=Antefasy, 425=Antemoro, 426=Antesaka, 427=Bara, 428=Betsileo, 429=Betsimisaraka,
+430=Bezanozano, 431=Mahafaly, 432=Merina, 433=Sakalava, 434=Sihanaka, 435=Tanala,
+436=Tsimihety, 437=Vezo, 439=Sahafatra, 441=Zafisoro, 461=Nkhonde, 462=Lambya, 463=Chewa,
+464=Yao, 465=Ngoni, 467=Mang‟anja, 469=Sukwa, 472=Ndali, 501=Bambara, 502=Bella,
+504=Bozo, 505=Dafing, 506=Dogon, 508=Haoussa, 509=Kakolo, 510=Khassonké, 513=Mianka,
+514=Peulh/Fulfude,
+515=Samogo,
+516=Senufo,
+517=Soninké/Sarakollé,
+518=Sonrhaï,
+519=Tamasheq, 520=Mossi, 540=Makua, 544=Changana, 545=Chope, 546=Bitonga, 547=Makonde,
+548=Chuabo, 549=Ajaua, 551=Barue, 552=Marenge, 553=Nhungue, 554=Tewe, 555=Matswa,
+556=Tawala, 557=Muani, 559=Manhawa, 560=Ronga, 580=Wambo, 581=Herero, 582=Caprivian,
+583=Kavango (Rukwangali, Rumanyo, Hambukushu), 584=German, 587=Portuguese, 588=Nama,
+589=Damara, 591=Subia, 593=Tswana, 594=Baster, 595=San, 621=Igbo, 623=Efik, 624=Ebira,
+625=Fulani, 626=Isoko, 627=Ibibio, 628=Kanuri, 629=Tiv, 630=Nupe, 631=Ijaw, 632=Edo,
+633=Igala, 634=Urhobo, 635=Idoma, 636=Itsekiri, 637=Ikwere, 638=Awori, 639=Tapa,
+640=Kalabari, 641=Birom, 642=Shuwa-Arab, 643=Jukun, 644=Gwari, 645=Ogoni, 646=Anang, ,
+648=Okpella, 649=Tarok, 650=Igede, 652=Gbagyi, 653=Okrika, 660=Wolof, 661=Pulaar/Toucouleur,
+662=Serer, 663=Mandinka/Bambara, 664=Soninke, 665=Diola, 666=Manjack, 668=BAYNOUK,
+669=BALANTE, 670=Bassari, 703=Xhosa, 704=Pedi/Spedi/North Sotho, 705=Sesotho/Sotho/South
+Sotho, 706=Setswana/Tswana, 707=Shangaan, 708=Swazi, 710=Zulu, 711=White/European,
+713=Indian, 740=Kinyakyusa, 741=Kichaga, 742=Kihaya, 743=Kingoni, 744=Kikwere, 745=Kipare,
+746=Kihehe, 747=Kimakonde, 748=Kinyamwezi, 749=Kisukuma, 750=Kimasai, 751=Kimeru,
+752=Kikurya, 753=Kigogo, 754=Kiluguru, 755=Kifipa, 756=Kimanyema, 757=Kinyiramba,
+758=Kinyaturu, 759=Mbena, 760=Mha, 761=Mhangaza, 762=Muiraqi, 763=Mjaluo, 764=Mjita,
+765=Mkinga, 766=Mtongwe, 767=Mmwera, 768=Mndali, 769=Mndendeule, 770=Mnyambo,
+771=Mpogoro, 772=Msambaa, 773=Myao, 774=Mzaramo, 775=Mzigua, 776=Mzinza, 777=Mdoe,
+778=Muarusha, 779=Msumbwa, 780=Muganda, 781=Munyankole, 782=Munyoro, 783=Musoga,
+784=Mugishu, 785=Mukhonjo, 786=Munyole, 787=Ateso, 788=Acholi, 789=Alur, 790=Lugbara,
+791=Madi, 792=Japhadhola, 793=Musamia, 794=Mugwere, 795=Mukiga, 796=Mutooro, 797=Langi,
+798=Sabinyi, 799=Karamajong, 800=Mutagwenda, 801=Mufumbira, 802=Munyarwanda,
+803=Mululi, 804=Aringa, 805=Kumam, 806=Kakwa, 807=Mulamogi, 808=Aliba, 810=Mwamba,
+820=Bemba, 825=Nsenga, 827=Kaonde, 828=Luvale, 829=Namwanga, 830=Lunda, 831=Bisa,
+832=Nkoya, 833=Mambwe, 834=Lenje, 836=Soli, 837=Ila, 838=Ushi, 839=Chokwe, 840=Mbunda,
+841=Kunda, 842=Lala, 843=Lamba, 844=Lungu, 845=Nyika, 847=Tokaleya, 848=Bwile,
+849=Ngumbo, 851=Tabwa, 852=Goba, 853=Luchazi, 861=Shona, 862=Zezuru, 863=Korekore,
+864=Karanga, 865=Manyika, 868=Kalanga, 872=Nambya, 900=Afro-Mauritian (Creole),
+901=Chenese, 902=Euro-Mauritian (white), 903=Hindu, 904=Marathi, 905=Muslim, 906=Tamil,
+907=Telegu, 930=Creole, 931=Fulla, 933=Kono, 935=Kuranko, 936=Limba, 937=Loko,
+938=Madingo, 940=Sherbro, 941=Susu, 942=Temne, 944=Yalunka, 1101=Zarrma/Songhaï,
+1103=Touareg, 1104=Kanouri, 1105=Gourmatché, 1107=Toubou, 1140=Ewé, 1141=Mina (Guen),
+1142=Kabyè, 1143=Tem (Kotokoli), 1144=Ben (Moba), 1145=Nawdem (Losso), 1146=Lama
+(Lamba), 1147=Ifè (Ana), 1148=Ikposso (Akposso), 1149=N‟Tcha (Bassar), 1152=Ouatchi,
+1153=Akébou, 1154=Gourma, 1156=Ngam-Gam, 1157=Tchamba, 1159=Aklobo, 1160=Tchokossi
+(Anoufom), 1180=Hutu, 1181=Tutsi, 1182=Twa, 1220=Beti, 1221=Bameleké, 1222=Sawa,
+1224=Nso, 1225=Bakweri, 1226=Basa, 1227=Baya, 1228=Arabe choua, 1229=Bafia, 1230=Bafut,
+1231=Bakassi, 1232=Bakundu, 1233=Bali Gashu, 1235=Bamoun, 1236=Bangwa, 1237=Batanga,
+1238=Batibo, 1239=Bayangi, 1240=Daba, 1241=Dii, 1242=Fali, 1243=Foulbé, 1245=Guidar,
+1246=Guiziga, 1247=Hina, 1248=Kapsiki, 1249=Kotoko, 1251=Mafa, 1252=Maka, 1253=Mandara,
+1254=Mankon, 1255=Massa, 1256=Mbamois, 1257=Mbo, 1258=Mboum, 1259=Moudang,
+1260=Akan, 1261=Krou, 1262=Mandé du Nord, 1263=Mandé du Sud, 1264=Gur (Voltaïque),
+1300=Soussou, 1303=Guérzé, 1304=Kissien, 1305=Toma, 1306=Djalounké, 1307=Kouranko,
+1308=Landouma, 1309=Diakanké, 2220=Mousgoum, 2221=Njikwa, 2222=Oku, 2223=Peule,
+2224=Tikari, 2225=Toupouri, 2226=Wimbum, 2227=Yamba, 2740=Misubi, 2741=Misimbiti,
+2742=Mkerewe, 2743=Mmbulu, 2744=Msangu, 2745=Mmakua, 2746=Mkwaya, 2747=Msafwa,
+2748=Mrangi, 2749=Mpangwa, 2750=Mndengereko, 2751=Mngindo, 2752=Mnguu, 2753=Mnyiha,
+2754=Mnyamwanga,
+2755=Mtumbatu,
+2756=Mswahili,
+2757=Mshirazi,
+2758=Mpemba,
+2759=Mnyasa, 2760=Mgunya, 9990=National identity only, or "doesn't think of self in those terms",
+9995=Others, 9997=Not asked, 9998=Refused, 9999=Don't know, -1=Missing
+* Recoded entirely: codes of round 6-5 are used. Round 3 was recoded to have the same codes. Groups that occurred in more
+than one round are kept. Also groups that occurred in one round but contained +50 respondents were preserved. When groups
+were smaller but clearly part of a bigger group, we integrated those groups. Other groups (N<50) were added to the category
+‘others’. See appendix for syntax of recoding.
+a Red: ethnic groups used in more than one country
+
+Q6. Education*
+Question: What is the highest level of education you have completed?
+Value Labels: 0=No formal schooling, 1=Informal schooling (including Koranic schooling), 2=Some
+primary schooling, 3=Primary school completed, 4=Some secondary school/ High school, 5=Secondary
+school completed/High school, 6=Post-secondary qualifications, other than university e.g. a diploma or
+degree from a technical/polytechnic/college, 7=Some university, 8=University completed, 9=Postgraduate, 98=Refused to Answer, 99=Don’t Know, -1=Missing Data
+* This variable is regrouped into Q6A.CAT. The categories are no formal education, primary, secondary, post-secondary.
+Recoding round 4 and 3 based on categories in round 5.
+
+Q6A. CAT
+Question: What is the highest level of education you have completed?
+Value Labels: 0=No formal education, 1=Primary, 2=Secondary, 3=Post-secondary, 98=Refused to Answer, 99=Don’t Know, -1=Missing Data
+
+Q7. Religion
+Question: What is your religion, if any?
+Value Labels: 0=None, 1=Christian only, 2=Roman Catholic, 3=Orthodox, 4=Coptic, 5=Anglican,
+6=Lutheran, 7=Methodist, 8=Presbyterian, 9=Baptist, 10=Quaker/Friends, 11=Mennonite,
+12=Evangelical, 13=Pentecostal, 14=Independent, 15=Jehovah's Witness, 16=Seventh Day Adventist,
+17=Mormon, 18=Muslim only, 19=Sunni only, 20=Ismaeli, 21=Mouridiya Brotherhood, 22=Tijaniya
+Brotherhood, 23=Qadiriya Brotherhood, 24=Shia only, 25=Traditional/ethnic religion, 26=Hindu,
+27=Bahai, 28=Agnostic(Do not know if there is a God), 29=Atheist(Do not believe in a God), 30=Dutch
+Reformed, 31=Calvinist, 32=Church of Christ, 33=Zionist Christian Church, 34=Apostolic, (…)
+995=Other, 998=Refused to answer, 999=Don’t know, -1=Missing data
+* Recoded for all rounds
+
+Q8. Imp_Religion
+Question: How important is religion in your life?
+Value Labels: 1=Not at all important, 2=Not very important, 3=Somewhat important, 4=Very
+important, 8=Refused to answer, 9=Don’t know, -1=Missing
+* Not included in round 3
+
+Q9. Close_Party
+Question: Do you feel close to any particular political party?
+Value Labels: 0=No not close to any party, 1=Yes, 8=Refused to Answer, 9=Don’t Know, -1=Missing
+Data
+
+Q10. Which_PartyR3
+Question Number: Q51*
+Question: Which party is that?
+Value Labels: No recoding. The different value labels of each round are maintained. Assessing
+continuity over round is not possible.
+
+Q10. Which_PartyR4
+Question Number: Q51*
+Question: Which party is that?
+Value Labels: No recoding. The different value labels of each round are maintained. Assessing
+continuity over round is not possible.
+
+Q10. Which_PartyR5
+Question Number: Q51*
+Question: Which party is that?
+Value Labels: No recoding. The different value labels of each round are maintained. Assessing
+continuity over round is not possible.
+
+Economy
+Q11A. Economy
+Question: In general, how would you describe – the present economic condition in this country?
+Value Labels: 1=Very bad, 2=Fairly bad, 3=Neither good nor bad, 4=Fairly good, 5=Very good,
+9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q11B. Living_Conditions
+Question: In general, how would you describe – your own living conditions?
+Value Labels: 1=Very bad, 2=Fairly bad, 3=Neither good nor bad, 4=Fairly good, 5=Very good,
+9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q12. LivingCon_Others
+Question: In general, how would you rate your general living conditions compare to those of other
+[country]?
+Value Labels: 1=Much worse, 2=Worse, 3=Same, 4=Better, 5=Much better, 9=Don’t know,
+998=Refused to answer, -1=Missing
+
+Q13A. Economy_Ago
+Question: Looking back, how do you rate the following compared to twelve months ago: Economic
+conditions in this country?
+Value Labels: 1=Much worse, 2=Worse, 3=Same, 4=Better, 5=Much better, 9=Don’t know,
+998=Refused to answer, -1=Missing
+
+Q13B. LivingCon_Ago*
+Question: Looking back, how do you rate the following compared to twelve months ago: Your living
+conditions?
+Value Labels: 1=Much worse, 2=Worse, 3=Same, 4=Better, 5=Much better, 9=Don’t know,
+998=Refused to answer, -1=Missing
+* Not included in round 6
+
+Q14A. Economy_Time
+Question: Looking ahead, do you expect the following to be better or worse: Economic conditions in
+this country in twelve months time?
+Value Labels: 1=Much worse, 2=Worse, 3=Same, 4=Better, 5=Much better, 9=Don’t know,
+998=Refused to answer, -1=Missing
+
+Q14B. LivingCon_Time*
+Question: Looking ahead, do you expect the following to be better or worse: Your living conditions in
+twelve months time?
+Value Labels: 1=Much worse, 2=Worse, 3=Same, 4=Better, 5=Much better, 9=Don’t know,
+998=Refused to answer, -1=Missing
+* Not included in round 6
+
+Q15. Employment
+Question: Do you have a job that pays a cash income? If yes, is it full-time or part-time? If no, are you
+presently looking for a job?
+Value Labels: 0=No (not looking), 1=No (looking), 2=Yes part time, 3= Yes full time, 9=Don’t know,
+998=Refused to answer, -1=Missing
+* Recoded for round 4 and 3
+
+Q16A. No_Food
+Question: Over the past year, how often, if ever, have you or anyone in your family gone without:
+Enough food to eat?
+Value Labels: 0=Never, 1=Just once or twice, 2=Several times, 3=Many times, 4=Always, 9=Don’t
+know, 998=Refused to answer, -1=Missing
+
+Q16B. No_Water
+Question: Over the past year, how often, if ever, have you or anyone in your family gone without:
+Enough clean water for home use?
+Value Labels: 0=Never, 1=Just once or twice, 2=Several times, 3=Many times, 4=Always, 9=Don’t
+know, 998=Refused to answer, -1=Missing
+
+Q16C. No_Meds
+Question: Over the past year, how often, if ever, have you or anyone in your family gone without:
+Medicines or medical treatment?
+Value Labels: 0=Never, 1=Just once or twice, 2=Several times, 3=Many times, 4=Always, 9=Don’t
+know, 998=Refused to answer, -1=Missing
+
+Q16D. No_Fuel
+Question: Over the past year, how often, if ever, have you or anyone in your family gone without:
+Enough fuel to cook your food?
+Value Labels: 0=Never, 1=Just once or twice, 2=Several times, 3=Many times, 4=Always, 9=Don’t
+know, 998=Refused to answer, -1=Missing
+
+Q16E. No_Cash
+Question: 
+Value Labels: 0=Never, 1=Just once or twice, 2=Several times, 3=Many times, 4=Always, 9=Don’t
+know, 998=Refused to answer, -1=Missing
+
+Q17A. Own_Radio
+Question: Which of these things do you personally own: Radio?
+Value Labels: 0=No (Don’t own), 1=Yes (Do own), 9=Don’t know, 998=Refused to answer, 1=Missing
+
+Q17B. Own_Television
+Question: Which of these things do you personally own: Television?
+Value Labels: 0=No (Don’t own), 1=Yes (Do own), 9=Don’t know, 998=Refused to answer, 1=Missing
+
+Q17C. Own_Motor
+Question: Which of these things do you personally own: Motor vehicle, car or motorcycle?
+Value Labels: 0=No (Don’t own), 1=Yes (Do own), 9=Don’t know, 998=Refused to answer, 1=Missing
+* Recoded for round 3
+
+Q17D. Own_Mobile
+Question: Which of these things do you personally own: Mobile phone?
+Value Labels: 0=No (Don’t own), 1=Yes (own), 9=Don’t know, 998=Refused to answer, -1=Missing
+* Only included in round 6
+
+Security
+Q18A. Perc_Unsafe*
+Question: Over the past year, how often, if ever, have you or anyone in your family: Felt unsafe walking
+in your neighborhood?
+Value Labels: 0=Never, 1=Just once or twice, 2=Several times, 3=Many times, 4=Always, 9=Don’t
+know, 998=Refused to answer, -1=Missing
+* Not included in round 4 and 3
+
+Q18B. Perc_Crime
+Question: Over the past year, how often, if ever, have you or anyone in your family: Feared crime in
+your own home?
+Value Labels: 0=Never, 1=Just once or twice, 2=Several times, 3=Many times, 4=Always, 9=Don’t
+know, 998=Refused to answer, -1=Missing
+
+Q19A. Stolen*
+Question: During the past year, have you or anyone in your family: Had something stolen from your
+house?
+Value Labels: 0=Never, 1=Just once or twice, 2=Three or more times, 9=Don’t know, 998=Refused to
+answer, -1=Missing
+* recoded
+
+Q19B. Attacked*
+Question: During the past year, have you or anyone in your family: Been physically attacked?
+Value Labels: 0=Never, 1=Just once or twice, 2=Three or more times, 9=Don’t know, 998=Refused to
+answer, -1=Missing
+* recoded
+
+Q20. Perc_PoliticalViolence
+Question: During election campaigns in this country, how much do you personally fear becoming a
+victim of political intimidation or violence?
+Value Labels: 0=A lot, 1=Somewhat, 2=A little bit, 3=Not at all, 9=Don’t know, 998=Refused to
+answer, - 1=Missing data
+
+Participation-Civic Engagement
+Q21A. News_Radio
+Question: How often do you get news from the following sources: Radio?
+Value Labels: 0=Never, 1=Less than once a month, 2=A few times a month, 3=A few times a week,
+4=Every day, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q21B. News_Television
+Question: How often do you get news from the following sources: Television?
+Value Labels: 0=Never, 1=Less than once a month, 2=A few times a month, 3=A few times a week,
+4=Every day, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q21C. News_Newspaper
+Question: How often do you get news from the following sources: Newspapers?
+Value Labels: 0=Never, 1=Less than once a month, 2=A few times a month, 3=A few times a week,
+4=Every day, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q21D. News_Internet
+Question: How often do you get news from the following sources: Internet?
+Value Labels: 0=Never, 1=Less than once a month, 2=A few times a month, 3=A few times a week,
+4=Every day, 9=Don’t know, 998=Refused to answer, -1=Missing
+* Not included in round 4 and 3
+
+Q22. Interest
+Question: How interested would you say you are in public affairs?
+Value Labels: 0=Not at all interested, 1=Not very interested, 2=Somewhat interested, 3=Very
+interested, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q23. Discuss
+Question: When you get together with your friends or family, would you say you discuss political
+matters?
+Value Labels: 0=Never, 1=Occasionally, 2=Frequently, 9=Don’t know, 998=Refused to answer, 1=Missing
+
+Q24A. Religious_Group
+Question: Let’s turn to your role in the community. Now I am going to read out a list of groups that
+people join or attend. For each one, could you tell me whether you are an official leader, an active
+member, an inactive member, or not a member: A religious group that meets outside of regular worship
+services?
+Value Labels: 0=Not a Member, 1=Inactive member, 2=Active member, 3=Official leader, 9=Don’t
+know, 998=Refused to answer, -1=Missing
+
+Q24B. Voluntary_Association*
+Question: Let’s turn to your role in the community. Now I am going to read out a list of groups that
+people join or attend. For each one, could you tell me whether you are an official leader, an active
+member, an inactive member, or not a member: Some other voluntary association or community group?
+Value Labels: 0=Not a member, 1=Inactive member, 2=Active member, 3=Official leader, 9=Don’t
+know, 998=Refused to answer, -1=Missing
+* Recoded for round 3 (Q14B=Q28B+Q28C+Q28D)
+
+Q24C.R3. Development_Ass
+Question: 
+Value Labels: 0=Not a member, 1=Inactive member, 2=Active member, 3=Official leader, 9=Don’t
+know, 998=Refused to answer, -1=Missing
+
+Q24C.R3. Business_Ass
+Question: 
+Value Labels: 0=Not a member, 1=Inactive member, 2=Active member, 3=Official leader, 9=Don’t
+know, 998=Refused to answer, -1=Missing
+
+Q24C.R3. Trade_Union
+Question: 
+Value Labels: 0=Not a member, 1=Inactive member, 2=Active member, 3=Official leader, 9=Don’t
+know, 998=Refused to answer, -1=Missing
+
+Q25A. Meeting
+Question: Here is a list of actions that people sometimes take as citizens. For each of these, please tell
+me whether you, personally, have done any of these things during the past year. If not, would you do
+this if you had the chance: Attended a community meeting?
+Value Labels: 0=No would never do this, 1=No but would do if had the chance, 2=Yes once or twice,
+3=Yes several times, 4=Yes often, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q25B. Raise_Issue
+Question: Here is a list of actions that people sometimes take as citizens. For each of these, please tell
+me whether you, personally, have done any of these things during the past year. If not, would you do
+this if you had the chance: Got together with others to raise an issue?
+Value Labels: 0=No would never do this, 1=No but would do if had the chance, 2=Yes once or twice,
+3=Yes several times, 4=Yes often, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q25C. Demonstration
+Question: Here is a list of actions that people sometimes take as citizens. For each of these, please tell
+me whether you, personally, have done any of these things during the past year. If not, would you do
+this if you had the chance: Attended a demonstration or protest march?
+Value Labels: 0=No would never do this, 1=No but would do if had the chance, 2=Yes once or twice,
+3=Yes several times, 4=Yes often, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q25D. Refused*
+Question: Here is a list of actions that people sometimes take as citizens. For each of these, please tell
+me whether you, personally, have done any of these things during the past year. If not, would you do
+this if you had the chance: Refused to pay taxes?
+Value Labels: 0=No would never do this, 1=No but would do if had the chance, 2=Yes once or twice,
+3=Yes several times, 4=Yes often, 9=Don’t know, 998=Refused to answer, -1=Missing
+* Not included in round 4 and 3
+
+Q26. Voted*
+Question: With regard to the most recent national election in [20xx], which statement is true for you?
+Value Labels: 0=You were not registered to vote, 1=You voted in the elections, 2=You decided not to
+vote, 3=You could not find the polling station, 4=You were prevented from voting, 5=You did not have
+time to vote, 6= You did not vote because you could not find your name in the voters‟ register, 7=Did
+not vote for some other reason, 8= You were too young to vote, 9=don’t know/Can't remember,
+998=Refused to answer, -1=Missing
+* Recoded for round 4 and 3
+
+Q27A. Contact_Councillor
+Question: During the past year, how often have you contacted any of the following persons about some
+important problem or to give them your views: A local government councilor? a
+Value Labels: 0=Never, 1=Only once, 2=A few times, 3=Often, 9=Don’t know, 997=Not asked,
+998=Refused to answer, -1=Missing
+a
+
+Round 6: local member of county assembly
+Q27B. Contact_MP
+Question: During the past year, how often have you contacted any of the following persons about some
+important problem or to give them your views: A Member of Parliament?
+Value Labels: 0=Never, 1=Only once, 2=A few times, 3=Often, 9=Don’t know, 997=Not asked,
+998=Refused to answer, -1=Missing
+
+Q27C. Contact_Agency
+Question: During the past year, how often have you contacted any of the following persons about some
+important problem or to give them your views: An official of a government agency?
+Value Labels: 0=Never, 1=Only once, 2=A few times, 3=Often, 9=Don’t know, 997=Not asked,
+998=Refused to answer, -1=Missing
+
+Q27D. Contact_Party*
+Question: During the past year, how often have you contacted any of the following persons about some
+important problem or to give them your views: A political party official?
+Value Labels: 0=Never, 1=Only once, 2=A few times, 3=Often, 9=Don’t know, 997=Not asked,
+998=Refused to answer, -1=Missing
+a Not
+
+included in round 4
+Democracy and politics
+Rights and Freedoms
+Q28A. Free_Say*
+Question: In this country, how free are you: To say what you think?
+Value Labels: 1=Not at all free, 2=Not very free, 3=Somewhat free, 4=Completely free, 9=Don't know,
+998=Refused to answer, -1=Missing
+
+Q28B. Free_Join*
+Question: In this country, how free are you: To join any political organization you want?
+Value Labels: 1=Not at all free, 2=Not very free, 3=Somewhat free, 4=Completely free, 9=Don't know,
+998=Refused to answer, -1=Missing
+
+Q28C. Free_Vote*
+Question: In this country, how free are you: To choose who to vote for without feeling pressured?
+Value Labels: 1=Not at all free, 2=Not very free, 3=Somewhat free, 4=Completely free, 9=Don't know,
+998=Refused to answer, -1=Missing
+*Not included in round 3
+
+Q29. Fair_Elections
+Question: On the whole, how would you rate the freeness and fairness of the last national election, held
+in [20xx]. Was it: (Freeness and fairness of the last national election)
+Value Labels: 1=Not free and fair, 2=Free and fair, with major problems, 3=Free and fair, but with
+minor problems, 4=Completely free and fair, 8=Do not understand the question, 9=Don’t know,
+998=Refused to answer, -1=Missing
+
+Democracy notions
+Q30A. OneParty
+Question: There are many ways to govern a country. Would you disapprove or approve of the following
+alternatives: Only one political party is allowed to stand for election and hold office?
+Value Labels: 1=Strongly disapprove, 2=Disapprove, 3=Neither approve nor disapprove, 4=Approve,
+5=Strongly approve, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q30B. Military
+Question: There are many ways to govern a country. Would you disapprove or approve of the following
+alternatives: The army comes in to govern the country?
+Value Labels: 1=Strongly disapprove, 2=Disapprove, 3=Neither approve nor disapprove, 4=Approve,
+5=Strongly approve, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q30C. OneMan
+Question: There are many ways to govern a country. Would you disapprove or approve of the following
+alternatives: Elections and Parliament are abolished so that the president can decide everything?
+Value Labels: 1=Strongly disapprove, 2=Disapprove, 3=Neither approve nor disapprove, 4=Approve,
+5=Strongly approve, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q30D_ARB. IslamicLaw**
+Question: There are many ways to govern a country. Would you disapprove or approve of the following
+alternatives: A system governed by Islamic law without elections or political parties?
+Value Labels: 1=Strongly disapprove, 2=Disapprove, 3=Neither approve nor disapprove, 4=Approve,
+5=Strongly approve, 9= Don’t know, 997=Not asked, 998=Refused to answer, -1=Missing.
+** Only asked in ALG, EGY, MRC, SUD and TUN and only included in round 6 and 5
+
+Q31. Support_Democracy
+Question: Which of these three statements is closest to your own opinion?
+Statement 1: Democracy is preferable to any other kind of government.
+Statement 2: In some circumstances, a non-democratic government can be preferable.
+Statement 3: For someone like me, it doesn’t matter what kind of government we have.
+Value Labels: 1=Statement 3: Doesn’t matter, 2=Statement 2: Sometimes non-democratic preferable,
+3=Statement 1: Democracy preferable, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q32. Influence*
+Question: Which of the following statements is closest to your view? Choose Statement1 or Statement2
+Statement 1: It is more important to have a government that can get things done, even if we have no
+influence over what it does.
+Statement 2: It is more important for citizens to be able to hold government accountable, even if that
+means it makes decisions more slowly.
+Value Labels: 1=Agree very strongly with Statement 1, 2=Agree with Statement 1, 3=Agree with
+Statement 2, 4=Agree very strongly with Statement 2, 5=Agree with neither, 9=Don’t know,
+998=Refused to answer, -1=Missing
+* Not included in round 4 and 3
+
+Q33. Elections
+Question: Which of the following statements is closest to your view? Choose Statement1 or Statement2
+Statement 1: We should choose our leaders in this country through regular, open and honest elections.
+Statement 2: Since elections sometimes produce bad results, we should adopt other methods for
+choosing this country’s leaders.
+Value Labels: 1=Agree very strongly with Statement 1, 2=Agree with Statement 1, 3=Agree with
+Statement 2, 4=Agree very strongly with Statement 2, 5=Agree with neither, 9=Don’t know,
+998=Refused to answer, -1=Missing
+
+Q34. Parties
+Question: Which of the following statements is closest to your view? Choose Statement1 or Statement2
+Statement 1: Political parties create division and confusion; it is therefore unnecessary to have many
+political parties in the country.
+Statement 2: Many political parties are needed to make sure that [Ghanaians] have real choices in who
+governs them.
+Value Labels: 1=Agree very strongly with Statement 1, 2=Agree with Statement 1, 3=Agree with
+Statement 2, 4=Agree very strongly with Statement 2, 5=Agree with neither, 9=Don’t know,
+998=Refused to answer, -1=Missing
+
+Q35. Justification*
+Question: Which of the following statements is closest to your view? Choose Statement1 or Statement2
+Statement 1: Parliament should ensure that the President explains to it on a regular basis how his
+government spends taxpayers’ money.
+Statement 2: The President should be able to devote his full attention to developing the country rather
+than wasting time justifying his actions.
+Value Labels: 1=Agree very strongly with Statement 1, 2=Agree with Statement 1, 3=Agree with
+Statement 2, 4=Agree very strongly with Statement 2, 5=Agree with neither, 9=Don’t know,
+998=Refused to answer, -1=Missing
+
+Q36. Opposition*
+Question: Which of the following statements is closest to your view? Choose Statement1 or Statement2
+Statement 1: Opposition parties should regularly examine and criticize government policies and actions.
+Statement 2: Opposition parties should concentrate on cooperating with government and helping it
+develop the country.
+Value Labels: 1=Agree very strongly with Statement 1, 2=Agree with Statement 1, 3=Agree with
+Statement 2, 4=Agree very strongly with Statement 2, 5=Agree with neither, 9=Don’t know,
+998=Refused to answer, -1=Missing
+
+Q37. Media*
+Question: Which of the following statements is closest to your view? Choose Statement1 or Statement2
+Statement 1: The news media should constantly investigate and report on government mistakes and
+corruption.
+Statement 2: Too much reporting on negative events, like government mistakes and corruption, only
+harms the country.
+Value Labels: 1=Agree very strongly with Statement 1, 2=Agree with Statement 1, 3=Agree with
+Statement 2, 4=Agree very strongly with Statement 2, 5=Agree with neither, 9=Don’t know,
+998=Refused to answer, -1=Missing
+* Not included in round 3
+
+Q38. Parlement
+Question: Which of the following statements is closest to your view? Choose Statement1 or Statement2
+Statement 1: Members of Parliament represent the people; therefore they should make laws for this
+country, even if the President does not agree.
+Statement 2: Since the President represents all of us, he should pass laws without worrying about what
+Parliament thinks.
+Value Labels: 1=Agree very strongly with Statement 1, 2=Agree with Statement 1, 3=Agree with
+Statement 2, 4=Agree very strongly with Statement 2, 5=Agree with neither, 9=Don’t know,
+998=Refused to answer, -1=Missing
+
+Q39. Laws
+Question: Which of the following statements is closest to your view? Choose Statement1 or Statement2
+Statement 1: Since the President was elected to lead the country, he should not be bound by laws or
+court decisions that he thinks are wrong.
+Statement 2: The President must always obey the laws and the courts, even if he thinks they are wrong.
+Value Labels: 1=Agree very strongly with Statement 1, 2=Agree with Statement 1, 3=Agree with
+Statement 2, 4=Agree very strongly with Statement 2, 5=Agree with neither, 9= Don’t know, 997=not
+asked, 998=Refused to answer, -1=Missing
+
+Q40. Constitution*
+Question: Which of the following statements is closest to your view? Choose Statement1 or Statement2
+Statement 1: The Constitution should limit the president to serving a maximum of two terms in office.
+Statement 2: There should be no constitutional limit on how long the president can serve.
+Value Labels: 1=Agree very strongly with Statement 1, 2=Agree with Statement 1, 3=Agree with
+Statement 2, 4=Agree very strongly with Statement 2, 5=Agree with neither, 9=Don’t know,
+998=Refused to answer, -1=Missing
+* Not included in round 3
+
+Q41A_ARB. Teachings**
+Question: The opinions of Islamic jurists and religious scholars differ with regard to their
+interpretations of certain issues in Islam. What extent you agree or disagree with each of the following
+statements: Democracy is a system that contradicts the teachings of Islam?
+Value Labels: 1=Strongly with Agree, 2=Agree, 3=Neither Agree nor Disagree, 4=Disagree,
+5=Strongly Disagree, 9=Don’t know, 997=Not asked, 998=Refused to answer, -1=Missing
+
+Q41B_ARB. NonMuslims**
+Question: The opinions of Islamic jurists and religious scholars differ with regard to their
+interpretations of certain issues in Islam. What extent you agree or disagree with each of the following
+statements: In a Muslim country, non-Muslims should enjoy less political rights than Muslims?
+Value Labels: 1=Strongly with Agree, 2=Agree, 3=Neither Agree nor Disagree, 4=Disagree,
+5=Strongly Disagree, 9=Don’t know, 997=Not asked, 998=Refused to answer, -1=Missing
+
+Q41C_ARB. Leaders**
+Question: The opinions of Islamic jurists and religious scholars differ with regard to their
+interpretations of certain issues in Islam. What extent you agree or disagree with each of the following
+statements: Religious leaders like imams, preachers and priests should not interfere in voters‟ decisions
+in elections?
+Value Labels: 1=Strongly with Agree, 2=Agree, 3=Neither Agree nor Disagree, 4=Disagree,
+5=Strongly Disagree, 9=Don’t know, 997=Not asked, 998=Refused to answer, -1=Missing
+
+Q41D_ARB. Positions**
+Question: The opinions of Islamic jurists and religious scholars differ with regard to their
+interpretations of certain issues in Islam. What extent you agree or disagree with each of the following
+statements: The country is better off if religious people hold public positions in the state?
+Value Labels: 1=Strongly with Agree, 2=Agree, 3=Neither Agree nor Disagree, 4=Disagree,
+5=Strongly Disagree, 9=Don’t know, 997=Not asked, 998=Refused to answer, -1=Missing
+** Only asked in ALG, EGY, MRC, SUD and TUN and only included in round 6 and 5
+
+Q42. Extent_Democracy
+Question: In your opinion how much of a democracy is the country today?
+Value Labels: 1=Not a democracy, 2=A democracy, with major problems, 3=A democracy, but with
+minor problems, 4=A full democracy, 8=Do not understand question/ do not understand what
+„democracy‟ is, 9=Don’t know, 998=Refused to answer, -1=Missing
+* Round 6 recoded (if merged dataset is still differently coded)
+
+Q43. Satisfaction_Democracy*
+Question: Overall, how satisfied are you with the way democracy works in the country? Are you:
+Value Labels: 0=the country is not a democracy, 1=Not at all satisfied, 2=Not very satisfied, 3=Fairly
+satisfied, 4=Very satisfied, 9=Don’t know, 998=Refused to answer, -1=Missing
+* Round 6 recoded (if merged dataset is still differently coded)
+
+Q43A_ARB. Economy**
+Question: Do you agree or disagree with each of the following statements: Under a democratic system,
+the country’s economic performance is weak?
+Value Labels: 1=Strongly with Agree, 2=Agree, 3=Neither Agree nor Disagree, 4=Disagree,
+5=Strongly Disagree, 8=Refused to answer, 9=Don’t know, 997=Not asked, -1=Missing
+
+Q43B_ARB. Indecisive**
+Question: Do you agree or disagree with each of the following statements: Democratic regimes are
+indecisive?
+Value Labels: 1=Strongly with Agree, 2=Agree, 3=Neither Agree nor Disagree, 4=Disagree,
+5=Strongly Disagree, 8=Refused to answer, 9=Don’t know, 997=Not asked, -1=Missing
+
+Q43C_ARB. Stability**
+Question: Do you agree or disagree with each of the following statements: Democratic systems are not
+effective at maintaining order and stability?
+Value Labels: 1=Strongly with Agree, 2=Agree, 3=Neither Agree nor Disagree, 4=Disagree,
+5=Strongly Disagree, 8=Refused to answer, 9=Don’t know, 997=Not asked, -1=Missing
+
+Q43D_ARB. System**
+Question: Do you agree or disagree with each of the following statements: people are not prepared for
+a democratic system?
+Value Labels: 1=Strongly with Agree, 2=Agree, 3=Neither Agree nor Disagree, 4=Disagree,
+5=Strongly Disagree, 8=Refused to answer, 9=Don’t know, 997=Not asked, -1=Missing
+
+Q43E_ARB. Values**
+Question: Do you agree or disagree with each of the following statements: Democracy negatively
+affects social and ethical values.
+Value Labels: 1=Strongly with Agree, 2=Agree, 3=Neither Agree nor Disagree, 4=Disagree,
+5=Strongly Disagree, 8=Refused to answer, 9=Don’t know, 997=Not asked, -1=Missing
+** Only asked in ALG, EGY, MRC, SUD and TUN and only included in round 6 and 5
+
+Politics
+Q44A. Courts
+Question: For each of the following statements, please tell me whether you disagree or agree: The
+courts have the right to make decisions that people always have to abide by.
+Value Labels: 1=Strongly disagree, 2=Disagree, 3=Neither agree nor disagree, 4=Agree, 5=Strongly
+agree, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q44B. Law
+Question: For each of the following statements, please tell me whether you disagree or agree: The
+police always have the right to make people obey the law.
+Value Labels: 1=Strongly disagree, 2=Disagree, 3=Neither agree nor disagree, 4=Agree, 5=Strongly
+agree, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q44C. Taxes
+Question: For each of the following statements, please tell me whether you disagree or agree: The tax
+department always has the right to make people pay taxes. 
+Value Labels: 1=Strongly Disagree, 2=Disagree, 3=Neither Agree Nor Disagree, 4=Agree, 5=Strongly
+Agree, 9=Don’t Know, 98=Refused to Answer, -1=Missing Data 
+
+Q45A. Media_Abuse*
+Question: In your opinion, how often, in this country: Does the news media abuse its freedoms by
+printing or saying things it knows are not true? 
+Value Labels: 0=Never, 1=Rarely, 2=Often, 3=Always, 9=Don’t know, 998=Refused to answer, 1=Missing
+
+Q45B. Opposition_Silenced*
+Question: In your opinion, how often, in this country: Are opposition parties or their supporters silenced
+by the government? 
+Value Labels: 0=Never, 1=Rarely, 2=Often, 3=Always, 9=Don’t know, 997=Not asked, 998=Refused
+to answer, -1=Missing
+* Not included in round 4 and 3
+
+Q45C. Competition
+Question: In your opinion, how often, in this country: Does competition between political parties lead
+to violent conflict? 
+Value Labels: 0=Never, 1=Rarely, 2=Often, 3=Always, 9=Don’t know, 997=Not asked, 998=Refused
+to answer, -1=Missing 
+
+Q45D. Unequally
+Question: In your opinion, how often, in this country: Are people treated unequally under the law?
+Value Labels: 0=Never, 1=Rarely, 2=Often, 3=Always, 9=Don’t know, 998=Refused to answer, 1=Missing
+
+Q45E. Careful
+Question: In your opinion, how often, in this country: Do people have to be careful of what they say
+about politics?
+Value Labels: 0=Never, 1=Rarely, 2=Often, 3=Always, 9=Don’t know, 998=Refused to answer, 1=Missing
+
+Q46A. President_Ignores1*
+Question: In your opinion, how often, in this country: Does the President ignore the courts and laws of
+the country?
+Value Labels: 0=Never, 1=Rarely, 2=Often, 3=Always, 9=Don’t know, 998=Refused to answer, 1=Missing
+* “Constitution” instead of “courts and laws” in round 3
+
+Q46B. President_Ignores2*
+Question: In your opinion, how often, in this country: Does the President ignore parliament and just do
+what he wants?
+Value Labels: 0=Never, 1=Rarely, 2=Often, 3=Always, 9=Don’t know, 997=Not asked, 998=Refused
+to answer, -1=Missing
+
+Q47. Media*
+Question: In this country, how effective is the news media in revealing government mistakes and
+corruption?
+Value Labels: 0= Not at all effective, 1= Not very effective, 2= Somewhat effective, 3= Very effective,
+9=Don’t know, 998=Refused to answer, -1=Missing
+* Not included in round 4 and 3
+
+Q48A. Vote_Reflect*
+Question: Think about how elections work in practice in this country. How well do elections: Ensure
+that the members of Parliament reflect the views of voters?
+Value Labels: 0=Not at all well, 1=Not very well, 2=Well, 3=Very well, 9=Don’t know, 998=Refused
+to answer, - 1=Missing data
+
+Q48B. Vote_Remove*
+Question: Think about how elections work in practice in this country. How well do elections: Enable
+voters to remove from office leaders who do not do what the people want?
+Value Labels: 0=Not at all well, 1=Not very well, 2=Well, 3=Very well, 9=Don’t know, 998=Refused
+to answer, - 1=Missing data
+* Not included in round 5
+
+Institutions and leaders
+Trust
+Q49A. Trust_Pres
+Question: How much do you trust each of the following, or haven’t you heard enough about them to
+say: The President/Prime Minister?
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 997=Not asked, 998=Refused to Answer, -1=Missing Data
+
+Q49B. Trust_Parl
+Question: How much do you trust each of the following, or haven’t you heard enough about them to
+say: The Parliament/National Assembly?
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 997=Not asked, 998=Refused to Answer, -1=Missing Data
+Note: “National Assembly” in Benin, Cape Verde, Madagascar, Mali, Mozambique, Namibia, Nigeria, Senegal and South
+Africa; “Parliament” in Botswana, Ghana, Kenya, Lesotho, Malawi, Tanzania, Uganda, Zambia, and Zimbabwe.
+
+Q49C. Trust_Elect
+Question: How much do you trust each of the following, or haven’t you heard enough about them to
+say: The Electoral Commission?
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 997=Not asked, 998=Refused to Answer, -1=Missing Data
+Note: The official name of each country’s national electoral commission was inserted.
+
+Q49D. Trust_Tax*
+Question: How much do you trust each of the following, or haven’t you heard enough about them to
+say: The tax department?
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 998=Refused to Answer, -1=Missing Data
+* Not included in round 4 and 3
+
+Q49E. Trust_Local
+Question: How much do you trust each of the following, or haven’t you heard enough about them to
+say: Your Elected Local Government Council?
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 998=Refused to Answer, -1=Missing Data
+
+Q49F. Trust_RulingParty
+Question: How much do you trust each of the following, or haven’t you heard enough about them to
+say: The Ruling Party?
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 997=Not asked, 998=Refused to Answer, -1=Missing Data
+
+Q49G. Trust_OppositionParties
+Question: How much do you trust each of the following, or haven’t you heard enough about them to
+say: Opposition Political Parties?
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 997=Not asked, 998=Refused to Answer, -1=Missing Data
+
+Q49H. Trust_Police
+Question: How much do you trust each of the following, or haven’t you heard enough about them to
+say: The Police?
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 998=Refused to Answer, -1=Missing Data
+* Other order in Round 3, reordered
+
+Q49I. Trust_Army*
+Question: How much do you trust each of the following, or haven’t you heard enough about them to
+say: The Army?
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 998=Refused to Answer, -1=Missing Data
+* Not included in round 4
+
+Q49J. Trust_Courts
+Question: How much do you trust each of the following, or haven’t you heard enough about them to
+say: Courts of Law?
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 998=Refused to Answer, -1=Missing Data
+Note Q49: Traditional leaders, religious leaders and media not included in merged dataset because it was only asked in one
+or maximum two rounds.
+
+Q49K. Trust_TVgov
+Question: 
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 998=Refused to Answer, -1=Missing Data
+
+Q49L. Trust_TVind
+Question: 
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 998=Refused to Answer, -1=Missing Data
+ 
+Q49M. Trust_PaperGov
+Question: 
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 998=Refused to Answer, -1=Missing Data
+
+Q49N. Trust_PaperInd
+Question:
+Value Labels: 0=Not at all, 1=Just a little, 2=Somewhat, 3=A lot, 9=Don’t Know/Haven’t Heard
+Enough, 998=Refused to Answer, -1=Missing Data
+
+Corruption-Bribing
+Q50A. Corr_Pres
+Question: How many of the following people do you think are involved in corruption, or haven’t you
+heard enough about them to say: The President/Prime Minister and Officials in his Office?
+Value Labels: 0=None, 1=Some of them, 2=Most of them, 3=All of them, 9=Don’t know, 997=Not
+asked, 998=Refused to answer, -1=Missing
+Note: The question asked about the office of most powerful leadership figure, whether the President or the Prime Minister.
+
+Q50B. Corr_Parl
+Question: How many of the following people do you think are involved in corruption, or haven’t you
+heard enough about them to say: Members of Parliament?
+Value Labels: 0=None, 1=Some of them, 2=Most of them, 3=All of them, 9=Don’t know, 997=Not
+asked, 998=Refused to answer, -1=Missing.
+
+Q50C. Corr_Officials
+Question: How many of the following people do you think are involved in corruption, or haven’t you
+heard enough about them to say: Government Officials?
+Value Labels: 0=None, 1=Some of them, 2=Most of them, 3=All of them, 9=Don’t know, 998=Refused
+to answer, -1=Missing.
+
+Q50D. Corr_Local
+Question: How many of the following people do you think are involved in corruption, or haven’t you
+heard enough about them to say: Local government councilors?
+Value Labels: 0=None, 1=Some of them, 2=Most of them, 3=All of them, 9=Don’t know, 997=Not
+asked, 998=Refused to answer, -1=Missing
+
+Q50E. Corr_Police
+Question: How many of the following people do you think are involved in corruption, or haven’t you
+heard enough about them to say: Police?
+Value Labels: 0=None, 1=Some of them, 2=Most of them, 3=All of them, 9=Don’t know, 998=Refused
+to answer, -1=Missing
+
+Q50F. Corr_Tax
+Question: How many of the following people do you think are involved in corruption, or haven’t you
+heard enough about them to say: Tax Officials (e.g. Ministry of Finance officials or Local Government
+tax collectors)
+Value Labels: 0=None, 1=Some of them, 2=Most of them, 3=All of them, 9=Don’t know, 998=Refused
+to answer, -1=Missing
+
+Q50G. Corr_Judges
+Question: How many of the following people do you think are involved in corruption, or haven’t you
+heard enough about them to say: Judges and Magistrates?
+Value Labels: 0=None, 1=Some of them, 2=Most of them, 3=All of them, 9=Don’t know, 998=Refused
+to answer, -1=Missing
+Note Q50: military, traditional leaders, religious leaders and business executives not included in merged dataset because it
+was only asked in one or maximum two rounds.
+
+Q51A. Bribe_Permit
+Question: In the past year, how often, (if ever, have you had to pay a bribe, give a gift, or do a favor to
+government officials in order to: Get a document or a permit?
+Value Labels: 0=Never, 1=Once or twice, 2=A few times, 3=Often, 7=No experience with this in the
+past year, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q51B. Bribe_Sanitation*
+Question: In the past year, how often, if ever, have you had to pay a bribe, give a gift, or do a favor to
+government officials in order to: Get water or sanitation services?
+Value Labels: 0=Never, 1=Once or twice, 2=A few times, 3=Often, 7=No experience with this in the
+past year, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q51C. Bribe_Treatment*
+Question: In the past year, how often, if ever, have you had to pay a bribe, give a gift, or do a favor to
+government officials in order to: Get treatment at a local health clinic or hospital?
+Value Labels: 0=Never, 1=Once or twice, 2=A few times, 3=Often, 7=No experience with this in the
+past year, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q51D. Bribe_Police*
+Question: In the past year, how often (if ever) have you had to pay a bribe, give a gift, or do a favor to
+government officials in order to: Avoid a problem with the police (like passing a checkpoint or avoiding
+a fine or arrest)?
+Value Labels: 0=Never, 1=Once or twice, 2=A few times, 3=Often, 7=No experience with this in the
+past year, 9=Don’t know, 998=Refused to answer, -1=Missing data 
+
+Q51E. Bribe_School*
+Question: In the past year, how often, if ever, have you had to pay a bribe, give a gift, or do a favor to
+government officials in order to: Get a place in a primary school for a child?
+Value Labels: 0=Never, 1=Once or twice, 2=A few times, 3=Often, 7=No experience with this in the
+past year, 9=Don’t know, 998=Refused to answer, -1=Missing
+* Slightly other orders in other rounds and not all options are included in all rounds
+
+Listening
+Q52A. MPs_Listen
+Question: How much of the time do you think the following try their best to listen to what people like
+you have to say: Members of Parliament?
+Value Labels: 0=Never, 1=Only sometimes, 2=Often, 3=Always, 9=Don’t know, 997=Not asked,
+998=Refused to answer, -1=Missing
+
+Q52B. Local_Listen
+Question: How much of the time do you think the following try their best to listen to what people like
+you have to say: Local government councilors? 
+Value Labels: 0=Never, 1=Only sometimes, 2=Often, 3=Always, 9=Don’t know, 997=Not asked,
+998=Refused to answer, -1=Missing 
+Most important problem
+
+Q53. Important_Problem*
+Question: In your opinion, what are the most important problems facing this country that government
+should address? 
+Value Labels: 0=Nothing/No problems, 1=Management of economy, 2=Wages, incomes and salaries,
+3=Unemployment, 4=Poverty/ destitution, 5=Rates and taxes, 6=Loans/ credit, 7=Farming/ agriculture,
+8=Food shortage/ famine, 9=Drought, 10=Land, 11=Transportation, 12=Communications,
+13=Infrastructure/ roads, 14=Education, 15=Housing, 16=Electricity, 17=Water supply, 18=Orphans/
+street children/ homeless, 19=Services (other), 20=Health, 21=AIDS, 22=Sickness/ disease, 23=Crime
+and security, 24=Corruption, 25=Political violence, 26=Political instability/ ethnic tensions,
+27=Discrimination/ inequality, 28=Gender issues/ women's rights, 29=Democracy/ political rights,
+30=War (international), 31=Civil war, 32=Agricultural marketing, 33=Food prices / Cost of living /
+Commodity prices, 9995=Other, 9998=Refused to answer, 9999=Don't know, -1=Missing. 
+* Recoded: values 0-33 are kept as they were the same in all rounds. All other values are added to ‘other’.
+
+Government performance
+Q53A. Handling_Economy
+Question: Now let’s speak about the present government of this country. How well or badly would you
+say the current government is handling the following matters, or haven’t you heard enough to say:
+Managing the economy?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+
+Q53B. Handling_Living
+Question: Now let’s speak about the present government of this country. How well or badly would you
+say the current government is handling the following matters, or haven’t you heard enough to say:
+Improving the living standards of the poor.
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+* Not in round 3
+
+Q53C. Handling_Jobs
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Creating jobs?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t heard
+enough, 998=Refused to answer, -1=Missing
+
+Q53D. Handling_Prices
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Keeping prices down/stable?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+
+Q53E. Handling_Gap
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Narrowing gaps between rich and poor?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+
+Q53F. Handling_Crime
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Reducing crime?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+
+Q53G. Handling_Health
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Improving basic health services?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+
+Q53H. Handling_Education
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Addressing educational needs?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+
+Q53I. Handling_Sanitation
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Providing water and sanitation services?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+
+Q53J. Handling_Eat
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Ensuring everyone has enough to eat?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+
+Q53K. Handling_Corruption
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Fighting corruption in government?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+
+Q53L. Handling_HIV
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Combating HIV/AIDS?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+* Not included in round 6
+
+Q53M. Handling_Roads*
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Maintaining roads and bridges?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+* Current local government in round 3
+
+Q53N. Handling_Electricity*
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Providing a reliable supply of electricity?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+* Not in round 3
+
+Q53O. Handling_Women*
+Question: How well or badly would you say the current government is handling the following matters,
+or haven’t you heard enough to say: Empowering women?
+Value Labels: 1=Very badly, 2=Fairly badly, 3=Fairly well, 4=Very well, 9=Don’t know/Haven’t
+heard enough, 998=Refused to answer, -1=Missing
+* Not included in round 6 and 3
+
+Q54A. Performance_Pres
+Question: Do you approve or disapprove of the way the following people have performed their jobs
+over the past twelve months, or haven’t you heard enough about them to say: President / Prime Minister
+Value Labels: 1=Strongly disapprove, 2=disapprove, 3=Approve, 4=Strongly approve, 9=Don’t
+know/Haven’t heard enough, 998=Refused to answer, -1=Missing
+
+Q54B. Performance_MP
+Question: Do you approve or disapprove of the way the following people have performed their jobs
+over the past twelve months, or haven’t you heard enough about them to say: Your Member of
+Parliament?
+Value Labels: 1=Strongly disapprove, 2=disapprove, 3=Approve, 4=Strongly approve, 9=Don’t
+know/Haven’t heard enough, 998=Refused to answer, -1=Missing
+
+Q54C. Performance_Local
+Question: Do you approve or disapprove of the way the following people have performed their jobs
+over the past twelve months, or haven’t you heard enough about them to say: Your Elected Assembly
+man/woman?
+Value Labels: 1=Strongly disapprove, 2=disapprove, 3=Approve, 4=Strongly approve, 9=Don’t
+know/Haven’t heard enough, 997=Not asked, 998=Refused to answer, -1=Missing
+Note Q54: Traditional leader only asked in round 6 and, thus, not included
+
+Other
+Identity
+Q55. Unfairly_Ethnic
+Question: How often is [Respondent’s Ethnic Group] treated unfairly by the government?
+Value Labels: 0=Never, 1=Sometimes, 2=Often, 3=Always, 7=Not applicable, 9=Don’t know,
+997=Not asked, 998=Refused to answer, -1=Missing
+
+Q55_ARB. Unfairly_Religious**
+Question: How often is [Respondent’s religious group] treated unfairly by government?
+Value Labels: 0=Never, 1=Sometimes, 2=Often, 3=Always, 7=Not applicable, 8=Refused to answer,
+9=Don’t know, 997=Not asked, -1=Missing
+
+Q56. Ethnic_National
+Question: Let us suppose that you had to choose between being a national ID and being a ________
+[R‟s Ethnic Group]. Which of the following best expresses your feelings?
+Value Labels: 1=I feel only (R’s ethnic group), 2=I feel more (R’s ethnic group) than national ID, 3=I
+feel equally national ID and (R’s ethnic group), 4=I feel more national ID than (R’s ethnic group), 5=I feel only national ID, 7=Not applicable, 9=Don’t know, 997=Not asked, 998=Refused to answer, -1=Missing
+
+Q56_ARB. Religious_National**
+Question: Let us suppose that you had to choose between being an [Country Name] and being a
+[religious group]. Which of the following statements best expresses your feelings?
+Value Labels: 1=I feel only [religious group], 2=I feel more [religious group] than [national identity],
+3=I feel equally [national identity] and [religious group], 4=I feel more [national identity] than
+[religious group], 5=I feel only [national identity], 7=Not applicable, 8=Refused to answer, 9=Don‟t
+know, 1580=I am only a human being, 997=Not asked, -1=Missing
+** Only asked in ALG, EGY, MRC, SUD and TUN and only included in round 6 and 5
+
+‘New’ media use
+Q57A. Computer_Use*
+Question: How often do you use: A computer?
+Value Labels: 0=Never, 1=Less than once a month, 2=A few times a month, 3=A few times a week,
+4=Every day, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q57B. Internet_Use*
+Question: How often do you use: The Internet?
+Value Labels: 0=Never, 1=Less than once a month, 2=A few times a month, 3=A few times a week,
+4=Every day, 9=Don’t know, 998=Refused to answer, -1=Missing
+
+Q57C. CPhone_Use
+Question: How often do you use: Cell phone?
+Value Labels: 0=Never, 1=Less than once a month, 2=A few times a month, 3=A few times a week,
+4=Every day, 9=Don’t know, 998=Refused to answer, -1=Missing
+* Not included in round three. a Differently asked in round 5:
+
+Q57C. MPhone_UseOwn
+Question: Do you ever use a mobile phone? If so, who owns the mobile phone that you use most often?
+Value Labels: 0= No I never use a mobile phone, 1= Yes I use a mobile phone that I own, 2= Yes I use a mobile phone owned by someone else in my household, 3= Yes I use a mobile phone owned by someone outside my household, 9=Don’t know, 998=Refused to answer, -1=Missing
+* Only in round 5 like this
+
+withinwt
+Variable Label: Within country weighting factor
+Note: This weighting variable adjusts the distribution of the sample based on individual selection
+probabilities (i.e. based on region, gender, urban-rural distribution, and size of household and
+enumeration area).
+
+combinwt
+Variable Label: Multi-country weighting factor
+Note: This weighting variable adjusts the distribution of the sample based on individual selection
+probabilities (i.e. based on region, gender, urban-rural distribution, and size of household and
+enumeration area) and treats every country as if its sample were the same size. This should be turned
+on when reporting multi-country results.
+
+Appendix: recoding (syntax)
+Round 5
+RECODE REGION (141 thru 145=141) (151 thru 152=151) (154 thru 155=154) (157 thru 158=157).
+RECODE Q7.Religion (37=34) (36=34) (35=9995) (144 thru 1420=9995).
+RECODE Q5.Tribe (8=995) (100=10) (101=1) (266=265) (267=266) (278=267) (277=269) (279=270)
+(281=271)
+(265=273) (274=9995) (269=275) (273=276) (275=277) (270=279) (276=9995) (283=282)
+(271=280) (282=281)
+(280=9995) (266=265) (267=266) (278=267) (277=269) (279=270) (313=9995) (322=7)
+(280=9995) (1=9) (9=1)
+(438=9995) (440=9995) (647=9995) (321=4) (108 thru 110=9995) (198 thru 199=9995) (316 thru
+318=9995)
+(2621 thru 2622=9995) (650 thru 651=9995) (654 thru 658=9995) (870 thru 871=9995) (873 thru
+883=9995).
+EXECUTE.
+RECODE Q19A.Stolen (2=1) (3=2).
+RECODE Q19B.Attacked (2=1) (3=2).
+
+Round 4
+RECODE COUNTRY (1=2) (2=3) (3=4) (4=7) (5=11) (6=13) (7=14) (8=15) (9=16) (10=17) (11=18)
+(12=21) (13=22) (14=24) (15=25) (16=27) (17=30) (18=33) (19=34) (20=35) (SYSMIS=SYSMIS).
+RECODE REGION (SYSMIS=SYSMIS) (151=152) (152=151) (343=340) (344=341) (345=342)
+(346=343) (347=344)
+(348=345) (340=346) (341=347) (342=348) (550=549) (549=550) (663=664) (664=666) (665=667)
+(666=668)
+(667=669) (668=671) (669=672) (670=673).
+RECODE REGION (141 thru 145=141) (151 thru 152=151) (154 thru 155=154) (157 thru 158=157).
+RECODE Q2.Age (MISSING=SYSMIS) (18 thru 35=1) (36 thru 50=2) (51 thru Highest=3)
+(ELSE=Copy) INTO
+Q2A.CAT.
+VARIABLE LABELS Q2A.CAT 'Age in categories'.
+RECODE Q5.Tribe (100=10) (101=9) (108=10) (990=9990) (995=9995) (997=9997) (998=9998)
+(999=9999) (997=9997) (182=180)
+(203=181) (184=182) (185=183) (186=184) (188=185) (187=186) (190=187) (189=188) (181=189)
+(192=190)
+(193=191) (199=192) (195=193) (197=194) (198=195) (194=9995) (196=9995) (200=9995)
+(202=9995)
+(204=9995) (229=9995) (230=9995) (260=3) (269=12) (277=265) (280=267) (274=269) (272=270)
+(279=271) (271=272)
+(270=276) (284=278) (276=268) (281=279) (278=280) (264=281) (283=9995) (275=9995)
+(306=304)
+(304=306) (314=319) (315=314) (317=306) (320=321) (321=4) (318=320) (313=322) (322=9995)
+(323=9995) (345=342) (346=345)
+
+(347=346) (357 thru 360=9995) (362=9995) (364 thru 366=9995) (368 thru 370=995) (387=13)
+(390=16)
+(394=22) (395=32) (396=9995) (442=439) (460=31) (470=29) (471=30)
+(473=472) (472=9995) (500=4) (503=5) (519=508) (518=509) (508=510) (512=514) (517=515)
+(513=516)
+(514=517) (515=518) (516=519) (542=23) (541=28) (544=543) (543=544) (551=6) (559=557)
+(550=17)
+(556=560) (552=25) (585=2) (586=1) (590=18) (592=7) (596=594) (594=595) (620=12) (622=34)
+(652=646)
+(650=652) (648=650) (649=9995) (651=9995) (653=9995) (667=668) (669=21) (668=670) (700=1)
+(701=2)
+(709=33) (712=7) (805=798) (803=801) (804=802) (800=803) (799=805) (798=806) (902=9995)
+(901=810)
+(821=26) (822=30) (823=18) (824=6) (850=838) (841=839) (838=840) (847=841) (845=842)
+(839=843)
+(848=844) (849=845) (940=846) (844=847) (846=848) (842=853) (860=24) (866=23) (867=33)
+(869=30)
+(870=6) (872=26) (871=872) (655 thru 659=9995) (109 thru 112=9995) (166 thru 167=9995) (265
+thru 268=9995) (443 thru
+444=9995) (475 thru 477=9995) (557 thru 558=9995 )(597 thru 599=9995).
+EXECUTE.
+RECODE Q6.Education (0=0) (1=0) (2=1) (3=1) (4=2) (5=2) (6=3) (7=3) (8=3) (9=3)
+(MISSING=SYSMIS)
+(ELSE=Copy) INTO Q6A.CAT.
+VARIABLE LABELS Q6A.CAT 'Education category'.
+RECODE Q7.Religion (140=30) (580=30) (701=30) (420=31) (463=32) (700=33) (464=34) (860=33)
+(620=995) (861=995) (862=995) (660=995) (141 thru 579=995).
+RECODE Q15.Employment (3=2) (4=3) (5=3).
+RECODE Q19A.Stolen (3=2) (4=2).
+RECODE Q19B.Attacked (3=2) (4=2).
+RECODE Q26.Voted (300=6) (6=7) (77=7) (88=7).
+RECODE Q53.Important_Problem (180 thru 501=995)
+
+Round 3
+RECODE COUNTRY_ALPHA (1=2) (2=3) (3=7) (4=11) (5=13) (6=14) (7=16) (8=17) (9=18)
+(10=21) (11=22)
+(12=24) (13=25) (14=27) (15=30) (16=33) (17=34) (18=35) (MISSING=SYSMIS).
+RECODE REGION (100=700) (101=701) (102=702) (103=703) (104=704) (105=705) (106=706)
+(107=707)
+(108=708) (120=100) (121=101) (122=102) (123=103) (124=104) (125=105) (126=106) (127=107)
+(128=108)
+(129=109) (130=110) (141=146) (142=147) (143=148) (144=149) (145=150) (147=153) (149=156)
+(150=161)
+(153=162) (154=163) (160=220) (161=221) (162=222) (163=223) (164=224) (180=260) (181=261)
+(182=262)
+(183=263) (184=264) (185=265) (186=266) (189=269) (200=300) (201=301) (202=302) (203=303)
+(204=304)
+(205=305) (206=306) (207=307) (220=340) (221=341) (222=342) (223=343) (224=344) (225=345)
+(226=346)
+(227=347) (228=348) (229=349) (260=460) (261=461) (262=462) (280=509) (281=501) (282=502)
+(283=503)
+(284=504) (285=505) (286=506) (287=507) (288=508) (300=540) (301=541) (302=542) (303=543)
+(304=544)
+(305=545) (306=546) (307=547) (308=548) (309=550) (310=549) (320=580) (321=581) (322=582)
+(323=583)
+(324=584) (325=585) (326=586) (327=587) (328=588) (329=589) (330=590) (331=591) (332=592)
+(340=644)
+(341=647) (342=650) (343=649) (344=648) (345=632) (346=633) (347=623) (348=636) (349=620)
+(350=622)
+(351=625) (352=628) (353=629) (354=631) (356=639) (357=653) (355=652) (358=638) (359=640)
+(360=660)
+(361=661) (362=662) (363=664) (364=666) (365=667) (366=668) (367=669) (368=671) (369=672)
+(370=673)
+(380=740) (381=741) (382=742) (383=743) (384=743) (385=745) (386=746) (387=747) (389=749)
+(390=750)
+(391=751) (392=752) (393=753) (394=754) (395=755) (396=756) (397=757) (398=758) (399=759)
+(400=780)
+(401=783) (402=782) (404=781) (420=820) (421=821) (422=822) (423=823) (424=824) (426=826)
+(427=827)
+(428=828) (425=825) (440=860) (441=861) (442=862) (443=863) (444=864) (445=865) (447=867)
+(446=866)
+(448=868) (449=869) (540=760) (541=761) (542=762) (543=763) (544=764) (545=765) (550=656)
+(551=624)
+(552=627) (553=621) (554=654) (555=651) (556=626) (557=642) (558=643) (559=646) (560=634)
+(131=111)
+(148=170) (151=171) (146=172) (155=173) (173=159) (140=141) (172=151) (170=154) (171=157).
+EXECUTE.
+Q5.Tribe (120=10) (121=9) (122=102) (123=103) (124=104) (125=105) (126=106) (127=107)
+(995=9995) (998=9998) (999=9999) (990=9990) (152=149) (153=150) (154=151) (155=152)
+(156=153)
+(159=153) (150=155) (157=158) (149=159) (151=160) (160=164) (169=220) (170=221) (171=222)
+(172=223)
+(173=224) (174=225) (175=226) (176=227) (177=228) (178=9995) (180=3) (181=261) (182=262)
+(184=12) (183=263)
+(185=9995) (200=300) (201=301) (202=302) (203=303) (206=304) (205=305) (204=306)
+(207=307)
+(208=308) (209=309) (210=310) (211=311) (212=312) (213=322) (214=319) (215=314) (217=306)
+(218=320) (220=340) (226=341) (222=343) (221=344)
+(223=345) (224=346) (225=347) (227=348) (230=349) (228=350) (232=351) (233=352) (237=353)
+(229=354)
+(231=355) (236=356) (235=361) (575=363) (238=367) (234=9995) (239=9995) (240=420)
+(241=421)
+(242=422) (243=423) (244=424) (245=425) (246=426) (248=427) (249=428) (250=429) (251=430)
+(252=431)
+(253=432) (254=433) (255=434) (256=435) (257=436) (258=438) (260=31) (261=461) (262=462)
+(263=463)
+(264=464) (265=465) (266=466) (267=467) (268=468) (269=469) (270=29) (291=4) (280=501)
+(296=502)
+(271=30) (289=5) (290=504) (298=505) (288=506) (293=509) (287=510) (286=20) (292=21)
+(283=513)
+(281=514) (294=515) (282=516) (285=517) (295=518) (297=519) (284=520) (300=540) (302=542)
+(301=541)
+(304=544) (303=543) (305=545) (306=546) (307=547) (308=548) (309=549) (320=580) (321=581)
+(322=582)
+(339=583) (324=584) (325=2) (326=1) (336=587) (327=588) (329=18) (330=591) (333=7)
+(335=593)
+(334=596) (323=583) (331=9995) (328=589) (338=9995) (340=12) (341=621) (342=34) (344=623)
+(345=624)
+(346=625) (347=626) (348=627) (349=628) (350=629) (351=630) (352=631) (353=632) (354=633)
+(355=634)
+(356=635) (357=636) (358=637) (409=9995) (550=638) (551=639) (553=640) (554=641)
+(555=642) (556=643) (558=644)
+(565=645) (559=646) (568=653) (567=648) (564=649) (566=2620) (653=9995) (360=660)
+(361=661)
+(362=662) (363=663) (364=664) (365=665) (366=666) (368=667) (367=663) (3=35) (113=1)
+(100=2)
+(101=702) (102=703) (103=704) (104=705) (105=706) (106=707) (107=708) (108=33) (109=710)
+(110=711)
+(111=7) (112=713) (380=740) (381=741) (382=742) (383=743) (384=744) (385=745) (386=746)
+(387=747)
+(388=748) (390=750) (389=749) (391=751) (392=752) (393=753) (394=754) (395=755) (396=756)
+(397=757)
+(398=758) (417=780) (510=781) (506=782) (419=783) (418=784) (504=785) (500=786) (407=787)
+(406=789)
+(414=790) (416=791) (408=792) (511=793) (415=794) (503=795) (508=796) (412=798) (405=799)
+(410=806)
+(411=805) (501=801) (505=802) (507=800) (509=810) (413=788) (420=820) (862=26) (422=30)
+(423=18)
+(424=6) (425=825) (426=826) (427=827) (428=828) (429=829) (432=830) (435=831) (437=832)
+(430=833)
+(431=834) (433=835) (863=836) (436=837) (871=838) (864=839) (439=840) (868=841) (438=842)
+(867=843)
+(865=845) (860=846) (870=847) (875=850) (869=851) (866=842) (861=9995) (872=9995) (128 thru
+130=9995) (801 thru 835=9995) (570 thru 573=9995) (560 thru 561=9995) (997=9997).
+
+502
+COMPUTE Q17C.Own_Motor=q93e = 1 | q93f = 1.
+RECODE Q19A.Stolen (3=2) (4=2).
+RECODE Q19B.Attacked (3=2) (4=2).
+RECODE Q26.Voted (7=0) (6=7).
+RECODE Q53.Important_Problem (9995=995) (9998=998) (9999=999) (100 thru 1622=995).
