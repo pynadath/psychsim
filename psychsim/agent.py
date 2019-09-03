@@ -607,6 +607,7 @@ class Agent(object):
                 # Make me the subject of these actions
                 atom['subject'] = self.name
         new = ActionSet(actions)
+        assert new not in self.actions,'Action %s already defined' % (new)
         self.actions.add(new)
         if condition:
             self.legal[new] = condition
