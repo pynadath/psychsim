@@ -17,20 +17,16 @@
 
     },
     {
-        "command": "apply filter -attribute childrenHealth -value 0.8 -operator >= -day 16 -name healthychildren",
-        "explanations": "Refine search by selecting actors whose children are healthy as well on the last day. Give a name to this filter: \"healthychildren\""
+        "command": "apply filter -attribute childrenHealth -value 0.8 -operator >= -days 1, 16 -name healthychildren",
+        "explanations": "Refine search by selecting actors whose children are healthy as well on the first AND the last day. Give a name to this filter: \"healthychildren\""
     },
     {
-        "command": "apply filter -attribute employed -value 1 -operator = -day 1",
-        "explanations": "Out of those, get me the ones that were employed at the beginning of the simulation..."
+        "command": "apply filter -attribute employed -value 1 -operator = -days 1 to 16",
+        "explanations": "Out of those, get me the ones that were employed through the simulation..."
     },
     {
-        "command": "apply filter -attribute employed -value 1 -operator = -day 16",
-        "explanations": "...and that are still employed at the end."
-    },
-    {
-        "command": "apply filter -attribute region -value 1 -operator = -day 16",
-        "explanations": "And out of those, who is in Region 1 at the end?"
+        "command": "apply filter -attribute region -value 1 -operator = -days 1, 3, 5, 13 to 16",
+        "explanations": "And out of those, who is in Region 1 on days 1, 3, 5, 13 to 16?"
 
     },
     {

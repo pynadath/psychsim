@@ -17,7 +17,7 @@ active_values = ["active", "on"]
 inactive_values = ["inactive", "off"]
 all_values = ["all"]
 
-DAY = "day"
+DAYS = "day"
 ATTRIBUTE = "attribute"
 ATTRIBUTE_VAL = "value"
 OPERATOR = "operator"
@@ -25,8 +25,6 @@ OPERATOR_VALUES_IN = ["<", "<=", "=<", ">", ">=", "=>", "="]
 ACTOR = "actor"
 MODE_SELECTION = "mode_selection"
 MODE_SELECTION_VALUES_IN = [random_str, ordered]
-# MODE_DISPLAY = "mode_display"
-# MODE_DISPLAY_VALUES_IN = [actors_list, filters_list]
 NUMBER = "number"
 ENTITY = "entity"
 NAME = "name"
@@ -35,12 +33,11 @@ TYPE_VALUES_IN = active_values + inactive_values + all_values
 ACOTRS_LIST = "actors_list"
 
 QUERY_PARAM = {
-    DAY: ["day", "d"],
+    DAYS: ["days", "day", "d"],
     ACTOR: ["actor", "a"],
     ATTRIBUTE: ["attribute", "att"],
     MODE_SELECTION: ["mode_selection", "modeselect", "modeselection", "ms"],
     NUMBER: ["number", "n"],
-    # MODE_DISPLAY: ["mode_display", "mode display", "md"],
     ATTRIBUTE_VAL: ["value", "att_value", "val", "att_val"],
     OPERATOR: ["operator", "op", "o"],
     ENTITY: ["entity", "e"],
@@ -140,7 +137,7 @@ HELP = {
                      optional: False},
                     {name: ATTRIBUTE_VAL,
                      optional: False},
-                    {name: DAY,
+                    {name: DAYS,
                      optional: False},
                     {name: NAME,
                      optional: True}
@@ -166,7 +163,7 @@ HELP = {
             COMMAND_GET_VALUES: {
                 description: "Returns the beliefs of the agent at a specific day",
                 parameters: [
-                    {name: DAY,
+                    {name: DAYS,
                      optional: False},
                     {name: ACTOR,
                      optional: False},
@@ -177,7 +174,7 @@ HELP = {
         }
     },
     parameters: {
-        DAY: {
+        DAYS: {
             value_type: "int",
             description: "Focus on given day"
         },
@@ -203,11 +200,6 @@ HELP = {
             description: "Mode for selecting agents",
             values_in: MODE_SELECTION_VALUES_IN
         },
-        # MODE_DISPLAY: {
-        #     value_type: "str",
-        #     description: "Mode for displaying selection",
-        #     values_in: MODE_DISPLAY_VALUES_IN
-        # },
         NUMBER: {
             value_type: "int",
             description: "Integer"

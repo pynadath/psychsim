@@ -2,6 +2,7 @@ import re
 import operator
 import itertools
 import os
+import more_itertools as mit
 
 import psychsim.domains.groundtruth.explore_simulation.query_gt_consts as consts
 
@@ -110,4 +111,11 @@ def actor_number_to_name(i):
     s += i
     return s
 
-
+def find_ranges(iterable):
+    """Yield range of consecutive numbers."""
+    for group in mit.consecutive_groups(iterable):
+        group = list(group)
+        if len(group) == 1:
+            yield group[0]
+        else:
+            yield group[0], group[-1]
