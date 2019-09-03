@@ -623,6 +623,8 @@ def getInitialState(args,name,feature,world,states,t,believer=None):
                     return world.getState(name,feature,next(iter(states[t-1]['Nature'][believer].values())))
     elif isinstance(t,tuple):
         return [getInitialState(args,name,feature,world,states,day,believer) for day in range(t[0],t[1])]
+    elif isinstance(t,list) or isinstance(t,set):
+        return [getInitialState(args,name,feature,world,states,day,believer) for day in t]
 
 def getAction(args,name,world,states,t):
     """
