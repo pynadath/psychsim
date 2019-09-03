@@ -56,5 +56,17 @@
     {
         "command": "show filters -type all",
         "explanations": "Check that filters are inactive."
+    },
+    {
+        "command": "reset selection",
+        "explanations": "Let's reset the selection..."
+    },
+    {
+        "command": "select n_actors -number 20",
+        "explanations": "You now want to randomly select 20 agents for a survey."
+    },
+    {
+        "command": "get stats -stat_function list -attribute health -days 1 to 16",
+        "explanations": "What is their health through the simulation?"
     }
 ]

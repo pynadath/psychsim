@@ -6,6 +6,9 @@ import os
 import random
 import json
 import copy
+import matplotlib.pyplot as plt
+import numpy as np
+from collections import Counter
 
 import psychsim.domains.groundtruth.explore_simulation.query_gt_consts as consts
 import psychsim.domains.groundtruth.explore_simulation.helper_functions as helper
@@ -457,7 +460,7 @@ class LogParser:
         return True
 
     def set_p_statfunction(self, p_val, buffer):
-        return self.set_p_with_values_in(p_name=consts.STAT_FCTS, p_val=p_val, values_in_list=consts.STAT_FCT_VALUES_IN, buffer=buffer)
+        return self.set_p_with_values_in(p_name=consts.STAT_FCT, p_val=p_val, values_in_list=consts.STAT_FCT_VALUES_IN, buffer=buffer)
 
 
 
@@ -493,7 +496,7 @@ class LogParser:
             return self.set_p_type(p_val, buffer)
         elif p_name in consts.QUERY_PARAM[consts.ACTORS_LIST]:
             return self.set_p_actors_list([p_val], buffer)
-        elif p_name in consts.QUERY_PARAM[consts.STAT_FCTS]:
+        elif p_name in consts.QUERY_PARAM[consts.STAT_FCT]:
             return self.set_p_statfunction(p_val, buffer)
         else:
             print_with_buffer("ParamaterError: %s does not exists." % p_name, buffer)
@@ -548,6 +551,8 @@ class LogParser:
                 self.reactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
             elif self.command in consts.COMMAND_SELECT_ACTORS_BY_NAME:
                 self.select_actors_by_name(p_list_names=self.query_param[consts.ACTORS_LIST], buffer=buffer)
+            elif self.command in consts.COMMAND_GET_STATS:
+                self.get_stats(p_att=self.query_param[consts.ATTRIBUTE], p_fct=self.query_param[consts.STAT_FCT], p_days=self.query_param[consts.DAYS], p_name=self.query_param[consts.name], buffer=buffer)
             else:
                 print_with_buffer("QueryError: \"%s\" command unknown" % self.command, buffer)
         else:
@@ -877,21 +882,99 @@ class LogParser:
     ## ---------------------------------------          Stat functions       -------------------------------- ##
 
     def get_stats(self, p_att, p_fct, p_days=[], p_name=None, buffer=None):
+        print(p_fct)
         if not p_days:
             p_days = list(range(1, self.n_days))
         if not p_name:
-            p_name = "stat" + self.stats_name_i + "_" + p_fct
+            p_name = "stat" + self.stats_name_i.__str__() + "_" + p_fct
             self.stats_name_i += 1
         new_stat = self.create_new_stat_obj(p_fct, p_att, p_days, p_name)
+        for day in p_days:
+            values = self.get_att_val(self.selected_agents, p_att, day)
+            new_stat[consts.stat_res][day] = values
+        print_with_buffer(new_stat, buffer)
+
+        title = p_fct + " of " + p_att + " for the %d actors selected" % len(self.selected_agents)
+        x_list, y_list = list(), list()
+        plotting_for_multiple_agents = isinstance(new_stat[consts.stat_res][p_days[0]], list)
+        if plotting_for_multiple_agents:
+            # for each agent
+            for i in range(len(new_stat[consts.stat_res][p_days[0]])):
+                list_values_y_for_agent_i = list()
+                list_values_x_for_agent_i = list()
+                # for each day
+                for day in new_stat[consts.stat_res].keys():
+                    list_values_x_for_agent_i.append(day)
+                    list_values_y_for_agent_i.append(new_stat[consts.stat_res][day][i])
+                x_list.append(list_values_x_for_agent_i)
+                y_list.append(list_values_y_for_agent_i)
+            # x_list = [item for sublist in x_list for item in sublist]
+            # y_list = [item for sublist in y_list for item in sublist]
+            self.plot_multiple_agents(x_lists=x_list, y_lists=y_list, y_label=p_att, title=title)
+
+        else:
+            for x_elt, y_elt in new_stat[consts.stat_res].items():
+                x_list.append(x_elt)
+                y_list.append(y_elt)
+            self.plot(x_list=x_list, y_list=y_list, y_label=p_att, title=title)
+
+
+    def plot_multiple_agents(self, x_lists, y_lists, y_label, title):
+        # Points
+        x_flattened = [item for sublist in x_lists for item in sublist]
+        y_flattened = [item for sublist in y_lists for item in sublist]
+        c = Counter(zip(x_flattened,y_flattened))
+        s = [10*c[(xx,yy)] for xx,yy in zip(x_flattened, y_flattened)]
+        plt.scatter(x_flattened, y_flattened, s=s)
+
+        # Connect points
+        for i in range(len((x_lists))):
+            x_one_agent = x_lists[i]
+            y_one_agent = y_lists[i]
+            self.plot_one_of_multiple_agents(x_one_agent, y_one_agent, plt)
+
+        plt.title(title)
+        plt.xticks(x_flattened)
+        plt.axes().set_xticklabels(x_flattened)
+        plt.ylabel(y_label)
+        plt.xlabel(consts.DAYS)
+        plt.show()
+
+
+
+    def plot_one_of_multiple_agents(self, x_list, y_list, plt):
+        plt.plot(x_list, y_list)
+
+
+
+    def plot(self, x_list, y_list, y_label, title):
+        # for xe, ye in zip(x_list, y_list):
+        #     plt.scatter([xe] * len(ye), ye)
+
+        c = Counter(zip(x_list,y_list))
+        s = [10*c[(xx,yy)] for xx,yy in zip(x_list,y_list)]
+
+        plt.scatter(x_list, y_list, s=s)
+        plt.plot(x_list, y_list)
+        plt.title(title)
+
+        plt.xticks(x_list)
+        plt.axes().set_xticklabels(x_list)
+        plt.ylabel(y_label)
+        plt.xlabel(consts.DAYS)
+        plt.show()
+
+
 
     def create_new_stat_obj(self, p_fct, p_att, p_days, p_name, p_val=None, p_op=None):
         new_stat = dict()
-        new_stat[consts.STAT_FCTS] = p_fct
+        new_stat[consts.STAT_FCT] = p_fct
         new_stat[consts.ATTRIBUTE] = p_att
-        new_stat[consts.DAYS] = p_days,
+        new_stat[consts.DAYS] = p_days
         new_stat[consts.NAME] = p_name
         new_stat[consts.ATTRIBUTE_VAL] = p_val
         new_stat[consts.OPERATOR] = p_op
+        new_stat[consts.stat_res] = dict()
         return new_stat
 
 

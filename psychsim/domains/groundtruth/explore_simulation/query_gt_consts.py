@@ -16,8 +16,9 @@ active = "active"
 active_values = ["active", "on"]
 inactive_values = ["inactive", "off"]
 all_values = ["all"]
+stat_res = "stat_res"
 
-DAYS = "day"
+DAYS = "days"
 ATTRIBUTE = "attribute"
 ATTRIBUTE_VAL = "value"
 OPERATOR = "operator"
@@ -31,7 +32,7 @@ NAME = "name"
 TYPE = "type"
 TYPE_VALUES_IN = active_values + inactive_values + all_values
 ACTORS_LIST = "actors_list"
-STAT_FCTS = "stat_functions"
+STAT_FCT = "stat_function"
 STAT_FCT_VALUES_IN = ["mean", "median", "variation", "std_dev", "list"]
 
 QUERY_PARAM = {
@@ -46,7 +47,7 @@ QUERY_PARAM = {
     NAME: ["name", "n"],
     TYPE: ["type", "t"],
     ACTORS_LIST: [ACTORS_LIST, "a_list"],
-    STAT_FCTS: [STAT_FCTS, "stat_fct", "function", "fct"]
+    STAT_FCT: [STAT_FCT, "stat_fct", "function", "fct"]
 }
 ALL_QUERY_PARAMS = [y for x in QUERY_PARAM.values() for y in x ]
 
@@ -204,7 +205,7 @@ HELP = {
                      optional: False},
                     {name: NAME,
                      optional: True},
-                    {name: STAT_FCTS,
+                    {name: STAT_FCT,
                      optional: True,
                      values_in: STAT_FCT_VALUES_IN}
                 ]
