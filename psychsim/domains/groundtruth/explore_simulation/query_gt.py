@@ -135,6 +135,9 @@ class LogParser:
         self.filter_list = list()
         self.filter_name_i = 1
 
+        self.stats = dict()
+        self.stats_name_i = 1
+
         self.parse_logs(buffer)
 
 
@@ -154,7 +157,7 @@ class LogParser:
         self.query_param[consts.ENTITY] = None
         self.query_param[consts.NAME] = None
         self.query_param[consts.TYPE] = "all"
-        self.query_param[consts.ACOTRS_LIST] = list()
+        self.query_param[consts.ACTORS_LIST] = list()
 
 
 
@@ -254,7 +257,7 @@ class LogParser:
                 return False
             elif len(args_pair) > 2:
                 p_name = args_pair[0]
-                if p_name == consts.ACOTRS_LIST:
+                if p_name == consts.ACTORS_LIST:
                     param_ok = self.set_p_actors_list(args_pair[1:], buffer)
                     if param_ok is not True:
                         return False
@@ -447,12 +450,14 @@ class LogParser:
         :param buffer:
         :return:
         """
-        param_ok = True
         for i in numbers_list:
-            param_ok = self.set_p_int_or_float(p_name=consts.ACOTRS_LIST, p_val=i, p_type=int, p_max=self.n_actors, p_to_str=True, buffer=buffer)
+            param_ok = self.set_p_int_or_float(p_name=consts.ACTORS_LIST, p_val=i, p_type=int, p_max=self.n_actors, p_to_str=True, buffer=buffer)
             if not param_ok:
                 return False
         return True
+
+    def set_p_statfunction(self, p_val, buffer):
+        return self.set_p_with_values_in(p_name=consts.STAT_FCTS, p_val=p_val, values_in_list=consts.STAT_FCT_VALUES_IN, buffer=buffer)
 
 
 
@@ -486,8 +491,10 @@ class LogParser:
             return self.set_p_name(p_val, buffer)
         elif p_name in consts.QUERY_PARAM[consts.TYPE]:
             return self.set_p_type(p_val, buffer)
-        elif p_name in consts.QUERY_PARAM[consts.ACOTRS_LIST]:
+        elif p_name in consts.QUERY_PARAM[consts.ACTORS_LIST]:
             return self.set_p_actors_list([p_val], buffer)
+        elif p_name in consts.QUERY_PARAM[consts.STAT_FCTS]:
+            return self.set_p_statfunction(p_val, buffer)
         else:
             print_with_buffer("ParamaterError: %s does not exists." % p_name, buffer)
             return False
@@ -540,7 +547,7 @@ class LogParser:
             elif self.command in consts.COMMAND_REACTIVATE_FILTER:
                 self.reactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
             elif self.command in consts.COMMAND_SELECT_ACTORS_BY_NAME:
-                self.select_actors_by_name(p_list_names=self.query_param[consts.ACOTRS_LIST], buffer=buffer)
+                self.select_actors_by_name(p_list_names=self.query_param[consts.ACTORS_LIST], buffer=buffer)
             else:
                 print_with_buffer("QueryError: \"%s\" command unknown" % self.command, buffer)
         else:
@@ -677,7 +684,7 @@ class LogParser:
             else:
                 str_days_list.append(d.__str__())
         str_days = ", ".join(str_days_list)
-        return f[consts.NAME] + ": " + f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " ats " + consts.DAYS + "(s) " + str_days + "  (" + active + ")"
+        return f[consts.NAME] + ": " + f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " at " + consts.DAYS + "(s) " + str_days + "  (" + active + ")"
 
 
     def display_filters(self, type=consts.all_values[0], buffer=None):
@@ -718,52 +725,10 @@ class LogParser:
             print_with_buffer("All filters are inactive", buffer)
 
 
-    ## ---------------------------------------   Query on one specific agent -------------------------------- ##
+    ## ---------------------------------------  Select agents with filters   -------------------------------- ##
 
 
-    def get_att_values(self, p_actor, p_days, buffer=None):
-        """
-        Displays the attributes (BELIEFS) of a specific agent. 2 modes:
-            - a day is selected:    returns the list of attributes and their values for that day
-            - no day is selected:   returns just the list of attributes attached to that actor (no values)
-        :param p_actor: name of the actor
-        :param p_days: day
-        :param buffer:
-        :return:
-        """
-        print("Function deprecated", buffer)
-        return False
-        if p_actor == None:
-            print_with_buffer("ParameterError: missing parameter -%s for command \"get attibute(s)\"" % consts.ACTOR, buffer)
-            return False
-
-        if p_days == -1:
-            print_with_buffer("ParameterError: missing parameter -%s for command \"get attibute(s)\"" % consts.DAYS, buffer)
-            return False
-            #read attributes for a random day
-
-        file_name = self.logs_dir + "/state" + p_days.__str__() + "Actor.pkl"
-        if os.path.exists(file_name):
-            with open(file_name, 'rb') as f:
-                content = pickle.load(f)
-            # actor_name = 'Actor000'+p_actor
-            actor_name = helper.actor_number_to_name(p_actor)
-            dict_for_actor = content[actor_name][actor_name+'0']
-            keys = dict_for_actor.keys()
-            attributes = [key.split()[1] for key in keys if (actor_name in key and "__" not in key)]
-
-            s = "At %s %d, %s has:\n" % (consts.DAYS, p_days, actor_name)
-            att_to_printable_distrib_dict = dict()
-            for att in attributes:
-                att_to_printable_distrib_dict[att] = helper.str_distribution(dict_for_actor[actor_name+"'s "+att])
-            s += helper.str_aligned_values(att_to_printable_distrib_dict)
-            print_with_buffer(s, buffer)
-
-        else:
-            print_with_buffer("ERROR - Missing file: %s" % file_name, buffer)
-            return False
-
-    def get_att_val(self, actor_name, p_att, p_day):
+    def get_att_val(self, actors_list, p_att, p_day):
         """
         For a specific actor, day and attribute, returns the value (STATE OF THE WORLD, --NOT belief) of the attribute.
         :param actor_name:
@@ -775,12 +740,15 @@ class LogParser:
         if os.path.exists(file_name):
             with open(file_name, 'rb') as f:
                 content = pickle.load(f)
-                k = actor_name+"'s "+p_att
-                if k in content['__state__'].keys():
-                    distrib = content['__state__'][k]
-                    return helper.get_val(distrib=distrib)
-                else:
-                    return consts.THISISFALSE
+                att_values = list()
+                for actor_name in actors_list:
+                    k = actor_name+"'s "+p_att
+                    if k in content['__state__'].keys():
+                        distrib = content['__state__'][k]
+                        att_values.append(helper.get_val(distrib=distrib))
+                    else:
+                        att_values.append(consts.THISISFALSE)
+                return att_values
 
 
     def add_filter_to_filter_list(self, p_days, p_att, p_val, p_operator, p_name, p_active=True, buffer=None):
@@ -832,7 +800,14 @@ class LogParser:
             if p_days:
                 new_selection = copy.deepcopy(self.selected_agents)
                 for d in p_days:
-                    new_selection = [agent for agent in new_selection if helper.compare(v1=self.get_att_val(agent, p_att=p_att, p_day=d), v2=p_val, op=p_operator)]
+                    att_values = self.get_att_val(actors_list=new_selection, p_att=p_att, p_day=d)
+                    # print(att_values)
+                    old_selection = copy.deepcopy(new_selection)
+                    new_selection = list()
+                    # print(len(att_values), len(old_selection))
+                    for i, agent in enumerate(old_selection):
+                        if helper.compare(att_values[i], v2=p_val, op=p_operator):
+                            new_selection.append(agent)
                 if len(new_selection) == 0:
                     self.add_filter_to_filter_list(p_days, p_att, p_val, p_operator, p_name, False, buffer)
                     if verbose:
@@ -899,7 +874,74 @@ class LogParser:
             else:
                 print_with_buffer("Filter %s is already active" % p_name, buffer)
 
+    ## ---------------------------------------          Stat functions       -------------------------------- ##
 
+    def get_stats(self, p_att, p_fct, p_days=[], p_name=None, buffer=None):
+        if not p_days:
+            p_days = list(range(1, self.n_days))
+        if not p_name:
+            p_name = "stat" + self.stats_name_i + "_" + p_fct
+            self.stats_name_i += 1
+        new_stat = self.create_new_stat_obj(p_fct, p_att, p_days, p_name)
+
+    def create_new_stat_obj(self, p_fct, p_att, p_days, p_name, p_val=None, p_op=None):
+        new_stat = dict()
+        new_stat[consts.STAT_FCTS] = p_fct
+        new_stat[consts.ATTRIBUTE] = p_att
+        new_stat[consts.DAYS] = p_days,
+        new_stat[consts.NAME] = p_name
+        new_stat[consts.ATTRIBUTE_VAL] = p_val
+        new_stat[consts.OPERATOR] = p_op
+        return new_stat
+
+
+    ## ---------------------------------------   Query on one specific agent -------------------------------- ##
+
+    def get_att_values(self, p_actor, p_days, buffer=None):
+        """
+        Displays the attributes (BELIEFS) of a specific agent. 2 modes:
+            - a day is selected:    returns the list of attributes and their values for that day
+            - no day is selected:   returns just the list of attributes attached to that actor (no values)
+        :param p_actor: name of the actor
+        :param p_days: day
+        :param buffer:
+        :return:
+        """
+        print("Function deprecated", buffer)
+        return False
+        # if p_actor == None:
+        #     print_with_buffer("ParameterError: missing parameter -%s for command \"get attibute(s)\"" % consts.ACTOR, buffer)
+        #     return False
+        #
+        # if p_days == -1:
+        #     print_with_buffer("ParameterError: missing parameter -%s for command \"get attibute(s)\"" % consts.DAYS, buffer)
+        #     return False
+        #     #read attributes for a random day
+        #
+        # file_name = self.logs_dir + "/state" + p_days.__str__() + "Actor.pkl"
+        # if os.path.exists(file_name):
+        #     with open(file_name, 'rb') as f:
+        #         content = pickle.load(f)
+        #     # actor_name = 'Actor000'+p_actor
+        #     actor_name = helper.actor_number_to_name(p_actor)
+        #     dict_for_actor = content[actor_name][actor_name+'0']
+        #     keys = dict_for_actor.keys()
+        #     attributes = [key.split()[1] for key in keys if (actor_name in key and "__" not in key)]
+        #
+        #     s = "At %s %d, %s has:\n" % (consts.DAYS, p_days, actor_name)
+        #     att_to_printable_distrib_dict = dict()
+        #     for att in attributes:
+        #         att_to_printable_distrib_dict[att] = helper.str_distribution(dict_for_actor[actor_name+"'s "+att])
+        #     s += helper.str_aligned_values(att_to_printable_distrib_dict)
+        #     print_with_buffer(s, buffer)
+        #
+        # else:
+        #     print_with_buffer("ERROR - Missing file: %s" % file_name, buffer)
+        #     return False
+
+    ############################################################################################################
+    ##                                         RUN DEMO AND AUTOTESTS                                         ##
+    ############################################################################################################
 
     def demo(self, autotest=False, buffer=None):
         """

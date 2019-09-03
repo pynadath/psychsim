@@ -30,7 +30,9 @@ ENTITY = "entity"
 NAME = "name"
 TYPE = "type"
 TYPE_VALUES_IN = active_values + inactive_values + all_values
-ACOTRS_LIST = "actors_list"
+ACTORS_LIST = "actors_list"
+STAT_FCTS = "stat_functions"
+STAT_FCT_VALUES_IN = ["mean", "median", "variation", "std_dev", "list"]
 
 QUERY_PARAM = {
     DAYS: ["days", "day", "d"],
@@ -43,17 +45,20 @@ QUERY_PARAM = {
     ENTITY: ["entity", "e"],
     NAME: ["name", "n"],
     TYPE: ["type", "t"],
-    ACOTRS_LIST: [ACOTRS_LIST, "a_list"]
+    ACTORS_LIST: [ACTORS_LIST, "a_list"],
+    STAT_FCTS: [STAT_FCTS, "stat_fct", "function", "fct"]
 }
 ALL_QUERY_PARAMS = [y for x in QUERY_PARAM.values() for y in x ]
 
 # General info on simulation
+CATEGORY_GENERAL_INFO = "--> General information about the simulation"
 COMMAND_GET_NDAYS = "get ndays", "get days", "get d"
 COMMAND_GET_NACTORS = "get nactors", "get actors", "get a"
 COMMAND_GET_ENTITIES = "get entities", "get e"
 COMMAND_GET_ATTNAMES = "get attribute_names", "get attnames", "get att_n", "get att"
 
 # Selecting agents
+CATEGORY_SELECTING_ACTORS = "--> Selecting / deselecting actors"
 COMMAND_SELECT_NACTORS = "select n_actors", "select a", "s a", "select n", "s n"
 COMMAND_SELECT_ACTORS_BY_NAME = "select actors_by_name", "selection actors_by_name"
 COMMAND_RESET_SELECTION = "reset selection", "del actors", "del a", "reset s", "reset a", "r s"
@@ -64,12 +69,13 @@ COMMAND_DEACTIVATE_FILTER = "deactivate filter", "cancel filter", "c f"
 COMMAND_REACTIVATE_FILTER = "reactivate filter", "r f"
 
 # Getting info about a specific agent
+CATEGORY_ACTOR_SPECIFIC = "--> Getting information about a specific actor"
 COMMAND_GET_VALUES = "get values", "get val", "get value", "get v"
 
-
-CATEGORY_GENERAL_INFO = "--> General information about the simulation"
-CATEGORY_SELECTING_ACTORS = "--> Selecting / deselecting actors"
-CATEGORY_ACTOR_SPECIFIC = "--> Getting information about a specific actor"
+# Getting stats
+CATEGORY_STATS_FUNCTIONS = "--> Counting / doing stats over agent selection"
+COMMAND_COUNT_ACTORS = "count actors", "count"
+COMMAND_GET_STATS = "get stats", "get statistics"
 
 
 HELP = {
@@ -109,7 +115,7 @@ HELP = {
             COMMAND_SELECT_ACTORS_BY_NAME: {
                 description: "Selects the actors listed by the user",
                 parameters: [
-                    {name: ACOTRS_LIST,
+                    {name: ACTORS_LIST,
                      optional: False}
                 ]
             },
@@ -169,6 +175,38 @@ HELP = {
                      optional: False},
                     {name: ATTRIBUTE,
                      optional: True}
+                ]
+            }
+        },
+        
+        CATEGORY_STATS_FUNCTIONS: {
+            COMMAND_COUNT_ACTORS: {
+                description: "Counts the actors, amoug those selected, that fulfil a specific criteria",
+                parameters: [
+                    {name: DAYS,
+                     optional: True},
+                    {name: ATTRIBUTE,
+                     optional: False},
+                    {name: OPERATOR,
+                     optional: False},
+                    {name:ATTRIBUTE_VAL,
+                     optional: False},
+                    {name: NAME,
+                     optional: True}
+                ]
+            },
+            COMMAND_GET_STATS: {
+                description: "Computes statistics over attribute passed as a parameter and the selected actors.",
+                parameters: [
+                    {name: DAYS,
+                     optional: True},
+                    {name: ATTRIBUTE,
+                     optional: False},
+                    {name: NAME,
+                     optional: True},
+                    {name: STAT_FCTS,
+                     optional: True,
+                     values_in: STAT_FCT_VALUES_IN}
                 ]
             }
         }
