@@ -1131,7 +1131,7 @@ to answer, -1=Missing 
 
 Q45D. Unequally
 Question: In your opinion, how often, in this country: Are people treated unequally under the law?
-Value Labels: 0=Never, 1=Rarely, 2=Often, 3=Always, 9=Don’t know, 998=Refused to answer, 1=Missing
+Value Labels: 0=Never, 1=Rarely, 2=Often, 3=Always, 9=Don’t know, 998=Refused to answer, -1=Missing
 
 Q45E. Careful
 Question: In your opinion, how often, in this country: Do people have to be careful of what they say
