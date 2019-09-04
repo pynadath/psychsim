@@ -16,8 +16,11 @@ active = "active"
 active_values = ["active", "on"]
 inactive_values = ["inactive", "off"]
 all_values = ["all"]
+stat_res = "stat_res"
+mean = "mean"
+val_list = "list"
 
-DAY = "day"
+DAYS = "days"
 ATTRIBUTE = "attribute"
 ATTRIBUTE_VAL = "value"
 OPERATOR = "operator"
@@ -25,38 +28,40 @@ OPERATOR_VALUES_IN = ["<", "<=", "=<", ">", ">=", "=>", "="]
 ACTOR = "actor"
 MODE_SELECTION = "mode_selection"
 MODE_SELECTION_VALUES_IN = [random_str, ordered]
-# MODE_DISPLAY = "mode_display"
-# MODE_DISPLAY_VALUES_IN = [actors_list, filters_list]
 NUMBER = "number"
 ENTITY = "entity"
 NAME = "name"
 TYPE = "type"
 TYPE_VALUES_IN = active_values + inactive_values + all_values
-ACOTRS_LIST = "actors_list"
+ACTORS_LIST = "actors_list"
+STAT_FCT = "stat_function"
+STAT_FCT_VALUES_IN = ["mean", "median", "variation", "std_dev", "list"]
 
 QUERY_PARAM = {
-    DAY: ["day", "d"],
+    DAYS: ["days", "day", "d"],
     ACTOR: ["actor", "a"],
     ATTRIBUTE: ["attribute", "att"],
     MODE_SELECTION: ["mode_selection", "modeselect", "modeselection", "ms"],
     NUMBER: ["number", "n"],
-    # MODE_DISPLAY: ["mode_display", "mode display", "md"],
     ATTRIBUTE_VAL: ["value", "att_value", "val", "att_val"],
     OPERATOR: ["operator", "op", "o"],
     ENTITY: ["entity", "e"],
     NAME: ["name", "n"],
     TYPE: ["type", "t"],
-    ACOTRS_LIST: [ACOTRS_LIST, "a_list"]
+    ACTORS_LIST: [ACTORS_LIST, "a_list"],
+    STAT_FCT: [STAT_FCT, "stat_fct", "function", "fct"]
 }
 ALL_QUERY_PARAMS = [y for x in QUERY_PARAM.values() for y in x ]
 
 # General info on simulation
+CATEGORY_GENERAL_INFO = "--> General information about the simulation"
 COMMAND_GET_NDAYS = "get ndays", "get days", "get d"
 COMMAND_GET_NACTORS = "get nactors", "get actors", "get a"
 COMMAND_GET_ENTITIES = "get entities", "get e"
 COMMAND_GET_ATTNAMES = "get attribute_names", "get attnames", "get att_n", "get att"
 
 # Selecting agents
+CATEGORY_SELECTING_ACTORS = "--> Selecting / deselecting actors"
 COMMAND_SELECT_NACTORS = "select n_actors", "select a", "s a", "select n", "s n"
 COMMAND_SELECT_ACTORS_BY_NAME = "select actors_by_name", "selection actors_by_name"
 COMMAND_RESET_SELECTION = "reset selection", "del actors", "del a", "reset s", "reset a", "r s"
@@ -67,12 +72,13 @@ COMMAND_DEACTIVATE_FILTER = "deactivate filter", "cancel filter", "c f"
 COMMAND_REACTIVATE_FILTER = "reactivate filter", "r f"
 
 # Getting info about a specific agent
+CATEGORY_ACTOR_SPECIFIC = "--> Getting information about a specific actor"
 COMMAND_GET_VALUES = "get values", "get val", "get value", "get v"
 
-
-CATEGORY_GENERAL_INFO = "--> General information about the simulation"
-CATEGORY_SELECTING_ACTORS = "--> Selecting / deselecting actors"
-CATEGORY_ACTOR_SPECIFIC = "--> Getting information about a specific actor"
+# Getting stats
+CATEGORY_STATS_FUNCTIONS = "--> Counting / doing stats over agent selection"
+COMMAND_COUNT_ACTORS = "count actors", "count"
+COMMAND_GET_STATS = "get stats", "get statistics"
 
 
 HELP = {
@@ -112,7 +118,7 @@ HELP = {
             COMMAND_SELECT_ACTORS_BY_NAME: {
                 description: "Selects the actors listed by the user",
                 parameters: [
-                    {name: ACOTRS_LIST,
+                    {name: ACTORS_LIST,
                      optional: False}
                 ]
             },
@@ -140,7 +146,7 @@ HELP = {
                      optional: False},
                     {name: ATTRIBUTE_VAL,
                      optional: False},
-                    {name: DAY,
+                    {name: DAYS,
                      optional: False},
                     {name: NAME,
                      optional: True}
@@ -166,7 +172,7 @@ HELP = {
             COMMAND_GET_VALUES: {
                 description: "Returns the beliefs of the agent at a specific day",
                 parameters: [
-                    {name: DAY,
+                    {name: DAYS,
                      optional: False},
                     {name: ACTOR,
                      optional: False},
@@ -174,10 +180,42 @@ HELP = {
                      optional: True}
                 ]
             }
+        },
+        
+        CATEGORY_STATS_FUNCTIONS: {
+            COMMAND_COUNT_ACTORS: {
+                description: "Counts the actors, amoug those selected, that fulfil a specific criteria",
+                parameters: [
+                    {name: DAYS,
+                     optional: True},
+                    {name: ATTRIBUTE,
+                     optional: False},
+                    {name: OPERATOR,
+                     optional: False},
+                    {name:ATTRIBUTE_VAL,
+                     optional: False},
+                    {name: NAME,
+                     optional: True}
+                ]
+            },
+            COMMAND_GET_STATS: {
+                description: "Computes statistics over attribute passed as a parameter and the selected actors.",
+                parameters: [
+                    {name: DAYS,
+                     optional: True},
+                    {name: ATTRIBUTE,
+                     optional: False},
+                    {name: NAME,
+                     optional: True},
+                    {name: STAT_FCT,
+                     optional: True,
+                     values_in: STAT_FCT_VALUES_IN}
+                ]
+            }
         }
     },
     parameters: {
-        DAY: {
+        DAYS: {
             value_type: "int",
             description: "Focus on given day"
         },
@@ -203,11 +241,6 @@ HELP = {
             description: "Mode for selecting agents",
             values_in: MODE_SELECTION_VALUES_IN
         },
-        # MODE_DISPLAY: {
-        #     value_type: "str",
-        #     description: "Mode for displaying selection",
-        #     values_in: MODE_DISPLAY_VALUES_IN
-        # },
         NUMBER: {
             value_type: "int",
             description: "Integer"
@@ -226,3 +259,8 @@ HELP = {
         }
     }
 }
+
+ALL_COMMANDS = {}
+for command_categories in HELP[commands].values():
+    for c_name, c_obj in command_categories.items():
+        ALL_COMMANDS[c_name] = c_obj

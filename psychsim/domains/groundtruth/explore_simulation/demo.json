@@ -17,20 +17,16 @@
 
     },
     {
-        "command": "apply filter -attribute childrenHealth -value 0.8 -operator >= -day 16 -name healthychildren",
-        "explanations": "Refine search by selecting actors whose children are healthy as well on the last day. Give a name to this filter: \"healthychildren\""
+        "command": "apply filter -attribute childrenHealth -value 0.8 -operator >= -days 1, 16 -name healthychildren",
+        "explanations": "Refine search by selecting actors whose children are healthy as well on the first AND the last day. Give a name to this filter: \"healthychildren\""
     },
     {
-        "command": "apply filter -attribute employed -value 1 -operator = -day 1",
-        "explanations": "Out of those, get me the ones that were employed at the beginning of the simulation..."
+        "command": "apply filter -attribute employed -value 1 -operator = -days 1 to 16",
+        "explanations": "Out of those, get me the ones that were employed through the simulation..."
     },
     {
-        "command": "apply filter -attribute employed -value 1 -operator = -day 16",
-        "explanations": "...and that are still employed at the end."
-    },
-    {
-        "command": "apply filter -attribute region -value 1 -operator = -day 16",
-        "explanations": "And out of those, who is in Region 1 at the end?"
+        "command": "apply filter -attribute region -value 1 -operator = -days 1, 3, 5, 13 to 16",
+        "explanations": "And out of those, who is in Region 1 on days 1, 3, 5, 13 to 16?"
 
     },
     {
@@ -46,11 +42,35 @@
         "explanations": "No, you changed your mind again, that was a mistake, reactivate the healthychildren filter!"
     },
     {
+        "command": "reset selection",
+        "explanations": "Let's reset the selection..."
+    },
+    {
         "command": "select n_actors -number 50",
         "explanations": "You want to ramdomly select 50 agents that fulfil all your criteria (filters)."
     },
     {
         "command": "select actors_by_name -actors_list 22 45 67",
         "explanations": "Among those actors, select 3. You want # 22, 45 and 76"
+    },
+    {
+        "command": "show filters -type all",
+        "explanations": "Check that filters are inactive."
+    },
+    {
+        "command": "reset selection",
+        "explanations": "Let's reset the selection..."
+    },
+    {
+        "command": "select n_actors -number 20",
+        "explanations": "You now want to randomly select 20 agents for a survey."
+    },
+    {
+        "command": "get stats -stat_function list -attribute health -days 1 to 16",
+        "explanations": "What is their health through the simulation?"
+    },
+    {
+        "command": "get stats -stat_function mean -attribute health -days 1 to 16",
+        "explanations": "Okay, what about the mean value of health for those agents?"
     }
 ]
