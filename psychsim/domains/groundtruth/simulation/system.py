@@ -196,7 +196,7 @@ class System(Agent):
             population = {name: [a for a in self.world.agents.values() if isinstance(a,Actor) and a.demographics['home'] == name]
                           for name in self.world.agents if isinstance(self.world.agents[name],Region)}
             risks = [(state[stateKey(a['object'],'risk')].expectation()*len(population[a['object']]),a)
-                     for a in actions if a['object'] is not None]
+                     for a in actions if a['object'] is not None and stateKey(a['object'],'risk') in state]
             choice = max(risks)
         tree = makeTree(setToConstantMatrix(stateKey(self.name,ACTION),choice[1]))
         return {'policy': tree.desymbolize(self.world.symbols)}
