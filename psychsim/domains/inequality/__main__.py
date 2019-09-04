@@ -4,7 +4,9 @@ import fileinput
 import logging
 import sys
 
-from psychsim.modeling import *
+from psychsim.action import Action
+from psychsim.world import World
+from psychsim import modeling
 
 def readCodebook(fname,logger=logging.getLogger()):
     logger = logger.getChild('readCodebook')
@@ -87,7 +89,7 @@ def createWorld(domain,codebook,logger=logging.getLogger()):
             action = Action({'subject': agent.name,'verb': field['variable']})
             agent.addAction(action)
             logger.debug('New action: %s' % (action))
-    world.setOrder([set(world.agents.keys())])
+#    world.setOrder([{name for name in world.agents}])
     return world
 
 def modelIndividual(domain,world,record,codebook,logger=logging.getLogger()):
@@ -97,7 +99,7 @@ def modelIndividual(domain,world,record,codebook,logger=logging.getLogger()):
         if field['class'] == 'state':
             value = record[field['field']].strip()
             if len(value) == 0:
-                value = '-1'
+                record[field['field']] = value = '-1'
             key = stateKey(field['agent'],field['field'])
             agent = world.agents[field['agent']]
             if world.variables[key]['domain'] is list:
@@ -115,7 +117,7 @@ def modelIndividual(domain,world,record,codebook,logger=logging.getLogger()):
 def tabulate(data,field):
     table = {}
     for datum in data:
-        table[datum[field]] = table.get(datum[field],0)+1
+        table[datum[field].strip()] = table.get(datum[field].strip(),0)+1
     total = float(sum(table.values()))
     table = {k: float(v)/total for k,v in table.items()}
     return table
@@ -133,11 +135,11 @@ if __name__ == '__main__':
     codebook = readCodebook('Afrobarometer - Codebook 2000-2015.txt')
     # for key,entry in states.items():
     #     logging.info(codebook[key])
-    domain = Domain('afrobarometer')
+    domain = modeling.Domain('afrobarometer')
     logging.debug('#records = %d' % (len(domain.data)))
     world = createWorld(domain,codebook)
     for inData in domain.fields:
-        for field,histogram in domain.targetHistogram().items():
+        for field,histogram in domain.targetHistogram('-1').items():
             for key,matches in sorted(histogram.items(),key=lambda item: -len(item[1])):
                 print('\t%5d: %s=%s | %s' % (len(matches),field,codebook[field]['labels'][key],inData))
                 table = tabulate([domain.data[ID] for ID in matches],inData)
