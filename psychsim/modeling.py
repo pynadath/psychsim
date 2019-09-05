@@ -48,16 +48,18 @@ class Domain:
         return {ID: record for ID,record in self.data.items() \
                 if min(map(len,record['__matches__'].values())) == 0}
 
-    def targetHistogram(self,missing=None):
+    def targetHistogram(self,missing=None,data=None):
+        if data is None:
+            data = self.data
         result = {field: {} for field in self.targets}
-        for record in self.data.values():
+        for ID,record in data.items():
             for field in self.targets:
                 value = record[field]
                 if missing is not None and len(value.strip()) == 0:
                     value = missing
                 if not value in result[field]:
                     result[field][value] = set()
-                result[field][value].add(self.recordID(record))
+                result[field][value].add(ID)
         return result
     
     def recordID(self,record):

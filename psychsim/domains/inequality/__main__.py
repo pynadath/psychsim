@@ -1,7 +1,9 @@
 from argparse import ArgumentParser
+import copy
 import csv
 import fileinput
 import logging
+import numpy
 import sys
 
 from psychsim.action import Action
@@ -32,7 +34,7 @@ def readCodebook(fname,logger=logging.getLogger()):
                         field['question'] = value
                     else:
                         field['question'] = '%s%s' % (elements[0],value)
-                    logger.info('Question: %s' % (field['question']))
+                    logger.debug('Question: %s' % (field['question']))
                 elif not 'domain' in field and elements[0] == 'Value' and elements[1] == 'Labels:':
                     logger.debug('values for %s' % (field['question']))
                     field['domain'] = set()
@@ -60,7 +62,7 @@ def readCodebook(fname,logger=logging.getLogger()):
                     if len(field['domain']) == 0:
                         logger.warning('Empty domain: %s' % (field['question']))
                     else:
-                        logger.info('%s: %s' % (field['question'],field['labels'].values()))
+                        logger.debug('%s: %s' % (field['question'],';'.join(field['labels'].values())))
                 else:
                     logger.warning('Missing value labels: %s' % (field['question']))
                 field = {}
@@ -89,7 +91,10 @@ def createWorld(domain,codebook,logger=logging.getLogger()):
             action = Action({'subject': agent.name,'verb': field['variable']})
             agent.addAction(action)
             logger.debug('New action: %s' % (action))
-#    world.setOrder([{name for name in world.agents}])
+    for agent in world.agents.values():
+        if len(agent.actions) == 0:
+            agent.addAction({'verb': 'observe'})
+    world.setOrder([{name for name in world.agents}])
     return world
 
 def modelIndividual(domain,world,record,codebook,logger=logging.getLogger()):
@@ -122,6 +127,13 @@ def tabulate(data,field):
     table = {k: float(v)/total for k,v in table.items()}
     return table
 
+def partition(data,field,codebook,minimal=True):
+    if minimal:
+        values = {record[field] for record in data.values()}
+    else:
+        values = codebook[field]['labels'].keys()
+    return {codebook[field]['labels'][key]: {ID: record for ID,record in data.items() if record[field] == key} for key in values}
+
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
@@ -138,6 +150,37 @@ if __name__ == '__main__':
     domain = modeling.Domain('afrobarometer')
     logging.debug('#records = %d' % (len(domain.data)))
     world = createWorld(domain,codebook)
+    hypotheses = set(domain.fields.keys()) - {'COUNTRY_ALPHA','URBRUR','REGION'} - domain.targets
+    hypotheses -= {'Q1.Gender','Q2A.Age','Q3.Race','Q5.Tribe','Q7.Religion','Q53.Important_Problem','Q56_ARB.Religious_National'}
+    domain.targets -= {'Q55_ARB.Unfairly_Religious'}
+    data = domain.data
+    ranges = {}
+    for hyp in hypotheses|domain.targets:
+        if hyp == 'Q2A.Age':
+            # Age allows for arbitrary integers
+            data = {ID: record for ID,record in data.items() if record[hyp] != ' ' and codebook[hyp]['labels'].get(record[hyp],'OK') not in 
+                {'Missing','Don’t know','Not applicable','Not asked','Refused to answer','Don’t','Exception handling','Missing Data','Don’t Know'}}
+            logging.debug('%s: %s' % (hyp,sorted({(record[hyp],record[hyp]) for record in data.values()})))
+        else:            
+            data = {ID: record for ID,record in data.items() if record[hyp] != ' ' and codebook[hyp]['labels'][record[hyp]] not in 
+                {'Missing','Don’t know','Not applicable','Not asked','Refused to answer','Don’t','Exception handling','Missing Data','Don’t Know'}}
+            logging.debug('%s: %s' % (hyp,sorted({(record[hyp],codebook[hyp]['labels'][record[hyp]]) for record in data.values()})))
+        logging.info('After %s: %d' % (hyp,len(data)))
+        ranges[hyp] = sorted(map(int,{record[hyp] for record in data.values()}))
+        logging.debug('%d,%d' % (ranges[hyp][0],ranges[hyp][-1]))
+    countries = partition(data,'COUNTRY_ALPHA',codebook)
+    for country,countryData in sorted(countries.items()):
+        logging.info('Country: %s (%d)' % (country,len(countryData)))
+        target = 'Q55.Unfairly_Ethnic'
+        histogram = domain.targetHistogram('-1',countryData)[target]
+        for key,matches in sorted(histogram.items(),key=lambda item: -len(item[1])):
+            logging.debug('Target: %s=%s (%d)' % (target,codebook[target]['labels'][key],len(matches)))
+        hypList = sorted(hypotheses)
+        arrays = numpy.array([[float(record[field]) if ranges[field][0] == 1 else float(record[field])+1. 
+            for field in hypList+[target]] for record in countryData.values()]).T
+        covar = numpy.cov(arrays)
+        print(['%s: %6.3f' % (hypList[i],covar[i][len(hypList)]) for i in sorted(range(len(hypList)),key=lambda j: abs(covar[j][len(hypList)]),reverse=True)])
+    exit()
     for inData in domain.fields:
         for field,histogram in domain.targetHistogram('-1').items():
             for key,matches in sorted(histogram.items(),key=lambda item: -len(item[1])):
