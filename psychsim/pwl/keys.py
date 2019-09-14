@@ -15,6 +15,7 @@ def stateKey(name,feature,future=False):
     :returns: a key representation of a given entity's state feature
     :rtype: str
     """
+    assert isinstance(future,bool),'Future flag is non-boolean: %s' % (future)
     if future:
         return stateKey(name,feature)+"'"
     elif name is None:
