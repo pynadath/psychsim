@@ -62,11 +62,11 @@ class System(Agent):
                 delta = 1-pow(1-delta,scale)
         else:
             delta = 0
-        return delta
+        return delta,scale
 
     def setAidDynamics(self,population):
         regions = self.getPopulated(population)
-        delta = self.grievanceDelta(regions)
+        delta,scale = self.grievanceDelta(regions)
         if self.config.getboolean('System','aid',fallback=True):
             #//GT: node 37; 1 of 1; next 12 lines
             for region in regions:
@@ -92,7 +92,7 @@ class System(Agent):
 
     def setNullGrievance(self,population):
         regions = self.getPopulated(population)
-        delta = self.grievanceDelta(regions)
+        delta,scale = self.grievanceDelta(regions)
         # Null
         if self.config.getboolean('Actors','grievance') and \
            self.config.getint('Actors','grievance_delta') > 0:
