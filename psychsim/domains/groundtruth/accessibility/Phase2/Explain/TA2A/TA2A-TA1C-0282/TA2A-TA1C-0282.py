@@ -25,8 +25,10 @@ if __name__ == '__main__':
             if h['End'] <= args['span']]
         if accessibility.instancePhase(instance) == 1:
             states = accessibility.loadRunData(args['instance'],args['run'],args['span'],subs=['Input'] if 3 <= instance <= 14 else [None])
+            network = accessibility.readNetwork(args['instance'],args['run'],'Input' if 3 <= instance <= 14 else None)
         else:
             states = {}
+            network = None
         actors = accessibility.getLivePopulation(args,world,states,args['span'])
         pool = {name for name,death in actors.items() if death is None}
         demos = {name: accessibility.getCurrentDemographics(args,name,world,states,config,args['span']) for name in pool}
@@ -49,7 +51,7 @@ if __name__ == '__main__':
                 aidVars = []
             else:
                 aidVars = None
-            aidWillingnessEtc(args,agent,record,world,states,demos,hurricanes,pool,aidVars)
+            aidWillingnessEtc(args,agent,record,world,states,demos,hurricanes,pool,aidVars,network)
             if not defined:
                 for j in range(len(aidVars)):
                     if j < 3:
@@ -78,9 +80,9 @@ if __name__ == '__main__':
             if cmd['debug']:
                 print(record)
             if not defined:
-                if not cmd['debug']:
-                    accessibility.writeVarDef(os.path.dirname(__file__),variables)
+#                if not cmd['debug']:
+#                    accessibility.writeVarDef(os.path.dirname(__file__),variables)
                 defined = True
         if not cmd['debug']:
-            accessibility.writeOutput(args,output,[var['Name'] for var in variables],'%s.tsv' % (os.path.splitext(os.path.basename(__file__))[0]),
+            accessibility.writeOutput(args,output,[var['Name'] for var in variables],'%s-R1.tsv' % (os.path.splitext(os.path.basename(__file__))[0]),
                 os.path.join(os.path.dirname(__file__),'Instances','Instance%d' % (instance),'Runs','run-0'))

@@ -279,3 +279,22 @@ INFO:root:Participant 46: Actor0849
 INFO:root:Participant 47: Actor0063
 INFO:root:Participant 48: Actor0799
 INFO:root:Participant 49: Actor0925
+INFO:root:Instance 1 (24,1)
+INFO:root:Participant 1: Actor0125
+INFO:root:Participant 2: Actor0098
+WARNING:root:Instance 24, run 1 has different friend set for Actor0098
+INFO:root:Participant 3: Actor0020
+WARNING:root:Instance 24, run 1 has different friend set for Actor0020
+INFO:root:Participant 4: Actor0029
+WARNING:root:Instance 24, run 1 has different friend set for Actor0029
+INFO:root:Participant 5: Actor0045
+WARNING:root:Instance 24, run 1 has different friend set for Actor0045
+INFO:root:Participant 6: Actor0062
+WARNING:root:Instance 24, run 1 has different friend set for Actor0062
+INFO:root:Participant 7: Actor0078
+WARNING:root:Instance 24, run 1 has different friend set for Actor0078
+INFO:root:Participant 8: Actor0084
+WARNING:root:Instance 24, run 1 has different friend set for Actor0084
+WARNING:root:Clipping Actor0020's risk perception change on day 76: 0.704640
+WARNING:root:Clipping Actor0078's risk perception change on day 76: 0.700614
+WARNING:root:Clipping Actor0078's risk perception change on day 77: -0.824022
