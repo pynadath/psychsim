@@ -1,0 +1,7 @@
+Name	LongName	Values	VarType	DataType	Notes
+Participant	Participant	[1+]	fixed	Integer	
+Hurricane	Hurricane	[1+]	dynamic	Integer	
+Timestep	Timestep	[1+]	dynamic	Integer	
+Last Poor Health Began	Last Poor Health Began	[1+]	dynamic	Integer	Q1. NA if no such episode occurred
+Last Poor Health at Shelter	Last Poor Health at Shelter	yes,no	dynamic	Boolean	Q3. NA if no such episode occurred
+Last Poor Health Ended	Last Poor Health Ended	[1+],ongoing	dynamic	Integer	Q4. NA if no such episode occurred
