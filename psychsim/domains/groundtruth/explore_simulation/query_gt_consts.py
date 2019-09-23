@@ -16,8 +16,20 @@ active = "active"
 active_values = ["active", "on"]
 inactive_values = ["inactive", "off"]
 all_values = ["all"]
+
+
+actor_sample = "actor_sample"
+# Stat functions
 stat_res = "stat_res"
 mean = "mean"
+median = "median"
+std_dev = "std_dev"
+var = "var"
+min = "min_at_each_day"
+min_ever_actor = "actor_with_min_value_ever"
+min_overall_actor = "actor_with_min_value_overall"
+max = "max_at_each_day"
+max_actor = "actor_with_max_value_overall"
 val_list = "list"
 
 DAYS = "days"
@@ -35,7 +47,7 @@ TYPE = "type"
 TYPE_VALUES_IN = active_values + inactive_values + all_values
 ACTORS_LIST = "actors_list"
 STAT_FCT = "stat_function"
-STAT_FCT_VALUES_IN = ["mean", "median", "variation", "std_dev", "list"]
+STAT_FCT_VALUES_IN = [mean, median, std_dev, var, min, min_ever_actor, min_overall_actor, max, max_actor, val_list]
 
 QUERY_PARAM = {
     DAYS: ["days", "day", "d"],

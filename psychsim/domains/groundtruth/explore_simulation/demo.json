@@ -55,7 +55,7 @@
     },
     {
         "command": "show filters -type all",
-        "explanations": "Check that filters are inactive."
+        "explanations": "Check what filters are inactive."
     },
     {
         "command": "reset selection",
@@ -70,7 +70,19 @@
         "explanations": "What is their health through the simulation?"
     },
     {
-        "command": "get stats -stat_function mean -attribute health -days 1 to 16",
-        "explanations": "Okay, what about the mean value of health for those agents?"
+        "command": "reset selection",
+        "explanations": "Reset the selection..."
+    },
+    {
+        "command": "select n_actors -number 20",
+        "explanations": "...change the sample..."
+    },
+    {
+        "command": "get stats -stat_function list -attribute health -days 1 to 16",
+        "explanations": "...and display the health again."
+    },
+    {
+        "command": "get stats -stat_function actor_with_min_value_overall -attribute health -days 1 to 16",
+        "explanations": "Okay, now what about the mean value of health for those agents?"
     }
 ]

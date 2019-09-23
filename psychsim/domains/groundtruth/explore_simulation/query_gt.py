@@ -7,7 +7,7 @@ import random
 import json
 import copy
 import matplotlib.pyplot as plt
-import numpy as np
+import operator
 from collections import Counter
 import statistics
 
@@ -886,19 +886,72 @@ class LogParser:
         print(p_fct)
         if not p_days:
             p_days = list(range(1, self.n_days))
-        if not p_name:
-            p_name = "stat" + self.stats_name_i.__str__() + "_" + p_fct
-            self.stats_name_i += 1
+
+        stat_obj = self.get_stat_obj(p_fct=p_fct, p_att=p_att, p_days=p_days, p_name=p_name, p_val=None, p_op=None)
+        if stat_obj:
+            if p_name:
+                print_with_buffer("Warning: This stat was already computed and named %s - the name you provided (%s) is ignored." % (stat_obj[p_name], p_name), buffer)
+        else:
+            if not p_name:
+                p_name = "stat" + self.stats_name_i.__str__() + "_" + p_fct
+                self.stats_name_i += 1
+            stat_obj = self.compute_stats(p_att=p_att, p_fct=p_fct, p_days=p_days, p_name=p_name, buffer=buffer)
+        self.plot_stats(stat_res=stat_obj[consts.stat_res], p_att=p_att, p_fct=p_fct, p_days=p_days, p_name=p_name, buffer=buffer)
+
+
+    def compute_stats(self, p_att, p_fct, p_days=[], p_name=None, buffer=None):
+        print_with_buffer("Wait, computing stats... ")
+        # get stat values (all)
         new_stat = self.create_new_stat_obj(p_fct, p_att, p_days, p_name)
         stat_res = dict()
-        stat_res[consts.val_list] = dict()
-        stat_res[consts.mean] = dict()
+        for fct in consts.STAT_FCT_VALUES_IN:
+            stat_res[fct] = dict()
+        min_val, min_idx, min_overall_idx = 1, 0, 0
+        min_overall_values = []
+        max_val = []
+
         for day in p_days:
             values = self.get_att_val(self.selected_agents, p_att, day)
             stat_res[consts.val_list][day] = values
             stat_res[consts.mean][day] = statistics.mean(values)
+            stat_res[consts.median][day] = statistics.median(values)
+            stat_res[consts.std_dev][day] = statistics.stdev(values)
+            stat_res[consts.var][day] = statistics.variance(values)
+            stat_res[consts.min][day] = min(values)
+
+            min_tmp, idx_tmp = min((val, idx) for (idx, val) in enumerate(values))
+            if min_tmp < min_val:
+                min_val, min_idx = min_tmp, idx_tmp
+
+            if not min_overall_values:
+                min_overall_values = copy.deepcopy(values)
+            else:
+                for i, v in enumerate(values):
+                    min_overall_values[i] += v
+                _, min_overall_idx = max((val, idx) for (idx, val) in enumerate(values))
+
+            if not max_val:
+                max_val = copy.deepcopy(values)
+            else:
+                for i, v in enumerate(values):
+                    max_val[i] += v
+                _, idx_max = max((val, idx) for (idx, val) in enumerate(values))
+
+        print("min_ever", "min_overall")
+        print(min_idx, min_overall_idx)
+
+        for day in p_days:
+            stat_res[consts.min_ever_actor][day] = stat_res[consts.val_list][day][min_idx]
+            stat_res[consts.min_overall_actor][day] = stat_res[consts.val_list][day][min_idx]
+            stat_res[consts.max_actor][day] = stat_res[consts.val_list][day][idx_max]
+
         print_with_buffer(new_stat, buffer)
         new_stat[consts.stat_res] = stat_res
+        self.stats[p_name] = new_stat
+
+        return new_stat
+
+    def plot_stats(self, stat_res, p_att, p_fct, p_days=[], p_name=None, buffer=None):
 
         title = p_fct + " of " + p_att + " for the %d actors selected" % len(self.selected_agents)
         x_list, y_list = list(), list()
@@ -916,16 +969,7 @@ class LogParser:
                         list_values_y_for_agent_i.append(stat_res[consts.val_list][day][i])
                     x_list.append(list_values_x_for_agent_i)
                     y_list.append(list_values_y_for_agent_i)
-                # x_list = [item for sublist in x_list for item in sublist]
-                # y_list = [item for sublist in y_list for item in sublist]
                 self.plot_multiple_agents(x_lists=x_list, y_lists=y_list, y_label=p_att, title=title)
-
-            # else:
-            #     for x_elt, y_elt in stat_res[consts.val_list].items():
-            #         x_list.append(x_elt)
-            #         y_list.append(y_elt)
-            #     self.plot(x_list=x_list, y_list=y_list, y_label=p_att, title=title)
-
         else:
             for x_elt, y_elt in stat_res[p_fct].items():
                 x_list.append(x_elt)
@@ -980,15 +1024,26 @@ class LogParser:
         plt.show()
 
 
+    def get_stat_obj(self, p_fct, p_att, p_days, p_name, p_val=None, p_op=None):
+        if p_name in self.stats.keys():
+            return self.stats[p_name]
+        else:
+            for s in self.stats.values():
+                # if s[consts.STAT_FCT] == p_fct and s[consts.ATTRIBUTE] == p_att and s[consts.DAYS] == p_days and s[consts.ATTRIBUTE_VAL] == p_val and s[consts.OPERATOR] == p_op:
+                if s[consts.actor_sample] == self.selected_agents:
+                    return s
+        return False
+
 
     def create_new_stat_obj(self, p_fct, p_att, p_days, p_name, p_val=None, p_op=None):
         new_stat = dict()
-        new_stat[consts.STAT_FCT] = p_fct
-        new_stat[consts.ATTRIBUTE] = p_att
-        new_stat[consts.DAYS] = p_days
+        # new_stat[consts.STAT_FCT] = p_fct
+        # new_stat[consts.ATTRIBUTE] = p_att
+        # new_stat[consts.DAYS] = p_days
         new_stat[consts.NAME] = p_name
-        new_stat[consts.ATTRIBUTE_VAL] = p_val
-        new_stat[consts.OPERATOR] = p_op
+        new_stat[consts.actor_sample] = self.selected_agents
+        # new_stat[consts.ATTRIBUTE_VAL] = p_val
+        # new_stat[consts.OPERATOR] = p_op
         new_stat[consts.stat_res] = dict()
         return new_stat
 
