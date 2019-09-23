@@ -566,6 +566,7 @@ class LogParser:
     ############################################################################################################
 
     ## ---------------------------------------       General queries         -------------------------------- ##
+    ## ------------------------------------------------------------------------------------------------------ ##
 
 
     def get_ndays(self, buffer):
@@ -605,6 +606,7 @@ class LogParser:
             print_with_buffer("MssingParamterError: expecting an entity", buffer)
 
     ## ---------------------------------------       Select agents           -------------------------------- ##
+    ## ------------------------------------------------------------------------------------------------------ ##
 
     def error_selection_not_enough_actors(self, p_n, buffer):
         """
@@ -660,6 +662,23 @@ class LogParser:
         p_list_names = [helper.actor_number_to_name(i) for i in p_list_names]
         self.selected_agents = [actor for actor in self.selected_agents if actor in p_list_names]
         self.display_actor_selection()
+
+    def reset_selection(self, buffer):
+        """
+        Resets the selection
+        :param buffer:
+        :return:
+        """
+        self.selected_agents = self.actors_full_list
+        print_with_buffer("Reset selection", buffer)
+        if self.filter_list:
+            for filter in self.filter_list:
+                filter[consts.active] = False
+            print_with_buffer("All filters are inactive", buffer)
+
+
+    ## --------------------------------------- Display selection and filters -------------------------------- ##
+    ## ------------------------------------------------------------------------------------------------------ ##
 
 
     def display_actor_selection(self, buffer=None):
@@ -717,21 +736,9 @@ class LogParser:
         print_with_buffer("%s:\n\t- %s" % (s_intro, filters_str), buffer)
 
 
-    def reset_selection(self, buffer):
-        """
-        Resets the selection
-        :param buffer:
-        :return:
-        """
-        self.selected_agents = self.actors_full_list
-        print_with_buffer("Reset selection", buffer)
-        if self.filter_list:
-            for filter in self.filter_list:
-                filter[consts.active] = False
-            print_with_buffer("All filters are inactive", buffer)
-
 
     ## ---------------------------------------  Select agents with filters   -------------------------------- ##
+    ## ------------------------------------------------------------------------------------------------------ ##
 
 
     def get_att_val(self, actors_list, p_att, p_day):
@@ -880,9 +887,19 @@ class LogParser:
             else:
                 print_with_buffer("Filter %s is already active" % p_name, buffer)
 
-    ## ---------------------------------------          Stat functions       -------------------------------- ##
+    ## ---------------------------------------      Get and compute Stats    -------------------------------- ##
+    ## ------------------------------------------------------------------------------------------------------ ##
 
     def get_stats(self, p_att, p_fct, p_days=[], p_name=None, buffer=None):
+        """
+        Execute a user query involving stats.
+        :param p_att:
+        :param p_fct:
+        :param p_days:
+        :param p_name:
+        :param buffer:
+        :return:
+        """
         print(p_fct)
         if not p_days:
             p_days = list(range(1, self.n_days))
@@ -900,6 +917,15 @@ class LogParser:
 
 
     def compute_stats(self, p_att, p_fct, p_days=[], p_name=None, buffer=None):
+        """
+        Compute stats --> creates a new stat object that is saved in self.stats
+        :param p_att:
+        :param p_fct:
+        :param p_days:
+        :param p_name:
+        :param buffer:
+        :return:
+        """
         print_with_buffer("Wait, computing stats... ")
         # get stat values (all)
         new_stat = self.create_new_stat_obj(p_fct, p_att, p_days, p_name)
@@ -951,7 +977,65 @@ class LogParser:
 
         return new_stat
 
+
+    def get_stat_obj(self, p_fct, p_att, p_days, p_name, p_val=None, p_op=None):
+        """
+        Returns a stat object is it already exists.
+        :param p_fct:
+        :param p_att:
+        :param p_days:
+        :param p_name:
+        :param p_val:
+        :param p_op:
+        :return:
+        """
+        if p_name in self.stats.keys():
+            return self.stats[p_name]
+        else:
+            for s in self.stats.values():
+                # if s[consts.STAT_FCT] == p_fct and s[consts.ATTRIBUTE] == p_att and s[consts.DAYS] == p_days and s[consts.ATTRIBUTE_VAL] == p_val and s[consts.OPERATOR] == p_op:
+                if s[consts.actor_sample] == self.selected_agents:
+                    return s
+        return False
+
+
+    def create_new_stat_obj(self, p_fct, p_att, p_days, p_name, p_val=None, p_op=None):
+        """
+        Creates a new empty stat object
+        :param p_fct:
+        :param p_att:
+        :param p_days:
+        :param p_name:
+        :param p_val:
+        :param p_op:
+        :return:
+        """
+        new_stat = dict()
+        # new_stat[consts.STAT_FCT] = p_fct
+        # new_stat[consts.ATTRIBUTE] = p_att
+        # new_stat[consts.DAYS] = p_days
+        new_stat[consts.NAME] = p_name
+        new_stat[consts.actor_sample] = self.selected_agents
+        # new_stat[consts.ATTRIBUTE_VAL] = p_val
+        # new_stat[consts.OPERATOR] = p_op
+        new_stat[consts.stat_res] = dict()
+        return new_stat
+
+
+    ## ---------------------------------------           Plot Stats          -------------------------------- ##
+    ## ------------------------------------------------------------------------------------------------------ ##
+
     def plot_stats(self, stat_res, p_att, p_fct, p_days=[], p_name=None, buffer=None):
+        """
+        Plots the stat ask asks by in the user command.
+        :param stat_res:
+        :param p_att:
+        :param p_fct:
+        :param p_days:
+        :param p_name:
+        :param buffer:
+        :return:
+        """
 
         title = p_fct + " of " + p_att + " for the %d actors selected" % len(self.selected_agents)
         x_list, y_list = list(), list()
@@ -979,6 +1063,14 @@ class LogParser:
 
 
     def plot_multiple_agents(self, x_lists, y_lists, y_label, title):
+        """
+        Plots values for multiple agents (list of individual values).
+        :param x_lists:
+        :param y_lists:
+        :param y_label:
+        :param title:
+        :return:
+        """
         # Points
         x_flattened = [item for sublist in x_lists for item in sublist]
         y_flattened = [item for sublist in y_lists for item in sublist]
@@ -999,14 +1091,25 @@ class LogParser:
         plt.xlabel(consts.DAYS)
         plt.show()
 
-
-
     def plot_one_of_multiple_agents(self, x_list, y_list, plt):
+        """
+        Plots values for one of multiple agents --> adds points in an already existing plot.
+        :param x_list:
+        :param y_list:
+        :param plt:
+        :return:
+        """
         plt.plot(x_list, y_list)
 
-
-
     def plot(self, x_list, y_list, y_label, title):
+        """
+        Plots agregated values in one stat function, e.g. "mean".
+        :param x_list:
+        :param y_list:
+        :param y_label:
+        :param title:
+        :return:
+        """
         # for xe, ye in zip(x_list, y_list):
         #     plt.scatter([xe] * len(ye), ye)
 
@@ -1024,31 +1127,8 @@ class LogParser:
         plt.show()
 
 
-    def get_stat_obj(self, p_fct, p_att, p_days, p_name, p_val=None, p_op=None):
-        if p_name in self.stats.keys():
-            return self.stats[p_name]
-        else:
-            for s in self.stats.values():
-                # if s[consts.STAT_FCT] == p_fct and s[consts.ATTRIBUTE] == p_att and s[consts.DAYS] == p_days and s[consts.ATTRIBUTE_VAL] == p_val and s[consts.OPERATOR] == p_op:
-                if s[consts.actor_sample] == self.selected_agents:
-                    return s
-        return False
-
-
-    def create_new_stat_obj(self, p_fct, p_att, p_days, p_name, p_val=None, p_op=None):
-        new_stat = dict()
-        # new_stat[consts.STAT_FCT] = p_fct
-        # new_stat[consts.ATTRIBUTE] = p_att
-        # new_stat[consts.DAYS] = p_days
-        new_stat[consts.NAME] = p_name
-        new_stat[consts.actor_sample] = self.selected_agents
-        # new_stat[consts.ATTRIBUTE_VAL] = p_val
-        # new_stat[consts.OPERATOR] = p_op
-        new_stat[consts.stat_res] = dict()
-        return new_stat
-
-
     ## ---------------------------------------   Query on one specific agent -------------------------------- ##
+    ## ------------------------------------------------------------------------------------------------------ ##
 
     def get_att_values(self, p_actor, p_days, buffer=None):
         """
@@ -1091,6 +1171,7 @@ class LogParser:
         # else:
         #     print_with_buffer("ERROR - Missing file: %s" % file_name, buffer)
         #     return False
+
 
     ############################################################################################################
     ##                                         RUN DEMO AND AUTOTESTS                                         ##
