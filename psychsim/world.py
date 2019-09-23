@@ -1126,12 +1126,12 @@ class World(object):
         elif self.variables[key]['domain'] is list or \
              self.variables[key]['domain'] is set or \
              self.variables[key]['domain'] is ActionSet:
-            index = int(float(flt)+0.1)
+            index = int(round(flt))
             return self.symbolList[index]
         elif self.variables[key]['domain'] is int:
             return int(flt)
-        elif isModelKey(key):
-            return self.agents[model2name(key)].index2model(flt)
+#        elif isModelKey(key):
+#            return self.agents[model2name(key)].index2model(flt)
         else:
             return flt
 
@@ -1154,6 +1154,8 @@ class World(object):
                 return 1.
             else:
                 return 0.
+#        elif isModelKey(key):
+#            return self.agents[model2name(key)].model2index(value)
         elif self.variables[key]['domain'] is list or self.variables[key]['domain'] is set or \
                 self.variables[key]['domain'] is ActionSet:
             return self.symbols[value]
@@ -1557,12 +1559,16 @@ class World(object):
         if state is None:
             state = self.state
         joint = {}
-        for name in sorted(self.agents.keys()):
-            key = stateKey(name,ACTION)
-            if key in state:
-                joint[name] = self.float2value(key,state.marginal(key))
-                if level > 0:
-                    print(joint[name],file=buf)
+        order = {name: state[turnKey(name)] for name in self.agents if turnKey(name) in state}
+        assert max(map(len,order.values())) == 1,'Unable to extract actions from uncertain turn orders'
+        last = max([dist.first() for dist in order.values()])
+        for name,dist in sorted(order.items()):
+            if dist.first() == last:
+                key = stateKey(name,ACTION)
+                if key in state:
+                    joint[name] = self.getFeature(key,state)
+                    if level > 0:
+                        print(joint[name],file=buf)
         return joint
         
 

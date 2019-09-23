@@ -684,31 +684,62 @@ def unpickle(instance,sub=None,day=None):
 def aidIfWealthLoss(agent):
     return sum([agent.Rweights[k] for k in ['health','childrenHealth','neighbors']])/sum(agent.Rweights.values())
 
-def holoCane(world,config,name,span,select=True,policy={}):
+def holoCane(world,config,actors,span,select=True,policy={},unit='days',debug=False):
+    if isinstance(actors,str):
+        # Backward compatibility
+        return holoCane(world,config,{actors},select,policy)
     state = copy.deepcopy(world.state)
     for key in list(state.keys()):
         actor = state2agent(key)
-        if actor[:5] == 'Actor' and actor != name and actor not in policy:
+        if actor[:5] == 'Actor' and actor not in actors and actor not in policy:
             del state[key]
     if config.getboolean('Actors','messages'):
-        friends = world.agents[name].friends & set(policy.keys())
+        friends = {name: world.agents[name].friends & set(policy.keys()) for name in actors}
     else:
-        friends = set()
+        friends = {name: set() for name in actors}
     step = 3
     phase = 'none'
-    history = [{'state': copy.deepcopy(state),'beliefs': copy.deepcopy(next(iter(world.agents[name].getBelief(state).values())))}]
-    while step // 3 < span or phase != 'none':
-        if not world.getState(name,'alive',state).first():
-            # Actor has died
-            break
-        if name in world.next(state) and friends:
-            friends = {friend for friend in friends if world.getState(friend,'alive').first()}
-            exchangeMessages(world,config,state,friends|{name})
-        actions = {name: action for name,action in policy.items() if name in world.next(state)}
+    dead = set()
+    hurricane = 0
+    history = [{'state': copy.deepcopy(state)}]
+    if len(actors) == 1:
+        history[0]['beliefs'] = copy.deepcopy(next(iter(world.agents[next(iter(actors))].getBelief(state).values())))
+    else:
+        history[0].update({name: copy.deepcopy(next(iter(world.agents[name].getBelief(state).values()))) for name in actors})
+    timeUnits = 0
+    while timeUnits < span or phase != 'none':
+        everyone = set()
+        for name in actors-dead:
+            if world.getState(name,'alive',state).first():
+                # Actor still alive
+                if name in world.next(state) and friends[name]:
+                    friends[name] = {friend for friend in friends[name] if world.getState(friend,'alive').first()}
+                    everyone |= friends[name]
+                    everyone.add(name)
+            else:
+                dead.add(name)
+        if everyone:
+            exchangeMessages(world,config,state,everyone)
+        actions = {name: action for name,action in policy.items() if name in world.next(state) and action is not None}
+        if debug:
+            print(world.getState(WORLD,'day',state).first(),world.agents[next(iter(world.next(state)))].__class__.__name__,phase)
         world.step(actions=actions,state=state,select=select,keySubset=state.keys())
         step += 1
+        oldPhase = phase
         phase = world.getState('Nature','phase',state).first()
-        history.append({'state': copy.deepcopy(state),'beliefs': copy.deepcopy(next(iter(world.agents[name].getBelief(state).values())))})
+        if phase == 'approaching' and oldPhase == 'none':
+            hurricane += 1
+        history.append({'state': copy.deepcopy(state)})
+        if len(actors) == 1:
+            history[-1]['beliefs'] = copy.deepcopy(next(iter(world.agents[next(iter(actors))].getBelief(state).values())))
+        else:
+            history[-1].update({name: copy.deepcopy(next(iter(world.agents[name].getBelief(state).values()))) for name in actors if name not in dead})
+        if unit == 'days':
+            timeUnits = step // 3
+        elif unit == 'hurricanes':
+            timeUnits = hurricane
+        else:
+            raise NameError('Unknown unit of time: %s' % (unit))
     return history
 
 def findParticipants(fname,args,world,states,config,ignoreWealth=True):

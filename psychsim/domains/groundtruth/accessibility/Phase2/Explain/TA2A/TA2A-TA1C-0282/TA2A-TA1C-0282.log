@@ -1002,3 +1002,34 @@ INFO:root:Participant 96: Actor0936
 INFO:root:Participant 97: Actor0589
 INFO:root:Participant 98: Actor0355
 INFO:root:Participant 99: Actor0408
+INFO:root:Instance 1 (24,1)
+INFO:root:Participant 1: Actor0106
+INFO:root:Participant 2: Actor0130
+WARNING:root:Instance 24, run 1 has different friend set for Actor0130
+INFO:root:Participant 3: Actor0142
+WARNING:root:Instance 24, run 1 has different friend set for Actor0142
+INFO:root:Participant 4: Actor0125
+INFO:root:Participant 5: Actor0035
+WARNING:root:Instance 24, run 1 has different friend set for Actor0035
+INFO:root:Participant 6: Actor0121
+WARNING:root:Instance 24, run 1 has different friend set for Actor0121
+INFO:root:Participant 7: Actor0068
+WARNING:root:Instance 24, run 1 has different friend set for Actor0068
+INFO:root:Participant 8: Actor0141
+WARNING:root:Instance 24, run 1 has different friend set for Actor0141
+INFO:root:Participant 9: Actor0076
+WARNING:root:Instance 24, run 1 has different friend set for Actor0076
+INFO:root:Participant 10: Actor0051
+WARNING:root:Instance 24, run 1 has different friend set for Actor0051
+INFO:root:Participant 11: Actor0097
+WARNING:root:Instance 24, run 1 has different friend set for Actor0097
+INFO:root:Participant 12: Actor0134
+WARNING:root:Instance 24, run 1 has different friend set for Actor0134
+INFO:root:Participant 13: Actor0008
+WARNING:root:Instance 24, run 1 has different friend set for Actor0008
+INFO:root:Participant 14: Actor0138
+WARNING:root:Instance 24, run 1 has different friend set for Actor0138
+INFO:root:Participant 15: Actor0153
+WARNING:root:Instance 24, run 1 has different friend set for Actor0153
+INFO:root:Participant 16: Actor0006
+WARNING:root:Instance 24, run 1 has different friend set for Actor0006

@@ -1,0 +1,14 @@
+Name	LongName	Values	VarType	DataType	Notes
+Participant	Participant	[1+]	fixed	Integer	
+Hurricane	Hurricane	[1+]	dynamic	Integer	
+Timestep	Timestep	[1+]	dynamic	Integer	
+Evacuation Past Safety	Evacuation Past Safety	[1-7]	dynamic	Integer	Q1
+Shelter Past Safety	Shelter Past Safety	[1-7]	dynamic	Integer	Q2
+Stay at Home Past Safety	Stay at Home Past Safety	[1-7]	dynamic	Integer	Q3
+Evacuation Past Property	Evacuation Past Property	[1-7]	dynamic	Integer	Q4
+Shelter Past Property	Shelter Past Property	[1-7]	dynamic	Integer	Q5
+Stay at Home Past Property	Stay at Home Past Property	[1-7]	dynamic	Integer	Q6
+Evacuation Past Wealth	Evacuation Past Wealth	[1-7]	dynamic	Integer	Q7
+Shelter Past Wealth	Shelter Past Wealth	[1-7]	dynamic	Integer	Q8
+Stay at Home Past Wealth	Stay at Home Past Wealth	[1-7]	dynamic	Integer	Q9
+Risk Independent Past	Risk Independent Past	[1-7]	dynamic	Integer	Q10. NA if no friends.

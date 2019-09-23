@@ -62,11 +62,11 @@ class System(Agent):
                 delta = 1-pow(1-delta,scale)
         else:
             delta = 0
-        return delta
+        return delta,scale
 
     def setAidDynamics(self,population):
         regions = self.getPopulated(population)
-        delta = self.grievanceDelta(regions)
+        delta,scale = self.grievanceDelta(regions)
         if self.config.getboolean('System','aid',fallback=True):
             #//GT: node 37; 1 of 1; next 12 lines
             for region in regions:
@@ -92,7 +92,7 @@ class System(Agent):
 
     def setNullGrievance(self,population):
         regions = self.getPopulated(population)
-        delta = self.grievanceDelta(regions)
+        delta,scale = self.grievanceDelta(regions)
         # Null
         if self.config.getboolean('Actors','grievance') and \
            self.config.getint('Actors','grievance_delta') > 0:
@@ -196,7 +196,7 @@ class System(Agent):
             population = {name: [a for a in self.world.agents.values() if isinstance(a,Actor) and a.demographics['home'] == name]
                           for name in self.world.agents if isinstance(self.world.agents[name],Region)}
             risks = [(state[stateKey(a['object'],'risk')].expectation()*len(population[a['object']]),a)
-                     for a in actions if a['object'] is not None]
+                     for a in actions if a['object'] is not None and stateKey(a['object'],'risk') in state]
             choice = max(risks)
         tree = makeTree(setToConstantMatrix(stateKey(self.name,ACTION),choice[1]))
         return {'policy': tree.desymbolize(self.world.symbols)}

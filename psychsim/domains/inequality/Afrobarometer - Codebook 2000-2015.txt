@@ -569,7 +569,7 @@ Recoding round 4 and 3 based on categories in round 5.
 
 Q6A. CAT
 Question: What is the highest level of education you have completed?
-Value Labels: 0=No formal education, 1=Primary, 2=Secondary, 3=Post-secondary, 98=Refused to Answer, 99=Don’t Know, -1=Missing Data
+Value Labels: 0=No formal education, 1=Primary, 2=Secondary, 3=Post-secondary, 9=Exception handling, 98=Refused to Answer, 99=Don’t Know, -1=Missing Data
 
 Q7. Religion
 Question: What is your religion, if any?
@@ -693,15 +693,15 @@ know, 998=Refused to answer, -1=Missing
 
 Q17A. Own_Radio
 Question: Which of these things do you personally own: Radio?
-Value Labels: 0=No (Don’t own), 1=Yes (Do own), 9=Don’t know, 998=Refused to answer, 1=Missing
+Value Labels: 0=No (Don’t own), 1=Yes (Do own), 9=Don’t know, 998=Refused to answer, -1=Missing
 
 Q17B. Own_Television
 Question: Which of these things do you personally own: Television?
-Value Labels: 0=No (Don’t own), 1=Yes (Do own), 9=Don’t know, 998=Refused to answer, 1=Missing
+Value Labels: 0=No (Don’t own), 1=Yes (Do own), 9=Don’t know, 998=Refused to answer, -1=Missing
 
 Q17C. Own_Motor
 Question: Which of these things do you personally own: Motor vehicle, car or motorcycle?
-Value Labels: 0=No (Don’t own), 1=Yes (Do own), 9=Don’t know, 998=Refused to answer, 1=Missing
+Value Labels: 0=No (Don’t own), 1=Yes (Do own), 9=Don’t know, 998=Refused to answer, -1=Missing
 * Recoded for round 3
 
 Q17D. Own_Mobile
@@ -732,7 +732,7 @@ answer, -1=Missing
 
 Q19B. Attacked*
 Question: During the past year, have you or anyone in your family: Been physically attacked?
-Value Labels: 0=Never, 1=Just once or twice, 2=Three or more times, 9=Don’t know, 998=Refused to
+Value Labels: 0=Never, 1=Just once or twice, 2=Three or more times, 9=Don’t know, 997=Exception handling, 998=Refused to
 answer, -1=Missing
 * recoded
 
@@ -772,7 +772,7 @@ interested, 9=Don’t know, 998=Refused to answer, -1=Missing
 Q23. Discuss
 Question: When you get together with your friends or family, would you say you discuss political
 matters?
-Value Labels: 0=Never, 1=Occasionally, 2=Frequently, 9=Don’t know, 998=Refused to answer, 1=Missing
+Value Labels: 0=Never, 1=Occasionally, 2=Frequently, 9=Don’t know, 998=Refused to answer, -1=Missing
 
 Q24A. Religious_Group
 Question: Let’s turn to your role in the community. Now I am going to read out a list of groups that
@@ -1131,7 +1131,7 @@ to answer, -1=Missing 
 
 Q45D. Unequally
 Question: In your opinion, how often, in this country: Are people treated unequally under the law?
-Value Labels: 0=Never, 1=Rarely, 2=Often, 3=Always, 9=Don’t know, 998=Refused to answer, 1=Missing
+Value Labels: 0=Never, 1=Rarely, 2=Often, 3=Always, 9=Don’t know, 998=Refused to answer, -1=Missing
 
 Q45E. Careful
 Question: In your opinion, how often, in this country: Do people have to be careful of what they say

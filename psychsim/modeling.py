@@ -48,13 +48,18 @@ class Domain:
         return {ID: record for ID,record in self.data.items() \
                 if min(map(len,record['__matches__'].values())) == 0}
 
-    def targetHistogram(self):
+    def targetHistogram(self,missing=None,data=None):
+        if data is None:
+            data = self.data
         result = {field: {} for field in self.targets}
-        for record in self.data.values():
+        for ID,record in data.items():
             for field in self.targets:
-                if not record[field] in result[field]:
-                    result[field][record[field]] = set()
-                result[field][record[field]].add(self.recordID(record))
+                value = record[field]
+                if missing is not None and len(value.strip()) == 0:
+                    value = missing
+                if not value in result[field]:
+                    result[field][value] = set()
+                result[field][value].add(ID)
         return result
     
     def recordID(self,record):
@@ -152,10 +157,9 @@ class Domain:
         else:
             raw = self.readDataFile('%s-raw.csv' % (self.filename))
             self.processData(raw)
-            fields = self.data.values()[0].keys()
+            fields = sorted(next(iter(self.data.values())).keys())
             for row in self.data.values():
                 assert set(row.keys()) == set(fields)
-            fields.sort()
             with open(fname,'w') as csvfile:
                 writer = csv.DictWriter(csvfile,fields,extrasaction='ignore')
                 writer.writeheader()
@@ -176,7 +180,7 @@ class Domain:
             newRecord = {field: record[field] for field in self.idFields}
             for field,entry in self.fields.items():
                 if field and not entry['class'] == 'id':
-                    assert record.has_key(field),'Missing field %s from record %s' % (field,ID)
+                    assert field in record,'Missing field %s from record %s' % (field,ID)
                     assert entry['variable'],'Field %s has no variable' % (field)
                     newRecord[field] = record[field]
             self.data[ID] = newRecord

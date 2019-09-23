@@ -217,6 +217,12 @@ def powerset(iterable):
     s = list(iterable)
     return itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(len(s)+1))
 
+def makeActionSet(subject,verb,obj=None):
+    if obj is None:
+        return ActionSet([Action({'subject': subject,'verb': verb})])
+    else:
+        return ActionSet([Action({'subject': subject,'verb': verb,'object': obj})])
+
 if __name__ == '__main__':
     act1 = Action({'subject': 'I','verb': 'help','object': 'you'})    
     act2 = Action({'subject': 'you','verb': 'help','object': 'I'})

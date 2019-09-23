@@ -107,14 +107,7 @@ class KeyedVector(collections.MutableMapping):
             if isinstance(value,float) or isinstance(value,int):
                 result[key] = value
             else:
-#            if isinstance(value,str):
-#                try:
-                result[key] = table[value]#eval(value,globals(),table)
-#                except KeyError:
-                    # Undefined reference: assume it'll get sorted out later
-#                    result[key] = value
-#            else:
-#                result[key] = value
+                result[key] = table[value]
         return result
 
     def makeFuture(self,keyList=None):

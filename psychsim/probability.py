@@ -192,6 +192,12 @@ class Distribution(dict):
         """
         return max([(self[element],element) for element in self.domain()])[1]
 
+    def entropy(self):
+        """
+        :returns: entropy (in bits) of this distribution
+        """
+        return sum([-p*math.log2(p) for p in dict.values(self)])
+
     def __add__(self,other):
         if isinstance(other,Distribution):
             result = self.__class__()
