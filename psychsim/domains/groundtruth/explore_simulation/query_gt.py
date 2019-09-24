@@ -139,6 +139,9 @@ class LogParser:
         self.filter_list = list()
         self.filter_name_i = 1
 
+        self.samples = dict()
+        self.samples_name_i = 1
+
         self.stats = dict()
         self.stats_name_i = 1
 
@@ -162,6 +165,9 @@ class LogParser:
         self.query_param[consts.NAME] = None
         self.query_param[consts.TYPE] = "all"
         self.query_param[consts.ACTORS_LIST] = list()
+        self.query_param[consts.OPERATOR] = None
+        self.query_param[consts.STAT_FCT] = None
+        self.query_param[consts.SAMPLE] = list()
 
 
 
@@ -269,6 +275,10 @@ class LogParser:
                     param_ok = self.set_p_days(" ".join(args_pair[1:]), buffer)
                     if param_ok is not True:
                         return False
+                elif p_name in consts.QUERY_PARAM[consts.SAMPLE]:
+                    param_ok = self.set_p_sample_name(" ".join(args_pair[1:]), buffer)
+                    if param_ok is not True:
+                        return False
                 else:
                     print_with_buffer("ParameterError: too many values for query parameter %s" % args, buffer)
                     return False
@@ -294,7 +304,10 @@ class LogParser:
         :return: True or False
         """
         if p_val in values_in_list:
-            self.query_param[p_name] = p_val
+            if isinstance(self.query_param[p_name], list):
+                self.query_param[p_name].append(p_val)
+            else:
+                self.query_param[p_name] = p_val
             return True
         else:
             values_in = " or ".join(values_in_list)
@@ -463,6 +476,22 @@ class LogParser:
     def set_p_statfunction(self, p_val, buffer):
         return self.set_p_with_values_in(p_name=consts.STAT_FCT, p_val=p_val, values_in_list=consts.STAT_FCT_VALUES_IN, buffer=buffer)
 
+    def set_p_sample_name(self, p_val, buffer):
+        if self.samples:
+            if p_val == "all":
+                self.query_param[consts.SAMPLE] = self.samples.keys()
+                return True
+            else:
+                possible_values = [sample[consts.name] for sample in self.samples.values()]
+                samples_names = p_val.split()
+                for s_name in samples_names:
+                    param_ok = self.set_p_with_values_in(p_name=consts.SAMPLE, p_val=s_name, values_in_list=possible_values, buffer=buffer)
+                    if not param_ok:
+                        return False
+                return True
+        else:
+            print_with_buffer("ParamterError: You have no saved samples.", buffer)
+            return False
 
 
     def set_param_value(self, p_name, p_val, buffer=None):
@@ -499,6 +528,8 @@ class LogParser:
             return self.set_p_actors_list([p_val], buffer)
         elif p_name in consts.QUERY_PARAM[consts.STAT_FCT]:
             return self.set_p_statfunction(p_val, buffer)
+        elif p_name in consts.QUERY_PARAM[consts.SAMPLE]:
+            return self.set_p_sample_name(p_val, buffer)
         else:
             print_with_buffer("ParamaterError: %s does not exists." % p_name, buffer)
             return False
@@ -525,12 +556,18 @@ class LogParser:
         :return:
         """
         if self.parse_query(query, buffer=buffer):
+            # General methods
             if self.command in consts.COMMAND_GET_NDAYS:
                 self.get_ndays(buffer)
             elif self.command in consts.COMMAND_GET_NACTORS:
                 self.get_nactors(buffer)
             elif self.command in consts.COMMAND_GET_VALUES:
                 self.get_att_values(self.query_param[consts.ACTOR], p_days=self.query_param[consts.DAYS], buffer=buffer)
+            elif self.command in consts.COMMAND_GET_ENTITIES:
+                self.get_entities(buffer)
+            elif self.command in consts.COMMAND_GET_ATTNAMES:
+                self.get_attributes(p_entity=self.query_param[consts.ENTITY], buffer=buffer)
+            # Select actors
             elif self.command in consts.COMMAND_SELECT_NACTORS:
                 self.select_nactors(p_n=self.query_param[consts.NUMBER], p_mode_select=self.query_param[consts.MODE_SELECTION], buffer=buffer)
             elif self.command in consts.COMMAND_SHOW_SELECTION:
@@ -542,18 +579,22 @@ class LogParser:
             elif self.command in consts.COMMAND_APPLY_FILTER:
                 p_days, p_att, p_val, p_op, p_name = self.query_param[consts.DAYS], self.query_param[consts.ATTRIBUTE], self.query_param[consts.ATTRIBUTE_VAL], self.query_param[consts.OPERATOR], self.query_param[consts.NAME]
                 self.apply_filter(p_days=p_days, p_att=p_att, p_val=p_val, p_operator=p_op, p_name=p_name, buffer=buffer)
-            elif self.command in consts.COMMAND_GET_ENTITIES:
-                self.get_entities(buffer)
-            elif self.command in consts.COMMAND_GET_ATTNAMES:
-                self.get_attributes(p_entity=self.query_param[consts.ENTITY], buffer=buffer)
             elif self.command in consts.COMMAND_DEACTIVATE_FILTER:
                 self.deactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
             elif self.command in consts.COMMAND_REACTIVATE_FILTER:
                 self.reactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
             elif self.command in consts.COMMAND_SELECT_ACTORS_BY_NAME:
                 self.select_actors_by_name(p_list_names=self.query_param[consts.ACTORS_LIST], buffer=buffer)
+            # Samples
+            elif self.command in consts.COMMAND_SAVE_SAMPLE:
+                self.save_sample(p_name=self.query_param[consts.NAME], buffer=buffer)
+            elif self.command in consts.COMMAND_DISPLAY_SAMPLES:
+                self.display_samples(buffer)
+            elif self.command in consts.COMMAND_DISPLAY_ONE_SAMPLE:
+                self.display_one_sample(p_name=self.query_param[consts.NAME], buffer=buffer)
+            # Stats
             elif self.command in consts.COMMAND_GET_STATS:
-                self.get_stats(p_att=self.query_param[consts.ATTRIBUTE], p_fct=self.query_param[consts.STAT_FCT], p_days=self.query_param[consts.DAYS], p_name=self.query_param[consts.name], buffer=buffer)
+                self.get_stats(p_att=self.query_param[consts.ATTRIBUTE], p_fct=self.query_param[consts.STAT_FCT], p_days=self.query_param[consts.DAYS], p_sample_names=self.query_param[consts.SAMPLE], buffer=buffer)
             else:
                 print_with_buffer("QueryError: \"%s\" command unknown" % self.command, buffer)
         else:
@@ -601,7 +642,7 @@ class LogParser:
         :return:
         """
         if p_entity:
-            print_with_buffer("The attributes associated with the category %s are: %s." % (p_entity, " ,".join(self.entities_att_list[p_entity])), buffer)
+            print_with_buffer("The attributes associated with the category %s are: %s." % (p_entity, ", ".join(self.entities_att_list[p_entity])), buffer)
         else:
             print_with_buffer("MssingParamterError: expecting an entity", buffer)
 
@@ -695,7 +736,7 @@ class LogParser:
             print_with_buffer(", ".join(self.selected_agents), buffer)
 
 
-    def filters_to_str(self, f):
+    def filters_to_str(self, f, display_activation_status=True):
         """
         Creates a string describing the filter.
         :param f: filter object
@@ -709,8 +750,10 @@ class LogParser:
             else:
                 str_days_list.append(d.__str__())
         str_days = ", ".join(str_days_list)
-        return f[consts.NAME] + ": " + f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " at " + consts.DAYS + "(s) " + str_days + "  (" + active + ")"
-
+        str = f[consts.NAME] + ": " + f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " at " + consts.DAYS + "(s) " + str_days
+        if display_activation_status:
+            str += "  (" + active + ")"
+        return str
 
     def display_filters(self, type=consts.all_values[0], buffer=None):
         """
@@ -887,10 +930,93 @@ class LogParser:
             else:
                 print_with_buffer("Filter %s is already active" % p_name, buffer)
 
+
+
+    ## ---------------------------------------       Save sample of agents   -------------------------------- ##
+    ## ------------------------------------------------------------------------------------------------------ ##
+
+    def save_sample(self, p_name=None, buffer=None):
+        this_sample_exists, s = self.get_sample(p_name, buffer)
+        if this_sample_exists:
+            str = "Warning: this sample already exists."
+            if p_name != s[consts.name] :
+                str += " It is saved with the name %s and will NOT be renamed with the name you provided (%s)" % (s[consts.name], p_name)
+        else:
+            if s:
+                str = "Error: another sample already has this name. Choose another name for your sample to save it."
+            else:
+                new_sample = self.create_new_sample(p_name, buffer)
+                sample_name = new_sample[consts.name]
+                self.samples[sample_name] = new_sample
+                str = "A new sample was created (%s)" % sample_name
+                s = new_sample
+        print_with_buffer(str, buffer)
+        return  s
+
+
+    def create_new_sample(self, p_name, buffer):
+        new_sample = dict()
+        if not p_name:
+            p_name = "sample_" + self.samples_name_i.__str__()
+            self.samples_name_i += 1
+        new_sample[consts.name] = p_name
+        new_sample[consts.ACTORS_LIST] = copy.deepcopy(self.selected_agents)
+        new_sample[consts.filters] = list()
+        for f in self.filter_list:
+            if f[consts.active]:
+                new_sample[consts.filters].append(f)
+        return new_sample
+
+
+    def get_sample(self, p_name=None, buffer=None):
+        for s in self.samples.values():
+            if s[consts.ACTORS_LIST] == self.selected_agents:
+                return True, s
+        if p_name and p_name in self.samples.keys():
+            return False, self.samples[p_name]
+        else:
+            return False, False
+
+    def display_samples(self, buffer=None):
+        if self.samples:
+            str = "Your samples are:"
+            for s in self.samples.values():
+                str += "\n - %s, %d actors " % (s[consts.name], len(s[consts.ACTORS_LIST]))
+                str += self.sample_selection_method_str(sample=s)
+            str += "\n[Note: To see the list of actors for each filter, use command \"display one_sample -name nameofyoursample\"]"
+
+        else:
+            str = "You have no saved samples."
+        print_with_buffer(str, buffer)
+
+    def sample_selection_method_str(self, sample, display_full_filter=False):
+        if sample[consts.filters]:
+            if display_full_filter:
+                str_filters = "\n\t- " + "\n\t- ".join([self.filters_to_str(f, display_activation_status=False) for f in sample[consts.filters]])
+            else:
+                str_filters = ", ".join([f[consts.name] for f in sample[consts.filters]])
+            str = "selected through filters %s" % str_filters
+        else:
+            str = "selected randomly."
+        return str
+
+    def display_one_sample(self, p_name, buffer=None):
+        if p_name in self.samples.keys():
+            sample = self.samples[p_name]
+            selection_method_str = self.sample_selection_method_str(sample, True)
+            str = "Actors in sample %s are: %s.\nThey were %s" % (p_name, ", ".join(sample[consts.ACTORS_LIST]), selection_method_str)
+            print_with_buffer(str, buffer)
+
+        else:
+            str = "ParameterError: There is no sample with this name."
+            print_with_buffer(str, buffer)
+            self.display_samples(buffer)
+
+
     ## ---------------------------------------      Get and compute Stats    -------------------------------- ##
     ## ------------------------------------------------------------------------------------------------------ ##
 
-    def get_stats(self, p_att, p_fct, p_days=[], p_name=None, buffer=None):
+    def get_stats(self, p_att, p_fct, p_days=[], p_sample_names=[], buffer=None):
         """
         Execute a user query involving stats.
         :param p_att:
@@ -901,25 +1027,37 @@ class LogParser:
         :return:
         """
         print(p_fct)
+        print(p_sample_names)
+
         if not p_days:
             p_days = list(range(1, self.n_days))
 
-        stat_obj = self.get_stat_obj(p_fct=p_fct, p_att=p_att, p_days=p_days, p_name=p_name, p_val=None, p_op=None)
-        if stat_obj:
-            if p_name:
-                print_with_buffer("Warning: This stat was already computed and named %s - the name you provided (%s) is ignored." % (stat_obj[p_name], p_name), buffer)
-        else:
-            if not p_name:
-                p_name = "stat" + self.stats_name_i.__str__() + "_" + p_fct
-                self.stats_name_i += 1
-            stat_obj = self.compute_stats(p_att=p_att, p_fct=p_fct, p_days=p_days, p_name=p_name, buffer=buffer)
-        self.plot_stats(stat_res=stat_obj[consts.stat_res], p_att=p_att, p_fct=p_fct, p_days=p_days, p_name=p_name, buffer=buffer)
+        if not p_sample_names:
+            print_with_buffer("You did not specify for which sample you want to get the stats. We'll use your current selection and create a new sample with it.")
+            sample = self.save_sample(p_name=None, buffer=buffer)
+            p_sample_names = list(sample[consts.name])
+
+        stat_objects_list = list()
+
+        for sample_name in p_sample_names:
+            print("\n")
+            print("here we are, printing obj, for sample ", sample_name)
+            stat_obj = self.get_stat_obj(p_sample_name=sample_name, p_att=p_att)
+            if not stat_obj:
+                stat_obj = self.compute_stats(p_sample_name=sample_name, p_att=p_att, p_days=p_days, p_name=sample_name, buffer=buffer)
+
+            print(stat_obj)
 
 
-    def compute_stats(self, p_att, p_fct, p_days=[], p_name=None, buffer=None):
+            stat_objects_list.append(stat_obj)
+
+        self.plot_stats(stat_objects_list=stat_objects_list, p_att=p_att, p_fct=p_fct, p_days=p_days, buffer=buffer)
+
+
+    def compute_stats(self, p_sample_name, p_att, p_days=[], p_name=None, buffer=None):
         """
         Compute stats --> creates a new stat object that is saved in self.stats
-        :param p_att:
+        :param p_sample_name:
         :param p_fct:
         :param p_days:
         :param p_name:
@@ -928,7 +1066,7 @@ class LogParser:
         """
         print_with_buffer("Wait, computing stats... ")
         # get stat values (all)
-        new_stat = self.create_new_stat_obj(p_fct, p_att, p_days, p_name)
+        new_stat = self.create_new_stat_obj(p_sample_name, p_name, p_att)
         stat_res = dict()
         for fct in consts.STAT_FCT_VALUES_IN:
             stat_res[fct] = dict()
@@ -936,8 +1074,11 @@ class LogParser:
         min_overall_values = []
         max_val = []
 
+        # print(self.samples[p_sample_name])
+        # print(self.samples[p_sample_name][consts.ACTORS_LIST])
+
         for day in p_days:
-            values = self.get_att_val(self.selected_agents, p_att, day)
+            values = self.get_att_val(self.samples[p_sample_name][consts.ACTORS_LIST], p_att, day)
             stat_res[consts.val_list][day] = values
             stat_res[consts.mean][day] = statistics.mean(values)
             stat_res[consts.median][day] = statistics.median(values)
@@ -978,7 +1119,7 @@ class LogParser:
         return new_stat
 
 
-    def get_stat_obj(self, p_fct, p_att, p_days, p_name, p_val=None, p_op=None):
+    def get_stat_obj(self, p_sample_name, p_att):
         """
         Returns a stat object is it already exists.
         :param p_fct:
@@ -989,17 +1130,14 @@ class LogParser:
         :param p_op:
         :return:
         """
-        if p_name in self.stats.keys():
-            return self.stats[p_name]
+        print("trying to finf stat obh with p_name = " + p_sample_name.__str__())
+        if p_sample_name in self.stats.keys():
+            return self.stats[p_sample_name]
         else:
-            for s in self.stats.values():
-                # if s[consts.STAT_FCT] == p_fct and s[consts.ATTRIBUTE] == p_att and s[consts.DAYS] == p_days and s[consts.ATTRIBUTE_VAL] == p_val and s[consts.OPERATOR] == p_op:
-                if s[consts.actor_sample] == self.selected_agents:
-                    return s
-        return False
+            return False
 
 
-    def create_new_stat_obj(self, p_fct, p_att, p_days, p_name, p_val=None, p_op=None):
+    def create_new_stat_obj(self, p_sample_name, p_name, p_att):
         """
         Creates a new empty stat object
         :param p_fct:
@@ -1011,21 +1149,18 @@ class LogParser:
         :return:
         """
         new_stat = dict()
-        # new_stat[consts.STAT_FCT] = p_fct
-        # new_stat[consts.ATTRIBUTE] = p_att
-        # new_stat[consts.DAYS] = p_days
         new_stat[consts.NAME] = p_name
-        new_stat[consts.actor_sample] = self.selected_agents
-        # new_stat[consts.ATTRIBUTE_VAL] = p_val
-        # new_stat[consts.OPERATOR] = p_op
+        new_stat[consts.actor_sample] = p_sample_name
+        new_stat[consts.ATTRIBUTE] = p_att
         new_stat[consts.stat_res] = dict()
         return new_stat
+
 
 
     ## ---------------------------------------           Plot Stats          -------------------------------- ##
     ## ------------------------------------------------------------------------------------------------------ ##
 
-    def plot_stats(self, stat_res, p_att, p_fct, p_days=[], p_name=None, buffer=None):
+    def plot_stats(self, stat_objects_list, p_att, p_fct, p_days=[], buffer=None):
         """
         Plots the stat ask asks by in the user command.
         :param stat_res:
@@ -1036,33 +1171,61 @@ class LogParser:
         :param buffer:
         :return:
         """
-
-        title = p_fct + " of " + p_att + " for the %d actors selected" % len(self.selected_agents)
-        x_list, y_list = list(), list()
-
-        if p_fct == consts.val_list:
-            plotting_for_multiple_agents = isinstance(stat_res[consts.val_list][p_days[0]], list)
-            if plotting_for_multiple_agents:
-                # for each agent
-                for i in range(len(stat_res[consts.val_list][p_days[0]])):
-                    list_values_y_for_agent_i = list()
-                    list_values_x_for_agent_i = list()
-                    # for each day
-                    for day in stat_res[consts.val_list].keys():
-                        list_values_x_for_agent_i.append(day)
-                        list_values_y_for_agent_i.append(stat_res[consts.val_list][day][i])
-                    x_list.append(list_values_x_for_agent_i)
-                    y_list.append(list_values_y_for_agent_i)
-                self.plot_multiple_agents(x_lists=x_list, y_lists=y_list, y_label=p_att, title=title)
-        else:
-            for x_elt, y_elt in stat_res[p_fct].items():
-                x_list.append(x_elt)
-                y_list.append(y_elt)
-            self.plot(x_list=x_list, y_list=y_list, y_label=p_att, title=title)
+        only_one = True if len(stat_objects_list) == 1 else False
 
 
+        for j, stat_obj in enumerate(stat_objects_list):
 
-    def plot_multiple_agents(self, x_lists, y_lists, y_label, title):
+            print(stat_obj[consts.NAME])
+
+            stat_res = stat_obj[consts.stat_res]
+            sample = self.samples[stat_obj[consts.actor_sample]]
+            sample_info_str = " for the %d actors\nof sample %s" % (len(sample[consts.ACTORS_LIST]), sample[consts.name])
+
+            if only_one:
+                title = p_fct + " of " + p_att + sample_info_str
+                label = None
+            else:
+                title = p_fct + " of " + p_att
+                label = sample_info_str
+            x_list, y_list = list(), list()
+
+            if p_fct == consts.val_list:
+                plotting_for_multiple_agents = isinstance(stat_res[consts.val_list][p_days[0]], list)
+                if plotting_for_multiple_agents:
+                    # for each agent
+                    for i in range(len(stat_res[consts.val_list][p_days[0]])):
+                        list_values_y_for_agent_i = list()
+                        list_values_x_for_agent_i = list()
+                        # for each day
+                        for day in stat_res[consts.val_list].keys():
+                            list_values_x_for_agent_i.append(day)
+                            list_values_y_for_agent_i.append(stat_res[consts.val_list][day][i])
+                        x_list.append(list_values_x_for_agent_i)
+                        y_list.append(list_values_y_for_agent_i)
+                    if only_one:
+                        self.plot_multiple_agents(x_lists=x_list, y_lists=y_list, y_label=p_att, title=title, label=None, color=None)
+                    else:
+                        self.plot_multiple_agents(x_lists=x_list, y_lists=y_list, y_label=p_att, title=title, label=label, color=consts.colors[j])
+            else:
+                for x_elt, y_elt in stat_res[p_fct].items():
+                    x_list.append(x_elt)
+                    y_list.append(y_elt)
+                self.plot(x_list=x_list, y_list=y_list, label=label, color=consts.colors[j])
+
+                plt.title(title)
+                plt.xticks(x_list)
+                plt.axes().set_xticklabels(x_list)
+                plt.ylabel(p_att)
+                plt.xlabel(consts.DAYS)
+                plt.gca().legend()
+
+        plt.show()
+
+
+
+
+    def plot_multiple_agents(self, x_lists, y_lists, y_label, title, label, color):
         """
         Plots values for multiple agents (list of individual values).
         :param x_lists:
@@ -1076,22 +1239,30 @@ class LogParser:
         y_flattened = [item for sublist in y_lists for item in sublist]
         c = Counter(zip(x_flattened,y_flattened))
         s = [10*c[(xx,yy)] for xx,yy in zip(x_flattened, y_flattened)]
-        plt.scatter(x_flattened, y_flattened, s=s)
+        if color:
+            plt.scatter(x_flattened, y_flattened, s=s, color=color)
+        else:
+            plt.scatter(x_flattened, y_flattened, s=s)
 
         # Connect points
         for i in range(len((x_lists))):
             x_one_agent = x_lists[i]
             y_one_agent = y_lists[i]
-            self.plot_one_of_multiple_agents(x_one_agent, y_one_agent, plt)
+            if i == 0:
+                self.plot_one_of_multiple_agents(x_one_agent, y_one_agent, color, label)
+            else:
+                self.plot_one_of_multiple_agents(x_one_agent, y_one_agent, color, None)
 
         plt.title(title)
         plt.xticks(x_flattened)
         plt.axes().set_xticklabels(x_flattened)
         plt.ylabel(y_label)
         plt.xlabel(consts.DAYS)
-        plt.show()
+        plt.gca().legend()
+        # plt.show()
+        return plt
 
-    def plot_one_of_multiple_agents(self, x_list, y_list, plt):
+    def plot_one_of_multiple_agents(self, x_list, y_list, color, label):
         """
         Plots values for one of multiple agents --> adds points in an already existing plot.
         :param x_list:
@@ -1099,9 +1270,21 @@ class LogParser:
         :param plt:
         :return:
         """
-        plt.plot(x_list, y_list)
+        if color:
+            if label:
+                plt.plot(x_list, y_list, color=color, label=label)
+            else:
+                plt.plot(x_list, y_list, color=color)
+        else:
+            plt.plot(x_list, y_list)
 
-    def plot(self, x_list, y_list, y_label, title):
+    def get_density(self, x_list, y_list):
+        c = Counter(zip(x_list,y_list))
+        s = [10*c[(xx,yy)] for xx,yy in zip(x_list,y_list)]
+        return s
+
+
+    def plot(self, x_list, y_list, label=None, color=consts.colors[0]):
         """
         Plots agregated values in one stat function, e.g. "mean".
         :param x_list:
@@ -1110,21 +1293,15 @@ class LogParser:
         :param title:
         :return:
         """
-        # for xe, ye in zip(x_list, y_list):
-        #     plt.scatter([xe] * len(ye), ye)
+        plt.scatter(x_list, y_list, s=self.get_density(x_list, y_list), color=color)
+        plt.plot(x_list, y_list, color=color, label=label)
+        # plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        # plt.show()
+        return plt
 
-        c = Counter(zip(x_list,y_list))
-        s = [10*c[(xx,yy)] for xx,yy in zip(x_list,y_list)]
-
-        plt.scatter(x_list, y_list, s=s)
-        plt.plot(x_list, y_list)
-        plt.title(title)
-
-        plt.xticks(x_list)
-        plt.axes().set_xticklabels(x_list)
-        plt.ylabel(y_label)
-        plt.xlabel(consts.DAYS)
-        plt.show()
+    def add_to_plot(self, x_list, y_list, plt, color):
+        plt.scatter(x_list, y_list, s=self.get_density(x_list, y_list), color=consts.colors[0])
+        plt.plot(x_list, y_list, color=consts.colors[0])
 
 
     ## ---------------------------------------   Query on one specific agent -------------------------------- ##
@@ -1195,7 +1372,7 @@ class LogParser:
                 self.execute_query(preprocess(query))
             else:
                 if i == 0:
-                    next = input(colored("We thought we would make it easy for you :-)\nWe will walk you through an example with pre-written queries. You'll just have to press \"y\" execute the next query when you're ready.\nShould we start? (y: yes, q: quit) > ", "red"))
+                    next = input(colored("We thought we would make it easy for you :-)\nWe will walk you through an example with pre-written queries. You'll just have to press \"y\" to execute the next query when you're ready.\nShould we start? (y: yes, q: quit) > ", "red"))
                     if next.lower() == "q":
                         exit(1)
                 print(colored(text, "blue"))

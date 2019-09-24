@@ -12,77 +12,85 @@
         "explanations": "How many Actors are there in the simulation?"
     },
     {
-        "command": "apply filter -attribute health -value 0.8 -operator >= -day 16",
-        "explanations": "Select Actors that are in good health on the last day of the simulation."
+        "command": "apply filter -attribute childrenHealth -value 0.8 -operator >= -days 1 to 16 -name healthychildren",
+        "explanations": "Now let's try to create a sample of acotrs to survey. Let's select actors whose children are healthy through the simulation. Give a name to this filter: \"healthychildren\""
+    },
+    {
+        "command": "select n_actors -number 10",
+        "explanations": "OK let's select only 10."
+    },
+    {
+        "command": "create sample -name healthyChildren",
+        "explanations": "And let's create a sample with those agents."
+    },
+    {
+        "command": "reset selection",
+        "explanations": "We'll come back to the samples later. Now let's reset the selection..."
+    },
+    {
+        "command": "apply filter -attribute employed -value 1 -operator = -days 1",
+        "explanations": "...and create other filters. We want agents that are employed on the 1st day of the simulation... "
+    },
+    {
+        "command": "apply filter -attribute resources -value 0.9 -operator >= -days 1",
+        "explanations": "... and that have a lot of resources (at the beginning of the simulation)"
 
     },
     {
-        "command": "apply filter -attribute childrenHealth -value 0.8 -operator >= -days 1, 16 -name healthychildren",
-        "explanations": "Refine search by selecting actors whose children are healthy as well on the first AND the last day. Give a name to this filter: \"healthychildren\""
-    },
-    {
-        "command": "apply filter -attribute employed -value 1 -operator = -days 1 to 16",
-        "explanations": "Out of those, get me the ones that were employed through the simulation..."
-    },
-    {
-        "command": "apply filter -attribute region -value 1 -operator = -days 1, 3, 5, 13 to 16",
-        "explanations": "And out of those, who is in Region 1 on days 1, 3, 5, 13 to 16?"
+        "command": "apply filter -attribute region -value 1 -operator = -days 1",
+        "explanations": "Out of those, let's check how many are in regions 1."
 
     },
     {
         "command": "show filters -type all",
-        "explanations": "Show me which filters are active."
+        "explanations": "Let's check our filters, see which ones are currently active."
     },
     {
-        "command": "deactivate filter -name healthychildren",
-        "explanations": "Deactivate the healthychildren filter."
+        "command": "select n_actors -number 10",
+        "explanations": "You want to ramdomly select 10 agents that that are employed and have lots of resources."
     },
     {
-        "command": "reactivate filter -name healthychildren",
-        "explanations": "No, you changed your mind again, that was a mistake, reactivate the healthychildren filter!"
-    },
-    {
-        "command": "reset selection",
-        "explanations": "Let's reset the selection..."
-    },
-    {
-        "command": "select n_actors -number 50",
-        "explanations": "You want to ramdomly select 50 agents that fulfil all your criteria (filters)."
+        "command": "create sample -name employed+resources",
+        "explanations": "And let's create a sample with those agents."
     },
     {
         "command": "select actors_by_name -actors_list 22 45 67",
-        "explanations": "Among those actors, select 3. You want # 22, 45 and 76"
+        "explanations": "We'll come back to our sample later, first let's finish to explore how we can select agents.\nAnother possibility is to select agents by name. For example, let's select 3 of them. You want # 22, 45 and 76"
     },
     {
         "command": "show filters -type all",
-        "explanations": "Check what filters are inactive."
+        "explanations": "Check that filters are inactive."
     },
     {
         "command": "reset selection",
         "explanations": "Let's reset the selection..."
     },
     {
-        "command": "select n_actors -number 20",
-        "explanations": "You now want to randomly select 20 agents for a survey."
+        "command": "select n_actors -number 10",
+        "explanations": "You now want to randomly select 10 agents for a survey."
     },
     {
-        "command": "get stats -stat_function list -attribute health -days 1 to 16",
-        "explanations": "What is their health through the simulation?"
+        "command": "create sample -name randomSelection",
+        "explanations": "This will be our last sample. Let's name it randomSelection."
     },
     {
-        "command": "reset selection",
-        "explanations": "Reset the selection..."
+        "command": "display samples",
+        "explanations": "Now let's display our samples."
     },
     {
-        "command": "select n_actors -number 20",
-        "explanations": "...change the sample..."
+        "command": "display one_sample -name employed+resources",
+        "explanations": "As it's not super clear because we did not give explicit names to our filters, let's get more details about our employed+resources sample."
     },
     {
-        "command": "get stats -stat_function list -attribute health -days 1 to 16",
-        "explanations": "...and display the health again."
+        "command": "get stats -stat_function list -attribute health -days 1 to 16 -sample randomSelection",
+        "explanations": "We're interested in the health of our actors. For the randomSelection sample, let's plot the health."
     },
     {
-        "command": "get stats -stat_function actor_with_min_value_overall -attribute health -days 1 to 16",
-        "explanations": "Okay, now what about the mean value of health for those agents?"
+        "command": "get stats -stat_function mean -attribute health -days 1 to 16 -samples all",
+        "explanations": "Now let's look at the health of the actors in our 2 samples."
+    },
+    {
+        "command": "get stats -stat_function list -attribute health -days 1 to 16 -samples all",
+        "explanations": "We can even plot the values of health for all actors of these 3 samples, but it may get a bit messy!."
     }
 ]
