@@ -178,7 +178,7 @@ class LogParser:
         :return:
         """
         if not os.path.isdir(self.logs_dir):
-            print("%s is not a directory. The instance or the run specified does not exists." % self.logs_dir, buffer)
+            print_with_buffer("%s is not a directory. The instance or the run specified does not exists." % self.logs_dir, buffer)
             exit(0)
         self.n_days = int((helper.count_files(self.logs_dir, ext="pkl") - 1) / 3)
 
@@ -857,10 +857,8 @@ class LogParser:
                 new_selection = copy.deepcopy(self.selected_agents)
                 for d in p_days:
                     att_values = self.get_att_val(actors_list=new_selection, p_att=p_att, p_day=d)
-                    # print(att_values)
                     old_selection = copy.deepcopy(new_selection)
                     new_selection = list()
-                    # print(len(att_values), len(old_selection))
                     for i, agent in enumerate(old_selection):
                         if helper.compare(att_values[i], v2=p_val, op=p_operator):
                             new_selection.append(agent)
@@ -1026,9 +1024,6 @@ class LogParser:
         :param buffer:
         :return:
         """
-        print(p_fct)
-        print(p_sample_names)
-
         if not p_days:
             p_days = list(range(1, self.n_days))
 
@@ -1040,14 +1035,9 @@ class LogParser:
         stat_objects_list = list()
 
         for sample_name in p_sample_names:
-            print("\n")
-            print("here we are, printing obj, for sample ", sample_name)
             stat_obj = self.get_stat_obj(p_sample_name=sample_name, p_att=p_att)
             if not stat_obj:
                 stat_obj = self.compute_stats(p_sample_name=sample_name, p_att=p_att, p_days=p_days, p_name=sample_name, buffer=buffer)
-
-            print(stat_obj)
-
 
             stat_objects_list.append(stat_obj)
 
@@ -1074,8 +1064,6 @@ class LogParser:
         min_overall_values = []
         max_val = []
 
-        # print(self.samples[p_sample_name])
-        # print(self.samples[p_sample_name][consts.ACTORS_LIST])
 
         for day in p_days:
             values = self.get_att_val(self.samples[p_sample_name][consts.ACTORS_LIST], p_att, day)
@@ -1104,8 +1092,6 @@ class LogParser:
                     max_val[i] += v
                 _, idx_max = max((val, idx) for (idx, val) in enumerate(values))
 
-        print("min_ever", "min_overall")
-        print(min_idx, min_overall_idx)
 
         for day in p_days:
             stat_res[consts.min_ever_actor][day] = stat_res[consts.val_list][day][min_idx]
@@ -1130,7 +1116,6 @@ class LogParser:
         :param p_op:
         :return:
         """
-        print("trying to finf stat obh with p_name = " + p_sample_name.__str__())
         if p_sample_name in self.stats.keys():
             return self.stats[p_sample_name]
         else:
@@ -1176,7 +1161,6 @@ class LogParser:
 
         for j, stat_obj in enumerate(stat_objects_list):
 
-            print(stat_obj[consts.NAME])
 
             stat_res = stat_obj[consts.stat_res]
             sample = self.samples[stat_obj[consts.actor_sample]]
