@@ -30,14 +30,26 @@ boilerPlate = [
     {'Name': 'Timestep','Values': '[1+]','VarType': 'dynamic','DataType': 'Integer'},
     {'Name': 'Age','Values': '[0-100]','VarType': 'dynamic','DataType': 'Integer'},
     {'Name': 'Children','Values': '[0-10]','VarType': 'dynamic','DataType': 'Integer'},
-    {'Name': 'Ethnicity','Values': 'majority,minority','VarType': 'fixed','DataType': 'String'},
+    {'Name': 'Ethnicity','Values': 'majority,minority','VarType': 'dynamic','DataType': 'String'},
     {'Name': 'Fulltime Job','Values': 'yes,no','VarType': 'dynamic','DataType': 'Boolean'},
-    {'Name': 'Gender','Values': 'female,male','VarType': 'fixed','DataType': 'String'},
+    {'Name': 'Gender','Values': 'female,male','VarType': 'dynamic','DataType': 'String'},
     {'Name': 'Pets','Values': 'yes,no','VarType': 'dynamic','DataType': 'Boolean'},
-    {'Name': 'Religion','Values': 'majority,minority,none','VarType': 'fixed','DataType': 'String'},
-    {'Name': 'Residence','Values': 'Region[01-16]','VarType': 'fixed','DataType': 'String'},
+    {'Name': 'Religion','Values': 'majority,minority,none','VarType': 'dynamic','DataType': 'String'},
+    {'Name': 'Residence','Values': 'Region[01-16]','VarType': 'dynamic','DataType': 'String'},
     {'Name': 'Wealth','Values': '[1-7]','VarType': 'dynamic','DataType': 'Integer'},    
     ]
+
+boilerDict = {'Age': {'Name': 'Age','Values': '[0-100]','VarType': 'dynamic','DataType': 'Integer'},
+    'Children': {'Name': 'Children','Values': '[0-10]','VarType': 'dynamic','DataType': 'Integer'},
+    'Ethnicity': {'Name': 'Ethnicity','Values': 'majority,minority','VarType': 'fixed','DataType': 'String'},
+    'Fulltime Job': {'Name': 'Fulltime Job','Values': 'yes,no','VarType': 'dynamic','DataType': 'Boolean'},
+    'Gender:': {'Name': 'Gender','Values': 'female,male','VarType': 'fixed','DataType': 'String'},
+    'Pets': {'Name': 'Pets','Values': 'yes,no','VarType': 'dynamic','DataType': 'Boolean'},
+    'Religion': {'Name': 'Religion','Values': 'majority,minority,none','VarType': 'fixed','DataType': 'String'},
+    'Residence': {'Name': 'Residence','Values': 'Region[01-16]','VarType': 'fixed','DataType': 'String'},
+    'Wealth': {'Name': 'Wealth','Values': '[1-7]','VarType': 'dynamic','DataType': 'Integer'},    
+    }
+
 def value2dist(value,notes=None,cls=None):
     if ',' in value:
         probs = [float(v) for v in value.split(',')]
