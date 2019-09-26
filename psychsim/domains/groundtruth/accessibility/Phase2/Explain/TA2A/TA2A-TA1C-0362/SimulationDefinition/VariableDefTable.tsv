@@ -1,0 +1,22 @@
+Name	LongName	Values	VarType	DataType	Notes
+Age	Age	[0-100]	dynamic	Integer	
+Children	Children	[0-10]	dynamic	Integer	
+Ethnicity	Ethnicity	majority,minority	fixed	String	
+Fulltime Job	Fulltime Job	yes,no	dynamic	Boolean	
+Gender	Gender	female,male	fixed	String	
+Pets	Pets	yes,no	dynamic	Boolean	
+Religion	Religion	majority,minority,none	fixed	String	
+Residence	Residence	Region[01-16]	fixed	String	
+Wealth	Wealth	[1-7]	dynamic	Integer	
+TA2A 362 Dissatisfaction	TA2A 362 Dissatisfaction	[0-6]	dynamic	Integer	QI.2
+TA2A 362 Aid Eagerness	TA2A 362 Aid Eagerness	[0-6]	dynamic	Integer	QI.2
+TA2A 362 Location	TA2A 362 Location	evacuated,shelter,home	dynamic	String	Q1
+TA2A 362 Injury	TA2A 362 Injury	none,minor,serious	dynamic	String	Q2a
+TA2A 362 Minor Injury Possibility	TA2A 362 Minor Injury Possibility	[0-6],NA	dynamic	Integer	Q2b
+TA2A 362 Serious Injury Possibility	TA2A 362 Serious Injury Possibility	[0-6],NA	dynamic	Integer	Q2b
+TA2A 362 Received Aid	TA2A 362 Received Aid	yes,no	dynamic	Boolean	Q3
+TA2A 362 Aid Adequacy	TA2A 362 Aid Adequacy	[0-6]	dynamic	Integer	Q3
+TA2A 362 Risk Change	TA2A 362 Risk Change	[-6,6]	dynamic	Integer	Q4
+TA2A 362 Injury Possibility Change	TA2A 362 Injury Possibility Change	[-6,6]	dynamic	Integer	Q4a
+TA2A 362 Aid	TA2A 362 Aid	yes,no	dynamic	Boolean	QII.2
+TA2A 362 Non-Financial Aid	TA2A 362 Non-Financial Aid	yes,no	dynamic	Boolean	QII.3
