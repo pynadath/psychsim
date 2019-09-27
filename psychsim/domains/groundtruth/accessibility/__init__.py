@@ -28,10 +28,12 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 85,'run': 1,'span': 189},
     {'instance': 90,'run': 0,'span': 123},
     {'instance': 100,'run': 0,'span': 122},
-    {'instance': 101,'run': 0,'span': 135}]
+    {'instance': 101,'run': 0,'span': 135},
+    {'instance': 100,'run': 2,'span': 93},
+    {'instance': 101,'run': 1,'span': 130},]
     
 instanceMap = {'Phase1': {'Explain': [1], 'Predict': [3,4,5,6,7,8], 'Prescribe': [9,10,11,12,13,14]},
-    'Phase2': {'Explain': [15,16,17]},
+    'Phase2': {'Explain': [15,16,17], 'Predict': [18,19]},
     'Phase3': {},
     }
 def instanceArgs(phase,challenge):
