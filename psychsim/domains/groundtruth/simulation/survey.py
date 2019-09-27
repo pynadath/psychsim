@@ -11,21 +11,47 @@ from psychsim.action import *
 from psychsim.probability import Distribution
 from psychsim.domains.groundtruth import accessibility
 
-fields = {'Population': ['Timestep','Deaths','Casualties','Evacuees','Sheltered'],
-    'Regional': ['Timestep','Region','Deaths','Casualties','Sheltered'],
+fields = {#'Population': ['Timestep','Deaths','Casualties','Evacuees','Sheltered'],
+    #'Regional': ['Timestep','Region','Deaths','Casualties','Sheltered'],
     'Hurricane': ['Timestep','Name','Category','Location','Landed'],
-    'ActorPre': ['Participant','Timestep','Hurricane']+sorted(accessibility.demographics.keys())+['At Shelter','Evacuated','Anticipated Shelter',
-        'Anticipated Evacuation','Category','Risk'],
-    'ActorPost': ['Participant','Timestep','Hurricane']+sorted(accessibility.demographics.keys())+['At Shelter','Evacuated','Injured',
-        'Risk','Dissatisfaction','Shelter Possibility','Evacuation Possibility','Stay at Home Possibility']
+    #'ActorPre': ['Participant','Timestep','Hurricane']+sorted(accessibility.demographics.keys())+['At Shelter','Evacuated','Anticipated Shelter',
+    #    'Anticipated Evacuation','Category','Risk'],
+    #'ActorPost': ['Participant','Timestep','Hurricane']+sorted(accessibility.demographics.keys())+['At Shelter','Evacuated','Injured',
+    #    'Risk','Dissatisfaction','Shelter Possibility','Evacuation Possibility','Stay at Home Possibility'],
+    'RunData': accessibility.fields['RunData'],
+    'InstanceVariable': accessibility.fields['InstanceVariable'],
 }
 
-def doPopulation(world,state,actors,t):
+def doPopulation(world,state,actors,t,variables,entity,prefix=''):
+    data = []
+    var = '%sDeaths' % (prefix)
     living = {name for name in actors if world.getState(name,'alive',state).first()}
-    return {'Timestep': t,'Deaths': len(actors)-len(living), 
-        'Casualties': len([name for name in actors if float(world.getState(name,'health',state)) < 0.2]),
-        'Evacuees': len([name for name in living if world.getState(name,'location',state).first() == 'evacuated']),
-        'Sheltered': len([name for name in living if world.getState(name,'location',state).first()[:7] == 'shelter'])}
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[0+]','DataType': 'Integer'}
+    record = {'Timestep': t,'VariableName': var,'EntityIdx': entity,'Value': len(actors)-len(living)}
+    data.append(record)
+    var = '%sCasualties' % (prefix)
+    living = {name for name in actors if world.getState(name,'alive',state).first()}
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[0+]','DataType': 'Integer'}
+    record = {'Timestep': t,'VariableName': var,'EntityIdx': entity,
+        'Value': len([name for name in actors if float(world.getState(name,'health',state)) < 0.2])}
+    data.append(record)
+    var = '%sEvacuees' % (prefix)
+    living = {name for name in actors if world.getState(name,'alive',state).first()}
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[0+]','DataType': 'Integer'}
+    record = {'Timestep': t,'VariableName': var,'EntityIdx': entity,
+        'Value': len([name for name in living if world.getState(name,'location',state).first() == 'evacuated'])}
+    data.append(record)
+    var = '%sSheltered' % (prefix)
+    living = {name for name in actors if world.getState(name,'alive',state).first()}
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[0+]','DataType': 'Integer'}
+    record = {'Timestep': t,'VariableName': var,'EntityIdx': entity,
+        'Value': len([name for name in living if world.getState(name,'location',state).first()[:7] == 'shelter'])}
+    data.append(record)
+    return data
 
 def chooseParticipant(entry,oldSurvey):
     old = [oldEntry for oldEntry in oldSurvey if entry['Name'] in oldEntry['Name'] and entry['Timestep'] == oldEntry['Timestep']]
@@ -51,26 +77,41 @@ def chooseParticipant(entry,oldSurvey):
             if entry['Name'] in oldEntry['Name']:
                 entry['Participant'] = oldEntry['Participant']
 
-def preSurvey(args,name,world,states,config,t,hurricane,variables=None):
+def preSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=None):
+    data = []
     agent = world.agents[name]
     entry = {'Name': name,'Timestep': t,'Hurricane': hurricane['Hurricane']}
-    if variables is not None:
-        variables.append({'Name': 'Participant','Values':'[1+]','VarType': 'fixed','DataType': 'Integer'})
-        variables.append({'Name': 'Hurricane','Values':'[1+]','DataType': 'Integer'})
-        variables += accessibility.boilerPlate[:]
-    entry.update(accessibility.getCurrentDemographics(args,name,world,states,config,t))
-    var = 'At Shelter'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'yes,no','DataType': 'Boolean'})
-    entry[var] = 'yes' if accessibility.getInitialState(args,name,'location',world,states,t).first()[:7] == 'shelter' else 'no'
-    var = 'Evacuated'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'yes,no','DataType': 'Boolean'})
-    entry[var] = 'yes' if accessibility.getInitialState(args,name,'location',world,states,t).first() == 'evacuated' else 'no'
-    var = 'Category'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'[1-5]','DataType': 'Integer'})
-    entry[var] = int(round(accessibility.getInitialState(args,'Nature','category',world,states,t,name).expectation()))
+    if partID is not None:
+        entry['EntityIdx'] = 'ActorPre %d' % (partID)
+    variables.update(accessibility.boilerDict)
+    for var,value in accessibility.getCurrentDemographics(args,name,world,states,config,t).items():
+        record = dict(entry)
+        record['VariableName'] = var
+        record['Value'] = value
+        data.append(record)
+    var = 'ActorPre At Shelter'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
+    record = dict(entry)
+    record['VariableName'] = var
+    sheltered = accessibility.getInitialState(args,name,'location',world,states,t).first()[:7] == 'shelter'
+    record['Value'] = 'yes' if sheltered else 'no'
+    data.append(record)
+    var = 'ActorPre Evacuated'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
+    record = dict(entry)
+    record['VariableName'] = var
+    evacuated = accessibility.getInitialState(args,name,'location',world,states,t).first() == 'evacuated'
+    record['Value'] = 'yes' if evacuated else 'no'
+    data.append(record)
+    var = 'ActorPre Category'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[1-5]','DataType': 'Integer'}
+    record = dict(entry)
+    record['VariableName'] = var
+    record['Value'] = int(round(accessibility.getInitialState(args,'Nature','category',world,states,t,name).expectation()))
+    data.append(record)
     model,belief = copy.deepcopy(next(iter(states[t-1]['Nature'][name].items())))
     pEvac = []
     pShelter = []
@@ -89,58 +130,88 @@ def preSurvey(args,name,world,states,config,t,hurricane,variables=None):
                     pShelter[-1] = max(prob,pShelter[-1])
         world.step(state=belief,select='max',keySubset=belief.keys())
         risks.append(float(world.getState(name,'risk',belief)))
-    var = 'Anticipated Shelter'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if already at shelter'})
-    if entry['At Shelter'] == 'yes':
-        entry[var] = 'N/A'
+    var = 'ActorPre Anticipated Shelter'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if already at shelter'}
+    record = dict(entry)
+    record['VariableName'] = var
+    if sheltered:
+        record['Value'] = 'N/A'
     else:
-        entry[var] = accessibility.toLikert(max(pShelter),7)
-    var = 'Anticipated Evacuation'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if already evacuated'})
-    if entry['Evacuated'] == 'yes':
-        entry[var] = 'N/A'
+        record['Value'] = accessibility.toLikert(max(pShelter),7)
+    data.append(record)
+    var = 'ActorPre Anticipated Evacuation'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if already evacuated'}
+    record = dict(entry)
+    record['VariableName'] = var
+    if evacuated:
+        record['Value'] = 'N/A'
     else:
-        entry[var] = accessibility.toLikert(max(pEvac),7)
-    var = 'Risk'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'[1-7]','DataType': 'Integer'})
-    entry[var] = accessibility.toLikert(max(risks),7)
-    return entry
+        record['Value'] = accessibility.toLikert(max(pEvac),7)
+    data.append(record)
+    var = 'ActorPre Risk'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer'}
+    record = dict(entry)
+    record['VariableName'] = var
+    record['Value'] = accessibility.toLikert(max(risks),7)
+    data.append(record)
+    return data
 
-def postSurvey(args,name,world,states,config,t,hurricane,variables=None):
+def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=None):
+    data = []
     agent = world.agents[name]
     entry = {'Name': name,'Timestep': t,'Hurricane': hurricane['Hurricane']}
-    if variables is not None:
-        variables.append({'Name': 'Participant','Values':'[1+]','VarType': 'fixed','DataType': 'Integer'})
-        variables.append({'Name': 'Hurricane','Values':'[1+]','VarType': 'dynamic','DataType': 'Integer'})
-        variables += accessibility.boilerPlate[:]
-    entry.update(accessibility.getCurrentDemographics(args,name,world,states,config,t))
+    if partID is not None:
+        entry['EntityIdx'] = 'ActorPost %d' % (partID)
+    variables.update(accessibility.boilerDict)
+    for var,value in accessibility.getCurrentDemographics(args,name,world,states,config,t).items():
+        record = dict(entry)
+        record['VariableName'] = var
+        record['Value'] = value
+        data.append(record)
     actions = accessibility.getAction(args,name,world,states,(hurricane['Start'],hurricane['End']+1))
-    var = 'At Shelter'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'yes,no','DataType': 'Boolean'})
+    var = 'ActorPost At Shelter'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
     locations = {dist.first() for dist in accessibility.getInitialState(args,name,'location',world,states,(hurricane['Start'],hurricane['End']+1))}
-    entry[var] = 'yes' if {loc for loc in locations if loc[:7] == 'shelter'} else 'no'
-    var = 'Evacuated'
+    record = dict(entry)
+    record['VariableName'] = var
+    sheltered = len({loc for loc in locations if loc[:7] == 'shelter'}) > 0
+    record['Value'] = 'yes' if sheltered else 'no'
+    data.append(record)
+    var = 'ActorPost Evacuated'
     if variables is not None:
-        variables.append({'Name': var,'Values':'yes,no','DataType': 'Boolean'})
-    entry[var] = 'yes' if 'evacuated' in locations else 'no'
-    var = 'Injured'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'yes,no','DataType': 'Boolean'})
+        variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
+    evacuated = 'evacuated' in locations
+    record = dict(entry)
+    record['VariableName'] = var
+    record['Value'] = 'yes' if evacuated else 'no'
+    data.append(record)
+    var = 'ActorPost Injured'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
     health = [dist.first() for dist in accessibility.getInitialState(args,name,'health',world,states,(hurricane['Start'],hurricane['End']+1))]
-    entry[var] = 'yes' if min(health) < 0.2 else 'no'
-    var = 'Risk'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'[1-7]','DataType': 'Integer'})
+    record = dict(entry)
+    record['VariableName'] = var
+    record['Value'] = 'yes' if min(health) < 0.2 else 'no'
+    data.append(record)
+    var = 'ActorPost Risk'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer'}
     risk = [dist.expectation() for dist in accessibility.getInitialState(args,name,'risk',world,states,(hurricane['Start'],hurricane['End']+1),name)]
-    entry[var] = accessibility.toLikert(max(risk),7)
-    var = 'Dissatisfaction'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'[1-7]','DataType': 'Integer'})
-    entry[var] = accessibility.toLikert(accessibility.getInitialState(args,name,'grievance',world,states,t).first(),7)
+    record = dict(entry)
+    record['VariableName'] = var
+    record['Value'] = accessibility.toLikert(max(risk),7)
+    data.append(record)
+    var = 'ActorPost Dissatisfaction'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer'}
+    record = dict(entry)
+    record['VariableName'] = var
+    record['Value'] = accessibility.toLikert(accessibility.getInitialState(args,name,'grievance',world,states,t).first(),7)
+    data.append(record)
     pShelter = []
     pEvac = []
     pHome = []
@@ -167,28 +238,111 @@ def postSurvey(args,name,world,states,config,t,hurricane,variables=None):
                     pHome[-1] += prob
                 elif action['verb'] == 'stayInLocation' and world.getState(name,'location',belief).first() == agent.demographics['home']:
                     pHome[-1] += prob
-    var = 'Shelter Possibility'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if already at shelter'})
-    if entry['At Shelter'] == 'yes':
-        entry[var] = 'N/A'
+    var = 'ActorPost Shelter Possibility'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if already at shelter'}
+    record = dict(entry)
+    record['VariableName'] = var
+    if sheltered == 'yes':
+        record['Value'] = 'N/A'
     else:
-        entry[var] = accessibility.toLikert(max(pShelter),7)
-    var = 'Evacuation Possibility'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if already evacuated'})
-    if entry['Evacuated'] == 'yes':
-        entry[var] = 'N/A'
+        record['Value'] = accessibility.toLikert(max(pShelter),7)
+    data.append(record)
+    var = 'ActorPost Evacuation Possibility'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if already evacuated'}
+    record = dict(entry)
+    record['VariableName'] = var
+    if evacuated:
+        record['Value'] = 'N/A'
     else:
-        entry[var] = accessibility.toLikert(max(pEvac),7)
-    var = 'Stay at Home Possibility'
-    if variables is not None:
-        variables.append({'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if stayed home'})
-    if entry['At Shelter'] == 'no' and entry['Evacuated'] == 'no':
-        entry[var] = 'N/A'
+        record['Value'] = accessibility.toLikert(max(pEvac),7)
+    data.append(record)
+    var = 'ActorPost Stay at Home Possibility'
+    if var not in variables:
+        variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if stayed home'}
+    record = dict(entry)
+    record['VariableName'] = var
+    if not sheltered and not evacuated:
+        record['Value'] = 'N/A'
     else:
-        entry[var] = accessibility.toLikert(max(pHome),7)
-    return entry
+        record['Value'] = accessibility.toLikert(max(pHome),7)
+    data.append(record)
+    return data
+
+def doCensus(world,variables):
+    data = []
+    actors = {name for name in world.agents if name[:5] == 'Actor'}
+    regions = {name: {actor for actor in actors if world.agents[actor].demographics['home'] == name}
+        for name in world.agents if name[:6] == 'Region'}
+    census = {'Population': None,
+              'Gender': 'gender',
+              'Ethnicity': 'ethnicGroup',
+              'Religion': 'religion',
+              'Age': 'age',
+              'Employment': 'employed',
+    }
+    ages = [world.agents[actor].demographics['age'] for actor in actors]
+    limits = [18]+[i for i in range(25,max(ages),5)]
+    labels = ['<%d' % (limits[0])]
+    labels += ['%d-%d' % (limits[i],limits[i+1]-1) for i in range(len(limits)-1)]
+    labels.append('>%d' % (limits[-1]-1))
+    for field,feature in census.items():
+        if field == 'Population':
+            total = 0
+        else:
+            total = {}
+        # Census
+        for name,residents in regions.items():
+            if field == 'Population':
+                if not field in variables:
+                    variables[field] = {'Name': field,'Values':'[0+]','DataType': 'Integer'}
+                data.append({'Timestep': 1, 'VariableName': field, 'EntityIdx': name,'Value': len(residents) + \
+                    sum([world.agents[actor].demographics['kids'] for actor in residents])})
+                total += data[-1]['Value']
+            elif field == 'Age':
+                histogram = [0 for limit in limits]
+                histogram.append(0)
+                for actor in residents:
+                    agent = world.agents[actor]
+                    histogram[0] += agent.demographics['kids']
+                    for i in range(len(limits)):
+                        if agent.demographics['age'] < limits[i]:
+                            histogram[i] += 1
+                            break
+                    else:
+                        histogram[-1] += 1
+                for i in range(len(histogram)):
+                    var = '%s %s' % (field,labels[i])
+                    if not var in variables:
+                        variables[var] = {'Name': var,'Values':'[0+]','DataType': 'Integer'}
+                    record = {'Timestep': 1,'VariableName': var,'EntityIdx': name,'Value': histogram[i]}
+                    data.append(record)
+                    total[labels[i]] = total.get(labels[i],0)+record['Value']
+            else:
+                histogram = {}
+                for actor in residents:
+                    agent = world.agents[actor]
+                    try:
+                        value = agent.demographics[feature]
+                    except KeyError:
+                        value = agent.getState(feature).first()
+                    histogram[value] = histogram.get(value,0) + 1
+                for value,count in histogram.items():
+                    total[value] = total.get(value,0) + count
+                    var = '%s %s' % (field,value)
+                    if not var in variables:
+                        variables[var] = {'Name': var,'Values':'[0+]','DataType': 'Integer'}
+                    record = {'Timestep': 1,'VariableName': var,'EntityIdx': name, 'Value': count}
+                    data.append(record)
+        if field == 'Population':
+            record = {'Timestep': 1,'VariableName': field,'Value': total}
+            data.append(record)
+        else:
+            for value,count in sorted(total.items()):
+                record = {'Timestep': 1,'VariableName': '%s %s' % (field,value),'Value': count}
+                data.append(record)
+    return data
 
 if __name__ == '__main__':
     parser = ArgumentParser()
@@ -206,6 +360,7 @@ if __name__ == '__main__':
     if not isinstance(level, int):
         raise ValueError('Invalid debug level: %s' % args['debug'])
     logging.basicConfig(level=level)
+    variables = {}
 
     for args['instance'] in args['instances']:
         print(args['instance'],args['run'])
@@ -233,10 +388,12 @@ if __name__ == '__main__':
         args['span'] = max(files)
         tables = {label: [] for label in fields}
         if not args['skiptables']:
-            tables['Population'].append(doPopulation(world,world.state,actors,1))
+            tables['RunData'] += doCensus(world,variables)
+            # Casualty stats
+            tables['RunData'] += doPopulation(world,world.state,actors,1,variables,'Actor[0001-%04d]' % (len(actors)))
             for region in regions:
-                tables['Regional'].append(doPopulation(world,world.state,{name for name in actors if world.agents[name].demographics['home'] == region},1))
-                tables['Regional'][-1]['Region'] = region
+                tables['RunData'] += doPopulation(world,world.state,{name for name in actors if world.agents[name].demographics['home'] == region},
+                    1,variables,region,'Regional ')
             t = 1
             states[t] = {}
             turn = 0
@@ -253,27 +410,38 @@ if __name__ == '__main__':
                     s = pickle.load(f)
                 states[t][order[turn]] = s
                 if order[turn] == 'Nature':
-                    tables['Population'].append(doPopulation(world,s['__state__'],actors,t+1))
-                    entries = []
+                    tables['RunData'] += doPopulation(world,s['__state__'],actors,t+1,variables,entity='Actor[0001-%04d]' % (len(actors)))
                     for region in regions:
-                        entries.append(doPopulation(world,s['__state__'],{name for name in actors if world.agents[name].demographics['home'] == region},t+1))
-                        entries[-1]['Region'] = region
-                    for field in tables['Population'][-1].keys():
-                        if field == 'Timestep':
-                            for entry in entries:
-                                assert entry[field] == tables['Population'][-1][field]
-                        else:
-                            assert tables['Population'][-1][field] == sum([entry[field] for entry in entries])
-                    tables['Regional'] += entries
+                        tables['RunData'] += doPopulation(world,s['__state__'],{name for name in actors if world.agents[name].demographics['home'] == region},
+                            t+1,variables,region,'Regional ')
                     if phase != world.getState('Nature','phase',s['__state__']).first():
                         phase = world.getState('Nature','phase',s['__state__']).first()
                         if phase == 'approaching':
                             # New hurricane
                             hurricane += 1
+#                            if hurricane > 6:
+#                                break
                     if phase != 'none':
                         region = world.getState('Nature','location',s['__state__']).first()
-                        tables['Hurricane'].append({'Timestep': t+1,'Name': hurricane,'Category': world.getState('Nature','category',s['__state__']).first(),
-                            'Location': 'leaving' if region == 'none' else region, 'Landed': 'yes' if phase == 'active' else 'no'})
+                        var = 'Hurricane'
+                        if var not in variables:
+                            variables[var] = {'Name': var,'Values':'[1+]','DataType': 'Integer'}
+                        tables['InstanceVariable'].append({'Timestep': t+1,'Name': var,'Value': hurricane})
+                        var = 'Category'
+                        if var not in variables:
+                            variables[var] = {'Name': var,'Values':'[0-5]','DataType': 'Integer'}
+                        tables['InstanceVariable'].append({'Timestep': t+1,'Name': var,'Value': world.getState('Nature','category',s['__state__']).first()})
+                        var = 'Location'
+                        if var not in variables:
+                            variables[var] = {'Name': var,'Values':'Region[01-16],leaving','DataType': 'String'}
+                        tables['InstanceVariable'].append({'Timestep': t+1,'Name': var,'Value': 'leaving' if region == 'none' else region})
+                        var = 'Landed'
+                        if var not in variables:
+                            variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
+                        tables['InstanceVariable'].append({'Timestep': t+1,'Name': var,'Value': 'yes' if phase == 'active' else 'no'})
+                        tables['Hurricane'].append({'Timestep': t+1,'Name': hurricane,
+                            'Category': world.getState('Nature','category',s['__state__']).first(), 'Location': 'leaving' if region == 'none' else region,
+                            'Landed': 'yes' if phase == 'active' else 'no'})
                 living = [name for name in living if world.getState(name,'alive',s['__state__']).first()]
                 turn += 1
                 if turn == len(order):
@@ -315,42 +483,25 @@ if __name__ == '__main__':
                         # Can afford to be selective
                         sample = random.sample(pool-preSurveyed,preCount)
                     preSurveyed |= set(sample)
+                    sample = list(sample)
                 # Conduct survey
                 entries = []
-                for name in sample:
+                for partID in range(len(sample)):
+                    name = sample[partID]
+                    logging.info('Pre-survey %d: Participant %d: %s' % (hurricane['Hurricane'],partID+1,name))
                     print('Pre',hurricane['Hurricane'],name)
                     if args['usepre']:
                         name,t = name
                     else:
                         t = random.randint(hurricane['Start'],hurricane['Landfall']-1)
-                    entry = preSurvey(args,name,world,states,config,t,hurricane)
-                    if args['usepre']:
-                        old = [oldEntry for oldEntry in oldSurvey if name in oldEntry['Name'] and t == oldEntry['Timestep']]
-                        for oldEntry in old:
-                            for key in ['Category','Anticipated Shelter','Anticipated Evacuation','Risk']:
-                                if oldEntry[key] != 'N/A':
-                                    oldEntry[key] = int(oldEntry[key])
-                            oldEntry['Name'][name] = [key for key,value in entry.items() if key != 'Name' and value != oldEntry[key]]
-                    entries.append(entry)
+                    entries += preSurvey(args,name,world,states,config,t,hurricane,variables,partID+1)
                 entries.sort(key=lambda e: e['Timestep'])
-                for entry in entries[:]:
-                    if args['usepre']:
-                        chooseParticipant(entry,oldSurvey)
-                        if 'Participant' in entry:
-                            tables['ActorPre'].append(entry)
-                        else:
-                            entries.remove(entry)
-                    else:
-                        tables['ActorPre'].append(entry)
-                        entry['Participant'] = len(tables['ActorPre'])
-                for entry in entries:
-                    logging.info('Pre-survey %d: Participant %d: %s' % (hurricane['Hurricane'],entry['Participant'],entry['Name']))
-                samples.append({entry['Participant']: entry['Name'] for entry in entries})
-            tables['ActorPre'].sort(key=lambda e: e['Participant'])
+                tables['RunData'] += entries
+                samples.append({partID+1: sample[partID] for partID in range(len(samples))})
         if not args['skippost']:
             if args['usepost']:
                 oldSurvey = accessibility.findParticipants(args['usepost'],args,world,states,config)
-            postCount = int(round(len(actors)*config.getfloat('Data','postsample',fallback=0.1)))
+            postCount = int(round(len(actors)*config.getfloat('Data','postsample',fallback=0.1))) 
             postSurveyed = set()
             samples = []
             for hurricane in hurricanes:
@@ -384,40 +535,25 @@ if __name__ == '__main__':
                         # Can afford to be selective
                         sample = random.sample(pool-postSurveyed,postCount)
                     postSurveyed |= set(sample)
+                    sample = list(sample)
                 # Conduct survey
                 entries = []
-                for name in sample:
+                for partID in range(len(sample)):
+                    name = sample[partID]
+                    logging.info('Post-survey %d: Participant %d: %s' % (hurricane['Hurricane'],partID+1,name))
                     print('Post',hurricane['Hurricane'],name)
                     if args['usepost']:
                         name,t = name
                     else:
                         t = random.randint(hurricane['End'],end-1)
                     agent = world.agents[name]
-                    entry = postSurvey(args,name,world,states,config,t,hurricane)
-                    if args['usepost']:
-                        old = [oldEntry for oldEntry in oldSurvey if name in oldEntry['Name'] and t == oldEntry['Timestep']]
-                        for oldEntry in old:
-                            for key in ['Dissatisfaction','Shelter Possibility','Evacuation Possibility','Stay at Home Possibility','Risk']:
-                                if oldEntry[key] != 'N/A':
-                                    oldEntry[key] = int(oldEntry[key])
-                            oldEntry['Name'][name] = [key for key,value in entry.items() if key != 'Name' and value != oldEntry[key]]
-                    entries.append(entry)
+                    entries += postSurvey(args,name,world,states,config,t,hurricane,variables,partID+1)
                 entries.sort(key=lambda e: e['Timestep'])
-                for entry in entries[:]:
-                    if args['usepost']:
-                        chooseParticipant(entry,oldSurvey)
-                        if 'Participant' in entry:
-                            tables['ActorPost'].append(entry)
-                        else:
-                            entries.remove(entry)
-                    else:
-                        tables['ActorPost'].append(entry)
-                        entry['Participant'] = len(tables['ActorPost'])
-                for entry in entries:
-                    logging.info('Post-survey %d: Participant %d: %s' % (hurricane['Hurricane'],entry['Participant'],entry['Name']))
-                samples.append({entry['Participant']: entry['Name'] for entry in entries})
-            tables['ActorPost'].sort(key=lambda e: e['Participant'])
+                tables['RunData'] += entries
+                samples.append({partID+1: sample[partID] for partID in range(len(samples))})
+                if hurricane == hurricanes[-1]:
+                    for actor in pool:
+                        print(name,accessibility.getActions(args,actor,world,states,config,(1,args['span']-1))) 
         for label,data in tables.items():
-            if (label == 'ActorPre' and not args['skippre']) or (label == 'ActorPost' and not args['skippost']) or \
-                (label != 'Hurricane' and not args['skiptables']):
-                    accessibility.writeOutput(args,data,fields[label],'%sTable_temp.tsv' % (label))
+            accessibility.writeOutput(args,data,fields[label],'%sTable_temp.tsv' % (label))
+    accessibility.writeVarDef(os.path.join(os.path.dirname(__file__),'..'),list(variables.values()))
