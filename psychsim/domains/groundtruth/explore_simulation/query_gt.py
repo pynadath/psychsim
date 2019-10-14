@@ -596,6 +596,8 @@ class LogParser:
             # Stats
             elif self.command in consts.COMMAND_GET_STATS:
                 res = self.get_stats(p_att=self.query_param[consts.ATTRIBUTE], p_fct=self.query_param[consts.STAT_FCT], p_days=self.query_param[consts.DAYS], p_sample_names=self.query_param[consts.SAMPLE], buffer=buffer)
+            elif self.command in consts.COMMAND_COUNT_ACTORS:
+                res = self.count_actors(p_days=self.query_param[consts.DAYS], p_att=self.query_param[consts.ATTRIBUTE], p_op=self.query_param[consts.OPERATOR], p_val=self.query_param[consts.ATTRIBUTE_VAL], buffer=buffer)
             else:
                 print_with_buffer("QueryError: \"%s\" command unknown" % self.command, buffer)
             return res
@@ -755,16 +757,21 @@ class LogParser:
         :return: string
         """
         active = "active" if f[consts.active] else "inactive"
+        str = self.filters_to_str2(f[consts.DAYS], f[consts.ATTRIBUTE], f[consts.ATTRIBUTE_VAL], f[consts.OPERATOR], f[consts.NAME])
+        if display_activation_status:
+            str += "  (" + active + ")"
+        return str
+
+    def filters_to_str2(self, p_days, p_att, p_val, p_op, p_name):
         str_days_list = []
-        for d in list(helper.find_ranges(f[consts.DAYS])):
+        for d in list(helper.find_ranges(p_days)):
             if isinstance(d, tuple):
                 str_days_list.append(d[0].__str__() + " to " + d[1].__str__())
             else:
                 str_days_list.append(d.__str__())
         str_days = ", ".join(str_days_list)
-        str = f[consts.NAME] + ": " + f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " at " + consts.DAYS + "(s) " + str_days
-        if display_activation_status:
-            str += "  (" + active + ")"
+        str_name = p_name + ": " if p_name else ""
+        str = str_name + p_att + " " + p_op + " " + p_val.__str__() + " at " + consts.DAYS + "(s) " + str_days
         return str
 
     def display_filters(self, type=consts.all_values[0], buffer=None):
@@ -774,21 +781,24 @@ class LogParser:
         :param buffer:
         :return:
         """
-        if type in consts.all_values[0]:
-            filters_str_list = [self.filters_to_str(f) for f in self.filter_list]
-            s_intro = "All filters are"
-        else:
-            if type in consts.active_values:
-                filters_str_list = [self.filters_to_str(f) for f in self.filter_list if f[consts.active] is True]
-                s_intro = "%d filter(s) are active (%d agents selected)" % (len(filters_str_list), len(self.selected_agents))
-            elif type in consts.inactive_values:
-                filters_str_list = [self.filters_to_str(f) for f in self.filter_list if f[consts.active] is False]
-                s_intro = "%d filter(s) are inactive" % len(filters_str_list)
+        if self.filter_list:
+            if type in consts.all_values[0]:
+                filters_str_list = [self.filters_to_str(f) for f in self.filter_list]
+                s_intro = "All filters are"
             else:
-                print_with_buffer("Parameter error: Got %s for parameter %s. Was expecting values in %s" % (type, consts.TYPE, ", ".join(consts.TYPE_VALUES_IN)), buffer)
-                return False
-        filters_str = "\n\t- ".join(filters_str_list)
-        print_with_buffer("%s:\n\t- %s" % (s_intro, filters_str), buffer)
+                if type in consts.active_values:
+                    filters_str_list = [self.filters_to_str(f) for f in self.filter_list if f[consts.active] is True]
+                    s_intro = "%d filter(s) are active (%d agents selected)" % (len(filters_str_list), len(self.selected_agents))
+                elif type in consts.inactive_values:
+                    filters_str_list = [self.filters_to_str(f) for f in self.filter_list if f[consts.active] is False]
+                    s_intro = "%d filter(s) are inactive" % len(filters_str_list)
+                else:
+                    print_with_buffer("Parameter error: Got %s for parameter %s. Was expecting values in %s" % (type, consts.TYPE, ", ".join(consts.TYPE_VALUES_IN)), buffer)
+                    return False
+            filters_str = "\n\t- ".join(filters_str_list)
+            print_with_buffer("%s:\n\t- %s" % (s_intro, filters_str), buffer)
+        else:
+            print_with_buffer("You haven't created any filter.", buffer)
         return self.filter_list
 
 
@@ -856,7 +866,7 @@ class LogParser:
 
 
 
-    def apply_filter(self, p_days, p_att, p_val, p_operator, p_name=None, buffer=None, verbose=True):
+    def apply_filter(self, p_days, p_att, p_val, p_operator, p_name=None, buffer=None, verbose=True, save=True):
         """
         Applies a filter to the currently selected agents. A filter is for example "location = 2 at da 1" or "health > 0.6 at day 16"
         :param p_days: day for which the selection should be done.
@@ -866,9 +876,9 @@ class LogParser:
         :param buffer:
         :return:
         """
+        new_selection = copy.deepcopy(self.selected_agents)
         if not self.check_filter_already_applied(p_days, p_att, p_val, p_operator, buffer):
             if p_days:
-                new_selection = copy.deepcopy(self.selected_agents)
                 for d in p_days:
                     att_values = self.get_att_val(actors_list=new_selection, p_att=p_att, p_day=d)
                     old_selection = copy.deepcopy(new_selection)
@@ -876,19 +886,20 @@ class LogParser:
                     for i, agent in enumerate(old_selection):
                         if helper.compare(att_values[i], v2=p_val, op=p_operator):
                             new_selection.append(agent)
-                if len(new_selection) == 0:
-                    self.add_filter_to_filter_list(p_days, p_att, p_val, p_operator, p_name, False, buffer)
-                    if verbose:
-                        print_with_buffer("FilterError: Given the current selection, no agents fulfil your new criteria --> new filter CANNOT be applied. However your filter is saved in memory (it's just inactive)", buffer)
-                else:
-                    self.selected_agents = new_selection
-                    self.add_filter_to_filter_list(p_days, p_att, p_val, p_operator, p_name, True, buffer)
-                    if verbose:
-                        print_with_buffer("After applying filter", buffer=buffer)
-                        self.display_actor_selection()
+                if save:
+                    if len(new_selection) == 0:
+                        self.add_filter_to_filter_list(p_days, p_att, p_val, p_operator, p_name, False, buffer)
+                        if verbose:
+                            print_with_buffer("FilterError: Given the current selection, no agents fulfil your new criteria --> new filter CANNOT be applied. However your filter is saved in memory (it's just inactive)", buffer)
+                    else:
+                        self.selected_agents = new_selection
+                        self.add_filter_to_filter_list(p_days, p_att, p_val, p_operator, p_name, True, buffer)
+                        if verbose:
+                            print_with_buffer("After applying filter", buffer=buffer)
+                            self.display_actor_selection()
             else:
                 print_with_buffer("ParameterError: parameter %s not set" % consts.DAYS, buffer)
-        return self.filter_list
+        return new_selection, self.filter_list
 
 
     def get_filter(self, p_name, buffer):
@@ -1030,6 +1041,14 @@ class LogParser:
 
     ## ---------------------------------------      Get and compute Stats    -------------------------------- ##
     ## ------------------------------------------------------------------------------------------------------ ##
+
+
+    def count_actors(self, p_days, p_att, p_op, p_val, buffer):
+        tmp_copy_actors, _ = self.apply_filter(p_days=p_days, p_att=p_att, p_operator=p_op, p_val=p_val, buffer=buffer, save=False)
+        tmp_filter_string = self.filters_to_str2(p_days, p_att, p_val, p_op, None)
+        n_actors = len(tmp_copy_actors)
+        print_with_buffer("We have %d agents with %s" % (n_actors, tmp_filter_string))
+        return n_actors
 
     def get_stats(self, p_att, p_fct, p_days=[], p_sample_names=[], buffer=None):
         """
