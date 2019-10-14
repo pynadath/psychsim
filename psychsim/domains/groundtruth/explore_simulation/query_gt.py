@@ -11,8 +11,14 @@ import operator
 from collections import Counter
 import statistics
 
-import psychsim.domains.groundtruth.explore_simulation.query_gt_consts as consts
-import psychsim.domains.groundtruth.explore_simulation.helper_functions as helper
+try:
+    import psychsim.domains.groundtruth.explore_simulation.query_gt_consts as consts
+except ModuleNotFoundError:
+    import query_gt_consts as consts
+try:
+    import psychsim.domains.groundtruth.explore_simulation.helper_functions as helper
+except ModuleNotFoundError:
+    import helper_functions as helper
 
 '''
     scneario.pkl does not open.
@@ -777,7 +783,7 @@ class LogParser:
                 return False
         filters_str = "\n\t- ".join(filters_str_list)
         print_with_buffer("%s:\n\t- %s" % (s_intro, filters_str), buffer)
-
+        return filters_str_list
 
 
     ## ---------------------------------------  Select agents with filters   -------------------------------- ##
