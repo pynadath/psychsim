@@ -1,6 +1,4 @@
 Name	LongName	Values	VarType	DataType	Notes
-Participant	Participant	[1+]	fixed	Integer	
-Timestep	Timestep	[1+]	dynamic	Integer	
 Age	Age	[0-100]	dynamic	Integer	
 Children	Children	[0-10]	dynamic	Integer	
 Ethnicity	Ethnicity	majority,minority	fixed	String	
@@ -10,74 +8,59 @@ Pets	Pets	yes,no	dynamic	Boolean
 Religion	Religion	majority,minority,none	fixed	String	
 Residence	Residence	Region[01-16]	fixed	String	
 Wealth	Wealth	[1-7]	dynamic	Integer	
-Relationship Participant 1	Relationship Participant 1	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 2	Relationship Participant 2	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 3	Relationship Participant 3	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 4	Relationship Participant 4	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 5	Relationship Participant 5	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 6	Relationship Participant 6	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 7	Relationship Participant 7	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 8	Relationship Participant 8	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 9	Relationship Participant 9	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 10	Relationship Participant 10	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 11	Relationship Participant 11	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 12	Relationship Participant 12	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 13	Relationship Participant 13	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 14	Relationship Participant 14	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 15	Relationship Participant 15	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 16	Relationship Participant 16	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 17	Relationship Participant 17	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 18	Relationship Participant 18	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 19	Relationship Participant 19	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 20	Relationship Participant 20	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 21	Relationship Participant 21	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 22	Relationship Participant 22	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 23	Relationship Participant 23	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 24	Relationship Participant 24	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 25	Relationship Participant 25	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 26	Relationship Participant 26	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 27	Relationship Participant 27	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 28	Relationship Participant 28	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 29	Relationship Participant 29	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 30	Relationship Participant 30	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 31	Relationship Participant 31	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 32	Relationship Participant 32	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 33	Relationship Participant 33	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 34	Relationship Participant 34	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 35	Relationship Participant 35	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 36	Relationship Participant 36	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 37	Relationship Participant 37	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 38	Relationship Participant 38	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 39	Relationship Participant 39	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 40	Relationship Participant 40	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 41	Relationship Participant 41	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 42	Relationship Participant 42	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 43	Relationship Participant 43	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 44	Relationship Participant 44	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 45	Relationship Participant 45	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 46	Relationship Participant 46	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 47	Relationship Participant 47	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 48	Relationship Participant 48	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 49	Relationship Participant 49	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Relationship Participant 50	Relationship Participant 50	self,family,friend,acquaintance,none	dynamic	String	QI.2
-Location	Location	evacuated,shelter,home	dynamic	String	Q1
-Injury	Injury	none,minor,serious	dynamic	String	Q2
-Wealth Change	Wealth Change	[-5,5]	dynamic	Integer	Q3
-Regional Damage	Regional Damage	[1-5]	dynamic	Integer	Q4
-Regional Damage Region01	Regional Damage Region01	[1-5]	dynamic	Integer	Q3
-Regional Damage Region02	Regional Damage Region02	[1-5]	dynamic	Integer	Q3
-Regional Damage Region03	Regional Damage Region03	[1-5]	dynamic	Integer	Q3
-Regional Damage Region04	Regional Damage Region04	[1-5]	dynamic	Integer	Q3
-Regional Damage Region05	Regional Damage Region05	[1-5]	dynamic	Integer	Q3
-Regional Damage Region06	Regional Damage Region06	[1-5]	dynamic	Integer	Q3
-Regional Damage Region07	Regional Damage Region07	[1-5]	dynamic	Integer	Q3
-Regional Damage Region08	Regional Damage Region08	[1-5]	dynamic	Integer	Q3
-Regional Damage Region09	Regional Damage Region09	[1-5]	dynamic	Integer	Q3
-Regional Damage Region10	Regional Damage Region10	[1-5]	dynamic	Integer	Q3
-Regional Damage Region11	Regional Damage Region11	[1-5]	dynamic	Integer	Q3
-Regional Damage Region12	Regional Damage Region12	[1-5]	dynamic	Integer	Q3
-Regional Damage Region13	Regional Damage Region13	[1-5]	dynamic	Integer	Q3
-Regional Damage Region14	Regional Damage Region14	[1-5]	dynamic	Integer	Q3
-Regional Damage Region15	Regional Damage Region15	[1-5]	dynamic	Integer	Q3
-Regional Damage Region16	Regional Damage Region16	[1-5]	dynamic	Integer	Q3
-Aid Destination	Aid Destination	Region[01-16]	dynamic	String	Q4
+TA2A 342 Relationship Participant 1	TA2A 342 Relationship Participant 1	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 2	TA2A 342 Relationship Participant 2	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 3	TA2A 342 Relationship Participant 3	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 4	TA2A 342 Relationship Participant 4	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 5	TA2A 342 Relationship Participant 5	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 6	TA2A 342 Relationship Participant 6	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 7	TA2A 342 Relationship Participant 7	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 8	TA2A 342 Relationship Participant 8	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 9	TA2A 342 Relationship Participant 9	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 10	TA2A 342 Relationship Participant 10	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 11	TA2A 342 Relationship Participant 11	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 12	TA2A 342 Relationship Participant 12	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 13	TA2A 342 Relationship Participant 13	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 14	TA2A 342 Relationship Participant 14	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 15	TA2A 342 Relationship Participant 15	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 16	TA2A 342 Relationship Participant 16	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 17	TA2A 342 Relationship Participant 17	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 18	TA2A 342 Relationship Participant 18	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 19	TA2A 342 Relationship Participant 19	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 20	TA2A 342 Relationship Participant 20	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 21	TA2A 342 Relationship Participant 21	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 22	TA2A 342 Relationship Participant 22	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 23	TA2A 342 Relationship Participant 23	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 24	TA2A 342 Relationship Participant 24	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 25	TA2A 342 Relationship Participant 25	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 26	TA2A 342 Relationship Participant 26	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 27	TA2A 342 Relationship Participant 27	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 28	TA2A 342 Relationship Participant 28	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 29	TA2A 342 Relationship Participant 29	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 30	TA2A 342 Relationship Participant 30	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 31	TA2A 342 Relationship Participant 31	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 32	TA2A 342 Relationship Participant 32	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 33	TA2A 342 Relationship Participant 33	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 34	TA2A 342 Relationship Participant 34	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 35	TA2A 342 Relationship Participant 35	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 36	TA2A 342 Relationship Participant 36	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 37	TA2A 342 Relationship Participant 37	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 38	TA2A 342 Relationship Participant 38	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 39	TA2A 342 Relationship Participant 39	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 40	TA2A 342 Relationship Participant 40	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 41	TA2A 342 Relationship Participant 41	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 42	TA2A 342 Relationship Participant 42	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 43	TA2A 342 Relationship Participant 43	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 44	TA2A 342 Relationship Participant 44	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 45	TA2A 342 Relationship Participant 45	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 46	TA2A 342 Relationship Participant 46	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 47	TA2A 342 Relationship Participant 47	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 48	TA2A 342 Relationship Participant 48	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 49	TA2A 342 Relationship Participant 49	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Relationship Participant 50	TA2A 342 Relationship Participant 50	self,family,friend,acquaintance,none	dynamic	String	QI.2
+TA2A 342 Location	TA2A 342 Location	evacuated,shelter,home	dynamic	String	Q1
+TA2A 342 Injury	TA2A 342 Injury	none,minor,serious	dynamic	String	Q2
+TA2A 342 Wealth Change	TA2A 342 Wealth Change	[-5,5]	dynamic	Integer	Q3
+TA2A 342 Regional Damage	TA2A 342 Regional Damage	[1-5]	dynamic	Integer	Q4
+TA2A 342 Crime	TA2A 342 Crime	yes	dynamic	String	Recorded only when a crime is committed
+TA2A 342 Aid Destination	TA2A 342 Aid Destination	Region[01-16]	dynamic	String	Q4
