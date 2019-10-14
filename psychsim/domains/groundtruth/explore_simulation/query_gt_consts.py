@@ -230,7 +230,7 @@ HELP = {
         
         CATEGORY_STATS_FUNCTIONS: {
             COMMAND_COUNT_ACTORS: {
-                description: "Counts the actors, amoug those selected, that fulfil a specific criteria",
+                description: "Counts the actors, among those selected, that fulfil a specific criteria",
                 parameters: [
                     {name: DAYS,
                      optional: True},
