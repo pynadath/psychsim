@@ -168,7 +168,7 @@
         </size>
        </property>
        <property name="title">
-        <string>day</string>
+        <string>days</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -176,7 +176,20 @@
        <widget class="QSpinBox" name="dayspinBox">
         <property name="geometry">
          <rect>
-          <x>20</x>
+          <x>10</x>
+          <y>30</y>
+          <width>53</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+       </widget>
+       <widget class="QSpinBox" name="dayspinBox_2">
+        <property name="geometry">
+         <rect>
+          <x>70</x>
           <y>30</y>
           <width>53</width>
           <height>24</height>
