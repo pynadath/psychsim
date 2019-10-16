@@ -234,7 +234,7 @@ class LogParser:
             elif query == 'h':
                 print_help()
             else:
-                self.execute_query(preprocess(query))
+                res = elf.execute_query(preprocess(query))
 
     ############################################################################################################
     ##                            Reading, understanding and executing user command                           ##
@@ -556,47 +556,51 @@ class LogParser:
         :return:
         """
         if self.parse_query(query, buffer=buffer):
+            res = None
             # General methods
             if self.command in consts.COMMAND_GET_NDAYS:
-                self.get_ndays(buffer)
+                res = self.get_ndays(buffer)
             elif self.command in consts.COMMAND_GET_NACTORS:
-                self.get_nactors(buffer)
+                res = self.get_nactors(buffer)
             elif self.command in consts.COMMAND_GET_VALUES:
-                self.get_att_values(self.query_param[consts.ACTOR], p_days=self.query_param[consts.DAYS], buffer=buffer)
+                res = self.get_att_values(self.query_param[consts.ACTOR], p_days=self.query_param[consts.DAYS], buffer=buffer)
             elif self.command in consts.COMMAND_GET_ENTITIES:
-                self.get_entities(buffer)
+                res = self.get_entities(buffer)
             elif self.command in consts.COMMAND_GET_ATTNAMES:
-                self.get_attributes(p_entity=self.query_param[consts.ENTITY], buffer=buffer)
+                res = self.get_attributes(p_entity=self.query_param[consts.ENTITY], buffer=buffer)
             # Select actors
             elif self.command in consts.COMMAND_SELECT_NACTORS:
-                self.select_nactors(p_n=self.query_param[consts.NUMBER], p_mode_select=self.query_param[consts.MODE_SELECTION], buffer=buffer)
+                res = self.select_nactors(p_n=self.query_param[consts.NUMBER], p_mode_select=self.query_param[consts.MODE_SELECTION], buffer=buffer)
             elif self.command in consts.COMMAND_SHOW_SELECTION:
-                self.display_actor_selection(buffer=buffer)
+                res = self.display_actor_selection(buffer=buffer)
             elif self.command in consts.COMMAND_SHOW_FILTERS:
-                self.display_filters(self.query_param[consts.TYPE], buffer)
+                res = self.display_filters(self.query_param[consts.TYPE], buffer)
             elif self.command in consts.COMMAND_RESET_SELECTION:
-                self.reset_selection(buffer)
+                res = self.reset_selection(buffer)
             elif self.command in consts.COMMAND_APPLY_FILTER:
                 p_days, p_att, p_val, p_op, p_name = self.query_param[consts.DAYS], self.query_param[consts.ATTRIBUTE], self.query_param[consts.ATTRIBUTE_VAL], self.query_param[consts.OPERATOR], self.query_param[consts.NAME]
-                self.apply_filter(p_days=p_days, p_att=p_att, p_val=p_val, p_operator=p_op, p_name=p_name, buffer=buffer)
+                res = self.apply_filter(p_days=p_days, p_att=p_att, p_val=p_val, p_operator=p_op, p_name=p_name, buffer=buffer)
             elif self.command in consts.COMMAND_DEACTIVATE_FILTER:
-                self.deactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
+                res = self.deactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
             elif self.command in consts.COMMAND_REACTIVATE_FILTER:
-                self.reactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
+                res = self.reactivate_filter(p_name=self.query_param[consts.NAME], buffer=buffer)
             elif self.command in consts.COMMAND_SELECT_ACTORS_BY_NAME:
-                self.select_actors_by_name(p_list_names=self.query_param[consts.ACTORS_LIST], buffer=buffer)
+                res = self.select_actors_by_name(p_list_names=self.query_param[consts.ACTORS_LIST], buffer=buffer)
             # Samples
             elif self.command in consts.COMMAND_SAVE_SAMPLE:
-                self.save_sample(p_name=self.query_param[consts.NAME], buffer=buffer)
+                res = self.save_sample(p_name=self.query_param[consts.NAME], buffer=buffer)
             elif self.command in consts.COMMAND_DISPLAY_SAMPLES:
-                self.display_samples(buffer)
+                res = self.display_samples(buffer)
             elif self.command in consts.COMMAND_DISPLAY_ONE_SAMPLE:
-                self.display_one_sample(p_name=self.query_param[consts.NAME], buffer=buffer)
+                res = self.display_one_sample(p_name=self.query_param[consts.NAME], buffer=buffer)
             # Stats
             elif self.command in consts.COMMAND_GET_STATS:
-                self.get_stats(p_att=self.query_param[consts.ATTRIBUTE], p_fct=self.query_param[consts.STAT_FCT], p_days=self.query_param[consts.DAYS], p_sample_names=self.query_param[consts.SAMPLE], buffer=buffer)
+                res = self.get_stats(p_att=self.query_param[consts.ATTRIBUTE], p_fct=self.query_param[consts.STAT_FCT], p_days=self.query_param[consts.DAYS], p_sample_names=self.query_param[consts.SAMPLE], buffer=buffer)
+            elif self.command in consts.COMMAND_COUNT_ACTORS:
+                res = self.count_actors(p_days=self.query_param[consts.DAYS], p_att=self.query_param[consts.ATTRIBUTE], p_op=self.query_param[consts.OPERATOR], p_val=self.query_param[consts.ATTRIBUTE_VAL], buffer=buffer)
             else:
                 print_with_buffer("QueryError: \"%s\" command unknown" % self.command, buffer)
+            return res
         else:
             print_with_buffer("ERROR, cannot execute query: %s." % query, buffer)
             return False
@@ -617,6 +621,7 @@ class LogParser:
         :return:
         """
         print_with_buffer("Simulation stopped after %d days" % self.n_days, buffer)
+        return self.n_days
 
     def get_nactors(self, buffer):
         """
@@ -625,6 +630,7 @@ class LogParser:
         :return:
         """
         print_with_buffer("There are %d actors in the simulation" % self.n_actors, buffer)
+        return self.n_days
 
     def get_entities(self, buffer):
         """
@@ -632,7 +638,9 @@ class LogParser:
         :param buffer:
         :return:
         """
-        print_with_buffer("The categories of entities in the simulation are: %s" % ", ".join(self.entities_att_list.keys()), buffer)
+        entities_list = self.entities_att_list.keys()
+        print_with_buffer("The categories of entities in the simulation are: %s" % ", ".join(entities_list), buffer)
+        return entities_list
 
     def get_attributes(self, p_entity, buffer):
         """
@@ -642,7 +650,9 @@ class LogParser:
         :return:
         """
         if p_entity:
-            print_with_buffer("The attributes associated with the category %s are: %s." % (p_entity, ", ".join(self.entities_att_list[p_entity])), buffer)
+            attributes_list = self.entities_att_list[p_entity]
+            print_with_buffer("The attributes associated with the category %s are: %s." % (p_entity, ", ".join(attributes_list)), buffer)
+            return attributes_list
         else:
             print_with_buffer("MssingParamterError: expecting an entity", buffer)
 
@@ -687,6 +697,7 @@ class LogParser:
 
         print_with_buffer("Selected %d agents:" % len(self.selected_agents), buffer)
         self.display_actor_selection(buffer=buffer)
+        return self.selected_agents
 
 
     def select_actors_by_name(self, p_list_names, buffer=None):
@@ -703,6 +714,7 @@ class LogParser:
         p_list_names = [helper.actor_number_to_name(i) for i in p_list_names]
         self.selected_agents = [actor for actor in self.selected_agents if actor in p_list_names]
         self.display_actor_selection()
+        return self.selected_agents
 
     def reset_selection(self, buffer):
         """
@@ -716,6 +728,7 @@ class LogParser:
             for filter in self.filter_list:
                 filter[consts.active] = False
             print_with_buffer("All filters are inactive", buffer)
+        return self.selected_agents
 
 
     ## --------------------------------------- Display selection and filters -------------------------------- ##
@@ -734,6 +747,7 @@ class LogParser:
         else:
             print_with_buffer("%d agents are selected:\n" % len(self.selected_agents), buffer)
             print_with_buffer(", ".join(self.selected_agents), buffer)
+        return self.selected_agents
 
 
     def filters_to_str(self, f, display_activation_status=True):
@@ -743,16 +757,21 @@ class LogParser:
         :return: string
         """
         active = "active" if f[consts.active] else "inactive"
+        str = self.filters_to_str2(f[consts.DAYS], f[consts.ATTRIBUTE], f[consts.ATTRIBUTE_VAL], f[consts.OPERATOR], f[consts.NAME])
+        if display_activation_status:
+            str += "  (" + active + ")"
+        return str
+
+    def filters_to_str2(self, p_days, p_att, p_val, p_op, p_name):
         str_days_list = []
-        for d in list(helper.find_ranges(f[consts.DAYS])):
+        for d in list(helper.find_ranges(p_days)):
             if isinstance(d, tuple):
                 str_days_list.append(d[0].__str__() + " to " + d[1].__str__())
             else:
                 str_days_list.append(d.__str__())
         str_days = ", ".join(str_days_list)
-        str = f[consts.NAME] + ": " + f[consts.ATTRIBUTE] + " " + f[consts.OPERATOR] + " " + f[consts.ATTRIBUTE_VAL].__str__() + " at " + consts.DAYS + "(s) " + str_days
-        if display_activation_status:
-            str += "  (" + active + ")"
+        str_name = p_name + ": " if p_name else ""
+        str = str_name + p_att + " " + p_op + " " + p_val.__str__() + " at " + consts.DAYS + "(s) " + str_days
         return str
 
     def display_filters(self, type=consts.all_values[0], buffer=None):
@@ -762,21 +781,25 @@ class LogParser:
         :param buffer:
         :return:
         """
-        if type in consts.all_values[0]:
-            filters_str_list = [self.filters_to_str(f) for f in self.filter_list]
-            s_intro = "All filters are"
-        else:
-            if type in consts.active_values:
-                filters_str_list = [self.filters_to_str(f) for f in self.filter_list if f[consts.active] is True]
-                s_intro = "%d filter(s) are active (%d agents selected)" % (len(filters_str_list), len(self.selected_agents))
-            elif type in consts.inactive_values:
-                filters_str_list = [self.filters_to_str(f) for f in self.filter_list if f[consts.active] is False]
-                s_intro = "%d filter(s) are inactive" % len(filters_str_list)
+        if self.filter_list:
+            if type in consts.all_values[0]:
+                filters_str_list = [self.filters_to_str(f) for f in self.filter_list]
+                s_intro = "All filters are"
             else:
-                print_with_buffer("Parameter error: Got %s for parameter %s. Was expecting values in %s" % (type, consts.TYPE, ", ".join(consts.TYPE_VALUES_IN)), buffer)
-                return False
-        filters_str = "\n\t- ".join(filters_str_list)
-        print_with_buffer("%s:\n\t- %s" % (s_intro, filters_str), buffer)
+                if type in consts.active_values:
+                    filters_str_list = [self.filters_to_str(f) for f in self.filter_list if f[consts.active] is True]
+                    s_intro = "%d filter(s) are active (%d agents selected)" % (len(filters_str_list), len(self.selected_agents))
+                elif type in consts.inactive_values:
+                    filters_str_list = [self.filters_to_str(f) for f in self.filter_list if f[consts.active] is False]
+                    s_intro = "%d filter(s) are inactive" % len(filters_str_list)
+                else:
+                    print_with_buffer("Parameter error: Got %s for parameter %s. Was expecting values in %s" % (type, consts.TYPE, ", ".join(consts.TYPE_VALUES_IN)), buffer)
+                    return False
+            filters_str = "\n\t- ".join(filters_str_list)
+            print_with_buffer("%s:\n\t- %s" % (s_intro, filters_str), buffer)
+        else:
+            print_with_buffer("You haven't created any filter.", buffer)
+        return self.filter_list
 
 
 
@@ -827,6 +850,7 @@ class LogParser:
             new_filter[consts.NAME] = "filter" + self.filter_name_i.__str__()
             self.filter_name_i += 1
         self.filter_list.append(new_filter)
+        return self.filter_list
 
 
     def check_filter_already_applied(self, p_days, p_att, p_val, p_operator, buffer=None):
@@ -842,7 +866,7 @@ class LogParser:
 
 
 
-    def apply_filter(self, p_days, p_att, p_val, p_operator, p_name=None, buffer=None, verbose=True):
+    def apply_filter(self, p_days, p_att, p_val, p_operator, p_name=None, buffer=None, verbose=True, save=True):
         """
         Applies a filter to the currently selected agents. A filter is for example "location = 2 at da 1" or "health > 0.6 at day 16"
         :param p_days: day for which the selection should be done.
@@ -852,9 +876,9 @@ class LogParser:
         :param buffer:
         :return:
         """
+        new_selection = copy.deepcopy(self.selected_agents)
         if not self.check_filter_already_applied(p_days, p_att, p_val, p_operator, buffer):
             if p_days:
-                new_selection = copy.deepcopy(self.selected_agents)
                 for d in p_days:
                     att_values = self.get_att_val(actors_list=new_selection, p_att=p_att, p_day=d)
                     old_selection = copy.deepcopy(new_selection)
@@ -862,18 +886,20 @@ class LogParser:
                     for i, agent in enumerate(old_selection):
                         if helper.compare(att_values[i], v2=p_val, op=p_operator):
                             new_selection.append(agent)
-                if len(new_selection) == 0:
-                    self.add_filter_to_filter_list(p_days, p_att, p_val, p_operator, p_name, False, buffer)
-                    if verbose:
-                        print_with_buffer("FilterError: Given the current selection, no agents fulfil your new criteria --> new filter CANNOT be applied. However your filter is saved in memory (it's just inactive)", buffer)
-                else:
-                    self.selected_agents = new_selection
-                    self.add_filter_to_filter_list(p_days, p_att, p_val, p_operator, p_name, True, buffer)
-                    if verbose:
-                        print_with_buffer("After applying filter", buffer=buffer)
-                        self.display_actor_selection()
+                if save:
+                    if len(new_selection) == 0:
+                        self.add_filter_to_filter_list(p_days, p_att, p_val, p_operator, p_name, False, buffer)
+                        if verbose:
+                            print_with_buffer("FilterError: Given the current selection, no agents fulfil your new criteria --> new filter CANNOT be applied. However your filter is saved in memory (it's just inactive)", buffer)
+                    else:
+                        self.selected_agents = new_selection
+                        self.add_filter_to_filter_list(p_days, p_att, p_val, p_operator, p_name, True, buffer)
+                        if verbose:
+                            print_with_buffer("After applying filter", buffer=buffer)
+                            self.display_actor_selection()
             else:
                 print_with_buffer("ParameterError: parameter %s not set" % consts.DAYS, buffer)
+        return new_selection, self.filter_list
 
 
     def get_filter(self, p_name, buffer):
@@ -911,6 +937,7 @@ class LogParser:
             # self.display_filters(buffer=buffer)
             print_with_buffer("After deactivating filter %s" % p_name, buffer)
             self.display_actor_selection(buffer=buffer)
+        return self.filter_list
 
 
     def reactivate_filter(self, p_name, buffer=None):
@@ -927,7 +954,7 @@ class LogParser:
                 self.apply_filter(p_days=f[consts.DAYS], p_att=f[consts.ATTRIBUTE], p_val=f[consts.ATTRIBUTE_VAL], p_operator=f[consts.OPERATOR], p_name=f[consts.NAME])
             else:
                 print_with_buffer("Filter %s is already active" % p_name, buffer)
-
+        return self.filter_list
 
 
     ## ---------------------------------------       Save sample of agents   -------------------------------- ##
@@ -949,7 +976,7 @@ class LogParser:
                 str = "A new sample was created (%s)" % sample_name
                 s = new_sample
         print_with_buffer(str, buffer)
-        return  s
+        return s
 
 
     def create_new_sample(self, p_name, buffer):
@@ -986,6 +1013,7 @@ class LogParser:
         else:
             str = "You have no saved samples."
         print_with_buffer(str, buffer)
+        return self.samples
 
     def sample_selection_method_str(self, sample, display_full_filter=False):
         if sample[consts.filters]:
@@ -1004,7 +1032,7 @@ class LogParser:
             selection_method_str = self.sample_selection_method_str(sample, True)
             str = "Actors in sample %s are: %s.\nThey were %s" % (p_name, ", ".join(sample[consts.ACTORS_LIST]), selection_method_str)
             print_with_buffer(str, buffer)
-
+            return sample
         else:
             str = "ParameterError: There is no sample with this name."
             print_with_buffer(str, buffer)
@@ -1013,6 +1041,14 @@ class LogParser:
 
     ## ---------------------------------------      Get and compute Stats    -------------------------------- ##
     ## ------------------------------------------------------------------------------------------------------ ##
+
+
+    def count_actors(self, p_days, p_att, p_op, p_val, buffer):
+        tmp_copy_actors, _ = self.apply_filter(p_days=p_days, p_att=p_att, p_operator=p_op, p_val=p_val, buffer=buffer, save=False)
+        tmp_filter_string = self.filters_to_str2(p_days, p_att, p_val, p_op, None)
+        n_actors = len(tmp_copy_actors)
+        print_with_buffer("We have %d agents with %s" % (n_actors, tmp_filter_string))
+        return n_actors
 
     def get_stats(self, p_att, p_fct, p_days=[], p_sample_names=[], buffer=None):
         """
@@ -1303,35 +1339,13 @@ class LogParser:
         """
         print("Function deprecated", buffer)
         return False
-        # if p_actor == None:
-        #     print_with_buffer("ParameterError: missing parameter -%s for command \"get attibute(s)\"" % consts.ACTOR, buffer)
-        #     return False
-        #
-        # if p_days == -1:
-        #     print_with_buffer("ParameterError: missing parameter -%s for command \"get attibute(s)\"" % consts.DAYS, buffer)
-        #     return False
-        #     #read attributes for a random day
-        #
-        # file_name = self.logs_dir + "/state" + p_days.__str__() + "Actor.pkl"
-        # if os.path.exists(file_name):
-        #     with open(file_name, 'rb') as f:
-        #         content = pickle.load(f)
-        #     # actor_name = 'Actor000'+p_actor
-        #     actor_name = helper.actor_number_to_name(p_actor)
-        #     dict_for_actor = content[actor_name][actor_name+'0']
-        #     keys = dict_for_actor.keys()
-        #     attributes = [key.split()[1] for key in keys if (actor_name in key and "__" not in key)]
-        #
-        #     s = "At %s %d, %s has:\n" % (consts.DAYS, p_days, actor_name)
-        #     att_to_printable_distrib_dict = dict()
-        #     for att in attributes:
-        #         att_to_printable_distrib_dict[att] = helper.str_distribution(dict_for_actor[actor_name+"'s "+att])
-        #     s += helper.str_aligned_values(att_to_printable_distrib_dict)
-        #     print_with_buffer(s, buffer)
-        #
-        # else:
-        #     print_with_buffer("ERROR - Missing file: %s" % file_name, buffer)
-        #     return False
+
+
+
+
+
+
+
 
 
     ############################################################################################################
@@ -1353,7 +1367,7 @@ class LogParser:
             if autotest:
                 print(colored("Wait while we execute predefined queries...", "red"))
                 print(colored(query, "green"))
-                self.execute_query(preprocess(query))
+                res = self.execute_query(preprocess(query))
             else:
                 if i == 0:
                     next = input(colored("We thought we would make it easy for you :-)\nWe will walk you through an example with pre-written queries. You'll just have to press \"y\" to execute the next query when you're ready.\nShould we start? (y: yes, q: quit) > ", "red"))
@@ -1361,7 +1375,7 @@ class LogParser:
                         exit(1)
                 print(colored(text, "blue"))
                 print(colored(query, "green"))
-                self.execute_query(preprocess(query))
+                res = self.execute_query(preprocess(query))
                 if i < (len(content) - 1):
                     next = input(colored("Next query? (y: yes, q: quit) > ", "red"))
                     if next.lower() == "q":
