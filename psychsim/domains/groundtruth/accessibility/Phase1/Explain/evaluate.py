@@ -68,14 +68,17 @@ if __name__ == '__main__':
                     try:
                         sheet['B%d' % (row)] = TA2A[node['label']]
                     except KeyError:
-                        # PNNL version
-                        sheet['A%d' % (row)] = '%d' % (row-1)
-                        sheet['B%d' % (row)] = node.id
+                        try:
+                            sheet['A%d' % (row)] = node.id
+                            sheet['B%d' % (row)] = node['name']
+                        except:
+                            # PNNL version
+                            sheet['A%d' % (row)] = '%d' % (row-1)
+                            sheet['B%d' % (row)] = node.id
                 row += 1
         else:
             for edge in graphs[team].edges():
-#                if team == 'TA2A':
-#                    sheet['A%d' % (row)] = 'e%d' % (edge.id-34)
+                sheet['A%d' % (row)] = edge.id
                 try:
                     sheet['B%d' % (row)] = edge.node1['v_name']
                     sheet['C%d' % (row)] = edge.node2['v_name']
@@ -84,8 +87,13 @@ if __name__ == '__main__':
                         sheet['B%d' % (row)] = TA2A[edge.node1['label']]
                         sheet['C%d' % (row)] = TA2A[edge.node2['label']]
                     except KeyError:
-                        # PNNL
-                        sheet['B%d' % (row)] = edge.node1.id
-                        sheet['C%d' % (row)] = edge.node2.id                        
+                        try:
+                            sheet['A%d' % (row)] = edge['SUID']
+                            sheet['B%d' % (row)] = edge.node1['name']
+                            sheet['C%d' % (row)] = edge.node2['name']
+                        except:
+                            # PNNL
+                            sheet['B%d' % (row)] = edge.node1.id
+                            sheet['C%d' % (row)] = edge.node2.id                        
                 row += 1
     wb.save('%s TA1C%s' % os.path.splitext(args['workbook']))

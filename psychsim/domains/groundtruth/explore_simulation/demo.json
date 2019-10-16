@@ -12,8 +12,16 @@
         "explanations": "How many Actors are there in the simulation?"
     },
     {
+        "command": "count actors -attribute childrenHealth -value 0.6 -operator >= -days 1 to 16",
+        "explanations": "And how many have children that are in fairly good health?"
+    },
+    {
+        "command": "show filters -type all",
+        "explanations": "Let's check our filters, see which ones are currently active."
+    },
+    {
         "command": "apply filter -attribute childrenHealth -value 0.8 -operator >= -days 1 to 16 -name healthychildren",
-        "explanations": "Now let's try to create a sample of acotrs to survey. Let's select actors whose children are healthy through the simulation. Give a name to this filter: \"healthychildren\""
+        "explanations": "Now let's try to create a sample of actors to survey. Let's select actors whose children are healthy through the simulation. Give a name to this filter: \"healthychildren\""
     },
     {
         "command": "select n_actors -number 10",

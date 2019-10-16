@@ -101,7 +101,7 @@ COMMAND_GET_VALUES = "get values", "get val", "get value", "get v"
 
 # Getting stats
 CATEGORY_STATS_FUNCTIONS = "--> Counting / doing stats over agent selection"
-COMMAND_COUNT_ACTORS = "count actors", "count"
+COMMAND_COUNT_ACTORS = "count actors", "count", "c a"
 COMMAND_GET_STATS = "get stats", "get statistics"
 
 
@@ -230,7 +230,7 @@ HELP = {
         
         CATEGORY_STATS_FUNCTIONS: {
             COMMAND_COUNT_ACTORS: {
-                description: "Counts the actors, amoug those selected, that fulfil a specific criteria",
+                description: "Counts the actors, among those selected, that fulfil a specific criteria",
                 parameters: [
                     {name: DAYS,
                      optional: True},
