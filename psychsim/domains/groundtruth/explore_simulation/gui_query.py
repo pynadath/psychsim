@@ -218,7 +218,7 @@ class Main(QMainWindow, Ui_MainWindow):
         p_val = self.apply_filter.valueSpinBox.value()
         p_name = self.apply_filter.nameLine.text()
         self.f = logparser.apply_filter(p_daylst, p_att, p_val, p_op, p_name=p_name)
-        self.filterText.addItems(logparser.filter_list))
+        self.filterText.addItems([logparser.filters_to_str(f) for f in logparser.filter_list])
         #for f in logparser.filterList:
 
     def show_apply_filter(self,selected):
