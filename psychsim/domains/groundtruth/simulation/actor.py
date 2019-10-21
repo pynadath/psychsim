@@ -486,6 +486,7 @@ class Actor(Agent):
 
         # Effect on my risk
         # //GT: edge 27; from 15; to 25; 1 of 1; next 23 lines
+        # //GT: edge 62; from 15; to 26; 1 of 1; next 23 lines
         if config.getboolean('Actors','movement'):
             tree = noChangeMatrix(risk)
         else:
@@ -783,6 +784,7 @@ class Actor(Agent):
             omega = self.defineObservation('perceivedCategory',domain=int,codePtr=True,
                                            description='Perception of Nature\'s category')
             # //GT: edge 43; from 30; to 16; 1 of 1; next 22 lines
+            # //GT: edge 61; from 38; to 16; 1 of 1; next 22 lines
             distortion = Distribution({'over': likert[5][config.getint('Actors','category_over')-1],
                                        'under': likert[5][config.getint('Actors','category_under')-1]})
             distortion['none'] = 1.-distortion['over']-distortion['under']
