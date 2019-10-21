@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>FilterDialog</class>
- <widget class="QDialog" name="FilterDialog">
+ <class>CountDialog</class>
+ <widget class="QDialog" name="CountDialog">
   <property name="windowModality">
    <enum>Qt::WindowModal</enum>
   </property>
@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>497</width>
-    <height>286</height>
+    <width>502</width>
+    <height>291</height>
    </rect>
   </property>
   <property name="maximumSize">
@@ -54,7 +54,7 @@
     </rect>
    </property>
    <property name="title">
-    <string>Apply Filter</string>
+    <string>Count</string>
    </property>
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
@@ -168,7 +168,7 @@
         </size>
        </property>
        <property name="title">
-        <string>days</string>
+        <string>day</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -176,20 +176,7 @@
        <widget class="QSpinBox" name="dayspinBox">
         <property name="geometry">
          <rect>
-          <x>10</x>
-          <y>30</y>
-          <width>53</width>
-          <height>24</height>
-         </rect>
-        </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
-       </widget>
-       <widget class="QSpinBox" name="dayspinBox_2">
-        <property name="geometry">
-         <rect>
-          <x>70</x>
+          <x>20</x>
           <y>30</y>
           <width>53</width>
           <height>24</height>
@@ -236,7 +223,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>FilterDialog</receiver>
+   <receiver>CountDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -252,7 +239,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>FilterDialog</receiver>
+   <receiver>CountDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

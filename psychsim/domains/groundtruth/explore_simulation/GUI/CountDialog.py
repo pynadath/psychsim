@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'FilterDialog.ui'
+# Form implementation generated from reading ui file 'CountDialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.13.0
 #
@@ -10,20 +10,20 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_FilterDialog(object):
-    def setupUi(self, FilterDialog):
-        FilterDialog.setObjectName("FilterDialog")
-        FilterDialog.setWindowModality(QtCore.Qt.WindowModal)
-        FilterDialog.setEnabled(True)
-        FilterDialog.resize(497, 286)
-        FilterDialog.setMaximumSize(QtCore.QSize(16777215, 16777215))
-        FilterDialog.setModal(False)
-        self.buttonBox = QtWidgets.QDialogButtonBox(FilterDialog)
+class Ui_CountDialog(object):
+    def setupUi(self, CountDialog):
+        CountDialog.setObjectName("CountDialog")
+        CountDialog.setWindowModality(QtCore.Qt.WindowModal)
+        CountDialog.setEnabled(True)
+        CountDialog.resize(1366, 723)
+        CountDialog.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        CountDialog.setModal(False)
+        self.buttonBox = QtWidgets.QDialogButtonBox(CountDialog)
         self.buttonBox.setGeometry(QtCore.QRect(170, 240, 161, 51))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
-        self.groupBox = QtWidgets.QGroupBox(FilterDialog)
+        self.groupBox = QtWidgets.QGroupBox(CountDialog)
         self.groupBox.setGeometry(QtCore.QRect(30, 20, 441, 221))
         self.groupBox.setObjectName("groupBox")
         self.gridLayoutWidget = QtWidgets.QWidget(self.groupBox)
@@ -65,13 +65,9 @@ class Ui_FilterDialog(object):
         self.groupBox_7.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.groupBox_7.setObjectName("groupBox_7")
         self.dayspinBox = QtWidgets.QSpinBox(self.groupBox_7)
-        self.dayspinBox.setGeometry(QtCore.QRect(10, 30, 53, 24))
+        self.dayspinBox.setGeometry(QtCore.QRect(20, 30, 53, 24))
         self.dayspinBox.setMinimum(1)
         self.dayspinBox.setObjectName("dayspinBox")
-        self.dayspinBox_2 = QtWidgets.QSpinBox(self.groupBox_7)
-        self.dayspinBox_2.setGeometry(QtCore.QRect(70, 30, 53, 24))
-        self.dayspinBox_2.setMinimum(1)
-        self.dayspinBox_2.setObjectName("dayspinBox_2")
         self.gridLayout.addWidget(self.groupBox_7, 2, 0, 1, 1)
         self.groupBox_4 = QtWidgets.QGroupBox(self.gridLayoutWidget)
         self.groupBox_4.setMaximumSize(QtCore.QSize(16777215, 75))
@@ -82,28 +78,28 @@ class Ui_FilterDialog(object):
         self.nameLine.setObjectName("nameLine")
         self.gridLayout.addWidget(self.groupBox_4, 3, 0, 1, 1)
 
-        self.retranslateUi(FilterDialog)
-        self.buttonBox.accepted.connect(FilterDialog.accept)
-        self.buttonBox.rejected.connect(FilterDialog.reject)
-        QtCore.QMetaObject.connectSlotsByName(FilterDialog)
+        self.retranslateUi(CountDialog)
+        self.buttonBox.accepted.connect(CountDialog.accept)
+        self.buttonBox.rejected.connect(CountDialog.reject)
+        QtCore.QMetaObject.connectSlotsByName(CountDialog)
 
-    def retranslateUi(self, FilterDialog):
+    def retranslateUi(self, CountDialog):
         _translate = QtCore.QCoreApplication.translate
-        FilterDialog.setWindowTitle(_translate("FilterDialog", "Apply Filter"))
-        self.groupBox.setTitle(_translate("FilterDialog", "Apply Filter"))
-        self.groupBox_3.setTitle(_translate("FilterDialog", "attribute"))
-        self.attributeBox.setToolTip(_translate("FilterDialog", "What freatiure of the agent to fileter by"))
-        self.groupBox_6.setTitle(_translate("FilterDialog", "value"))
-        self.groupBox_2.setTitle(_translate("FilterDialog", "operator"))
-        self.groupBox_7.setTitle(_translate("FilterDialog", "days"))
-        self.groupBox_4.setTitle(_translate("FilterDialog", "name (optional)"))
+        CountDialog.setWindowTitle(_translate("CountDialog", "Apply Filter"))
+        self.groupBox.setTitle(_translate("CountDialog", "Count"))
+        self.groupBox_3.setTitle(_translate("CountDialog", "attribute"))
+        self.attributeBox.setToolTip(_translate("CountDialog", "What freatiure of the agent to fileter by"))
+        self.groupBox_6.setTitle(_translate("CountDialog", "value"))
+        self.groupBox_2.setTitle(_translate("CountDialog", "operator"))
+        self.groupBox_7.setTitle(_translate("CountDialog", "day"))
+        self.groupBox_4.setTitle(_translate("CountDialog", "name (optional)"))
 
 
 if __name__ == "__main__":
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    FilterDialog = QtWidgets.QDialog()
-    ui = Ui_FilterDialog()
-    ui.setupUi(FilterDialog)
-    FilterDialog.show()
+    CountDialog = QtWidgets.QDialog()
+    ui = Ui_CountDialog()
+    ui.setupUi(CountDialog)
+    CountDialog.show()
     sys.exit(app.exec_())
