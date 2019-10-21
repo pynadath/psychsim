@@ -81,8 +81,10 @@ def preSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=No
     data = []
     agent = world.agents[name]
     entry = {'Name': name,'Timestep': t,'Hurricane': hurricane['Hurricane']}
-    if partID is not None:
+    if isinstance(partID,int):
         entry['EntityIdx'] = 'ActorPre %d' % (partID)
+    elif isinstance(partID,str):
+        entry['EntityIdx'] = 'ActorPre %s' % (partID)
     variables.update(accessibility.boilerDict)
     for var,value in accessibility.getCurrentDemographics(args,name,world,states,config,t).items():
         record = dict(entry)
@@ -163,8 +165,10 @@ def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=N
     data = []
     agent = world.agents[name]
     entry = {'Name': name,'Timestep': t,'Hurricane': hurricane['Hurricane']}
-    if partID is not None:
+    if isinstance(partID,int):
         entry['EntityIdx'] = 'ActorPost %d' % (partID)
+    elif isinstance(partID,str):
+        entry['EntityIdx'] = 'ActorPost %s' % (partID)
     variables.update(accessibility.boilerDict)
     for var,value in accessibility.getCurrentDemographics(args,name,world,states,config,t).items():
         record = dict(entry)
@@ -553,7 +557,7 @@ if __name__ == '__main__':
                 samples.append({partID+1: sample[partID] for partID in range(len(samples))})
                 if hurricane == hurricanes[-1]:
                     for actor in pool:
-                        print(name,accessibility.getActions(args,actor,world,states,config,(1,args['span']-1))) 
+                        print(name,accessibility.getAction(args,actor,world,states,(1,args['span']-1))) 
         for label,data in tables.items():
             accessibility.writeOutput(args,data,fields[label],'%sTable_temp.tsv' % (label))
     accessibility.writeVarDef(os.path.join(os.path.dirname(__file__),'..'),list(variables.values()))
