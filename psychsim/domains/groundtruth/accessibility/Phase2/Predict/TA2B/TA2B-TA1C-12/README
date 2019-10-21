@@ -1,0 +1,1 @@
+The EntityIdx values are encoded as "ActorPost <ID> Hurricane <h>", where the participant is the actor who filled out the IDP post-survey for hurricane <h>, and who is now filling out the post-survey for hurricane <h+1>.
