@@ -29,15 +29,22 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 90,'run': 0,'span': 123},
     {'instance': 100,'run': 0,'span': 122},
     {'instance': 101,'run': 0,'span': 135},
-    {'instance': 100,'run': 2,'span': 93},
+    {'instance': 100,'run': 2,'span': 82},
     {'instance': 101,'run': 1,'span': 130},]
     
 instanceMap = {'Phase1': {'Explain': [1], 'Predict': [3,4,5,6,7,8], 'Prescribe': [9,10,11,12,13,14]},
     'Phase2': {'Explain': [15,16,17], 'Predict': [18,19]},
     'Phase3': {},
     }
-def instanceArgs(phase,challenge):
-    return {instance: instances[instance-1] for instance in instanceMap[phase][challenge]}.items()
+def instanceArgs(phase,challenge=True):
+    if challenge is True:
+        result = []
+        for challenge in instanceMap[phase]:
+            result += list(instanceArgs(phase,challenge))
+        return result
+    else:
+        return {instance: instances[instance-1] for instance in instanceMap[phase][challenge]}.items()
+
 def allArgs():
     """
     :warning: Skips Instance2, which was generated only for Team B's request
@@ -47,6 +54,13 @@ def instancePhase(instance):
     assert instance > 0,'First instance is 1'
     assert instance <= len(instances),'Latest instance is %d' % (len(instances))
     return 1 if instance < 15 else 2
+def instanceChallenge(instance):
+    for phase,table in instanceMap.items():
+        for challenge,instances in table.items():
+            if instance in instances:
+                return phase,challenge
+    else:
+        raise ValueError('Unknown instance: %s' % (instance))
 
 def createParser(output=None,day=None,seed=False,instances=False):
     """
@@ -481,8 +495,10 @@ def backwardDemographics(agent,demos):
     for key,feature in demographics.items():
         agent.demographics[feature] = demos[agent.name][key]
         
-def writeVarDef(dirName,items):
+def writeVarDef(dirName,items,relationships=False):
     fields = ['Name','LongName','Values','VarType','DataType','Notes']
+    if relationships:
+        fields[3] = 'RelType' 
     output = []
     for item in items:
         if 'Values' not in item:
@@ -492,11 +508,11 @@ def writeVarDef(dirName,items):
                 raise ValueError('Values missing from item %s' % (item['Name']))
         if 'LongName' not in item:
             item['LongName'] = item['Name']
-        if 'VarType' not in item:
-            item['VarType'] = 'dynamic'
+        if '%sType' % ('Rel' if relationships else 'Var') not in item:
+            item['%sType' % ('Rel' if relationships else 'Var')] = 'dynamic'
     if not os.path.exists(os.path.join(dirName,'SimulationDefinition')):
         os.makedirs(os.path.join(dirName,'SimulationDefinition'))
-    with open(os.path.join(dirName,'SimulationDefinition','VariableDefTable.tsv'),'w') as csvfile:
+    with open(os.path.join(dirName,'SimulationDefinition','RelationshipDefTable.tsv' if relationships else 'VariableDefTable.tsv'),'w') as csvfile:
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
         writer.writeheader()
         for record in items:
@@ -594,7 +610,7 @@ def loadState(args,states,t,turn,world=None):
             else:
                 agent = world.agents[name]
                 for model,belief in state.items():
-                    agent.model[model]['beliefs'] = belief
+                    agent.models[model]['beliefs'] = belief
 #                model = agent.getBelief().keys()
 #                assert len(model) == 1
 #                model = next(iter(model))
@@ -709,7 +725,7 @@ def holoCane(world,config,actors,span,select=True,policy={},unit='days',debug=Fa
     else:
         history[0].update({name: copy.deepcopy(next(iter(world.agents[name].getBelief(state).values()))) for name in actors})
     timeUnits = 0
-    while timeUnits < span or phase != 'none':
+    while timeUnits < span or (unit == 'hurricanes' and phase != 'none'):
         everyone = set()
         for name in actors-dead:
             if world.getState(name,'alive',state).first():
