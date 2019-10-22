@@ -1,0 +1,5 @@
+For the Predict instances, we run a HoloCane simulation over the last 5 days of the IDP timeline.
+
+A hurricane cannot equally hit all regions. We provide the hurricane trajectory experienced in the HoloCane within the InstanceVariableTable.
+
+The participants and their IDs are reused from request TA2A-TA1C-0372.

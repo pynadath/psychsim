@@ -432,6 +432,20 @@ def setBelief(actor,world,data,t,debug=False):
         world.setFeature(key,value,newBelief)
     return newBelief
 
+def initiateHurricane(world,category,location,actors,state=None,phase='approaching'):
+    world.setState('Nature','category',category,state)
+    world.setState('Nature','phase',phase,state)
+    world.setState('Nature','days',0,state)
+    world.setState('Nature','location',location,state)
+    for actor in actors:
+        beliefs = world.agents[actor].getBelief()
+        model,myBelief = next(iter(beliefs.items()))
+        myBelief = copy.deepcopy(myBelief)
+        world.setState('Nature','category',category,myBelief)
+        world.setState('Nature','phase',phase,myBelief)
+        world.setState('Nature','days',0,myBelief)
+        world.setState('Nature','location',location,myBelief)
+
 def setHurricane(world,category,location,actor,actions=None,locations=None,myStart=None,debug=False):
     """
     :param start: Initial location for actor (default is current location)
@@ -778,3 +792,16 @@ def findParticipants(fname,args,world,states,config,ignoreWealth=True):
             assert entry['Name'],'No matches for: %s' % (entry)
             oldSurvey.append(entry)
     return oldSurvey
+
+def readRRParticipants(fname):
+    participants = {}
+    with open(fname,'r') as logfile:
+        for line in logfile:
+            elements = line.split(':')
+            terms = elements[2].split()
+            if terms[0] == 'Instance':
+                instance = int(terms[1])
+                participants[instance] = {}
+            elif terms[0] == 'Participant':
+                participants[instance][int(terms[1])] = elements[-1].strip()
+    return participants
