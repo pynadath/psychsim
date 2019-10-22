@@ -6,7 +6,7 @@ from psychsim.pwl import *
 from psychsim.action import Action,ActionSet
 from psychsim.world import World,stateKey,actionKey
 from psychsim.agent import Agent
-
+from psychsim.reward import *
 
     # Create scenario
 class Centipede:
@@ -35,8 +35,8 @@ class Centipede:
             meTake = me.addAction({'verb': 'take','object': other.name})
             # Parameters
             me.setHorizon(6)
-            me.setParameter('discount',1.)
-            # me.setParameter('discount',0.9)
+            me.setAttribute('discount',1.)
+            # me.setAttribute('discount',0.9)
         
             # Levels of belief
         david.setRecursiveLevel(3)
@@ -58,15 +58,15 @@ class Centipede:
         # Dynamics
         for action in stacy.actions | david.actions:
             tree = makeTree(incrementMatrix(stateKey(None,'round'),1))
-            self.world.setDynamics(None,'round',action,tree)
+            self.world.setDynamics(stateKey(None,'round'),action,tree)
             if (action['verb'] == 'take'):
                 tree = makeTree(setTrueMatrix(stateKey(None,'gameOver')))
-                self.world.setDynamics(None,'gameOver',action,tree)
+                self.world.setDynamics(stateKey(None,'gameOver'),action,tree)
                 agts = ['Stacy','David']
                 for i in range(2):
                     key = stateKey(agts[i],'money')
                     tree = makeTree(self.buildPayoff(0, key, self.payoff[agts[i]]))
-                    self.world.setDynamics(agts[i],'money',action,tree)
+                    self.world.setDynamics(stateKey(agts[i],'money'),action,tree)
             elif action['verb'] == 'pass':
                 agts = ['Stacy','David']
                 for i in range(2):
@@ -74,7 +74,7 @@ class Centipede:
                     tree = makeTree({'if': equalRow(stateKey(None,'round'),self.maxRounds-1),
                                      True: setToConstantMatrix(key,self.payoff[agts[i]][self.maxRounds]),
                                      False: noChangeMatrix(key)})
-                    self.world.setDynamics(agts[i],'money',action,tree)
+                    self.world.setDynamics(stateKey(agts[i],'money'),action,tree)
                 
 
 # really need to ask david about these levels - if adding modesl with levels, can
@@ -125,14 +125,14 @@ class Centipede:
             self.world.explain(self.world.step(),level=2)
             # self.world.explain(self.world.step(),level=1)
             # print self.world.step()
-            self.world.state.select()
+            #self.world.state.select()
             # self.world.printState()
             if self.world.terminated():
                 break        
 
 # Parameters
 #           me.setHorizon(6)
-#           me.setParameter('discount',0.9)
+#           me.setAttribute('discount',0.9)
 # Levels of belief
 #        david.setRecursiveLevel(3)
 #        stacy.setRecursiveLevel(3)

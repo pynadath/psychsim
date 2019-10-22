@@ -1,0 +1,17 @@
+Team Scenarios:
+Interdependent Sports Team
+Examples: Football, rugby, soccer
+Non-examples: Track and field, swimming
+Good team qualities:
+-Communication
+-Coordination
+-Trust between members
+-Proper leadership, i.e. good coach and team captain
+-Encouragement
+
+Battleship Crew
+Good team qualities:
+-All of the above
+-Following chain of command
+-Trust in the mission, e.g. it's accomplishable, and we aill accomplish it
+

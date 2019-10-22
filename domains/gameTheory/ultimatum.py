@@ -36,8 +36,8 @@ class Ultimatum:
                 mePass = me.addAction({'verb': 'reject','object': other.name})
             # Parameters
             me.setHorizon(2)
-            me.setParameter('discount',0.9)
-            # me.setParameter('discount',1.0)
+            me.setAttribute('discount',0.9)
+            # me.setAttribute('discount',1.0)
         
             # Levels of belief
         david.setRecursiveLevel(3)
@@ -123,7 +123,7 @@ class Ultimatum:
 
 # Parameters
 #           me.setHorizon(6)
-#           me.setParameter('discount',0.9)
+#           me.setAttribute('discount',0.9)
 # Levels of belief
 #        david.setRecursiveLevel(3)
 #        stacy.setRecursiveLevel(3)

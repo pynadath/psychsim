@@ -55,7 +55,7 @@ class Agent:
     """Policy methods"""
     """------------------"""
 
-    def decide(self,vector,horizon=None,others=None,model=None,selection=None,actions=None,keys=None):
+    def decide(self,vector,horizon=None,others=None,model=None,selection='random',actions=None,keys=None):
         """
         Generate an action choice for this agent in the given state
         @param vector: the current state in which the agent is making its decision
@@ -76,6 +76,7 @@ class Agent:
         @param actions: possible action choices (default is all legal actions)
         @param keys: subset of state features to project over (default is all state features)
         """
+        selection = 'random'
         if model is None:
             model = self.world.getModel(self.name,vector)
         if selection is None:
@@ -97,7 +98,7 @@ class Agent:
             # Consider all legal actions (legality determined by my belief, circumscribed by real world)
             actions = self.getActions(vector)
             for state in belief.domain():
-                actions = actions & self.getActions(state) 
+                actions = actions & self.getActions(state)
         if len(actions) == 0:
             # Someone made a boo-boo because there is no legal action for this agent right now
             buf = StringIO.StringIO()
@@ -140,7 +141,7 @@ class Agent:
                 values[key] = entry['__EV__']
             result['action'] = Distribution(values,self.getAttribute('rationality',model))
         elif len(best) == 1:
-            # If there is only one best action, all of the selection mechanisms devolve 
+            # If there is only one best action, all of the selection mechanisms devolve
             # to the same unique choice
             result['action'] = best[0]
         elif selection == 'random':
@@ -156,7 +157,7 @@ class Agent:
             best.sort()
             result['action'] = best[0]
         return result
-                
+
     def value(self,vector,action=None,horizon=None,others=None,model=None,keys=None):
         """
         Computes the expected value of a state vector (and optional action choice) to this agent
@@ -308,7 +309,7 @@ class Agent:
                                     Vrest = 0.
                                 else:
                                     Vrest = distribution[end]*future
-                                # Determine discount function 
+                                # Determine discount function
                                 # (should use belief about other agent, but doesn't yet)
                                 if agent.name == self.name:
                                     discount = agent.getAttribute('discount',model)
@@ -683,7 +684,7 @@ class Agent:
             print >> buf,'%s\t\t\t----beliefs:----' % (prefix)
             self.world.printState(model['beliefs'],buf,prefix+'\t\t\t',beliefs=True)
             print >> buf,'%s\t\t\t----------------' % (prefix)
-        
+
     """---------------------"""
     """Belief update methods"""
     """---------------------"""
@@ -934,7 +935,7 @@ class Agent:
     """------------------"""
     """Serialization methods"""
     """------------------"""
-            
+
     def __copy__(self):
         return self.__class__(self.self.__xml__())
 

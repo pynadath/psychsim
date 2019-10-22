@@ -1,0 +1,39 @@
+Parameters:
+Map Size X: 8
+Map Size Y: 5
+Soldiers: 1
+Soldier Start Locations: ['1,2']
+Soldier Goal Locations: ['5,4']
+Enemies: 1
+Enemy Start Locations: ['4,3']
+Bases/Helicopters: 1
+Base/Helicopter Start Locations: ['0,0']
+
+ 
+Weights:
+Soldier:
+Minimizing soldier and goal distance: -0.1
+Minimizing soldier and enemy distance: 0.8
+Enemy:
+Minimizing soldier and enemy distance: 0.5
+Minimizing soldier and helicopter distance: 0.6
+Minimizing soldier and goal distance: -1.0
+Base:
+Minimizing helicopter and enemy distance: 0.5
+Minimizing helicopter cost: 0.2
+Helicopter:
+Minimizing helicopter and enemy distance: -1.0
+Minimizing soldier and enemy distance : 1.0
+
+ 
+Scores:
+Soldier-Goal Manhattan Distance: 
+Soldier0: 9
+Soldier-Enemy Manhattan Distance: 
+Soldier0: -13
+Helicopter Deployment Costs: 
+Distractor0: 2
+Turns Taken: 
+4
+Overall Score: 
+Soldier0: 56.6037735849

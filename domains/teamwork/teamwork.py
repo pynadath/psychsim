@@ -18,6 +18,10 @@ from time import time
 import os
 
 
+def test():
+	print('x')
+
+
 class Scenario:
     def __init__(self,
                  MAP_SIZE_X=0,
@@ -53,7 +57,7 @@ class Scenario:
         self.world = World()
         self.world.defineState(None, 'turns', int)
         self.world.setState(None, 'turns', 0)
-        self.world.addTermination(makeTree({'if': thresholdRow(stateKey(None, 'turns'), 20),
+        self.world.addTermination(makeTree({'if': thresholdRow(stateKey(None, 'turns'), 50),
                                             True: True, False: False}))
         self.create_friendly_agents()
         self.create_enemy_agents()
@@ -648,6 +652,39 @@ class Scenario:
         Thread(target=pyglet.app.run()).start()
         # target=pyglet.app.run()
 
-# if __name__ == '__main__':
-#
-#     print('RUN COMPLETE!')
+
+
+if __name__ == '__main__':
+    MAP_SIZE_X = 10
+    MAP_SIZE_Y = 10
+    F_ACTORS = 1
+    F_START_LOC = ['0,0']
+    F_GOAL_LOC = ['7,7']
+    E_ACTORS = 1
+    E_START_LOC = ['9,9']
+    D_ACTORS = 1
+    D_START_LOC = ['0,0']
+    AGENT = [0.5,-0.5]
+    BASE = [0,5,0.2]
+    DISTRACTOR = [-1.0,1.0]
+    ENEMY = [1.0,0.0,-1.0]
+
+    run = Scenario(
+        MAP_SIZE_X,
+        MAP_SIZE_Y,
+        F_ACTORS,
+        F_START_LOC,
+        F_GOAL_LOC,
+        E_ACTORS,
+        E_START_LOC,
+        5,
+        D_ACTORS,
+        D_START_LOC,
+        BASE,
+        DISTRACTOR,
+        ENEMY,
+        AGENT
+    )
+    run.run_with_visual()
+
+    
