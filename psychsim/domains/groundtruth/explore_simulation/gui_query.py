@@ -53,21 +53,62 @@ class Main(QMainWindow, Ui_MainWindow):
         fig = Figure()
         self.addmpl(fig)
 
+        #self.filtersText.clicked.connect(self.on_Filter)
+        self.setupQueries()
+        self.setupButtons()
+        self.initSubWindows()
+
+    def setupButtons(self):
         self.queryBox.activated[str].connect(self.on_Query)
         self.resetButton.clicked.connect(self.on_reset)
         self.helpButton.clicked.connect(self.on_help)
         self.samplesText.itemDoubleClicked.connect(self.samples_dclicked)
-        #self.filtersText.clicked.connect(self.on_Filter)
-        self.setupQueries()
-        self.initSubWindows()
+        self.apply_filter.clicked.connect(self.apply_filter_clicked)    
+        self.activate_filter.clicked.connect(self.activate_filter_clicked)    
+        self.deactivate_filter.clicked.connect(self.deactivate_filter_clicked)
+        self.delete_filter.clicked.connect(self.delete_filter_clicked)    
+        self.deleteSample.clicked.connect(self.delete_sample_clicked)
 
 
+    def apply_filter_clicked(self):
+        self.show_apply_filter('dummyArg')
+            
     def samples_dclicked(self, qmodelindex):
         item = self.samplesText.currentItem()
         logparser.display_one_sample(p_name=item.text())
         print(item.text())
                                          
+    def delete_filter_clicked(self, qmodelindex):
+        item = self.filterText.currentItem().text().split(':')
+        logparser.delete_filter(p_name=item[0])
+        print(item[0])
+    def activate_filter_clicked(self, qmodelindex):
+        if self.filterText.currentItem():
+            item = self.filterText.currentItem().text().split(':')
+            logparser.reactivate_filter(p_name=item[0])
+            self.filterText.clear()
+            self.filterText.addItems([logparser.filters_to_str(f) for f in logparser.filter_list])
+            #self.filterText.addItems(logparser.display_filters())            
+            print(item[0])
+        else:
+            print('Must firest select a filter')
+    def deactivate_filter_clicked(self, qmodelindex):
+        if self.filterText.currentItem():
+            item = self.filterText.currentItem().text().split(':')
+            logparser.deactivate_filter(p_name=item[0])
+            self.filterText.clear()
+            self.filterText.addItems([logparser.filters_to_str(f) for f in logparser.filter_list])
+            #self.filterText.addItems(logparser.display_filters())            
+            print(item[0])
+        else:
+            print('Must first select a filter')
+    def delete_sample_clicked(self, qmodelindex):
+        item = self.samplesText.currentItem()
+        logparser.delete_sample(p_name=item.text())
+        print(item.text())
 
+
+                                         
     def changefig(self, item):
         text = item.text()
         self.rmmpl()
@@ -144,6 +185,9 @@ class Main(QMainWindow, Ui_MainWindow):
     def show_create_sample(self,selected):
         self.CreateSample.show()
         
+  
+
+
         
     # def setup_save_sample(self):
     #     self.SaveSample = QtWidgets.QDialog()
@@ -196,11 +240,30 @@ class Main(QMainWindow, Ui_MainWindow):
     def on_deactivate_filter(self):
         print("#######################\n")
         p_name = self.deactivate_filter.filterBox.currentText()
+        
         self.f = logparser.deactivate_filter(p_name=p_name)
         self.updateFilterList()
     def show_deactivate_filter(self,selected):
         self.deactivate_filter.operatorBox.addItems(logparser.show_filters())
         self.DeactivateFilter.show()
+
+
+        
+    # def setup_activate_filter(self):
+    #     self.activateFilter = QtWidgets.QDialog()
+    #     self.activate_filter = Ui_activateFilter()
+    #     self.activate_filter.setupUi(self.activateFilter)
+    #     self.activate_filter.buttonBox.accepted.connect(self.on_activate_filter)
+    #     self.activate_filter.attributeBox.addItems(logparser.entities_att_list['Actor'])
+    def on_activate_filter(self):
+        print("#######################\n")
+        p_name = self.activate_filter.filterBox.currentText()
+        
+        self.f = logparser.activate_filter(p_name=p_name)
+        self.updateFilterList()
+    def show_activate_filter(self,selected):
+        self.activate_filter.operatorBox.addItems(logparser.show_filters())
+        self.activateFilter.show()
 
     def setup_apply_filter(self):
         self.FilterDialog = QtWidgets.QDialog()
@@ -218,6 +281,7 @@ class Main(QMainWindow, Ui_MainWindow):
         p_val = self.apply_filter.valueSpinBox.value()
         p_name = self.apply_filter.nameLine.text()
         self.f = logparser.apply_filter(p_daylst, p_att, p_val, p_op, p_name=p_name)
+        self.filterText.clear()
         self.filterText.addItems([logparser.filters_to_str(f) for f in logparser.filter_list])
         #for f in logparser.filterList:
 
@@ -247,7 +311,7 @@ class Main(QMainWindow, Ui_MainWindow):
         for action in self.get_stats.toolmenu.actions():
             if action.isChecked():
                 p_snames.append(action.text())
-        logparser.get_stats(p_att, p_fct, p_days=p_daylst,p_name=p_name,p_sample_names=p_snames)
+        logparser.get_stats(p_att, p_fct, p_days=p_daylst,p_sample_names=p_snames)
         self.StatsDialog.hide()
     def show_get_stats(self,selected):
         self.get_stats.dayspinBox_2.setRange(1,logparser.n_days)
