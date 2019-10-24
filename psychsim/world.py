@@ -822,6 +822,12 @@ class World(object):
                     self.defineVariable(key,ActionSet,description='Action performed by %s' % (name))
                     self.setFeature(key,next(iter(self.variables[key]['elements'])))
 
+    def setAllParallel(self):
+        """
+        Utility method that sets the order to be all agents (who have actions) acting in parallel
+        """
+        self.setOrder([{name for name,agent in self.agents.items() if agent.actions}])
+        
     def next(self,vector=None):
         """
         :returns: a list of agents (by name) whose turn it is in the current epoch
