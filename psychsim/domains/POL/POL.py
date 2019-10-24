@@ -282,7 +282,7 @@ if __name__ == '__main__':
     environment_agent =Environment('current_environment', world)
 
     civilians=[]
-    civilian_count=1
+    civilian_count=1000
     for j in range(civilian_count):
         starting_location=(randint(residential.lower_x,residential.higher_x), randint(residential.lower_y,residential.higher_y))
         civilian = Person('civilian %d' %(j+1), starting_location, world, True, True, True)
@@ -305,7 +305,7 @@ if __name__ == '__main__':
 #       world.agents[name].init_attitudes(world)
         print(name)
         exportCS(world,name)
-        exit()
+    exit()
     for i in range(24):
         start_round=time()
         print('\n \tStep %d: ' %(i+1))
