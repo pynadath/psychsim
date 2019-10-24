@@ -7,10 +7,10 @@ from psychsim.pwl import *
 
 typeMap = {float: 'double'}
 
-actionTemplate = Template('meCurrentAction = PS${name}.${action};\nRaiseActionChangedEvent(new ActionChangedEventArgs(this, meCurrentAction));')
+actionTemplate = Template('meCurrentAction = PSCivilian.${action};\nRaiseActionChangedEvent(new ActionChangedEventArgs(this, meCurrentAction));')
 branchTemplate = Template('if ${plane} {\n\t${true}\n} else {\n\t${false}\n}')
 dynamicsTemplate = Template('\t\tvoid update_${variable}()\n\t\t{\n\t\t\tswitch (meCurrentAction)\n\t\t\t{\n${trees}\n\t\t\t}\n\t\t}\n')
-caseTemplate = Template('\t\t\t\tcase PS${name}ActionEnum.${action}:\n\t\t\t\t{\n\t\t\t\t\t${tree}\n\t\t\t\t}\n')
+caseTemplate = Template('\t\t\t\tcase PSCivilianActionEnum.${action}:\n\t\t\t\t{\n\t\t\t\t\t${tree}\n\t\t\t\t}\n')
 effectTemplate = Template('${var} = ${vector};')
 
 def encodeName(name):

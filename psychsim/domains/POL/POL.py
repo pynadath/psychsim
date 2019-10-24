@@ -66,7 +66,7 @@ class Person(Agent):
                                 True: False,
                                 False: True},
                         False: False})
-        work = self.addAction({'verb':'work'}, tree)
+        work = self.addAction({'verb':'GoWork'}, tree)
 
         
         eating_cost =randint(10,50)*.01 if random_costs else .5
@@ -84,8 +84,8 @@ class Person(Agent):
         tree= makeTree({'if': thresholdRow(wealth,eating_cost),
                         True: True,
                         False: False})
-        eat = self.addAction({'verb':'eat'}, tree)
-        gohome = self.addAction({'verb':'gohome'})
+        eat = self.addAction({'verb':'GoEat'}, tree)
+        gohome = self.addAction({'verb':'GoHome'})
 
         # set dynamics
         commercial=world.agents['commercial']
@@ -152,7 +152,7 @@ class Person(Agent):
 
     # ignore the other people unless they are not civilians
     def init_beliefs(self):
-        relevant = {key for key in self.world.state.keys() if state2agent(key) == self.name or state2agent(key)[:8] != 'civilian'}
+        relevant = {key for key in self.world.state.keys() if state2agent(key) == self.name or state2agent(key)[:8] != 'Civilian'}
         return self.resetBelief(include=relevant)
 
 
@@ -285,7 +285,7 @@ if __name__ == '__main__':
     civilian_count=1000
     for j in range(civilian_count):
         starting_location=(randint(residential.lower_x,residential.higher_x), randint(residential.lower_y,residential.higher_y))
-        civilian = Person('civilian %d' %(j+1), starting_location, world, True, True, True)
+        civilian = Person('Civilian %d' %(j+1), starting_location, world, True, True, True)
         civilians.append(civilian.name)
 
 
