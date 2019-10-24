@@ -116,6 +116,12 @@ def isModelKey(key):
 def model2name(key):
     return key[:-(len(MODEL)+3)]
 
+def isSpecialKey(key):
+    """
+    :return: True iff the given key is a state key and its feature is a reserved name (e.g., for a turn, model, reward, etc)
+    """
+    return isStateKey(key) and state2feature(key)[:2] == '__'
+    
 def binaryKey(subj,obj,relation):
     return '%s %s -- %s' % (subj,relation,obj)
 
