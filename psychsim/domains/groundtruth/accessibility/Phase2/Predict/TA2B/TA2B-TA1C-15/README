@@ -1,0 +1,3 @@
+As in request 14, we provide pre/post survey matches for all instances within the RunDataTable. For, the Predict instances, the Timestep matches the Timestep of the actor's survey response (the hurricane number is also included in the value).
+
+An empty table means that no one died.
