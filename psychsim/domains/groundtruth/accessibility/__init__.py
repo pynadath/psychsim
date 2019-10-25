@@ -539,11 +539,14 @@ def trustInFriends(config,world,friends):
     return sum([trust[world.agents[friend].distortion] for friend in friends])/len(friends)
 
 def getDeath(args,name,world,states,t):
-    for day in range(2,t+1):
-        if not getInitialState(args,name,'alive',world,states,day).first():
-            return day
-    else:
+    if getInitialState(args,name,'alive',world,states,t).first():
+        # Still Alive
         return None
+    for day in range(t-1,1,-1):
+        if getInitialState(args,name,'alive',world,states,day).first():
+            return day+1
+    else:
+        raise ValueError('%s was never alive!' % (name))
 
 def getLivePopulation(args,world,states,t):
     """
@@ -805,3 +808,26 @@ def readRRParticipants(fname):
             elif terms[0] == 'Participant':
                 participants[instance][int(terms[1])] = elements[-1].strip()
     return participants
+
+def getSurveyTime(args,pre,h,partID):
+    hurricanes = readHurricanes(args['instance'],args['run'])
+    hurricane = hurricanes[h-1]
+    assert hurricane['Hurricane'] == h
+    entity = 'Actor%s %d' % ('Pre' if pre else 'Post',partID)
+    if pre:
+        start = hurricane['Start']
+        end = hurricane['Landfall']
+    else:
+        start = hurricane['End']
+        try:
+            end = hurricanes[h]['Start']
+        except IndexError:
+            end = None
+    for line in loadMultiCSV(instanceFile(args,'RunDataTable.tsv'),args['instance'],args['run'],grabFields=False):
+        if int(line['Timestep']) >= start and (end is None or int(line['Timestep']) <= end):
+            if line['EntityIdx'] == entity:
+                break
+    else:
+        raise ValueError('Unable to find: %s' % (entity))
+    return int(line['Timestep'])
+
