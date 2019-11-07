@@ -1,3 +1,4 @@
+
 from psychsim.reward import *
 from psychsim.pwl import *
 from psychsim.action import *
@@ -282,7 +283,7 @@ if __name__ == '__main__':
     environment_agent =Environment('current_environment', world)
 
     civilians=[]
-    civilian_count=1000
+    civilian_count=50
     for j in range(civilian_count):
         starting_location=(randint(residential.lower_x,residential.higher_x), randint(residential.lower_y,residential.higher_y))
         civilian = Person('Civilian %d' %(j+1), starting_location, world, True, True, True)
@@ -300,11 +301,44 @@ if __name__ == '__main__':
     
     world.setAllParallel()
 
+
     for name in civilians:
         world.agents[name].init_beliefs()
 #       world.agents[name].init_attitudes(world)
         print(name)
         exportCS(world,name)
+        
+    
+    with open(os.path.join(os.path.dirname(__file__), 'PSCivilianInit.cs'), 'w') as initFile:
+		
+        
+        initFile.write('using UnityEngine;\n')
+        initFile.write('namespace PsychSim \n')
+        initFile.write('{\n')
+        initFile.write('\tpublic partial class TssPsController : MonoBehaviour\n')
+        initFile.write('\t{\n')
+
+        for j in range(civilian_count):
+            initFile.write('\t\tPSCivilian%d mPSCivilian%d;\n'% (j+1, j+1))
+        initFile.write('\t\tint numAgents = %d;\n\n'%(civilian_count))
+        
+        initFile.write('\t\tvoid InitializeCivilians()\n')
+        initFile.write('\t\t{\n')
+        initFile.write('\t\t\tGameObject psCivilians = new GameObject("PS Civilians");\n')
+
+        for j in range(civilian_count):
+            
+            initFile.write('\t\t\tmPSCivilian%d = mIAgents[%d].AddComponent<PSCivilian%d>();\n'%(j+1, j, j+1))
+            initFile.write('\t\t\tmPSCivilian%d.transform.SetParent(psCivilians.transform);\n'%(j+1))
+            initFile.write('\t\t\tmPSCivilian%d.agentId = mIAgents[%d].id;\n'%(j+1, j))
+            initFile.write('\t\t\tmPSCivilian%d.SetController(this);\n'%(j+1))
+            initFile.write('\t\t\tmPSCivilian%d.ActionChanged += OnActionChanged;\n\n'%(j+1))
+    
+        initFile.write('\t\t}\n')
+        initFile.write('\t}\n')
+        initFile.write('}')
+
+
     exit()
     for i in range(24):
         start_round=time()
