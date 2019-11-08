@@ -7,7 +7,7 @@ using TSS;
 namespace PsychSim
 {
 
-    public  class PS${name} : MonoBehaviour
+    public  class PS${name} : PSCivilian
     {
 
 
@@ -42,15 +42,7 @@ ${dynamics}
             ${policy}
 
         }
-        protected virtual void HandleHurricane()
-        {
 
-        }
-        protected virtual void RaiseActionChangedEvent(ActionChangedEventArgs eventArgs)
-        {
-            if (ActionChanged != null)
-                ActionChanged.Invoke(this, eventArgs);
-        }
 
 
     }
