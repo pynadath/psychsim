@@ -432,10 +432,10 @@ def setBelief(actor,world,data,t,debug=False):
         world.setFeature(key,value,newBelief)
     return newBelief
 
-def initiateHurricane(world,category,location,actors,state=None,phase='approaching'):
+def initiateHurricane(world,category,location,actors,state=None,phase='approaching',days=0):
     world.setState('Nature','category',category,state)
     world.setState('Nature','phase',phase,state)
-    world.setState('Nature','days',0,state)
+    world.setState('Nature','days',days,state)
     world.setState('Nature','location',location,state)
     for actor in actors:
         beliefs = world.agents[actor].getBelief()
@@ -443,7 +443,7 @@ def initiateHurricane(world,category,location,actors,state=None,phase='approachi
         myBelief = copy.deepcopy(myBelief)
         world.setState('Nature','category',category,myBelief)
         world.setState('Nature','phase',phase,myBelief)
-        world.setState('Nature','days',0,myBelief)
+        world.setState('Nature','days',days,myBelief)
         world.setState('Nature','location',location,myBelief)
 
 def setHurricane(world,category,location,actor,actions=None,locations=None,myStart=None,debug=False):
@@ -655,7 +655,11 @@ def getInitialState(args,name,feature,world,states,t,believer=None):
                 if believer is None:
                     return world.getState(name,feature,states[t-1]['Nature']['__state__'])
                 else:
-                    return world.getState(name,feature,next(iter(states[t-1]['Nature'][believer].values())))
+                    beliefs = states[t-1]['Nature'][believer]
+                    if isinstance(beliefs,dict):
+                        # Must be a dictionary of {model: beliefs}
+                        beliefs = next(iter(beliefs.values()))
+                    return world.getState(name,feature,beliefs)
     elif isinstance(t,tuple):
         return [getInitialState(args,name,feature,world,states,day,believer) for day in range(t[0],t[1])]
     elif isinstance(t,list) or isinstance(t,set):
@@ -719,7 +723,7 @@ def unpickle(instance,sub=None,day=None):
 def aidIfWealthLoss(agent):
     return sum([agent.Rweights[k] for k in ['health','childrenHealth','neighbors']])/sum(agent.Rweights.values())
 
-def holoCane(world,config,actors,span,select=True,policy={},unit='days',debug=False):
+def holoCane(world,config,actors,span,select=True,policy={},unit='days',fixedHurricane=None,debug=False):
     if isinstance(actors,str):
         # Backward compatibility
         return holoCane(world,config,{actors},select,policy)
@@ -733,16 +737,16 @@ def holoCane(world,config,actors,span,select=True,policy={},unit='days',debug=Fa
     else:
         friends = {name: set() for name in actors}
     step = 3
-    phase = 'none'
+    phase = world.getState('Nature','phase',state).first()
     dead = set()
     hurricane = 0
-    history = [{'state': copy.deepcopy(state)}]
+    history = [{'__state__': copy.deepcopy(state)}]
     if len(actors) == 1:
         history[0]['beliefs'] = copy.deepcopy(next(iter(world.agents[next(iter(actors))].getBelief(state).values())))
     else:
         history[0].update({name: copy.deepcopy(next(iter(world.agents[name].getBelief(state).values()))) for name in actors})
     timeUnits = 0
-    while timeUnits < span or (unit == 'hurricanes' and phase != 'none'):
+    while timeUnits < span or (unit != 'days' and phase != 'none'):
         everyone = set()
         for name in actors-dead:
             if world.getState(name,'alive',state).first():
@@ -756,15 +760,22 @@ def holoCane(world,config,actors,span,select=True,policy={},unit='days',debug=Fa
         if everyone:
             exchangeMessages(world,config,state,everyone)
         actions = {name: action for name,action in policy.items() if name in world.next(state) and action is not None}
+        turn = world.agents[next(iter(world.next(state)))].__class__.__name__
+        day = world.getState(WORLD,'day',state).first()
         if debug:
-            print(world.getState(WORLD,'day',state).first(),world.agents[next(iter(world.next(state)))].__class__.__name__,phase)
-        world.step(actions=actions,state=state,select=select,keySubset=state.keys())
+            print(day,turn,phase)
+        if turn == 'Nature' and fixedHurricane:
+            world.step(actions=actions,state=state,select=hurr2select(world,fixedHurricane,day),keySubset=state.keys())
+        else:
+            world.step(actions=actions,state=state,select=select,keySubset=state.keys())
+        if turn == 'System':
+            action = world.getFeature(actionKey('System'),state).first()
         step += 1
         oldPhase = phase
         phase = world.getState('Nature','phase',state).first()
         if phase == 'approaching' and oldPhase == 'none':
             hurricane += 1
-        history.append({'state': copy.deepcopy(state)})
+        history.append({'__state__': copy.deepcopy(state)})
         if len(actors) == 1:
             history[-1]['beliefs'] = copy.deepcopy(next(iter(world.agents[next(iter(actors))].getBelief(state).values())))
         else:
@@ -773,6 +784,8 @@ def holoCane(world,config,actors,span,select=True,policy={},unit='days',debug=Fa
             timeUnits = step // 3
         elif unit == 'hurricanes':
             timeUnits = hurricane
+        elif unit == 'seasons':
+            timeUnits = step // 3 // config.getint('Disaster','season_length')
         else:
             raise NameError('Unknown unit of time: %s' % (unit))
     return history
@@ -828,6 +841,35 @@ def getSurveyTime(args,pre,h,partID):
             if line['EntityIdx'] == entity:
                 break
     else:
-        raise ValueError('Unable to find: %s' % (entity))
+        raise ValueError('Unable to find: %s for hurricane %d' % (entity,hurricane['Hurricane']))
     return int(line['Timestep'])
 
+def hurr2select(world,hurr,day):
+    select = {}
+    key = stateKey('Nature','phase')
+    if day+1 < hurr['Start']:
+        setTrack = False
+        select[key] = world.value2float(key,'none')
+    elif day+1 < hurr['Landfall']:
+        setTrack = True
+        select[key] = world.value2float(key,'approaching')
+    elif day+1 < hurr['End']:
+        setTrack = True
+        select[key] = world.value2float(key,'active')
+    else:
+        setTrack = False
+        select[key] = world.value2float(key,'none')
+    key = stateKey('Nature','location')
+    if setTrack:
+        if hurr['Actual Location'][day+1-hurr['Start']] == 'leaving':
+            select[key] = world.value2float(key,'none')
+        else:
+            select[key] = world.value2float(key,hurr['Actual Location'][day+1-hurr['Start']])
+    else:
+        select[key] = world.value2float(key,'none')
+    key = stateKey('Nature','category')
+    if setTrack:
+        select[key] = world.value2float(key,int(hurr['Actual Category'][day+1-hurr['Start']]))
+    else:
+        select[key] = world.value2float(key,0)
+    return select
