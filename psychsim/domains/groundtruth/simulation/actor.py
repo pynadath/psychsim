@@ -119,6 +119,7 @@ class Actor(Agent):
         else:
             self.demographics['pet'] = False
 
+        # // GT: node 39; 1 of 1; next 6 lines
         if config.getint('Actors','married',fallback=0) > 0:
             threshold = likert[5][config.getint('Actors','married')-1]
             if random.random() < threshold:
@@ -127,6 +128,7 @@ class Actor(Agent):
                 self.world.setFeature(key,True)
 
         # Psychological
+        # // GT: node 40; 1 of 1; next 10 lines
         if config.getboolean('Actors','attachment'):
             attachmentStyles = {'secure': likert[5][config.getint('Actors','attachment_secure')-1],
                                 'anxious': likert[5][config.getint('Actors','attachment_anxious')-1]}
@@ -139,6 +141,7 @@ class Actor(Agent):
             world.setFeature(attachment,self.attachment)
         if config.getboolean('Actors','appraisal'):
             # Coping Style
+            # // GT: node 41; 1 of 1; next 11 lines
             copingStyles = {'none': 1.}
             if config.getint('Actors','coping_emotion') > 0:
                 copingStyles['emotion'] = likert[5][config.getint('Actors','coping_emotion')-1]
@@ -151,6 +154,7 @@ class Actor(Agent):
             self.coping = copingStyles.sample()
             world.setFeature(coping,self.coping)
             # Control bias
+            # // GT: node 42; 1 of 1; next 13 lines
             controlStyles = {'none': 1.}
             if config.getint('Actors','control_hi') > 0:
                 controlStyles['hiEfficacy'] = likert[5][config.getint('Actors','control_hi')-1]
@@ -165,6 +169,7 @@ class Actor(Agent):
             self.control = controlStyles.sample()
             world.setFeature(control,self.control)
             # Causal attribution
+            # // GT: node 42; 1 of 1; next 14 lines
             attributionStyles = {'none': 1.}
             if config.getint('Actors','attribution_in') > 0:
                 attributionStyles['internal'] = likert[5][config.getint('Actors','attribution_in')-1]
@@ -256,9 +261,6 @@ class Actor(Agent):
             else:
                 self.health = likert[5][mean-1]
         world.setFeature(health,self.health)
-#        healthMax = world.defineState(self.name,'healthMax',float,
-#                                      description='Maximum level of physical wellbeing',codePtr=True)
-#        world.setFeature(healthMax,self.health)
 
         #//GT: node 9; 1 of 1; next 5 lines
         if self.demographics['kids'] > 0:
@@ -341,10 +343,10 @@ class Actor(Agent):
                                        True: False,
                                        False: True},
                                 False: False}}
-#                if world.getState(region,'shelterCapacity').first() > 0:
-#                    tree = {'if': greaterThanRow(stateKey(region,'shelterCapacity'),
-#                                                 stateKey(region,'shelterOccupancy')),
-#                            True: tree, False: False}
+                if world.getState(region,'shelterCapacity').first() > 0:
+                    tree = {'if': greaterThanRow(stateKey(region,'shelterCapacity'),
+                                                 stateKey(region,'shelterOccupancy')),
+                            True: tree, False: False}
                 if config.getboolean('Actors','movement'):
                     # Actors move from region to region
                     tree = {'if': equalFeatureRow(location,Region.nameString % (int(index))),
