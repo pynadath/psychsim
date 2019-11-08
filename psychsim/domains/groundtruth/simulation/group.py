@@ -24,13 +24,14 @@ class Group(Agent):
         # self.setState('size',0)
         
         if config.getboolean('Groups','prorisk'):
-#            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
+            #//GT: node 50; 1 of 1; next 5 lines
             if name in regions:
                 actGoodRisk = self.addAction({'verb': 'decreaseRisk','object': name},codePtr=True)
             else:
                 actGoodRisk = self.addAction({'verb': 'decreaseRisk'},codePtr=True)
                 name ='Region01'
             # TODO: Scale by group size and amplification
+            #//GT: edge 68; from 50; to 34; 1 of 1; next 4 lines
             key = stateKey(name,'risk')
             benefit = likert[5][config.getint('Actors','prorisk_benefit')-1]
             tree = makeTree(approachMatrix(key,benefit,self.world.agents[name].risk))
@@ -63,9 +64,11 @@ class Group(Agent):
             goHome = self.addAction({'verb': 'returnHome'},codePtr=True)
 
 #        self.nop = self.addAction({'verb': 'noDecision'},codePtr=True)
+        #//GT: node 51; 1 of 1; next 1 line
         self.setAttribute('horizon',config.getint('Groups','horizon'))
         self.potentials = None
         # Belief aggregation
+        #//GT: node 52; 1 of 1; next 16 lines
         aggregators = ['mean']
         weights = [5]
         value = config.getint('Groups','belief_max')
@@ -90,6 +93,7 @@ class Group(Agent):
 #        size = stateKey(self.name,'size')
         count = 0
         for name in agents:
+            #//GT: node 47; 1 of 1; next 10 lines
             agent = self.world.agents[name]
             member = self.world.defineRelation(name,self.name,'memberOf',bool,codePtr=True)
             # Join a group
@@ -100,30 +104,35 @@ class Group(Agent):
                 self.world.setFeature(member,inGroup)
                 if inGroup:
                     count += 1
-                
+            #//GT: node 48; 1 of 1; next 6 lines
             tree = makeTree({'if': trueRow(stateKey(name,'alive')),
                              True: {'if': trueRow(member),
                                     True: False, False: True},
                              False: False})
             join = agent.addAction({'verb': 'join','object': self.name},
                                    tree.desymbolize(self.world.symbols),codePtr=True)
+            #//GT: edge 64; from 48; to 47; 1 of 1; next 2 lines
             tree = makeTree(setTrueMatrix(member))
             self.world.setDynamics(member,join,tree,codePtr=True)
 #            tree = makeTree(incrementMatrix(size,1))
 #            self.world.setDynamics(size,join,tree,codePtr=True)
             # Leave a group
+            #//GT: node 49; 1 of 1; next 6 lines
             tree = makeTree({'if': trueRow(stateKey(name,'alive')),
                              True: {'if': trueRow(member),
                                     True: True, False: False},
                              False: False})
             leave = agent.addAction({'verb': 'leave','object': self.name},
                                     tree.desymbolize(self.world.symbols),codePtr=True)
+            #//GT: edge 65; from 49; to 47; 1 of 1; next 2 lines
             tree = makeTree(setFalseMatrix(member))
             self.world.setDynamics(member,leave,tree,codePtr=True)
 #            tree = makeTree(incrementMatrix(size,-1))
 #            self.world.setDynamics(size,leave,tree,codePtr=True)
             if self.config.getboolean('Actors','attachment'):
                 # Reward associated with being a member
+                #//GT: edge 66; from 40; to 11; 1 of 1; next 11 lines
+                #//GT: edge 67; from 47; to 11; 1 of 1; next 11 lines
                 attachment = stateKey(name,'attachment')
                 R = rewardKey(name)
                 tree = makeTree({'if': thresholdRow(stateKey(name,'risk'),
@@ -205,6 +214,10 @@ class Group(Agent):
         return total
     
     def getBelief(self,state=None,model=None):
+        #//GT: node 53; 1 of 1; next 88 lines
+        #//GT: edge 69; from 47; to 53; 1 of 1; next 88 lines
+        #//GT: edge 70; from 28; to 53; 1 of 1; next 88 lines
+        #//GT: edge 71; from 52; to 53; 1 of 1; next 88 lines
         if state is None:
             state = self.world.state
         if model is None:
