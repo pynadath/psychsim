@@ -63,9 +63,6 @@ class Region(Agent):
                 else:
                     self.risk = likert[5][mean-1]
         world.setFeature(risk,self.risk)
-#        riskMin = world.defineState(self.name,'riskMin',float,codePtr=True,
-#                                    description='Minimum level of risk in this region')
-#        world.setFeature(riskMin,self.risk)
 
         if config.getint('Simulation','phase',fallback=1) == 1:
             security = world.defineState(self.name,'security',float,codePtr=True,
@@ -80,10 +77,19 @@ class Region(Agent):
                 else:
                     self.security = likert[5][mean-1]
             world.setFeature(security,self.security)
-
-#        economy = world.defineState(self.name,'economy',float,codePtr=True,
-#                                    description='Current economic level of region')
-#        world.setFeature(economy,1.)
+        mean = config.getint('Regions','economy_mean',fallback=0)
+        if mean == 0:
+            self.economy = None
+        else:
+            #//GT: node 46; 1 of 1; next 8 lines
+            sigma = config.getint('Regions','economy_sigma')
+            if sigma > 0:
+                self.economy = sampleNormal(mean,sigma)
+            else:
+                self.economy = likert[5][mean-1]
+            economy = world.defineState(self.name,'economy',float,codePtr=True,
+                                        description='Current economic level of region')
+            world.setFeature(economy,self.economy)
 
         #//GT: node 35; 1 of 1; next 8 lines
         if index is not None:
@@ -100,6 +106,16 @@ class Region(Agent):
                 self.setState('shelterPets',True)
             else:
                 self.setState('shelterPets',False)
+            self.capacity = int(config.get('Shelter','capacity').split(',')[index])
+            if self.capacity > 0:
+                #//GT: node 44; 1 of 1; next 2 lines
+                world.defineState(self.name,'shelterCapacity',int,codePtr=True)
+                self.setState('shelterCapacity',self.capacity)
+                #//GT: node 45; 1 of 1; next 2 lines
+                world.defineState(self.name,'shelterOccupancy',int,codePtr=True)
+                self.setState('shelterOccupancy',0)
+        else:
+            self.capacity = 0
 
     def distance(self,region):
         if isinstance(region,str):
