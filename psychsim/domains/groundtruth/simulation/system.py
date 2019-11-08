@@ -70,13 +70,17 @@ class System(Agent):
         if self.config.getboolean('System','aid',fallback=True):
             #//GT: node 37; 1 of 1; next 12 lines
             for region in regions:
-                allocate = self.addAction({'verb': 'allocate','object': region},codePtr=True)
+                try:
+                    allocate = self.addAction({'verb': 'allocate','object': region},codePtr=True)
+                except AssertionError:
+                    allocate = ActionSet([Action({'subject': self.name,'verb': 'allocate','object': region})])
                 # // GT: edge 60; from 37; to 24; 1 of 1; next 5 lines
                 risk = stateKey(region,'risk')
                 impact = 1-pow(1-likert[5][self.config.getint('System','system_impact')-1],scale)
                 tree = makeTree(approachMatrix(risk,impact,
                                                0. if self.config.getint('Simulation','phase',fallback=1) == 1 else self.world.agents[region].risk))
                 self.world.setDynamics(risk,allocate,tree,codePtr=True)
+                print(tree)
                 # //GT: edge 24; from  23; to 12; 1 of 1; next 12 lines
                 # //GT: edge 59; from  37; to 12; 1 of 1; next 12 lines
                 if self.config.getboolean('Actors','grievance') and \
