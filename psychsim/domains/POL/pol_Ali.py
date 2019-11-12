@@ -216,7 +216,8 @@ class ArmedForces(Agent):
 			self.setState('tactical_info', 0.40)
 
 		# the resources that they need to take action, which could be weapons, money, etc
-		resources = 1
+		resources =world.defineState(self.name,'resources') 
+		self.setState('resources', 1)
 		gather_resources = self.addAction({'verb':'gather_resources'})
 		tree = makeTree(incrementMatrix(resources,1))
 		world.setDynamics(resources,gather_resources,tree)
