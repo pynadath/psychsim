@@ -308,6 +308,9 @@ class ArmedForces(Agent):
 					False: approachMatrix(attitude,0.1,-1.0)}) # when civilian is  NOT in the same region, the impact is lower: .1
 				world.setDynamics(attitude,do_bad,tree)
 			
+	def init_beliefs(self):
+		relevant = {key for key in self.world.state.keys() if (isStateKey(key) and (state2agent(key) == self.name or  state2agent(key)[:8] != 'civilian'))}
+		return self.resetBelief(include=relevant)
 			# print(world.dynamics[risk][do_bad])
 			# print(world.dynamics.keys())
 			# print(world.dynamics[do_bad][risk])
@@ -333,7 +336,7 @@ if __name__ == '__main__':
 	environment_agent =Environment('current_environment', world)
 
 	civilians=[]
-	civilian_count=1
+	civilian_count=100
 	for j in range(civilian_count):
 		starting_location=(randint(residential.lower_x,residential.higher_x), randint(residential.lower_y,residential.higher_y))
 		civilian = Person('civilian %d' %(j+1), starting_location, world, True, True, True)
@@ -350,10 +353,13 @@ if __name__ == '__main__':
 	
 	world.setOrder([set(civilians) | {hostile_force.name,friendly_force.name} | {environment_agent.name}])
 
-	for name in civilians:
-		world.agents[name].attitude_impacts()
+	# for name in civilians:
+	# 	world.agents[name].attitude_impacts()
 	for name in civilians:
 		world.agents[name].init_beliefs()
+
+	world.agents['Friendly_Force'].init_beliefs()
+	world.agents['Hostile_Force'].init_beliefs()
 
 	day_count= 2
 	for i in range(24*day_count):
