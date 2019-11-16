@@ -658,7 +658,7 @@ Value Labels: 1=Much worse, 2=Worse, 3=Same, 4=Better, 5=Much better, 9=Don’t 
 Q15. Employment
 Question: Do you have a job that pays a cash income? If yes, is it full-time or part-time? If no, are you
 presently looking for a job?
-Value Labels: 0=No (not looking), 1=No (looking), 2=Yes part time, 3= Yes full time, 9=Don’t know,
+Value Labels: 0=No (not looking), 1=No (looking), 2=Yes part time, 3=Yes full time, 9=Don’t know,
 998=Refused to answer, -1=Missing
 * Recoded for round 4 and 3
 
@@ -1501,8 +1501,7 @@ Value Labels: 0=Never, 1=Sometimes, 2=Often, 3=Always, 7=Not applicable, 8=Refus
 Q56. Ethnic_National
 Question: Let us suppose that you had to choose between being a national ID and being a ________
 [R‟s Ethnic Group]. Which of the following best expresses your feelings?
-Value Labels: 1=I feel only (R’s ethnic group), 2=I feel more (R’s ethnic group) than national ID, 3=I
-feel equally national ID and (R’s ethnic group), 4=I feel more national ID than (R’s ethnic group), 5=I feel only national ID, 7=Not applicable, 9=Don’t know, 997=Not asked, 998=Refused to answer, -1=Missing
+Value Labels: 1=I feel only (R’s ethnic group), 2=I feel more (R’s ethnic group) than national ID, 3=I feel equally national ID and (R’s ethnic group), 4=I feel more national ID than (R’s ethnic group), 5=I feel only national ID, 7=Not applicable, 9=Don’t know, 997=Not asked, 998=Refused to answer, -1=Missing
 
 Q56_ARB. Religious_National**
 Question: Let us suppose that you had to choose between being an [Country Name] and being a
