@@ -686,6 +686,13 @@ def getAction(args,name,world,states,t):
             return [getAction(args,name,world,states,day) for day in range(t[0],t[1]) if day == 1 or name == 'System' or \
                 getInitialState(args,name,'alive',world,states,day).first()]
 
+def getAid(args,world,states,t):
+    actions = getAction(args,'System',world,states,t)
+    if isinstance(t,int):
+        return actions.get('object',None)
+    else:
+        return {t[0]+i: actions[i].get('object',None) for i in range(len(actions))}
+
 def readLog(args):
     """
     Extracts expected reward tables from 'psychsim.log'
