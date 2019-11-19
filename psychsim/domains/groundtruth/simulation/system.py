@@ -66,7 +66,15 @@ class System(Agent):
 
     def setAidDynamics(self,population):
         regions = self.getPopulated(population)
-        delta,scale = self.grievanceDelta(regions)
+        allocation = self.config.getint('System','system_allocation')
+        try:
+            if self.resources is None:
+                self.resources = allocation
+            resources = self.resources
+        except AttributeError:
+            self.resources = allocation
+            resources = self.resources
+        scale = resources/likert[5][max(allocation,1)]
         if self.config.getboolean('System','aid',fallback=True):
             #//GT: node 37; 1 of 1; next 12 lines
             for region in regions:
@@ -80,7 +88,6 @@ class System(Agent):
                 tree = makeTree(approachMatrix(risk,impact,
                                                0. if self.config.getint('Simulation','phase',fallback=1) == 1 else self.world.agents[region].risk))
                 self.world.setDynamics(risk,allocate,tree,codePtr=True)
-                print(tree)
                 # //GT: edge 24; from  23; to 12; 1 of 1; next 12 lines
                 # //GT: edge 59; from  37; to 12; 1 of 1; next 12 lines
                 if self.config.getboolean('Actors','grievance') and \
