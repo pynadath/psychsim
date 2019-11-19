@@ -82,7 +82,7 @@ def preSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=No
     agent = world.agents[name]
     entry = {'Name': name,'Timestep': t,'Hurricane': hurricane['Hurricane']}
     if isinstance(partID,int):
-        entry['EntityIdx'] = '%s %d' % (prefix,partID)
+        entry['EntityIdx'] = '%s %d Hurricane %d' % (prefix,partID,hurricane['Hurricane'])
     elif isinstance(partID,str):
         entry['EntityIdx'] = '%s' % (partID)
     if demographics:
@@ -172,7 +172,7 @@ def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=N
     agent = world.agents[name]
     entry = {'Name': name,'Timestep': t,'Hurricane': hurricane['Hurricane']}
     if isinstance(partID,int):
-        entry['EntityIdx'] = '%s %d' % (prefix,partID)
+        entry['EntityIdx'] = '%s %d Hurricane %d' % (prefix,partID,hurricane['Hurricane'])
     elif isinstance(partID,str):
         entry['EntityIdx'] = '%s' % (partID)
     if demographics:
