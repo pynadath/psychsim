@@ -1,0 +1,11 @@
+Name	LongName	Values	VarType	DataType	Notes
+TA2B 19 Satisfaction	TA2B 19 Satisfaction	[1-7]	dynamic	Integer	
+TA2B 19 Days at Shelter	TA2B 19 Days at Shelter	[0+]	dynamic	Integer	
+TA2B 19 Days Evacuated	TA2B 19 Days Evacuated	[0+]	dynamic	Integer	
+TA2B 19 Injuries	TA2B 19 Injuries	none,self,dependents,selfplusdependents	dynamic	String	
+TA2B 19 Risk	TA2B 19 Risk	[1-7]	dynamic	Integer	
+TA2B 19 Wealth	TA2B 19 Wealth	[1-7]	dynamic	Integer	
+TA2B 19 Property Damage	TA2B 19 Property Damage	[1-7]	dynamic	Integer	
+TA2B 19 Government Assistance	TA2B 19 Government Assistance	[1-7]	dynamic	Integer	
+TA2B 19 Friends Evacuated	TA2B 19 Friends Evacuated	[0+]	dynamic	Integer	
+TA2B 19 Friends Sheltered	TA2B 19 Friends Sheltered	[0+]	dynamic	Integer	
