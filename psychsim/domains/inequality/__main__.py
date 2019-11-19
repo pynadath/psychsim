@@ -10,6 +10,7 @@ import sys
 from psychsim.action import Action
 from psychsim.world import World
 from psychsim import modeling
+from psychsim.domains.inequality.learning import *
 
 def readCodebook(fname,logger=logging.getLogger()):
     logger = logger.getChild('readCodebook')
@@ -169,23 +170,33 @@ def scoreModel(model,target,data,codebook,ignoreNull=False):
     print({key:value for key,value in model.items() if value is not None},len(matches))
     return matches
 
-def greedyMatch(matchTable,field,records):
-    print(field,len(records))
+def greedyMatch(matchTable,field,records,previous=None,debug=False):
+    if debug: print(field,len(records))
+    if previous is None:
+        previous = []
     hypotheses = sorted([(len(records & matchTable[row][field]),row) for row in range(len(matchTable)) 
         if '%s Rank' % (field) not in matchTable[row]],reverse=True)
     best = matchTable[hypotheses[0][1]]
+    previous.append(best)
     if hypotheses[0][0]:
         best['%s Rank' % (field)] = len(matchTable) - len(hypotheses) + 1
         records -= best[field]
-        return greedyMatch(matchTable,field,records)
+        return greedyMatch(matchTable,field,records,previous)
     else:
         # No matches left
-        return records
+        return records,previous
 
+def link2str(link):
+    term = link[0].split('.')[1]
+    return term if link[1] else '!%s' % (term)
+def model2str(model):
+    return ' OR '.join([link2str(link) for link in model])
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
     parser.add_argument('-t','--threshold',default=0.1,type=float,help='Minimal correlation for considering hypothesis')
+    parser.add_argument('-l','--length',default=4,type=int,help='Maximum number of hypotheses to consider in model')
+    parser.add_argument('-m','--model',default='psychsim',help='Model type to be learned')
     args = vars(parser.parse_args())
     # Extract logging level from command-line argument
     level = getattr(logging, args['debug'].upper(), None)
@@ -222,68 +233,113 @@ if __name__ == '__main__':
         logging.info('After %s: %d' % (hyp,len(data)))
         ranges[hyp] = sorted(map(int,{record[hyp] for record in data.values()}))
         logging.debug('%d,%d' % (ranges[hyp][0],ranges[hyp][-1]))
+    target = 'Q55.Unfairly_Ethnic'
     countries = partition(data,'COUNTRY_ALPHA',codebook)
-    countryStats = {}
-    sigHypos = {hyp: {0: set()} for hyp in hypotheses}
-    for country,countryData in sorted(countries.items()):
-        logging.info('Country: %s (%d)' % (country,len(countryData)))
-        target = 'Q55.Unfairly_Ethnic'
-        histogram = domain.targetHistogram('-1',countryData)[target]
-        for key,matches in sorted(histogram.items(),key=lambda item: -len(item[1])):
-            logging.debug('Target: %s=%s (%d)' % (target,codebook[target]['labels'][key],len(matches)))
-        hypList = sorted(hypotheses)
-        arrays = numpy.array([[float(record[field]) for field in hypList+[target]] for record in countryData.values()]).T
-        covar = numpy.cov(arrays)
-        countryStats[country] = {hypList[i]: covar[i][len(hypList)] for i in range(len(hypList))}
-        for hyp,value in countryStats[country].items():
-            if abs(value) > args['threshold']:
-                try:
-                    sigHypos[hyp][int(numpy.sign(value))].add(country)
-                except KeyError:
-                    sigHypos[hyp][int(numpy.sign(value))] = {country}
-    hypSpace = []
-    for hyp,table in sorted(sigHypos.items()):
-        if len(table) > 1:
-            print(hyp)
-            for value,entries in table.items():
-                if value != 0:
-                    print(value,sorted(entries))
-                    hypSpace.append((hyp,value == 1))
-        else:
-            del sigHypos[hyp]
-    output = []
-    for numberUp in range(1,5):
-        for hypUp in itertools.combinations(hypSpace,numberUp):
-            # Remove combinations that are contradictory
-            if len({hyp for hyp,val in hypUp}) == len(hypUp):
-                model = {hyp: None for hyp in sigHypos}
-                for hyp,val in hypUp:
-                    model[hyp] = val
-                record = {'Model': hypUp}
-                matches = scoreModel(model,target,data,codebook)
-                record['Total'] = matches
-                record['Total %'] = len(matches)/len(data)
-                for country,countryData in sorted(countries.items()):
-                    record[country] = matches & set(countryData.keys())
-                    record['%s %%' % (country)] = len(record[country])/len(countryData)
-                output.append(record)
-    for country,countryData in countries.items():
-        print(country,len(countryData),len(greedyMatch(output,country,set(countryData.keys()))))
-    fields = ['Model','Total %']+['%s %%' % (country) for country in sorted(countries.keys())]+\
-        ['%s Rank' % (country) for country in sorted(countries.keys())]
-    with open('afrobarometer.tsv','w') as csvfile:
-        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
-        writer.writeheader()
-        for record in output:
-            writer.writerow(record)
-    print(len([record for record in data.values() if record[target] != '0']))
-    print(len(data))
-    exit()
-    for inData in domain.fields:
-        for field,histogram in domain.targetHistogram('-1').items():
+    if args['model'] == 'psychsim':
+        countryStats = {}
+
+        sigHypos = {hyp: {0: set()} for hyp in hypotheses}
+        for country,countryData in sorted(countries.items()):
+            logging.info('Country: %s (%d)' % (country,len(countryData)))
+            histogram = domain.targetHistogram('-1',countryData)[target]
             for key,matches in sorted(histogram.items(),key=lambda item: -len(item[1])):
-                print('\t%5d: %s=%s | %s' % (len(matches),field,codebook[field]['labels'][key],inData))
-                table = tabulate([domain.data[ID] for ID in matches],inData)
-                print(', '.join(['%s: %4.1f%%' % (codebook[inData]['labels'].get(k,k),pct*100.) for k,pct in sorted(table.items(),key=lambda i: i[1],reverse=True)]))
-#    for ID,record in domain.data.items():
-#        modelIndividual(domain,world,record,codebook)
+                logging.debug('Target: %s=%s (%d)' % (target,codebook[target]['labels'][key],len(matches)))
+            hypList = sorted(hypotheses)
+            arrays = numpy.array([[float(record[field]) for field in hypList+[target]] for record in countryData.values()]).T
+            covar = numpy.cov(arrays)
+            countryStats[country] = {hypList[i]: covar[i][len(hypList)] for i in range(len(hypList))}
+            for hyp,value in countryStats[country].items():
+                if abs(value) > args['threshold']:
+                    try:
+                        sigHypos[hyp][int(numpy.sign(value))].add(country)
+                    except KeyError:
+                        sigHypos[hyp][int(numpy.sign(value))] = {country}
+
+        hypSpace = []
+        for hyp,table in sorted(sigHypos.items()):
+            if len(table) > 1:
+                print(hyp)
+                for value,entries in table.items():
+                    if value != 0:
+                        print(value,sorted(entries))
+                        hypSpace.append((hyp,value == 1))
+            else:
+                del sigHypos[hyp]
+        output = []
+        for numberUp in range(1,args['length']+1):
+            for hypUp in itertools.combinations(hypSpace,numberUp):
+                # Remove combinations that are contradictory
+                if len({hyp for hyp,val in hypUp}) == len(hypUp):
+                    model = {hyp: None for hyp in sigHypos}
+                    for hyp,val in hypUp:
+                        model[hyp] = val
+                    record = {'Model': hypUp}
+                    matches = scoreModel(model,target,data,codebook)
+                    record['Total'] = matches
+                    record['Total %'] = len(matches)/len(data)
+                    for country,countryData in sorted(countries.items()):
+                        record[country] = matches & set(countryData.keys())
+                        record['%s %%' % (country)] = len(record[country])/len(countryData)
+                    output.append(record)
+        fields = ['Model']+sorted(data.keys())
+        with open('afrobarometer.tsv','w') as csvfile:
+            writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+            writer.writeheader()
+            for record in output:
+                row = {label: 'yes' if label in record['Total'] else 'no' for label in data}
+                row['Model'] = record['Model']
+                writer.writerow(row)
+        used = set()
+        fields = ['Country','Model','Matches','Remaining']
+        with open('afrobarometer-search.tsv','w') as csvfile:
+            writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+            writer.writeheader()
+            for country,countryData in countries.items():
+                unmatched,models = greedyMatch(output,country,set(countryData.keys()))
+                writer.writerow({'Country': country,'Remaining': len(countryData)})
+                remaining = set(countryData.keys())
+                for record in models:
+                    row = {'Country': country,'Model': model2str(record['Model'])}
+                    matches = record[country] & remaining
+                    row['Matches'] = len(matches)
+                    remaining -= matches
+                    row['Remaining'] = len(remaining)
+                    writer.writerow(row)
+                    used.add(record['Model'])
+        print(len(used))
+        fields = ['Label','Matches']+[link2str(hyp) for hyp in hypSpace]
+        with open('afrobarometer-individuals.tsv','w') as csvfile:
+            writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore',restval=0)
+            writer.writeheader()
+            for label in data:
+                models = [record['Model'] for record in output if label in record['Total']]
+                record = {'Label': label, 'Matches': len(models)}
+                for model in models:
+                    for hyp in model:
+                        record[link2str(hyp)] = record.get(link2str(hyp),0) + 1
+                writer.writerow(record)
+        fields = ['Model','Total %']+['%s %%' % (country) for country in sorted(countries.keys())]+\
+            ['%s Rank' % (country) for country in sorted(countries.keys())]
+    #    with open('afrobarometer.tsv','w') as csvfile:
+    #        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+    #        writer.writeheader()
+    #        for record in output:
+    #            writer.writerow(record)
+        print(len([record for record in data.values() if record[target] != '0']))
+        print(len(data))
+        exit()
+        for inData in domain.fields:
+            for field,histogram in domain.targetHistogram('-1').items():
+                for key,matches in sorted(histogram.items(),key=lambda item: -len(item[1])):
+                    print('\t%5d: %s=%s | %s' % (len(matches),field,codebook[field]['labels'][key],inData))
+                    table = tabulate([domain.data[ID] for ID in matches],inData)
+                    print(', '.join(['%s: %4.1f%%' % (codebook[inData]['labels'].get(k,k),pct*100.) for k,pct in sorted(table.items(),key=lambda i: i[1],reverse=True)]))
+    #    for ID,record in domain.data.items():
+    #        modelIndividual(domain,world,record,codebook)
+    elif args['model'] == 'naive':
+        features = sorted(hypotheses)
+        for country,countryData in sorted(countries.items()):
+            print(country)
+            logging.info('Country: %s (%d)' % (country,len(countryData)))
+            data = table2data(list(countryData.values()),features,target)
+            model = naiveBayes(data,True)
