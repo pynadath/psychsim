@@ -30,10 +30,13 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 100,'run': 0,'span': 122},
     {'instance': 101,'run': 0,'span': 135},
     {'instance': 100,'run': 2,'span': 82},
-    {'instance': 101,'run': 1,'span': 130},]
+    {'instance': 101,'run': 1,'span': 130},
+    {'instance': 103,'run': 0,'span': 80},
+    {'instance': 101,'run': 1,'span': 130},
+    ]
     
 instanceMap = {'Phase1': {'Explain': [1], 'Predict': [3,4,5,6,7,8], 'Prescribe': [9,10,11,12,13,14]},
-    'Phase2': {'Explain': [15,16,17], 'Predict': [18,19]},
+    'Phase2': {'Explain': [15,16,17], 'Predict': [18,19]}, 'Prescribe': [20,21],
     'Phase3': {},
     }
 def instanceArgs(phase,challenge=True):
@@ -385,15 +388,40 @@ def employment(data,name,hurricane):
     return worked,possible
 
 def getTarget(instance,run=0):
-    actor = None
-    with open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (run),
-        'Input'),'TargetActor.tsv'),'r') as csvfile:
-        reader = csv.DictReader(csvfile,delimiter='\t')
-        for row in reader:
-            assert actor is None,'Multiple targets found'
-            actor = row['Participant']
-    assert actor is not None,'No target found'
-    return int(actor)
+    if instance < 100:
+        actor = None
+        with open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (run),
+            'Input'),'TargetActor.tsv'),'r') as csvfile:
+            reader = csv.DictReader(csvfile,delimiter='\t')
+            for row in reader:
+                assert actor is None,'Multiple targets found'
+                actor = row['Participant']
+        assert actor is not None,'No target found'
+        return int(actor)
+    else:
+        participants = {}
+        targets = []
+        with open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (run)),'RunDataTable.tsv'),'r') as csvfile:
+            reader = csv.DictReader(csvfile,delimiter='\t')
+            for row in reader:
+                if row['VariableName'] == 'TargetActor':
+                    targets.append(row)
+                elif row['VariableName'] == 'Age' and row['EntityIdx'][:6] == 'ActorP':
+                    participants[row['EntityIdx']] = participants.get(row['EntityIdx'],[])+[row]
+        assert len(targets) == 1,'No one target for instance %d' % (instance)
+        entity = targets[0]['EntityIdx']
+        for hurricane in range(len(participants[entity])):
+            if participants[entity][hurricane]['Timestep'] == row['Timestep']:
+                break
+        else:
+            raise ValueError('Unable to find target actor survey for Instance %d' % (instance))
+        targets[0]['Hurricane'] = hurricane+1
+        participants = readParticipants(instance,run,splitHurricanes=True,duplicates=True)
+        if entity[6] == 'o':
+            targets[0]['Name'] = participants['Post-survey %d' % (targets[0]['Hurricane'])][int(entity.split()[1])]
+        else:
+            targets[0]['Name'] = participants['Pre-survey %d' % (targets[0]['Hurricane'])][int(entity.split()[1])]
+        return targets[0]
 
 def getPopulation(data):
     """
