@@ -467,6 +467,8 @@ if __name__ == '__main__':
                     turn = 0
                     t += 1
                     states[t] = {}
+                if t > args['span']:
+                    break 
             # Write down hurricane data for easier recall when doing surveys
             if tables['Hurricane'][-1]['Landed'] == 'no':
                 del tables['Hurricane'][-1]
