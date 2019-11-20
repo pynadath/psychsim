@@ -1,6 +1,7 @@
 import numpy
 from sklearn.datasets.base import Bunch
 from sklearn.naive_bayes import GaussianNB
+from sklearn import linear_model
 
 def table2data(table,features,output):
 	data = numpy.empty((len(table),len(features)),dtype=numpy.int)
@@ -15,5 +16,16 @@ def naiveBayes(data,debug=False):
 	model = GaussianNB()
 	model.fit(data.data,data.target)
 	if debug:
-		print(model.score(data.data,data.target))		
+		print(model.score(data.data,data.target))
+		print(model.get_params(deep=True))
+		exit()
+	return model
+
+def linear(data,debug=False):
+	model = linear_model.LinearRegression()	
+	model.fit(data.data,data.target)
+	if debug:
+		print(model.score(data.data,data.target))
+		print(model.coef_)
+		exit()
 	return model

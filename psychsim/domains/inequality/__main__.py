@@ -343,3 +343,16 @@ if __name__ == '__main__':
             logging.info('Country: %s (%d)' % (country,len(countryData)))
             data = table2data(list(countryData.values()),features,target)
             model = naiveBayes(data,True)
+    elif args['model'] == 'linear':
+        features = sorted(hypotheses)
+        with open('afrobarometer-%s.tsv' % (args['model']),'w') as csvfile:
+            writer = csv.DictWriter(csvfile,['Country','Accuracy']+features,delimiter='\t',extrasaction='ignore')
+            writer.writeheader()
+            for country,countryData in sorted(countries.items()):
+                logging.info('Country: %s (%d)' % (country,len(countryData)))
+                data = table2data(list(countryData.values()),features,target)
+                model = linear(data)
+                record = {'Country': country,'Accuracy': model.score(data.data,data.target)}
+                for i in range(len(features)):
+                    record[features[i]] = model.coef_[i]
+                writer.writerow(record)
