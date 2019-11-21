@@ -18,7 +18,6 @@ def naiveBayes(data,debug=False):
 	if debug:
 		print(model.score(data.data,data.target))
 		print(model.get_params(deep=True))
-		exit()
 	return model
 
 def linear(data,debug=False):
@@ -27,5 +26,4 @@ def linear(data,debug=False):
 	if debug:
 		print(model.score(data.data,data.target))
 		print(model.coef_)
-		exit()
 	return model

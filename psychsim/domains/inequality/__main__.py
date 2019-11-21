@@ -336,23 +336,25 @@ if __name__ == '__main__':
                     print(', '.join(['%s: %4.1f%%' % (codebook[inData]['labels'].get(k,k),pct*100.) for k,pct in sorted(table.items(),key=lambda i: i[1],reverse=True)]))
     #    for ID,record in domain.data.items():
     #        modelIndividual(domain,world,record,codebook)
-    elif args['model'] == 'naive':
-        features = sorted(hypotheses)
-        for country,countryData in sorted(countries.items()):
-            print(country)
-            logging.info('Country: %s (%d)' % (country,len(countryData)))
-            data = table2data(list(countryData.values()),features,target)
-            model = naiveBayes(data,True)
-    elif args['model'] == 'linear':
+    else:
         features = sorted(hypotheses)
         with open('afrobarometer-%s.tsv' % (args['model']),'w') as csvfile:
-            writer = csv.DictWriter(csvfile,['Country','Accuracy']+features,delimiter='\t',extrasaction='ignore')
+            writer = csv.DictWriter(csvfile,['Country','Score','Correct','Total']+features,delimiter='\t',extrasaction='ignore')
             writer.writeheader()
             for country,countryData in sorted(countries.items()):
                 logging.info('Country: %s (%d)' % (country,len(countryData)))
-                data = table2data(list(countryData.values()),features,target)
-                model = linear(data)
-                record = {'Country': country,'Accuracy': model.score(data.data,data.target)}
-                for i in range(len(features)):
-                    record[features[i]] = model.coef_[i]
+                people = sorted(countryData.keys())
+                data = table2data([countryData[label] for label in people],features,target)
+                if args['model'] == 'linear':
+                    model = linear(data)
+                elif args['model'] == 'naive':
+                    model = naiveBayes(data,True)
+                record = {'Country': country,'Total': len(people)}
+                record['Score'] = model.score(data.data,data.target)
+                predictions = model.predict(data.data)
+                record['Correct'] = len([i for i in range(len(people)) if predictions[i] == int(countryData[people[i]][target])])
+                print(record['Correct'])
+                if args['model'] == 'linear':
+                    for i in range(len(features)):
+                        record[features[i]] = model.coef_[i]
                 writer.writerow(record)
