@@ -7,6 +7,7 @@ import logging
 import numpy
 import sys
 
+from psychsim.probability import Distribution
 from psychsim.action import Action
 from psychsim.world import World
 from psychsim import modeling
@@ -145,28 +146,31 @@ label2prob = {'Never': 0.,'Less than once a month': 0.1,'A few times a month': 0
     'I feel equally national ID and (R’s ethnic group)': 0.5,'I feel more national ID than (R’s ethnic group)': 0.75,
     'I feel only national ID': 1.}
 
-def scoreModel(model,target,data,codebook,ignoreNull=False):
+def execModel(model,datum,codebook):
+    prob = None
+    for field,value in model.items() if isinstance(model,dict) else model:
+        if value is not None:
+            factor = 0.5*label2prob[codebook[field]['labels'][datum[field]]]
+            if value is False:
+                factor = 1.-factor
+            if factor > 1e-6:
+                if prob is None:
+                    prob = factor
+                else:
+                    prob *= factor
+    if prob is None:
+        return 0
+    else:
+        return int(round(prob*4))
+
+def scorePSModel(model,target,data,codebook,ignoreNull=False):
     matches = set()
     for label,datum in data.items():
         if ignoreNull and datum[target] == '0':
             continue
-        prob = None
-        for field,value in model.items():
-            if value is not None:
-                factor = 0.5*label2prob[codebook[field]['labels'][datum[field]]]
-                if value is False:
-                    factor = 1.-factor
-                if factor > 1e-6:
-                    if prob is None:
-                        prob = factor
-                    else:
-                        prob *= factor
-        if prob is None:
-            if datum[target] == '0':
-                matches.add(label)
-        else:
-            if int(datum[target]) == int(round(prob*4)):
-                matches.add(label)
+        output = execModel(model,datum,codebook)
+        if int(datum[target]) == output:
+            matches.add(label)
     print({key:value for key,value in model.items() if value is not None},len(matches))
     return matches
 
@@ -185,6 +189,28 @@ def greedyMatch(matchTable,field,records,previous=None,debug=False):
     else:
         # No matches left
         return records,previous
+
+def scoreModel(country,raw,features,target,modelType,baseline=None):
+    people = sorted(raw.keys())
+    data = table2data([raw[label] for label in people],features,target)
+    if modelType == 'linear':
+        model = linear(data)
+    elif modelType == 'naive':
+        model = naiveBayes(data)
+    record = {'Country': country,'Total': len(people)}
+    record['Score'] = model.score(data.data,data.target)
+    predictions = model.predict(data.data)
+    record['Correct'] = len([i for i in range(len(people)) if predictions[i] == int(raw[people[i]][target])])
+    nonnull = [i for i in range(len(people)) if raw[people[i]][target] != '0']
+    print(country,len(nonnull),len([i for i in nonnull if predictions[i] == int(raw[people[i]][target])]))
+    if baseline:
+        record['Baseline'] = baseline.score(data.data,data.target)
+    for i in range(len(features)):
+        if modelType == 'naive':
+            record[features[i]] = model.coef_[3][i]
+        else:
+            record[features[i]] = model.coef_[i]
+    return record,model
 
 def link2str(link):
     term = link[0].split('.')[1]
@@ -274,7 +300,7 @@ if __name__ == '__main__':
                     for hyp,val in hypUp:
                         model[hyp] = val
                     record = {'Model': hypUp}
-                    matches = scoreModel(model,target,data,codebook)
+                    matches = scorePSModel(model,target,data,codebook)
                     record['Total'] = matches
                     record['Total %'] = len(matches)/len(data)
                     for country,countryData in sorted(countries.items()):
@@ -291,14 +317,15 @@ if __name__ == '__main__':
                 writer.writerow(row)
         used = set()
         fields = ['Country','Model','Matches','Remaining']
+        models = {}
         with open('afrobarometer-search.tsv','w') as csvfile:
             writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
             writer.writeheader()
             for country,countryData in countries.items():
-                unmatched,models = greedyMatch(output,country,set(countryData.keys()))
+                unmatched,models[country] = greedyMatch(output,country,set(countryData.keys()))
                 writer.writerow({'Country': country,'Remaining': len(countryData)})
                 remaining = set(countryData.keys())
-                for record in models:
+                for record in models[country]:
                     row = {'Country': country,'Model': model2str(record['Model'])}
                     matches = record[country] & remaining
                     row['Matches'] = len(matches)
@@ -306,7 +333,31 @@ if __name__ == '__main__':
                     row['Remaining'] = len(remaining)
                     writer.writerow(row)
                     used.add(record['Model'])
+        fields = ['Country','Score','Nonzero']
+        with open('afrobarometer-psychsim.tsv','w') as csvfile:
+            writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+            writer.writeheader()
+            for country,countryData in countries.items():
+                weights = {model2str(model['Model']): len(model[country]) for model in models[country]}
+                totalWeight = sum(weights.values())
+                weights = {model: weight/totalWeight for model,weight in weights.items()}
+                row = {'Country': country,'Nonzero': 0}
+                scores = []
+                for record in countryData.values():
+                    prediction = {}
+                    for model in models[country]:
+                        output = execModel(model['Model'],record,codebook)
+                        prediction[output] = prediction.get(output,0)+weights[model2str(model['Model'])]
+                    assert abs(sum(prediction.values())-1.) < 1e-6
+                    if int(record[target]) in prediction:
+                        row['Nonzero'] += 1
+                    scores.append(prediction.get(int(record[target]),0))
+                print(max(scores))
+                row['Score'] = sum(scores)/len(scores)
+                row['Nonzero'] /= len(countryData)
+                writer.writerow(row)
         print(len(used))
+        exit()
         fields = ['Label','Matches']+[link2str(hyp) for hyp in hypSpace]
         with open('afrobarometer-individuals.tsv','w') as csvfile:
             writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore',restval=0)
@@ -316,7 +367,7 @@ if __name__ == '__main__':
                 record = {'Label': label, 'Matches': len(models)}
                 for model in models:
                     for hyp in model:
-                        record[link2str(hyp)] = record.get(link2str(hyp),0) + 1
+                        record[link2str(hyp)] = record.get(link2str(hyp),0) + 1/record['Matches']
                 writer.writerow(record)
         fields = ['Model','Total %']+['%s %%' % (country) for country in sorted(countries.keys())]+\
             ['%s Rank' % (country) for country in sorted(countries.keys())]
@@ -339,22 +390,11 @@ if __name__ == '__main__':
     else:
         features = sorted(hypotheses)
         with open('afrobarometer-%s.tsv' % (args['model']),'w') as csvfile:
-            writer = csv.DictWriter(csvfile,['Country','Score','Correct','Total']+features,delimiter='\t',extrasaction='ignore')
+            writer = csv.DictWriter(csvfile,['Country','Score','Correct','Total','Baseline']+features,delimiter='\t',extrasaction='ignore')
             writer.writeheader()
+            record,baseline = scoreModel('All',data,features,target,args['model'])
+            writer.writerow(record)
             for country,countryData in sorted(countries.items()):
                 logging.info('Country: %s (%d)' % (country,len(countryData)))
-                people = sorted(countryData.keys())
-                data = table2data([countryData[label] for label in people],features,target)
-                if args['model'] == 'linear':
-                    model = linear(data)
-                elif args['model'] == 'naive':
-                    model = naiveBayes(data,True)
-                record = {'Country': country,'Total': len(people)}
-                record['Score'] = model.score(data.data,data.target)
-                predictions = model.predict(data.data)
-                record['Correct'] = len([i for i in range(len(people)) if predictions[i] == int(countryData[people[i]][target])])
-                print(record['Correct'])
-                if args['model'] == 'linear':
-                    for i in range(len(features)):
-                        record[features[i]] = model.coef_[i]
+                record,model = scoreModel(country,countryData,features,target,args['model'],baseline)
                 writer.writerow(record)

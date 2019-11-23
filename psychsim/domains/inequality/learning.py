@@ -1,6 +1,6 @@
 import numpy
 from sklearn.datasets.base import Bunch
-from sklearn.naive_bayes import GaussianNB
+from sklearn.naive_bayes import GaussianNB,MultinomialNB
 from sklearn import linear_model
 
 def table2data(table,features,output):
@@ -12,18 +12,15 @@ def table2data(table,features,output):
 		labels[i] = numpy.asarray(table[i][output])
 	return Bunch(data=data,target=labels)
 
-def naiveBayes(data,debug=False):
-	model = GaussianNB()
+def naiveBayes(data,gaussian=False):
+	if gaussian:
+		model = GaussianNB()
+	else:
+		model = MultinomialNB()
 	model.fit(data.data,data.target)
-	if debug:
-		print(model.score(data.data,data.target))
-		print(model.get_params(deep=True))
 	return model
 
 def linear(data,debug=False):
 	model = linear_model.LinearRegression()	
 	model.fit(data.data,data.target)
-	if debug:
-		print(model.score(data.data,data.target))
-		print(model.coef_)
 	return model
