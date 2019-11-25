@@ -1083,7 +1083,7 @@ class LogParser:
         print_with_buffer("We have %d agents with %s" % (n_actors, tmp_filter_string))
         return n_actors
 
-    def get_stats(self, p_att, p_fct_list, p_days=[], p_sample_names=[], buffer=None):
+    def get_stats(self, p_att, p_fct_list, p_days=[], p_sample_names=[], buffer=None, fig=None, using_gui=False):
         """
         Execute a user query involving stats.
         :param p_att:
@@ -1113,7 +1113,7 @@ class LogParser:
         # stat_objects_list = list(set(stat_objects_list))
         stat_objects_list = helper.remove_duplicates_from_list_of_dicts(stat_objects_list)
 
-        self.plot_stats(stat_objects_list=stat_objects_list, p_att=p_att, p_fct_list=p_fct_list, p_days=p_days, buffer=buffer)
+        self.plot_stats(stat_objects_list=stat_objects_list, p_att=p_att, p_fct_list=p_fct_list, p_days=p_days, buffer=buffer, fig=fig, using_gui=using_gui)
 
 
     def compute_stats(self, p_sample_name, p_att, p_days=[], p_name=None, stat_obj=None, buffer=None):
