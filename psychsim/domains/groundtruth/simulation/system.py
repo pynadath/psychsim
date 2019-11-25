@@ -64,7 +64,7 @@ class System(Agent):
             delta = 0
         return delta,scale
 
-    def setAidDynamics(self,population):
+    def setAidDynamics(self,population,multiplier=1.):
         regions = self.getPopulated(population)
         allocation = self.config.getint('System','system_allocation')
         try:
@@ -84,7 +84,7 @@ class System(Agent):
                     allocate = ActionSet([Action({'subject': self.name,'verb': 'allocate','object': region})])
                 # // GT: edge 60; from 37; to 24; 1 of 1; next 5 lines
                 risk = stateKey(region,'risk')
-                impact = 1-pow(1-likert[5][self.config.getint('System','system_impact')-1],scale)
+                impact = (1-pow(1-likert[5][self.config.getint('System','system_impact')-1],scale))*multiplier
                 tree = makeTree(approachMatrix(risk,impact,
                                                0. if self.config.getint('Simulation','phase',fallback=1) == 1 else self.world.agents[region].risk))
                 self.world.setDynamics(risk,allocate,tree,codePtr=True)
