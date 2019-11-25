@@ -284,17 +284,22 @@ def findMatches(record,world=None,population={},ignoreWealth=True):
         people = world.agents
     for name in sorted(people):
         if name[:5] == 'Actor':
-            for field,feature in sorted(demographics.items()):
+            for field,feature in sorted(demographics.items(),reverse=True):
                 if field == 'Wealth' and ignoreWealth:
                     continue
                 if name in population:
                     value = population[name][field]
                 else:
                     key = stateKey(name,feature)
-                    if world.variables[key]['domain'] is bool:
-                        value = {True: 'yes',False: 'no'}[world.agents[name].getState(feature).first()]
+                    if key in world.variables:
+                        if world.variables[key]['domain'] is bool:
+                            value = {True: 'yes',False: 'no'}[world.agents[name].getState(feature).first()]
+                        else:
+                            value = str(world.agents[name].getState(feature).first())
                     else:
-                        value = str(world.agents[name].getState(feature).first())
+                        value = world.agents[name].demographics[feature]
+                        if isinstance(value,bool):
+                            value = 'yes' if value else 'no'
                 if record[field] != value and record[field] != str(value):
                     try:
                         mismatch[field].append(name)
@@ -656,10 +661,7 @@ def loadState(args,states,t,turn,world=None):
                 agent = world.agents[name]
                 for model,belief in state.items():
                     agent.models[model]['beliefs'] = belief
-#                model = agent.getBelief().keys()
-#                assert len(model) == 1
-#                model = next(iter(model))
-#                agent.models[model]['beliefs'] = state[model]
+    return states[t][turn]
 
 def getInitialState(args,name,feature,world,states,t,believer=None):
     if isinstance(t,int):
