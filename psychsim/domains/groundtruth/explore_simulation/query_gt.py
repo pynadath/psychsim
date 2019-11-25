@@ -1293,9 +1293,9 @@ class LogParser:
                                 x_list.append(list_values_x_for_agent_i)
                                 y_list.append(list_values_y_for_agent_i)
                             if only_one and len(p_att) <2:
-                                self.plot_multiple_agents(ax=ax, x_lists=x_list, y_lists=y_list, y_label=p_att, title=title, label=None, color=None)
+                                self.plot_multiple_agents(ax=ax, x_lists=x_list, y_lists=y_list, y_label=", ".join(p_att), title=title, label=None, color=None)
                             else:
-                                self.plot_multiple_agents(ax=ax, x_lists=x_list, y_lists=y_list, y_label=p_att, title=title, label=new_label, color=consts.colors[j], linestyle=consts.linestyles[i_att])
+                                self.plot_multiple_agents(ax=ax, x_lists=x_list, y_lists=y_list, y_label=", ".join(p_att), title=title, label=new_label, color=consts.colors[j], linestyle=consts.linestyles[i_att])
                     else:
                         # print("check we are here", j, i_att, i_p_fct)
                         # print(stat_obj[consts.name], attribute, p_fct)
