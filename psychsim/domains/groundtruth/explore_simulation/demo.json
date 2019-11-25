@@ -104,5 +104,9 @@
     {
         "command": "get stats -stat_function list -attribute health -days 1 to 16 -samples all",
         "explanations": "We can even plot the values of health for all actors of these 3 samples, but it may get a bit messy!."
+    },
+    {
+        "command": "get stats -stat_function mean, median -attribute health, childrenHealth -days 1 to 16 -sample healthyChildren, randomSelection",
+        "explanations": "Now let's look at the health of the actors in our 2 samples."
     }
 ]

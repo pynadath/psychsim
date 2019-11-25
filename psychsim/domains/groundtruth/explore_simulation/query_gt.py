@@ -8,6 +8,7 @@ import json
 import copy
 import matplotlib.pyplot as plt
 from matplotlib.legend_handler import HandlerLine2D
+from matplotlib.figure import Figure
 import operator
 from collections import Counter
 import statistics
@@ -272,7 +273,7 @@ class LogParser:
                     print_with_buffer("ParameterError: unknown parameter %s" % p_name, buffer)
                     return False
                 elif self.check_number_of_values_for(p_name, p_value):
-                    param_ok =  self.set_param_value(p_name, p_value, buffer)
+                    param_ok = self.set_param_value(p_name, p_value, buffer)
                     if param_ok is not True:
                         return False
                 else:
@@ -502,11 +503,14 @@ class LogParser:
         #     return self.set_p_with_values_in(p_name=consts.STAT_FCT, p_val=p_val, values_in_list=consts.STAT_FCT_VALUES_IN, buffer=buffer)
 
     def set_p_sample_name(self, p_val, buffer):
+        print("p_val", p_val)
         if self.samples:
             if p_val == "all":
                 self.query_param[consts.SAMPLE] = self.samples.keys()
                 return True
             else:
+                if not isinstance(p_val, list):
+                    p_val = [p_val]
                 possible_values = [sample[consts.name] for sample in self.samples.values()]
                 p_val = [x for x in p_val if x]
                 # samples_names = p_val.split()
@@ -1122,7 +1126,7 @@ class LogParser:
         :param buffer:
         :return:
         """
-        print_with_buffer("Wait, computing stats for %s... " % p_att)
+        print_with_buffer("Wait, computing stats for %s %s... " % (p_att, p_sample_name))
         # get stat values (all)
 
         if stat_obj:
@@ -1174,7 +1178,7 @@ class LogParser:
             stat_res[consts.max_actor][day] = stat_res[consts.val_list][day][idx_max]
 
         new_stat[consts.stat_res][p_att] = stat_res
-        print_with_buffer(new_stat, buffer)
+        # print_with_buffer(new_stat, buffer)
         self.stats[p_name] = new_stat
 
         return new_stat
@@ -1210,7 +1214,10 @@ class LogParser:
     ## ---------------------------------------           Plot Stats          -------------------------------- ##
     ## ------------------------------------------------------------------------------------------------------ ##
 
-    def plot_stats(self, stat_objects_list, p_att, p_fct_list, p_days=[], buffer=None):
+    def plot_stats(self, stat_objects_list, p_att, p_fct_list, p_days=[], buffer=None, fig=None, using_gui=False):
+        if not fig:
+            import matplotlib.pyplot as plt
+            fig = plt.figure()
         """
         Plots the stat ask asks by in the user command.
         :param stat_res:
@@ -1222,6 +1229,9 @@ class LogParser:
         :return:
         """
         only_one = True if len(stat_objects_list) == 1 and len(p_fct_list) == 1 and len(p_att) == 1 else False
+
+
+        ax = fig.add_subplot()
 
         scatter_list, labels_list, lines_list = list(), list(), list()
 
@@ -1283,9 +1293,9 @@ class LogParser:
                                 x_list.append(list_values_x_for_agent_i)
                                 y_list.append(list_values_y_for_agent_i)
                             if only_one and len(p_att) <2:
-                                self.plot_multiple_agents(x_lists=x_list, y_lists=y_list, y_label=p_att, title=title, label=None, color=None)
+                                self.plot_multiple_agents(ax=ax, x_lists=x_list, y_lists=y_list, y_label=p_att, title=title, label=None, color=None)
                             else:
-                                self.plot_multiple_agents(x_lists=x_list, y_lists=y_list, y_label=p_att, title=title, label=new_label, color=consts.colors[j], linestyle=consts.linestyles[i_att])
+                                self.plot_multiple_agents(ax=ax, x_lists=x_list, y_lists=y_list, y_label=p_att, title=title, label=new_label, color=consts.colors[j], linestyle=consts.linestyles[i_att])
                     else:
                         # print("check we are here", j, i_att, i_p_fct)
                         # print(stat_obj[consts.name], attribute, p_fct)
@@ -1295,7 +1305,7 @@ class LogParser:
                             y_list.append(y_elt)
                             # std_dev_list = list(stat_res[consts.std_dev].values()) if p_fct == consts.mean else None
                             std_dev_list = None
-                        scatter, line = self.plot(x_list=x_list, y_list=y_list, std_dev=std_dev_list, marker=marker, label=new_label, color=consts.colors[j], linestyle=consts.linestyles[i_att])
+                        scatter, line = self.plot(ax, x_list=x_list, y_list=y_list, std_dev=std_dev_list, marker=marker, label=new_label, color=consts.colors[j], linestyle=consts.linestyles[i_att])
                         scatter_list.append(scatter)
                         lines_list.append(line)
                         labels_list.append(new_label)
@@ -1304,19 +1314,24 @@ class LogParser:
             fake_lines_for_legend = list()
             for i_line, line in enumerate(lines_list):
                 fake_lines_for_legend.insert(i_line, Line2D([0,1],[1,0], marker=line.get_marker(), linestyle=line.get_linestyle(), color=line.get_color()))
-            plt.title(title)
-            plt.xticks(x_list)
-            plt.axes().set_xticklabels(x_list)
-            plt.ylabel(", ".join(p_att))
-            plt.xlabel(consts.DAYS)
+            ax.set_title(title)
+            ax.set_xticks(x_list)
+            ax.set_xticklabels(x_list)
+            ax.set_ylabel(", ".join(p_att))
+            ax.set_xlabel(consts.DAYS)
             # plt.gca().legend()
-            plt.legend(fake_lines_for_legend, labels_list, fontsize=8, scatterpoints=1)
-        plt.show()
+            ax.legend(fake_lines_for_legend, labels_list, fontsize=8, scatterpoints=1)
+        # fig.show()
+
+        if not using_gui:
+            print("show plot")
+            plt.show()
+        else:
+            return fig
 
 
 
-
-    def plot_multiple_agents(self, x_lists, y_lists, y_label, title, label, color, linestyle=consts.linestyles[0]):
+    def plot_multiple_agents(self, ax, x_lists, y_lists, y_label, title, label, color, linestyle=consts.linestyles[0]):
         """
         Plots values for multiple agents (list of individual values).
         :param x_lists:
@@ -1331,29 +1346,30 @@ class LogParser:
         c = Counter(zip(x_flattened,y_flattened))
         s = [10*c[(xx,yy)] for xx,yy in zip(x_flattened, y_flattened)]
         if color:
-            plt.scatter(x_flattened, y_flattened, s=s, color=color)
+            ax.scatter(x_flattened, y_flattened, s=s, color=color)
         else:
-            plt.scatter(x_flattened, y_flattened, s=s)
+            ax.scatter(x_flattened, y_flattened, s=s)
 
         # Connect points
         for i in range(len((x_lists))):
             x_one_agent = x_lists[i]
             y_one_agent = y_lists[i]
             if i == 0:
-                self.plot_one_of_multiple_agents(x_one_agent, y_one_agent, color, label, linestyle)
+                self.plot_one_of_multiple_agents(ax, x_one_agent, y_one_agent, color, label, linestyle)
             else:
-                self.plot_one_of_multiple_agents(x_one_agent, y_one_agent, color, None, linestyle)
+                self.plot_one_of_multiple_agents(ax, x_one_agent, y_one_agent, color, None, linestyle)
 
-        plt.title(title)
-        plt.xticks(x_flattened)
-        plt.axes().set_xticklabels(x_flattened)
-        plt.ylabel(y_label)
-        plt.xlabel(consts.DAYS)
-        plt.gca().legend()
+        ax.set_title(title)
+        ax.set_xticks(x_flattened)
+        ax.set_xticklabels(x_flattened)
+        ax.set_ylabel(y_label)
+        ax.set_xlabel(consts.DAYS)
+        # ax.gca().legend()
+        ax.legend()
         # plt.show()
-        return plt
+        # return plt
 
-    def plot_one_of_multiple_agents(self, x_list, y_list, color, label, linestyle=consts.linestyles[0]):
+    def plot_one_of_multiple_agents(self, ax, x_list, y_list, color, label, linestyle=consts.linestyles[0]):
         """
         Plots values for one of multiple agents --> adds points in an already existing plot.
         :param x_list:
@@ -1363,12 +1379,12 @@ class LogParser:
         """
         if color:
             if label:
-                line, = plt.plot(x_list, y_list, color=color, label=label, linestyle=linestyle)
-                plt.legend(handler_map = {line: HandlerLine2D(numpoints=1)})
+                line, = ax.plot(x_list, y_list, color=color, label=label, linestyle=linestyle)
+                ax.legend(handler_map = {line: HandlerLine2D(numpoints=1)})
             else:
-                plt.plot(x_list, y_list, color=color, linestyle=linestyle)
+                ax.plot(x_list, y_list, color=color, linestyle=linestyle)
         else:
-            plt.plot(x_list, y_list)
+            ax.plot(x_list, y_list)
 
     def get_density(self, x_list, y_list):
         c = Counter(zip(x_list,y_list))
@@ -1376,7 +1392,7 @@ class LogParser:
         return s
 
 
-    def plot(self, x_list, y_list, std_dev=None, marker=consts.markers[0], label=None, color=consts.colors[0], linestyle=consts.linestyles[0]):
+    def plot(self, ax, x_list, y_list, std_dev=None, marker=consts.markers[0], label=None, color=consts.colors[0], linestyle=consts.linestyles[0]):
         """
         Plots agregated values in one stat function, e.g. "mean".
         :param x_list:
@@ -1391,13 +1407,13 @@ class LogParser:
         # print(density)
         if marker:
             density = [d*5 for d in density]
-        scatter = plt.scatter(x_list, y_list, s=density, marker=marker, color=color)
+        scatter = ax.scatter(x_list, y_list, s=density, marker=marker, color=color)
         if std_dev:
             print("line 1357")
             print(std_dev)
 
-            plt.errorbar(x_list, y_list, std_dev, color=color)
-        line, = plt.plot(x_list, y_list, color=color, marker=marker, label=label, linestyle=linestyle)
+            ax.errorbar(x_list, y_list, std_dev, color=color)
+        line, = ax.plot(x_list, y_list, color=color, marker=marker, label=label, linestyle=linestyle)
         # plt.show()
         return scatter, line
     #
