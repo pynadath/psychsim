@@ -368,7 +368,10 @@ if __name__ == '__main__':
     parser.add_argument('instances',nargs='+',type=int,help='Number of instance(s) to process')
     parser.add_argument('-r','--run',default=0,type=int,help='Number of run to process')
     parser.add_argument('-d','--debug',default='WARNING',help='Level of logging detail')
+    parser.add_argument('-f','--first',type=int,default=1,help='First day to consider')
+    parser.add_argument('-l','--last',type=int,help='Last day to consider')
     parser.add_argument('--skiptables',action='store_true',help='Do not generate event tables')
+    parser.add_argument('--skiphurricane',action='store_true',help='Do not generate hurricane tables')
     parser.add_argument('--skippre',action='store_true',help='Do not generate pre-hurricane survey')
     parser.add_argument('--skippost',action='store_true',help='Do not generate post-hurricane survey')
     parser.add_argument('--usepre',help='Use existing pre-hurricane survey file for participants')
@@ -402,9 +405,12 @@ if __name__ == '__main__':
         shelterObjs = {'shelter%s' % (name[-2:]) for name in shelters}
         states = {0: {'Nature': {name: world.agents[name].getBelief() for name in actors}}}
         states[0]['Nature']['__state__'] = world.state
-        # Compute length of simulation run
-        files = [int(name[5:-10]) for name in os.listdir(dirName) if name[:5] == 'state' and name[-10:] == 'Nature.pkl']
-        args['span'] = max(files)
+        if args['last'] is None:
+            # Compute length of simulation run
+            files = [int(name[5:-10]) for name in os.listdir(dirName) if name[:5] == 'state' and name[-10:] == 'Nature.pkl']
+            args['span'] = max(files)
+        else:
+            args['span'] = args['last']
         tables = {label: [] for label in fields}
         if not args['skiptables']:
             tables['RunData'] += doCensus(world,variables)
@@ -413,7 +419,8 @@ if __name__ == '__main__':
             for region in regions:
                 tables['RunData'] += doPopulation(world,world.state,{name for name in actors if world.agents[name].demographics['home'] == region},
                     1,variables,region,'Regional ')
-            t = 1
+        if not args['skiptables'] or not args['skiphurricane']:
+            t = args['first']
             states[t] = {}
             turn = 0
             hurricane = 0
@@ -429,50 +436,52 @@ if __name__ == '__main__':
                     s = pickle.load(f)
                 states[t][order[turn]] = s
                 if order[turn] == 'Nature':
-                    tables['RunData'] += doPopulation(world,s['__state__'],actors,t+1,variables,entity='Actor[0001-%04d]' % (len(actors)))
-                    for region in regions:
-                        tables['RunData'] += doPopulation(world,s['__state__'],{name for name in actors if world.agents[name].demographics['home'] == region},
-                            t+1,variables,region,'Regional ')
-                    if phase != world.getState('Nature','phase',s['__state__']).first():
-                        phase = world.getState('Nature','phase',s['__state__']).first()
-                        if phase == 'approaching':
-                            # New hurricane
-                            hurricane += 1
-#                            if hurricane > 6:
-#                                break
-                    if phase != 'none':
-                        region = world.getState('Nature','location',s['__state__']).first()
-                        var = 'Hurricane'
-                        if var not in variables:
-                            variables[var] = {'Name': var,'Values':'[1+]','DataType': 'Integer'}
-                        tables['InstanceVariable'].append({'Timestep': t+1,'Name': var,'Value': hurricane})
-                        var = 'Category'
-                        if var not in variables:
-                            variables[var] = {'Name': var,'Values':'[0-5]','DataType': 'Integer'}
-                        tables['InstanceVariable'].append({'Timestep': t+1,'Name': var,'Value': world.getState('Nature','category',s['__state__']).first()})
-                        var = 'Location'
-                        if var not in variables:
-                            variables[var] = {'Name': var,'Values':'Region[01-16],leaving','DataType': 'String'}
-                        tables['InstanceVariable'].append({'Timestep': t+1,'Name': var,'Value': 'leaving' if region == 'none' else region})
-                        var = 'Landed'
-                        if var not in variables:
-                            variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
-                        tables['InstanceVariable'].append({'Timestep': t+1,'Name': var,'Value': 'yes' if phase == 'active' else 'no'})
-                        tables['Hurricane'].append({'Timestep': t+1,'Name': hurricane,
-                            'Category': world.getState('Nature','category',s['__state__']).first(), 'Location': 'leaving' if region == 'none' else region,
-                            'Landed': 'yes' if phase == 'active' else 'no'})
+                    if not args['skiptables']:
+                        tables['RunData'] += doPopulation(world,s['__state__'],actors,t+1,variables,entity='Actor[0001-%04d]' % (len(actors)))
+                        for region in regions:
+                            tables['RunData'] += doPopulation(world,s['__state__'],{name for name in actors if world.agents[name].demographics['home'] == region},
+                                t+1,variables,region,'Regional ')
+                    if not args['skiphurricane']:
+                        if phase != world.getState('Nature','phase',s['__state__']).first():
+                            phase = world.getState('Nature','phase',s['__state__']).first()
+                            if phase == 'approaching':
+                                # New hurricane
+                                hurricane += 1
+                        if phase != 'none':
+                            region = world.getState('Nature','location',s['__state__']).first()
+                            var = 'Hurricane'
+                            if var not in variables:
+                                variables[var] = {'Name': var,'Values':'[1+]','DataType': 'Integer'}
+                            tables['InstanceVariable'].append({'Timestep': t+1,'Name': var,'Value': hurricane})
+                            var = 'Category'
+                            if var not in variables:
+                                variables[var] = {'Name': var,'Values':'[0-5]','DataType': 'Integer'}
+                            tables['InstanceVariable'].append({'Timestep': t+1,'Name': var,'Value': world.getState('Nature','category',s['__state__']).first()})
+                            var = 'Location'
+                            if var not in variables:
+                                variables[var] = {'Name': var,'Values':'Region[01-16],leaving','DataType': 'String'}
+                            tables['InstanceVariable'].append({'Timestep': t+1,'Name': var,'Value': 'leaving' if region == 'none' else region})
+                            var = 'Landed'
+                            if var not in variables:
+                                variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
+                            tables['InstanceVariable'].append({'Timestep': t+1,'Name': var,'Value': 'yes' if phase == 'active' else 'no'})
+                            tables['Hurricane'].append({'Timestep': t+1,'Name': hurricane,
+                                'Category': world.getState('Nature','category',s['__state__']).first(), 'Location': 'leaving' if region == 'none' else region,
+                                'Landed': 'yes' if phase == 'active' else 'no'})
                 living = [name for name in living if world.getState(name,'alive',s['__state__']).first()]
                 turn += 1
                 if turn == len(order):
                     turn = 0
                     t += 1
+                    states[t-1].clear()
                     states[t] = {}
                 if t > args['span']:
                     break 
-            # Write down hurricane data for easier recall when doing surveys
-            if tables['Hurricane'][-1]['Landed'] == 'no':
-                del tables['Hurricane'][-1]
-            accessibility.writeOutput(args,tables['Hurricane'],fields['Hurricane'],'HurricaneTable.tsv')
+            if not args['skiphurricane']:
+                # Write down hurricane data for easier recall when doing surveys
+                if tables['Hurricane'][-1]['Landed'] == 'no':
+                    del tables['Hurricane'][-1]
+                accessibility.writeOutput(args,tables['Hurricane'],fields['Hurricane'],'HurricaneTable.tsv')
         # Actor surveys
         hurricanes = accessibility.readHurricanes(args['instance'],args['run'])
         if not args['skippre']:
@@ -576,5 +585,5 @@ if __name__ == '__main__':
                     for actor in pool:
                         print(name,accessibility.getAction(args,actor,world,states,(1,args['span']-1))) 
         for label,data in tables.items():
-            accessibility.writeOutput(args,data,fields[label],'%sTable_temp.tsv' % (label))
+            accessibility.writeOutput(args,data,fields[label],'%sTable_temp2.tsv' % (label))
     accessibility.writeVarDef(os.path.join(os.path.dirname(__file__),'..'),list(variables.values()))
