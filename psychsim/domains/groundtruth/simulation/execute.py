@@ -48,10 +48,24 @@ def runInstance(instance,args,config,rerun=True):
         if not os.path.exists(dirName):
             os.makedirs(dirName)
         if args['reload']:
-            world = loadPickle(args['instance'],run,args['reload'])
             if config.getint('Simulation','phase',fallback=1) == 1:
+                world = loadPickle(args['instance'],run,args['reload'])
                 world.addActionEffects()
-            hurricanes = readHurricanes(args['instance'],run)
+            else:
+                try:
+                    world = loadPickle(args['instance'],run,args['reload'])
+                except FileNotFoundError:
+                    # Load original world, then re-apply logged states/belief states
+                    world = loadPickle(args['instance'],run,0)
+                    with open(os.path.join(dirName,'state%d%s.pkl' % (args['reload']-1,'Nature')),'rb') as f:
+                        oldStates = pickle.load(f)
+                    for name,state in oldStates.items():
+                        if name == '__state__':
+                            world.state = state
+                        else:
+                            agent = world.agents[name]
+                            for model,belief in state.items():
+                                agent.models[model]['beliefs'] = belief
             population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
             try:
                 population[0].demographics
@@ -67,11 +81,16 @@ def runInstance(instance,args,config,rerun=True):
                 for agent in population:
                     agent.config = config
             regions = {agent.name: {'agent': agent,
-                                    'inhabitants': [a for a in population if a.home == agent.name]}
+                                    'inhabitants': [a for a in population if a.demographics['home'] == agent.name]}
                        for agent in world.agents.values() if isinstance(agent,Region)}
-            cdfTables = makeCDFTables(population,[world.agents[r] for r in regions],regions)
-            preSurvey(world,None,dirName,0,args['TA2BTA1C10'])
-            postSurvey(None,dirName,0,args['TA2BTA1C10'],config.getboolean('Data','postprevious',fallback=False))
+            if config.getboolean('Data','livecdf',fallback=True):
+                cdfTables = makeCDFTables(population,[world.agents[r] for r in regions],regions)
+            else:
+                cdfTables = {}
+            if config.getboolean('Data','presurvey',fallback=True):
+                preSurvey(world,None,dirName,0,args['TA2BTA1C10'])
+            if config.getboolean('Data','postsurvey',fallback=True):
+                postSurvey(None,dirName,0,args['TA2BTA1C10'],config.getboolean('Data','postprevious',fallback=False))
         else:
             scenarios = [int(name[8:-4]) for name in os.listdir(dirName) if name[:8] == 'scenario' and name[-4:] == '.pkl']
             if scenarios and not rerun:
@@ -103,9 +122,12 @@ def runInstance(instance,args,config,rerun=True):
         if world is None:
             # Initialize new world
             world = createWorld(config)
-            writeHurricane(world,0,dirName)
-            preSurvey(world,None,dirName,0,False)
-            postSurvey(None,dirName,0,False,config.getboolean('Data','postprevious',fallback=False))
+            if config.getboolean('Data','livecdf',fallback=True):
+                writeHurricane(world,0,dirName)
+            if config.getboolean('Data','presurvey',fallback=True):
+                preSurvey(world,None,dirName,0,False)
+            if config.getboolean('Data','postsurvey',fallback=True):
+                postSurvey(None,dirName,0,False,config.getboolean('Data','postprevious',fallback=False))
             if args['TA2BTA1C10']:
                 preSurvey(world,None,dirName,0,True)
                 postSurvey(None,dirName,0,True)
@@ -113,9 +135,12 @@ def runInstance(instance,args,config,rerun=True):
             regions = {agent.name: {'agent': agent,
                                     'inhabitants': [a for a in population if a.demographics['home'] == agent.name]}
                        for agent in world.agents.values() if isinstance(agent,Region)}
-            writeCensus(world,regions,dirName)
-            cdfTables = makeCDFTables(population,[world.agents[r] for r in regions],regions)
-            toCDF(world,dirName,cdfTables)
+            if config.getboolean('Data','livecdf',fallback=True):
+                writeCensus(world,regions,dirName)
+                cdfTables = makeCDFTables(population,[world.agents[r] for r in regions],regions)
+                toCDF(world,dirName,cdfTables)
+            else:
+                cdfTables = {}
             # Write definition files
             if args['write']:
                 defDir = os.path.join(os.path.dirname(__file__),'SimulationDefinition')
@@ -163,7 +188,8 @@ def runInstance(instance,args,config,rerun=True):
         if args['compile']:
             for agent in population:
                 print('Compiling: %s' % (agent.name))
-                agent.compileV()
+                print(agent.compilePi(debug=True))
+                exit()
         random.seed(config.getint('Simulation','seedRun')+run)
         survey = set()
         oldPhase = world.getState('Nature','phase').first()
@@ -191,11 +217,20 @@ def runInstance(instance,args,config,rerun=True):
                 impact = 1.5*likert[5][config.getint('System','system_impact')-1]
                 tree = makeTree(approachMatrix(risk,impact,0.))
                 world.setDynamics(risk,{'verb': 'allocate','object': region},tree)
-        if args['phase1predictshort']:
+        elif args['phase2predictlong']:
+            for agent in population:
+                value = 0.9*agent.getState('resources').expectation()
+                agent.setState('resources',value)
+                beliefs = agent.getBelief()
+                model,myBelief = next(iter(beliefs.items()))
+                agent.setBelief(stateKey(agent.name,'resources'),value,model)
+            world.agents['System'].setAidDynamics([agent.name for agent in population],1.5)
+        if args['phase1predictshort'] or args['phase2predictshort']:
             for agent in population:
                 for action in list(agent.actions):
                     if action['verb'] == 'moveTo' and action['object'][:7] == 'shelter':
                         agent.actions.remove(action)
+                assert agent.getState('location').first()[:7] != 'shelter','Oh well, %s is starting out in the shelter' % (agent.name)
         # Load any prescription
         if args['prescription']:
             if args['prescription'] == 'NULL':
@@ -291,10 +326,6 @@ def runInstance(instance,args,config,rerun=True):
             if newSeason:
                 # Jump to new season
                 if config.getint('Simulation','phase',fallback=1) == 1:
-                    season += 1
-                    if isinstance(args['seasons'],int) and season >= args['seasons']:
-                        # All done
-                        break
                     phase = stateKey('Nature','phase')
                     dayKey = stateKey('Nature','days')
                     evolution = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
@@ -333,8 +364,12 @@ def runInstance(instance,args,config,rerun=True):
                 state['phase'] = world.getState('Nature','phase').first()
 #                print('Next season')
 #                world.printState()
+                season += 1
+                if isinstance(args['seasons'],int) and season >= args['seasons']:
+                    # All done
+                    break
                 if args['pickle']:
-                    # Save after fast-forwarding
+                    # Not done, but let's just save after fast-forwarding
                     day = world.getState(WORLD,'day').first()
                     with open(os.path.join(dirName,'scenario%d.pkl' % (day)),'wb') as outfile:
                         pickle.dump(world,outfile)
@@ -350,9 +385,9 @@ def runInstance(instance,args,config,rerun=True):
         elif args['xml']:
             print('Saving...')
             world.save(os.path.join(dirName,'scenario.psy'))
-        else:
-            with open(os.path.join(dirName,'scenario.pkl'),'w') as outfile:
-                print('%d' % (state['hurricanes']),file=outfile)
+#        else:
+#            with open(os.path.join(dirName,'scenario.pkl'),'w') as outfile:
+#                print('%d' % (state['hurricanes']),file=outfile)
         if args['profile']:
             prof.disable()
             buf = StringIO()
