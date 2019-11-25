@@ -82,6 +82,10 @@
         "explanations": "This will be our last sample. Let's name it randomSelection."
     },
     {
+        "command": "create sample -name randomSelection2",
+        "explanations": "This will be our last sample. Let's name it randomSelection."
+    },
+    {
         "command": "display samples",
         "explanations": "Now let's display our samples."
     },

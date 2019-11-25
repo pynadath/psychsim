@@ -119,3 +119,11 @@ def find_ranges(iterable):
             yield group[0]
         else:
             yield group[0], group[-1]
+
+
+def remove_duplicates_from_list_of_dicts(my_list):
+    new_list = list()
+    for elt in my_list:
+        if elt not in new_list:
+            new_list.append(elt)
+    return new_list
