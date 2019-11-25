@@ -1,0 +1,7 @@
+Q5: If the hurricane never reached the decedent's home region, we report the category when the hurricane came closest.
+
+Q6 and Q7: Left blank if no previous hurricanes.
+
+Q9 and Q10: These data are not available.
+
+We provide pre/post survey matches for all instances within the RunDataTable. For, the Predict instances, the Timestep matches the Timestep of the actor's survey response (the hurricane number is also included in the value).

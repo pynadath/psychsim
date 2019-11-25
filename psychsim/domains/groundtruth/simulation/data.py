@@ -156,7 +156,7 @@ def readNetwork(instance,run=0,sub=None):
                 networks[link][row['FromEntityId']] = {row['ToEntityId']}
     return networks
 
-def readParticipants(instance,run=0,fname='psychsim.log',splitHurricanes=False):
+def readParticipants(instance,run=0,fname='psychsim.log',splitHurricanes=False,duplicates=False):
     """
     :returns: Mapping from participants to actor names for each survey
     """
@@ -180,7 +180,7 @@ def readParticipants(instance,run=0,fname='psychsim.log',splitHurricanes=False):
                     tables[survey] = {}
                 participant = int(elements[3][:-1])
                 name = elements[4]
-                if participant in tables[survey]:
+                if participant in tables[survey] and not duplicates:
                     assert name == tables[survey][participant],'Mismatch on participant %s in %s' % (participant,survey)
                 else:
                     tables[survey][participant] = name

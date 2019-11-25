@@ -1,0 +1,3 @@
+Name	LongName	Values	VarType	DataType	Notes
+TA2A 422 Tax	TA2A 422 Tax	[0-6]	dynamic	Integer	
+TA2A 422 Aid Sent	TA2A 422 Aid Sent	[0-6]	dynamic	Integer	

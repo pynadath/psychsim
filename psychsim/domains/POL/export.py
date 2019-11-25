@@ -7,10 +7,10 @@ from psychsim.pwl import *
 
 typeMap = {float: 'double'}
 
-actionTemplate = Template('meCurrentAction = PS${name}.${action};\nRaiseActionChangedEvent(new ActionChangedEventArgs(this, meCurrentAction));')
+actionTemplate = Template('meCurrentAction = PSCivilianActionEnum.${action};\nRaiseActionChangedEvent(new ActionChangedEventArgs(this, meCurrentAction));')
 branchTemplate = Template('if ${plane} {\n\t${true}\n} else {\n\t${false}\n}')
-dynamicsTemplate = Template('\t\tvoid update_${variable}()\n\t\t{\n\t\t\tswitch (meCurrentAction)\n\t\t\t{\n${trees}\n\t\t\t}\n\t\t}\n')
-caseTemplate = Template('\t\t\t\tcase PS${name}ActionEnum.${action}:\n\t\t\t\t{\n\t\t\t\t\t${tree}\n\t\t\t\t}\n')
+dynamicsTemplate = Template('\t\tprotected override void update_${variable}()\n\t\t{\n\t\t\tswitch (meCurrentAction)\n\t\t\t{\n${trees}\t\t\t\tdefault: { break; }\n\t\t\t}\n\t\t}\n')
+caseTemplate = Template('\t\t\t\tcase PSCivilianActionEnum.${action}:\n\t\t\t\t{\n\t\t\t\t\t${tree}\n\t\t\t\t\tbreak;\n\t\t\t\t}\n')
 effectTemplate = Template('${var} = ${vector};')
 
 def encodeName(name):
@@ -99,4 +99,3 @@ def exportCS(world,name,dirname='.'):
 	code = template.safe_substitute(subs)
 	with open(os.path.join(os.path.dirname(__file__),'PS%s.cs' % (safeName)),'w') as outFile:
 		outFile.write(code)
-

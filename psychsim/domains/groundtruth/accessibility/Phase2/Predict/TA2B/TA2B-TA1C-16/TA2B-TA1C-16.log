@@ -1,0 +1,274 @@
+INFO:root:Instance 18 (100,2)
+INFO:root:Participant 1: Actor0434
+INFO:root:Actor0434: TA2B 16 Participant 1 and Pre-survey 6 42
+INFO:root:Participant 2: Actor0709
+INFO:root:Actor0709: TA2B 16 Participant 2 and Pre-survey 2 95
+INFO:root:Participant 3: Actor0658
+INFO:root:Actor0658: TA2B 16 Participant 3 and Pre-survey 2 80
+INFO:root:Participant 4: Actor0363
+INFO:root:Actor0363: TA2B 16 Participant 4 and Pre-survey 4 3
+INFO:root:Participant 5: Actor0561
+INFO:root:Actor0561: TA2B 16 Participant 5 and Pre-survey 1 30
+INFO:root:Participant 6: Actor0781
+INFO:root:Actor0781: TA2B 16 Participant 6 and Pre-survey 4 90
+INFO:root:Participant 7: Actor0820
+INFO:root:Actor0820: TA2B 16 Participant 7 and Pre-survey 3 23
+INFO:root:Participant 8: Actor0515
+INFO:root:Actor0515: TA2B 16 Participant 8 and Post-survey 4 88
+INFO:root:Participant 9: Actor0544
+INFO:root:Actor0544: TA2B 16 Participant 9 and Post-survey 4 26
+INFO:root:Participant 10: Actor0295
+INFO:root:Actor0295: TA2B 16 Participant 10 and Post-survey 1 16
+INFO:root:Participant 11: Actor0336
+INFO:root:Actor0336: TA2B 16 Participant 11 and Pre-survey 5 77
+INFO:root:Participant 12: Actor0976
+WARNING:root:Actor0976 never filled out survey
+INFO:root:Participant 13: Actor0510
+WARNING:root:Actor0510 never filled out survey
+INFO:root:Participant 14: Actor0642
+INFO:root:Actor0642: TA2B 16 Participant 14 and Pre-survey 1 16
+INFO:root:Participant 15: Actor0080
+WARNING:root:Actor0080 never filled out survey
+INFO:root:Participant 16: Actor0765
+INFO:root:Actor0765: TA2B 16 Participant 16 and Pre-survey 5 11
+INFO:root:Participant 17: Actor0943
+INFO:root:Actor0943: TA2B 16 Participant 17 and Pre-survey 1 42
+INFO:root:Participant 18: Actor0817
+INFO:root:Actor0817: TA2B 16 Participant 18 and Pre-survey 1 56
+INFO:root:Participant 19: Actor0927
+INFO:root:Actor0927: TA2B 16 Participant 19 and Pre-survey 3 1
+INFO:root:Participant 20: Actor0950
+WARNING:root:Actor0950 never filled out survey
+INFO:root:Participant 21: Actor0551
+INFO:root:Actor0551: TA2B 16 Participant 21 and Post-survey 2 49
+INFO:root:Participant 22: Actor0303
+INFO:root:Actor0303: TA2B 16 Participant 22 and Pre-survey 3 75
+INFO:root:Participant 23: Actor0613
+INFO:root:Actor0613: TA2B 16 Participant 23 and Post-survey 6 38
+INFO:root:Participant 24: Actor0386
+WARNING:root:Actor0386 never filled out survey
+INFO:root:Participant 25: Actor0669
+INFO:root:Actor0669: TA2B 16 Participant 25 and Pre-survey 2 66
+INFO:root:Participant 26: Actor0208
+INFO:root:Actor0208: TA2B 16 Participant 26 and Pre-survey 6 15
+INFO:root:Participant 27: Actor0012
+INFO:root:Actor0012: TA2B 16 Participant 27 and Post-survey 1 74
+INFO:root:Participant 28: Actor0671
+WARNING:root:Actor0671 never filled out survey
+INFO:root:Participant 29: Actor0516
+INFO:root:Actor0516: TA2B 16 Participant 29 and Pre-survey 5 74
+INFO:root:Participant 30: Actor0665
+INFO:root:Actor0665: TA2B 16 Participant 30 and Pre-survey 1 2
+INFO:root:Participant 31: Actor0707
+INFO:root:Actor0707: TA2B 16 Participant 31 and Post-survey 3 1
+INFO:root:Participant 32: Actor0364
+INFO:root:Actor0364: TA2B 16 Participant 32 and Pre-survey 6 14
+INFO:root:Participant 33: Actor0924
+INFO:root:Actor0924: TA2B 16 Participant 33 and Pre-survey 6 66
+INFO:root:Participant 34: Actor0156
+INFO:root:Actor0156: TA2B 16 Participant 34 and Pre-survey 4 67
+INFO:root:Participant 35: Actor0729
+INFO:root:Actor0729: TA2B 16 Participant 35 and Pre-survey 1 86
+INFO:root:Participant 36: Actor0804
+INFO:root:Actor0804: TA2B 16 Participant 36 and Pre-survey 5 71
+INFO:root:Participant 37: Actor0852
+WARNING:root:Actor0852 never filled out survey
+INFO:root:Participant 38: Actor0797
+INFO:root:Actor0797: TA2B 16 Participant 38 and Pre-survey 6 92
+INFO:root:Participant 39: Actor0780
+INFO:root:Actor0780: TA2B 16 Participant 39 and Pre-survey 2 89
+INFO:root:Participant 40: Actor0108
+INFO:root:Actor0108: TA2B 16 Participant 40 and Pre-survey 4 38
+INFO:root:Participant 41: Actor0783
+WARNING:root:Actor0783 never filled out survey
+INFO:root:Participant 42: Actor0920
+WARNING:root:Actor0920 never filled out survey
+INFO:root:Participant 43: Actor0947
+INFO:root:Actor0947: TA2B 16 Participant 43 and Pre-survey 3 38
+INFO:root:Participant 44: Actor0091
+INFO:root:Actor0091: TA2B 16 Participant 44 and Post-survey 6 29
+INFO:root:Participant 45: Actor0189
+INFO:root:Actor0189: TA2B 16 Participant 45 and Pre-survey 1 23
+INFO:root:Participant 46: Actor0805
+INFO:root:Actor0805: TA2B 16 Participant 46 and Pre-survey 6 16
+INFO:root:Participant 47: Actor0751
+INFO:root:Actor0751: TA2B 16 Participant 47 and Post-survey 6 69
+INFO:root:Participant 48: Actor0638
+WARNING:root:Actor0638 never filled out survey
+INFO:root:Participant 49: Actor0015
+WARNING:root:Actor0015 never filled out survey
+INFO:root:Condition 0
+INFO:root:Condition 1
+WARNING:root:Actor0515-stayInLocation
+{ActionSet({{'verb': 'evacuate', 'subject': 'Actor0515'}}): 1.7955431414975531, ActionSet({{'verb': 'moveTo', 'object': 'Region15', 'subject': 'Actor0515'}}): 2.2755489913510574, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0515'}}): 2.275543141497553}
+WARNING:root:Actor0515-stayInLocation
+{ActionSet({{'verb': 'evacuate', 'subject': 'Actor0515'}}): 1.7846112618546215, ActionSet({{'verb': 'takeResources', 'object': 'Region15', 'subject': 'Actor0515'}}): 2.178212314828252, ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0515'}}): 2.2646112618546215, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region15', 'subject': 'Actor0515'}}): 2.237867327265392, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0515'}}): 2.2358133678018834}
+WARNING:root:Actor0510-stayInLocation
+{ActionSet({{'verb': 'moveTo', 'object': 'Region15', 'subject': 'Actor0510'}}): 4.195315189566421, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0510'}}): 3.955309339712917, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0510'}}): 4.195309339712917}
+WARNING:root:Actor0510-stayInLocation
+{ActionSet({{'verb': 'takeResources', 'object': 'Region15', 'subject': 'Actor0510'}}): 3.7037640297061643, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0510'}}): 3.9437629767325335, ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0510'}}): 4.183762976732534, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0510'}}): 4.023765082679795, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region15', 'subject': 'Actor0510'}}): 4.025931433675358}
+WARNING:root:Actor0080-stayInLocation
+{ActionSet({{'verb': 'decreaseRisk', 'object': 'Region15', 'subject': 'Actor0080'}}): 2.6171732175876796, ActionSet({{'verb': 'takeResources', 'object': 'Region15', 'subject': 'Actor0080'}}): 2.4196903764922917, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0080'}}): 2.611690376492292, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0080'}}): 2.4676903764922917, ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0080'}}): 2.7076903764922915}
+WARNING:root:Actor0817-stayInLocation
+{ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0817'}}): 4.0875000436523425, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0817'}}): 3.8475000436523423, ActionSet({{'verb': 'moveTo', 'object': 'Region11', 'subject': 'Actor0817'}}): 4.0875244180419426}
+WARNING:root:Actor0817-stayInLocation
+{ActionSet({{'verb': 'decreaseRisk', 'object': 'Region11', 'subject': 'Actor0817'}}): 4.00043574412784, ActionSet({{'verb': 'takeResources', 'object': 'Region11', 'subject': 'Actor0817'}}): 3.678350089996461, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0817'}}): 3.9183474575623833, ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0817'}}): 4.1583474575623836, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0817'}}): 3.8404594445372595}
+WARNING:root:Actor0927-stayInLocation
+{ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0927'}}): 2.268360251643153, ActionSet({{'verb': 'takeResources', 'object': 'Region11', 'subject': 'Actor0927'}}): 2.1819602516431527, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0927'}}): 1.788360251643153, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region11', 'subject': 'Actor0927'}}): 2.2401689290961464, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0927'}}): 2.210760251643153}
+WARNING:root:Actor0551-stayInLocation
+{ActionSet({{'verb': 'moveTo', 'object': 'Region11', 'subject': 'Actor0551'}}): 3.5432674105691193, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0551'}}): 3.0632349113829855, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0551'}}): 3.543234911382986}
+WARNING:root:Actor0551-stayInLocation
+{ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0551'}}): 3.561709913058941, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0551'}}): 3.0817099130589414, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region11', 'subject': 'Actor0551'}}): 3.4496423429071257, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0551'}}): 3.3328337727999857, ActionSet({{'verb': 'takeResources', 'object': 'Region11', 'subject': 'Actor0551'}}): 3.216113422971044}
+WARNING:root:Actor0386-stayInLocation
+{ActionSet({{'verb': 'evacuate', 'subject': 'Actor0386'}}): 2.5134042583551164, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0386'}}): 2.993404258355117, ActionSet({{'verb': 'moveTo', 'object': 'Region15', 'subject': 'Actor0386'}}): 2.9934101082086206}
+WARNING:root:Actor0386-stayInLocation
+{ActionSet({{'verb': 'decreaseRisk', 'object': 'Region15', 'subject': 'Actor0386'}}): 2.932201929763059, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0386'}}): 2.4971500273990848, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0386'}}): 2.929152133346346, ActionSet({{'verb': 'takeResources', 'object': 'Region15', 'subject': 'Actor0386'}}): 2.8331510803727156, ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0386'}}): 2.9771500273990847}
+WARNING:root:Actor0012-decreaseRisk-Region06
+{ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0012'}}): 0.4072987450631034, ActionSet({{'verb': 'takeResources', 'object': 'Region06', 'subject': 'Actor0012'}}): 0.4395524798914835, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0012'}}): -0.01703258079499581, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0012'}}): 0.1995524798914835, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region06', 'subject': 'Actor0012'}}): 0.4008325876848724}
+WARNING:root:Actor0012-takeResources-Region06
+{ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0012'}}): 0.5772977237790368, ActionSet({{'verb': 'takeResources', 'object': 'Region06', 'subject': 'Actor0012'}}): 0.5564681140692, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0012'}}): 0.13569772377903677, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0012'}}): 0.35486811406920005, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region06', 'subject': 'Actor0012'}}): 0.5552608262596632}
+WARNING:root:Actor0665-stayInLocation
+{ActionSet({{'verb': 'evacuate', 'subject': 'Actor0665'}}): 1.4361079055652677, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0665'}}): 1.9161079055652679, ActionSet({{'verb': 'moveTo', 'object': 'Region15', 'subject': 'Actor0665'}}): 1.916119605272276}
+WARNING:root:Actor0665-stayInLocation
+{ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0665'}}): 1.8711050626144237, ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0665'}}): 1.9048063452253952, ActionSet({{'verb': 'takeResources', 'object': 'Region15', 'subject': 'Actor0665'}}): 1.8472084511726568, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0665'}}): 1.4248063452253952, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region15', 'subject': 'Actor0665'}}): 1.8875843534202272}
+WARNING:root:Actor0108-decreaseRisk-Region10
+{ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0108'}}): 1.9503085559473918, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0108'}}): 1.5851293459681814, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region10', 'subject': 'Actor0108'}}): 2.0646319292375255, ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0108'}}): 2.065129345968182, ActionSet({{'verb': 'takeResources', 'object': 'Region10', 'subject': 'Actor0108'}}): 1.9787293459681816}
+WARNING:root:Actor0108-moveTo-shelter11
+{ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0108'}}): 2.0372842411667555, ActionSet({{'verb': 'moveTo', 'object': 'Region10', 'subject': 'Actor0108'}}): 1.9220842411667554, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0108'}}): 1.557284241166755}
+WARNING:root:Actor0783-stayInLocation
+{ActionSet({{'verb': 'takeResources', 'object': 'Region15', 'subject': 'Actor0783'}}): 2.1719045159940378, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0783'}}): 2.2295045159940377, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0783'}}): 1.7783045159940372, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region15', 'subject': 'Actor0783'}}): 2.2310027226090794, ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0783'}}): 2.2583045159940376}
+INFO:root:Instance 19 (101,1)
+INFO:root:Participant 1: Actor0042
+INFO:root:Actor0042: TA2B 16 Participant 1 and Pre-survey 8 79
+INFO:root:Participant 2: Actor0413
+INFO:root:Actor0413: TA2B 16 Participant 2 and Pre-survey 10 73
+INFO:root:Participant 3: Actor0697
+INFO:root:Actor0697: TA2B 16 Participant 3 and Pre-survey 7 59
+INFO:root:Participant 4: Actor0814
+INFO:root:Actor0814: TA2B 16 Participant 4 and Pre-survey 1 34
+INFO:root:Participant 5: Actor0517
+INFO:root:Actor0517: TA2B 16 Participant 5 and Pre-survey 3 68
+INFO:root:Participant 6: Actor0543
+INFO:root:Actor0543: TA2B 16 Participant 6 and Pre-survey 7 14
+INFO:root:Participant 7: Actor0292
+INFO:root:Actor0292: TA2B 16 Participant 7 and Pre-survey 3 57
+INFO:root:Participant 8: Actor0553
+INFO:root:Actor0553: TA2B 16 Participant 8 and Pre-survey 5 92
+INFO:root:Participant 9: Actor0431
+INFO:root:Actor0431: TA2B 16 Participant 9 and Pre-survey 2 86
+INFO:root:Participant 10: Actor0177
+INFO:root:Actor0177: TA2B 16 Participant 10 and Pre-survey 4 79
+INFO:root:Participant 11: Actor0122
+INFO:root:Actor0122: TA2B 16 Participant 11 and Pre-survey 8 9
+INFO:root:Participant 12: Actor0263
+INFO:root:Actor0263: TA2B 16 Participant 12 and Pre-survey 1 19
+INFO:root:Participant 13: Actor0683
+INFO:root:Actor0683: TA2B 16 Participant 13 and Pre-survey 9 22
+INFO:root:Participant 14: Actor0540
+INFO:root:Actor0540: TA2B 16 Participant 14 and Pre-survey 9 38
+INFO:root:Participant 15: Actor0416
+INFO:root:Actor0416: TA2B 16 Participant 15 and Pre-survey 8 71
+INFO:root:Participant 16: Actor0140
+INFO:root:Actor0140: TA2B 16 Participant 16 and Pre-survey 1 73
+INFO:root:Participant 17: Actor0434
+INFO:root:Actor0434: TA2B 16 Participant 17 and Pre-survey 3 34
+INFO:root:Participant 18: Actor0099
+INFO:root:Actor0099: TA2B 16 Participant 18 and Pre-survey 4 81
+INFO:root:Participant 19: Actor0355
+INFO:root:Actor0355: TA2B 16 Participant 19 and Pre-survey 9 27
+INFO:root:Participant 20: Actor0748
+INFO:root:Actor0748: TA2B 16 Participant 20 and Pre-survey 2 70
+INFO:root:Participant 21: Actor0980
+INFO:root:Actor0980: TA2B 16 Participant 21 and Pre-survey 1 63
+INFO:root:Participant 22: Actor0682
+INFO:root:Actor0682: TA2B 16 Participant 22 and Pre-survey 8 34
+INFO:root:Participant 23: Actor0677
+INFO:root:Actor0677: TA2B 16 Participant 23 and Pre-survey 9 13
+INFO:root:Participant 24: Actor0171
+INFO:root:Actor0171: TA2B 16 Participant 24 and Pre-survey 9 21
+INFO:root:Participant 25: Actor0767
+INFO:root:Actor0767: TA2B 16 Participant 25 and Pre-survey 9 40
+INFO:root:Participant 26: Actor0664
+INFO:root:Actor0664: TA2B 16 Participant 26 and Pre-survey 7 2
+INFO:root:Participant 27: Actor0909
+INFO:root:Actor0909: TA2B 16 Participant 27 and Pre-survey 2 90
+INFO:root:Participant 28: Actor0566
+INFO:root:Actor0566: TA2B 16 Participant 28 and Pre-survey 10 15
+INFO:root:Participant 29: Actor0608
+INFO:root:Actor0608: TA2B 16 Participant 29 and Pre-survey 1 84
+INFO:root:Participant 30: Actor0038
+INFO:root:Actor0038: TA2B 16 Participant 30 and Pre-survey 1 38
+INFO:root:Participant 31: Actor0201
+INFO:root:Actor0201: TA2B 16 Participant 31 and Pre-survey 1 86
+INFO:root:Participant 32: Actor0087
+INFO:root:Actor0087: TA2B 16 Participant 32 and Pre-survey 6 33
+INFO:root:Participant 33: Actor0229
+INFO:root:Actor0229: TA2B 16 Participant 33 and Pre-survey 9 66
+INFO:root:Participant 34: Actor0026
+INFO:root:Actor0026: TA2B 16 Participant 34 and Pre-survey 3 18
+INFO:root:Participant 35: Actor0597
+INFO:root:Actor0597: TA2B 16 Participant 35 and Pre-survey 5 21
+INFO:root:Participant 36: Actor0704
+INFO:root:Actor0704: TA2B 16 Participant 36 and Pre-survey 1 24
+INFO:root:Participant 37: Actor0999
+INFO:root:Actor0999: TA2B 16 Participant 37 and Pre-survey 9 12
+INFO:root:Participant 38: Actor0215
+INFO:root:Actor0215: TA2B 16 Participant 38 and Pre-survey 9 76
+INFO:root:Participant 39: Actor0959
+INFO:root:Actor0959: TA2B 16 Participant 39 and Pre-survey 7 43
+INFO:root:Participant 40: Actor0863
+INFO:root:Actor0863: TA2B 16 Participant 40 and Pre-survey 1 67
+INFO:root:Participant 41: Actor0262
+INFO:root:Actor0262: TA2B 16 Participant 41 and Pre-survey 6 38
+INFO:root:Participant 42: Actor0248
+INFO:root:Actor0248: TA2B 16 Participant 42 and Pre-survey 4 41
+INFO:root:Participant 43: Actor0565
+INFO:root:Actor0565: TA2B 16 Participant 43 and Pre-survey 8 50
+INFO:root:Participant 44: Actor0598
+INFO:root:Actor0598: TA2B 16 Participant 44 and Pre-survey 8 65
+INFO:root:Participant 45: Actor0796
+INFO:root:Actor0796: TA2B 16 Participant 45 and Pre-survey 3 89
+INFO:root:Participant 46: Actor0896
+INFO:root:Actor0896: TA2B 16 Participant 46 and Pre-survey 5 78
+INFO:root:Participant 47: Actor0590
+INFO:root:Actor0590: TA2B 16 Participant 47 and Pre-survey 10 82
+INFO:root:Participant 48: Actor0067
+INFO:root:Actor0067: TA2B 16 Participant 48 and Pre-survey 8 13
+INFO:root:Participant 49: Actor0199
+INFO:root:Actor0199: TA2B 16 Participant 49 and Pre-survey 7 83
+INFO:root:Condition 0
+WARNING:root:Actor0767-evacuate
+{ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0767'}}): 1.595060752502051, ActionSet({{'verb': 'moveTo', 'object': 'Region04', 'subject': 'Actor0767'}}): 1.4670607525020511, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0767'}}): 1.595060752502051}
+WARNING:root:Actor0767-moveTo-shelter11
+{ActionSet({{'verb': 'evacuate', 'subject': 'Actor0767'}}): 1.5927115009005803, ActionSet({{'verb': 'moveTo', 'object': 'Region04', 'subject': 'Actor0767'}}): 1.3367115009005803, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0767'}}): 1.5927115009005803}
+WARNING:root:Actor0767-evacuate
+{ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0767'}}): 1.5894655527411845, ActionSet({{'verb': 'moveTo', 'object': 'Region04', 'subject': 'Actor0767'}}): 1.0774655527411843, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0767'}}): 1.5894655527411845}
+WARNING:root:Actor0767-moveTo-shelter11
+{ActionSet({{'verb': 'evacuate', 'subject': 'Actor0767'}}): 1.5915724421929476, ActionSet({{'verb': 'moveTo', 'object': 'Region04', 'subject': 'Actor0767'}}): 1.2075724421929477, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0767'}}): 1.5915724421929476}
+WARNING:root:Actor0229-moveTo-shelter11
+{ActionSet({{'verb': 'evacuate', 'subject': 'Actor0229'}}): 3.931361225688713, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region16', 'subject': 'Actor0229'}}): 4.015880091572008, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0229'}}): 4.17136122568875, ActionSet({{'verb': 'takeResources', 'object': 'Region16', 'subject': 'Actor0229'}}): 3.6913612256887305, ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0229'}}): 4.171361225688712}
+WARNING:root:Actor0229-stayInLocation
+{ActionSet({{'verb': 'evacuate', 'subject': 'Actor0229'}}): 3.91437687313769, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region16', 'subject': 'Actor0229'}}): 4.001926387344996, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0229'}}): 3.9943768731377123, ActionSet({{'verb': 'takeResources', 'object': 'Region16', 'subject': 'Actor0229'}}): 3.6743768731377013, ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0229'}}): 4.15437687313769}
+WARNING:root:Actor0597-stayInLocation
+{ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0597'}}): 1.380684451152593, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0597'}}): 1.6206844511525933, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region04', 'subject': 'Actor0597'}}): 1.701087875965922, ActionSet({{'verb': 'takeResources', 'object': 'Region04', 'subject': 'Actor0597'}}): 1.5406856211232942, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0597'}}): 1.7006867910939953}
+WARNING:root:Actor0597-decreaseRisk-Region04
+{ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0597'}}): 1.3864671806712094, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0597'}}): 1.6264671806712092, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region04', 'subject': 'Actor0597'}}): 1.6270974655749957, ActionSet({{'verb': 'takeResources', 'object': 'Region04', 'subject': 'Actor0597'}}): 1.5464683506419103, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0597'}}): 1.7064695206126113}
+WARNING:root:Actor0959-moveTo-shelter11
+{ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0959'}}): 0.5934884905637193, ActionSet({{'verb': 'moveTo', 'object': 'Region06', 'subject': 'Actor0959'}}): 0.4014884905637193, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0959'}}): 0.5934884905637193}
+INFO:root:Condition 1
+WARNING:root:Actor0413-decreaseRisk-Region14
+{ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0413'}}): 1.5087766741506594, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0413'}}): 1.9887766741506596, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0413'}}): 2.2569366741506602, ActionSet({{'verb': 'takeResources', 'object': 'Region14', 'subject': 'Actor0413'}}): 2.13597667415066, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region14', 'subject': 'Actor0413'}}): 2.2522406716339463}
+WARNING:root:Actor0767-evacuate
+{ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0767'}}): 1.5963972505904387, ActionSet({{'verb': 'moveTo', 'object': 'Region04', 'subject': 'Actor0767'}}): 1.468397250590439, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0767'}}): 1.5963972505904387}
+WARNING:root:Actor0767-moveTo-shelter11
+{ActionSet({{'verb': 'evacuate', 'subject': 'Actor0767'}}): 1.5944829641709455, ActionSet({{'verb': 'moveTo', 'object': 'Region04', 'subject': 'Actor0767'}}): 1.3384829641709453, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0767'}}): 1.5944829641709455}
+WARNING:root:Actor0767-evacuate
+{ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0767'}}): 1.5918029631836546, ActionSet({{'verb': 'moveTo', 'object': 'Region04', 'subject': 'Actor0767'}}): 1.0798029631836545, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0767'}}): 1.5918029631836546}
+WARNING:root:Actor0767-moveTo-shelter11
+{ActionSet({{'verb': 'evacuate', 'subject': 'Actor0767'}}): 1.5934423705469238, ActionSet({{'verb': 'moveTo', 'object': 'Region04', 'subject': 'Actor0767'}}): 1.2094423705469237, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0767'}}): 1.5934423705469238}
+WARNING:root:Actor0229-moveTo-shelter11
+{ActionSet({{'verb': 'evacuate', 'subject': 'Actor0229'}}): 3.9376486985095065, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region16', 'subject': 'Actor0229'}}): 4.020910069828643, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0229'}}): 4.177648698509544, ActionSet({{'verb': 'takeResources', 'object': 'Region16', 'subject': 'Actor0229'}}): 3.697648698509525, ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0229'}}): 4.177648698509507}
+WARNING:root:Actor0229-stayInLocation
+{ActionSet({{'verb': 'evacuate', 'subject': 'Actor0229'}}): 3.9247988880984135, ActionSet({{'verb': 'decreaseRisk', 'object': 'Region16', 'subject': 'Actor0229'}}): 4.010263999313576, ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0229'}}): 4.004798888098436, ActionSet({{'verb': 'takeResources', 'object': 'Region16', 'subject': 'Actor0229'}}): 3.6847988880984244, ActionSet({{'verb': 'moveTo', 'object': 'shelter11', 'subject': 'Actor0229'}}): 4.164798888098414}
+WARNING:root:Actor0959-moveTo-shelter11
+{ActionSet({{'verb': 'stayInLocation', 'subject': 'Actor0959'}}): 0.5934884905637193, ActionSet({{'verb': 'moveTo', 'object': 'Region06', 'subject': 'Actor0959'}}): 0.4014884905637193, ActionSet({{'verb': 'evacuate', 'subject': 'Actor0959'}}): 0.5934884905637193}

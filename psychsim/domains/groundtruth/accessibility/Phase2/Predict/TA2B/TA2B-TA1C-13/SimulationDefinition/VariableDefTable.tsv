@@ -1,0 +1,16 @@
+Name	LongName	Values	VarType	DataType	Notes
+Age	Age	[0-100]	dynamic	Integer	
+Children	Children	[0-10]	dynamic	Integer	
+Ethnicity	Ethnicity	majority,minority	fixed	String	
+Fulltime Job	Fulltime Job	yes,no	dynamic	Boolean	
+Gender	Gender	female,male	fixed	String	
+Pets	Pets	yes,no	dynamic	Boolean	
+Religion	Religion	majority,minority,none	fixed	String	
+Residence	Residence	Region[01-16]	fixed	String	
+Wealth	Wealth	[1-7]	dynamic	Integer	
+ActorPre At Shelter	ActorPre At Shelter	yes,no	dynamic	Boolean	
+ActorPre Evacuated	ActorPre Evacuated	yes,no	dynamic	Boolean	
+ActorPre Category	ActorPre Category	[1-5]	dynamic	Integer	
+ActorPre Anticipated Shelter	ActorPre Anticipated Shelter	[1-7]	dynamic	Integer	N/A if already at shelter
+ActorPre Anticipated Evacuation	ActorPre Anticipated Evacuation	[1-7]	dynamic	Integer	N/A if already evacuated
+ActorPre Risk	ActorPre Risk	[1-7]	dynamic	Integer	

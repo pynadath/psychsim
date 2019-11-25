@@ -66,11 +66,22 @@ class System(Agent):
 
     def setAidDynamics(self,population):
         regions = self.getPopulated(population)
-        delta,scale = self.grievanceDelta(regions)
+        allocation = self.config.getint('System','system_allocation')
+        try:
+            if self.resources is None:
+                self.resources = allocation
+            resources = self.resources
+        except AttributeError:
+            self.resources = allocation
+            resources = self.resources
+        scale = resources/likert[5][max(allocation,1)]
         if self.config.getboolean('System','aid',fallback=True):
             #//GT: node 37; 1 of 1; next 12 lines
             for region in regions:
-                allocate = self.addAction({'verb': 'allocate','object': region},codePtr=True)
+                try:
+                    allocate = self.addAction({'verb': 'allocate','object': region},codePtr=True)
+                except AssertionError:
+                    allocate = ActionSet([Action({'subject': self.name,'verb': 'allocate','object': region})])
                 # // GT: edge 60; from 37; to 24; 1 of 1; next 5 lines
                 risk = stateKey(region,'risk')
                 impact = 1-pow(1-likert[5][self.config.getint('System','system_impact')-1],scale)

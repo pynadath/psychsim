@@ -1,0 +1,8 @@
+Name	LongName	Values	VarType	DataType	Notes
+Gender	Gender	female,male	fixed	String	
+Age	Age	[0-100]	dynamic	Integer	
+Ethnicity	Ethnicity	majority,minority	fixed	String	
+TA2A 382 Aid to Family	TA2A 382 Aid to Family	[0-6]	dynamic	Integer	I.3
+TA2A 382 Aid to Friends	TA2A 382 Aid to Friends	[0-6]	dynamic	Integer	I.3
+TA2A 382 Aid to Strangers	TA2A 382 Aid to Strangers	[0-6]	dynamic	Integer	I.3
+TA2A 382 Crime	TA2A 382 Crime	yes,no	dynamic	Boolean	QII.1.a

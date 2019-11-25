@@ -1,0 +1,5 @@
+Name	LongName	Values	RelType	DataType	Notes
+familyWith	familyWith	yes,no	dynamic	Boolean	
+friendOf	friendOf	yes,no	dynamic	Boolean	
+acquaintanceOf	acquaintanceOf	yes,no	dynamic	Boolean	
+strangerTo	strangerTo	yes,no	dynamic	Boolean	

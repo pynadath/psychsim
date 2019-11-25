@@ -77,19 +77,22 @@ def chooseParticipant(entry,oldSurvey):
             if entry['Name'] in oldEntry['Name']:
                 entry['Participant'] = oldEntry['Participant']
 
-def preSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=None):
+def preSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=None,prefix='ActorPre',demographics=True):
     data = []
     agent = world.agents[name]
     entry = {'Name': name,'Timestep': t,'Hurricane': hurricane['Hurricane']}
-    if partID is not None:
-        entry['EntityIdx'] = 'ActorPre %d' % (partID)
-    variables.update(accessibility.boilerDict)
-    for var,value in accessibility.getCurrentDemographics(args,name,world,states,config,t).items():
-        record = dict(entry)
-        record['VariableName'] = var
-        record['Value'] = value
-        data.append(record)
-    var = 'ActorPre At Shelter'
+    if isinstance(partID,int):
+        entry['EntityIdx'] = '%s %d Hurricane %d' % (prefix,partID,hurricane['Hurricane'])
+    elif isinstance(partID,str):
+        entry['EntityIdx'] = '%s' % (partID)
+    if demographics:
+        variables.update(accessibility.boilerDict)
+        for var,value in accessibility.getCurrentDemographics(args,name,world,states,config,t).items():
+            record = dict(entry)
+            record['VariableName'] = var
+            record['Value'] = value
+            data.append(record)
+    var = '%s At Shelter' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
     record = dict(entry)
@@ -97,7 +100,7 @@ def preSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=No
     sheltered = accessibility.getInitialState(args,name,'location',world,states,t).first()[:7] == 'shelter'
     record['Value'] = 'yes' if sheltered else 'no'
     data.append(record)
-    var = 'ActorPre Evacuated'
+    var = '%s Evacuated' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
     record = dict(entry)
@@ -105,14 +108,19 @@ def preSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=No
     evacuated = accessibility.getInitialState(args,name,'location',world,states,t).first() == 'evacuated'
     record['Value'] = 'yes' if evacuated else 'no'
     data.append(record)
-    var = 'ActorPre Category'
+    var = '%s Category' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[1-5]','DataType': 'Integer'}
     record = dict(entry)
     record['VariableName'] = var
     record['Value'] = int(round(accessibility.getInitialState(args,'Nature','category',world,states,t,name).expectation()))
     data.append(record)
-    model,belief = copy.deepcopy(next(iter(states[t-1]['Nature'][name].items())))
+    belief = states[t-1]['Nature'][name]
+    if isinstance(belief,dict):
+        model,belief = copy.deepcopy(next(iter(belief.items())))
+    else:
+        belief = copy.deepcopy(belief)
+        model = world.getFeature(modelKey(name),states[t-1]['Nature']['__state__']).first()
     pEvac = []
     pShelter = []
     risks = []
@@ -130,7 +138,7 @@ def preSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=No
                     pShelter[-1] = max(prob,pShelter[-1])
         world.step(state=belief,select='max',keySubset=belief.keys())
         risks.append(float(world.getState(name,'risk',belief)))
-    var = 'ActorPre Anticipated Shelter'
+    var = '%s Anticipated Shelter' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if already at shelter'}
     record = dict(entry)
@@ -140,7 +148,7 @@ def preSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=No
     else:
         record['Value'] = accessibility.toLikert(max(pShelter),7)
     data.append(record)
-    var = 'ActorPre Anticipated Evacuation'
+    var = '%s Anticipated Evacuation' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if already evacuated'}
     record = dict(entry)
@@ -150,7 +158,7 @@ def preSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=No
     else:
         record['Value'] = accessibility.toLikert(max(pEvac),7)
     data.append(record)
-    var = 'ActorPre Risk'
+    var = '%s Risk' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer'}
     record = dict(entry)
@@ -159,20 +167,23 @@ def preSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=No
     data.append(record)
     return data
 
-def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=None):
+def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=None,prefix='ActorPost',demographics=True,verify=True):
     data = []
     agent = world.agents[name]
     entry = {'Name': name,'Timestep': t,'Hurricane': hurricane['Hurricane']}
-    if partID is not None:
-        entry['EntityIdx'] = 'ActorPost %d' % (partID)
-    variables.update(accessibility.boilerDict)
-    for var,value in accessibility.getCurrentDemographics(args,name,world,states,config,t).items():
-        record = dict(entry)
-        record['VariableName'] = var
-        record['Value'] = value
-        data.append(record)
+    if isinstance(partID,int):
+        entry['EntityIdx'] = '%s %d Hurricane %d' % (prefix,partID,hurricane['Hurricane'])
+    elif isinstance(partID,str):
+        entry['EntityIdx'] = '%s' % (partID)
+    if demographics:
+        variables.update(accessibility.boilerDict)
+        for var,value in accessibility.getCurrentDemographics(args,name,world,states,config,t).items():
+            record = dict(entry)
+            record['VariableName'] = var
+            record['Value'] = value
+            data.append(record)
     actions = accessibility.getAction(args,name,world,states,(hurricane['Start'],hurricane['End']+1))
-    var = 'ActorPost At Shelter'
+    var = '%s At Shelter' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
     locations = {dist.first() for dist in accessibility.getInitialState(args,name,'location',world,states,(hurricane['Start'],hurricane['End']+1))}
@@ -181,7 +192,7 @@ def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=N
     sheltered = len({loc for loc in locations if loc[:7] == 'shelter'}) > 0
     record['Value'] = 'yes' if sheltered else 'no'
     data.append(record)
-    var = 'ActorPost Evacuated'
+    var = '%s Evacuated' % (prefix)
     if variables is not None:
         variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
     evacuated = 'evacuated' in locations
@@ -189,7 +200,7 @@ def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=N
     record['VariableName'] = var
     record['Value'] = 'yes' if evacuated else 'no'
     data.append(record)
-    var = 'ActorPost Injured'
+    var = '%s Injured' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'yes,no','DataType': 'Boolean'}
     health = [dist.first() for dist in accessibility.getInitialState(args,name,'health',world,states,(hurricane['Start'],hurricane['End']+1))]
@@ -197,7 +208,7 @@ def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=N
     record['VariableName'] = var
     record['Value'] = 'yes' if min(health) < 0.2 else 'no'
     data.append(record)
-    var = 'ActorPost Risk'
+    var = '%s Risk' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer'}
     risk = [dist.expectation() for dist in accessibility.getInitialState(args,name,'risk',world,states,(hurricane['Start'],hurricane['End']+1),name)]
@@ -205,7 +216,7 @@ def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=N
     record['VariableName'] = var
     record['Value'] = accessibility.toLikert(max(risk),7)
     data.append(record)
-    var = 'ActorPost Dissatisfaction'
+    var = '%s Dissatisfaction' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer'}
     record = dict(entry)
@@ -216,13 +227,21 @@ def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=N
     pEvac = []
     pHome = []
     for day in range(hurricane['Start'],hurricane['End']+1):
-        model,belief = copy.deepcopy(next(iter(states[day-1]['Nature'][name].items())))
+        belief = states[day-1]['Nature'][name]
+        if isinstance(belief,dict):
+            model,belief = copy.deepcopy(next(iter(belief.items())))
+        else:
+            belief = copy.deepcopy(belief)
+            model = world.getFeature(modelKey(name),states[day-1]['Nature']['__state__']).first()
         pEvac.append(0.)
         pShelter.append(0.)
         pHome.append(0.)
         V = {action: agent.value(belief,action,model,updateBeliefs=False)['__EV__'] for action in agent.getActions(belief)}
         #//GT: Verify that behavior in log is the optimal value
-        assert V[actions[day-hurricane['Start']]] == max(V.values())
+        if verify:
+            assert V[actions[day-hurricane['Start']]] == max(V.values()),'%s\n%s' % (actions[day-hurricane['Start']],V)
+        elif actions[day-hurricane['Start']] not in V or V[actions[day-hurricane['Start']]] < max(V.values()):
+            logging.warning('%s\n%s' % (actions[day-hurricane['Start']],V))
         dist = Distribution(V,agent.getAttribute('rationality',model))
         for action,prob in dist.items():
             if action != actions[day-hurricane['Start']]:
@@ -238,17 +257,17 @@ def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=N
                     pHome[-1] += prob
                 elif action['verb'] == 'stayInLocation' and world.getState(name,'location',belief).first() == agent.demographics['home']:
                     pHome[-1] += prob
-    var = 'ActorPost Shelter Possibility'
+    var = '%s Shelter Possibility' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if already at shelter'}
     record = dict(entry)
     record['VariableName'] = var
-    if sheltered == 'yes':
+    if sheltered:
         record['Value'] = 'N/A'
     else:
         record['Value'] = accessibility.toLikert(max(pShelter),7)
     data.append(record)
-    var = 'ActorPost Evacuation Possibility'
+    var = '%s Evacuation Possibility' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if already evacuated'}
     record = dict(entry)
@@ -258,7 +277,7 @@ def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=N
     else:
         record['Value'] = accessibility.toLikert(max(pEvac),7)
     data.append(record)
-    var = 'ActorPost Stay at Home Possibility'
+    var = '%s Stay at Home Possibility' % (prefix)
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'N/A if stayed home'}
     record = dict(entry)
@@ -448,6 +467,8 @@ if __name__ == '__main__':
                     turn = 0
                     t += 1
                     states[t] = {}
+                if t > args['span']:
+                    break 
             # Write down hurricane data for easier recall when doing surveys
             if tables['Hurricane'][-1]['Landed'] == 'no':
                 del tables['Hurricane'][-1]
@@ -553,7 +574,7 @@ if __name__ == '__main__':
                 samples.append({partID+1: sample[partID] for partID in range(len(samples))})
                 if hurricane == hurricanes[-1]:
                     for actor in pool:
-                        print(name,accessibility.getActions(args,actor,world,states,config,(1,args['span']-1))) 
+                        print(name,accessibility.getAction(args,actor,world,states,(1,args['span']-1))) 
         for label,data in tables.items():
             accessibility.writeOutput(args,data,fields[label],'%sTable_temp.tsv' % (label))
     accessibility.writeVarDef(os.path.join(os.path.dirname(__file__),'..'),list(variables.values()))

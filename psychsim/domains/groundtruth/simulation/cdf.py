@@ -43,7 +43,7 @@ boilerDict = {'Age': {'Name': 'Age','Values': '[0-100]','VarType': 'dynamic','Da
     'Children': {'Name': 'Children','Values': '[0-10]','VarType': 'dynamic','DataType': 'Integer'},
     'Ethnicity': {'Name': 'Ethnicity','Values': 'majority,minority','VarType': 'fixed','DataType': 'String'},
     'Fulltime Job': {'Name': 'Fulltime Job','Values': 'yes,no','VarType': 'dynamic','DataType': 'Boolean'},
-    'Gender:': {'Name': 'Gender','Values': 'female,male','VarType': 'fixed','DataType': 'String'},
+    'Gender': {'Name': 'Gender','Values': 'female,male','VarType': 'fixed','DataType': 'String'},
     'Pets': {'Name': 'Pets','Values': 'yes,no','VarType': 'dynamic','DataType': 'Boolean'},
     'Religion': {'Name': 'Religion','Values': 'majority,minority,none','VarType': 'fixed','DataType': 'String'},
     'Residence': {'Name': 'Residence','Values': 'Region[01-16]','VarType': 'fixed','DataType': 'String'},

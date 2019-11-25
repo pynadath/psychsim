@@ -65,9 +65,13 @@ class Ui_FilterDialog(object):
         self.groupBox_7.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.groupBox_7.setObjectName("groupBox_7")
         self.dayspinBox = QtWidgets.QSpinBox(self.groupBox_7)
-        self.dayspinBox.setGeometry(QtCore.QRect(20, 30, 53, 24))
+        self.dayspinBox.setGeometry(QtCore.QRect(10, 30, 53, 24))
         self.dayspinBox.setMinimum(1)
         self.dayspinBox.setObjectName("dayspinBox")
+        self.dayspinBox_2 = QtWidgets.QSpinBox(self.groupBox_7)
+        self.dayspinBox_2.setGeometry(QtCore.QRect(70, 30, 53, 24))
+        self.dayspinBox_2.setMinimum(1)
+        self.dayspinBox_2.setObjectName("dayspinBox_2")
         self.gridLayout.addWidget(self.groupBox_7, 2, 0, 1, 1)
         self.groupBox_4 = QtWidgets.QGroupBox(self.gridLayoutWidget)
         self.groupBox_4.setMaximumSize(QtCore.QSize(16777215, 75))
@@ -91,7 +95,7 @@ class Ui_FilterDialog(object):
         self.attributeBox.setToolTip(_translate("FilterDialog", "What freatiure of the agent to fileter by"))
         self.groupBox_6.setTitle(_translate("FilterDialog", "value"))
         self.groupBox_2.setTitle(_translate("FilterDialog", "operator"))
-        self.groupBox_7.setTitle(_translate("FilterDialog", "day"))
+        self.groupBox_7.setTitle(_translate("FilterDialog", "days"))
         self.groupBox_4.setTitle(_translate("FilterDialog", "name (optional)"))
 
 

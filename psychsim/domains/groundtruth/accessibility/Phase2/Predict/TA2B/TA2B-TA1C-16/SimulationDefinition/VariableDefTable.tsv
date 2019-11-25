@@ -1,0 +1,40 @@
+Name	LongName	Values	VarType	DataType	Notes
+Age	Age	[0-100]	dynamic	Integer	
+Children	Children	[0-10]	dynamic	Integer	
+Ethnicity	Ethnicity	majority,minority	fixed	String	
+Fulltime Job	Fulltime Job	yes,no	dynamic	Boolean	
+Gender	Gender	female,male	fixed	String	
+Pets	Pets	yes,no	dynamic	Boolean	
+Religion	Religion	majority,minority,none	fixed	String	
+Residence	Residence	Region[01-16]	fixed	String	
+Wealth	Wealth	[1-7]	dynamic	Integer	
+TA2B 16 Participant ID	TA2B 16 Participant ID	Actor	dynamic	String	Map to pre/post-survey ID
+TA2B 16 Friends	TA2B 16 Friends	[0+]	dynamic	Integer	
+TA2B 16 Pt3 At Shelter	TA2B 16 Pt3 At Shelter	yes,no	dynamic	Boolean	
+TA2B 16 Pt3 Evacuated	TA2B 16 Pt3 Evacuated	yes,no	dynamic	Boolean	
+TA2B 16 Pt3 Category	TA2B 16 Pt3 Category	[1-5]	dynamic	Integer	
+TA2B 16 Pt3 Anticipated Shelter	TA2B 16 Pt3 Anticipated Shelter	[1-7]	dynamic	Integer	N/A if already at shelter
+TA2B 16 Pt3 Anticipated Evacuation	TA2B 16 Pt3 Anticipated Evacuation	[1-7]	dynamic	Integer	N/A if already evacuated
+TA2B 16 Pt3 Risk	TA2B 16 Pt3 Risk	[1-7]	dynamic	Integer	
+TA2B 16 Pt1 Condition 0 At Shelter	TA2B 16 Pt1 Condition 0 At Shelter	yes,no	dynamic	Boolean	
+TA2B 16 Pt1 Condition 0 Evacuated	TA2B 16 Pt1 Condition 0 Evacuated	yes,no	dynamic	Boolean	
+TA2B 16 Pt1 Condition 0 Injured	TA2B 16 Pt1 Condition 0 Injured	yes,no	dynamic	Boolean	
+TA2B 16 Pt1 Condition 0 Risk	TA2B 16 Pt1 Condition 0 Risk	[1-7]	dynamic	Integer	
+TA2B 16 Pt1 Condition 0 Dissatisfaction	TA2B 16 Pt1 Condition 0 Dissatisfaction	[1-7]	dynamic	Integer	
+TA2B 16 Pt1 Condition 0 Shelter Possibility	TA2B 16 Pt1 Condition 0 Shelter Possibility	[1-7]	dynamic	Integer	N/A if already at shelter
+TA2B 16 Pt1 Condition 0 Evacuation Possibility	TA2B 16 Pt1 Condition 0 Evacuation Possibility	[1-7]	dynamic	Integer	N/A if already evacuated
+TA2B 16 Pt1 Condition 0 Stay at Home Possibility	TA2B 16 Pt1 Condition 0 Stay at Home Possibility	[1-7]	dynamic	Integer	N/A if stayed home
+TA2B 16 Pt3 Condition 1 At Shelter	TA2B 16 Pt3 Condition 1 At Shelter	yes,no	dynamic	Boolean	
+TA2B 16 Pt3 Condition 1 Evacuated	TA2B 16 Pt3 Condition 1 Evacuated	yes,no	dynamic	Boolean	
+TA2B 16 Pt3 Condition 1 Category	TA2B 16 Pt3 Condition 1 Category	[1-5]	dynamic	Integer	
+TA2B 16 Pt3 Condition 1 Anticipated Shelter	TA2B 16 Pt3 Condition 1 Anticipated Shelter	[1-7]	dynamic	Integer	N/A if already at shelter
+TA2B 16 Pt3 Condition 1 Anticipated Evacuation	TA2B 16 Pt3 Condition 1 Anticipated Evacuation	[1-7]	dynamic	Integer	N/A if already evacuated
+TA2B 16 Pt3 Condition 1 Risk	TA2B 16 Pt3 Condition 1 Risk	[1-7]	dynamic	Integer	
+TA2B 16 Pt1 Condition 1 At Shelter	TA2B 16 Pt1 Condition 1 At Shelter	yes,no	dynamic	Boolean	
+TA2B 16 Pt1 Condition 1 Evacuated	TA2B 16 Pt1 Condition 1 Evacuated	yes,no	dynamic	Boolean	
+TA2B 16 Pt1 Condition 1 Injured	TA2B 16 Pt1 Condition 1 Injured	yes,no	dynamic	Boolean	
+TA2B 16 Pt1 Condition 1 Risk	TA2B 16 Pt1 Condition 1 Risk	[1-7]	dynamic	Integer	
+TA2B 16 Pt1 Condition 1 Dissatisfaction	TA2B 16 Pt1 Condition 1 Dissatisfaction	[1-7]	dynamic	Integer	
+TA2B 16 Pt1 Condition 1 Shelter Possibility	TA2B 16 Pt1 Condition 1 Shelter Possibility	[1-7]	dynamic	Integer	N/A if already at shelter
+TA2B 16 Pt1 Condition 1 Evacuation Possibility	TA2B 16 Pt1 Condition 1 Evacuation Possibility	[1-7]	dynamic	Integer	N/A if already evacuated
+TA2B 16 Pt1 Condition 1 Stay at Home Possibility	TA2B 16 Pt1 Condition 1 Stay at Home Possibility	[1-7]	dynamic	Integer	N/A if stayed home
