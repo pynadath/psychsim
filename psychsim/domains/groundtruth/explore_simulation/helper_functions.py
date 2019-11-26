@@ -4,7 +4,10 @@ import itertools
 import os
 import more_itertools as mit
 
-import psychsim.domains.groundtruth.explore_simulation.query_gt_consts as consts
+try:
+    import psychsim.domains.groundtruth.explore_simulation.query_gt_consts as consts
+except ModuleNotFoundError:
+    import query_gt_consts as consts
 
 
 def remove_numbers_from_string(input_string):
