@@ -66,7 +66,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.apply_filter.clicked.connect(self.apply_filter_clicked)    
         self.activate_filter.clicked.connect(self.activate_filter_clicked)    
         self.deactivate_filter.clicked.connect(self.deactivate_filter_clicked)
-        self.delete_filter.clicked.connect(self.delete_filter_clicked)    
+        # self.delete_filter.clicked.connect(self.delete_filter_clicked)    
         self.deleteSample.clicked.connect(self.delete_sample_clicked)
 
 
