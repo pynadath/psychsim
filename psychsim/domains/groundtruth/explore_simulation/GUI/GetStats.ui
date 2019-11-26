@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>278</width>
+    <width>222</width>
     <height>463</height>
    </rect>
   </property>
@@ -16,9 +16,9 @@
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>10</x>
+     <x>20</x>
      <y>20</y>
-     <width>241</width>
+     <width>181</width>
      <height>421</height>
     </rect>
    </property>
@@ -34,14 +34,23 @@
       <property name="title">
        <string>Attribute</string>
       </property>
-      <widget class="QComboBox" name="attribute">
+      <widget class="QToolButton" name="Attributes">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>0</x>
          <y>20</y>
-         <width>131</width>
-         <height>26</height>
+         <width>141</width>
+         <height>22</height>
         </rect>
+       </property>
+       <property name="text">
+        <string>Select Attrbutes</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="popupMode">
+        <enum>QToolButton::InstantPopup</enum>
        </property>
       </widget>
      </widget>
@@ -57,13 +66,80 @@
       <property name="title">
        <string>Function</string>
       </property>
-      <widget class="QComboBox" name="function">
+      <widget class="QToolButton" name="Functions">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>20</y>
+         <width>141</width>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Select Functions</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="popupMode">
+        <enum>QToolButton::InstantPopup</enum>
+       </property>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="groupBox_7">
+      <property name="maximumSize">
+       <size>
+        <width>150</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="title">
+       <string>Samples</string>
+      </property>
+      <widget class="QToolButton" name="Samples">
        <property name="geometry">
         <rect>
          <x>10</x>
          <y>20</y>
          <width>131</width>
-         <height>26</height>
+         <height>22</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>'Select Samples '</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="popupMode">
+        <enum>QToolButton::InstantPopup</enum>
+       </property>
+       <property name="arrowType">
+        <enum>Qt::NoArrow</enum>
+       </property>
+      </widget>
+     </widget>
+    </item>
+    <item>
+     <widget class="QGroupBox" name="PlotName">
+      <property name="maximumSize">
+       <size>
+        <width>150</width>
+        <height>50</height>
+       </size>
+      </property>
+      <property name="title">
+       <string>Plot Name</string>
+      </property>
+      <widget class="QLineEdit" name="name">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>30</y>
+         <width>131</width>
+         <height>21</height>
         </rect>
        </property>
       </widget>
@@ -103,72 +179,19 @@
      </widget>
     </item>
     <item>
-     <widget class="QGroupBox" name="groupBox_6">
-      <property name="maximumSize">
-       <size>
-        <width>150</width>
-        <height>50</height>
-       </size>
-      </property>
-      <property name="title">
-       <string>Plot Name</string>
-      </property>
-      <widget class="QLineEdit" name="name">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>20</y>
-         <width>113</width>
-         <height>21</height>
-        </rect>
-       </property>
-      </widget>
-     </widget>
-    </item>
-    <item>
-     <widget class="QGroupBox" name="groupBox_4">
-      <property name="maximumSize">
-       <size>
-        <width>16777214</width>
-        <height>200</height>
-       </size>
-      </property>
-      <property name="title">
-       <string>Samples</string>
-      </property>
-      <widget class="QListWidget" name="sampleList">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>30</y>
-         <width>201</width>
-         <height>71</height>
-        </rect>
-       </property>
-       <property name="editTriggers">
-        <set>QAbstractItemView::AnyKeyPressed|QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set>
-       </property>
-      </widget>
-      <widget class="QToolButton" name="toolButton">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>110</y>
-         <width>201</width>
-         <height>22</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>'Select Samples '</string>
-       </property>
-       <property name="popupMode">
-        <enum>QToolButton::InstantPopup</enum>
-       </property>
-      </widget>
-     </widget>
-    </item>
-    <item>
      <widget class="QDialogButtonBox" name="buttonBox">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="baseSize">
+       <size>
+        <width>100</width>
+        <height>100</height>
+       </size>
+      </property>
       <property name="standardButtons">
        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
       </property>
