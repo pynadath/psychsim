@@ -36,6 +36,7 @@ from psychsim.domains.groundtruth.explore_simulation.GUI.SelectDialog import Ui_
 from psychsim.domains.groundtruth.explore_simulation.GUI.GetStats import Ui_GetStats
 from psychsim.domains.groundtruth.explore_simulation.GUI.CreateSample import Ui_CreateSample
 from psychsim.domains.groundtruth.explore_simulation.GUI.DisplayOneSample import Ui_Display_One_Sample_Dialog
+from psychsim.domains.groundtruth.explore_simulation.GUI.GetEntityAttributes import Ui_EntityName
 
 # from GUI.GetDialog import Ui_GetDialog
 
@@ -143,6 +144,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setup_get_stats()
         self.setup_create_sample()
         self.setup_display_one_sample()
+        self.setup_get_attribute_names()
         
 
     def show_get_ndays(self,selected):
@@ -157,6 +159,20 @@ class Main(QMainWindow, Ui_MainWindow):
        
     def show_get_entities(self,selected):    
         logparser.get_entities(None)
+
+    def setup_get_attribute_names(self):
+        self.GetAttributes = QtWidgets.QDialog()
+        self.get_attributes = Ui_EntityName()
+        self.get_attributes.setupUi(self.GetAttributes)
+        self.get_attributes.entityTypes.addItems(logparser.entities_att_list.keys())        
+        self.get_attributes.buttonBox.accepted.connect(self.on_get_attribute_names)
+    def on_get_attribute_names(self):
+        p_name = self.get_attributes.entityTypes.currentText()
+        logparser.get_attributes(p_entity=p_name, buffer=None)
+    def show_get_attribute_names(self,selected):
+        self.GetAttributes.show()
+        
+        
 
     def show_reset_selection(self,selected):
         logparser.reset_selection(buffer=sys.stdout)
