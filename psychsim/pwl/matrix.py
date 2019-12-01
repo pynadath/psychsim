@@ -76,7 +76,10 @@ class KeyedMatrix(dict):
                 try:
                     col = other[c1].items()
                 except KeyError:
-                    continue
+                    if c1 == CONSTANT:
+                        col = [(CONSTANT,1.)]
+                    else:
+                        continue
                 for c2,value2 in col:
                     row[c2] = row.get(c2,0) + value1*value2
                     result._keysIn.add(c2)
@@ -227,9 +230,9 @@ class KeyedMatrix(dict):
     
     def __str__(self):
         if self._string is None:
-            joiner = lambda item: '%s*%s' % (item[1],item[0])
+            joiner = lambda item: '%5.3f*%s' % (item[1],item[0]) if isinstance(item[1],float) else '%s*%s' % (item[1],item[0])
             self._string = '\n'.join(map(lambda item: '%s) %s' % \
-                                             (item[0],' + '.join(map(joiner,
+                                             (item[0],'+'.join(map(joiner,
                                                                     item[1].items()))),
                                          self.items()))
         return self._string
