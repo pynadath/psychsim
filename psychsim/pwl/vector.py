@@ -23,6 +23,12 @@ class KeyedVector(collections.MutableMapping):
         else:
             self._data.update(arg)
 
+    def prune(self):
+        for key,value in list(self.items()):
+            if abs(value) < self.epsilon:
+                del self[key]
+        return self
+
     def __contains__(self,key):
         return key in self._data
     
@@ -100,6 +106,18 @@ class KeyedVector(collections.MutableMapping):
     
     def __len__(self):
         return len(self._data)
+
+    def normalize(self):
+        """
+        Multiplies all of the weights so that the smallest weight is 1 and the relative values are preserved
+        :return: the multiplier used
+        """
+        alpha = 1./min([abs(v) for v in self._data.values()])
+        if abs(alpha-1.) > self.epsilon:
+            self._string = None
+            for key in self._data.keys():
+                self._data[key] *= alpha
+        return alpha
             
     def desymbolize(self,table,debug=False):
         result = self.__class__()
