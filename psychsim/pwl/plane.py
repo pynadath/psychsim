@@ -1,6 +1,7 @@
 import operator
 from xml.dom.minidom import Node,Document
 
+from psychsim.pwl.keys import CONSTANT
 from psychsim.pwl.vector import KeyedVector
 from psychsim.probability import Distribution
 from psychsim.action import ActionSet
@@ -63,6 +64,46 @@ class KeyedPlane:
                 self._keys |= set(vector.keys())
         return self._keys
     
+    def possible(self,variables):
+        for plane,threshold,comparison in self.planes:
+            lo = 0.
+            hi = 0.
+            for key in plane.keys():
+                if key not in variables:
+                    # Ambiguous
+                    return None
+                elif variables[key]['domain'] is set or variables[key]['domain'] is list:
+                    # Symbolic
+                    return None
+                if plane[key] > 0.:
+                    lo += plane[key]*variables[key]['lo']
+                    hi += plane[key]*variables[key]['hi']
+                else:
+                    lo -= plane[key]*variables[key]['hi']
+                    hi -= plane[key]*variables[key]['lo']
+            values = []
+            if self.COMPARISON_MAP[comparison] == '>':
+                print(plane)
+                print(lo,hi)
+                print(threshold)
+                if isinstance(threshold,list):
+                    for i in range(len(threshold)):
+                        if hi <= threshold[i]:
+                            break
+                        elif i > 0 and lo < threshold[i]:
+                            values.append(i-1)
+                elif lo > threshold:
+                    print('Always true')
+                    return [True]
+                elif hi <= threshold:
+                    print('Always false')
+                    return [False]
+                else:
+                    print('Who knows?')
+                    return [True,False]
+            else:
+                raise NotImplementedError('Not yet handling comparisons other than >, but it is really easy to do')
+
     def evaluate(self,vector):
         """
         Tests whether the given vector passes or fails this test.
@@ -194,7 +235,7 @@ class KeyedPlane:
         threshold = self.threshold
         symbolic = False
         span = None
-        assert not vector.has_key(CONSTANT),'Unable to scale hyperplanes with constant factors. Move constant factor into threshold.'
+        assert CONSTANT not in vector,'Unable to scale hyperplanes with constant factors. Move constant factor into threshold.'
         for key in vector.keys():
             if table.has_key(key):
                 assert not symbolic,'Unable to scale hyperplanes with both numeric and symbolic variables'
@@ -209,15 +250,16 @@ class KeyedPlane:
                 symbolic = True
         return self.__class__(vector,threshold)
 
-#    def __eq__(self,other):
-#        if not isinstance(other,KeyedVector):
-#            return False
-#        elif self.vector == other.vector and \
-#                self.threshold == other.threshold and \
-#                self.comparison == other.comparison:
-#            return True
-#        else:
-#            return False
+    def __eq__(self,other):
+        if not isinstance(other,KeyedPlane):
+            return False
+        if len(self.planes) != len(other.planes):
+            return False
+        for plane in other.planes:
+            if plane not in self.planes:
+                return False
+        else:
+            return True
 
     def compare(self,other,value):
         """
@@ -306,15 +348,19 @@ class KeyedPlane:
 
     def minimize(self):
         """
-        :return: an equivalent plane with no constant element in the weights
         """
-        weights = self.vector.__class__(self.vector)
-        if self.vector.has_key(CONSTANT):
-            threshold = self.threshold - self.vector[CONSTANT]
-            del weights[CONSTANT]
-        else:
-            threshold = self.threshold
-        return self.__class__(weights,threshold,self.comparison)
+        for i in range(len(self.planes)):
+            vector,threshold,comparison = self.planes[i]
+            if CONSTANT in vector:
+                if isinstance(threshold,list):
+                    threshold = [value-vector[CONSTANT] for value in threshold]
+                elif isinstance(threshold,set):
+                    threshold = {value-vector[CONSTANT] for value in threshold}
+                else:
+                    threshold -= vector[CONSTANT]
+                vector[CONSTANT] = 0.
+                self.planes[i] = (vector,threshold,comparison)
+                self._string = None
 
     def __str__(self):
         if self._string is None:
