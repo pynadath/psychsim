@@ -120,7 +120,7 @@ class VectorDistributionSet:
                     distributions[substate].append((vector,prob))
         for substate,dist in distributions.items():
             if len(dist[0][0]) == 1:
-                assert dist[0][0].keys()[0] == keys.CONSTANT
+                assert next(iter(dist[0][0].keys())) == keys.CONSTANT
                 del self.distributions[substate]
             else:
                 self.distributions[substate].clear()
