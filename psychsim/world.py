@@ -372,15 +372,19 @@ class World(object):
                         self.printState(state)
                         print(tree)
                         raise RuntimeError
+                    except KeyError:
+                        print('Applying effect on %s' % (key))
+                        print('Effect tree is\n%s' % (tree))
+                        print('State contains only: %s' % (sorted(state.keys())))
+                        raise
                 substate = state.keyMap[makeFuture(key)]
             else:
 #                raise RuntimeError('Parallel dynamics do not work')
                 cumulative = None
                 for tree in dynamics:
                     if cumulative is None:
-                        cumulative = tree
+                        cumulative = copy.deepcopy(tree)
                     else:
-                        cumulative = copy.deepcopy(cumulative)
                         cumulative.makeFuture([key])
                         cumulative *= tree
                         cumulative = cumulative.prune()
@@ -654,6 +658,8 @@ class World(object):
 #        logging.warning('setDynamics will soon be deprecated. Please migrate to using addDynamics instead.')
         if isinstance(action,str):
             raise TypeError('Incorrect action type in setDynamics call, perhaps due to change in method definition. Please use a key string as the first argument, rather than the more limiting entity/feature combination.')
+        if isinstance(tree,dict):
+            raise TypeError('Tree passed in to setDynamics is a dictionary. Perhaps you forgot to call makeTree first?')
         if not isinstance(action,ActionSet) and not action is True:
             if not isinstance(action,Action):
                 # dict -> Action
@@ -967,7 +973,7 @@ class World(object):
     """State methods"""
     """-------------"""
 
-    def defineVariable(self,key,domain=float,lo=-1.,hi=1.,description=None,
+    def defineVariable(self,key,domain=float,lo=0.,hi=1.,description=None,
                        combinator=None,substate=None,codePtr=False):
         """
         Define the type and domain of a given element of the state vector
@@ -1023,7 +1029,7 @@ class World(object):
                     self.symbols[element] = len(self.symbols)
                     self.symbolList.append(element)
         elif domain is bool:
-            self.variables[key].update({'lo': None,'hi': None})
+            self.variables[key].update({'lo': 0.,'hi': 1.})
         elif domain is ActionSet:
             # The actions of an agent
             if isinstance(lo,float):
