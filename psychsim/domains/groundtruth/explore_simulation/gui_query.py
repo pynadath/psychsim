@@ -36,6 +36,7 @@ from psychsim.domains.groundtruth.explore_simulation.GUI.SelectDialog import Ui_
 from psychsim.domains.groundtruth.explore_simulation.GUI.GetStats import Ui_GetStats
 from psychsim.domains.groundtruth.explore_simulation.GUI.CreateSample import Ui_CreateSample
 from psychsim.domains.groundtruth.explore_simulation.GUI.DisplayOneSample import Ui_Display_One_Sample_Dialog
+from psychsim.domains.groundtruth.explore_simulation.GUI.GetEntityAttributes import Ui_EntityName
 
 # from GUI.GetDialog import Ui_GetDialog
 
@@ -66,7 +67,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.apply_filter.clicked.connect(self.apply_filter_clicked)    
         self.activate_filter.clicked.connect(self.activate_filter_clicked)    
         self.deactivate_filter.clicked.connect(self.deactivate_filter_clicked)
-        self.delete_filter.clicked.connect(self.delete_filter_clicked)    
+        # self.delete_filter.clicked.connect(self.delete_filter_clicked)    
         self.deleteSample.clicked.connect(self.delete_sample_clicked)
 
 
@@ -143,6 +144,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setup_get_stats()
         self.setup_create_sample()
         self.setup_display_one_sample()
+        self.setup_get_attribute_names()
         
 
     def show_get_ndays(self,selected):
@@ -157,6 +159,20 @@ class Main(QMainWindow, Ui_MainWindow):
        
     def show_get_entities(self,selected):    
         logparser.get_entities(None)
+
+    def setup_get_attribute_names(self):
+        self.GetAttributes = QtWidgets.QDialog()
+        self.get_attributes = Ui_EntityName()
+        self.get_attributes.setupUi(self.GetAttributes)
+        self.get_attributes.entityTypes.addItems(logparser.entities_att_list.keys())        
+        self.get_attributes.buttonBox.accepted.connect(self.on_get_attribute_names)
+    def on_get_attribute_names(self):
+        p_name = self.get_attributes.entityTypes.currentText()
+        logparser.get_attributes(p_entity=p_name, buffer=None)
+    def show_get_attribute_names(self,selected):
+        self.GetAttributes.show()
+        
+        
 
     def show_reset_selection(self,selected):
         logparser.reset_selection(buffer=sys.stdout)
@@ -297,21 +313,37 @@ class Main(QMainWindow, Ui_MainWindow):
         self.get_stats = Ui_GetStats()
         self.get_stats.setupUi(self.StatsDialog)
         self.get_stats.buttonBox.accepted.connect(self.on_get_stats)
-        self.get_stats.attribute.addItems(logparser.entities_att_list['Actor'])
-        self.get_stats.function.addItems(consts.STAT_FCT_VALUES_IN)
+        self.get_stats.toolmenuAtt = QtWidgets.QMenu(self)
+        for k in logparser.entities_att_list['Actor']:
+            action = self.get_stats.toolmenuAtt.addAction(k)
+            action.setCheckable(True)
+        self.get_stats.Attributes.setMenu(self.get_stats.toolmenuAtt)
+        self.get_stats.toolmenuFct = QtWidgets.QMenu(self)
+        for k in consts.STAT_FCT_VALUES_IN:
+            action = self.get_stats.toolmenuFct.addAction(k)
+            action.setCheckable(True)
+        self.get_stats.Functions.setMenu(self.get_stats.toolmenuFct)
         #self.get_stats.sampleList.addItems()
 
     def on_get_stats(self):
         print("#######################\n")
         p_snames = []
-        p_att = self.get_stats.attribute.currentText()
-        p_fct = self.get_stats.function.currentText()
-        p_daylst = range(self.get_stats.dayspinBox_1.value(),self.get_stats.dayspinBox_2.value())
+        p_att = []
+        p_fct_list = []
+        p_daylst = list(range(self.get_stats.dayspinBox_1.value(),self.get_stats.dayspinBox_2.value()))
         p_name  = self.get_stats.name.text()
         for action in self.get_stats.toolmenu.actions():
             if action.isChecked():
                 p_snames.append(action.text())
-        logparser.get_stats(p_att, p_fct, p_days=p_daylst,p_sample_names=p_snames)
+        for action in self.get_stats.toolmenuAtt.actions():
+            if action.isChecked():
+                p_att.append(action.text())
+        for action in self.get_stats.toolmenuFct.actions():
+            if action.isChecked():
+                p_fct_list.append(action.text())
+        figure=Figure()
+        logparser.get_stats(p_att, p_fct_list, p_days=p_daylst,p_sample_names=p_snames, fig=figure, using_gui=True)
+        main.addfig(p_name, figure)
         self.StatsDialog.hide()
     def show_get_stats(self,selected):
         self.get_stats.dayspinBox_2.setRange(1,logparser.n_days)
@@ -322,7 +354,7 @@ class Main(QMainWindow, Ui_MainWindow):
         for k in logparser.samples.keys():
             action = self.get_stats.toolmenu.addAction(k)
             action.setCheckable(True)
-        self.get_stats.toolButton.setMenu(self.get_stats.toolmenu)
+        self.get_stats.Samples.setMenu(self.get_stats.toolmenu)
         self.StatsDialog.show()
 
     def setup_count_actors(self):
@@ -465,25 +497,24 @@ if __name__ == "__main__":
         main = Main()
         sys.stdout = OutLog(main.historyEdit)
 
-        fig1 = Figure()
-        ax1f1 = fig1.add_subplot(111)
-        ax1f1.plot(np.random.rand(5))
+        # fig1 = Figure()
+        # ax1f1 = fig1.add_subplot(111)
+        # ax1f1.plot(np.random.rand(5))
         
-        fig2 = Figure()
-        ax1f2 = fig2.add_subplot(121)
-        ax1f2.plot(np.random.rand(5))
-        ax2f2 = fig2.add_subplot(122)
-        ax2f2.plot(np.random.rand(10))
+        # fig2 = Figure()
+        # ax1f2 = fig2.add_subplot(121)
+        # ax1f2.plot(np.random.rand(5))
+        # ax2f2 = fig2.add_subplot(122)
+        # ax2f2.plot(np.random.rand(10))
 
-        fig3 = Figure()
-        ax1f3 = fig3.add_subplot(111)
-        ax1f3.pcolormesh(np.random.rand(20,20))
+        # fig3 = Figure()
+        # ax1f3 = fig3.add_subplot(111)
+        # ax1f3.pcolormesh(np.random.rand(20,20))
 
  
 
-        main.addfig('One plot', fig1)
-        main.addfig('Two plots', fig2)
-        main.addfig('Pcolormesh', fig3)
+        # main.addfig('Two plots', fig2)
+        # main.addfig('Pcolormesh', fig3)
 
         main.filterList = OutLog(main.filterText)
         main.historyEdit.setPlainText("Hi Stacy\n")

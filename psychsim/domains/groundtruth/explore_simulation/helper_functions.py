@@ -4,7 +4,10 @@ import itertools
 import os
 import more_itertools as mit
 
-import psychsim.domains.groundtruth.explore_simulation.query_gt_consts as consts
+try:
+    import psychsim.domains.groundtruth.explore_simulation.query_gt_consts as consts
+except ModuleNotFoundError:
+    import query_gt_consts as consts
 
 
 def remove_numbers_from_string(input_string):
@@ -119,3 +122,11 @@ def find_ranges(iterable):
             yield group[0]
         else:
             yield group[0], group[-1]
+
+
+def remove_duplicates_from_list_of_dicts(my_list):
+    new_list = list()
+    for elt in my_list:
+        if elt not in new_list:
+            new_list.append(elt)
+    return new_list
