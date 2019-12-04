@@ -1,0 +1,19 @@
+Name	LongName	Values	VarType	DataType	Notes
+Age	Age	[0-100]	dynamic	Integer	
+Children	Children	[0-10]	dynamic	Integer	
+Ethnicity	Ethnicity	majority,minority	fixed	String	
+Fulltime Job	Fulltime Job	yes,no	dynamic	Boolean	
+Gender	Gender	female,male	fixed	String	
+Pets	Pets	yes,no	dynamic	Boolean	
+Religion	Religion	majority,minority,none	fixed	String	
+Residence	Residence	Region[01-16]	fixed	String	
+Wealth	Wealth	[1-7]	dynamic	Integer	
+TA2A 442 Risk	TA2A 442 Risk	[0-6]	dynamic	Integer	Q1
+TA2A 442 Dissatisfaction	TA2A 442 Dissatisfaction	[0-6]	dynamic	Integer	Q2
+TA2A 442 Injured	TA2A 442 Injured	yes,no	dynamic	Boolean	Q3
+TA2A 442 Action	TA2A 442 Action	went home,sheltered,evacuated,none	dynamic	String	Q4: Comma-separated
+TA2A 442 Paid Evacuation	TA2A 442 Paid Evacuation	yes,no	dynamic	Boolean	Q5
+TA2A 442 Remain w/Family	TA2A 442 Remain w/Family	yes,no	dynamic	Boolean	Q6
+TA2A 442 Govt Aid	TA2A 442 Govt Aid	yes,no	dynamic	Boolean	Q7
+TA2A 442 Tax Change	TA2A 442 Tax Change	yes,no	dynamic	Boolean	Q8
+TA2A 442 Aided Others	TA2A 442 Aided Others	yes,no	dynamic	Boolean	Q9
