@@ -152,7 +152,10 @@ class Nature(Agent):
                     risk = stateKey(region,'shelterRisk')
                     subtree = {'if': equalRow(category,list(range(1,6)))}
                     for cat in range(5):
-                        effect = base_increase#*float(cat)
+                        if config.getint('Shelter','category_effect',fallback=0) > 0:
+                            effect = base_increase*float(cat)*likert[5][config.getint('Shelter','category_effect',fallback=0)-1]
+                        else:
+                            effect = base_increase#*float(cat)
                         subtree[cat] = approachMatrix(risk,effect,1.)
                     tree = makeTree({'if': equalRow(makeFuture(phase),'active'),
                                      True: {'if': equalRow(makeFuture(location),region),
