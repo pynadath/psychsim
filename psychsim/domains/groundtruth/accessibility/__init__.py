@@ -31,12 +31,12 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 101,'run': 0,'span': 135},
     {'instance': 100,'run': 2,'span': 82},
     {'instance': 101,'run': 1,'span': 130},
-    {'instance': 103,'run': 0,'span': 80},
+    {'instance': 103,'run': 0,'span': 91},
     {'instance': 104,'run': 0,'span': 104},
     ]
     
 instanceMap = {'Phase1': {'Explain': [1], 'Predict': [3,4,5,6,7,8], 'Prescribe': [9,10,11,12,13,14]},
-    'Phase2': {'Explain': [15,16,17], 'Predict': [18,19]}, 'Prescribe': [20,21],
+    'Phase2': {'Explain': [15,16,17], 'Predict': [18,19], 'Prescribe': [20,21]},
     'Phase3': {},
     }
 def instanceArgs(phase,challenge=True):
@@ -275,7 +275,7 @@ def findHurricane(day,hurricanes,includePrevious=False):
             return None
 
 
-def findMatches(record,world=None,population={},ignoreWealth=True):
+def findMatches(record,world=None,population={},ignoreWealth=True,ignoreJob=False):
     mismatch = {}
     matches = set()
     if world is None:
@@ -286,6 +286,8 @@ def findMatches(record,world=None,population={},ignoreWealth=True):
         if name[:5] == 'Actor':
             for field,feature in sorted(demographics.items(),reverse=True):
                 if field == 'Wealth' and ignoreWealth:
+                    continue
+                if field == 'Fulltime Job' and ignoreJob:
                     continue
                 if name in population:
                     value = population[name][field]
@@ -314,7 +316,10 @@ def findMatches(record,world=None,population={},ignoreWealth=True):
     else:
         for key,names in mismatch.items():
             print(key)
-            print({name: population[name][key] for name in names})
+            if population:
+                print({name: population[name][key] for name in names})
+            else:
+                print(sorted({name for name in names}))
         raise ValueError('No match for %s (mismatches: %s)' % (record['Participant'],mismatch))
 
 def readDemographics(data,old=False,last=True,name=None):
@@ -846,6 +851,25 @@ def findParticipants(fname,args,world,states,config,ignoreWealth=True):
             oldSurvey.append(entry)
     return oldSurvey
 
+def loadParticipants(args,world):
+    participants = {}
+    with open(instanceFile(args,'RunDataTable.tsv'),'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        for entry in reader:
+            if entry['EntityIdx'][:6] == 'ActorP':
+                elements = entry['EntityIdx'].split()
+                if elements[0][6] == 'o':
+                    survey = 'Pre-survey %s' % (elements[-1])
+                else:
+                    survey = 'Post-survey %s' % (elements[-1])
+                if survey not in participants:
+                    participants[survey] = {}
+                partID = int(elements[1])
+                if partID not in participants[survey]:
+                    participants[survey][partID] = {'Timestep': int(entry['Timestep']),'Participant': partID}
+                participants[survey][partID][entry['VariableName']] = entry['Value']
+    return participants
+
 def readRRParticipants(fname):
     participants = {}
     with open(fname,'r') as logfile:
@@ -859,11 +883,13 @@ def readRRParticipants(fname):
                 participants[instance][int(terms[1])] = elements[-1].strip()
     return participants
 
-def getSurveyTime(args,pre,h,partID):
+def getSurveyTime(args,pre,h,partID,useHurricane=False):
     hurricanes = readHurricanes(args['instance'],args['run'])
     hurricane = hurricanes[h-1]
     assert hurricane['Hurricane'] == h
     entity = 'Actor%s %d' % ('Pre' if pre else 'Post',partID)
+    if useHurricane:
+        entity = '%s Hurricane %d' % (entity,hurricane['Hurricane'])
     if pre:
         start = hurricane['Start']
         end = hurricane['Landfall']
@@ -874,7 +900,7 @@ def getSurveyTime(args,pre,h,partID):
         except IndexError:
             end = None
     for line in loadMultiCSV(instanceFile(args,'RunDataTable.tsv'),args['instance'],args['run'],grabFields=False):
-        if int(line['Timestep']) >= start and (end is None or int(line['Timestep']) <= end):
+        if line['Timestep'] and int(line['Timestep']) >= start and (end is None or int(line['Timestep']) <= end):
             if line['EntityIdx'] == entity:
                 break
     else:
