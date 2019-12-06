@@ -34,7 +34,7 @@ class Group(Agent):
             #//GT: edge 68; from 50; to 34; 1 of 1; next 4 lines
             key = stateKey(name,'risk')
             benefit = likert[5][config.getint('Actors','prorisk_benefit')-1]
-            tree = makeTree(approachMatrix(key,benefit,self.world.agents[name].risk))
+            tree = makeTree(approachMatrix(key,benefit,self.world.agents[actGoodRisk['object']].risk))
             world.setDynamics(key,actGoodRisk,tree,codePtr=True)
         if config.getboolean('Groups','proresources'):
 #            tree = makeTree({'if': thresholdRow(size,1.5),True: True, False: False})
@@ -61,9 +61,9 @@ class Group(Agent):
                              True: False, False: True})
             actEvacuate = self.addAction({'verb': 'evacuate'},tree.desymbolize(world.symbols),
                                          codePtr=True)
-            goHome = self.addAction({'verb': 'returnHome'},codePtr=True)
+#            goHome = self.addAction({'verb': 'returnHome'},codePtr=True)
 
-#        self.nop = self.addAction({'verb': 'noDecision'},codePtr=True)
+        self.nop = self.addAction({'verb': 'noDecision'},codePtr=True)
         #//GT: node 51; 1 of 1; next 1 line
         self.setAttribute('horizon',config.getint('Groups','horizon'))
         self.potentials = None
@@ -105,12 +105,11 @@ class Group(Agent):
                 if inGroup:
                     count += 1
             #//GT: node 48; 1 of 1; next 6 lines
-            tree = makeTree({'if': trueRow(stateKey(name,'alive')),
-                             True: {'if': trueRow(member),
-                                    True: False, False: True},
-                             False: False})
+            tree = {'if': trueRow(member),True: False, False: True}
+            if self.config.getint('Simulation','phase',fallback=1) < 3:
+                tree = {'if': trueRow(stateKey(name,'alive')),True: tree,False: False}
             join = agent.addAction({'verb': 'join','object': self.name},
-                                   tree.desymbolize(self.world.symbols),codePtr=True)
+                                   makeTree(tree).desymbolize(self.world.symbols),codePtr=True)
             #//GT: edge 64; from 48; to 47; 1 of 1; next 2 lines
             tree = makeTree(setTrueMatrix(member))
             self.world.setDynamics(member,join,tree,codePtr=True)
@@ -118,12 +117,11 @@ class Group(Agent):
 #            self.world.setDynamics(size,join,tree,codePtr=True)
             # Leave a group
             #//GT: node 49; 1 of 1; next 6 lines
-            tree = makeTree({'if': trueRow(stateKey(name,'alive')),
-                             True: {'if': trueRow(member),
-                                    True: True, False: False},
-                             False: False})
+            tree = {'if': trueRow(member),True: True, False: False}
+            if self.config.getint('Simulation','phase',fallback=1) < 3:
+                tree = {'if': trueRow(stateKey(name,'alive')),True: tree,False: False}
             leave = agent.addAction({'verb': 'leave','object': self.name},
-                                    tree.desymbolize(self.world.symbols),codePtr=True)
+                                    makeTree(tree).desymbolize(self.world.symbols),codePtr=True)
             #//GT: edge 65; from 49; to 47; 1 of 1; next 2 lines
             tree = makeTree(setFalseMatrix(member))
             self.world.setDynamics(member,leave,tree,codePtr=True)
@@ -159,8 +157,7 @@ class Group(Agent):
                                 weight = tree.getLeaf()[makeFuture(risk)][risk]
                                 newWeight = (1.-weight)*(1.+likert[5][magnify-1])
                                 newTree = {'if': equalRow(stateKey(self.name,ACTION),action),
-                                           True: approachMatrix(risk,newWeight,1.,
-                                                                stateKey(lonely['object'],'riskMin')),
+                                           True: approachMatrix(risk,newWeight,self.world.agents[lonely['object']].risk),
                                            False: tree}
                                 self.world.setDynamics(risk,lonely,makeTree(newTree))
                                 # Minimize cost of prosocial behavior
@@ -306,6 +303,9 @@ class Group(Agent):
             submodel = self.world.state[key]
             assert len(submodel) == 1
             belief.join(key,submodel)
+            # Insert true membership into group beliefs
+            key = binaryKey(name,self.name,'memberOf')
+            belief.join(key,self.world.state[key])
         assert turnKey(self.name) in belief.keys(),'%s\n%s' % (self.name,members)
         return belief
 
@@ -343,25 +343,19 @@ class Group(Agent):
                     act['subject'] = name
                     joint[name] = ActionSet([act])
             # Use final value
-            EV = self.value(belief,action,model,horizon,joint,belief.keys(),
+            EV = self.value(current,action,model,horizon,joint,belief.keys(),
                             updateBeliefs=False,debug=debug)
-            # risk[action] = EV['__S__'][-1]['%s\'s risk' % (self.name[5:])].expectation()
-            # health[action] = {}
-            # risks[action] = {}
-            #for name in members:
-            #     health[action][name] = EV['__S__'][-1]['%s\'s health' % (name)].expectation()
-            #     risks[action][name] = EV['__S__'][-1]['%s\'s risk' % (name)].expectation()
+            risk[action] = EV['__S__'][-1]['%s\'s risk' % (self.name[5:])].expectation()
+            health[action] = {}
+            risks[action] = {}
+            for name in members:
+                health[action][name] = EV['__S__'][-1]['%s\'s health' % (name)].expectation()
+                risks[action][name] = EV['__S__'][-1]['%s\'s risk' % (name)].expectation()
             V[action] = EV['__ER__'][-1]
         best = None
         for action,value in V.items():
             if best is None or value > best[1]:
                 best = action,value
-        # actions = [a for a in risk]
-        # print(actions)
-        # print(risk)
-        # print('Risk:',risk[actions[0]]-risk[actions[1]])
-        # for name in members:
-        #     print(name,'risk',risks[actions[0]][name]-risks[actions[1]][name])
-        #     print(name,'health',health[actions[0]][name]-health[actions[1]][name])
+        actions = sorted(risks.keys())
         return {'action': best[0],'V': V}
 
