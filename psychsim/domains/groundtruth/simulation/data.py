@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 import csv
+import inspect
+import logging
 import os.path
 import random
 
 from psychsim.action import Action
+
+gtNodes = {}
 
 likert = {5: [0.2,0.4,0.6,0.8,1.],
           7: [0.14,0.28,0.42,0.56,0.70,0.84,1.],
@@ -241,3 +245,40 @@ def readPrescription(inFile):
                 except AttributeError:
                     prescription = [row]
     return prescription
+
+def logNode(name,description,nodeType):
+    if name not in gtNodes:
+        nodeID = len(gtNodes)+1
+        frame = inspect.getouterframes(inspect.currentframe())[1]
+        gtNodes[name] = ('%d' % (nodeID),name,description,nodeType,inspect.getmodulename(frame.filename),'%d' % (frame.lineno+1))
+        logging.debug('%s' % (','.join(gtNodes[name])))
+
+if __name__ == '__main__':
+    with open('psychsim.log','r') as log:
+        for entry in log:
+            cols = entry.split(',')
+            if len(cols) == 6:
+                print(cols)
+                newSrc = ''
+                start = int(cols[5])
+                with open(os.path.join(os.path.dirname(__file__),'%s.py' % (cols[4])),'r') as src:
+                    found = False
+                    fragment = ''
+                    for lineno,line in enumerate(src):
+                        if lineno < start-1:
+                            newSrc += line
+                        elif found:
+                            newSrc += line
+                        elif lineno == start-1:
+                            comment = line
+                        elif len(line.strip()) == 0:
+                            found = True
+                            print(comment)
+                            newSrc += comment[:comment.index('#')] + '#//GT: node %d; 1 of 1; next %d lines%s' % (int(cols[0]),lineno-start,comment[-1])
+                            newSrc += fragment + line
+                        else:
+                            fragment += line
+                with open(os.path.join(os.path.dirname(__file__),'%s.py' % (cols[4])),'w') as src:
+                    src.write(newSrc)
+
+
