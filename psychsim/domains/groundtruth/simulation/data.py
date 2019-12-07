@@ -247,14 +247,16 @@ def readPrescription(inFile):
                     prescription = [row]
     return prescription
 
-def logNode(name,description,nodeType,offset=1):
+def logNode(name,description=None,nodeType=None,offset=1):
     """
     :param offset: How many lines after this one is the relevant comment (default is 1)
     """
     if name not in gtNodes:
         nodeID = len(gtNodes)+1
+        gtNodes[name] = ('%d' % (nodeID),)
+    if description is not None and len(gtNodes[name]) == 1:
         frame = inspect.getouterframes(inspect.currentframe())[1]
-        gtNodes[name] = ('%d' % (nodeID),name,description,nodeType,inspect.getmodulename(frame.filename),'%d' % (frame.lineno+offset))
+        gtNodes[name] = (gtNodes[name][0],name,description,nodeType,inspect.getmodulename(frame.filename),'%d' % (frame.lineno+offset))
         logging.debug('%s' % (','.join(gtNodes[name])))
 
 
@@ -262,6 +264,10 @@ def logEdge(source,target,frequency,description,notes='',offset=1):
     """
     :param offset: How many lines after this one is the relevant comment (default is 1)
     """
+    if source not in gtNodes:
+        logNode(source)
+    if target not in gtNodes:
+        logNode(target)
     label = (gtNodes[source][0],gtNodes[target][0])
     try:
         edgeID = gtEdges[label][0]
@@ -312,7 +318,7 @@ if __name__ == '__main__':
                 except KeyError:
                     edges[cols[0]] = [cols]
     # Process edges
-    for edgeID,entries in sorted(edges.items()):
+    for edgeID,entries in sorted(edges.items(),key=lambda item: int(item[0])):
         for i in range(len(entries)):
             newSrc = ''
             cols = entries[i]
