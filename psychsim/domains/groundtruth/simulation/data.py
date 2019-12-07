@@ -8,6 +8,7 @@ import random
 from psychsim.action import Action
 
 gtNodes = {}
+gtEdges = {}
 
 likert = {5: [0.2,0.4,0.6,0.8,1.],
           7: [0.14,0.28,0.42,0.56,0.70,0.84,1.],
@@ -246,18 +247,43 @@ def readPrescription(inFile):
                     prescription = [row]
     return prescription
 
-def logNode(name,description,nodeType):
+def logNode(name,description,nodeType,offset=1):
+    """
+    :param offset: How many lines after this one is the relevant comment (default is 1)
+    """
     if name not in gtNodes:
         nodeID = len(gtNodes)+1
         frame = inspect.getouterframes(inspect.currentframe())[1]
-        gtNodes[name] = ('%d' % (nodeID),name,description,nodeType,inspect.getmodulename(frame.filename),'%d' % (frame.lineno+1))
+        gtNodes[name] = ('%d' % (nodeID),name,description,nodeType,inspect.getmodulename(frame.filename),'%d' % (frame.lineno+offset))
         logging.debug('%s' % (','.join(gtNodes[name])))
 
+
+def logEdge(source,target,frequency,description,notes='',offset=1):
+    """
+    :param offset: How many lines after this one is the relevant comment (default is 1)
+    """
+    label = (gtNodes[source][0],gtNodes[target][0])
+    try:
+        edgeID = gtEdges[label][0]
+    except KeyError:
+        edgeID = len(gtEdges)+1
+        gtEdges[label] = (edgeID,set())
+    frame = inspect.getouterframes(inspect.currentframe())[1]
+    entry = ('%d' % (edgeID),source,target,frequency,description,inspect.getmodulename(frame.filename),'%d' % (frame.lineno+offset),notes,label[0],label[1])
+    if (entry[5],entry[6]) not in gtEdges[label][1]:
+        gtEdges[label][1].add((entry[5],entry[6]))
+        logging.debug('%s' % (','.join(entry)))
+
 if __name__ == '__main__':
+    nodes = {}
+    edges = {}
     with open('psychsim.log','r') as log:
         for entry in log:
             cols = entry.split(',')
             if len(cols) == 6:
+                # Entry for a node
+                assert cols[0] not in nodes
+                nodes[cols[0]] = cols
                 print(cols)
                 newSrc = ''
                 start = int(cols[5])
@@ -273,12 +299,45 @@ if __name__ == '__main__':
                             comment = line
                         elif len(line.strip()) == 0:
                             found = True
-                            print(comment)
                             newSrc += comment[:comment.index('#')] + '#//GT: node %d; 1 of 1; next %d lines%s' % (int(cols[0]),lineno-start,comment[-1])
                             newSrc += fragment + line
                         else:
                             fragment += line
                 with open(os.path.join(os.path.dirname(__file__),'%s.py' % (cols[4])),'w') as src:
                     src.write(newSrc)
+            elif len(cols) == 10:
+                # Entry for an edge
+                try:
+                    edges[cols[0]].append(cols)
+                except KeyError:
+                    edges[cols[0]] = [cols]
+    # Process edges
+    for edgeID,entries in sorted(edges.items()):
+        for i in range(len(entries)):
+            newSrc = ''
+            cols = entries[i]
+            print(cols)
+            start = int(cols[6])
+            with open(os.path.join(os.path.dirname(__file__),'%s.py' % (cols[5])),'r') as src:
+                found = False
+                fragment = ''
+                for lineno,line in enumerate(src):
+                    if lineno < start-1:
+                        newSrc += line
+                    elif found:
+                        newSrc += line
+                    elif lineno == start-1:
+                        comment = line
+                    elif len(line.strip()) == 0:
+                        found = True
+                        newSrc += comment[:comment.index('#')] + '#//GT: edge %d; from %s; to %s; %d of %d; next %d lines%s' % \
+                            (int(edgeID),cols[-2],cols[-1].strip(),i+1,len(entries),lineno-start,comment[-1])
+                        newSrc += fragment + line
+                    else:
+                        fragment += line
+            with open(os.path.join(os.path.dirname(__file__),'%s.py' % (cols[5])),'w') as src:
+                src.write(newSrc)
+    # Write node table
+
 
 
