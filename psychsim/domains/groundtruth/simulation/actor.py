@@ -7,7 +7,7 @@ from psychsim.pwl import *
 from psychsim.action import *
 from psychsim.reward import *
 from psychsim.agent import Agent
-from psychsim.domains.groundtruth.simulation.data import likert,toLikert,sampleNormal,logNode
+from psychsim.domains.groundtruth.simulation.data import likert,toLikert,sampleNormal,logNode,logEdge
 from psychsim.domains.groundtruth.simulation.region import Region
 
 
@@ -37,7 +37,7 @@ class Actor(Agent):
 
         # Decision-making parameters
         logNode('Actor\'s horizon','Number of steps into future that actor uses to evaluate candidate action choices','Positive integer')
-        #//GT: node 1; 1 of 1; next 7 lines
+        #//GT: node 11; 1 of 1; next 7 lines
         minH = config.getint('Actors','min_horizon')
         maxH = config.getint('Actors','max_horizon')
         if minH == maxH:
@@ -105,7 +105,7 @@ class Actor(Agent):
             world.setFeature(kids,self.demographics['kids'])
 
         logNode('Actor\'s employed','True iff actor has a job','Boolean')
-        #//GT: node 2; 1 of 1; next 5 lines
+        #//GT: node 12; 1 of 1; next 5 lines
         job = world.defineState(self.name,'employed',bool,description='Has a full-time job',
                                 codePtr=True)
         threshold = likert[5][config.getint('Actors','job_%s' % (self.demographics['ethnicGroup']))-1]
@@ -113,7 +113,7 @@ class Actor(Agent):
         world.setFeature(job,self.demographics['job'])
 
         logNode('Actor\'s pet','Whether actor owns a pet','Boolean')
-        #//GT: node 3; 1 of 1; next 8 lines
+        #//GT: node 13; 1 of 1; next 8 lines
         threshold = config.getint('Actors','pet_prob')
         if threshold > 0:
             self.demographics['pet'] = random.random() < likert[5][threshold-1]
@@ -123,8 +123,9 @@ class Actor(Agent):
         else:
             self.demographics['pet'] = False
 
-        # // GT: node 39; 1 of 1; next 6 lines
         if config.getint('Actors','married',fallback=0) > 0:
+            logNode('Actor marriedTo Actor','Marriage relationship between two actors','Boolean')
+            # // GT: node 39; 1 of 1; next 6 lines
             threshold = likert[5][config.getint('Actors','married')-1]
             if random.random() < threshold:
                 key = binaryKey(self.name,self.name,'marriedTo')
@@ -132,19 +133,23 @@ class Actor(Agent):
                 self.world.setFeature(key,True)
 
         # Psychological
-        # // GT: node 40; 1 of 1; next 10 lines
         if config.getboolean('Actors','attachment'):
+            logNode('Actor\'s attachment','Attachment style of the actor','String: "secure" / "anxious" / "avoidant"')
+            # // GT: node 40; 1 of 1; next 10 lines
             attachmentStyles = {'secure': likert[5][config.getint('Actors','attachment_secure')-1],
                                 'anxious': likert[5][config.getint('Actors','attachment_anxious')-1]}
             attachmentStyles['avoidant'] = 1.-attachmentStyles['secure']-attachmentStyles['anxious']
             attachmentStyles = Distribution(attachmentStyles)
-            attachment = world.defineState(self.name,'attachment',list,
-                                           list(attachmentStyles.domain()),
-                                           description='Attachment style',codePtr=True)
             self.attachment = attachmentStyles.sample()
-            world.setFeature(attachment,self.attachment)
+
+#            attachment = world.defineState(self.name,'attachment',list,
+#                                           list(attachmentStyles.domain()),
+#                                           description='Attachment style',codePtr=True)
+#            world.setFeature(attachment,self.attachment)
+
         if config.getboolean('Actors','appraisal'):
             # Coping Style
+            logNode('Actor\'s copingStyle','Coping style of the actor','String: "none" / "problem" / "emotion"')
             # // GT: node 41; 1 of 1; next 11 lines
             copingStyles = {'none': 1.}
             if config.getint('Actors','coping_emotion') > 0:
@@ -152,12 +157,15 @@ class Actor(Agent):
             if config.getint('Actors','coping_problem') > 0:
                 copingStyles['problem'] = likert[5][config.getint('Actors','coping_problem')-1]
             copingStyles = Distribution(copingStyles)
-            coping = world.defineState(self.name,'coping',list,['none','emotion','problem'],
-                                       description='Coping style, whether biased toward emotion- or problem-directed decision-making',
-                                       codePtr=True)
             self.coping = copingStyles.sample()
-            world.setFeature(coping,self.coping)
+
+#            coping = world.defineState(self.name,'coping',list,['none','emotion','problem'],
+#                                       description='Coping style, whether biased toward emotion- or problem-directed decision-making',
+#                                       codePtr=True)
+#            world.setFeature(coping,self.coping)
+
             # Control bias
+            logNode('Actor\'s controlStyle','Control bias of the actor','String: "none" / "hiEfficacy" / "loEfficacy"')
             # // GT: node 42; 1 of 1; next 13 lines
             controlStyles = {'none': 1.}
             if config.getint('Actors','control_hi') > 0:
@@ -167,12 +175,15 @@ class Actor(Agent):
                 controlStyles['loEfficacy'] = likert[5][config.getint('Actors','control_lo')-1]
                 controlStyles['none'] -= controlStyles['loEfficacy']
             controlStyles = Distribution(controlStyles)
-            control = world.defineState(self.name,'control',list,['none','hiEfficacy','loEfficacy'],
-                                        description='Control style, whether low or high self-efficacy',
-                                        codePtr=True)
             self.control = controlStyles.sample()
-            world.setFeature(control,self.control)
+
+#            control = world.defineState(self.name,'control',list,['none','hiEfficacy','loEfficacy'],
+#                                        description='Control style, whether low or high self-efficacy',
+#                                        codePtr=True)
+#            world.setFeature(control,self.control)
+
             # Causal attribution
+            logNode('Actor\'s attributionStyle','Causal attribution of the actor','String: "none" / "internal" / "external"')
             # // GT: node 42; 1 of 1; next 14 lines
             attributionStyles = {'none': 1.}
             if config.getint('Actors','attribution_in') > 0:
@@ -182,15 +193,16 @@ class Actor(Agent):
                 attributionStyles['external'] = likert[5][config.getint('Actors','attribution_ex')-1]
                 attributionStyles['none'] -= attributionStyles['external']
             attributionStyles = Distribution(attributionStyles)
-            attribution = world.defineState(self.name,'attribution',list,['none','internal',
-                                                                          'external'],
-                                            description='Causal attribution style, whether attributing events to internal or external causes',
-                                            codePtr=True)
             self.attribution = attributionStyles.sample()
-            world.setFeature(attribution,self.attribution)
+
+#            attribution = world.defineState(self.name,'attribution',list,['none','internal',
+#                                                                          'external'],
+#                                            description='Causal attribution style, whether attributing events to internal or external causes',
+#                                            codePtr=True)
+#            world.setFeature(attribution,self.attribution)
 
         logNode('Actor\'s home','Region of residence','Region[01-16]')
-        #//GT: node 4; 1 of 1; next 11 lines
+        #//GT: node 14; 1 of 1; next 11 lines
         regions = sorted([name for name in self.world.agents
                           if isinstance(self.world.agents[name],Region)])
         if config.getboolean('Regions','random_population'):
@@ -232,7 +244,7 @@ class Actor(Agent):
 
         # Dynamic states
         logNode('Actor\'s location','Where actor currently is','String: either region name / shelter name / "evacuated"')
-        #//GT: node 6; 1 of 1; next 13 lines
+        #//GT: node 16; 1 of 1; next 13 lines
         if config.getboolean('Actors','movement'):
             locationSet = regions[:]
         else:
@@ -252,7 +264,7 @@ class Actor(Agent):
             world.setFeature(alive,True)
 
         logNode('Actor\'s health','Level of actor\'s wellbeing','Real in [0-1]')
-        #//GT: node 7; 1 of 1; next 15 lines
+        #//GT: node 17; 1 of 1; next 15 lines
         health = world.defineState(self.name,'health',float,
                                    description='Current level of physical wellbeing',codePtr=True)
         try:
@@ -271,14 +283,14 @@ class Actor(Agent):
 
         if self.demographics['kids'] > 0:
             logNode('Actor\'s childrenHealth','Level of children\'s wellbeing','Real in [0-1]')
-            #//GT: node 8; 1 of 1; next 4 lines
+            #//GT: node 18; 1 of 1; next 4 lines
             kidHealth = world.defineState(self.name,'childrenHealth',float,
                                           description='Current level of children\'s physical wellbeing',
                                           codePtr=True)
             world.setFeature(kidHealth,self.health)
 
         logNode('Actor\'s resources','Level of wealth','Real in [0-1]')
-        #//GT: node 9; 1 of 1; next 19 lines
+        #//GT: node 19; 1 of 1; next 19 lines
         wealth = world.defineState(self.name,'resources',float,codePtr=True,
                                    description='Material resources (wealth) currently owned')
         try:
@@ -300,14 +312,14 @@ class Actor(Agent):
         world.setFeature(wealth,self.demographics['wealth'])
 
         logNode('Actor\'s risk','Level of personal risk','Real in [0-1]')
-        #//GT: node 10; 1 of 1; next 3 lines
+        #//GT: node 20; 1 of 1; next 3 lines
         risk = world.defineState(self.name,'risk',float,codePtr=True,lo=0.,hi=1.,
                                  description='Current level of risk from hurricane')
         world.setFeature(risk,world.getState(self.demographics['home'],'risk').expectation())
 
         if config.getboolean('Actors','grievance'):
             logNode('Actor\'s grievance','Level of dissatisfaction with government','Real in [0-1]')
-            #//GT: node 11; 1 of 1; next 16 lines
+            #//GT: node 21; 1 of 1; next 16 lines
             mean = config.getint('Actors','grievance_ethnic_%s' % (self.demographics['ethnicGroup']))
             mean += config.getint('Actors','grievance_religious_%s' % (self.demographics['religion']))
             mean += config.getint('Actors','grievance_%s' % (self.demographics['gender']))
@@ -329,7 +341,7 @@ class Actor(Agent):
 
         evolve = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
         logNode('Actor-stayInLocation','Action choice of staying in current location','Boolean')
-        #//GT: node 12; 1 of 1; next 2 lines
+        #//GT: node 22; 1 of 1; next 2 lines
         self.nop = self.addAction({'verb': 'stayInLocation'},codePtr=True,
                                   description='Actor does not move from current location, nor perform any pro/antisocial behaviors')
 
@@ -337,7 +349,7 @@ class Actor(Agent):
         if config.getboolean('Shelter','exists'):
             # Go to shelter
             logNode('Actor-moveTo-shelter','Action choice of moving to public shelter','Boolean')
-            #//GT: node 13; 1 of 1; next 40 lines
+            #//GT: node 23; 1 of 1; next 40 lines
             shelters = config.get('Shelter','region').split(',')
             actShelter = {}
             distances = {}
@@ -382,7 +394,7 @@ class Actor(Agent):
         if config.getboolean('Actors','evacuation'):
             # Evacuate city altogether
             logNode('Actor-evacuate','Action choice of leaving the area for at least a short time','Boolean')
-            #//GT: node 14; 1 of 1; next 11 lines
+            #//GT: node 24; 1 of 1; next 11 lines
             tree = {'if': equalRow(stateKey('Nature','phase'),'none'),
                              True: False,
                              False: {'if': equalRow(location,'evacuated'),
@@ -397,7 +409,7 @@ class Actor(Agent):
 
         if goHomeFrom:
             logNode('Actor-moveTo-Region','Action choice of moving back home','Boolean')
-            #//GT: node 15; 1 of 1; next 5 lines
+            #//GT: node 25; 1 of 1; next 5 lines
             tree = makeTree({'if': equalRow(location,goHomeFrom),
                              True: True, False: False})
             goHome = self.addAction({'verb': 'moveTo','object': self.demographics['home']},
@@ -407,7 +419,7 @@ class Actor(Agent):
         if config.getboolean('Actors','prorisk'):
             # Prosocial behavior
             logNode('Actor-decreaseRisk-Region','Prosocial action choice','Boolean')
-            #//GT: node 16; 1 of 1; next 17 lines
+            #//GT: node 26; 1 of 1; next 17 lines
             actGoodRisk = {}
             for region in regions:
                 if config.getboolean('Actors','movement') or region == self.demographics['home']:
@@ -462,7 +474,7 @@ class Actor(Agent):
         if config.getboolean('Actors','antiresources'):
             # Antisocial behavior
             logNode('Actor-takeResources-Region','Antisocial action choice','Boolean')
-            #//GT: node 17; 1 of 1; next 18 lines
+            #//GT: node 27; 1 of 1; next 18 lines
             actBadResources = {}
             for region in regions:
                 if config.getboolean('Actors','movement') or region == self.demographics['home']:
@@ -764,7 +776,7 @@ class Actor(Agent):
         sigma = config.getint('Actors','reward_sigma')
         self.Rweights = {'childrenHealth': 0.,'pet':0.}
         logNode('Actor\'s priority of health','Importance of health','Real in [0-1]')
-        #//GT: node 18; 1 of 1; next 11 lines
+        #//GT: node 28; 1 of 1; next 11 lines
         # //GT: edge 31; from 19; to 11; 1 of 1; next 10 lines
         mean = config.getint('Actors','reward_health_%s' % (self.demographics['gender']))
         if mean > 0:
@@ -778,7 +790,7 @@ class Actor(Agent):
             self.Rweights['health'] = 0.
 
         logNode('Actor\'s priority of resources','Importance of resources','Real in [0-1]')
-        #//GT: node 19; 1 of 1; next 11 lines
+        #//GT: node 29; 1 of 1; next 11 lines
         # //GT: edge 34; from 2; to 11; 1 of 1; next 10 lines
         mean = config.getint('Actors','reward_wealth_%s' % (self.demographics['gender']))
         if mean > 0:
@@ -793,7 +805,7 @@ class Actor(Agent):
 
         if self.demographics['kids'] > 0:
             logNode('Actor\'s priority of childrenHealth','Importance of children\'s health','Real in [0-1]')
-            #//GT: node 20; 1 of 1; next 9 lines
+            #//GT: node 30; 1 of 1; next 9 lines
             # //GT: edge 30; from 18; to 11; 1 of 1; next 9 lines
             mean = config.getint('Actors','reward_kids_%s' % (self.demographics['gender']))
             if mean > 0:
@@ -806,7 +818,7 @@ class Actor(Agent):
 
         if self.demographics.get('pet',False):
             logNode('Actor\'s priority of pets','Importance of pet\'s wellbeing','Real in [0-1]')
-            #//GT: node 21; 1 of 1; next 9 lines
+            #//GT: node 31; 1 of 1; next 9 lines
             # //GT: edge 33; from 21; to 11; 1 of 1; next 9 lines
             mean = config.getint('Actors','reward_pets')
             if mean > 0:
@@ -818,7 +830,7 @@ class Actor(Agent):
                 self.setReward(maximizeFeature(pet,self.name),self.Rweights['pet'])
 
         logNode('Actor\'s priority of neighbors','Importance of neighbors\' wellbeing','Real in [0-1]')
-        #//GT: node 22; 1 of 1; next 16 lines
+        #//GT: node 32; 1 of 1; next 16 lines
         # //GT: edge 32; from 20; to 11; 1 of 1; next 14 lines
         mean = config.getint('Actors','altruism_neighbors_%s' % (self.demographics['religion']))
         if mean > 0:
@@ -863,16 +875,26 @@ class Actor(Agent):
                               makeTree(setToFeatureMatrix(omega,stateKey('Nature','location'))))
                     self.world.setFeature(omega,'none')
 
-            logNode('Actor\'s perceivedCategory','Information that actor receives about the hurricane\'s current severity','Integer in [0-5]')
-            #//GT: node 23; 1 of 1; next 28 lines
-            omega = self.defineObservation('perceivedCategory',domain=int,codePtr=True,
-                                           description='Perception of Nature\'s category')
-            # //GT: edge 43; from 30; to 16; 1 of 1; next 22 lines
-            # //GT: edge 61; from 38; to 16; 1 of 1; next 22 lines
+            logNode('Actor\'s information distortion','Over/underestimation in information received about hurricane severity','"none" / "over" / "under"')
+            #//GT: node 33; 1 of 1; next 4 lines
             distortion = Distribution({'over': likert[5][config.getint('Actors','category_over')-1],
                                        'under': likert[5][config.getint('Actors','category_under')-1]})
             distortion['none'] = 1.-distortion['over']-distortion['under']
             self.distortion = distortion.sample()
+
+            logNode('Actor\'s memory','How much an actor remembers about personal experience in previous hurricanes','Real in [0-1]')
+            #//GT: node 34; 1 of 1; next 4 lines
+            if config.getint('Actor','memory',fallback=0) > 0:
+                self.memory = likert[5][config.getint('Actor','memory')-1]
+            else:
+                self.memory = 0.
+                
+            logNode('Actor\'s perceivedCategory','Information that actor receives about the hurricane\'s current severity','Integer in [0-5]')
+            #//GT: node 35; 1 of 1; next 24 lines
+            omega = self.defineObservation('perceivedCategory',domain=int,codePtr=True,
+                                           description='Perception of Nature\'s category')
+            # //GT: edge 43; from 30; to 16; 1 of 1; next 22 lines
+            # //GT: edge 61; from 38; to 16; 1 of 1; next 22 lines
             distortionProb = likert[5][config.getint('Actors','category_distortion')-1]
             real = stateKey('Nature','category')
             if self.distortion == 'none':
@@ -953,7 +975,7 @@ class Actor(Agent):
 
     def makeFriend(self,friend,config):
         logNode('Actor friendOf Actor','Friendship relationship between two actors','Boolean')
-        #//GT: node 24; 1 of 1; next 1 lines
+        #//GT: node 46; 1 of 1; next 1 lines
         self.friends.add(friend.name)
 
         if self.config.getint('Simulation','phase',fallback=1) == 1:
@@ -1231,6 +1253,7 @@ class Actor(Agent):
             self.setAttribute('beliefs',beliefs,model)
 
     def recvMessage(self,key,msg,myScale=1.,yrScaleOpt=1.,yrScalePess=1.,model=None):
+        logEdge('Actor friendOf Actor','ActorBeliefOfNature\'s category','often','Actors share their beliefs about the hurricane\'s category with their friends on a daily basis, and their beliefs are influence by the incoming messages')
         # // GT: edge 1; from 1 to 27; 2 of 2; next 19 lines
         beliefs = self.getBelief()
         if model is None:
@@ -1337,7 +1360,7 @@ class Actor(Agent):
 
     def getNeighbors(self):
         logNode('Actor neighborOf Actor','Neighbor relationship between two actors','Boolean')
-        #//GT: node 5; 1 of 1; next 7 lines
+        #//GT: node 15; 1 of 1; next 7 lines
         try:
             return {a.name for a in self.world.agents.values() if isinstance(a,Actor) and \
                 not a.name == self.name and a.demographics['home'] == self.demographics['home']}
