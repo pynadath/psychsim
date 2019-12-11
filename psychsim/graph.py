@@ -34,6 +34,9 @@ class DependencyGraph(dict):
             self.computeLineage()
         return self.root
 
+    def deleteKeys(self,toDelete):
+        self.evaluation = [keySet-toDelete for keySet in self.evaluation if keySet-toDelete]
+        
     def __getitem__(self,key):
         if len(self) == 0:
             self.computeGraph()
