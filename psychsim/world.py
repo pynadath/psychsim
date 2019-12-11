@@ -143,7 +143,7 @@ class World(object):
         if self.terminated(state):
             return state
         # Determine the actions taken by the agents in this world
-        outcome['actions'] = self.stepPolicy(state,actions,horizon,tiebreak,debug)
+        outcome['actions'] = self.stepPolicy(state,actions,horizon,tiebreak,keySubset,debug)
         joint = ActionSet()
         for actor,policy in outcome['actions'].items():
             assert policy.isLeaf(),'Currently unable to project stochastic decisions'
@@ -244,7 +244,7 @@ class World(object):
             pass
         return outcome
 
-    def stepPolicy(self,state=None,actions=None,horizon=None,tiebreak=None,debug={}):
+    def stepPolicy(self,state=None,actions=None,horizon=None,tiebreak=None,keySubset=None,debug={}):
         if state is None:
             state = self.state
         if isinstance(actions,Action):
@@ -284,8 +284,10 @@ class World(object):
         else:
             assert actions is None
             actions = {}
+        if keySubset is None:
+            keySubset = state.keyMap
         toDecide = [name for name in self.agents if name not in actions and
-                    keys.turnKey(name) in state.keyMap and 0 in state.domain(keys.turnKey(name))]
+                    keys.turnKey(name) in keySubset and 0 in state.domain(keys.turnKey(name))]
         if self.parallel and state is self.state:
             with multiprocessing.Pool() as pool:
                 results = [(name,pool.apply_async(self.agents[name].decide,
@@ -342,7 +344,10 @@ class World(object):
             O = self.agents[name].getO(state,actions)
             if O:
                 for key,tree in O.items():
-                    if keySubset is None or key in keySubset:
+                    if keySubset is None:
+                        if key in state:
+                            Ofuns[key] = [tree]
+                    elif key in keySubset:
                         Ofuns[key] = [tree]
         return Ofuns
 
@@ -383,13 +388,13 @@ class World(object):
                 cumulative = None
                 for tree in dynamics:
                     if cumulative is None:
-                        cumulative = copy.deepcopy(tree)
+                        cumulative = copy.deepcopy(tree[self.state])
                     else:
                         cumulative.makeFuture([key])
-                        cumulative *= tree
-                        cumulative = cumulative.prune()
+                        cumulative *= tree[self.state]
+#                        cumulative = cumulative.prune()
                 if select is True:
-                    state.__imul__(tree,True)
+                    state.__imul__(cumulative,True)
                 else:
                     state *= cumulative
                 substate = state.keyMap[makeFuture(key)]
@@ -854,7 +859,7 @@ class World(object):
                         agents.add(turn2name(key))
             return agents
         else:
-            items = filter(lambda i: isTurnKey(i[0]),vector.items())
+            items = [i for i in vector.items() if isTurnKey(i[0])]
         if len(items) == 0:
             # No turn information in vector
             return []
