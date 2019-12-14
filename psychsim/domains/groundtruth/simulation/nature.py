@@ -1,6 +1,6 @@
 from psychsim.pwl import *
 from psychsim.agent import Agent
-from psychsim.domains.groundtruth.simulation.data import likert
+from psychsim.domains.groundtruth.simulation.data import likert,logNode,logEdge
 from psychsim.domains.groundtruth.simulation.region import Region
 
 class Nature(Agent):
@@ -12,26 +12,33 @@ class Nature(Agent):
 
         evolution = self.addAction({'verb': 'evolve'},codePtr=True)
 
-        #//GT: node 33; 1 of 1; next 2 lines
+        logNode('Nature\'s phase','Current hurricane state','String: either "none" / "approaching" / "active"')
+        #//GT: node 7; 1 of 1; next 2 lines
         phase = world.defineState(self.name,'phase',list,['none','approaching','active'],codePtr=True)
         world.setFeature(phase,'none')
-        #//GT: node 31; 1 of 1; next 2 lines
+
+        logNode('Nature\'s days','Number of days of current Hurricane\'s phase','Nonnegative integer')
+        #//GT: node 8; 1 of 1; next 2 lines
         days = world.defineState(self.name,'days',int,codePtr=True)
         world.setFeature(days,0)
 
-        #//GT: node 32; 1 of 1; next 4 lines
+        logNode('Nature\'s location','Projected landfall location (when over sea) or current center (when over land)','Region[01-16]')
+        #//GT: node 9; 1 of 1; next 4 lines
         regions = sorted([name for name in self.world.agents
                           if isinstance(self.world.agents[name],Region)])
         location = world.defineState(self.name,'location',list,regions+['none'],codePtr=True)
         world.setFeature(location,'none')
 
-        #//GT: node 30; 1 of 1; next 2 lines
+        logNode('Nature\'s category','Hurricane severity','Integer in [0-5]')
+        #//GT: node 10; 1 of 1; next 2 lines
         category = world.defineState(self.name,'category',int,codePtr=True)
         world.setFeature(category,0)
         
         # Phase dynamics
-        # //GT: edge 46; from 31; to 33; 1 of 1; next 20 lines
-        # //GT: edge 47; from 32; to 33; 1 of 1; next 20 lines
+        logEdge('Nature\'s days','Nature\'s phase','often','There is a minimum number of days that must pass before a hurricane can change phase')
+        #//GT: edge 1; from 8; to 7; 1 of 1; next 22 lines
+        logEdge('Nature\'s location','Nature\'s phase','sometimes','Active hurricanes that move out of the area are no longer considered active and their phase goes to "none"')
+        #//GT: edge 2; from 9; to 7; 1 of 1; next 20 lines
         prob = likert[5][config.getint('Disaster','phase_change_prob')-1]
         minDays = config.getint('Disaster','phase_min_days')
         tree = {'if': equalRow(phase,['none','approaching']),
@@ -53,13 +60,15 @@ class Nature(Agent):
                        False: setToConstantMatrix(phase,'active')}}
         world.setDynamics(phase,evolution,makeTree(tree),codePtr=True)
 
-        # //GT: edge 51; from 33; to 31; 1 of 1; next 4 lines
+        logEdge('Nature\'s phase','Nature\'s days','often','The number of days spent in the current phase goes to 0 if there\'s a phase change; otherwise it increases by 1')
+        #//GT: edge 3; from 7; to 8; 1 of 1; next 4 lines
         tree = makeTree({'if': equalFeatureRow(phase,makeFuture(phase)),
                          True: incrementMatrix(days,1),
                          False: setToConstantMatrix(days,0)})
         world.setDynamics(days,evolution,tree,codePtr=True)
 
-        # //GT: edge 50; from 33; to 30; 1 of 1; next 25 lines
+        logEdge('Nature\'s phase','Nature\'s category','sometimes','The hurricane\'s category can change when its phase is "approaching"')
+        #//GT: edge 4; from 7; to 10; 1 of 1; next 25 lines
         if config.getint('Disaster','category_change') > 0:
             prob = likert[5][config.getint('Disaster','category_change')-1]
             subtree = {'if': equalRow(category,1),
@@ -90,7 +99,8 @@ class Nature(Agent):
         coastline = {r for r in regions if world.agents[r].x == 1}
         prob = 1./float(len(coastline))
         # For computing hurricane movement
-        # //GT: edge 52; from 33; to 32; 1 of 1; next 29 lines
+        logEdge('Nature\'s phase','Nature\'s location','sometimes','The hurricane moves differently depending on whether it is over land or over water')
+        #//GT: edge 5; from 7; to 9; 1 of 1; next 28 lines
         subtree = {'if': equalRow(location,regions[:]),
                    None: noChangeMatrix(location)}
         northProb = likert[5][config.getint('Disaster','move_north')-1]
@@ -121,10 +131,14 @@ class Nature(Agent):
         world.setDynamics(location,evolution,tree,codePtr=True)
 
         # Effect of disaster on risk
-        # //GT: edge 38; from 27; to 28; 1 of 1; next 17 lines
-        # //GT: edge 44; from 30; to 34; 1 of 1; next 17 lines
-        # //GT: edge 48; from 32; to 34; 1 of 1; next 17 lines
-        # //GT: edge 53; from 33; to 34; 1 of 1; next 17 lines
+        logEdge('ActorBeliefOfNature\'s category','ActorBeliefOfRegion\'s risk','often','Higher categories of hurricane mean higher increase in perception of risk to region')
+        #//GT: edge 6; from 11; to 12; 1 of 1; next 23 lines
+        logEdge('Nature\'s category','Region\'s risk','often','Higher categories of current hurricane mean higher increase in risk to region')
+        #//GT: edge 7; from 10; to 1; 1 of 1; next 21 lines
+        logEdge('Nature\'s location','Region\'s risk','often','A region\'s risk level increases more the closer it is to the hurricane\'s center')
+        #//GT: edge 8; from 9; to 1; 1 of 1; next 19 lines
+        logEdge('Nature\'s phase','Region\'s risk','often','A region\'s risk is affected by Nature variables only when phase is active')
+        #//GT: edge 9; from 7; to 1; 1 of 1; next 17 lines
         base_increase = likert[5][config.getint('Disaster','risk_impact')-1]
         base_decrease = likert[5][config.getint('Disaster','risk_decay')-1]
         for region in regions:
@@ -142,10 +156,28 @@ class Nature(Agent):
                              True: subtree,
                              False: approachMatrix(risk,base_decrease,world.agents[region].risk)})
             world.setDynamics(risk,evolution,tree,codePtr=True)
-        # //GT: edge 39; from 27; to 29; 1 of 1; next 15 lines
-        # //GT: edge 49; from 32; to 29; 1 of 1; next 17 lines
-        # //GT: edge 54; from 33; to 29; 1 of 1; next 17 lines
+
+        if config.getint('Regions','economy_mean',fallback=0) > 0:
+            delta = config.getint('Regions','economy_risk_delta',fallback=0)
+            if delta > 0:
+                logEdge('Region\'s risk','Region\'s economy','often','Excessive risk in a region causes its economy to decline')
+                #
+                for region in regions:
+                    economy = stateKey(region,'economy')
+                    tree = {'if': thresholdRow(makeFuture(economy),toLikert(config.getint('Regions','economy_risk_threshold',fallback=5)-1)),
+                        True: approachMatrix(economy,toLikert(delta-1),0.),
+                        False: approachMatrix(economy,toLikert(delta-1),world.agents[region].economy)}
+                    world.setDynamics(economy,evolution,makeTree(tree),codePtr=True)
+
         if config.getboolean('Shelter','exists'):
+            logEdge('ActorBeliefOfNature\'s category','ActorBeliefOfRegion\'s shelterRisk','often','Higher categories of hurricane mean higher increases in perception of risk at the shelters')
+            #//GT: edge 10; from 11; to 13; 1 of 1; next 23 lines
+            logEdge('Nature\'s category','Region\'s shelterRisk','often','Higher categories of hurricane mean higher increases in a shelter\'s risk')
+            #//GT: edge 11; from 10; to 3; 1 of 1; next 21 lines
+            logEdge('Nature\'s location','Region\'s shelterRisk','often','A shelter\'s risk level increases more the closer it is to the hurricane\'s center')
+            #//GT: edge 12; from 9; to 3; 1 of 1; next 19 lines
+            logEdge('Nature\'s phase','Region\'s shelterRisk','often','A shelter\'s risk is affected by Nature variables only when phase is active')
+            #//GT: edge 13; from 7; to 3; 1 of 1; next 17 lines
             for index in map(int,config.get('Shelter','region').split(',')):
                 region = Region.nameString % (index)
                 if region in world.agents:
@@ -163,6 +195,7 @@ class Nature(Agent):
                                             False: noChangeMatrix(risk)},
                                      False: approachMatrix(risk,base_decrease,0.)})
                     world.setDynamics(risk,evolution,tree,codePtr=True)
+
         self.setAttribute('static',True)
                                         
         if not config.getboolean('Simulation','graph',fallback=False):
