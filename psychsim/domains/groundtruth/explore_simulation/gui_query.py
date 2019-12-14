@@ -38,6 +38,7 @@ from psychsim.domains.groundtruth.explore_simulation.GUI.CreateSample import Ui_
 from psychsim.domains.groundtruth.explore_simulation.GUI.DisplayOneSample import Ui_Display_One_Sample_Dialog
 from psychsim.domains.groundtruth.explore_simulation.GUI.GetEntityAttributes import Ui_EntityName
 from psychsim.domains.groundtruth.explore_simulation.GUI.DeactivateFilter import Ui_DeactivateFilter
+from psychsim.domains.groundtruth.explore_simulation.GUI.CountDialog import Ui_CountDialog
 
 # from GUI.GetDialog import Ui_GetDialog
 
@@ -69,7 +70,8 @@ class Main(QMainWindow, Ui_MainWindow):
         self.activate_filter.clicked.connect(self.activate_filter_clicked)    
         self.deactivate_filter.clicked.connect(self.deactivate_filter_clicked)
         # self.delete_filter.clicked.connect(self.delete_filter_clicked)    
-        self.deleteSample.clicked.connect(self.delete_sample_clicked)
+        self.CreateSample.clicked.connect(self.show_create_sample)
+        self.DisplaySamples.clicked.connect(self.show_display_samples_clicked)
 
 
     def apply_filter_clicked(self):
@@ -105,10 +107,7 @@ class Main(QMainWindow, Ui_MainWindow):
             print(item[0])
         else:
             print('Must first select a filter')
-    def delete_sample_clicked(self, qmodelindex):
-        item = self.samplesText.currentItem()
-        logparser.delete_sample(p_name=item.text())
-        print(item.text())
+
 
     def updateFilterList(self):
         self.filterText.clear()
@@ -151,13 +150,16 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setup_display_one_sample()
         self.setup_get_attribute_names()
         self.setup_deactivate_filter()
+        self.setup_count_actors()
         
 
     def show_get_ndays(self):
         logparser.get_ndays(None)
 
-    def show_display_samples(self):
-        logparser.display_samples(None)
+    def show_display_samples_clicked(self):
+        print("------")
+        logparser.display_samples()
+        print("------")
 
         
     def show_get_nactors(self):
@@ -190,8 +192,9 @@ class Main(QMainWindow, Ui_MainWindow):
         logparser.display_filters()
 
 
-    def show_display_samples(self):    
+    def show_display_samples(self):
         logparser.display_samples()
+        
 
     def setup_create_sample(self):
         self.CreateSample = QtWidgets.QDialog()
@@ -206,7 +209,7 @@ class Main(QMainWindow, Ui_MainWindow):
             logparser.save_sample(p_name)
     def show_create_sample(self):
         self.CreateSample.show()
-        
+        self.create_sample.nameLine.setFocus()
   
 
 
@@ -363,30 +366,26 @@ class Main(QMainWindow, Ui_MainWindow):
         self.StatsDialog.show()
 
     def setup_count_actors(self):
-        self.StatsDialog = QtWidgets.QDialog()
-        self.count_actors = Ui_StatsDialog()
-        self.count_actors.setupUi(self.StatsDialog)
+        self.CountDialog = QtWidgets.QDialog()
+        self.count_actors = Ui_CountDialog()
+        self.count_actors.setupUi(self.CountDialog)
         self.count_actors.buttonBox.accepted.connect(self.on_count_actors)
         self.count_actors.attributeBox.addItems(logparser.entities_att_list['Actor'])
         self.count_actors.operatorBox.addItems(['<','>','=','<=','>='])
     def on_count_actors(self):
         print("#######################\n")
         p_att = self.count_actors.attributeBox.currentText()
-        p_fct = self.count_actors.functionBox.currentText()
         p_daylst = range(self.count_actors.dayspinBox_1.value(),self.count_actors.dayspinBox_2.value())
-        p_name = self.count_actors.nameLine.text()
-
         p_op = self.count_actors.operatorBox.currentText()
         p_val = self.count_actors.valueSpinBox.value()
-        
-        logparser.count_actors(p_att, p_fct, p_days=p_daylst, p_name=p_name)
-        self.StatsDialog.hide()
+        logparser.count_actors(p_daylst, p_att, p_op, p_val, sys.stdout)
+        self.CountDialog.hide()
     def show_count_actors(self):
         self.count_actors.dayspinBox_2.setRange(1,logparser.n_days)
         self.count_actors.dayspinBox_1.setRange(1,logparser.n_days)
         self.count_actors.dayspinBox_2.setValue(logparser.n_days)
         self.count_actors.dayspinBox_1.setValue(1)
-        self.StatsDialog.show()
+        self.CountDialog.show()
 
         
     def setupQueries(self):
