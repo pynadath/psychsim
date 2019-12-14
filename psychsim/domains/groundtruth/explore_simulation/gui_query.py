@@ -37,6 +37,7 @@ from psychsim.domains.groundtruth.explore_simulation.GUI.GetStats import Ui_GetS
 from psychsim.domains.groundtruth.explore_simulation.GUI.CreateSample import Ui_CreateSample
 from psychsim.domains.groundtruth.explore_simulation.GUI.DisplayOneSample import Ui_Display_One_Sample_Dialog
 from psychsim.domains.groundtruth.explore_simulation.GUI.GetEntityAttributes import Ui_EntityName
+from psychsim.domains.groundtruth.explore_simulation.GUI.DeactivateFilter import Ui_DeactivateFilter
 
 # from GUI.GetDialog import Ui_GetDialog
 
@@ -72,7 +73,7 @@ class Main(QMainWindow, Ui_MainWindow):
 
 
     def apply_filter_clicked(self):
-        self.show_apply_filter('dummyArg')
+        self.show_apply_filter()
             
     def samples_dclicked(self, qmodelindex):
         item = self.samplesText.currentItem()
@@ -97,8 +98,9 @@ class Main(QMainWindow, Ui_MainWindow):
         if self.filterText.currentItem():
             item = self.filterText.currentItem().text().split(':')
             logparser.deactivate_filter(p_name=item[0])
-            self.filterText.clear()
-            self.filterText.addItems([logparser.filters_to_str(f) for f in logparser.filter_list])
+            self.updateFilterList()
+            #self.filterText.clear()
+            #self.filterText.addItems([logparser.filters_to_str(f) for f in logparser.filter_list])
             #self.filterText.addItems(logparser.display_filters())            
             print(item[0])
         else:
@@ -108,6 +110,9 @@ class Main(QMainWindow, Ui_MainWindow):
         logparser.delete_sample(p_name=item.text())
         print(item.text())
 
+    def updateFilterList(self):
+        self.filterText.clear()
+        self.filterText.addItems([logparser.filters_to_str(f) for f in logparser.filter_list])
 
                                          
     def changefig(self, item):
@@ -145,19 +150,20 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setup_create_sample()
         self.setup_display_one_sample()
         self.setup_get_attribute_names()
+        self.setup_deactivate_filter()
         
 
-    def show_get_ndays(self,selected):
+    def show_get_ndays(self):
         logparser.get_ndays(None)
 
-    def show_display_samples(self,selected):
+    def show_display_samples(self):
         logparser.display_samples(None)
 
         
-    def show_get_nactors(self,selected):
+    def show_get_nactors(self):
         logparser.get_nactors(None)
        
-    def show_get_entities(self,selected):    
+    def show_get_entities(self):    
         logparser.get_entities(None)
 
     def setup_get_attribute_names(self):
@@ -169,22 +175,22 @@ class Main(QMainWindow, Ui_MainWindow):
     def on_get_attribute_names(self):
         p_name = self.get_attributes.entityTypes.currentText()
         logparser.get_attributes(p_entity=p_name, buffer=None)
-    def show_get_attribute_names(self,selected):
+    def show_get_attribute_names(self):
         self.GetAttributes.show()
         
         
 
-    def show_reset_selection(self,selected):
+    def show_reset_selection(self):
         logparser.reset_selection(buffer=sys.stdout)
 
-    def show_show_selection(self,selected):    
+    def show_show_selection(self):    
         logparser.display_actor_selection()
 
-    def show_show_filters(self,selected):    
+    def show_show_filters(self):    
         logparser.display_filters()
 
 
-    def show_display_samples(self,selected):    
+    def show_display_samples(self):    
         logparser.display_samples()
 
     def setup_create_sample(self):
@@ -198,7 +204,7 @@ class Main(QMainWindow, Ui_MainWindow):
         if (not s1 and not s2):
             self.samplesText.addItem(p_name)
             logparser.save_sample(p_name)
-    def show_create_sample(self,selected):
+    def show_create_sample(self):
         self.CreateSample.show()
         
   
@@ -228,7 +234,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.display_one_sample.setupUi(self.DisplayOneSample)
         p_name = self.display_one_sample.nameLine.text()
         logparser.display_one_sample(p_name=p_name)
-    def show_display_one_sample(self,selected):
+    def show_display_one_sample(self):
         self.DisplayOneSample.show()
 
     def setup_select_nactors(self):
@@ -243,7 +249,7 @@ class Main(QMainWindow, Ui_MainWindow):
         p_sel = self.select_nactors.selBox.currentText()
         p_n = self.select_nactors.numberspinBox.value()
         logparser.select_nactors(p_n=p_n, p_mode_select=p_sel)
-    def show_select_n_actors(self,selected):
+    def show_select_n_actors(self):
         self.SelectDialog.show()
 
         
@@ -252,15 +258,14 @@ class Main(QMainWindow, Ui_MainWindow):
         self.deactivate_filter = Ui_DeactivateFilter()
         self.deactivate_filter.setupUi(self.DeactivateFilter)
         self.deactivate_filter.buttonBox.accepted.connect(self.on_deactivate_filter)
-        self.deactivate_filter.attributeBox.addItems(logparser.entities_att_list['Actor'])
+        # self.deactivate_filter.attributeBox.addItems(logparser.entities_att_list['Actor'])
     def on_deactivate_filter(self):
         print("#######################\n")
-        p_name = self.deactivate_filter.filterBox.currentText()
-        
+        p_name = self.deactivate_filter.comboBox.currentText()
         self.f = logparser.deactivate_filter(p_name=p_name)
         self.updateFilterList()
-    def show_deactivate_filter(self,selected):
-        self.deactivate_filter.operatorBox.addItems(logparser.show_filters())
+    def show_deactivate_filter(self):
+        self.deactivate_filter.comboBox.addItems([f['name'] for f in logparser.filter_list])
         self.DeactivateFilter.show()
 
 
@@ -277,7 +282,7 @@ class Main(QMainWindow, Ui_MainWindow):
         
         self.f = logparser.activate_filter(p_name=p_name)
         self.updateFilterList()
-    def show_activate_filter(self,selected):
+    def show_activate_filter(self):
         self.activate_filter.operatorBox.addItems(logparser.show_filters())
         self.activateFilter.show()
 
@@ -301,7 +306,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.filterText.addItems([logparser.filters_to_str(f) for f in logparser.filter_list])
         #for f in logparser.filterList:
 
-    def show_apply_filter(self,selected):
+    def show_apply_filter(self):
         self.apply_filter.dayspinBox_2.setRange(1,logparser.n_days)
         self.apply_filter.dayspinBox.setRange(1,logparser.n_days)
         self.apply_filter.dayspinBox_2.setValue(logparser.n_days)
@@ -345,7 +350,7 @@ class Main(QMainWindow, Ui_MainWindow):
         logparser.get_stats(p_att, p_fct_list, p_days=p_daylst,p_sample_names=p_snames, fig=figure, using_gui=True)
         main.addfig(p_name, figure)
         self.StatsDialog.hide()
-    def show_get_stats(self,selected):
+    def show_get_stats(self):
         self.get_stats.dayspinBox_2.setRange(1,logparser.n_days)
         self.get_stats.dayspinBox_1.setRange(1,logparser.n_days)
         self.get_stats.dayspinBox_2.setValue(logparser.n_days)
@@ -376,7 +381,7 @@ class Main(QMainWindow, Ui_MainWindow):
         
         logparser.count_actors(p_att, p_fct, p_days=p_daylst, p_name=p_name)
         self.StatsDialog.hide()
-    def show_count_actors(self,selected):
+    def show_count_actors(self):
         self.count_actors.dayspinBox_2.setRange(1,logparser.n_days)
         self.count_actors.dayspinBox_1.setRange(1,logparser.n_days)
         self.count_actors.dayspinBox_2.setValue(logparser.n_days)
@@ -403,7 +408,7 @@ class Main(QMainWindow, Ui_MainWindow):
         # self.queryBox.addItem('percent_filtered')
         
         
-    def on_execute(self):
+    def on_execute(self,selected):
         self.parse_execute_query()
 
     def on_help(self,selected):
@@ -417,7 +422,7 @@ class Main(QMainWindow, Ui_MainWindow):
         # if (selected == "apply filter"):
         #     self.filter.show()
         self.method = getattr(self, "show_" + selected, lambda: 'self.show_create')
-        return self.method(selected)
+        return self.method()
 
     # def setup_create(self):
     #     self.FilterDialog = QtWidgets.QDialog()
@@ -434,7 +439,7 @@ class Main(QMainWindow, Ui_MainWindow):
     #     p_val = self.apply_filter.valueSpinBox.value()
     #     p_name = self.apply_filter.nameLine.text()
     #     logparser.apply_filter(p_daylst, p_att, p_val, p_op, p_name=p_name)
-    # def show_create(self,selected):
+    # def show_create(self):
     #     self.FilterDialog.show()
 
         
@@ -481,9 +486,7 @@ if __name__ == "__main__":
     argp = argparse.ArgumentParser()
     argp.add_argument('-i', metavar='instance', type=str, help='Instance number to process.')
     argp.add_argument('-r', metavar='run', type=str, help='Run number to process.')
-    argp.add_argument("--autotest", help="Auto test using demo.json", action="store_true")
     argp.add_argument("--test", help="Test the tool yourself", action="store_true")
-    argp.add_argument("--demo", help="Demo of the explore_simulation tool", action="store_true")
 
     args = argp.parse_args()
 
