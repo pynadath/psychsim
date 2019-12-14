@@ -37,7 +37,7 @@ class Actor(Agent):
 
         # Decision-making parameters
         logNode('Actor\'s horizon','Number of steps into future that actor uses to evaluate candidate action choices','Positive integer')
-        #//GT: node 11; 1 of 1; next 7 lines
+        #//GT: node 14; 1 of 1; next 7 lines
         minH = config.getint('Actors','min_horizon')
         maxH = config.getint('Actors','max_horizon')
         if minH == maxH:
@@ -55,15 +55,20 @@ class Actor(Agent):
         # States
 
         # Demographic info
+        logNode('Actor\'s ethnicGroup','Actor\'s ethnicity','String: either "majority" or "minority"','Static')
+        #//GT: node 15; 1 of 1; next 4 lines
         if random.random() > likert[5][config.getint('Actors','ethnic_majority')-1]:
             self.demographics['ethnicGroup'] = 'minority'
         else:
             self.demographics['ethnicGroup'] = 'majority'
+
         if config.getint('Simulation','phase',fallback=1) == 1:
             ethnic = world.defineState(self.name,'ethnicGroup',list,['majority','minority'],
                                        description='Ethnicity of actor',codePtr=True)
             world.setFeature(ethnic,self.demographics['ethnicGroup'])
 
+        logNode('Actor\'s religion','Actor\'s religion','String: either "majority" or "minority" or "none"','Static')
+        #//GT: node 16; 1 of 1; next 8 lines
         if random.random() < likert[5][config.getint('Actors','religious_majority')-1]:
             self.demographics['religion'] = 'majority'
         else:
@@ -72,6 +77,7 @@ class Actor(Agent):
                 self.demographics['religion'] = 'none'
             else:
                 self.demographics['religion'] = 'minority'
+
         if config.getint('Simulation','phase',fallback=1) == 1:
             religion = world.defineState(self.name,'religion',list,['majority','minority','none'],
                                          description='Religious affiliation of actor',codePtr=True)
@@ -105,7 +111,7 @@ class Actor(Agent):
             world.setFeature(kids,self.demographics['kids'])
 
         logNode('Actor\'s employed','True iff actor has a job','Boolean')
-        #//GT: node 12; 1 of 1; next 5 lines
+        #//GT: node 17; 1 of 1; next 5 lines
         job = world.defineState(self.name,'employed',bool,description='Has a full-time job',
                                 codePtr=True)
         threshold = likert[5][config.getint('Actors','job_%s' % (self.demographics['ethnicGroup']))-1]
@@ -113,7 +119,7 @@ class Actor(Agent):
         world.setFeature(job,self.demographics['job'])
 
         logNode('Actor\'s pet','Whether actor owns a pet','Boolean')
-        #//GT: node 13; 1 of 1; next 8 lines
+        #//GT: node 18; 1 of 1; next 8 lines
         threshold = config.getint('Actors','pet_prob')
         if threshold > 0:
             self.demographics['pet'] = random.random() < likert[5][threshold-1]
@@ -122,15 +128,6 @@ class Actor(Agent):
                 world.setFeature(pet,self.demographics['pet'])
         else:
             self.demographics['pet'] = False
-
-        if config.getint('Actors','married',fallback=0) > 0:
-            logNode('Actor marriedTo Actor','Marriage relationship between two actors','Boolean')
-            # // GT: node 39; 1 of 1; next 6 lines
-            threshold = likert[5][config.getint('Actors','married')-1]
-            if random.random() < threshold:
-                key = binaryKey(self.name,self.name,'marriedTo')
-                self.world.defineRelation(self.name,self.name,'marriedTo',bool,codePtr=True)
-                self.world.setFeature(key,True)
 
         # Psychological
         if config.getboolean('Actors','attachment'):
@@ -202,7 +199,7 @@ class Actor(Agent):
 #            world.setFeature(attribution,self.attribution)
 
         logNode('Actor\'s home','Region of residence','Region[01-16]')
-        #//GT: node 14; 1 of 1; next 11 lines
+        #//GT: node 19; 1 of 1; next 11 lines
         regions = sorted([name for name in self.world.agents
                           if isinstance(self.world.agents[name],Region)])
         if config.getboolean('Regions','random_population'):
@@ -216,6 +213,22 @@ class Actor(Agent):
             world.setFeature(region,self.demographics['home'])
 
         neighbors = self.getNeighbors()
+
+        self.spouse = None
+        if config.getint('Actors','married',fallback=0) > 0:
+            logNode('Actor marriedTo Actor','Marriage relationship between two actors','Boolean')
+            #//GT: node 22; 1 of 1; next 11 lines
+            threshold = likert[5][config.getint('Actors','married')-1]/2
+            if random.random() < threshold:
+                others = [other for other,otherAgent in self.world.agents.items() if other[:5] == 'Actor' and other != self.name and \
+                    other in neighbors and otherAgent.spouse is None]
+                if others:
+                    self.spouse = random.choice(others)
+                    key = self.world.defineRelation(self.name,self.spouse,'marriedTo',bool,codePtr=True)
+                    self.world.setFeature(key,True)
+                    key = self.world.defineRelation(self.spouse,self.name,'marriedTo',bool,codePtr=True)
+                    self.world.setFeature(key,True)
+                    self.world.agents[self.spouse].spouse = self.name
 
         if config.getboolean('Simulation','visualize',fallback=False):
             # For display use only
@@ -244,7 +257,7 @@ class Actor(Agent):
 
         # Dynamic states
         logNode('Actor\'s location','Where actor currently is','String: either region name / shelter name / "evacuated"')
-        #//GT: node 16; 1 of 1; next 13 lines
+        #//GT: node 23; 1 of 1; next 13 lines
         if config.getboolean('Actors','movement'):
             locationSet = regions[:]
         else:
@@ -264,7 +277,7 @@ class Actor(Agent):
             world.setFeature(alive,True)
 
         logNode('Actor\'s health','Level of actor\'s wellbeing','Real in [0-1]')
-        #//GT: node 17; 1 of 1; next 15 lines
+        #//GT: node 21; 1 of 1; next 15 lines
         health = world.defineState(self.name,'health',float,
                                    description='Current level of physical wellbeing',codePtr=True)
         try:
@@ -283,14 +296,14 @@ class Actor(Agent):
 
         if self.demographics['kids'] > 0:
             logNode('Actor\'s childrenHealth','Level of children\'s wellbeing','Real in [0-1]')
-            #//GT: node 18; 1 of 1; next 4 lines
+            #//GT: node 24; 1 of 1; next 4 lines
             kidHealth = world.defineState(self.name,'childrenHealth',float,
                                           description='Current level of children\'s physical wellbeing',
                                           codePtr=True)
             world.setFeature(kidHealth,self.health)
 
         logNode('Actor\'s resources','Level of wealth','Real in [0-1]')
-        #//GT: node 19; 1 of 1; next 19 lines
+        #//GT: node 25; 1 of 1; next 19 lines
         wealth = world.defineState(self.name,'resources',float,codePtr=True,
                                    description='Material resources (wealth) currently owned')
         try:
@@ -312,14 +325,14 @@ class Actor(Agent):
         world.setFeature(wealth,self.demographics['wealth'])
 
         logNode('Actor\'s risk','Level of personal risk','Real in [0-1]')
-        #//GT: node 20; 1 of 1; next 3 lines
+        #//GT: node 26; 1 of 1; next 3 lines
         risk = world.defineState(self.name,'risk',float,codePtr=True,lo=0.,hi=1.,
                                  description='Current level of risk from hurricane')
         world.setFeature(risk,world.getState(self.demographics['home'],'risk').expectation())
 
         if config.getboolean('Actors','grievance'):
             logNode('Actor\'s grievance','Level of dissatisfaction with government','Real in [0-1]')
-            #//GT: node 21; 1 of 1; next 16 lines
+            #//GT: node 27; 1 of 1; next 16 lines
             mean = config.getint('Actors','grievance_ethnic_%s' % (self.demographics['ethnicGroup']))
             mean += config.getint('Actors','grievance_religious_%s' % (self.demographics['religion']))
             mean += config.getint('Actors','grievance_%s' % (self.demographics['gender']))
@@ -341,7 +354,7 @@ class Actor(Agent):
 
         evolve = ActionSet([Action({'subject': 'Nature','verb': 'evolve'})])
         logNode('Actor-stayInLocation','Action choice of staying in current location','Boolean')
-        #//GT: node 22; 1 of 1; next 2 lines
+        #//GT: node 28; 1 of 1; next 2 lines
         self.nop = self.addAction({'verb': 'stayInLocation'},codePtr=True,
                                   description='Actor does not move from current location, nor perform any pro/antisocial behaviors')
 
@@ -349,7 +362,7 @@ class Actor(Agent):
         if config.getboolean('Shelter','exists'):
             # Go to shelter
             logNode('Actor-moveTo-shelter','Action choice of moving to public shelter','Boolean')
-            #//GT: node 23; 1 of 1; next 40 lines
+            #//GT: node 29; 1 of 1; next 44 lines
             shelters = config.get('Shelter','region').split(',')
             actShelter = {}
             distances = {}
@@ -374,6 +387,10 @@ class Actor(Agent):
                 else:
                     tree[False] = {'if': equalRow(location,shelter),True: False,False: True}
                 if world.getState(region,'shelterCapacity').first() > 0:
+                    logEdge('Region\'s shelterCapacity','Actor-moveTo-shelter','sometimes','Cannot move to a full shelter')
+                    #//GT: edge 15; from 5; to 29; 1 of 1; next 18 lines
+                    logEdge('Region\'s shelterOccupancy','Actor-moveTo-shelter','sometimes','Cannot move to a full shelter')
+                    #//GT: edge 16; from 6; to 29; 1 of 1; next 16 lines
                     tree = {'if': greaterThanRow(stateKey(region,'shelterCapacity'),
                                                  stateKey(region,'shelterOccupancy')),
                             True: tree, False: False}
@@ -394,7 +411,7 @@ class Actor(Agent):
         if config.getboolean('Actors','evacuation'):
             # Evacuate city altogether
             logNode('Actor-evacuate','Action choice of leaving the area for at least a short time','Boolean')
-            #//GT: node 24; 1 of 1; next 11 lines
+            #//GT: node 30; 1 of 1; next 11 lines
             tree = {'if': equalRow(stateKey('Nature','phase'),'none'),
                              True: False,
                              False: {'if': equalRow(location,'evacuated'),
@@ -408,8 +425,8 @@ class Actor(Agent):
             goHomeFrom.add('evacuated')
 
         if goHomeFrom:
-            logNode('Actor-moveTo-Region','Action choice of moving back home','Boolean')
-            #//GT: node 25; 1 of 1; next 5 lines
+            logNode('Actor-moveTo-home','Action choice of moving back home','Boolean')
+            #//GT: node 31; 1 of 1; next 5 lines
             tree = makeTree({'if': equalRow(location,goHomeFrom),
                              True: True, False: False})
             goHome = self.addAction({'verb': 'moveTo','object': self.demographics['home']},
@@ -418,8 +435,8 @@ class Actor(Agent):
             
         if config.getboolean('Actors','prorisk'):
             # Prosocial behavior
-            logNode('Actor-decreaseRisk-Region','Prosocial action choice','Boolean')
-            #//GT: node 26; 1 of 1; next 17 lines
+            logNode('Actor-decreaseRisk','Prosocial action choice','Boolean')
+            #//GT: node 32; 1 of 1; next 17 lines
             actGoodRisk = {}
             for region in regions:
                 if config.getboolean('Actors','movement') or region == self.demographics['home']:
@@ -473,8 +490,8 @@ class Actor(Agent):
                                                         'Perform antisocial behaviors that increase the danger faced by people in a given region',True)
         if config.getboolean('Actors','antiresources'):
             # Antisocial behavior
-            logNode('Actor-takeResources-Region','Antisocial action choice','Boolean')
-            #//GT: node 27; 1 of 1; next 18 lines
+            logNode('Actor-takeResources','Antisocial action choice','Boolean')
+            #//GT: node 33; 1 of 1; next 18 lines
             actBadResources = {}
             for region in regions:
                 if config.getboolean('Actors','movement') or region == self.demographics['home']:
@@ -523,6 +540,8 @@ class Actor(Agent):
 
         # Information-seeking actions
         if config.getboolean('Actors','infoseek'):
+            logNode('Actor-infoSeek','Seek out additional information about the hurricane risk','Boolean')
+            #
             if config.getint('Simulation','phase',fallback=1) < 3:
                 tree = makeTree({'if': trueRow(alive), True: True, False: False})
             else:
@@ -532,27 +551,37 @@ class Actor(Agent):
                                       'Seek out additional information about the hurricane risk',True)
                 
         # Effect on location
-        # //GT: edge 9; from 6; to 15; 1 of 1; next 4 lines
         if config.getboolean('Shelter','exists'):
+            logEdge('Actor-moveTo-shelter','Actor\'s location','often','Moving to a shelter changes the actors\' location to that shelter')
+            #//GT: edge 17; from 29; to 23; 1 of 1; next 3 lines
             for index,action in actShelter.items():
                 tree = makeTree(setToConstantMatrix(location,'shelter%s' % (index)))
             world.setDynamics(location,action,tree,codePtr=True)
-        # //GT: edge 5; from 4; to 15; 1 of 1; next 3 lines
+
         if config.getboolean('Actors','evacuation'):
+            logEdge('Actor-evacuate','Actor\'s location','often','Evacuating changes the actors\' location to "evacuated"')
+            #//GT: edge 18; from 30; to 23; 1 of 1; next 2 lines
             tree = makeTree(setToConstantMatrix(location,'evacuated'))
             world.setDynamics(location,actEvacuate,tree,codePtr=True)
+
         if config.getboolean('Actors','movement'):
             for region in regions:
                 tree = makeTree(setToConstantMatrix(location,region.name))
+                logEdge(str(actMove[region.name],'Actor\'s location','often','Moving to a different region changes location'))
+                #
                 world.setDynamics(location,actMove[region.name],tree,codePtr=True)
-        # //GT: edge 7; from 5; to 15; 1 of 1; next 3 lines
+
         if goHomeFrom:
+            logEdge('Actor-moveTo-home','Actor\'s location','often','When actors move to their home region their location becomes that region')
+            #//GT: edge 19; from 31; to 23; 1 of 1; next 2 lines
             tree = makeTree(setToConstantMatrix(location,self.demographics['home']))
             world.setDynamics(location,goHome,tree,codePtr=True)
 
         # Effect on my risk
-        # //GT: edge 27; from 15; to 25; 1 of 1; next 23 lines
-        # //GT: edge 62; from 15; to 26; 1 of 1; next 23 lines
+        logEdge('Actor\'s location','Actor\'s risk','often','Actor\'s personal risk decreases if evacuated; otherwise it moves closer to the risk in his/her current location')
+        #//GT: edge 20; from 23; to 26; 1 of 1; next 10 lines
+        logEdge('Actor\'s location','ActorBeliefOf Actor\'s risk','often','Actor\'s belief about risk is influenced in the same way as actual risk')
+        #//GT: edge 21; from 23; to 34; 1 of 1; next 8 lines
         if config.getboolean('Actors','movement'):
             tree = noChangeMatrix(risk)
         else:
@@ -561,16 +590,22 @@ class Actor(Agent):
             tree = {'if': equalRow(makeFuture(location),'evacuated'),
                     True: approachMatrix(risk,0.9,0.),
                     False:  tree}
-        # //GT: edge 42; from 29; to 26; 1 of 1; next 6 lines
-        # //GT: edge 58; from 36; to 25; 1 of 1; next 6 lines
+
         if config.getboolean('Shelter','exists'):
+            logEdge('ActorBeliefOfRegion\'s shelterRisk','ActorBeliefOfActor\'s risk','often','Actors staying at the shelter have a perception of personal risk based on their perception of risk at the shelter')
+            #//GT: edge 22; from 13; to 35; 1 of 1; next 7 lines
+            logEdge('Region\'s shelterRisk','Actor\'s risk','sometimes','Actors staying at the shelter face a level of personal risk based on the risk at the shelter')
+            #//GT: edge 23; from 3; to 26; 1 of 1; next 5 lines
             for index in actShelter:
                 region = Region.nameString % (int(index))
                 tree = {'if': equalRow(makeFuture(location),'shelter%s' % (index)),
                         True: setToFeatureMatrix(risk,stateKey(region,'shelterRisk')),
                         False: tree}
-        # //GT: edge 41; from 28; to 26; 1 of 1; next 7 lines
-        # //GT: edge 55; from 34; to 25; 1 of 1; next 7 lines
+
+        logEdge('ActorBeliefOfRegion\'s risk','ActorBeliefOfActor\'s risk','often','Actors staying at home face a higher risk level in their region of residence leads to a higher level of personal risk')
+        #//GT: edge 24; from 12; to 35; 1 of 1; next 20 lines
+        logEdge('Region\'s risk','Actor\'s risk','often','Actors staying at home face a higher risk level in their region of residence leads to a higher level of personal risk')
+        #//GT: edge 25; from 1; to 26; 1 of 1; next 18 lines
         if config.getboolean('Actors','movement'):
             for region in regions:
                 tree = {'if': equalRow(makeFuture(location),region.name),
@@ -582,17 +617,64 @@ class Actor(Agent):
                 False: setToConstantMatrix(risk,0.)}
         if config.getint('Simulation','phase',fallback=1) == 1:
             world.setDynamics(risk,True,makeTree(tree),codePtr=True)
-        else:
+        elif config.getint('Simulation','phase',fallback=1) < 3:
             for action in self.actions:
                 world.setDynamics(risk,action,makeTree(tree),codePtr=True)
-        
+        else:
+            logEdge('Actor-stayInLocation','Actor\'s risk','often','Actors staying in a location face the risk associated with that location')
+            #//GT: edge 26; from 28; to 26; 1 of 1; next 1 lines
+            world.setDynamics(risk,self.nop,makeTree(tree),codePtr=True)
+
+        if config.getboolean('Actors','evacuation') and config.getboolean('Disaster','evacuation_path_risk',fallback=False):
+            logEdge('Actor-evacuate','Actor\'s risk','often','Evacuating can incur risk on the way')
+            #//GT: edge 27; from 30; to 26; 1 of 1; next 3 lines
+            path = self.world.agents[self.demographics['home']].evacuationPath()
+            tree = setToFeatureMatrix(risk,makeFuture(stateKey(path[-1],'risk')))
+            world.setDynamics(risk,actEvacuate,makeTree(tree),codePtr=True)
+
+        if config.getboolean('Shelter','exists'):
+
+            if config.getboolean('Disaster','shelter_path_risk',fallback=False):
+                logEdge('Actor-moveTo-shelter','Actor\'s risk','often','Actors moving to shelter incur some risk before entering')
+                #//GT: edge 28; from 29; to 26; 1 of 1; next 4 lines
+                for index,action in actShelter.items():
+                    region = Region.nameString % (int(index))
+                    tree = setToFeatureMatrix(risk,makeFuture(stateKey(region,'risk')))
+                    world.setDynamics(risk,action,makeTree(tree),codePtr=True)
+
+            logEdge('Actor-moveTo-shelter','Region\'s shelterOccupancy','sometimes','Moving to a shelter increases the number of people in it')
+            #//GT: edge 29; from 29; to 6; 1 of 1; next 4 lines
+            for index,action in actShelter.items():
+                region = Region.nameString % (int(index))
+                tree = incrementMatrix(stateKey(region,'shelterOccupancy'),1)
+                world.setDynamics(stateKey(region,'shelterOccupancy'),action,makeTree(tree),codePtr=True)
+
+            logEdge('Actor-moveTo-home','Region\'s shelterOccupancy','sometimes','Moving out of shelter decreases the number of people in it')
+            #//GT: edge 30; from 31; to 6; 1 of 1; next 6 lines
+            for index,action in actShelter.items():
+                region = Region.nameString % (int(index))
+                tree = {'if': equalRow(location,'shelter%s' % (index)),
+                    True: incrementMatrix(stateKey(region,'shelterOccupancy'),-1),
+                    False: noChangeMatrix(stateKey(region,'shelterOccupancy'))}
+                world.setDynamics(stateKey(region,'shelterOccupancy'),goHome,makeTree(tree),codePtr=True)
+
+            logEdge('Actor-evacuate','Region\'s shelterOccupancy','sometimes','Moving out of shelter decreases the number of people in it')
+            #//GT: edge 31; from 30; to 6; 1 of 1; next 6 lines
+            for index,action in actShelter.items():
+                region = Region.nameString % (int(index))
+                tree = {'if': equalRow(location,'shelter%s' % (index)),
+                    True: incrementMatrix(stateKey(region,'shelterOccupancy'),-1),
+                    False: noChangeMatrix(stateKey(region,'shelterOccupancy'))}
+                world.setDynamics(stateKey(region,'shelterOccupancy'),actEvacuate,makeTree(tree),codePtr=True)
+
         # Effect on my health
         impact = likert[5][config.getint('Actors','health_impact')-1]
         self.setHealthDynamics(impact,impact)
 
-        # //GT: edge 36; from 25; to 9; 1 of 1; next 15 lines
         if self.demographics['kids'] > 0:
             # Effect on kids' health
+            logEdge('Actor\'s risk','Actor\'s childrenHealth','often','Higher levels of personal risk lead to higher likelihoods and higher severity of health loss for their children')
+            #//GT: edge 33; from 26; to 24; 1 of 1; next 18 lines
             tree = {'if': thresholdRow(makeFuture(risk),likert[5][:]),
                     0: approachMatrix(kidHealth,impact,self.health)}
             for level in range(1,6):
@@ -614,6 +696,8 @@ class Actor(Agent):
 
         if config.getint('Simulation','phase',fallback=1) < 3:
             # Effect on life
+            logEdge('Actor\'s health','Actor\'s alive','often','Actor is dead or alive based on current health level')
+            #
             tree = makeTree({'if': trueRow(alive),
                              True: {'if': thresholdRow(makeFuture(health),
                                                        config.getfloat('Actors','life_threshold')),
@@ -628,9 +712,12 @@ class Actor(Agent):
         ceiling = config.getboolean('Actors','wealth_ceiling',fallback=False)
         if impactJob > 0:
             # Being at home or out of town, allows your job to make money
-            # //GT: edge 12; from 7; to 24; 1 of 1; next 14 lines
-            # //GT: edge 16; from 10; to 24; 1 of 1; next 13 lines
-            # //GT: edge 26; from 15; to 24; 1 of 1; next 13 lines
+            logEdge('Actor-stayInLocation','Actor\'s resources','often','If an actor stays at home s/he can still go to work and earn money')
+            #//GT: edge 34; from 28; to 25; 1 of 1; next 23 lines
+            logEdge('Actor\'s employed','Actor\'s resources','sometimes','Actors who are employed experience an increase in resources on every day where they go to work (e.g. as opposed to staying in a shelter)')
+            #//GT: edge 35; from 17; to 25; 1 of 1; next 21 lines
+            logEdge('Actor\'s location','Actor\'s resources','often','An actor\'s resource gain/loss depends on the location in terms of whether s/he can go to work')
+            #//GT: edge 36; from 23; to 25; 1 of 1; next 19 lines
             tree = {'if': trueRow(job),
                True: {'if': equalRow(location,{self.demographics['home'],'evacuated'}),
                       True: approachMatrix(wealth,likert[5][impactJob-1],self.demographics['wealth'] if ceiling else 1.),
@@ -650,9 +737,11 @@ class Actor(Agent):
                 else:
                     tree[False] = noChangeMatrix(wealth)
             world.setDynamics(wealth,self.nop,makeTree(tree),codePtr=True)
+
             # TODO: What if you can work if you're at the shelter?
             # Going home allows you to work again
-            # //GT: edge 8; from 5; to 24; 1 of 1; next 10 lines
+            logEdge('Actor-moveTo-home','Actor\'s resources','often','If an actor moves back home s/he can still go to work and earn money')
+            #//GT: edge 37; from 31; to 25; 1 of 1; next 17 lines
             tree = {'if': trueRow(job),
                True: approachMatrix(wealth,likert[5][impactJob-1],1.),
                False: None} 
@@ -670,28 +759,36 @@ class Actor(Agent):
                 else:
                     tree[False] = noChangeMatrix(wealth)
             world.setDynamics(wealth,goHome,makeTree(tree),codePtr=True)
-        # //GT: edge 11; from 6; to 24; 1 of 1; next 5 lines
+            
         if impactNoJob > 0: 
             if config.getboolean('Shelter','exists') and not config.getboolean('Shelter','job'):
+                logEdge('Actor-moveTo-shelter','Actor\'s resources','often','Going to a shelter can prevent an actor from going to work and earning resources')
+                # 
                 for index,action in actShelter.items():
                     tree = makeTree(approachMatrix(wealth,likert[5][impactNoJob-1],0.))
                     world.setDynamics(wealth,action,tree,codePtr=True)
-        if config.getboolean('Shelter','exists') and not config.getboolean('Shelter','job') and config.getint('Simulation','phase',fallback=1) == 1:
+
+        elif config.getboolean('Shelter','exists') and not config.getboolean('Shelter','job') and config.getint('Simulation','phase',fallback=1) == 1:
+            # Phase 1 did not care about "impactNoJob" config
             for index,action in actShelter.items():
                 tree = makeTree(approachMatrix(wealth,likert[5][impactNoJob-1],0.))
                 world.setDynamics(wealth,action,tree,codePtr=True)
+
         if config.getboolean('Actors','evacuation'):
-            # //GT: edge 6; from 4; to 24; 1 of 1; next 7 lines
             cost = config.getint('Actors','evacuation_cost')
             if cost > 0:
+                logEdge('Actor-evacuate','Actor\'s resources','often','Evacuating costs resources')
+                #//GT: edge 38; from 30; to 25; 1 of 1; next 5 lines
                 cost = likert[5][cost-1]
                 tree = makeTree({'if': thresholdRow(wealth,cost),
                                  True: incrementMatrix(wealth,-cost),
                                  False: setToConstantMatrix(wealth,0.)})
                 world.setDynamics(wealth,actEvacuate,tree,codePtr=True)
-            # //GT: edge 4; from 4; to 10; 1 of 1; next 12 lines
+
             if config.getint('Actors','evacuation_unemployment') > 0:
                 # Might lose job
+                logEdge('Actor-evacuate','Actor\'s employed','sometimes','If an actor evacuates it might lose its job')
+                #//GT: edge 39; from 30; to 17; 1 of 1; next 9 lines
                 prob = likert[5][config.getint('Actors','evacuation_unemployment')-1]
                 tree = {'if': trueRow(job),
                     True: {'distribution': [(noChangeMatrix(job),1.-prob),
@@ -701,44 +798,64 @@ class Actor(Agent):
                     tree = {'if': trueRow(alive),
                                      True: tree,
                                      False: noChangeMatrix(job)}
+
             else:
                 tree = noChangeMatrix(job)
             world.setDynamics(job,actEvacuate,makeTree(tree),codePtr=True)
 
         if config.getboolean('Actors','prorisk'):
             # Effect of doing good
-            # //GT: edge 3; from 3; to 34; 1 of 1; next 5 lines
+            logEdge('Actor-decreaseRisk','Region\'s risk','often','Performing prosocial behavior reduces the risk in the target region')
+            #//GT: edge 40; from 32; to 1; 1 of 1; next 5 lines
             benefit = likert[5][config.getint('Actors','prorisk_benefit')-1]
             for region,action in actGoodRisk.items():
                 key = stateKey(region,'risk')
                 tree = makeTree(approachMatrix(key,benefit,self.world.agents[region].risk))
                 world.setDynamics(key,action,tree,codePtr=True)
-            # //GT: edge 2; from 3; to 25; 1 of 1; next 5 lines
+
             cost = config.getint('Actors','prorisk_cost_risk')
             if cost > 0:
+                logEdge('Actor-decreaseRisk','Actor\'s risk','often','Performing prosocial behavior exposes the actor to additional risk')
+                #//GT: edge 41; from 32; to 26; 1 of 1; next 3 lines
                 for region,action in actGoodRisk.items():
                     tree = makeTree(approachMatrix(risk,likert[5][cost-1],1.))
                     world.setDynamics(risk,action,tree,codePtr=True)
+
+            logEdge('Actor-decreaseRisk','Actor\'s resources','often','Performing prosocial behavior means no income')
+            #
+            if config.getint('Simulation','phase',fallback=1) >= 3 and impactNoJob > 0: 
+                tree = makeTree(approachMatrix(wealth,likert[5][impactNoJob-1],0.))
+                world.setDynamics(wealth,action,tree,codePtr=True)
+                    
         if config.getboolean('Actors','proresources'):
             # Effect of doing good
+            logEdge('Actor-giveResources','Region\'s economy','often','Performing prosocial behavior benefits the economy in the target region')
+            #
             benefit = likert[5][config.getint('Actors','proresources_benefit')-1]
             for region,action in actGoodResources.items():
-                key = stateKey(region,'resources')
-                tree = makeTree(approachMatrix(key,benefit,0.))
+                key = stateKey(region,'economy')
+                tree = makeTree(approachMatrix(key,benefit,self.world.agents[region].economy))
                 world.setDynamics(key,action,tree,codePtr=True)
+
             cost = config.getint('Actors','proresources_cost_risk')
             if cost > 0:
+                logEdge('Actor-giveResources','Actor\'s risk','often','Performing prosocial behavior exposes the actor to additional risk')
+                #
                 for region,action in actGoodResources.items():
                     tree = makeTree(approachMatrix(risk,likert[5][cost-1],1.))
                     world.setDynamics(risk,action,tree,codePtr=True)
+
         if config.getboolean('Actors','antiresources'):
             # Effect of doing bad
-            # //GT: edge 13; from 8; to 24; 1 of 1; next 4 lines
+            logEdge('Actor-takeResources','Actor\'s resources','often','Performing antisocial behavior increases the actor\'s resources')
+            #//GT: edge 42; from 33; to 25; 1 of 1; next 4 lines
             benefit = likert[5][config.getint('Actors','antiresources_benefit')-1]
             for region,action in actBadResources.items():
                 tree = makeTree(approachMatrix(wealth,benefit,self.demographics['wealth'] if ceiling else 1.))
                 world.setDynamics(wealth,action,tree,codePtr=True)
-            # //GT: edge 14; from 8; to 25; 1 of 1; next 7 lines
+
+            logEdge('Actor-takeResources','Actor\'s risk','often','Performing antisocial behavior exposes the actor to additional risk')
+            #//GT: edge 43; from 33; to 26; 1 of 1; next 7 lines
             cost = config.getint('Actors','antiresources_cost_risk')
             if cost > 0:
                 for region,action in actBadResources.items():
@@ -746,25 +863,33 @@ class Actor(Agent):
                                      True: approachMatrix(risk,likert[5][3],1.),
                                      False: approachMatrix(risk,likert[5][cost-1],1.)})
                     world.setDynamics(risk,action,tree,codePtr=True)
+
         if config.getboolean('Actors','antirisk'):
             # Effect of doing bad
+            logEdge('Actor-increaseRisk','Region\'s risk','often','Performing antisocial behavior increases the region\'s risk')
+            #
             benefit = likert[5][config.getint('Actors','antirisk_benefit')-1]
             for region,action in actBadRisk.items():
                 key = stateKey(region,'risk')
                 tree = makeTree(approachMatrix(key,benefit,1.))
                 world.setDynamics(key,action,tree,codePtr=True)
+
             cost = config.getint('Actors','antirisk_cost_risk')
             if cost > 0:
+                logEdge('Actor-takeResources','Actor\'s risk','often','Performing antisocial behavior exposes the actor to additional risk')
+                #
                 for region,action in actBadRisk.items():
                     tree = makeTree({'if': equalRow(stateKey('Nature','phase'),'none'),
                                      True: approachMatrix(risk,likert[5][3],1.),
                                      False: approachMatrix(risk,likert[5][cost-1],1.)})
                     world.setDynamics(risk,action,tree,codePtr=True)
 
-        # //GT: edge 10; from 6; to 17; 1 of 1; next 10 lines
-        # //GT: edge 57; from 35; to 17; 1 of 1; next 10 lines
         if self.demographics.get('pet',False) and config.getboolean('Shelter','exists'):
             # Process shelters' pet policy
+            logEdge('Actor-moveTo-shelter','Actor\'s pet','sometimes','Pets die if an actor goes to a shelter that does not allow pets')
+            #//GT: edge 44; from 29; to 18; 1 of 1; next 8 lines
+            logEdge('Region\'s shelterPets','Actor\'s pet','sometimes','Pets die if an actor goes to a shelter that does not allow pets')
+            #//GT: edge 45; from 4; to 18; 1 of 1; next 6 lines
             for index,action in actShelter.items():
                 region = Region.nameString % (int(index))
                 tree = makeTree({'if': trueRow(stateKey(region,'shelterPets')),
@@ -776,64 +901,78 @@ class Actor(Agent):
         sigma = config.getint('Actors','reward_sigma')
         self.Rweights = {'childrenHealth': 0.,'pet':0.}
         logNode('Actor\'s priority of health','Importance of health','Real in [0-1]')
-        #//GT: node 28; 1 of 1; next 11 lines
-        # //GT: edge 31; from 19; to 11; 1 of 1; next 10 lines
+        #//GT: node 36; 1 of 1; next 8 lines
         mean = config.getint('Actors','reward_health_%s' % (self.demographics['gender']))
-        if mean > 0:
+        if mean == 0:
+            self.Rweights['health'] = 0.
+        else:
             if sigma > 0:
                 self.Rweights['health'] = sampleNormal(mean,sigma)
             else:
                 self.Rweights['health'] = likert[5][mean-1]
-            # //GT: edge 23; from 13; to 11; 1 of 1; next 1 line
+
+            logEdge('Actor\'s priority of health','Actor\'s Expected Reward','often','This priority moderates the dependency between Actor\'s health and its Expected Reward')
+            #//GT: edge 46; from 36; to 37; 1 of 1; next 3 lines
+            logEdge('Actor\'s health','Actor\'s Expected Reward','often','Actors are incentivized to avoid decreases to their own health levels')
+            #//GT: edge 47; from 21; to 37; 1 of 1; next 1 lines
             self.setReward(maximizeFeature(health,self.name),self.Rweights['health'])
-        else:
-            self.Rweights['health'] = 0.
+
 
         logNode('Actor\'s priority of resources','Importance of resources','Real in [0-1]')
-        #//GT: node 29; 1 of 1; next 11 lines
-        # //GT: edge 34; from 2; to 11; 1 of 1; next 10 lines
+        #//GT: node 38; 1 of 1; next 8 lines
         mean = config.getint('Actors','reward_wealth_%s' % (self.demographics['gender']))
-        if mean > 0:
+        if mean == 0:
+            self.Rweights['resources'] = 0.
+        else:
             if sigma > 0:
                 self.Rweights['resources'] = sampleNormal(mean,sigma)
             else:
                 self.Rweights['resources'] = likert[5][mean-1]
-            # //GT: edge 35; from 24; to 11; 1 of 1; next 1 line
+
+            logEdge('Actor\'s priority of resources','Actor\'s Expected Reward','often','This priority moderates the dependency between Actor\'s resources and its Expected Reward')
+            #//GT: edge 48; from 38; to 37; 1 of 1; next 3 lines
+            logEdge('Actor\'s resources','Actor\'s Expected Reward','often','Actors are incentivized to increase their resources')
+            #//GT: edge 49; from 25; to 37; 1 of 1; next 1 lines
             self.setReward(maximizeFeature(wealth,self.name),self.Rweights['resources'])
-        else:
-            self.Rweights['resources'] = 0.
 
         if self.demographics['kids'] > 0:
-            logNode('Actor\'s priority of childrenHealth','Importance of children\'s health','Real in [0-1]')
-            #//GT: node 30; 1 of 1; next 9 lines
-            # //GT: edge 30; from 18; to 11; 1 of 1; next 9 lines
             mean = config.getint('Actors','reward_kids_%s' % (self.demographics['gender']))
             if mean > 0:
+                logNode('Actor\'s priority of childrenHealth','Importance of children\'s health','Real in [0-1]')
+                #//GT: node 39; 1 of 1; next 4 lines
                 if sigma > 0:
                     self.Rweights['childrenHealth'] = sampleNormal(mean,sigma)
                 else:
                     self.Rweights['childrenHealth'] = likert[5][mean-1]
-                # //GT: edge 15; from 9; to 11; 1 of 1; next 1 line
+
+                logEdge('Actor\'s priority of childrenHealth','Actor\'s Expected Reward','often','This priority moderates the dependency between Actor\'s childrenHealth and its Expected Reward')
+                #//GT: edge 50; from 39; to 37; 1 of 1; next 3 lines
+                logEdge('Actor\'s childrenHealth','Actor\'s Expected Reward','often','Actors with children are incentivized to avoid decreases to their children\'s health levels')
+                #//GT: edge 51; from 24; to 37; 1 of 1; next 1 lines
                 self.setReward(maximizeFeature(kidHealth,self.name),self.Rweights['childrenHealth'])
 
         if self.demographics.get('pet',False):
-            logNode('Actor\'s priority of pets','Importance of pet\'s wellbeing','Real in [0-1]')
-            #//GT: node 31; 1 of 1; next 9 lines
-            # //GT: edge 33; from 21; to 11; 1 of 1; next 9 lines
             mean = config.getint('Actors','reward_pets')
             if mean > 0:
+                logNode('Actor\'s priority of pets','Importance of pet\'s wellbeing','Real in [0-1]')
+                #//GT: node 40; 1 of 1; next 4 lines
                 if sigma > 0:
                     self.Rweights['pet'] = sampleNormal(mean,sigma)
                 else:
                     self.Rweights['pet'] = likert[5][mean-1]
-                # //GT: edge 29; from 17; to 11; 1 of 1; next 1 line
+
+                logEdge('Actor\'s priority of pets','Actor\'s Expected Reward','often','This priority moderates the dependency between Actor\'s pets and its Expected Reward')
+                #//GT: edge 52; from 40; to 37; 1 of 1; next 3 lines
+                logEdge('Actor\'s pet','Actor\'s Expected Reward','often','Actors are incentivized to avoid having a pet die')
+                #//GT: edge 53; from 18; to 37; 1 of 1; next 1 lines
                 self.setReward(maximizeFeature(pet,self.name),self.Rweights['pet'])
 
         logNode('Actor\'s priority of neighbors','Importance of neighbors\' wellbeing','Real in [0-1]')
-        #//GT: node 32; 1 of 1; next 16 lines
-        # //GT: edge 32; from 20; to 11; 1 of 1; next 14 lines
+        #//GT: node 41; 1 of 1; next 12 lines
         mean = config.getint('Actors','altruism_neighbors_%s' % (self.demographics['religion']))
-        if mean > 0:
+        if mean == 0:
+            self.Rweights['neighbors'] = 0.
+        else:
             if sigma > 0:
                 self.Rweights['neighbors'] = sampleNormal(mean,sigma)
             else:
@@ -842,11 +981,13 @@ class Actor(Agent):
                 self.Rweights['neighbors'] /= float(len(neighbors))
             except ZeroDivisionError:
                 pass
-            # //GT: edge 40; from 28; to 11; 1 of 1; next 2 lines
+
+            logEdge('Actor\'s priority of neighbors','Actor\'s Expected Reward','often','This priority moderates the dependency between Region\'s risk and the actor\'s Expected Reward')
+            #//GT: edge 54; from 41; to 37; 1 of 1; next 4 lines
+            logEdge('ActorBeliefOfRegion\'s risk','Actor\'s Expected Reward','often','Altruistic actors derive reward from the risk level of their home region')
+            #//GT: edge 55; from 12; to 37; 1 of 3; next 2 lines
             self.setReward(minimizeFeature(stateKey(self.demographics['home'],'risk'),self.name),
                            self.Rweights['neighbors'])
-        else:
-            self.Rweights['neighbors'] = 0.
 
         if config.getboolean('Actors','beliefs'):
             # Observations
@@ -876,25 +1017,32 @@ class Actor(Agent):
                     self.world.setFeature(omega,'none')
 
             logNode('Actor\'s information distortion','Over/underestimation in information received about hurricane severity','"none" / "over" / "under"')
-            #//GT: node 33; 1 of 1; next 4 lines
+            #//GT: node 42; 1 of 1; next 7 lines
             distortion = Distribution({'over': likert[5][config.getint('Actors','category_over')-1],
                                        'under': likert[5][config.getint('Actors','category_under')-1]})
             distortion['none'] = 1.-distortion['over']-distortion['under']
             self.distortion = distortion.sample()
+#            self.world.defineState(self.name,'distortion',list,['none','over','under'],
+#                description='Over/underestimation in information received about hurricane severity',codePtr=True)
+#            self.setState('distortion',self.distortion)
 
             logNode('Actor\'s memory','How much an actor remembers about personal experience in previous hurricanes','Real in [0-1]')
-            #//GT: node 34; 1 of 1; next 4 lines
+            #//GT: node 43; 1 of 1; next 4 lines
             if config.getint('Actor','memory',fallback=0) > 0:
                 self.memory = likert[5][config.getint('Actor','memory')-1]
             else:
                 self.memory = 0.
                 
             logNode('Actor\'s perceivedCategory','Information that actor receives about the hurricane\'s current severity','Integer in [0-5]')
-            #//GT: node 35; 1 of 1; next 24 lines
+            #//GT: node 44; 1 of 1; next 3 lines
             omega = self.defineObservation('perceivedCategory',domain=int,codePtr=True,
                                            description='Perception of Nature\'s category')
-            # //GT: edge 43; from 30; to 16; 1 of 1; next 22 lines
-            # //GT: edge 61; from 38; to 16; 1 of 1; next 22 lines
+            self.setState('perceivedCategory',0)
+
+            logEdge('Nature\'s category','Actor\'s perceivedCategory','often','Actors received accurate or off-by-1 reports of the hurricane category with some probability')
+            #//GT: edge 56; from 10; to 44; 1 of 1; next 21 lines
+            logEdge('Actor\'s information distortion','Actor\'s perceivedCategory','often','Category information is possibly an over/underestimate of real value')
+            #//GT: edge 57; from 42; to 44; 1 of 1; next 19 lines
             distortionProb = likert[5][config.getint('Actors','category_distortion')-1]
             real = stateKey('Nature','category')
             if self.distortion == 'none':
@@ -914,7 +1062,6 @@ class Actor(Agent):
                                                   1.-distortionProb)]}}
             self.setO('perceivedCategory',evolve,makeTree(tree))
             self.setO('perceivedCategory',None,makeTree(setToConstantMatrix(omega,-1)))
-            self.setState('perceivedCategory',0)
 
             if config.getint('Simulation','phase',fallback=1) == 1:        
                 if not config.getboolean('Simulation','graph',fallback=False):
@@ -952,7 +1099,8 @@ class Actor(Agent):
                                                                          (setToFeatureMatrix(omega,real,shift=-1),(1.-trueProb)/2.),
                                                                          (setToFeatureMatrix(omega,real,shift=1),(1.-trueProb)/2.)]}}}))
     def setHealthDynamics(self,up,down,codePtr=True): 
-        # //GT: edge 37; from 25; to 13; 1 of 1; next 13 lines
+        logEdge('Actor\'s risk','Actor\'s health','often','Higher levels of personal risk lead to higher likelihoods and higher severity of health loss for themselves')
+        #//GT: edge 32; from 26; to 21; 1 of 1; next 20 lines
         tree = {'if': thresholdRow(makeFuture(stateKey(self.name,'risk')),likert[5][:]),
                 0: approachMatrix(stateKey(self.name,'health'),up,self.health)}
         for level in range(1,6):
@@ -964,6 +1112,7 @@ class Actor(Agent):
             tree = {'if': trueRow(stateKey(self.name,'alive')),
                              True: tree, False: setToConstantMatrix(stateKey(self.name,'health'),0.)}
         if self.horizon <= 2:
+            # Make sure even the most short-sighted actors are aware that the hurricane will impact their health
             if self.config.getint('Simulation','phase',fallback=1) == 1:
                 self.world.setDynamics(stateKey(self.name,'health'),Action({'subject': self.name}),makeTree(tree),codePtr=codePtr)
             else:
@@ -975,7 +1124,7 @@ class Actor(Agent):
 
     def makeFriend(self,friend,config):
         logNode('Actor friendOf Actor','Friendship relationship between two actors','Boolean')
-        #//GT: node 46; 1 of 1; next 1 lines
+        #//GT: node 57; 1 of 1; next 1 lines
         self.friends.add(friend.name)
 
         if self.config.getint('Simulation','phase',fallback=1) == 1:
@@ -1062,8 +1211,14 @@ class Actor(Agent):
                 if self.Rweights['neighbors'] > 0.:
                     self.setReward(maximizeFeature(key,self.name),1.)
 
-        regions = [n for n in self.world.agents if isinstance(self.world.agents[n],Region)]
-        shelters = {int(region) for region in config.get('Shelter','region').split(',')}
+        shelters = set()
+        for act in self.actions:
+            if act['verb'] == 'moveTo' and act['object'][:7] == 'shelter':
+                shelters.add(Region.nameString % (int(act['object'][7:])))
+        regions = {self.demographics['home']}
+        if config.getint('Simulation','phase',fallback=1) == 3:
+            regions |= shelters
+            regions.add(self.world.agents[self.demographics['home']].evacuationPath()[-1])
 
         include = set()
         altNeighbor = config.getint('Actors','altruism_neighbors_%s' % (self.demographics['religion']))
@@ -1116,16 +1271,16 @@ class Actor(Agent):
             #         if state2feature(key) in {'health','alive','risk'}:
             #             include.add(key)
             elif isinstance(self.world.agents[agent],Region):
-                if agent == self.demographics['home']:
+                if agent in regions:
                     if not isModelKey(key):
                         if not config.getboolean('Simulation','graph',fallback=False):
                             include.add(key)
                         elif state2feature(key) == 'risk':
-                            logNode('ActorBeliefOfRegion\'s risk','Belief about risk level of home region','Probability Distribution over reals in [0,1]')
+                            logNode('ActorBeliefOfRegion\'s risk','Belief about risk level of region','Probability Distribution over reals in [0,1]')
                             #//GT: node 28; 1 of 1; next 6 lines
                             include.add(key)
 
-                elif self.world.agents[agent].number in shelters:
+                elif agent in shelters:
                     if state2feature(key)[:7] == 'shelter':
                         if not config.getboolean('Simulation','graph',fallback=False):
                             logNode('ActorBeliefOfRegion\'s shelterRisk','Belief about risk level at shelter','Probability Distribution over reals in [0,1]')
@@ -1195,7 +1350,8 @@ class Actor(Agent):
         if self.config.getint('Simulation','phase',fallback=1) == 1:
             return Agent.updateBeliefs(self,trueState,actions)
         else:
-            # //GT: edge 28; from 16; to 27; 1 of 1; next 21 lines
+            logEdge('Actor\'s perceivedCategory','ActorBeliefOfNature\'s category','often','The information received influences the actors\' subsequent belief')
+            #//GT: edge 69; from 44; to 11; 1 of 1; next 55 lines
             beliefs = self.getBelief(trueState)
             assert len(beliefs) == 1
             model,beliefs = next(iter(beliefs.items()))
@@ -1288,6 +1444,8 @@ class Actor(Agent):
 
     def decide(self,state=None,horizon=None,others=None,model=None,selection='uniform',
                     actions=None,debug={}):
+        if actions is not None and len(actions) == 1:
+            return {'action': next(iter(actions))}
         if state is None:
             state = self.world.state
         if selection is None:
@@ -1302,51 +1460,105 @@ class Actor(Agent):
             model = model.first()
         if actions is None:
             actions = self.getActions(state)
-        belief = self.getBelief(state,model)
+
+        if self.spouse is not None and self.spouse in others:
+            logEdge('Actor marriedTo Actor','Actor\'s Expected Reward','sometimes','Spouses have the highest expected reward for coordinated action')
+            #//GT: edge 85; from 22; to 37; 1 of 1; next 12 lines
+            spouseKey = actionKey(self.spouse)
+            joint = self.world.float2value(spouseKey,others[self.spouse][makeFuture(spouseKey)][makeFuture(spouseKey)][CONSTANT])
+            for action in self.actions:
+                if action['verb'] == joint['verb']:
+                    if 'object' in action:
+                        if action['object'] == joint['object']:
+                            return {'action': action}
+                    else:
+                        return {'action': action}
+            else:
+                raise ValueError('%s unable to match spouse action: %s' % (self.name,joint))
+        actionMap = {action: action for action in actions}
+
         for group in self.groups:
             membership = self.world.getFeature(binaryKey(self.name,group,'memberOf'))
             assert len(membership) == 1,'Unable to handle uncertain group membership'
             if membership.first():
                 # I'm in this group; has there been a group decision?
-                action = self.world.getFeature(stateKey(group,ACTION))
+                action = self.world.getFeature(stateKey(group,ACTION),state)
                 assert len(action) == 1
                 action = action.first()
                 if action['verb'] != 'noDecision':
+                    logEdge('Actor memberOf Group','Actor\'s Expected Reward','sometimes','Group members have highest expected reward when abiding by group decision')
+                    #
+                    logEdge('Group-decreaseRisk','Actor-decreaseRisk','sometimes','Group members must either follow group decision or leave group')
+                    #
+                    logEdge('Group-decreaseRisk','Actor-leave-Group','sometimes','Group members must either follow group decision or leave group')
+                    #
                     candidates = []
                     for lonely in actions:
                         if lonely['verb'] == action['verb']:
                             if 'object' in action:
                                 if lonely['object'] == action['object']:
-                                    return {'action': lonely}
+                                    candidates = {lonely}
+                                    break
                             elif 'object' in lonely:
                                 candidates.append(lonely)
                             else:
-                                return {'action': lonely}
+                                candidates = {lonely}
+                                break
                     assert len(candidates) == 1,'Multiple options for agent %s to satisfy group %s decision %s:\n%s' % (self.name,group,action,candidates)
-                    return {'action': candidates[0]}
-        else:
-            logNode('Actor\'s Expected Reward','Expected utility (desirability) of candidate actions','Real for each action choice')
-            # //GT: node 11; 1 of 1; next 20 lines
-            # //GT: edges 17 to 22; from 11; to 3-8; next 19 lines
-            # //GT: edges 25; from 14; to 11; next 18 lines
-            decision = Agent.decide(self,state,horizon,None if self.config.getint('Simulation','phase',fallback=1) > 1 else others,
-                model,selection,actions,belief.keys(),debug)
-            if len(decision['action']) > 1 and selection == 'uniform':
-                try:
-                    home = self.demographics['home']
-                except AttributeError:
-                    home = self.world.getState(self.name,'region').first()
-                if self.world.getState(self.name,'location',belief).first() == home:
-                    action = ActionSet(Action({'subject': self.name,'verb': 'stayInLocation'}))
-                else:
-                    action = ActionSet(Action({'subject': self.name, 'verb': 'moveTo','object': home}))
-                for choice in decision['action'].domain():
-                    if action == choice:
-                        decision['action'] = choice
-                        break
-                else:
-                    decision['action'] = decision['action'].first()
-            return decision
+                    actionMap = {lonely: lonely, self.nop: ActionSet([Action({'subject': self.name,'verb': 'leave','object': group})])}
+                    break
+
+        logEdge('ActorBeliefOfActor\'s risk','Actor\'s Expected Reward','often','Actor\'s expected reward computation uses perception of its risk (not actual value)')
+        #//GT: edge 70; from 35; to 37; 1 of 2; next 49 lines
+        logEdge('ActorBeliefOfNature\'s category','Actor\'s Expected Reward','often','Actor\'s expected reward computation uses perception of hurricane category (not actual value)')
+        #//GT: edge 71; from 11; to 37; 1 of 2; next 47 lines
+        logEdge('ActorBeliefOfRegion\'s risk','Actor\'s Expected Reward','often','Actor\'s expected reward computation uses perception of region risk (not actual value)')
+        #//GT: edge 55; from 12; to 37; 2 of 3; next 45 lines
+        logEdge('ActorBeliefOfRegion\'s shelterRisk','Actor\'s Expected Reward','often','Actor\'s expected reward computation uses perception of shelter risk (not actual value)')
+        #//GT: edge 72; from 13; to 37; 1 of 2; next 43 lines
+        logNode('Actor\'s Expected Reward','Expected utility (desirability) of candidate actions','Real for each action choice')
+        #//GT: node 37; 1 of 1; next 41 lines
+        logEdge('Actor\'s Expected Reward','Actor-decreaseRisk','often','Action choice determined by the expected reward calculation')
+        #//GT: edge 73; from 37; to 32; 1 of 1; next 39 lines
+        logEdge('Actor\'s Expected Reward','Actor-evacuate','often','Action choice determined by the expected reward calculation')
+        #//GT: edge 74; from 37; to 30; 1 of 1; next 37 lines
+        logEdge('Actor\'s Expected Reward','Actor-moveTo-home','often','Action choice determined by the expected reward calculation')
+        #//GT: edge 75; from 37; to 31; 1 of 1; next 35 lines
+        logEdge('Actor\'s Expected Reward','Actor-moveTo-shelter','often','Action choice determined by the expected reward calculation')
+        #//GT: edge 76; from 37; to 29; 1 of 1; next 33 lines
+        logEdge('Actor\'s Expected Reward','Actor-stayInLocation','often','Action choice determined by the expected reward calculation')
+        #//GT: edge 77; from 37; to 28; 1 of 1; next 31 lines
+        logEdge('Actor\'s Expected Reward','Actor-takeResources','often','Action choice determined by the expected reward calculation')
+        #//GT: edge 78; from 37; to 33; 1 of 1; next 29 lines
+        logEdge('Actor\'s horizon','Actor\'s Expected Reward','often','How far into the future an Actor looks when deciding what to do')
+        #//GT: edge 79; from 14; to 37; 1 of 1; next 27 lines
+        logEdge('ActorBeliefOfActor\'s risk','Actor\'s Expected Reward','often','Actor\'s expected reward computation uses perception of its risk (not actual value)')
+        #//GT: edge 70; from 35; to 37; 2 of 2; next 25 lines
+        logEdge('ActorBeliefOfNature\'s category','Actor\'s Expected Reward','often','Actor\'s expected reward computation uses perception of hurricane category (not actual value)')
+        #//GT: edge 71; from 11; to 37; 2 of 2; next 23 lines
+        logEdge('ActorBeliefOfRegion\'s risk','Actor\'s Expected Reward','often','Actor\'s expected reward computation uses perception of region risk (not actual value)')
+        #//GT: edge 55; from 12; to 37; 3 of 3; next 21 lines
+        logEdge('ActorBeliefOfRegion\'s shelterRisk','Actor\'s Expected Reward','often','Actor\'s expected reward computation uses perception of shelter risk (not actual value)')
+        #//GT: edge 72; from 13; to 37; 2 of 2; next 19 lines
+        belief = self.getBelief(state,model)
+        decision = Agent.decide(self,state,horizon,None if self.config.getint('Simulation','phase',fallback=1) > 1 else others,
+            model,selection,actionMap.keys(),belief.keys(),debug)
+        if len(decision['action']) > 1 and selection == 'uniform':
+            try:
+                home = self.demographics['home']
+            except AttributeError:
+                home = self.world.getState(self.name,'region').first()
+            if self.world.getState(self.name,'location',belief).first() == home:
+                action = ActionSet(Action({'subject': self.name,'verb': 'stayInLocation'}))
+            else:
+                action = ActionSet(Action({'subject': self.name, 'verb': 'moveTo','object': home}))
+            for choice in decision['action'].domain():
+                if action == choice:
+                    decision['action'] = choice
+                    break
+            else:
+                decision['action'] = actionMap[decision['action'].first()]
+        return decision
 
     def reinforceHome(self,config):
         impact = likert[5][config.getint('Actors','health_impact')-1]
@@ -1360,10 +1572,12 @@ class Actor(Agent):
 
     def getNeighbors(self):
         logNode('Actor neighborOf Actor','Neighbor relationship between two actors','Boolean')
-        #//GT: node 15; 1 of 1; next 7 lines
+        #//GT: node 20; 1 of 1; next 9 lines
+        logEdge('Actor\'s health','Actor neighborOf Actor','sometimes','Actors cannot be neighbors with dead people')
+        #//GT: edge 14; from 21; to 20; 1 of 1; next 7 lines
         try:
             return {a.name for a in self.world.agents.values() if isinstance(a,Actor) and \
-                not a.name == self.name and a.demographics['home'] == self.demographics['home']}
+                not a.name == self.name and a.demographics['home'] == self.demographics['home'] and stateKey(a.name,'health') in self.world.state}
         except AttributeError:
             # Old school (i.e., terrible)
             return {a.name for a in self.world.agents.values() if isinstance(a,Actor) and \
