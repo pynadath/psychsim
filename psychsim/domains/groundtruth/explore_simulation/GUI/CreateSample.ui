@@ -78,7 +78,7 @@
         </size>
        </property>
        <property name="title">
-        <string>name (optional)</string>
+        <string>name</string>
        </property>
        <widget class="QLineEdit" name="nameLine">
         <property name="geometry">

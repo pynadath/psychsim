@@ -51,14 +51,4 @@ class Ui_CreateSample(object):
         _translate = QtCore.QCoreApplication.translate
         CreateSample.setWindowTitle(_translate("CreateSample", "Create Sample"))
         self.groupBox.setTitle(_translate("CreateSample", "Create Sample"))
-        self.groupBox_4.setTitle(_translate("CreateSample", "name (optional)"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    CreateSample = QtWidgets.QDialog()
-    ui = Ui_CreateSample()
-    ui.setupUi(CreateSample)
-    CreateSample.show()
-    sys.exit(app.exec_())
+        self.groupBox_4.setTitle(_translate("CreateSample", "name"))
