@@ -247,7 +247,7 @@ def readPrescription(inFile):
                     prescription = [row]
     return prescription
 
-def logNode(name,description=None,nodeType=None,offset=1):
+def logNode(name,description=None,nodeType=None,notes='',offset=1):
     """
     :param offset: How many lines after this one is the relevant comment (default is 1)
     """
@@ -256,7 +256,7 @@ def logNode(name,description=None,nodeType=None,offset=1):
         gtNodes[name] = ('%d' % (nodeID),)
     if description is not None and len(gtNodes[name]) == 1:
         frame = inspect.getouterframes(inspect.currentframe())[1]
-        gtNodes[name] = (gtNodes[name][0],name,description,nodeType,inspect.getmodulename(frame.filename),'%d' % (frame.lineno+offset))
+        gtNodes[name] = (gtNodes[name][0],name,description,nodeType,inspect.getmodulename(frame.filename),'%d' % (frame.lineno+offset),notes)
         logging.debug('%s' % (','.join(gtNodes[name])))
 
 
@@ -286,7 +286,7 @@ if __name__ == '__main__':
     with open('psychsim.log','r') as log:
         for entry in log:
             cols = entry.split(',')
-            if len(cols) == 6:
+            if len(cols) == 7:
                 # Entry for a node
                 assert cols[0] not in nodes
                 nodes[cols[0]] = cols
@@ -344,6 +344,16 @@ if __name__ == '__main__':
             with open(os.path.join(os.path.dirname(__file__),'%s.py' % (cols[5])),'w') as src:
                 src.write(newSrc)
     # Write node table
-
-
-
+    fields = ['Node ID','Name','Description','Type','Module','Line','Notes']
+    with open('nodes.tsv','w') as csvfile:
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+        writer.writeheader()
+        for record in sorted(nodes.values(),key=lambda n: int(n[0])):
+            writer.writerow({fields[i]: record[i].strip() for i in range(len(fields))})
+    fields = ['Edge ID','Source','Target','Frequency','Description','Module','Line','Notes']
+    with open('edges.tsv','w') as csvfile:
+        writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
+        writer.writeheader()
+        for edgeID,entries in sorted(edges.items(),key=lambda item: int(item[0])):
+            for record in entries:
+                writer.writerow({fields[i]: record[i].strip() for i in range(len(fields))})
