@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Apply Filter</string>
+   <string>Count Actors</string>
   </property>
   <property name="modal">
    <bool>false</bool>
@@ -65,11 +65,37 @@
       <height>181</height>
      </rect>
     </property>
-    <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0,0">
+    <layout class="QGridLayout" name="gridLayout" rowstretch="0,0,0">
      <property name="sizeConstraint">
       <enum>QLayout::SetMinimumSize</enum>
      </property>
-     <item row="1" column="0">
+     <item row="0" column="2">
+      <widget class="QGroupBox" name="groupBox_2">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>75</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>operator</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+       <widget class="QComboBox" name="operatorBox">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>104</width>
+          <height>26</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+     </item>
+     <item row="0" column="0">
       <widget class="QGroupBox" name="groupBox_3">
        <property name="maximumSize">
         <size>
@@ -98,7 +124,7 @@
        </widget>
       </widget>
      </item>
-     <item row="1" column="2">
+     <item row="0" column="3">
       <widget class="QGroupBox" name="groupBox_6">
        <property name="maximumSize">
         <size>
@@ -133,33 +159,7 @@
        </widget>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QGroupBox" name="groupBox_2">
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>75</height>
-        </size>
-       </property>
-       <property name="title">
-        <string>operator</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-       </property>
-       <widget class="QComboBox" name="operatorBox">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>30</y>
-          <width>104</width>
-          <height>26</height>
-         </rect>
-        </property>
-       </widget>
-      </widget>
-     </item>
-     <item row="2" column="0">
+     <item row="1" column="0">
       <widget class="QGroupBox" name="groupBox_7">
        <property name="maximumSize">
         <size>
@@ -168,17 +168,17 @@
         </size>
        </property>
        <property name="title">
-        <string>day</string>
+        <string>days</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
        </property>
-       <widget class="QSpinBox" name="dayspinBox">
+       <widget class="QSpinBox" name="dayspinBox_1">
         <property name="geometry">
          <rect>
-          <x>20</x>
+          <x>10</x>
           <y>30</y>
-          <width>53</width>
+          <width>51</width>
           <height>24</height>
          </rect>
         </property>
@@ -186,30 +186,17 @@
          <number>1</number>
         </property>
        </widget>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QGroupBox" name="groupBox_4">
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>75</height>
-        </size>
-       </property>
-       <property name="title">
-        <string>name (optional)</string>
-       </property>
-       <widget class="QLineEdit" name="nameLine">
+       <widget class="QSpinBox" name="dayspinBox_2">
         <property name="geometry">
          <rect>
-          <x>10</x>
+          <x>70</x>
           <y>30</y>
-          <width>113</width>
-          <height>21</height>
+          <width>51</width>
+          <height>24</height>
          </rect>
         </property>
-        <property name="alignment">
-         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+        <property name="minimum">
+         <number>1</number>
         </property>
        </widget>
       </widget>
