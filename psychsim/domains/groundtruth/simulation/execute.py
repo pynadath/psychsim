@@ -197,6 +197,7 @@ def runInstance(instance,args,config,rerun=True):
         state = {'hurricanes': len(hurricanes),
                  'phase': world.getState('Nature','phase').first(),
                  'TA2BTA1C10': args['TA2BTA1C10'],
+                 'election': 1,
                  'panels': {}, 'participants': {}}
         if args['TA2BTA1C10']:
             state['panels']['TA2BTA1C10pre'] = {}
@@ -405,7 +406,38 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
     if config.getboolean('Data','livecdf',fallback=True):
         updateCDF(world,dirName,cdfTables)
     while day == state['today']:
-        living = [a for a in world.agents.values() if isinstance(a,Actor) and a.getState('alive').first()]
+        if config.getint('Simulation','phase',fallback=1) < 3:
+            living = [a for a in world.agents.values() if isinstance(a,Actor) and a.getState('alive').first()]
+        else:
+            living = []
+            for actor in [a for a in world.agents.values() if isinstance(a,Actor) and stateKey(a.name,'health') in world.state]:
+                if actor.getState('health').expectation() > config.getfloat('Actors','life_threshold'):
+                    # still going strong
+                    living.append(actor)
+                else:
+                    # not so much
+                    toDelete = [key for key in world.state.keys() if (isStateKey(key) and state2agent(key) == actor.name) or \
+                        (isBinaryKey(key) and key2relation(key)['subject'] == actor.name)]
+                    world.state.deleteKeys(toDelete)
+                    world.dependency.deleteKeys(set(toDelete))
+
+                    logEdge('Actor\'s health','Actor memberOf Group','sometimes','Actors can no longer be group members when they die')
+                    #
+                    for group in [g for g in world.agents if g[:5] == 'Group']:
+                        if actor.name in world.agents[group].potentials:
+                            world.agents[group].potentials.remove(actor.name)
+
+                    logEdge('Actor\'s health','Actor marriedTo Actor','sometimes','Actors are no longer married if their spouse dies')
+                    #
+                    if actor.spouse is not None:
+                        world.agents[actor.spouse].spouse = None
+
+                    logEdge('Actor\'s health','Actor friendOf Actor','sometimes','Actors cannot be friends with dead people')
+                    #
+                    for friend in [f for f in world.agents.values() if f.name[:5] == 'Actor']:
+                        if actor.name in friend.friends:
+                            friend.friends.remove(actor.name)
+
         agents = world.next()
         turn = world.agents[next(iter(agents))].__class__.__name__
         if start:
@@ -417,9 +449,20 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
             if groups:
                 # Make group decisions
                 pass
-            # //GT: edge 1; from 1; to 27; 1 of 2; next 35 lines
             if config.getboolean('Actors','messages') and state['phase'] != 'none':
+                logEdge('Actor friendOf Actor','ActorBeliefOfNature\'s category','often','Actors share their beliefs about the hurricane\'s category with their friends on a daily basis, and their beliefs are influence by the incoming messages')
+                # 
                 exchangeMessages(world,config,world.state,living)
+
+        elif turn == 'System' and config.getint('System','election_effect',fallback=0) > 0:
+            freq = config.get('System','election_frequency',fallback='season')
+            electionT = state['today']
+            if freq == 'season':
+                electionT /= config.getint('Disaster','year_length',fallback=365) + 1
+            if electionT > state['election']:
+                # Time for a new election
+                world.agents['System'].election(living)
+                state['election'] = electionT
         if state['phase'] == 'approaching':
             history.clear()
             if turn == 'Actor' and survey is not None and config.getboolean('Data','presurvey',fallback=True):
