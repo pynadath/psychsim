@@ -38,6 +38,7 @@ from psychsim.domains.groundtruth.explore_simulation.GUI.CreateSample import Ui_
 from psychsim.domains.groundtruth.explore_simulation.GUI.DisplayOneSample import Ui_Display_One_Sample_Dialog
 from psychsim.domains.groundtruth.explore_simulation.GUI.GetEntityAttributes import Ui_EntityName
 from psychsim.domains.groundtruth.explore_simulation.GUI.DeactivateFilter import Ui_DeactivateFilter
+from psychsim.domains.groundtruth.explore_simulation.GUI.ReactivateFilter import Ui_ReactivateFilter
 from psychsim.domains.groundtruth.explore_simulation.GUI.CountDialog import Ui_CountDialog
 
 # from GUI.GetDialog import Ui_GetDialog
@@ -90,9 +91,7 @@ class Main(QMainWindow, Ui_MainWindow):
         if self.filterText.currentItem():
             item = self.filterText.currentItem().text().split(':')
             logparser.reactivate_filter(p_name=item[0])
-            self.filterText.clear()
-            self.filterText.addItems([logparser.filters_to_str(f) for f in logparser.filter_list])
-            #self.filterText.addItems(logparser.display_filters())            
+            self.updateFilterList()
             print(item[0])
         else:
             print('Must firest select a filter')
@@ -101,9 +100,6 @@ class Main(QMainWindow, Ui_MainWindow):
             item = self.filterText.currentItem().text().split(':')
             logparser.deactivate_filter(p_name=item[0])
             self.updateFilterList()
-            #self.filterText.clear()
-            #self.filterText.addItems([logparser.filters_to_str(f) for f in logparser.filter_list])
-            #self.filterText.addItems(logparser.display_filters())            
             print(item[0])
         else:
             print('Must first select a filter')
@@ -150,6 +146,7 @@ class Main(QMainWindow, Ui_MainWindow):
         self.setup_display_one_sample()
         self.setup_get_attribute_names()
         self.setup_deactivate_filter()
+        self.setup_reactivate_filter()
         self.setup_count_actors()
         
 
@@ -157,10 +154,15 @@ class Main(QMainWindow, Ui_MainWindow):
         logparser.get_ndays(None)
 
     def show_display_samples_clicked(self):
-        print("------")
-        logparser.display_samples()
-        print("------")
-
+        self.on_Query('display_samples')
+        # the following should not be necessary since I am above calling the exact same code that
+        # does not require a repaint - that code is called from the query combobox and works fine
+        # without a repaint--- ie pyqt5 is garbage
+        # for some reason therefore the event loop must be sleeping
+        # or the automatic repaint doesn't happen when it is called from a button as opposed
+        # to a combobox??
+        self.historyEdit.repaint()
+        
         
     def show_get_nactors(self):
         logparser.get_nactors(None)
@@ -273,21 +275,20 @@ class Main(QMainWindow, Ui_MainWindow):
 
 
         
-    # def setup_activate_filter(self):
-    #     self.activateFilter = QtWidgets.QDialog()
-    #     self.activate_filter = Ui_activateFilter()
-    #     self.activate_filter.setupUi(self.activateFilter)
-    #     self.activate_filter.buttonBox.accepted.connect(self.on_activate_filter)
-    #     self.activate_filter.attributeBox.addItems(logparser.entities_att_list['Actor'])
-    def on_activate_filter(self):
+    def setup_reactivate_filter(self):
+        self.ReactivateFilter = QtWidgets.QDialog()
+        self.reactivate_filter = Ui_ReactivateFilter()
+        self.reactivate_filter.setupUi(self.ReactivateFilter)
+        self.reactivate_filter.buttonBox.accepted.connect(self.on_reactivate_filter)
+        # self.deactivate_filter.attributeBox.addItems(logparser.entities_att_list['Actor'])
+    def on_reactivate_filter(self):
         print("#######################\n")
-        p_name = self.activate_filter.filterBox.currentText()
-        
-        self.f = logparser.activate_filter(p_name=p_name)
+        p_name = self.reactivate_filter.comboBox.currentText()
+        self.f = logparser.reactivate_filter(p_name=p_name)
         self.updateFilterList()
-    def show_activate_filter(self):
-        self.activate_filter.operatorBox.addItems(logparser.show_filters())
-        self.activateFilter.show()
+    def show_reactivate_filter(self):
+        self.reactivate_filter.comboBox.addItems([f['name'] for f in logparser.filter_list])
+        self.ReactivateFilter.show()
 
     def setup_apply_filter(self):
         self.FilterDialog = QtWidgets.QDialog()
@@ -401,11 +402,6 @@ class Main(QMainWindow, Ui_MainWindow):
                 self.queryBox.addItem(self.cmd)
                 self.subwindowList[self.cmd] = self.commands[cmdType][cmdInst]
                 sep_flag = True
-        # self.subwindowList.append('graph_days')
-        # self.queryBox.addItem('graph_days')
-        # self.subwindowList.append('percent_filtered')
-        # self.queryBox.addItem('percent_filtered')
-        
         
     def on_execute(self,selected):
         self.parse_execute_query()
@@ -423,25 +419,6 @@ class Main(QMainWindow, Ui_MainWindow):
         self.method = getattr(self, "show_" + selected, lambda: 'self.show_create')
         return self.method()
 
-    # def setup_create(self):
-    #     self.FilterDialog = QtWidgets.QDialog()
-    #     self.apply_filter = Ui_FilterDialog()
-    #     self.apply_filter.setupUi(self.FilterDialog)
-    #     self.apply_filter.buttonBox.accepted.connect(self.on_apply_filter)
-    #     self.apply_filter.attributeBox.addItems(logparser.entities_att_list['Actor'])
-    #     self.apply_filter.operatorBox.addItems(['<','>','=','<=','>='])
-    # def on_create(self):
-    #     print("#######################\n")
-    #     p_att = self.apply_filter.attributeBox.currentText()
-    #     p_op = self.apply_filter.operatorBox.currentText()
-    #     p_daylst = range(self.apply_filter.dayspinBox.value(),self.apply_filter.dayspinBox_2.value())
-    #     p_val = self.apply_filter.valueSpinBox.value()
-    #     p_name = self.apply_filter.nameLine.text()
-    #     logparser.apply_filter(p_daylst, p_att, p_val, p_op, p_name=p_name)
-    # def show_create(self):
-    #     self.FilterDialog.show()
-
-        
     def on_reset(self,selected):
         print(selected)
         logparser.reset_selection(None)
@@ -461,6 +438,22 @@ class Main(QMainWindow, Ui_MainWindow):
         logparser.execute_query(self.query,buffer=sys.stdout)
         sys.stdout.flush()
 
+class unBuffered(object):
+    def __init__(self, stream):
+       self.stream = stream
+    def write(self, data):
+       self.stream.moveCursor(QtGui.QTextCursor.End)
+       self.stream.insertPlainText(data)
+       self.flush()
+    #def writelines(self, datas):
+    #   self.stream.writelines(datas)
+    #   self.flush()
+
+    def flush(self):
+       self.stream.moveCursor(QtGui.QTextCursor.End)
+       
+    def __getattr__(self, attr):
+       return getattr(self.stream, attr)
 
 
 class OutLog:
@@ -490,33 +483,27 @@ if __name__ == "__main__":
     args = argp.parse_args()
 
 
-
-    
-
     if (args.test):
         app = QApplication(sys.argv)
         logparser = q_gt.LogParser(args.i, args.r)
         main = Main()
-        sys.stdout = OutLog(main.historyEdit)
+        sys.stdout = unBuffered(main.historyEdit)
 
-        # fig1 = Figure()
-        # ax1f1 = fig1.add_subplot(111)
-        # ax1f1.plot(np.random.rand(5))
         
-        # fig2 = Figure()
-        # ax1f2 = fig2.add_subplot(121)
-        # ax1f2.plot(np.random.rand(5))
-        # ax2f2 = fig2.add_subplot(122)
-        # ax2f2.plot(np.random.rand(10))
+        fig2 = Figure()
+        ax1f2 = fig2.add_subplot(121)
+        ax1f2.plot(np.random.rand(5))
+        ax2f2 = fig2.add_subplot(122)
+        ax2f2.plot(np.random.rand(10))
 
-        # fig3 = Figure()
-        # ax1f3 = fig3.add_subplot(111)
-        # ax1f3.pcolormesh(np.random.rand(20,20))
+        fig3 = Figure()
+        ax1f3 = fig3.add_subplot(111)
+        ax1f3.pcolormesh(np.random.rand(16,16))
 
  
 
-        # main.addfig('Two plots', fig2)
-        # main.addfig('Pcolormesh', fig3)
+        main.addfig('Two plots', fig2)
+        main.addfig('Pcolormesh Example eg Health', fig3)
 
         main.filterList = OutLog(main.filterText)
         main.historyEdit.setPlainText("Hi Stacy\n")
