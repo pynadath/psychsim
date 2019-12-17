@@ -1,5 +1,5 @@
 import sys
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from optparse import OptionParser
 
 from psychsim.pwl import *

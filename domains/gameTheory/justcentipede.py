@@ -1,5 +1,5 @@
 import sys
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from optparse import OptionParser
 
 from psychsim.pwl import *
@@ -17,7 +17,7 @@ class Centipede:
 
         self.maxRounds=maxRounds
         self.payoff = payoff
-        print self.payoff
+        print(self.payoff)
         self.world = World()
         stacy = Agent('Stacy')
         david = Agent('David')
@@ -80,7 +80,7 @@ class Centipede:
 # really need to ask david about these levels - if adding modesl with levels, can
 # the true model point to these but have a different level
 
-        for agent in self.world.agents.values():
+        for agent in list(self.world.agents.values()):
             agent.addModel('Christian',R={},level=2,rationality=10.,selection='distribution')
             agent.addModel('Capitalist',R={},level=2,rationality=10.,selection='distribution')
             # agent.addModel('Christian',R={},level=2,rationality=0.01)
@@ -96,11 +96,11 @@ class Centipede:
 
 
     def modeltest(self,trueModels,davidBeliefAboutStacy,stacyBeliefAboutDavid,strongerBelief):
-        agts = self.world.agents.values()
+        agts = list(self.world.agents.values())
         for i in range(2):
             me = agts[i]
             other = agts[1-i]
-            for model in me.models.keys():
+            for model in list(me.models.keys()):
                 if model is True:
                     name = trueModels[me.name]
                 else:
@@ -120,7 +120,7 @@ class Centipede:
         self.world.setMentalModel('Stacy','David',belief)
 
     def runit(self,Msg):
-        print Msg
+        print(Msg)
         for t in range(self.maxRounds + 1):
             self.world.explain(self.world.step(),level=2)
             # self.world.explain(self.world.step(),level=1)

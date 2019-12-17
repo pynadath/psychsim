@@ -89,7 +89,7 @@ def parseGDELT(fname,targets=[]):
     for line in fileinput.input(fname):
         lines += 1
         # Extract the event fields
-        elements = map(lambda x: x.strip(),line.split('\t'))
+        elements = [x.strip() for x in line.split('\t')]
         event = {}
         for index in range(len(elements)):
             if len(elements[index]) == 0:
@@ -104,24 +104,24 @@ def parseGDELT(fname,targets=[]):
             today = event['SQLDATE']
             events = []
             result['calendar'][event['SQLDATE']] = events
-            print >> sys.stderr,today
+            print(today, file=sys.stderr)
         if event['Actor1Code'] is None: 
             # No actor?
             event['Actor1Code'] = 'Unknown'
         if lines%10000 == 0 and events:
-            print >> sys.stderr,'\t%dK (%d events,%d agents)' % \
-                (lines/1000,len(events),len(result['agents']))
+            print('\t%dK (%d events,%d agents)' % \
+                (lines/1000,len(events),len(result['agents'])), file=sys.stderr)
         if matchActor(event['Actor1Code'],targets) or \
                 matchActor(event['Actor2Code'],targets):
             # Event matching our target
             events.append(event)
-            if not result['agents'].has_key(event['Actor1Code']):
+            if event['Actor1Code'] not in result['agents']:
                 agent = Agent(event['Actor1Code'])
                 result['agents'][agent.name] = agent
             event['action'] = Action({'subject': event['Actor1Code'],
                                       'verb': cameo[event['EventCode']]})
             if event['Actor2Code']:
-                if not result['agents'].has_key(event['Actor2Code']):
+                if event['Actor2Code'] not in result['agents']:
                     agent = Agent(event['Actor2Code'])
                     result['agents'][agent.name] = agent
                 event['action']['object'] = event['Actor2Code']
@@ -153,21 +153,21 @@ if __name__ == '__main__':
     # Get cracking
     for fname in args.files:
         result = parseGDELT(fname,args.actor)
-        assert result.has_key('calendar')
+        assert 'calendar' in result
         earliest = min(earliest,result['year'])
         latest = max(latest,result['year'])
         # Add relationships to the matrix
-        for key,actions in result['matrix'].items():
+        for key,actions in list(result['matrix'].items()):
             try:
                 matrix[key] += actions
             except KeyError:
                 matrix[key] = actions
         # Add new agents to the world
-        for agent in result['agents'].values():
+        for agent in list(result['agents'].values()):
             if not world.has_agent(agent):
                 world.addAgent(agent)
         # Add events to the calendar
-        for when,day in result['calendar'].items():
+        for when,day in list(result['calendar'].items()):
             try:
                 eventCalendar[when] += day
             except KeyError:
@@ -175,18 +175,18 @@ if __name__ == '__main__':
             events += day
                 
     # Print summary
-    print >> sys.stderr,format(len(world.agents),',d'),'agents'
-    print >> sys.stderr,format(len(events),',d'),'events'
-    print >> sys.stderr,len(eventCalendar),'days'
+    print(format(len(world.agents),',d'),'agents', file=sys.stderr)
+    print(format(len(events),',d'),'events', file=sys.stderr)
+    print(len(eventCalendar),'days', file=sys.stderr)
 
     # Print calendar
-    pairs = matrix.keys()
+    pairs = list(matrix.keys())
     pairs.sort()
     for pair in pairs:
         today = None
-        print pair
+        print(pair)
         for event in matrix[pair]:
             if event['SQLDATE'] != today:
-                print '\t',event['SQLDATE']
+                print('\t',event['SQLDATE'])
                 today = event['SQLDATE']
-            print '\t\t%s %4.2f %d/%d/%d %4.2f' % (event['action'],event['GoldsteinScale'],event['NumMentions'],event['NumSources'],event['NumArticles'],event['AvgTone'])
+            print('\t\t%s %4.2f %d/%d/%d %4.2f' % (event['action'],event['GoldsteinScale'],event['NumMentions'],event['NumSources'],event['NumArticles'],event['AvgTone']))

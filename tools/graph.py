@@ -9,16 +9,16 @@ def createModelGraph(world, filename="modelgraph"):
     This method creates a graph of the models used by the agents
     '''
     modelgraph = pydot.Dot('Model graph', graph_type='digraph') 
-    for agent in world.agents.values():
+    for agent in list(world.agents.values()):
         for my_model in list(agent.models.keys()):
             name = agent.name + ' ' + str(my_model)
             node_src = pydot.Node(name)
-            if node_src.get_name() not in modelgraph.obj_dict['nodes'].keys():
+            if node_src.get_name() not in list(modelgraph.obj_dict['nodes'].keys()):
                 modelgraph.add_node(node_src)
-            if world.agents[agent.name].models[my_model].has_key('beliefs'):
+            if 'beliefs' in world.agents[agent.name].models[my_model]:
                 beliefs = world.agents[agent.name].models[my_model]['beliefs']
                 if beliefs != True:
-                    for belief,pct in beliefs.items():
+                    for belief,pct in list(beliefs.items()):
                         split = belief.replace('\t','\n').split('\n')
                         for line in split:
                             if '_model' in line:
@@ -27,7 +27,7 @@ def createModelGraph(world, filename="modelgraph"):
                                 model_key = world.agents[modeled_agent_name].index2model(model_num)
                                 name = modeled_agent_name + ' ' + model_key
                                 node_dst = pydot.Node(name)
-                                if node_dst.get_name() not in modelgraph.obj_dict['nodes'].keys():
+                                if node_dst.get_name() not in list(modelgraph.obj_dict['nodes'].keys()):
                                     modelgraph.add_node(node_dst)
                                 if not modelgraph.get_edge(node_src.get_name(), node_dst.get_name()):
                                     edge = pydot.Edge(node_src, node_dst, label=str(pct))

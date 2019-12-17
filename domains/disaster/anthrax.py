@@ -150,7 +150,7 @@ objectives = {
     }
                     
 def incrementLeaves(tree,value):
-    if tree.has_key('if'):
+    if 'if' in tree:
         return {'if': tree['if'],
                 True: incrementLeaves(tree[True],value),
                 False: incrementLeaves(tree[False],value)}
@@ -160,7 +160,7 @@ def incrementLeaves(tree,value):
         return {True: tree[True],False: tree[False]+1}
 
 def leaf2matrix(tree,key):
-    if tree.has_key('if'):
+    if 'if' in tree:
         return {'if': tree['if'],
                 True: leaf2matrix(tree[True],key),
                 False: leaf2matrix(tree[False],key)}
@@ -198,14 +198,14 @@ if __name__ == '__main__':
     resident.setState('location','Seattle')
 
     # Decisions
-    for name,entry in behaviors.items():
+    for name,entry in list(behaviors.items()):
         entry['action'] = Action({'subject': resident.name,'verb': name})
 
     # Generate possible combinations of actions
     options = {}
     
     # Lifestyle choices in Seattle
-    joints = [name for name in behaviors.keys() if behaviors[name]['phase'] == 'how' and \
+    joints = [name for name in list(behaviors.keys()) if behaviors[name]['phase'] == 'how' and \
                      behaviors[name]['location'] == 'Seattle']
     for joint in powerset(joints):
         action = ActionSet([behaviors[name]['action'] for name in joint])
@@ -217,7 +217,7 @@ if __name__ == '__main__':
                                                           True: True, False: False},
                                                    False: False}))
     # Lifestyle choices outside Seattle
-    for joint in [name for name in behaviors.keys() if behaviors[name]['phase'] == 'how' and \
+    for joint in [name for name in list(behaviors.keys()) if behaviors[name]['phase'] == 'how' and \
                      behaviors[name]['location'] == 'beyond']:
         options[joint] = resident.addAction(behaviors[joint]['action'])
         # Only legal during "how" phase and if *not* living in Seattle
@@ -226,7 +226,7 @@ if __name__ == '__main__':
                                                           True: True, False: False},
                                                    False: False}))
     # Choices of where to live
-    for joint in [name for name in behaviors.keys() if behaviors[name]['phase'] == 'where']:
+    for joint in [name for name in list(behaviors.keys()) if behaviors[name]['phase'] == 'where']:
         options[joint] = resident.addAction(behaviors[joint]['action'])
         # Only legal during "where" phase
         resident.setLegal(options[joint],makeTree({'if': equalRow('phase','where'),
@@ -235,16 +235,16 @@ if __name__ == '__main__':
                                                    False: False}))
 
     # Objectives
-    ranks = [objective['rank'] for objective in objectives.values()]
+    ranks = [objective['rank'] for objective in list(objectives.values())]
     ceiling = max(ranks) + 1
     total = float(sum(ranks))
-    for name,objective in objectives.items():
+    for name,objective in list(objectives.items()):
         objective['key'] = world.defineState(resident.name,name,bool)
         world.setFeature(objective['key'],True)
         resident.setReward(maximizeFeature(objective['key']),float(ceiling-objective['rank'])/total)
 
     # Beliefs
-    for name,belief in beliefs.items():
+    for name,belief in list(beliefs.items()):
         if belief['agent']:
             agent = resident.name
         else:
@@ -256,7 +256,7 @@ if __name__ == '__main__':
         world.setFeature(belief['key'],round(distribution[True]) == 1)
 
     # Dynamics of objectives
-    for name,objective in objectives.items():
+    for name,objective in list(objectives.items()):
         # Consider possible "how" behaviors
         for option in [o for o in resident.actions if o != options['leave']]:
             # How many actions contribute to this objective?
@@ -278,7 +278,7 @@ if __name__ == '__main__':
             except KeyError:
                 causes = {}
             tree = count
-            for feature,value in causes.items():
+            for feature,value in list(causes.items()):
                 tree = {'if': trueRow(beliefs[feature]['key']),
                         True: incrementLeaves(tree,value),
                         False: incrementLeaves(tree,not value)}
@@ -305,15 +305,15 @@ if __name__ == '__main__':
 
     #    world.printState()
 
-    for tree,weight in resident.getAttribute('R').items():
-        print weight,tree
+    for tree,weight in list(resident.getAttribute('R').items()):
+        print(weight,tree)
     decision = Distribution()
     for vector in world.state[None].domain():
         world.printVector(vector)
         result = resident.decide(vector,selection='distribution')
         for action in result['action'].domain():
             decision.addProb(action,world.state[None][vector]*result['action'][action])
-            print 'Choice:',action
+            print('Choice:',action)
             outcome = world.stepFromState(vector,action)
             world.printState(outcome['new'])
-    print decision
+    print(decision)

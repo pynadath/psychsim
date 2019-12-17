@@ -10,11 +10,11 @@ if __DEPLOYED__:
 else:
     weblogdir = '/tmp'
 cgitb.enable(display=0, logdir=weblogdir)
-from ConfigParser import SafeConfigParser,NoOptionError,NoSectionError
-import Cookie
+from configparser import SafeConfigParser,NoOptionError,NoSectionError
+import http.cookies
 import os
 import re
-import StringIO
+import io
 import sys
 import time
 
@@ -61,9 +61,9 @@ def getOutcomes(world):
         # Extract actions
         actions = world.explainAction(outcome)
         assert len(actions) == 1 # Only one person acted
-        action = iter(actions).next()
+        action = next(iter(actions))
         assert len(action) == 1 # Only one action selected
-        action = iter(action).next()
+        action = next(iter(action))
         try:
             sequence[day][action['subject']].append(action)
         except KeyError:
@@ -78,8 +78,8 @@ def getDelta(world,delta,config):
     """
     user = config.get('Game','user')
     phrases = []
-    for name in world.agents.keys():
-        for feature in world.features[name].keys():
+    for name in list(world.agents.keys()):
+        for feature in list(world.features[name].keys()):
             if config.has_option('Change',feature):
                 key = stateKey(name,feature)
                 value = delta[key]
@@ -101,8 +101,8 @@ def getDelta(world,delta,config):
 
 def getAttacks(world,outcome,config):
     attackers = []
-    for name in world.agents.keys():
-        if outcome.has_key(name) and outcome[name][-1]['verb'] == 'attack':
+    for name in list(world.agents.keys()):
+        if name in outcome and outcome[name][-1]['verb'] == 'attack':
             attackers.append(name)
     user = world.agents[config.get('Game','user')]
     if user.name in attackers:
@@ -148,7 +148,7 @@ def getAction(world,form):
         for option in world.agents[table['subject']].getActions(state):
             atom = option.match(table)
             if atom:
-                if atom.has_key('object'):
+                if 'object' in atom:
                     table['object'] = atom['object']
                 for key in atom.getParameters():
                     # Make sure all parameters are specified
@@ -183,17 +183,17 @@ def intro(config,session,scenario):
         f = open('/home/david/Documents/Curious/Welcome.html','r')
     content = f.read()
     f.close()
-    buf = StringIO.StringIO()
-    print >> buf, '<form method="post">'
-    print >> buf, '<input type="hidden" name="session" value="%ld"/>' % (session)
-    print >> buf, '<input type="hidden" name="scenario" value="%s"/>' % (scenario)
-    print >> buf, '<input type="submit" value="Next"/>'
-    print >> buf, '</form>'
+    buf = io.StringIO()
+    print('<form method="post">', file=buf)
+    print('<input type="hidden" name="session" value="%ld"/>' % (session), file=buf)
+    print('<input type="hidden" name="scenario" value="%s"/>' % (scenario), file=buf)
+    print('<input type="submit" value="Next"/>', file=buf)
+    print('</form>', file=buf)
     content = content.replace('<a href="Bargain.html">[Next]</a>',buf.getvalue())
     buf.close()
     content = content.replace('Sylvania',config.get('Game','agent'))
     content = content.replace('Trentino',config.get('Game','region'))
-    print content
+    print(content)
 
 def doSession(msg=''):
     f = open('templates/empty.html','r')
@@ -205,7 +205,7 @@ def doSession(msg=''):
         'enter your Amazon Mechanical Turk Worker ID: <input type="text" name="turk">'\
         '<input type="submit"/></form></p>'
     template = template.replace('<body/>','<body><div id="fullwidthbox">\n<h1>%s</h1>%s\n</div></body>' % (msg,content))
-    print template
+    print(template)
     sys.exit(0)
 
 def doTurn(world,turn,config,logfile,session=1,scenario='default'):
@@ -236,49 +236,49 @@ def doTurn(world,turn,config,logfile,session=1,scenario='default'):
     template = template.replace('<state/>',doState(world,turn,config,logfile,session))
     template = template.replace('<negotiation/>',doNegotiation(world,turn,config,logfile,session))
     template = template.replace('<battle/>',doBattle(world,turn,config,logfile,session))
-    print template
+    print(template)
 
 def doState(world,turn,config,logfile,session=1):
-    buf = StringIO.StringIO()
-    print >> buf,'<h5>'
-    print >> buf,'<table cellpadding="5" width="100%">'
+    buf = io.StringIO()
+    print('<h5>', file=buf)
+    print('<table cellpadding="5" width="100%">', file=buf)
     state = world.state.domain()[0]
     user = world.agents[config.get('Game','user')]
-    features = world.features[user.name].keys()
+    features = list(world.features[user.name].keys())
     features.sort()
-    for feature in filter(lambda f: config.has_option('Visible',f) and config.has_option('Visible',f),features):
+    for feature in [f for f in features if config.has_option('Visible',f) and config.has_option('Visible',f)]:
         value = state[stateKey(user.name,feature)]
         desc = world.getDescription(user.name,feature)
-        print >> buf,'<tr><td colspan="2">%s</td></tr>' % (desc)
-        print >> buf,'<tr><td width="5%%" align="right">%s</td>' % \
-            (locale.format('%d',value,True))
+        print('<tr><td colspan="2">%s</td></tr>' % (desc), file=buf)
+        print('<tr><td width="5%%" align="right">%s</td>' % \
+            (locale.format('%d',value,True)), file=buf)
         span = world.features[user.name][feature]['hi'] - \
             world.features[user.name][feature]['lo'] 
         pct = 100*(value-world.features[user.name][feature]['lo'])/span
-        print >> buf,'<td><table width="93%" border="1" frame="box" rules="none"><tr>'
+        print('<td><table width="93%" border="1" frame="box" rules="none"><tr>', file=buf)
         if pct > 0:
-            print >> buf,'<td bgcolor="white" height="12" width="%d%%"/>' % (pct)
+            print('<td bgcolor="white" height="12" width="%d%%"/>' % (pct), file=buf)
         else:
-            print >> buf,'<td height="12"/>'
-        print >> buf,'<td/></tr></table></td>'
-        print >> buf,'</tr>'
-    print >> buf,'</table>'
-    print >> buf,'</h5>'
+            print('<td height="12"/>', file=buf)
+        print('<td/></tr></table></td>', file=buf)
+        print('</tr>', file=buf)
+    print('</table>', file=buf)
+    print('</h5>', file=buf)
     contents = buf.getvalue()
     buf.close()
     return contents
 
 def doActions(world,turn,config,logfile,session=1,scenario='default'):
-    buf = StringIO.StringIO()
+    buf = io.StringIO()
     user = world.agents[config.get('Game','user')]
-    print >> buf, '<form method="post">'
-    print >> buf,'<input type="hidden" name="subject" value="%s"/>' % (user.name)
-    print >> buf,'<input type="hidden" name="scenario" value="%s"/>' % (scenario)
-    print >> buf,'<input type="hidden" name="session" value="%ld"/>' % (session)
+    print('<form method="post">', file=buf)
+    print('<input type="hidden" name="subject" value="%s"/>' % (user.name), file=buf)
+    print('<input type="hidden" name="scenario" value="%s"/>' % (scenario), file=buf)
+    print('<input type="hidden" name="session" value="%ld"/>' % (session), file=buf)
     actions = user.getActions(world.state.domain()[0])
     actionSelection(world,actions,buf,config,logfile)
-    print >> buf,'<div align="right"><p><input type="submit"/></p></div>'
-    print >> buf,'</form>'
+    print('<div align="right"><p><input type="submit"/></p></div>', file=buf)
+    print('</form>', file=buf)
     contents = buf.getvalue()
     buf.close()
     return contents
@@ -291,16 +291,16 @@ def actionSelection(world,actions,buf,config,logfile,var='verb'):
     for option in actions:
         if len(option) > 1:
             writeLog(logfile,'error','Option has %2 simultaneous actions' % (len(option)))
-        action = iter(option).next()
-        if not processed.has_key(action.root()):
+        action = next(iter(option))
+        if action.root() not in processed:
             processed[action.root()] = True
             if first and var == 'verb':
                 checked = ' checked'
                 first = False
             else:
                 checked = ''
-            print >> buf,'<p><input type="radio" name="%s" value="%s"%s>%s</input></p>' %\
-                (var,action['verb'],checked,action2label(action,world,True))
+            print('<p><input type="radio" name="%s" value="%s"%s>%s</input></p>' %\
+                (var,action['verb'],checked,action2label(action,world,True)), file=buf)
 
 def action2label(action,world,form=False):
     pat = re.compile('<.*?>')
@@ -325,102 +325,102 @@ def action2label(action,world,form=False):
     return label
 
 def doNegotiation(world,turn,config,logfile,session=1):
-    buf = StringIO.StringIO()
+    buf = io.StringIO()
     user = config.get('Game','user')
     other = config.get('Game','agent')
     if len(world.history) == 0:
-        print >> buf,'<h2>No previous offers made.</h2>'
+        print('<h2>No previous offers made.</h2>', file=buf)
         previous = ''
         outcomes = []
     else:
         outcomes = getOutcomes(world)
-        assert outcomes[-1].has_key(other)
+        assert other in outcomes[-1]
         otherAction = outcomes[-1][other][0]
-        print >> buf,'<h2>%s decided to %s</h2>' % (otherAction['subject'],action2label(otherAction,world))
-    print >> buf,'<br/>'
-    print >> buf,'<h3>Negotiation History</h3>'
-    print >> buf,'<select size=8>'
+        print('<h2>%s decided to %s</h2>' % (otherAction['subject'],action2label(otherAction,world)), file=buf)
+    print('<br/>', file=buf)
+    print('<h3>Negotiation History</h3>', file=buf)
+    print('<select size=8>', file=buf)
     for day in range(len(outcomes)):
-        print >> buf,'<option>%02d)' % (day+1)
+        print('<option>%02d)' % (day+1), file=buf)
         actions = {}
-        for name in world.agents.keys():
-            if outcomes[day].has_key(name):
+        for name in list(world.agents.keys()):
+            if name in outcomes[day]:
                 for action in outcomes[day][name]:
                     actions[action['verb']] = action
-        if actions.has_key('offer'):
+        if 'offer' in actions:
             subj = actions['offer']['subject'].replace(user,'you')
             obj = actions['offer']['object'].replace(user,'you')
             obj = obj.replace(other,'they')
-            print >> buf,'%s offered %d%% to %s.' % \
-                (subj.capitalize(),actions['offer']['amount'],actions['offer']['object'])
-            if outcomes[day].has_key(actions['offer']['object']):
-                print >> buf,'%s decided to %s.' % \
-                    (obj.capitalize(),outcomes[day][actions['offer']['object']][0]['verb'])
+            print('%s offered %d%% to %s.' % \
+                (subj.capitalize(),actions['offer']['amount'],actions['offer']['object']), file=buf)
+            if actions['offer']['object'] in outcomes[day]:
+                print('%s decided to %s.' % \
+                    (obj.capitalize(),outcomes[day][actions['offer']['object']][0]['verb']), file=buf)
         else:
-            print >> buf,'No negotiation.'
-        print >> buf,'</option>'
-    print >> buf,'</select>'
+            print('No negotiation.', file=buf)
+        print('</option>', file=buf)
+    print('</select>', file=buf)
     contents = buf.getvalue()
     buf.close()
     return contents
 
 def doBattle(world,turn,config,logfile,session=1):
-    buf = StringIO.StringIO()
+    buf = io.StringIO()
     user = world.agents[config.get('Game','user')]
     if len(world.history) == 0:
-        print >> buf,'<h2>No previous battle.</h2>'
+        print('<h2>No previous battle.</h2>', file=buf)
         outcomes = []
     else:
         outcomes = getOutcomes(world)
-        if not outcomes[-1].has_key(user.name):
+        if user.name not in outcomes[-1]:
             outcomes = outcomes[:-1]
         attackers = getAttacks(world,outcomes[-1],config)
         if attackers:
             if config.get('Game','battle') == 'mandatory':
-                print >> buf,'<h2>Battle results</h2>'
+                print('<h2>Battle results</h2>', file=buf)
             else:
                 msg = ' and '.join(attackers)
-                print >> buf,'<h2>%s attacked</h2>' % (msg)
+                print('<h2>%s attacked</h2>' % (msg), file=buf)
             state = world.state.expectation()
             territory = stateKey(user.name,'territory')
             if state[territory] < 1:
-                print >> buf,'<h5>You lost the war.</h5>'
+                print('<h5>You lost the war.</h5>', file=buf)
             elif state[territory] > 99:
-                print >> buf,'<h5>You won the war.</h5>'
+                print('<h5>You won the war.</h5>', file=buf)
             else:
                 delta = state - outcomes[-1]['old']
                 if delta[stateKey(user.name,'position')] > 0:
-                    print >> buf,'<h5>You won the last battle.</h5>'
+                    print('<h5>You won the last battle.</h5>', file=buf)
                 elif delta[stateKey(user.name,'position')] < 0:
-                    print >> buf,'<h5>You lost the last battle.</h5>'
+                    print('<h5>You lost the last battle.</h5>', file=buf)
                 else:
-                    print >> buf,'<h5>The last battle was indecisive.</h5>'
+                    print('<h5>The last battle was indecisive.</h5>', file=buf)
         elif config.get('Game','battle') == 'mandatory':
-            print >> buf,'<h2>The results from the battle are not in yet.</h2>'
+            print('<h2>The results from the battle are not in yet.</h2>', file=buf)
         else:
-            print >> buf,'<h2>There was no battle.</h2>'
-    print >> buf,'<br/>'
-    print >> buf,'<h3>Battle History</h3>'
-    print >> buf,'<select size=8>'
+            print('<h2>There was no battle.</h2>', file=buf)
+    print('<br/>', file=buf)
+    print('<h3>Battle History</h3>', file=buf)
+    print('<select size=8>', file=buf)
     for day in range(len(outcomes)):
-        print >> buf,'<option>%02d)' % (day+1)
+        print('<option>%02d)' % (day+1), file=buf)
         attackers = getAttacks(world,outcomes[day],config)
         if attackers:
-            print >> buf,'<h2>'
+            print('<h2>', file=buf)
             if config.get('Game','battle') == 'optional':
                 msg = ' and '.join(attackers)
-                print >> buf,'%s attacked.' % (msg)
+                print('%s attacked.' % (msg), file=buf)
             try:
                 delta = outcomes[day+1]['old'] - outcomes[day]['old']
             except IndexError:
                 delta = state - outcomes[day]['old']
-            print >> buf, '%s</h2>' % (getDelta(world,delta,config))
+            print('%s</h2>' % (getDelta(world,delta,config)), file=buf)
         elif config.get('Game','battle') == 'optional':
-            print >> buf,'<h2>No battle.</h2>'
+            print('<h2>No battle.</h2>', file=buf)
         else:
-            print >> buf,'<h2>Results not in yet.</h2>'
-        print >> buf,'</option>'
-    print >> buf,'</select>'
+            print('<h2>Results not in yet.</h2>', file=buf)
+        print('</option>', file=buf)
+    print('</select>', file=buf)
     contents = buf.getvalue()
     buf.close()
     return contents
@@ -432,30 +432,30 @@ def doExpectation(world,turn,config,logfile,session=1,scenario='default'):
     template = template.replace('Day 1','Round %d' % (turn+1))
     user = world.agents[config.get('Game','user')]
     other = world.agents[config.get('Game','agent')]
-    action = iter(world.explainAction(world.history[-1][0])).next()
-    atom = iter(action).next()
+    action = next(iter(world.explainAction(world.history[-1][0])))
+    atom = next(iter(action))
     template = template.replace('<action/>',action2label(atom,world))
     template = template.replace('<effect/>','<input type="radio" name="effect" value="opponent_collapse" /> %s collapses <br />' % (other.name)+\
                                     '<input type="radio" name="effect" value="Lose_battle" /> Lose battle <br />'\
                                     '<input type="radio" name="effect" value="Gain_territory" /> Gain territory <br />'\
                                     '<input type="radio" name="effect" value="Lose_territory" /> Lose territory')
-    buf = StringIO.StringIO()
-    for agent in world.agents.values():
+    buf = io.StringIO()
+    for agent in list(world.agents.values()):
         if agent.name != user.name:
-            print >> buf,'<h2>How do you expect %s to respond?</h2>' % \
-                (agent.name)
-            print >> buf, '<h4>'
+            print('<h2>How do you expect %s to respond?</h2>' % \
+                (agent.name), file=buf)
+            print('<h4>', file=buf)
             actions = agent.getActions(world.state.expectation())
             actionSelection(world,actions,buf,config,logfile,agent.name)
-            print >> buf,'</h4>'
-    print >> buf,'<input type="hidden" name="action" value="%s"/>' % (action)
-    print >> buf,'<input type="hidden" name="scenario" value="%s"/>' % (scenario)
-    print >> buf,'<input type="hidden" name="phase" value="choose"/>'
-    print >> buf,'<input type="hidden" name="session" value="%ld"/>' % (session)
-    print >> buf,'<div align="right"><p><input type="submit"/></p></div>'
+            print('</h4>', file=buf)
+    print('<input type="hidden" name="action" value="%s"/>' % (action), file=buf)
+    print('<input type="hidden" name="scenario" value="%s"/>' % (scenario), file=buf)
+    print('<input type="hidden" name="phase" value="choose"/>', file=buf)
+    print('<input type="hidden" name="session" value="%ld"/>' % (session), file=buf)
+    print('<div align="right"><p><input type="submit"/></p></div>', file=buf)
     template = template.replace('<response/>',buf.getvalue())
     buf.close()
-    print template
+    print(template)
 
 def doFrame(url,logfile,session=None,scenario=None,header=None):
     if header is None:
@@ -472,7 +472,7 @@ def doFrame(url,logfile,session=None,scenario=None,header=None):
         template = template.replace('<header/>','http://www.curiouslab.com/cgi-bin/COSMOS/?turk=%s&header=yes' % (session))
     if url:
         template = template.replace('<survey/>',url)
-    if isinstance(session,long):
+    if isinstance(session,int):
         template = template.replace('<session/>','%ld' % (session))
     if scenario:
         if header:
@@ -481,7 +481,7 @@ def doFrame(url,logfile,session=None,scenario=None,header=None):
             template = template.replace('<scenario/>','%s' % (scenario))
     else:
         template = template.replace('Game ID: <scenario/>','Write your ID down for future reference')
-    print template
+    print(template)
 
 def doThanks(session=1,sequence=None):
     f = open('templates/empty.html','r')
@@ -493,7 +493,7 @@ def doThanks(session=1,sequence=None):
                                     '<h2>%ld%s</h2>' % (session,sequence.replace(',',''))+\
                                     'You can use this code only once. If you have already used this code in our previous HITs, you <em>cannot</em> use it again in the current HIT. If you do, your HIT <em>will</em> be rejected.'\
                                     '</div></body>')
-    print template
+    print(template)
 
 # Other utility functions
 
@@ -529,35 +529,35 @@ def getScenarioFile(scenario,session=None):
     return filename
 
 def writeLog(logfile,category,entry):
-    print >> logfile,'%s,%s,%s' % (time.strftime('%c',time.localtime(time.time())),category,entry)
+    print('%s,%s,%s' % (time.strftime('%c',time.localtime(time.time())),category,entry), file=logfile)
     
 if __name__ == '__main__':
-    print 'Content-Type: text/html'     # HTML is following
+    print('Content-Type: text/html')     # HTML is following
     form = cgi.FieldStorage()
     # Cookie handling
-    cookie = Cookie.SimpleCookie()
-    if os.environ.has_key('HTTP_COOKIE'):
+    cookie = http.cookies.SimpleCookie()
+    if 'HTTP_COOKIE' in os.environ:
         cookie.load(os.environ['HTTP_COOKIE'])
     # Get session ID
     turk = form.getvalue('turk')
     try:
-        session = long(form.getvalue('session'))
+        session = int(form.getvalue('session'))
     except TypeError:
         session = 0
-        if cookie.has_key('session'):
-            session = long(cookie['session'].value)
+        if 'session' in cookie:
+            session = int(cookie['session'].value)
     except ValueError:
         session = -1
     # Get scenario name
     scenario = form.getvalue('scenario')
     if scenario is None:
-        if cookie.has_key('scenario'):
+        if 'scenario' in cookie:
             scenario = cookie['scenario'].value
     # Update cookie
 #    cookie['session'] = session
 #    cookie['scenario'] = scenario
-    print cookie
-    print                               # blank line, end of headers
+    print(cookie)
+    print()                               # blank line, end of headers
 
     # Get session
     config = SafeConfigParser()
@@ -579,7 +579,7 @@ if __name__ == '__main__':
                     doSession('Worker ID should be 13-14 alphanumeric characters')
             try:
                 value = config.get('Turk',turk.lower()).split('\n')[0] # Sometimes the config file returns multiple lines (not sure why)
-                session = long(value)
+                session = int(value)
             except NoOptionError:
                 # Assign next player ID to this worker
                 assigned = False
@@ -594,7 +594,7 @@ if __name__ == '__main__':
                 for row in reader:
                     if len(row) == 1 and not assigned:
                         # Use this unassigned participant ID
-                        session = long(row[0])
+                        session = int(row[0])
                         rows.append([row[0],turk])
                         assigned = True
                         config.set('Turk',turk,row[0])
@@ -652,7 +652,7 @@ if __name__ == '__main__':
     try:
         user = config.get('Game','user')
     except NoSectionError:
-        print 'Illegal game ID'
+        print('Illegal game ID')
         sys.exit(-1)
     # Open logfile
     if __DEPLOYED__:

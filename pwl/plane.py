@@ -1,7 +1,8 @@
 import operator
 from xml.dom.minidom import Node
 
-from vector import KeyedVector
+from .vector import KeyedVector
+from functools import reduce
 
 class KeyedPlane:
     """
@@ -35,7 +36,7 @@ class KeyedPlane:
             else:
                 return abs(total-self.threshold) < self.vector.epsilon
         else:
-            raise ValueError,'Unknown comparison for %s: %s' % (self.__class__.__name__,self.comparison)
+            raise ValueError('Unknown comparison for %s: %s' % (self.__class__.__name__,self.comparison))
 
     def desymbolize(self,table,debug=False):
         threshold = self.desymbolizeThreshold(self.threshold,table)
@@ -58,9 +59,9 @@ class KeyedPlane:
         threshold = self.threshold
         symbolic = False
         span = None
-        assert not vector.has_key(CONSTANT),'Unable to scale hyperplanes with constant factors. Move constant factor into threshold.'
-        for key in vector.keys():
-            if table.has_key(key):
+        assert CONSTANT not in vector,'Unable to scale hyperplanes with constant factors. Move constant factor into threshold.'
+        for key in list(vector.keys()):
+            if key in table:
                 assert not symbolic,'Unable to scale hyperplanes with both numeric and symbolic variables'
                 if span is None:
                     span = table[key]
@@ -136,7 +137,7 @@ class KeyedPlane:
         @return: an equivalent plane with no constant element in the weights
         """
         weights = self.vector.__class__(self.vector)
-        if self.vector.has_key(CONSTANT):
+        if CONSTANT in self.vector:
             threshold = self.threshold - self.vector[CONSTANT]
             del weights[CONSTANT]
         else:
@@ -146,7 +147,7 @@ class KeyedPlane:
     def __str__(self):
         if self._string is None:
             operator = ['==','>','<'][self.comparison]
-            self._string = '%s %s %s' % (' + '.join(map(lambda (k,v): '%5.3f*%s' % (v,k),self.vector.items())),
+            self._string = '%s %s %s' % (' + '.join(['%5.3f*%s' % (k_v[1],k_v[0]) for k_v in list(self.vector.items())]),
                                              operator,self.threshold)
         return self._string
 

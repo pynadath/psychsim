@@ -1083,7 +1083,7 @@ def dangerp(room,category=None):
     if category is None:
         return dangerp(room,'armed') or dangerp(room,'NBC')
     else:
-        return room.has_key(category) and room[category] is True
+        return category in room and room[category] is True
 
 def genLevel(freq):
     NUMBUILDINGS = 15
@@ -1093,7 +1093,7 @@ def genLevel(freq):
         level = [None for i in range(NUMBUILDINGS)]
         # Insert all buildings with armed gunmen (i.e., robot errors)
         # Don't have robot errors for first 3 buildings
-        positions = random.sample(range(3,NUMBUILDINGS),len(ARMED))
+        positions = random.sample(list(range(3,NUMBUILDINGS)),len(ARMED))
         for i in range(len(ARMED)):
             level[positions[i]] = ARMED[i]
             # Fill in the remaining buildings
@@ -1121,19 +1121,19 @@ def genLevels():
             counts[building['image']] += 1
     for i in range(len(levels)):
         level = levels[i]
-        print 'Level %d' % (i+1)
+        print('Level %d' % (i+1))
         for building in level:
-            print '\t%s: %s %s' % (building['name'],dangerp(building,'armed'),
-                                      dangerp(building,'NBC'))
+            print('\t%s: %s %s' % (building['name'],dangerp(building,'armed'),
+                                      dangerp(building,'NBC')))
         
     for building in SAFE+NBC:
-        print '%d %s' % (counts[building['image']],building['image'])
+        print('%d %s' % (counts[building['image']],building['image']))
     return levels
 
 def countBuildings():
     count = {}
     for level in range(len(WAYPOINTS)):
-        print 'Level %d' % (level+1)
+        print('Level %d' % (level+1))
         for building in WAYPOINTS[level]:
             try:
                 count[building['image']] += 1
@@ -1144,14 +1144,14 @@ def countBuildings():
 if __name__ == '__main__':
     used = {}
     for level in range(len(WAYPOINTS)):
-        print 'Level %d' % (level+1)
+        print('Level %d' % (level+1))
         for building in WAYPOINTS[level]:
-            print '\t',building['name']
-            assert not used.has_key(building['name']),'%s has already appeared' % (building['name'])
+            print('\t',building['name'])
+            assert building['name'] not in used,'%s has already appeared' % (building['name'])
             used[building['name']] = True
     count = countBuildings()
     for key in sorted(count.keys()):
-        print '\t',key,count[key]
+        print('\t',key,count[key])
 #    WAYPOINTS.append(genLevel(count))
 #    count = countBuildings()
 #    WAYPOINTS.append(genLevel(count))

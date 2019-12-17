@@ -168,4 +168,4 @@ class Ui_MainWindow(object):
         self.actionLikelihood.setToolTip(_translate("MainWindow", "Color code nodes by relative likelihood", None))
         self.actionStep.setText(_translate("MainWindow", "Step", None))
 
-import psychsim_rc
+from . import psychsim_rc

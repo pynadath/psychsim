@@ -1,4 +1,4 @@
-from pwl import *
+from .pwl import *
         
 def maximizeFeature(key):
     return KeyedTree(KeyedVector({key: 1.}))

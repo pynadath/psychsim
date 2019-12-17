@@ -1,9 +1,9 @@
 import os.path
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-from ui.mainwindow import Ui_MainWindow
-from ui.worldview import WorldView
-from world import World
+from .ui.mainwindow import Ui_MainWindow
+from .ui.worldview import WorldView
+from .world import World
 
 class PsychSimUI(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):

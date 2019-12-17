@@ -34,11 +34,11 @@ class Distribution(dict):
                         self[key] = args[key]
                 else:
                     # Probability dictionary provided
-                    for key,value in args.items():
+                    for key,value in list(args.items()):
                         self[key] = value
             else:
                 # Do quantal response / softmax on table of values
-                for key,V in args.items():
+                for key,V in list(args.items()):
                     self[key] = math.exp(rationality*V)
                 self.normalize()
 
@@ -95,7 +95,7 @@ class Distribution(dict):
         @return: the sample space of this probability distribution
         @rtype: C{list}
         """
-        return self._domain.values()
+        return list(self._domain.values())
 
     def normalize(self):
         """Normalizes the distribution so that the sum of values = 1
@@ -145,7 +145,7 @@ class Distribution(dict):
                 else:
                     return element
         else:
-            raise ValueError,'Random number exceeded total probability in distribution.'
+            raise ValueError('Random number exceeded total probability in distribution.')
 
     def set(self,element):
         """
@@ -195,8 +195,8 @@ class Distribution(dict):
 
     def __mul__(self,other):
         if isinstance(other,Distribution):
-            raise NotImplementedError,'Unable to multiply %s by %s.' \
-                % (self.__class__.__name__,other.__class__.__name__)
+            raise NotImplementedError('Unable to multiply %s by %s.' \
+                % (self.__class__.__name__,other.__class__.__name__))
         else:
             result = self.__class__()
             for element in self.domain():
@@ -210,7 +210,7 @@ class Distribution(dict):
         doc = Document()
         root = doc.createElement('distribution')
         doc.appendChild(root)
-        for key,value in self._domain.items():
+        for key,value in list(self._domain.items()):
             prob = dict.__getitem__(self,key)
             node = doc.createElement('entry')
             root.appendChild(node)
@@ -224,7 +224,7 @@ class Distribution(dict):
         return doc
         
     def element2xml(self,value):
-        raise NotImplementedError,'Unable to generate XML for distributions over %s' % (value.__class__.__name__)
+        raise NotImplementedError('Unable to generate XML for distributions over %s' % (value.__class__.__name__))
 
     def parse(self,element):
         """Extracts the distribution from the given XML element
@@ -257,7 +257,7 @@ class Distribution(dict):
         return '\n'.join(['%4.1f%%\t%s' % (100.*self[el],str(el)) for el in elements])
 
     def __str__(self):
-        return '\n'.join(map(lambda el: '%d%%\t%s' % (100.*self[el],str(el).replace('\n','\n\t')),self.domain()))
+        return '\n'.join(['%d%%\t%s' % (100.*self[el],str(el).replace('\n','\n\t')) for el in self.domain()])
 
     def __hash__(self):
         return hash(str(self))

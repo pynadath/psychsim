@@ -1,5 +1,5 @@
 import sys
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from optparse import OptionParser
 
 from psychsim.pwl import *
@@ -186,7 +186,7 @@ class Negotiate:
         for action in stacy.actions | david.actions:
             tree = makeTree(incrementMatrix(stateKey(None,'round'),1))
             self.world.setDynamics(None,'round',action,tree)
-        for agent in self.world.agents.values():
+        for agent in list(self.world.agents.values()):
             agent.addModel('pearLover',R={},level=2,rationality=0.01)
             agent.addModel('appleLover',R={},level=2,rationality=0.01)
 
@@ -194,8 +194,8 @@ class Negotiate:
 
 
     def modeltest(self,trueModels,davidBeliefAboutStacy,stacyBeliefAboutDavid,strongerBelief):
-        for agent in self.world.agents.values():
-            for model in agent.models.keys():
+        for agent in list(self.world.agents.values()):
+            for model in list(agent.models.keys()):
                 if model is True:
                     name = trueModels[agent.name]
                 else:
@@ -217,7 +217,7 @@ class Negotiate:
         self.world.setMentalModel('Stacy','David',belief)
 
     def runit(self,Msg):
-        print Msg
+        print(Msg)
         for t in range(self.maxRounds + 1):
             self.world.explain(self.world.step(),level=1)
             # print self.world.step()

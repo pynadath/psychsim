@@ -1,5 +1,5 @@
 import sys
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from optparse import OptionParser
 
 from psychsim.pwl import *
@@ -42,7 +42,7 @@ if __name__ == '__main__':
     embodiedAgts = []
     for base in ['exiter','follower','avoider']:
         num = 0
-        print base
+        print(base)
         for i in range(totals[base]):
             num = num + 1
             me = Agent(base + str(num))
@@ -76,7 +76,7 @@ if __name__ == '__main__':
 
     # Turn order: Uncomment the following if you want agents to act in parallel
 
-    actors = world.agents.keys()
+    actors = list(world.agents.keys())
     # actors = set(actors)
     # print actors
     # actors.discard('door')
@@ -85,7 +85,7 @@ if __name__ == '__main__':
     actors.remove('door')
     actors.remove('fire')
     world.setOrder([set(actors)])
-    print actors
+    print(actors)
     
     for agt in actors:
         atom = Action({'subject': agt,'verb': 'runAway', 'object':'fire'})
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     # world.printState()
     
     for t in range(7):
-        print 'next:',world.next(world.state.expectation())
+        print('next:',world.next(world.state.expectation()))
         world.explain(world.step(),0)
         # world.explain()
         # print world.step()

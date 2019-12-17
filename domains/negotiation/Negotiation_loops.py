@@ -1,5 +1,5 @@
 import sys
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from optparse import OptionParser
 
 from psychsim.pwl import *
@@ -194,9 +194,9 @@ if __name__ == '__main__':
         # print world.step()
         world.state.select()
         world.printState()
-        print stacy.name, "'s beliefs about ", david.name
+        print(stacy.name, "'s beliefs about ", david.name)
         stacy.printBeliefs()
-        print david.name, "'s belief about ", stacy.name
+        print(david.name, "'s belief about ", stacy.name)
         david.printBeliefs()
         if world.terminated():
             break

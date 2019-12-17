@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-import ConfigParser
+import configparser
 
 import csv
 
@@ -34,7 +34,7 @@ def readLog(gameID,cursor):
                     writer.writerow(record)
     
 if __name__ == '__main__':
-    config = ConfigParser.SafeConfigParser()
+    config = configparser.SafeConfigParser()
     config.read('db.cfg')
     if not config.has_section('mysql'):
         config.add_section('mysql')
@@ -52,7 +52,7 @@ if __name__ == '__main__':
                          cursorclass=MySQLdb.cursors.DictCursor)
     cursor = db.cursor()
     idList = args['gameID'].split(',')
-    idList = [int(element) if isinstance(element,str) else map(int,element.split('-')) for element in idList]
+    idList = [int(element) if isinstance(element,str) else list(map(int,element.split('-'))) for element in idList]
     for gameId in idList:
         if isinstance(gameId,int):
             readLog(gameId,cursor)

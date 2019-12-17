@@ -3,7 +3,7 @@ from xml.dom.minidom import Document,Node
 
 from psychsim.probability import Distribution
 
-from vector import *
+from .vector import *
 from . import CONSTANT
 
 class KeyedMatrix(dict):
@@ -34,19 +34,19 @@ class KeyedMatrix(dict):
 
     def __neg__(self):
         result = KeyedMatrix()
-        for key,vector in self.items():
+        for key,vector in list(self.items()):
             result[key] = -vector
         return result
 
     def __add__(self,other):
         result = KeyedMatrix()
-        for key,vector in self.items():
+        for key,vector in list(self.items()):
             try:
                 result[key] = vector + other[key]
             except KeyError:
                 result[key] = KeyedVector(vector)
-        for key,vector in other.items():
-            if not result.has_key(key):
+        for key,vector in list(other.items()):
+            if key not in result:
                 result[key] = KeyedVector(vector)
         return result
 
@@ -56,20 +56,20 @@ class KeyedMatrix(dict):
     def __mul__(self,other):
         if isinstance(other,KeyedMatrix):
             result = KeyedMatrix()
-            for r1,v1 in self.items():
+            for r1,v1 in list(self.items()):
                 result[r1] = KeyedVector()
-                for c1,value1 in v1.items():
-                    if other.has_key(c1):
-                        for c2,value2 in other[c1].items():
+                for c1,value1 in list(v1.items()):
+                    if c1 in other:
+                        for c2,value2 in list(other[c1].items()):
                             try:
                                 result[r1][c2] += value1*value2
                             except KeyError:
                                 result[r1][c2] = value1*value2
         elif isinstance(other,KeyedVector):
             result = KeyedVector()
-            for r1,v1 in self.items():
-                for c1,value1 in v1.items():
-                    if other.has_key(c1):
+            for r1,v1 in list(self.items()):
+                for c1,value1 in list(v1.items()):
+                    if c1 in other:
                         try:
                             result[r1] += value1*other[c1]
                         except KeyError:
@@ -90,9 +90,9 @@ class KeyedMatrix(dict):
         if isinstance(other,KeyedVector):
             # Transform vector
             result = KeyedVector()
-            for key in other.keys():
-                if self.has_key(key):
-                    for col in self[key].keys():
+            for key in list(other.keys()):
+                if key in self:
+                    for col in list(self[key].keys()):
                         try:
                             result[col] += other[key]*self[key][col]
                         except KeyError:
@@ -108,7 +108,7 @@ class KeyedMatrix(dict):
         if self._keysIn is None:
             self._keysIn = set()
             self._keysOut = set()
-            for col,row in self.items():
+            for col,row in list(self.items()):
                 self._keysIn |= set(row.keys())
                 self._keysOut.add(col)
         return self._keysIn
@@ -129,14 +129,14 @@ class KeyedMatrix(dict):
 
     def desymbolize(self,table,debug=False):
         result = self.__class__()
-        for key,row in self.items():
+        for key,row in list(self.items()):
             result[key] = row.desymbolize(table)
         return result
 
     def scale(self,table):
         result = self.__class__()
-        for row,vector in self.items():
-            if table.has_key(row):
+        for row,vector in list(self.items()):
+            if row in table:
                 result[row] = KeyedVector()
                 lo,hi = table[row]
                 constant = 0.
@@ -148,7 +148,7 @@ class KeyedMatrix(dict):
                     elif col != CONSTANT:
                         # Scale weight for another feature
                         if abs(value) > epsilon:
-                            assert table.has_key(col),'Unable to mix symbolic and numeric values in single vector'
+                            assert col in table,'Unable to mix symbolic and numeric values in single vector'
                             colLo,colHi = table[col]
                             result[row][col] = value*(colHi-colLo)*(hi-lo)
                             constant += value*colLo
@@ -173,10 +173,9 @@ class KeyedMatrix(dict):
     def __str__(self):
         if self._string is None:
             joiner = lambda item: '%s*%s' % (item[1],item[0])
-            self._string = '\n'.join(map(lambda item: '%s) %s' % \
+            self._string = '\n'.join(['%s) %s' % \
                                              (item[0],' + '.join(map(joiner,
-                                                                    item[1].items()))),
-                                         self.items()))
+                                                                    list(item[1].items())))) for item in list(self.items())])
         return self._string
 
     def __hash__(self):
@@ -185,7 +184,7 @@ class KeyedMatrix(dict):
     def __xml__(self):
         doc = Document()
         root = doc.createElement('matrix')
-        for key,value in self.items():
+        for key,value in list(self.items()):
             element = value.__xml__().documentElement
             element.setAttribute('key',key)
             root.appendChild(element)
@@ -278,7 +277,7 @@ class MatrixDistribution(Distribution):
 
     def __mul__(self,other):
         if isinstance(other,Distribution):
-            raise NotImplementedError,'Unable to multiply two distributions.'
+            raise NotImplementedError('Unable to multiply two distributions.')
         else:
             result = {}
             for element in self.domain():
@@ -291,7 +290,7 @@ class MatrixDistribution(Distribution):
             elif isinstance(other,KeyedMatrix):
                 return self.__class__(result)
             else:
-                raise TypeError,'Unable to process multiplication by %s' % (other.__class__.__name__)
+                raise TypeError('Unable to process multiplication by %s' % (other.__class__.__name__))
 
     def element2xml(self,value):
         return value.__xml__().documentElement

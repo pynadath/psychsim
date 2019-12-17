@@ -1,5 +1,5 @@
-from Tkinter import *
-from teamwork import *
+from tkinter import *
+from .teamwork import *
 from time import sleep
 
 class BaseLoader:

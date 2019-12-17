@@ -76,15 +76,15 @@ class TestPWL(unittest.TestCase):
             v1 = self.makeVector(gap=0.1)
             v2 = self.makeVector(gap=0.2)
             total = v1+v2
-            for key in v1.keys():
-                self.assertTrue(total.has_key(key))
-            for key in v2.keys():
-                self.assertTrue(total.has_key(key))
-            for key in total.keys():
-                self.assertTrue(v1.has_key(key) or v2.has_key(key))
-                if v1.has_key(key) and v2.has_key(key):
+            for key in list(v1.keys()):
+                self.assertTrue(key in total)
+            for key in list(v2.keys()):
+                self.assertTrue(key in total)
+            for key in list(total.keys()):
+                self.assertTrue(key in v1 or key in v2)
+                if key in v1 and key in v2:
                     self.assertAlmostEqual(v1[key]+v2[key],total[key],8)
-                elif v1.has_key(key):
+                elif key in v1:
                     self.assertAlmostEqual(v1[key],total[key],8)
                 else: # v2.has_key(key)
                     self.assertAlmostEqual(v2[key],total[key],8)
@@ -100,8 +100,8 @@ class TestPWL(unittest.TestCase):
                 v1 = m2*v0
                 v2 = m1*v1
                 product = mProduct*v0
-                self.assertEqual(v2.keys(),product.keys())
-                for key in product.keys():
+                self.assertEqual(list(v2.keys()),list(product.keys()))
+                for key in list(product.keys()):
                     self.assertAlmostEqual(product[key],v2[key],8)
 
     def DONTtestTreeAddition(self):
@@ -125,7 +125,7 @@ class TestPWL(unittest.TestCase):
                 v3 = t1[v2]*v2
                 self.assertEqual(t1.branch.evaluate(v2),tProduct.branch.evaluate(v1))
                 product1 = tProduct[v1]*v1
-                for key in v3.keys():
+                for key in list(v3.keys()):
                     self.assertAlmostEqual(product1[key],v3[key],8)
 
 if __name__ == '__main__':

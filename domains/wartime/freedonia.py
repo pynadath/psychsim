@@ -3,9 +3,9 @@ Example scenario for wartime negotiation.
 Provides use cases for both modeling and simulating scenarios.
 """
 import sys
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from argparse import ArgumentParser
-import StringIO
+import io
 
 from psychsim.pwl import *
 from psychsim.reward import *
@@ -256,8 +256,8 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
 
     # Dynamics of offers
     for index in range(2):
-        atom =  Action({'subject': world.agents.keys()[index],'verb': 'offer',
-                        'object': world.agents.keys()[1-index]})
+        atom =  Action({'subject': list(world.agents.keys())[index],'verb': 'offer',
+                        'object': list(world.agents.keys())[1-index]})
         if atom['subject'] == free.name or model != 'powell':
             offer = stateKey(atom['object'],'offered')
             amount = actionKey('amount')
@@ -289,8 +289,8 @@ def scenarioCreationUseCase(enemy='Sylvania',model='powell',web=False,
     roundKey = stateKey(None,'round')
     # OFFER -> RESPOND
     for index in range(2):
-        action = Action({'subject': world.agents.keys()[index],'verb': 'offer',
-                         'object': world.agents.keys()[1-index]})
+        action = Action({'subject': list(world.agents.keys())[index],'verb': 'offer',
+                         'object': list(world.agents.keys())[1-index]})
         if action['subject'] == free.name or model != 'powell':
             tree = makeTree(setToConstantMatrix(phase,'respond'))
             world.setDynamics(phase,action,tree)
@@ -389,7 +389,7 @@ def fitWorld(world):
     """
     Piecewise linear compilation of Freedonia's policy
     """
-    for agent in world.agents.values():
+    for agent in list(world.agents.values()):
         if agent.name == 'Freedonia':
             free = agent
         else:
@@ -400,7 +400,7 @@ def fitWorld(world):
     beliefs = free.getBelief(state,freeModel)
     # Compute transition trees
     T = {}
-    for agent in world.agents.values():
+    for agent in list(world.agents.values()):
         for action in agent.actions:
             T[action] = None
             for keys in world.evaluationOrder:
@@ -425,9 +425,9 @@ def fitWorld(world):
                     T[action] = result*T[action]
     # Compute policy trees for the other agent
     models = {}
-    for agent in world.agents.values():
+    for agent in list(world.agents.values()):
         models[agent.name] = set()
-    for agent in world.agents.values():
+    for agent in list(world.agents.values()):
         for vector in beliefs.domain():
             model = world.getModel(agent.name,vector)
             ancestor = agent.findAttribute('R',model)
@@ -435,7 +435,7 @@ def fitWorld(world):
         if len(models[agent.name]) == 0:
             # No beliefs about models found, assume True model
             models[agent.name].add(True)
-    for agent in world.agents.values():
+    for agent in list(world.agents.values()):
         for model in models[agent.name]:
             R = sum(agent.getAttribute('R',model),KeyedTree(KeyedVector()))
             agent.models[model]['policy'] = []
@@ -454,7 +454,7 @@ def fitWorld(world):
                             legal[action] = KeyedTree(True)
                     # Compute value functions for each action
                     if horizon > 1:
-                        raise NotImplementedError,'Backup step is missing'
+                        raise NotImplementedError('Backup step is missing')
                     V = {}
                     for action in agent.actions:
                         V[action] = R*T[action]
@@ -476,7 +476,7 @@ def fitWorld(world):
     #                print policy[horizon-1]
                     pruned = policy[horizon-1].prune()
     #                print 'Pruned:'
-                    print pruned
+                    print(pruned)
                     # # Verify pruning
                     # world.setFeature('phase','respond',beliefs)
                     # world.setState('Freedonia','territory',72,beliefs)
@@ -486,7 +486,7 @@ def fitWorld(world):
                     #     print offer
                     #     print policy[horizon-1][vector],pruned[vector]
                     #     assert policy[horizon-1][vector] == pruned[vector]
-                    print free.models[freeModel]['beliefs']
+                    print(free.models[freeModel]['beliefs'])
                 break
     sys.exit(0)
                                  
@@ -502,10 +502,10 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
     """
     testMode = isinstance(debug,dict)
     if testMode:
-        buf = StringIO.StringIO()
+        buf = io.StringIO()
         debug[offer] = buf
         debug = 0
-    for agent in world.agents.values():
+    for agent in list(world.agents.values()):
         if agent.name == 'Freedonia':
             free = agent
         else:
@@ -542,8 +542,8 @@ def scenarioSimulationUseCase(world,offer=0,rounds=1,debug=1,model='powell'):
                 world.state.select()
                 if not testMode and debug > 0:
                     world.printState(beliefs=True)
-                for agent in world.agents.values():
-                    print agent.name,len(agent.models)
+                for agent in list(world.agents.values()):
+                    print(agent.name,len(agent.models))
             assert len(world.state) == 1
             phase = world.getState(None,'phase').expectation()
             if phase == 'offer':
@@ -565,7 +565,7 @@ def findThreshold(scenario,t,model='powell',position=0):
             actions = entry[20].getvalue().split('\n')[:-1]
             entry[20].close()
         amount = int(actions[1].split('-')[-1])
-        print 'Time: %d, Position %d -> Offer %d%%' % (t,position,amount)
+        print('Time: %d, Position %d -> Offer %d%%' % (t,position,amount))
     # Compute acceptance threshold
     offers = [50]
     index = 0
@@ -587,7 +587,7 @@ def findThreshold(scenario,t,model='powell',position=0):
             else:
                 down = 0
             new = (offers[index]+down) / 2
-            if entry.has_key(new):
+            if new in entry:
                 if entry[new] != 'accept':
                     new += 1
                 break
@@ -602,7 +602,7 @@ def findThreshold(scenario,t,model='powell',position=0):
             except IndexError:
                 up = 100
             new = (offers[index]+up) / 2
-            if entry.has_key(new):
+            if new in entry:
                 break
             else:
                 offers.insert(index+1,new)
@@ -613,7 +613,7 @@ def play(world,debug=1):
     """
     Modify Freedonia to play autonomously and simulate
     """
-    for agent in world.agents.values():
+    for agent in list(world.agents.values()):
         if agent.name == 'Freedonia':
             free = agent
         else:
@@ -625,13 +625,13 @@ def play(world,debug=1):
         sylv.addAction(action)
     for action in filterActions({'verb': 'offer'},free.actions | sylv.actions):
         actor = world.agents[action['subject']]
-        if not actor.legal.has_key(action):
+        if action not in actor.legal:
             actor.setLegal(action,makeTree({'if': equalRow(stateKey(None,'phase'),'offer'),
                                            True: True,     # Offers are legal in the offer phase
                                            False: False})) # Offers are illegal in all other phases
     model = world.getState(None,'model').domain()[0]
     start = world.getState(free.name,'territory').expectation()
-    print model,start
+    print(model,start)
     scenarioSimulationUseCase(world,offer=0,rounds=15,debug=debug,model=model)
 
 def findPolicies(args):
@@ -648,10 +648,10 @@ def findPolicies(args):
                 results.append(subresult)
                 subresult.append(entry)
                 thresh = findThreshold(args['output'],t,args['model'],position)
-                print 'Time %d, Position %d -> Accept if > %d%%' % (t,position,thresh)
+                print('Time %d, Position %d -> Accept if > %d%%' % (t,position,thresh))
         else:
             results.append(entry)
-            print 'Time %d -> Accept if > %d%%' %(t,findThreshold(args['output'],t))
+            print('Time %d -> Accept if > %d%%' %(t,findThreshold(args['output'],t)))
 
 if __name__ == '__main__':
     # Grab command-line arguments

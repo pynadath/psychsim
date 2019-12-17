@@ -87,7 +87,7 @@ class TestAgents(unittest.TestCase):
         beliefs = self.jerry.getAttribute('beliefs',self.world.getModel(self.jerry.name,vector))
         for belief in beliefs.domain():
             model = self.world.getModel(self.tom.name,belief)
-            if self.tom.models[model].has_key('beliefs'):
+            if 'beliefs' in self.tom.models[model]:
                 nested = self.tom.models[model]['beliefs']
                 self.assertEqual(len(nested),1)
                 nested = nested.domain()[0]
@@ -206,10 +206,10 @@ class TestAgents(unittest.TestCase):
         key = stateKey(self.jerry.name,'health')
         self.assertEqual(len(self.world.state[None]),1)
         vector = self.world.state[None].domain()[0]
-        self.assertTrue(vector.has_key(stateKey(self.tom.name,'health')))
-        self.assertTrue(vector.has_key(turnKey(self.tom.name)))
-        self.assertTrue(vector.has_key(key))
-        self.assertTrue(vector.has_key(CONSTANT))
+        self.assertTrue(stateKey(self.tom.name,'health') in vector)
+        self.assertTrue(turnKey(self.tom.name) in vector)
+        self.assertTrue(key in vector)
+        self.assertTrue(CONSTANT in vector)
         self.assertEqual(len(vector),4)
         self.assertEqual(vector[stateKey(self.tom.name,'health')],50)
         self.assertEqual(vector[key],50)
@@ -217,10 +217,10 @@ class TestAgents(unittest.TestCase):
         for i in range(7):
             self.assertEqual(len(self.world.state[None]),1)
             vector = self.world.state[None].domain()[0]
-            self.assertTrue(vector.has_key(stateKey(self.tom.name,'health')))
-            self.assertTrue(vector.has_key(turnKey(self.tom.name)))
-            self.assertTrue(vector.has_key(key))
-            self.assertTrue(vector.has_key(CONSTANT))
+            self.assertTrue(stateKey(self.tom.name,'health') in vector)
+            self.assertTrue(turnKey(self.tom.name) in vector)
+            self.assertTrue(key in vector)
+            self.assertTrue(CONSTANT in vector)
             self.assertEqual(len(vector),4)
             self.assertEqual(vector[stateKey(self.tom.name,'health')],50)
             self.assertEqual(vector[key],max(50-10*i,0))
@@ -266,12 +266,12 @@ class TestAgents(unittest.TestCase):
         self.jerry.setReward(goal,1.)
         R = self.jerry.models[True]['R']
         self.assertEqual(len(R),1)
-        newGoal = R.keys()[0]
+        newGoal = list(R.keys())[0]
         self.assertEqual(newGoal,goal)
         self.assertAlmostEqual(R[goal],1.,8)
         self.jerry.setReward(goal,2.)
         self.assertEqual(len(R),1)
-        self.assertEqual(R.keys()[0],goal)
+        self.assertEqual(list(R.keys())[0],goal)
         self.assertAlmostEqual(R[goal],2.,8)
 
     def testTurnDynamics(self):
@@ -283,17 +283,17 @@ class TestAgents(unittest.TestCase):
         vector = self.world.state[None].domain()[0]
         jTurn = turnKey(self.jerry.name)
         tTurn = turnKey(self.tom.name)
-        self.assertEqual(self.world.next(),[self.tom.name])
+        self.assertEqual(next(self.world),[self.tom.name])
         self.assertEqual(vector[tTurn],0)
         self.assertEqual(vector[jTurn],1)
         self.world.step()
         vector = self.world.state[None].domain()[0]
-        self.assertEqual(self.world.next(),[self.jerry.name])
+        self.assertEqual(next(self.world),[self.jerry.name])
         self.assertEqual(vector[tTurn],1)
         self.assertEqual(vector[jTurn],0)
         self.world.step()
         vector = self.world.state[None].domain()[0]
-        self.assertEqual(self.world.next(),[self.tom.name])
+        self.assertEqual(next(self.world),[self.tom.name])
         self.assertEqual(vector[tTurn],0)
         self.assertEqual(vector[jTurn],1)
         # Try some custom dynamics
@@ -301,12 +301,12 @@ class TestAgents(unittest.TestCase):
         self.world.setTurnDynamics(self.jerry.name,self.hit,makeTree(noChangeMatrix(tTurn)))
         self.world.step()
         vector = self.world.state[None].domain()[0]
-        self.assertEqual(self.world.next(),[self.tom.name])
+        self.assertEqual(next(self.world),[self.tom.name])
         self.assertEqual(vector[tTurn],0)
         self.assertEqual(vector[jTurn],1)
         self.world.step({self.tom.name: self.chase})
         vector = self.world.state[None].domain()[0]
-        self.assertEqual(self.world.next(),[self.jerry.name])
+        self.assertEqual(next(self.world),[self.jerry.name])
         self.assertEqual(vector[tTurn],1)
         self.assertEqual(vector[jTurn],0)
 

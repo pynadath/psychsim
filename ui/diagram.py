@@ -29,7 +29,7 @@ class Diagram:
         """
         @warning: if no color exists, assigns a random color
         """
-        if not self.color.has_key(key):
+        if key not in self.color:
             self.color[key] = QColor(random.choice(QColor.colorNames()))
         return self.color[key]
 
@@ -41,17 +41,17 @@ class Diagram:
     def __xml__(self):
         doc = Document()
         root = doc.createElement('diagram')
-        for key,value in self.x.items():
+        for key,value in list(self.x.items()):
             node = doc.createElement('x')
             node.setAttribute('key',key)
             node.appendChild(doc.createTextNode(str(value)))
             root.appendChild(node)
-        for key,value in self.y.items():
+        for key,value in list(self.y.items()):
             node = doc.createElement('y')
             node.setAttribute('key',key)
             node.appendChild(doc.createTextNode(str(value)))
             root.appendChild(node)
-        for key,value in self.color.items():
+        for key,value in list(self.color.items()):
             node = doc.createElement('color')
             if key:
                 node.setAttribute('key',key)
@@ -75,6 +75,6 @@ class Diagram:
                 elif node.tagName == 'color':
                     self.setColor(key,str(node.firstChild.data).strip())
                 else:
-                    raise NameError,'Unknown element %s when parsing %s' % \
-                        (node.tagName,self.__class__.__name__)
+                    raise NameError('Unknown element %s when parsing %s' % \
+                        (node.tagName,self.__class__.__name__))
             node = node.nextSibling

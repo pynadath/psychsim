@@ -5,7 +5,7 @@
 # Enemy - minimize distance between self and explorer and distractor
 # Base - deploy distractor when explorer in danger (new)
 
-from __future__ import print_function
+
 from psychsim.reward import *
 from psychsim.pwl import *
 from psychsim.action import *
@@ -65,7 +65,7 @@ class Scenario:
         # Parallel action
         # self.world.setOrder([set(self.world.agents.keys())])
         # Sequential action
-        self.world.setOrder(self.world.agents.keys())
+        self.world.setOrder(list(self.world.agents.keys()))
 
     def f_get_current_x(self, actor):
         return self.world.getState(actor.name, 'x').domain()[0]

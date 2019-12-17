@@ -3,9 +3,9 @@ from xml.dom.minidom import Document,Node
 from psychsim.probability import Distribution
 from psychsim.action import Action
 
-from vector import KeyedVector
-from matrix import *
-from plane import KeyedPlane
+from .vector import KeyedVector
+from .matrix import *
+from .plane import KeyedPlane
 
 class KeyedTree:
     """
@@ -63,7 +63,7 @@ class KeyedTree:
                 # Keys are taken from each child
                 children = self.children.domain()
             else:
-                children = self.children.values()
+                children = list(self.children.values())
                 if not self.isLeaf():
                     # Keys also include those in the branch
                     self._keysIn |= set(self.branch.vector.keys())
@@ -184,7 +184,7 @@ class KeyedTree:
         if self.isLeaf():
             tMatrix = self.children[None]
             assert len(tMatrix) == 1,'Unable to handle dynamics of more than one feature'
-            assert tMatrix.has_key(key),'Are you sure you should be flooring me on a key I don\'t have?'
+            assert key in tMatrix,'Are you sure you should be flooring me on a key I don\'t have?'
             del self.children[None]
             fMatrix = setToConstantMatrix(key,lo)
             branch = KeyedPlane(KeyedVector(tMatrix[key]),lo)
@@ -207,7 +207,7 @@ class KeyedTree:
         if self.isLeaf():
             fMatrix = self.children[None]
             assert len(fMatrix) == 1,'Unable to handle dynamics of more than one feature'
-            assert fMatrix.has_key(key),'Are you sure you should be ceiling me on a key I don\'t have?'
+            assert key in fMatrix,'Are you sure you should be ceiling me on a key I don\'t have?'
             del self.children[None]
             tMatrix = setToConstantMatrix(key,hi)
             branch = KeyedPlane(KeyedVector(fMatrix[key]),hi)
@@ -479,13 +479,13 @@ class KeyedTree:
         if self._string is None:
             if self.isLeaf():
                 self._string = str(self.children[None])
-            elif self.children.has_key(True):
+            elif True in self.children:
                 # Deterministic branch
                 self._string = 'if %s\nThen\t%s\nElse\t%s' % (str(self.branch),str(self.children[True]).replace('\n','\n\t'),
                                                       str(self.children[False]).replace('\n','\n\t'))
             else:
                 # Probabilistic branch
-                self._string = '\n'.join(map(lambda el: '%d%%: %s' % (100.*self.children[el],str(el)),self.children.domain()))
+                self._string = '\n'.join(['%d%%: %s' % (100.*self.children[el],str(el)) for el in self.children.domain()])
         return self._string
 
     def __xml__(self):
@@ -497,7 +497,7 @@ class KeyedTree:
         if isinstance(self.children,Distribution):
             root.appendChild(self.children.__xml__().documentElement)
         else:
-            for key,value in self.children.items():
+            for key,value in list(self.children.items()):
                 if isinstance(value,bool):
                     node = doc.createElement('bool')
                     node.setAttribute('value',str(value))
@@ -579,12 +579,12 @@ def makeTree(table):
     elif isinstance(table,frozenset):
         # Set leaf (e.g., ActionSet for a policy)
         return KeyedTree(table)
-    elif table.has_key('if'):
+    elif 'if' in table:
         # Deterministic branch
         tree = KeyedTree()
         tree.makeBranch(table['if'],makeTree(table[True]),makeTree(table[False]))
         return tree
-    elif table.has_key('distribution'):
+    elif 'distribution' in table:
         # Probabilistic branch
         tree = KeyedTree()
         branch = {}

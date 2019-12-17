@@ -1,5 +1,5 @@
 import sys
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from optparse import OptionParser
 
 from psychsim.pwl import *
@@ -76,7 +76,7 @@ class Ultimatum:
 
 # really need to ask david about these levels - if adding modesl with levels, can
 # the true model point to these but have a different level
-        for agent in self.world.agents.values():
+        for agent in list(self.world.agents.values()):
             agent.addModel('Christian',R={},level=2,rationality=25.,selection='distribution')
             agent.addModel('Capitalist',R={},level=2,rationality=25.,selection='distribution')
             # agent.addModel('Christian',R={},level=2,rationality=10.,selection='distribution')
@@ -87,11 +87,11 @@ class Ultimatum:
 
 
     def modeltest(self,trueModels,davidBeliefAboutStacy,stacyBeliefAboutDavid,strongerBelief):
-        agts = self.world.agents.values()
+        agts = list(self.world.agents.values())
         for i in range(2):
             me = agts[i]
             other = agts[1-i]
-            for model in me.models.keys():
+            for model in list(me.models.keys()):
                 if model is True:
                     name = trueModels[me.name]
                 else:
@@ -103,7 +103,7 @@ class Ultimatum:
                     me.setReward(maximizeFeature(stateKey(other.name,'money')),1.0,model)
 
         weakBelief = 1.0 - strongerBelief          
-        print weakBelief
+        print(weakBelief)
         belief = {'Christian': weakBelief,'Capitalist': weakBelief}
         belief[davidBeliefAboutStacy] = strongerBelief
         self.world.setMentalModel('David','Stacy',belief)
@@ -112,7 +112,7 @@ class Ultimatum:
         self.world.setMentalModel('Stacy','David',belief)
 
     def runit(self,Msg):
-        print Msg
+        print(Msg)
         for t in range(2):
             self.world.explain(self.world.step(),level=2)
             # print self.world.step()

@@ -1,4 +1,4 @@
-import ConfigParser
+import configparser
 import csv
 import datetime
 import os
@@ -57,7 +57,7 @@ if __name__ == '__main__':
         survey.append(readSurvey('Survey_Mission%d.csv' % (mission+1)))
         remaining.append(set(survey[-1].keys()))
     # Open connection to database
-    config = ConfigParser.SafeConfigParser()
+    config = configparser.SafeConfigParser()
     config.read('db.cfg')
     if not config.has_section('mysql'):
         config.add_section('mysql')
@@ -92,24 +92,24 @@ if __name__ == '__main__':
             if log[-1]['start'] > cutoff:
                 # Make sure mission was complete
                 if log[0]['type'] == 'complete':
-                    if not logs.has_key(user):
+                    if user not in logs:
                         logs[user] = {}
                     logs[user][mission] = log
                     # Determine condition (embodiment not in logs due to sloppy programming)
-                    if not sequences.has_key(user):
+                    if user not in sequences:
                         query = 'SELECT htp_sequence_value_used FROM hri_trust_player '\
                                 'WHERE htp_amazon_id="%s"' % (f[:-6])
                         cursor.execute(query)
                         sequences[user] = int(cursor.fetchone()['htp_sequence_value_used'])
                 else:
-                    print >> sys.stderr,'User %d did not complete mission %d' % (user,mission+1)
+                    print('User %d did not complete mission %d' % (user,mission+1), file=sys.stderr)
     valid = []
     for user in sorted(logs.keys()):
         if len(logs[user]) == 8:
             valid.append(user)
         else:
-            print >> sys.stderr, 'User %d did not complete 8 missions' % (user)
-    print '%d Valid Users' % (len(valid))
+            print('User %d did not complete 8 missions' % (user), file=sys.stderr)
+    print('%d Valid Users' % (len(valid)))
     data = []
     decisionCases = ['true+', 'false+', 'true-', 'false-']
     for user in valid:
@@ -127,11 +127,11 @@ if __name__ == '__main__':
                 datum['surveyID'] = datum['gameID']
             if mission == 0:
                 if not datum['surveyID'] in survey[0]:
-                    print >> sys.stderr,'User %d did not fill out background survey' % (user)
+                    print('User %d did not fill out background survey' % (user), file=sys.stderr)
                 else:
                     remaining[0].remove(datum['surveyID'])
             if not datum['surveyID'] in survey[mission+1]:
-                print >> sys.stderr,'User %d did not fill out post-survey for mission %d' % (user,mission+1)
+                print('User %d did not fill out post-survey for mission %d' % (user,mission+1), file=sys.stderr)
             else:
                 remaining[mission+1].remove(datum['surveyID'])
             for case in decisionCases:
@@ -172,7 +172,7 @@ if __name__ == '__main__':
                             case = 'false-'
                     datum[case] += 1
                     datum['%s_%s' % (choice,case)] += 1
-            if not datum.has_key('acknowledgment'):
+            if 'acknowledgment' not in datum:
                 datum['acknowledgment'] = False
             # Condition check
             condition = (sequences[user]+mission) % 8
@@ -185,8 +185,8 @@ if __name__ == '__main__':
             data.append(datum)
             decisions = sum([datum[case] for case in decisionCases])
             if decisions != 15:
-                print '\n'.join(['%s\n%s' % (e['type'],str(e)) for e in log])
-                raise ValueError,'\tOnly %d/15 decisions\n%s' % (decisions,datum)
+                print('\n'.join(['%s\n%s' % (e['type'],str(e)) for e in log]))
+                raise ValueError('\tOnly %d/15 decisions\n%s' % (decisions,datum))
             datum['follow'] = sum([datum['follow_%s' % (case)] for case in decisionCases])
             datum['ignore'] = sum([datum['ignore_%s' % (case)] for case in decisionCases])
     # Write data to file
@@ -201,4 +201,4 @@ if __name__ == '__main__':
         for datum in data:
             writer.writerow(datum)
     for ids in remaining:
-        print >> sys.stderr,ids
+        print(ids, file=sys.stderr)

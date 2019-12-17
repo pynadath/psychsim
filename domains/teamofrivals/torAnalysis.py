@@ -21,7 +21,7 @@ if __name__ == '__main__':
                                                      'team': int(row['teamRewards'])})
         key = ''.join(incentives)
         R[key] = incentives
-        if not expectedTime.has_key(key):
+        if key not in expectedTime:
             expectedTime[key] = 0.
             probability[key] = 0.
             values[key] = {}
@@ -40,19 +40,19 @@ if __name__ == '__main__':
             territories[key][R[key][player]] += float(row['probability'])*\
                                                 float(row['territoryPlayer%d' % (player+1)])
     for key,value in sorted(expectedTime.items()):
-        print '%s\t%5.2f' % (key,value/probability[key])
-        for reward in values[key].keys():
+        print('%s\t%5.2f' % (key,value/probability[key]))
+        for reward in list(values[key].keys()):
             V = values[key][reward]/(probability[key]*float(R[key].count(reward)))
-            print '\tV[%s]\t%5.2f' % (reward[:4],V)
+            print('\tV[%s]\t%5.2f' % (reward[:4],V))
             Values[reward] += V
-        for reward in values[key].keys():
+        for reward in list(values[key].keys()):
             T = territories[key][reward]/(probability[key]*float(R[key].count(reward)))
-            print '\tT[%s]\t%5.2f' % (reward[:4],T)
+            print('\tT[%s]\t%5.2f' % (reward[:4],T))
             Territories[reward] += T
     for key,value in sorted(Values.items()):
-        print '%s\t%5.2f' % (key,value)
+        print('%s\t%5.2f' % (key,value))
     for key,value in sorted(Territories.items()):
-        print '%s\t%5.2f' % (key,value)
+        print('%s\t%5.2f' % (key,value))
             
 
         

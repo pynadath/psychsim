@@ -4,10 +4,10 @@ import sys
 from psychsim.world import World
 
 def printHelp():
-    keys = commands.keys()
+    keys = list(commands.keys())
     keys.sort()
     for cmd in keys:
-        print '%s\t%s' % (cmd,commands[cmd]['help'])
+        print('%s\t%s' % (cmd,commands[cmd]['help']))
 
 def loadScenario(filename):
     global world
@@ -28,7 +28,7 @@ def act(label):
             step({agent.name: action})
             break
     else:
-        raise AssertionError,'%s has no legal action: %s' % (agent.name,label)
+        raise AssertionError('%s has no legal action: %s' % (agent.name,label))
 
 def choose():
     assert len(world.state) == 1,'Unable to work with uncertain state'
@@ -40,10 +40,10 @@ def choose():
         actions = list(agent.getActions(vector))
         actions.sort()
         for index in range(len(actions)):
-            print '%d) %s' % (index,actions[index])
-        print 'Choose action: ',
+            print('%d) %s' % (index,actions[index]))
+        print('Choose action: ', end=' ')
         choice[name] = actions[int(stream.readline())]
-        print
+        print()
     step(choice)
 
 if __name__ == '__main__':
@@ -92,30 +92,30 @@ if __name__ == '__main__':
     while True:
         prompt = '> '
         if world:
-            prompt = '%s%s' % (','.join(world.next()),prompt)
-        print prompt,
+            prompt = '%s%s' % (','.join(next(world)),prompt)
+        print(prompt, end=' ')
         line = stream.readline().strip()
-        print
+        print()
         elements = line.split()
         if elements:
             cmd = elements[0]
-            if commands.has_key(cmd):
+            if cmd in commands:
                 if len(commands[cmd]['args']) == 1:
                     params = (' '.join(elements[1:]),)
                 else:
                     params = elements[1:]
                 if len(params) != len(commands[cmd]['args']):
-                    print 'Usage: %s %s' % (cmd,' '.join(commands[cmd]['args']))
+                    print('Usage: %s %s' % (cmd,' '.join(commands[cmd]['args'])))
                 elif commands[cmd]['world'] and world is None:
-                    print 'Must load scenario before performing command "%s"' % (cmd)
+                    print('Must load scenario before performing command "%s"' % (cmd))
                 else:
                     try:
-                        apply(commands[cmd]['function'],params)
+                        commands[cmd]['function'](*params)
                         if commands[cmd]['state']:
                             world.printState()
-                    except AssertionError,msg:
-                        print 'Error: %s' % (msg)
+                    except AssertionError as msg:
+                        print('Error: %s' % (msg))
             else:
-                print 'Unknown command: "%s"' % (cmd)
-                print elements
-        print
+                print('Unknown command: "%s"' % (cmd))
+                print(elements)
+        print()

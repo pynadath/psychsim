@@ -2,7 +2,7 @@ import math
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import graph
-import diagram
+from . import diagram
 from world import *
 
 def getLayout(graph):
@@ -13,7 +13,7 @@ def getLayout(graph):
               }
     for target in ['state pre','state post']:
         remaining = []
-        for key,table in graph.items():
+        for key,table in list(graph.items()):
             if table['type'] == target:
                 parents = set([parent for parent in table['parents'] \
                                    if graph[parent]['type'] == target])
@@ -33,7 +33,7 @@ def getLayout(graph):
                     layout[target][-1].add(key)
             remaining = temp
     for target in ['action','utility']:
-        for key,table in graph.items():
+        for key,table in list(graph.items()):
             if table['type'] == target:
                 layout[target].add(key)
 
@@ -59,7 +59,7 @@ class WorldView(QGraphicsScene):
         self.dirty = False
 
     def displayWorld(self,world):
-        for table in self.nodes.values():
+        for table in list(self.nodes.values()):
             table.clear()
         self.edgesOut.clear()
         self.edgesIn.clear()
@@ -81,7 +81,7 @@ class WorldView(QGraphicsScene):
             y = 0
             for key in sorted(layer,lambda k0,k1: cmp((self.graph[k0]['agent'],k0),
                                                       (self.graph[k1]['agent'],k1))):
-                if not self.world.variables[key].has_key('xpre'):
+                if 'xpre' not in self.world.variables[key]:
                     if y >= 10*self.rowHeight:
                         even = not even
                         if even:
@@ -109,8 +109,8 @@ class WorldView(QGraphicsScene):
                                         100,50,scene=self)
                 self.nodes[self.graph[key]['type']][key] = node
             x += self.colWidth
-        assert len(self.nodes['state pre']) == sum(map(len,self.world.locals.values()))+\
-            sum(map(len,self.world.relations.values()))
+        assert len(self.nodes['state pre']) == sum(map(len,list(self.world.locals.values())))+\
+            sum(map(len,list(self.world.relations.values())))
         # Lay out the action nodes
         y = 0
         for action in sorted(layout['action']):
@@ -132,7 +132,7 @@ class WorldView(QGraphicsScene):
             y = 0
             for key in sorted(layer,lambda k0,k1: cmp((self.graph[k0]['agent'],k0),
                                                       (self.graph[k1]['agent'],k1))):
-                if not self.world.variables[makePresent(key)].has_key('xpost'):
+                if 'xpost' not in self.world.variables[makePresent(key)]:
                     if y >= 10*self.rowHeight:
                         even = not even
                         if even:
@@ -166,7 +166,7 @@ class WorldView(QGraphicsScene):
         # Lay out the utility nodes
         y = -self.rowHeight
         for name in sorted(self.world.agents.keys()):
-            if self.graph.has_key(name):
+            if name in self.graph:
                 agent = self.world.agents[name]
                 if self.world.diagram.getX(agent.name) is None:
                     self.setDirty()
@@ -178,7 +178,7 @@ class WorldView(QGraphicsScene):
         x += self.colWidth
         self.colorNodes()
         # Lay out edges
-        for key,entry in self.graph.items():
+        for key,entry in list(self.graph.items()):
             node = self.nodes[entry['type']][key]
             for child in entry['children']:
                 self.drawEdge(key,child)
@@ -221,14 +221,14 @@ class WorldView(QGraphicsScene):
         Highlight any edges originating or ending at the named node
         @type center: str
         """
-        for key,table in self.edgesOut.items()+self.edgesIn.items():
+        for key,table in list(self.edgesOut.items())+list(self.edgesIn.items()):
             if key == center:
                 # All edges are important!
-                for edge in table.values():
+                for edge in list(table.values()):
                     edge.setPen(QPen(QBrush(QColor('black')),5))
                     edge.setZValue(2.0)
             else:
-                for subkey,edge in table.items():
+                for subkey,edge in list(table.items()):
                     if subkey == center:
                         # This edge is important
                         edge.setPen(QPen(QBrush(QColor('black')),5))
@@ -240,13 +240,13 @@ class WorldView(QGraphicsScene):
 
     def updateEdges(self,key,rect):
         self.setDirty()
-        if self.edgesOut.has_key(key):
-            for edge in self.edgesOut[key].values():
+        if key in self.edgesOut:
+            for edge in list(self.edgesOut[key].values()):
                 line = edge.line()
                 line.setP1(QPointF(rect.x()+rect.width(),rect.y()+rect.height()/2))
                 edge.setLine(line)
-        if self.edgesIn.has_key(key):
-            for edge in self.edgesIn[key].values():
+        if key in self.edgesIn:
+            for edge in list(self.edgesIn[key].values()):
                 line = edge.line()
                 line.setP2(QPointF(rect.x(),rect.y()+rect.height()/2))
                 edge.setLine(line)
@@ -258,8 +258,8 @@ class WorldView(QGraphicsScene):
         
     def colorNodes(self,mode='agent'):
         cache = None
-        for category,nodes in self.nodes.items():
-            for node in nodes.values():
+        for category,nodes in list(self.nodes.items()):
+            for node in list(nodes.values()):
                 color = node.defaultColor
                 if mode == 'agent':
                     if node.agent:
@@ -273,15 +273,15 @@ class WorldView(QGraphicsScene):
                         outcomes = self.world.step(real=False)
                         for outcome in outcomes:
                             # Update action probabilities
-                            for name,distribution in outcome['actions'].items():
-                                if not cache.has_key(name):
+                            for name,distribution in list(outcome['actions'].items()):
+                                if name not in cache:
                                     cache[name] = Distribution()
                                 for action in distribution.domain():
                                     cache[name].addProb(action,outcome['probability']*distribution[action])
                             # Update state probabilities
                             for vector in outcome['new'].domain():
-                                for key,value in vector.items():
-                                    if not cache.has_key(key):
+                                for key,value in list(vector.items()):
+                                    if key not in cache:
                                         cache[key] = Distribution()
                                     cache[key].addProb(value,outcome['probability']*outcome['new'][vector])
                     if category == 'state pre':
@@ -294,7 +294,7 @@ class WorldView(QGraphicsScene):
                         if variable['domain'] is bool:
                             color = dist2color(marginal)
                         else:
-                            print key,variable['domain']
+                            print(key,variable['domain'])
                     elif category == 'action':
                         uniform = 1./float(len(cache[node.agent.name]))
                         prob = cache[node.agent.name].getProb(node.action)

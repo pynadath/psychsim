@@ -23,14 +23,14 @@ class KeyedVector(dict):
     def __eq__(self,other):
         delta = 0.
         tested = {}
-        for key,value in self.items():
+        for key,value in list(self.items()):
             try:
                 delta += abs(value-other[key])
             except KeyError:
                 delta += abs(value)
             tested[key] = True
-        for key,value in other.items():
-            if not tested.has_key(key):
+        for key,value in list(other.items()):
+            if key not in tested:
                 delta += abs(value)
         return delta < self.epsilon
 
@@ -39,7 +39,7 @@ class KeyedVector(dict):
 
     def __add__(self,other):
         result = KeyedVector(self)
-        for key,value in other.items():
+        for key,value in list(other.items()):
             try:
                 result[key] += value
             except KeyError:
@@ -48,7 +48,7 @@ class KeyedVector(dict):
 
     def __neg__(self):
         result = KeyedVector()
-        for key,value in self.items():
+        for key,value in list(self.items()):
             result[key] = -value
         return result
 
@@ -59,14 +59,14 @@ class KeyedVector(dict):
         if isinstance(other,KeyedVector):
             # Dot product
             total = 0.
-            for key,value in self.items():
-                if other.has_key(key):
+            for key,value in list(self.items()):
+                if key in other:
                     total += value*other[key]
             return total
         elif isinstance(other,float):
             # Scaling
             result = KeyedVector()
-            for key,value in self.items():
+            for key,value in list(self.items()):
                 result[key] = value*other
             return result
         else:
@@ -82,7 +82,7 @@ class KeyedVector(dict):
 
     def desymbolize(self,table,debug=False):
         result = self.__class__()
-        for key,value in self.items():
+        for key,value in list(self.items()):
             if isinstance(value,str):
                 try:
                     result[key] = eval(value,globals(),table)
@@ -103,7 +103,7 @@ class KeyedVector(dict):
         else:
             test = ignore
         result = self.__class__()
-        for key in filter(test,self.keys()):
+        for key in filter(test,list(self.keys())):
             result[key] = self[key]
         return result
 
@@ -127,15 +127,15 @@ class KeyedVector(dict):
         @rtype: float
         """
         d = 0.
-        for key in self.keys():
+        for key in list(self.keys()):
             d += pow(self[key]-vector[key],2)
         return d
 
     def __str__(self):
         if self._string is None:
-            keys = self.keys()
+            keys = list(self.keys())
             keys.sort()
-            self._string = '\n'.join(map(lambda k: '%s: %s' % (k,self[k]),keys))
+            self._string = '\n'.join(['%s: %s' % (k,self[k]) for k in keys])
         return self._string
 
     def __repr__(self):
@@ -147,7 +147,7 @@ class KeyedVector(dict):
     def __xml__(self):
         doc = Document()
         root = doc.createElement('vector')
-        for key,value in self.items():
+        for key,value in list(self.items()):
             node = doc.createElement('entry')
             node.setAttribute('key',key)
             node.setAttribute('value',str(value))
@@ -232,7 +232,7 @@ class VectorDistribution(Distribution):
         if incremental:
             # Sample each key and keep track how likely each individual choice was
             sample = KeyedVector()
-            keys = self.domain()[0].keys()
+            keys = list(self.domain()[0].keys())
             index = 0
             while len(self) > 1:
                 key = keys[index]
@@ -261,7 +261,7 @@ class VectorDistribution(Distribution):
         @rtype: bool
         """
         for vector in self.domain():
-            if not vector.has_key(key):
+            if key not in vector:
                 return False
         return True
 
