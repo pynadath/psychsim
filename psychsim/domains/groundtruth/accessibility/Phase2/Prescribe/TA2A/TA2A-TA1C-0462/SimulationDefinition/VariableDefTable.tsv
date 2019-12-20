@@ -1,0 +1,21 @@
+Name	LongName	Values	VarType	DataType	Notes
+TA2A 462 Hurricane 2 Injury	TA2A 462 Hurricane 2 Injury	[0-6]	dynamic	Integer	Q1
+TA2A 462 Hurricane 2 Action	TA2A 462 Hurricane 2 Action	go home,shelter,evacuate,stay in current location	dynamic	String	Q2: Comma-separated
+TA2A 462 Hurricane 3 Injury	TA2A 462 Hurricane 3 Injury	[0-6]	dynamic	Integer	Q1
+TA2A 462 Hurricane 3 Action	TA2A 462 Hurricane 3 Action	go home,shelter,evacuate,stay in current location	dynamic	String	Q2: Comma-separated
+TA2A 462 Hurricane 4 Injury	TA2A 462 Hurricane 4 Injury	[0-6]	dynamic	Integer	Q1
+TA2A 462 Hurricane 4 Action	TA2A 462 Hurricane 4 Action	go home,shelter,evacuate,stay in current location	dynamic	String	Q2: Comma-separated
+TA2A 462 Hurricane 5 Injury	TA2A 462 Hurricane 5 Injury	[0-6]	dynamic	Integer	Q1
+TA2A 462 Hurricane 5 Action	TA2A 462 Hurricane 5 Action	go home,shelter,evacuate,stay in current location	dynamic	String	Q2: Comma-separated
+TA2A 462 Hurricane 6 Injury	TA2A 462 Hurricane 6 Injury	[0-6]	dynamic	Integer	Q1
+TA2A 462 Hurricane 6 Action	TA2A 462 Hurricane 6 Action	go home,shelter,evacuate,stay in current location	dynamic	String	Q2: Comma-separated
+TA2A 462 Hurricane 7 Injury	TA2A 462 Hurricane 7 Injury	[0-6]	dynamic	Integer	Q1
+TA2A 462 Hurricane 7 Action	TA2A 462 Hurricane 7 Action	go home,shelter,evacuate,stay in current location	dynamic	String	Q2: Comma-separated
+TA2A 462 Hurricane 8 Injury	TA2A 462 Hurricane 8 Injury	[0-6]	dynamic	Integer	Q1
+TA2A 462 Hurricane 8 Action	TA2A 462 Hurricane 8 Action	go home,shelter,evacuate,stay in current location	dynamic	String	Q2: Comma-separated
+TA2A 462 Hurricane 9 Injury	TA2A 462 Hurricane 9 Injury	[0-6]	dynamic	Integer	Q1
+TA2A 462 Hurricane 9 Action	TA2A 462 Hurricane 9 Action	go home,shelter,evacuate,stay in current location	dynamic	String	Q2: Comma-separated
+TA2A 462 Hurricane 10 Injury	TA2A 462 Hurricane 10 Injury	[0-6]	dynamic	Integer	Q1
+TA2A 462 Hurricane 10 Action	TA2A 462 Hurricane 10 Action	go home,shelter,evacuate,stay in current location	dynamic	String	Q2: Comma-separated
+TA2A 462 Hurricane 11 Injury	TA2A 462 Hurricane 11 Injury	[0-6]	dynamic	Integer	Q1
+TA2A 462 Hurricane 11 Action	TA2A 462 Hurricane 11 Action	go home,shelter,evacuate,stay in current location	dynamic	String	Q2: Comma-separated
