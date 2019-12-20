@@ -1,0 +1,202 @@
+INFO:root:Instance 20 (103,0)
+INFO:root:Participant 1: Actor0190
+INFO:root:Actor0190: TA2B 23 Participant 1 and Pre-survey 3 93
+INFO:root:Participant 2: Actor0758
+INFO:root:Actor0758: TA2B 23 Participant 2 and Pre-survey 1 31
+INFO:root:Participant 3: Actor0287
+INFO:root:Actor0287: TA2B 23 Participant 3 and Pre-survey 1 26
+INFO:root:Participant 4: Actor0363
+INFO:root:Actor0363: TA2B 23 Participant 4 and Post-survey 4 72
+INFO:root:Participant 5: Actor0293
+INFO:root:Actor0293: TA2B 23 Participant 5 and Post-survey 1 57
+INFO:root:Participant 6: Actor0676
+INFO:root:Actor0676: TA2B 23 Participant 6 and Pre-survey 6 37
+INFO:root:Participant 7: Actor0693
+INFO:root:Actor0693: TA2B 23 Participant 7 and Post-survey 3 54
+INFO:root:Participant 8: Actor0284
+INFO:root:Actor0284: TA2B 23 Participant 8 and Post-survey 1 22
+INFO:root:Participant 9: Actor0139
+INFO:root:Actor0139: TA2B 23 Participant 9 and Pre-survey 3 67
+INFO:root:Participant 10: Actor0927
+INFO:root:Actor0927: TA2B 23 Participant 10 and Post-survey 2 69
+INFO:root:Participant 11: Actor0145
+INFO:root:Actor0145: TA2B 23 Participant 11 and Pre-survey 2 76
+INFO:root:Participant 12: Actor0087
+WARNING:root:Actor0087 never filled out survey
+INFO:root:Participant 13: Actor0659
+INFO:root:Actor0659: TA2B 23 Participant 13 and Post-survey 3 63
+INFO:root:Participant 14: Actor0663
+WARNING:root:Actor0663 never filled out survey
+INFO:root:Participant 15: Actor0283
+INFO:root:Actor0283: TA2B 23 Participant 15 and Post-survey 1 87
+INFO:root:Participant 16: Actor0348
+INFO:root:Actor0348: TA2B 23 Participant 16 and Pre-survey 4 40
+INFO:root:Participant 17: Actor0571
+WARNING:root:Actor0571 never filled out survey
+INFO:root:Participant 18: Actor0014
+INFO:root:Actor0014: TA2B 23 Participant 18 and Post-survey 2 70
+INFO:root:Participant 19: Actor0929
+INFO:root:Actor0929: TA2B 23 Participant 19 and Post-survey 3 56
+INFO:root:Participant 20: Actor0881
+INFO:root:Actor0881: TA2B 23 Participant 20 and Post-survey 4 87
+INFO:root:Participant 21: Actor0485
+INFO:root:Actor0485: TA2B 23 Participant 21 and Post-survey 4 40
+INFO:root:Participant 22: Actor0764
+INFO:root:Actor0764: TA2B 23 Participant 22 and Post-survey 1 88
+INFO:root:Participant 23: Actor0425
+INFO:root:Actor0425: TA2B 23 Participant 23 and Post-survey 1 12
+INFO:root:Participant 24: Actor0577
+INFO:root:Actor0577: TA2B 23 Participant 24 and Pre-survey 2 1
+INFO:root:Participant 25: Actor0977
+INFO:root:Actor0977: TA2B 23 Participant 25 and Post-survey 3 4
+INFO:root:Participant 26: Actor0650
+WARNING:root:Actor0650 never filled out survey
+INFO:root:Participant 27: Actor0830
+WARNING:root:Actor0830 never filled out survey
+INFO:root:Participant 28: Actor0023
+INFO:root:Actor0023: TA2B 23 Participant 28 and Post-survey 5 99
+INFO:root:Participant 29: Actor0424
+INFO:root:Actor0424: TA2B 23 Participant 29 and Post-survey 1 25
+INFO:root:Participant 30: Actor0542
+INFO:root:Actor0542: TA2B 23 Participant 30 and Post-survey 1 86
+INFO:root:Participant 31: Actor0156
+INFO:root:Actor0156: TA2B 23 Participant 31 and Post-survey 2 43
+INFO:root:Participant 32: Actor0582
+INFO:root:Actor0582: TA2B 23 Participant 32 and Post-survey 6 84
+INFO:root:Participant 33: Actor0621
+INFO:root:Actor0621: TA2B 23 Participant 33 and Post-survey 1 1
+INFO:root:Participant 34: Actor0068
+WARNING:root:Actor0068 never filled out survey
+INFO:root:Participant 35: Actor0428
+INFO:root:Actor0428: TA2B 23 Participant 35 and Post-survey 2 18
+INFO:root:Participant 36: Actor0953
+INFO:root:Actor0953: TA2B 23 Participant 36 and Post-survey 6 12
+INFO:root:Participant 37: Actor0598
+WARNING:root:Actor0598 never filled out survey
+INFO:root:Participant 38: Actor0956
+INFO:root:Actor0956: TA2B 23 Participant 38 and Post-survey 3 49
+INFO:root:Participant 39: Actor0228
+INFO:root:Actor0228: TA2B 23 Participant 39 and Pre-survey 3 1
+INFO:root:Participant 40: Actor0109
+INFO:root:Actor0109: TA2B 23 Participant 40 and Post-survey 1 79
+INFO:root:Participant 41: Actor0800
+INFO:root:Actor0800: TA2B 23 Participant 41 and Pre-survey 4 92
+INFO:root:Participant 42: Actor0501
+INFO:root:Actor0501: TA2B 23 Participant 42 and Pre-survey 6 68
+INFO:root:Participant 43: Actor0718
+INFO:root:Actor0718: TA2B 23 Participant 43 and Post-survey 2 2
+INFO:root:Participant 44: Actor0413
+WARNING:root:Actor0413 never filled out survey
+INFO:root:Participant 45: Actor0502
+INFO:root:Actor0502: TA2B 23 Participant 45 and Post-survey 3 98
+INFO:root:Participant 46: Actor0985
+WARNING:root:Actor0985 never filled out survey
+INFO:root:Participant 47: Actor0860
+INFO:root:Actor0860: TA2B 23 Participant 47 and Pre-survey 2 89
+INFO:root:Participant 48: Actor0033
+WARNING:root:Actor0033 never filled out survey
+INFO:root:Participant 49: Actor0482
+WARNING:root:Actor0482 never filled out survey
+INFO:root:Participant 50: Actor0461
+INFO:root:Condition 0
+INFO:root:Condition 1
+INFO:root:Instance 21 (104,0)
+INFO:root:Participant 1: Actor0463
+INFO:root:Actor0463: TA2B 23 Participant 1 and Post-survey 6 33
+INFO:root:Participant 2: Actor0792
+WARNING:root:Actor0792 never filled out survey
+INFO:root:Participant 3: Actor0581
+INFO:root:Actor0581: TA2B 23 Participant 3 and Post-survey 2 38
+INFO:root:Participant 4: Actor0399
+WARNING:root:Actor0399 never filled out survey
+INFO:root:Participant 5: Actor0676
+WARNING:root:Actor0676 never filled out survey
+INFO:root:Participant 6: Actor0033
+INFO:root:Actor0033: TA2B 23 Participant 6 and Post-survey 4 95
+INFO:root:Participant 7: Actor0611
+INFO:root:Actor0611: TA2B 23 Participant 7 and Post-survey 5 91
+INFO:root:Participant 8: Actor0125
+INFO:root:Actor0125: TA2B 23 Participant 8 and Pre-survey 5 64
+INFO:root:Participant 9: Actor0827
+INFO:root:Actor0827: TA2B 23 Participant 9 and Post-survey 6 86
+INFO:root:Participant 10: Actor0558
+INFO:root:Actor0558: TA2B 23 Participant 10 and Pre-survey 4 66
+INFO:root:Participant 11: Actor0860
+INFO:root:Actor0860: TA2B 23 Participant 11 and Pre-survey 3 47
+INFO:root:Participant 12: Actor0356
+INFO:root:Actor0356: TA2B 23 Participant 12 and Pre-survey 2 23
+INFO:root:Participant 13: Actor0443
+INFO:root:Actor0443: TA2B 23 Participant 13 and Post-survey 4 54
+INFO:root:Participant 14: Actor0740
+INFO:root:Actor0740: TA2B 23 Participant 14 and Pre-survey 2 33
+INFO:root:Participant 15: Actor0455
+INFO:root:Actor0455: TA2B 23 Participant 15 and Post-survey 6 45
+INFO:root:Participant 16: Actor0289
+INFO:root:Actor0289: TA2B 23 Participant 16 and Post-survey 6 5
+INFO:root:Participant 17: Actor0003
+INFO:root:Actor0003: TA2B 23 Participant 17 and Post-survey 1 60
+INFO:root:Participant 18: Actor0498
+INFO:root:Actor0498: TA2B 23 Participant 18 and Post-survey 3 55
+INFO:root:Participant 19: Actor0582
+INFO:root:Actor0582: TA2B 23 Participant 19 and Pre-survey 3 58
+INFO:root:Participant 20: Actor0175
+INFO:root:Actor0175: TA2B 23 Participant 20 and Post-survey 3 80
+INFO:root:Participant 21: Actor0685
+INFO:root:Actor0685: TA2B 23 Participant 21 and Post-survey 3 12
+INFO:root:Participant 22: Actor0829
+INFO:root:Actor0829: TA2B 23 Participant 22 and Post-survey 5 17
+INFO:root:Participant 23: Actor0910
+INFO:root:Actor0910: TA2B 23 Participant 23 and Pre-survey 4 21
+INFO:root:Participant 24: Actor0088
+INFO:root:Actor0088: TA2B 23 Participant 24 and Post-survey 1 82
+INFO:root:Participant 25: Actor0895
+INFO:root:Actor0895: TA2B 23 Participant 25 and Pre-survey 4 40
+INFO:root:Participant 26: Actor0052
+INFO:root:Actor0052: TA2B 23 Participant 26 and Post-survey 1 13
+INFO:root:Participant 27: Actor0809
+INFO:root:Actor0809: TA2B 23 Participant 27 and Pre-survey 2 50
+INFO:root:Participant 28: Actor0413
+INFO:root:Actor0413: TA2B 23 Participant 28 and Post-survey 4 10
+INFO:root:Participant 29: Actor0647
+INFO:root:Actor0647: TA2B 23 Participant 29 and Post-survey 3 2
+INFO:root:Participant 30: Actor0570
+WARNING:root:Actor0570 never filled out survey
+INFO:root:Participant 31: Actor0802
+INFO:root:Actor0802: TA2B 23 Participant 31 and Post-survey 6 9
+INFO:root:Participant 32: Actor0361
+INFO:root:Participant 33: Actor0039
+INFO:root:Actor0039: TA2B 23 Participant 33 and Pre-survey 2 82
+INFO:root:Participant 34: Actor0310
+WARNING:root:Actor0310 never filled out survey
+INFO:root:Participant 35: Actor0958
+INFO:root:Actor0958: TA2B 23 Participant 35 and Pre-survey 3 81
+INFO:root:Participant 36: Actor0675
+INFO:root:Actor0675: TA2B 23 Participant 36 and Post-survey 1 22
+INFO:root:Participant 37: Actor0136
+WARNING:root:Actor0136 never filled out survey
+INFO:root:Participant 38: Actor0181
+INFO:root:Actor0181: TA2B 23 Participant 38 and Pre-survey 3 66
+INFO:root:Participant 39: Actor0401
+INFO:root:Actor0401: TA2B 23 Participant 39 and Pre-survey 1 9
+INFO:root:Participant 40: Actor0398
+WARNING:root:Actor0398 never filled out survey
+INFO:root:Participant 41: Actor0103
+WARNING:root:Actor0103 never filled out survey
+INFO:root:Participant 42: Actor0292
+INFO:root:Actor0292: TA2B 23 Participant 42 and Pre-survey 5 72
+INFO:root:Participant 43: Actor0445
+INFO:root:Actor0445: TA2B 23 Participant 43 and Post-survey 1 71
+INFO:root:Participant 44: Actor0914
+INFO:root:Actor0914: TA2B 23 Participant 44 and Pre-survey 1 59
+INFO:root:Participant 45: Actor0970
+WARNING:root:Actor0970 never filled out survey
+INFO:root:Participant 46: Actor0159
+INFO:root:Actor0159: TA2B 23 Participant 46 and Pre-survey 2 5
+INFO:root:Participant 47: Actor0574
+WARNING:root:Actor0574 never filled out survey
+INFO:root:Participant 48: Actor0785
+INFO:root:Actor0785: TA2B 23 Participant 48 and Pre-survey 3 48
+INFO:root:Participant 49: Actor0355
+INFO:root:Actor0355: TA2B 23 Participant 49 and Post-survey 3 11
+INFO:root:Condition 0
+INFO:root:Condition 1
