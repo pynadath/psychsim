@@ -446,9 +446,6 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
             print(('Day %3d: %-6s %-11s' % (state['today'],turn,state['phase'] if state['phase'] != 'active' else world.getState('Nature','location').first())))
         if turn == 'Actor':
 #            world.history[day] = {}
-            if groups:
-                # Make group decisions
-                pass
             if config.getboolean('Actors','messages') and state['phase'] != 'none':
                 logEdge('Actor friendOf Actor','ActorBeliefOfNature\'s category','often','Actors share their beliefs about the hurricane\'s category with their friends on a daily basis, and their beliefs are influence by the incoming messages')
                 # 
@@ -701,7 +698,11 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                                 break
                         else:
                             raise ValueError('Unable to find action %s for %s' % (entry['Action'],actor.name))
-        newState = world.step(policy,select=select,debug=debug)
+        if turn == 'Nature' and config.getint('Simulation','phase',fallback=1) >= 3:
+            newState = world.agents[turn].step(select)
+        else:
+            newState = world.step(policy,select=select,debug=debug)
+
         if config.getint('Simulation','phase',fallback=1) == 1:
             buf = StringIO()
             joint = world.explainAction(newState,level=1,buf=buf)
@@ -1270,7 +1271,7 @@ def exchangeMessages(world,config,state,living):
     else:
         # Phase 2 messages
         key = stateKey('Nature','category')
-        beliefs = {actor.name: next(iter(actor.getBelief(state).values()))}
+        beliefs = {actor.name: next(iter(actor.getBelief(state).values())) for actor in living}
         messages = {}
         for actor in living:
             friends = [friend for friend in actor.friends
