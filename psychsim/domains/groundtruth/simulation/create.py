@@ -74,7 +74,7 @@ def createWorld(config):
                 group.potentialMembers([a.name for a in info['inhabitants']],
                                        membership=config.getint('Groups','region_membership'))
                 groups.append(group)
-    if config.getboolean('Groups','ethnic'):
+    if config.getboolean('Groups','ethnic',fallback=False):
         group = Group('EthnicMinority',world,config)
         group.potentialMembers([a.name for a in population \
                                 if a.getState('ethnicGroup').first() == 'minority'])
@@ -87,7 +87,7 @@ def createWorld(config):
         if world.diagram:
             world.diagram.setColor(group.name,'blueviolet')
         groups.append(group)
-    if config.getboolean('Groups','religion'):
+    if config.getboolean('Groups','religion',fallback=False):
         group = Group('ReligiousMinority',world,config)
         group.potentialMembers([a.name for a in population \
                                 if a.getState('religion').first() == 'minority'])
@@ -129,7 +129,7 @@ def createWorld(config):
         if not config.getboolean('Actors','beliefs'):
             agent.setAttribute('static',True)
 
-    if system and config.getboolean('System','beliefs'):
+    if system and config.getboolean('System','beliefs',fallback=False):
         system.resetBelief()
 
 
