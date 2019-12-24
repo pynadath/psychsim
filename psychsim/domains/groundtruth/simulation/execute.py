@@ -59,6 +59,10 @@ def runInstance(instance,args,config,rerun=True):
                     world = loadPickle(args['instance'],run,0)
                     with open(os.path.join(dirName,'state%d%s.pkl' % (args['reload']-1,'Nature')),'rb') as f:
                         oldStates = pickle.load(f)
+                    for name in world.agents:
+                        if name[:5] == 'Actor' and name not in oldStates:
+                            # He's dead Jim
+                            killAgent(name,world)
                     for name,state in oldStates.items():
                         if name == '__state__':
                             world.state = state
@@ -416,27 +420,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                     living.append(actor)
                 else:
                     # not so much
-                    toDelete = [key for key in world.state.keys() if (isStateKey(key) and state2agent(key) == actor.name) or \
-                        (isBinaryKey(key) and key2relation(key)['subject'] == actor.name)]
-                    world.state.deleteKeys(toDelete)
-                    world.dependency.deleteKeys(set(toDelete))
-
-                    logEdge('Actor\'s health','Actor memberOf Group','sometimes','Actors can no longer be group members when they die')
-                    #
-                    for group in [g for g in world.agents if g[:5] == 'Group']:
-                        if actor.name in world.agents[group].potentials:
-                            world.agents[group].potentials.remove(actor.name)
-
-                    logEdge('Actor\'s health','Actor marriedTo Actor','sometimes','Actors are no longer married if their spouse dies')
-                    #
-                    if actor.spouse is not None:
-                        world.agents[actor.spouse].spouse = None
-
-                    logEdge('Actor\'s health','Actor friendOf Actor','sometimes','Actors cannot be friends with dead people')
-                    #
-                    for friend in [f for f in world.agents.values() if f.name[:5] == 'Actor']:
-                        if actor.name in friend.friends:
-                            friend.friends.remove(actor.name)
+                    killAgent(actor.name,world)
 
         agents = world.next()
         turn = world.agents[next(iter(agents))].__class__.__name__
@@ -456,6 +440,8 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
             electionT = state['today']
             if freq == 'season':
                 electionT /= config.getint('Disaster','year_length',fallback=365) + 1
+            elif freq == 'hurricane':
+                electionT = state['hurricane']
             if electionT > state['election']:
                 # Time for a new election
                 world.agents['System'].election(living)
@@ -1266,7 +1252,7 @@ def exchangeMessages(world,config,state,living):
                 for friend in friends:
                     yrBelief = next(iter(world.agents[friend].getBelief(state).values()))
                     msg = yrBelief[key]
-                    logging.info('%s receives message %s from %s' % (actor,msg,friend))
+                    logging.info('%s receives message %s from %s' % (actor.name,msg,friend))
                     actor.recvMessage(key,msg,myScale,optScale,pessScale)
     else:
         # Phase 2 messages
@@ -1279,5 +1265,29 @@ def exchangeMessages(world,config,state,living):
             if friends:
                 msg = [beliefs[friend][key] for friend in friends]
                 messages[actor.name] = msg
-                logging.info('%s receives message %s' % (actor,msg))
+                logging.info('%s receives message %s' % (actor.name,msg))
                 actor.recvMessage(key,msg,myScale,optScale,pessScale)
+
+def killAgent(name,world):
+    toDelete = [key for key in world.state.keys() if (isStateKey(key) and state2agent(key) == name) or \
+        (isBinaryKey(key) and key2relation(key)['subject'] == name)]
+    world.state.deleteKeys(toDelete)
+    world.dependency.deleteKeys(set(toDelete))
+
+    logEdge('Actor\'s health','Actor memberOf Group','sometimes','Actors can no longer be group members when they die')
+    #//GT: edge 93; from 21; to 52; 1 of 1; next 3 lines
+    for group in [g for g in world.agents if g[:5] == 'Group']:
+        if name in world.agents[group].potentials:
+            world.agents[group].potentials.remove(name)
+
+    logEdge('Actor\'s health','Actor marriedTo Actor','sometimes','Actors are no longer married if their spouse dies')
+    #//GT: edge 94; from 21; to 22; 1 of 1; next 2 lines
+    actor = world.agents[name]
+    if actor.spouse is not None:
+        world.agents[actor.spouse].spouse = None
+
+    logEdge('Actor\'s health','Actor friendOf Actor','sometimes','Actors cannot be friends with dead people')
+    #//GT: edge 95; from 21; to 57; 1 of 1; next 3 lines
+    for friend in [f for f in world.agents.values() if f.name[:5] == 'Actor']:
+        if name in friend.friends:
+            friend.friends.remove(name)
