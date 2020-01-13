@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1007</width>
-    <height>1056</height>
+    <height>723</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -40,8 +40,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>981</width>
-         <height>830</height>
+         <width>966</width>
+         <height>536</height>
         </rect>
        </property>
        <property name="sizePolicy">
@@ -259,17 +259,30 @@
         </sizepolicy>
        </property>
       </widget>
-      <widget class="QPushButton" name="deleteSample">
+      <widget class="QPushButton" name="CreateSample">
        <property name="geometry">
         <rect>
-         <x>120</x>
-         <y>120</y>
-         <width>71</width>
+         <x>110</x>
+         <y>70</y>
+         <width>91</width>
          <height>32</height>
         </rect>
        </property>
        <property name="text">
-        <string>Delete</string>
+        <string>Create</string>
+       </property>
+      </widget>
+      <widget class="QPushButton" name="DisplaySamples">
+       <property name="geometry">
+        <rect>
+         <x>110</x>
+         <y>110</y>
+         <width>91</width>
+         <height>32</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Display</string>
        </property>
       </widget>
      </widget>

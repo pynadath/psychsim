@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>CreateSample</class>
- <widget class="QDialog" name="CreateSample">
+ <class>ReactivateFilter</class>
+ <widget class="QDialog" name="ReactivateFilter">
   <property name="windowModality">
    <enum>Qt::WindowModal</enum>
   </property>
@@ -12,8 +12,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>224</width>
-    <height>180</height>
+    <width>223</width>
+    <height>160</height>
    </rect>
   </property>
   <property name="maximumSize">
@@ -23,7 +23,10 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Create Sample</string>
+   <string>Reactivate Filter</string>
+  </property>
+  <property name="toolTip">
+   <string/>
   </property>
   <property name="modal">
    <bool>false</bool>
@@ -32,7 +35,7 @@
    <property name="geometry">
     <rect>
      <x>30</x>
-     <y>140</y>
+     <y>100</y>
      <width>161</width>
      <height>51</height>
     </rect>
@@ -50,52 +53,21 @@
      <x>10</x>
      <y>20</y>
      <width>201</width>
-     <height>111</height>
+     <height>71</height>
     </rect>
    </property>
    <property name="title">
-    <string>Create Sample</string>
+    <string>Re-Activate Filter</string>
    </property>
-   <widget class="QWidget" name="gridLayoutWidget">
+   <widget class="QComboBox" name="comboBox">
     <property name="geometry">
      <rect>
-      <x>0</x>
-      <y>20</y>
-      <width>201</width>
-      <height>91</height>
+      <x>10</x>
+      <y>30</y>
+      <width>181</width>
+      <height>26</height>
      </rect>
     </property>
-    <layout class="QGridLayout" name="gridLayout" rowstretch="0,0">
-     <property name="sizeConstraint">
-      <enum>QLayout::SetMinimumSize</enum>
-     </property>
-     <item row="1" column="0">
-      <widget class="QGroupBox" name="groupBox_4">
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>75</height>
-        </size>
-       </property>
-       <property name="title">
-        <string>name</string>
-       </property>
-       <widget class="QLineEdit" name="nameLine">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>30</y>
-          <width>151</width>
-          <height>21</height>
-         </rect>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </widget>
-     </item>
-    </layout>
    </widget>
   </widget>
  </widget>
@@ -104,7 +76,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>CreateSample</receiver>
+   <receiver>ReactivateFilter</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -120,7 +92,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>CreateSample</receiver>
+   <receiver>ReactivateFilter</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
