@@ -1,0 +1,11 @@
+Name	LongName	Values	VarType	DataType	Notes
+Residence	Residence	Region[01-16]	fixed	String	
+Age	Age	[0-100]	dynamic	Integer	
+Gender	Gender	female,male	fixed	String	
+Wealth	Wealth	[1-7]	dynamic	Integer	
+TA2A 552 Health Issues	TA2A 552 Health Issues	[1-7]	dynamic	Integer	Q1e
+TA2A 552 Criminal Record	TA2A 552 Criminal Record	[0+]	dynamic	Integer	Q2
+TA2A 552 Navigation Confidence	TA2A 552 Navigation Confidence	[1-7]	dynamic	Integer	Q3
+TA2A 552 Stay Home Willingness	TA2A 552 Stay Home Willingness	[1-7]	dynamic	Integer	Q4
+TA2A 552 Location	TA2A 552 Location	home,evacuated,shelter	dynamic	String	Q5
+TA2A 552 Shelter Comfort	TA2A 552 Shelter Comfort	[1-7]	dynamic	Integer	Q6
