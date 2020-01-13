@@ -20,8 +20,8 @@ fields = {'VariableDef': ['Name','LongName','Values','VarType','DataType','Notes
           'RunData': ['Timestep','VariableName','EntityIdx','Value','Notes'],
           'SummaryStatisticsData': ['Timestep','VariableName','EntityIdx','Value','Metadata'],
           'QualitativeData': ['Timestep','EntityIdx','QualData','Metadata'],
-          'RelationshipData': ['Timestep','RelationshipType','Directed','FromEntityId',
-                               'ToEntityId','Data','Notes'],
+          'RelationshipData': ['Timestep','RelationshipType','Directed','FromEntityID',
+                               'ToEntityID','Data','Notes'],
           'Population': ['Timestep','Deaths','Casualties','Evacuees','Sheltered'],
           'Regional': ['Timestep','Region','Deaths','Casualties','Sheltered'],
           }
@@ -346,8 +346,8 @@ def toCDF(world,dirName,tables,unobservable=set()):
                         if key in world.dynamics or value.first():
                             record = {'RelationshipType': relation['relation'],
                                       'Directed': 'yes',
-                                      'FromEntityId': relation['subject'],
-                                      'ToEntityId': relation['object'],
+                                      'FromEntityID': relation['subject'],
+                                      'ToEntityID': relation['object'],
                                       'Data': value.first()
                                       }
                             if key in world.dynamics:
@@ -366,13 +366,13 @@ def toCDF(world,dirName,tables,unobservable=set()):
                         for j in range(i+1,len(agents)):
                             record = {'RelationshipType': 'neighbor',
                                       'Directed': 'yes',
-                                      'FromEntityId': agents[i],
-                                      'ToEntityId': agents[j],
+                                      'FromEntityID': agents[i],
+                                      'ToEntityID': agents[j],
                                       'Data': region,
                             }
                             writer.writerow(record)
-                            record['FromEntityId'] = agents[j]
-                            record['ToEntityId'] = agents[i]
+                            record['FromEntityID'] = agents[j]
+                            record['ToEntityID'] = agents[i]
                             writer.writerow(record)
                     
             # elif name == 'InstanceVariable':
@@ -427,8 +427,8 @@ def updateCDF(world,dirName,tables,unobservable=set()):
                         record = {'Timestep': day,
                                   'RelationshipType': relation['relation'],
                                   'Directed': 'yes',
-                                  'FromEntityId': relation['subject'],
-                                  'ToEntityId': relation['object'],
+                                  'FromEntityID': relation['subject'],
+                                  'ToEntityID': relation['object'],
                                   'Data': value.first()}
                         writer.writerow(record)
             elif name == 'QualitativeData':
@@ -695,7 +695,7 @@ if __name__ == '__main__':
                 else:
                     raise NameError('Unknown relationship: %s' % (variable))
                 for other in others:
-                    tables['RelationshipData'].append({'RelationshipType': variable,'Directed': 'yes','FromEntityId': name,'ToEntityId': other,'Data': 'yes'})
+                    tables['RelationshipData'].append({'RelationshipType': variable,'Directed': 'yes','FromEntityID': name,'ToEntityID': other,'Data': 'yes'})
         # Dynamic variables
         for behaviors in world.agents['Actor0001'].actions:
             action = Action(next(iter(behaviors)))
