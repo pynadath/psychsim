@@ -25,7 +25,7 @@ else:
 
 def createWorld(config):
     random.seed(config.getint('Simulation','seedGen'))
-    world = World()
+    world = World(single=config.getboolean('Simulation','singletrue',fallback=False))
 #    world.history = {}
     if __ui__:
         world.diagram = Diagram()
