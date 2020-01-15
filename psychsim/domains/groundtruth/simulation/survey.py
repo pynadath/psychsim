@@ -22,30 +22,30 @@ fields = {#'Population': ['Timestep','Deaths','Casualties','Evacuees','Sheltered
     'InstanceVariable': accessibility.fields['InstanceVariable'],
 }
 
-def doPopulation(world,state,actors,t,variables,entity,prefix=''):
+def doPopulation(world,state,actors,t,variables,entity,prefix='',alive=True):
     data = []
     var = '%sDeaths' % (prefix)
-    living = {name for name in actors if world.getState(name,'alive',state).first()}
+    if alive:
+        living = {name for name in actors if world.getState(name,'alive',state).first()}
+    else:
+        living = {name for name in actors if stateKey(name,'health') in state}
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[0+]','DataType': 'Integer'}
     record = {'Timestep': t,'VariableName': var,'EntityIdx': entity,'Value': len(actors)-len(living)}
     data.append(record)
     var = '%sCasualties' % (prefix)
-    living = {name for name in actors if world.getState(name,'alive',state).first()}
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[0+]','DataType': 'Integer'}
     record = {'Timestep': t,'VariableName': var,'EntityIdx': entity,
-        'Value': len([name for name in actors if float(world.getState(name,'health',state)) < 0.2])}
+        'Value': len([name for name in actors if name not in living or float(world.getState(name,'health',state)) < 0.2])}
     data.append(record)
     var = '%sEvacuees' % (prefix)
-    living = {name for name in actors if world.getState(name,'alive',state).first()}
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[0+]','DataType': 'Integer'}
     record = {'Timestep': t,'VariableName': var,'EntityIdx': entity,
         'Value': len([name for name in living if world.getState(name,'location',state).first() == 'evacuated'])}
     data.append(record)
     var = '%sSheltered' % (prefix)
-    living = {name for name in actors if world.getState(name,'alive',state).first()}
     if var not in variables:
         variables[var] = {'Name': var,'Values':'[0+]','DataType': 'Integer'}
     record = {'Timestep': t,'VariableName': var,'EntityIdx': entity,
@@ -233,10 +233,14 @@ def postSurvey(args,name,world,states,config,t,hurricane,variables=None,partID=N
         else:
             belief = copy.deepcopy(belief)
             model = world.getFeature(modelKey(name),states[day-1]['Nature']['__state__']).first()
+        horizon = agent.getAttribute('horizon',model)
         pEvac.append(0.)
         pShelter.append(0.)
         pHome.append(0.)
-        V = {action: agent.value(belief,action,model,updateBeliefs=False)['__EV__'] for action in agent.getActions(belief)}
+        if config.getint('Simulation','phase',fallback=1) < 3:
+            V = {action: agent.value(belief,action,model,updateBeliefs=False)['__EV__'] for action in agent.getActions(belief)}
+        else:
+            V = {action: agent.chooseAction(copy.deepcopy(belief),horizon,action,model)[1] for action in agent.getActions(belief)}            
         #//GT: Verify that behavior in log is the optimal value
         if verify:
             assert V[actions[day-hurricane['Start']]] == max(V.values()),'%s\n%s' % (actions[day-hurricane['Start']],V)
@@ -415,10 +419,11 @@ if __name__ == '__main__':
         if not args['skiptables']:
             tables['RunData'] += doCensus(world,variables)
             # Casualty stats
-            tables['RunData'] += doPopulation(world,world.state,actors,1,variables,'Actor[0001-%04d]' % (len(actors)))
+            tables['RunData'] += doPopulation(world,world.state,actors,1,variables,'Actor[0001-%04d]' % (len(actors)),
+                alive=config.getint('Simulation','phase',fallback=1)<3)
             for region in regions:
                 tables['RunData'] += doPopulation(world,world.state,{name for name in actors if world.agents[name].demographics['home'] == region},
-                    1,variables,region,'Regional ')
+                    1,variables,region,'Regional ',alive=config.getint('Simulation','phase',fallback=1)<3)
         if not args['skiptables'] or not args['skiphurricane']:
             t = args['first']
             states[t] = {}
@@ -437,10 +442,11 @@ if __name__ == '__main__':
                 states[t][order[turn]] = s
                 if order[turn] == 'Nature':
                     if not args['skiptables']:
-                        tables['RunData'] += doPopulation(world,s['__state__'],actors,t+1,variables,entity='Actor[0001-%04d]' % (len(actors)))
+                        tables['RunData'] += doPopulation(world,s['__state__'],actors,t+1,variables,entity='Actor[0001-%04d]' % (len(actors)),
+                            alive=config.getint('Simulation','phase',fallback=1)<3)
                         for region in regions:
                             tables['RunData'] += doPopulation(world,s['__state__'],{name for name in actors if world.agents[name].demographics['home'] == region},
-                                t+1,variables,region,'Regional ')
+                                t+1,variables,region,'Regional ',alive=config.getint('Simulation','phase',fallback=1)<3)
                     if not args['skiphurricane']:
                         if phase != world.getState('Nature','phase',s['__state__']).first():
                             phase = world.getState('Nature','phase',s['__state__']).first()
@@ -468,7 +474,10 @@ if __name__ == '__main__':
                             tables['Hurricane'].append({'Timestep': t+1,'Name': hurricane,
                                 'Category': world.getState('Nature','category',s['__state__']).first(), 'Location': 'leaving' if region == 'none' else region,
                                 'Landed': 'yes' if phase == 'active' else 'no'})
-                living = [name for name in living if world.getState(name,'alive',s['__state__']).first()]
+                if config.getint('Simulation','phase',fallback=1) < 3:
+                    living = [name for name in living if world.getState(name,'alive',s['__state__']).first()]
+                else:
+                    living = {name for name in living if stateKey(name,'health') in s['__state__']}
                 turn += 1
                 if turn == len(order):
                     turn = 0
@@ -501,7 +510,7 @@ if __name__ == '__main__':
                         for name in entry['Name']:
                             sample.add((name,entry['Timestep']))
                 else:
-                    pool = {name for name in actors if accessibility.getInitialState(args,name,'alive',world,states,hurricane['Landfall']).first()}
+                    pool = {name for name in actors if accessibility.getLiving(args,name,world,states,hurricane['Landfall'])}
                     if len(pool-preSurveyed) <= preCount:
                         # Going to have to ask some people again
                         sample = pool - preSurveyed
@@ -547,14 +556,16 @@ if __name__ == '__main__':
                 else:
                     if hurricane['Hurricane'] < len(hurricanes):
                         # Pool people who are alive when the next hurricane starts
-                        pool = {name for name in actors 
-                            if accessibility.getInitialState(args,name,'alive',world,states,hurricanes[hurricane['Hurricane']]['Start']).first()}
+                        pool = {name for name in actors if accessibility.getLiving(args,name,world,states,hurricanes[hurricane['Hurricane']]['Start'])}
                         end = hurricanes[hurricane['Hurricane']]['Start']
                     else:
                         # Pool people who are alive at the end of the simulation
-                        pool = {name for name in actors if accessibility.getInitialState(args,name,'alive',world,states,args['span']).first()}
+                        pool = {name for name in actors if accessibility.getLiving(args,name,world,states,args['span'])}
                         end = args['span']
-                    if len(pool-postSurveyed) <= postCount:
+                    if len(pool) <= postCount:
+                        # 
+                        sample = pool
+                    elif len(pool-postSurveyed) <= postCount:
                         # Going to have to ask some people again
                         sample = pool - postSurveyed
                         if len(sample) < postCount:
@@ -577,13 +588,13 @@ if __name__ == '__main__':
                     else:
                         t = random.randint(hurricane['End'],end-1)
                     agent = world.agents[name]
-                    entries += postSurvey(args,name,world,states,config,t,hurricane,variables,partID+1)
+                    entries += postSurvey(args,name,world,states,config,t,hurricane,variables,partID+1,verify=False)
                 entries.sort(key=lambda e: e['Timestep'])
                 tables['RunData'] += entries
                 samples.append({partID+1: sample[partID] for partID in range(len(samples))})
-                if hurricane == hurricanes[-1]:
-                    for actor in pool:
-                        print(name,accessibility.getAction(args,actor,world,states,(1,args['span']-1))) 
+#                if hurricane == hurricanes[-1]:
+#                    for actor in pool:
+#                        print(name,accessibility.getAction(args,actor,world,states,(1,args['span']-1))) 
         for label,data in tables.items():
             accessibility.writeOutput(args,data,fields[label],'%sTable_temp2.tsv' % (label))
     accessibility.writeVarDef(os.path.join(os.path.dirname(__file__),'..'),list(variables.values()))
