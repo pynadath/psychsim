@@ -196,10 +196,10 @@ def runInstance(instance,args,config,rerun=True):
                 exit()
         random.seed(config.getint('Simulation','seedRun')+run)
         survey = set()
-        oldPhase = world.getState('Nature','phase').first()
+        oldPhase = world.getState('Nature','phase',unique=True)
         start = time.time()
         state = {'hurricanes': len(hurricanes),
-                 'phase': world.getState('Nature','phase').first(),
+                 'phase': world.getState('Nature','phase',unique=True),
                  'TA2BTA1C10': args['TA2BTA1C10'],
                  'election': 1,
                  'panels': {}, 'participants': {}}
@@ -209,7 +209,7 @@ def runInstance(instance,args,config,rerun=True):
             state['participants']['TA2BTA1C10pre'] = set()
             state['participants']['TA2BTA1C10post'] = set()
         if not config.getboolean('Simulation','graph',fallback=False):
-            season = world.getState(WORLD,'day').first() // config.getint('Disaster','year_length',fallback=365)
+            season = world.getState(WORLD,'day',unique=True) // config.getint('Disaster','year_length',fallback=365)
         if args['phase1predictlong']:
             for agent in population:
                 value = 0.9*agent.getState('resources').expectation()
@@ -305,24 +305,24 @@ def runInstance(instance,args,config,rerun=True):
                     # We haven't run any hurricanes, so just exit
                     break
                 # Make sure we're not terminating in the middle of hurricane
-                elif state['phase'] == 'none' and world.getState('Nature','days').first() >= config.getint('Disaster','phase_min_days'):
+                elif state['phase'] == 'none' and world.getState('Nature','days',unique=True) >= config.getint('Disaster','phase_min_days'):
                     break
             nextDay(world,groups,state,config,dirName,survey,start,cdfTables,future=future,maximize=args['max'])
             if args['visualize']:
-                addState2tables(world,world.getState(WORLD,'day').first()-1,allTables,population,regions)
-                visualize.addDayToQueue(world.getState(WORLD,'day').first()-1)
+                addState2tables(world,world.getState(WORLD,'day',unique=True)-1,allTables,population,regions)
+                visualize.addDayToQueue(world.getState(WORLD,'day',unique=True)-1)
             hurricaneEntry = writeHurricane(world,state['hurricanes']+1,dirName)
             if args['visualize']:
                 if hurricaneEntry is not None:
                     visualize.addToVizData("hurricane", hurricaneEntry)
             newSeason = False
-            if world.getState(WORLD,'day').first() - season*config.getint('Disaster','year_length',fallback=365) > config.getint('Disaster','season_length'):
+            if world.getState(WORLD,'day',unique=True) - season*config.getint('Disaster','year_length',fallback=365) > config.getint('Disaster','season_length'):
                 # Might be a new season
-                if world.getState('Nature','phase').first() == 'none' \
-                    and world.getState('Nature','days').first() > config.getint('Disaster','phase_min_days'):
+                if world.getState('Nature','phase',unique=True) == 'none' \
+                    and world.getState('Nature','days',unique=True) > config.getint('Disaster','phase_min_days'):
                     newSeason = True
-                elif world.getState('Nature','phase').first() == 'approaching' \
-                    and world.getState('Nature','days').first() == 0:
+                elif world.getState('Nature','phase',unique=True) == 'approaching' \
+                    and world.getState('Nature','days',unique=True) == 0:
                     world.setState('Nature','phase','none')
                     world.setState('Nature','days',config.getint('Disaster','phase_min_days')+1)
                     world.setState('Nature','location','none')
@@ -340,11 +340,11 @@ def runInstance(instance,args,config,rerun=True):
                     world.setDynamics(dayKey,evolution,makeTree(setToConstantMatrix(dayKey,0)))
     #                world.printState()
                     first = True
-                    while world.getState(WORLD,'day').first() < season*config.getint('Disaster','year_length',fallback=365):
+                    while world.getState(WORLD,'day',unique=True) < season*config.getint('Disaster','year_length',fallback=365):
                         # Advance simulation to next season
                         names = world.next()
                         turn = world.agents[next(iter(names))].__class__.__name__
-                        print('Fast-forward:',world.getState(WORLD,'day').first(),turn)
+                        print('Fast-forward:',world.getState(WORLD,'day',unique=True),turn)
                         if turn == 'Actor':
                             if first:
                                 actions = {name: ActionSet([Action({'subject': name,'verb': 'moveTo', 'object': world.agents[name].home})]) for name in names}
@@ -366,7 +366,7 @@ def runInstance(instance,args,config,rerun=True):
                             world.agents[name].setState('resources',world.agents[name].wealth)
                 else:
                     fastForward(world,config)
-                state['phase'] = world.getState('Nature','phase').first()
+                state['phase'] = world.getState('Nature','phase',unique=True)
 #                print('Next season')
 #                world.printState()
                 season += 1
@@ -375,7 +375,7 @@ def runInstance(instance,args,config,rerun=True):
                     break
                 if args['pickle']:
                     # Not done, but let's just save after fast-forwarding
-                    day = world.getState(WORLD,'day').first()
+                    day = world.getState(WORLD,'day',unique=True)
                     with open(os.path.join(dirName,'scenario%d.pkl' % (day)),'wb') as outfile:
                         pickle.dump(world,outfile)
         logging.info('Total time: %f' % (time.time()-start))
@@ -384,7 +384,7 @@ def runInstance(instance,args,config,rerun=True):
             if config.getboolean('Simulation','graph',fallback=False):
                 day = 1
             else:
-                day = world.getState(WORLD,'day').first()
+                day = world.getState(WORLD,'day',unique=True)
             with open(os.path.join(dirName,'scenario%d.pkl' % (day)),'wb') as outfile:
                 pickle.dump(world,outfile)
         elif args['xml']:
@@ -404,18 +404,18 @@ def runInstance(instance,args,config,rerun=True):
             visualize.closeViz()
 
 def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={},actions={},future={},maximize=False):
-    state['today'] = world.getState(WORLD,'day').first()
+    state['today'] = world.getState(WORLD,'day',unique=True)
     logging.info('Day %d' % (state['today']))
     day = state['today']
     if config.getboolean('Data','livecdf',fallback=True):
         updateCDF(world,dirName,cdfTables)
     while day == state['today']:
         if config.getint('Simulation','phase',fallback=1) < 3:
-            living = [a for a in world.agents.values() if isinstance(a,Actor) and a.getState('alive').first()]
+            living = [a for a in world.agents.values() if isinstance(a,Actor) and a.getState('alive',unique=True)]
         else:
             living = []
             for actor in [a for a in world.agents.values() if isinstance(a,Actor) and stateKey(a.name,'health') in world.state]:
-                if actor.getState('health').expectation() > config.getfloat('Actors','life_threshold'):
+                if float(actor.getState('health')) > config.getfloat('Actors','life_threshold'):
                     # still going strong
                     living.append(actor)
                 else:
@@ -425,14 +425,14 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
         agents = world.next()
         turn = world.agents[next(iter(agents))].__class__.__name__
         if start:
-            print('Day %3d: %-6s %-11s (%8.2f)' % (state['today'],turn,state['phase'] if state['phase'] != 'active' else world.getState('Nature','location').first(),time.time()-start))
+            print('Day %3d: %-6s %-11s (%8.2f)' % (state['today'],turn,state['phase'] if state['phase'] != 'active' else world.getState('Nature','location',unique=True),time.time()-start))
         else:
-            print(('Day %3d: %-6s %-11s' % (state['today'],turn,state['phase'] if state['phase'] != 'active' else world.getState('Nature','location').first())))
+            print(('Day %3d: %-6s %-11s' % (state['today'],turn,state['phase'] if state['phase'] != 'active' else world.getState('Nature','location',unique=True))))
         if turn == 'Actor':
 #            world.history[day] = {}
             if config.getboolean('Actors','messages') and state['phase'] != 'none':
-                logEdge('Actor friendOf Actor','ActorBeliefOfNature\'s category','often','Actors share their beliefs about the hurricane\'s category with their friends on a daily basis, and their beliefs are influence by the incoming messages')
-                # 
+                logEdge('Actor friendOf Actor','ActorBeliefOfNature\'s category','often','Actors share their beliefs about the hurricane\'s category with their friends on a daily basis and their beliefs are influence by the incoming messages')
+                #//GT: edge 94; from 54; to 11; 1 of 2; next 1 lines
                 exchangeMessages(world,config,world.state,living)
 
         elif turn == 'System' and config.getint('System','election_effect',fallback=0) > 0:
@@ -506,7 +506,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                     while count < sampleLimit and remaining:
                         actor = world.agents[random.choice(list(remaining))]
                         remaining.remove(actor.name)
-                        if actor.getState('alive').first():
+                        if actor.getState('alive',unique=True):
                             postSurvey(actor,dirName,state['hurricanes'],previous=config.getboolean('Data','postprevious',fallback=False))
                             survey.add(actor.name)
                         else:
@@ -545,7 +545,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                             newSample.add(name)
                             postSurvey(world.agents[name],dirName,state['hurricanes'],True)
         else:
-            assert state['phase'] == 'active'
+            assert state['phase'] == 'active','Phase has incorrect value of %s' % (state['phase'])
         debug = {}
         #            debug.update({name: {'V': True} for name in world.agents if name[:5] == 'Group'})
         #            for name in debug:
@@ -626,7 +626,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                                 policy = {}
                             for actor in living:
                                 if actor.demographics['home'] == region:
-                                    if actor.getState('location').first() == 'evacuated':
+                                    if actor.getState('location',unique=True) == 'evacuated':
                                         verb = 'stayInLocation'
                                     else:
                                         verb = 'evacuate'
@@ -707,7 +707,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                 pickle.dump(record,outfile)            
         for actor in living:
             if turn == 'Actor' and isinstance(world.history,dict):
-                world.history[day][actor.name] = world.getFeature(actionKey(actor.name),newState).first()
+                world.history[day][actor.name] = world.getFeature(actionKey(actor.name),newState,unique=True)
             if config.getint('Simulation','phase',fallback=1) == 1:
                 belief = actor.getBelief()
                 for dist in belief.values():
@@ -736,7 +736,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                         belief = agent.getBelief()
                         assert len(belief) == 1,'Unable to store beliefs over uncertain models'
                         belief = next(iter(belief.values()))
-                        entry = {'action': world.getFeature(actionKey(actor.name),newState).first(), 'hurricane': state['hurricanes']}
+                        entry = {'action': world.getFeature(actionKey(actor.name),newState,unique=True), 'hurricane': state['hurricanes']}
                         features = ['location','risk','health']
                         if config.getboolean('System','system'):
                             features.append('grievance')
@@ -752,8 +752,8 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                 qualData = cdfTables['QualitativeData'][-1]
                 qualData['evacuated'] = max(evacuees,qualData.get('evacuated',0))
                 qualData['went to shelters'] = max(shelter,qualData.get('shelter',0))
-        day = world.getState(WORLD,'day').first()
-        phase = world.getState('Nature','phase').first()
+        day = world.getState(WORLD,'day',unique=True)
+        phase = world.getState('Nature','phase',unique=True)
         if phase != state['phase']:
             if survey is not None:
                 # Reset survey on each phase change
@@ -862,8 +862,8 @@ def writeHurricane(world,hurricane,dirName):
         if hurricane == 0:
             writer.writeheader()
         else:
-            today = world.getState(WORLD,'day').first()
-            phase = world.getState('Nature','phase').first()
+            today = world.getState(WORLD,'day',unique=True)
+            phase = world.getState('Nature','phase',unique=True)
             if phase != 'none':
                 record = {}
                 for field in fields:
@@ -877,7 +877,7 @@ def writeHurricane(world,hurricane,dirName):
                         else:
                             record[field] = 'yes'
                     else:
-                        record[field] = world.getState('Nature',field.lower()).first()
+                        record[field] = world.getState('Nature',field.lower(),unique=True)
                     if field == 'Location':
                         if record[field] == 'none':
                             record[field] = 'leaving'
@@ -940,7 +940,7 @@ def writeCensus(world,regions,dirName,filename='CensusTable',fieldSubset=None):
                         try:
                             value = agent.demographics[feature]
                         except KeyError:
-                            value = agent.getState(feature).first()
+                            value = agent.getState(feature,unique=True)
                         histogram[value] = histogram.get(value,0) + 1
                     for value,count in histogram.items():
                         total[value] = total.get(value,0) + count
@@ -1257,7 +1257,8 @@ def exchangeMessages(world,config,state,living):
     else:
         # Phase 2 messages
         key = stateKey('Nature','category')
-        beliefs = {actor.name: next(iter(actor.getBelief(state).values())) for actor in living}
+        beliefs = {actor.name: actor.getBelief(state) for actor in living}
+        beliefs = {name: next(iter(belief.values())) if isinstance(belief,dict) else belief for name,belief in beliefs.items()}
         messages = {}
         for actor in living:
             friends = [friend for friend in actor.friends
@@ -1271,7 +1272,13 @@ def exchangeMessages(world,config,state,living):
 def killAgent(name,world):
     toDelete = [key for key in world.state.keys() if (isStateKey(key) and state2agent(key) == name) or \
         (isBinaryKey(key) and key2relation(key)['subject'] == name)]
-    world.state.deleteKeys(toDelete)
+    try:
+        # VectorDistributionSet
+        world.state.deleteKeys(toDelete)
+    except AttributeError:
+        # KeyedVector
+        for key in toDelete:
+            del world.state[key]
     world.dependency.deleteKeys(set(toDelete))
 
     logEdge('Actor\'s health','Actor memberOf Group','sometimes','Actors can no longer be group members when they die')
