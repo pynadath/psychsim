@@ -4,6 +4,7 @@ import inspect
 import logging
 import os.path
 import random
+import sys
 
 from psychsim.action import Action
 
@@ -253,10 +254,14 @@ def logNode(name,description=None,nodeType=None,notes='',offset=1):
     """
     if name not in gtNodes:
         nodeID = len(gtNodes)+1
+        for other in gtNodes.values():
+            assert nodeID != other[0]
         gtNodes[name] = ('%d' % (nodeID),)
     if description is not None and len(gtNodes[name]) == 1:
         frame = inspect.getouterframes(inspect.currentframe())[1]
         gtNodes[name] = (gtNodes[name][0],name,description,nodeType,inspect.getmodulename(frame.filename),'%d' % (frame.lineno+offset),notes)
+        for value in gtNodes[name]:
+            assert ',' not in value
         logging.debug('%s' % (','.join(gtNodes[name])))
 
 
@@ -278,21 +283,30 @@ def logEdge(source,target,frequency,description,notes='',offset=1):
     entry = ('%d' % (edgeID),source,target,frequency,description,inspect.getmodulename(frame.filename),'%d' % (frame.lineno+offset),notes,label[0],label[1])
     if (entry[5],entry[6]) not in gtEdges[label][1]:
         gtEdges[label][1].add((entry[5],entry[6]))
+        for value in entry:
+            assert ',' not in value
         logging.debug('%s' % (','.join(entry)))
 
 if __name__ == '__main__':
     nodes = {}
     edges = {}
+    try:
+        nowrite = sys.argv[1] == 'nowrite'
+    except IndexError:
+        nowrite = False
     with open('psychsim.log','r') as log:
         for entry in log:
             cols = entry.split(',')
             if len(cols) == 7:
                 # Entry for a node
-                assert cols[0] not in nodes
+                try:
+                    start = int(cols[5])
+                except ValueError:
+                    # Probably some irrelevant line. Probably.
+                    continue
                 nodes[cols[0]] = cols
-                print(cols)
                 newSrc = ''
-                start = int(cols[5])
+                print(cols)
                 with open(os.path.join(os.path.dirname(__file__),'%s.py' % (cols[4])),'r') as src:
                     found = False
                     fragment = ''
@@ -305,14 +319,22 @@ if __name__ == '__main__':
                             comment = line
                         elif len(line.strip()) == 0:
                             found = True
-                            newSrc += comment[:comment.index('#')] + '#//GT: node %d; 1 of 1; next %d lines%s' % (int(cols[0]),lineno-start,comment[-1])
+                            try:
+                                newSrc += comment[:comment.index('#')] + '#//GT: node %d; 1 of 1; next %d lines%s' % (int(cols[0]),lineno-start,comment[-1])
+                            except ValueError:
+                                raise ValueError('No comment on line %d in %s.py' % (start-1,cols[4]))
                             newSrc += fragment + line
                         else:
                             fragment += line
-                with open(os.path.join(os.path.dirname(__file__),'%s.py' % (cols[4])),'w') as src:
-                    src.write(newSrc)
+                if not nowrite:
+                    with open(os.path.join(os.path.dirname(__file__),'%s.py' % (cols[4])),'w') as src:
+                        src.write(newSrc)
             elif len(cols) == 10:
                 # Entry for an edge
+                try:
+                    int(cols[0])
+                except ValueError:
+                    continue
                 try:
                     edges[cols[0]].append(cols)
                 except KeyError:
@@ -341,8 +363,39 @@ if __name__ == '__main__':
                         newSrc += fragment + line
                     else:
                         fragment += line
-            with open(os.path.join(os.path.dirname(__file__),'%s.py' % (cols[5])),'w') as src:
-                src.write(newSrc)
+            if not nowrite:
+                with open(os.path.join(os.path.dirname(__file__),'%s.py' % (cols[5])),'w') as src:
+                    src.write(newSrc)
+    for nodeID in range(max([int(nodeID) for nodeID in nodes])):
+        if str(nodeID+1) not in nodes:
+            print('Missing node %d' % (nodeID+1))
+    for edgeID in range(max([int(edgeID) for edgeID in edges])):
+        if str(edgeID+1) not in edges:
+            print('Missing edge %d' % (edgeID+1))
+    # Do all nodes have an edge?
+    for node in nodes.values():
+        for edgeID,entries in edges.items():
+            for record in entries:
+                if record[1] == node[1] or record[2] == node[1]:
+                    break
+            else:
+                continue
+            break
+        else:
+            print('No edge for: %s' % (node['Name']))
+    # Are all nodes from edges listed?
+    for edgeID,entries in edges.items():
+        for record in entries:
+            for node in nodes.values():
+                if node[1] == record[1]:
+                    break
+            else:
+                print('Edge %d has unlisted source %s' % (edgeID,record[1]))
+            for node in nodes.values():
+                if node[1] == record[2]:
+                    break
+            else:
+                print('Edge %d has unlisted target %s' % (edgeID,record[2]))
     # Write node table
     fields = ['Node ID','Name','Description','Type','Module','Line','Notes']
     with open('nodes.tsv','w') as csvfile:
