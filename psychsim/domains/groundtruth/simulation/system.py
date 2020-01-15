@@ -1,7 +1,6 @@
 import logging
 
 from psychsim.pwl import *
-from psychsim.reward import *
 from psychsim.agent import Agent
 
 from psychsim.domains.groundtruth.simulation.data import likert,logNode,logEdge
@@ -20,30 +19,17 @@ class System(Agent):
         self.setAttribute('static',True)
         
         self.resources = None
-#        resources = world.defineState(self.name,'resources',int,lo=0,hi=100,codePtr=True)
-#        self.setState('resources',int(likert[5][config.getint('System','resources')-1]*100))
         population = [name for name in self.world.agents
                       if isinstance(self.world.agents[name],Actor)]
 
         populated = self.getPopulated(population)
-        for actor in population:
-            if config.getint('System','reward_health') > 0:
-                self.setReward(maximizeFeature(stateKey(actor,'health'),self.name),
-                               likert[5][config.getint('System','reward_health')-1])
-            if config.getint('System','reward_grievance') > 0:
-                self.setReward(minimizeFeature(stateKey(actor,'grievance'),self.name),
-                               likert[5][config.getint('System','reward_grievance')-1])
         self.nop = self.addAction({'verb': 'doNothing'},codePtr=True)
         self.setAidDynamics(population)
-        self.setAttribute('horizon',config.getint('System','horizon'))
+        self.setAttribute('horizon',config.getint('System','horizon',fallback=1))
         self.TA2BTA1C52 = False
         self.TA2BTA1C54 = False
         self.prescription = None
 
-        logNode('System\'s ethnicBias','Degree to which System favors actors of the ethnic majority (negative numbers mean favoring the ethnic minority)',
-            'Real in [-1-1]')
-        #//GT: node 46; 1 of 1; next 9 lines
-        world.defineState(self.name,'ethnicBias',float,description='Degree to which System favors actors of the ethnic majority',codePtr=True)
         value = config.getint('System','ethnic_bias',fallback=0)
         if value < 0:
             self.ethnicBias = -likert[5][-value-1]
@@ -51,20 +37,26 @@ class System(Agent):
             self.ethnicBias = likert[5][value-1]
         else:
             self.ethnicBias = 0
-        self.setState('ethnicBias',self.ethnicBias)
+        if self.ethnicBias != 0:
+            logNode('System\'s ethnicBias','Degree to which System favors actors of the ethnic majority (negative numbers mean favoring the ethnic minority)',
+                'Real in [-1-1]')
+            #//GT: node 44; 1 of 1; next 2 lines
+            world.defineState(self.name,'ethnicBias',float,description='Degree to which System favors actors of the ethnic majority',codePtr=True)
+            self.setState('ethnicBias',self.ethnicBias)
 
-        logNode('System\'s religiousBias','Degree to which System favors actors of the religious majority (negative numbers mean favoring the religious minority)',
-            'Real in [-1-1]')
-        #//GT: node 47; 1 of 1; next 9 lines
-        world.defineState(self.name,'religiousBias',float,description='Degree to which System favors actors of the religious majority',codePtr=True)
         value = config.getint('System','religious_bias',fallback=0)
         if value < 0:
             self.religiousBias = -likert[5][-value-1]
         elif value > 0:
             self.religiousBias = likert[5][value-1]
         else:
-            self.religiousBias = 0.
-        self.setState('religiousBias',self.ethnicBias)
+            self.religiousBias = 0
+        if self.religiousBias != 0:
+            logNode('System\'s religiousBias','Degree to which System favors actors of the religious majority (negative numbers mean favoring the religious minority)',
+                'Real in [-1-1]')
+            #//GT: node 45; 1 of 1; next 2 lines
+            world.defineState(self.name,'religiousBias',float,description='Degree to which System favors actors of the religious majority',codePtr=True)
+            self.setState('religiousBias',self.religiousBias)
 
     def getPopulated(self,population):
         populated = set()
@@ -97,7 +89,7 @@ class System(Agent):
         delta,scale = self.grievanceDelta(regions)
         if self.config.getboolean('System','aid',fallback=True):
             logNode('System-allocate-Region','Allocation of aid to a given region','Region[01-16]')
-            #//GT: node 45; 1 of 1; next 5 lines
+            #//GT: node 43; 1 of 1; next 5 lines
             for region in regions:
                 try:
                     allocate = self.addAction({'verb': 'allocate','object': region},codePtr=True)
@@ -105,7 +97,7 @@ class System(Agent):
                     allocate = ActionSet([Action({'subject': self.name,'verb': 'allocate','object': region})])
 
                 logEdge('System-allocate-Region','Region\'s risk','often','Allocating resources reduces the risk in a given region')
-                #//GT: edge 58; from 45; to 1; 1 of 1; next 5 lines
+                #//GT: edge 60; from 43; to 1; 1 of 1; next 5 lines
                 risk = stateKey(region,'risk')
                 impact = (1-pow(1-likert[5][self.config.getint('System','system_impact')-1],scale))*multiplier
                 tree = makeTree(approachMatrix(risk,impact,
@@ -115,9 +107,9 @@ class System(Agent):
                 if self.config.getboolean('Actors','grievance') and \
                    self.config.getint('Actors','grievance_delta') > 0:
                     logEdge('Actor\'s home','Actor\'s grievance','often','An actor\'s grievance will decrease (increase) if aid goes (does not go) to his/her home region')
-                    #//GT: edge 59; from 19; to 27; 1 of 1; next 9 lines
+                    #//GT: edge 61; from 19; to 26; 1 of 1; next 9 lines
                     logEdge('System-allocate-Region','Actor\'s grievance','often','An actor\'s grievance will decrease (increase) if aid goes (does not go) to his/her home region')
-                    #//GT: edge 60; from 45; to 27; 1 of 1; next 7 lines
+                    #//GT: edge 62; from 43; to 26; 1 of 1; next 7 lines
                     for actor in population:
                         grievance = stateKey(actor,'grievance')
                         if self.world.agents[actor].demographics['home'] == region:
@@ -151,24 +143,6 @@ class System(Agent):
                     else:
                         raise ValueError('Unable to find nop for System')
                 self.world.setDynamics(grievance,self.nop,tree,codePtr=True)
-
-    def reward(self,state=None,model=None,recurse=True):
-        if state is None:
-            state = self.world.state
-        if model is None:
-            model = self.world.getModel(self.name,state)
-        population = [name for name in self.world.agents
-                      if isinstance(self.world.agents[name],Actor)]
-        weights = {'health': likert[5][self.config.getint('System','reward_health')-1],
-                   'grievance': -likert[5][self.config.getint('System','reward_grievance')-1]}
-        ER = 0.
-        for actor in population:
-            for feature in weights:
-                key = stateKey(actor,feature)
-                dist = state.distributions[state.keyMap[key]]
-                for vector in dist.domain():
-                    ER += weights[feature]*dist[vector]*vector[key]
-        return ER
         
     def decide(self,state=None,horizon=None,others=None,model=None,selection=None,actions=None,
                debug={}):
@@ -234,15 +208,15 @@ class System(Agent):
                 choice = None
         if choice is None:
             logEdge('Region\'s risk','System-allocate-Region','often','Aid target determined by allocating resources to region with highest risk level')
-            #//GT: edge 80; from 1; to 45; 1 of 1; next 22 lines
+            #//GT: edge 86; from 1; to 43; 1 of 1; next 26 lines
             logEdge('System\'s ethnicBias','System-allocate-Region','often','System\'s bias affects region chosen to receive aid')
-            #//GT: edge 81; from 46; to 45; 1 of 1; next 20 lines
+            #//GT: edge 87; from 44; to 43; 1 of 1; next 24 lines
             logEdge('System\'s religiousBias','System-allocate-Region','often','System\'s bias affects region chosen to receive aid')
-            #//GT: edge 82; from 47; to 45; 1 of 1; next 18 lines
+            #//GT: edge 88; from 45; to 43; 1 of 1; next 22 lines
             logEdge('Actor\'s ethnicGroup','System-allocate-Region','often','Ethnic demographics affect region chosen to receive aid')
-            #//GT: edge 83; from 15; to 45; 1 of 1; next 16 lines
+            #//GT: edge 89; from 15; to 43; 1 of 1; next 20 lines
             logEdge('Actor\'s religion','System-allocate-Region','often','Religious demographics affect region chosen to receive aid')
-            #//GT: edge 84; from 16; to 45; 1 of 1; next 14 lines
+            #//GT: edge 90; from 16; to 43; 1 of 1; next 18 lines
             population = {name: [a.name for a in self.world.agents.values() if isinstance(a,Actor) and a.demographics['home'] == name]
                           for name in self.world.agents if isinstance(self.world.agents[name],Region)}
             weights = {}
@@ -253,11 +227,12 @@ class System(Agent):
                     weights[region] = len(actors)
                     for name in actors:
                         demos = self.world.agents[name].demographics
-                        if demos['ethnicGroup'] == 'majority':
-                            weights[region] += self.getState('ethnicBias',state).expectation()
-                        if demos['religion'] == 'majority':
-                            weights[region] += self.getState('religiousBias',state).expectation()
-            risks = [(state[stateKey(a['object'],'risk')].expectation()*weights[a['object']],a)
+                        key = stateKey(self.name,'ethnicBias')
+                        if key in state and demos['ethnicGroup'] == 'majority':
+                            weights[region] += float(self.world.getFeature(key,state))
+                        if key in state and demos['religion'] == 'majority':
+                            weights[region] += float(self.world.getFeature(key,state))
+            risks = [(float(state[stateKey(a['object'],'risk')])*weights[a['object']],a)
                      for a in actions if a['object'] is not None and stateKey(a['object'],'risk') in state]
             choice = max(risks)
 
