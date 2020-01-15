@@ -10,7 +10,7 @@ class Nature(Agent):
         if world.diagram:
             world.diagram.setColor(self.name,'red')
 
-        evolution = self.addAction({'verb': 'evolve'},codePtr=True)
+        self.evolution = self.addAction({'verb': 'evolve'},codePtr=True)
 
         logNode('Nature\'s phase','Current hurricane state','String: either "none" / "approaching" / "active"')
         #//GT: node 7; 1 of 1; next 2 lines
@@ -41,7 +41,7 @@ class Nature(Agent):
         #//GT: edge 2; from 9; to 7; 1 of 1; next 20 lines
         prob = likert[5][config.getint('Disaster','phase_change_prob')-1]
         minDays = config.getint('Disaster','phase_min_days')
-        tree = {'if': equalRow(phase,['none','approaching']),
+        tree = {'if': equalRow(phase,['none','approaching','active']),
                 # When does a hurricane emerge
                 0: {'if': thresholdRow(days,minDays),
                     True: {'distribution': [(setToConstantMatrix(phase,'approaching'),
@@ -55,17 +55,17 @@ class Nature(Agent):
                    ]},
                    False: setToConstantMatrix(phase,'approaching')},
                 # Active hurricane
-                None: {'if': equalRow(location,'none'),
+                2: {'if': equalRow(location,'none'),
                        True: setToConstantMatrix(phase,'none'),
                        False: setToConstantMatrix(phase,'active')}}
-        world.setDynamics(phase,evolution,makeTree(tree),codePtr=True)
+        world.setDynamics(phase,self.evolution,makeTree(tree),codePtr=True)
 
         logEdge('Nature\'s phase','Nature\'s days','often','The number of days spent in the current phase goes to 0 if there\'s a phase change; otherwise it increases by 1')
         #//GT: edge 3; from 7; to 8; 1 of 1; next 4 lines
         tree = makeTree({'if': equalFeatureRow(phase,makeFuture(phase)),
                          True: incrementMatrix(days,1),
                          False: setToConstantMatrix(days,0)})
-        world.setDynamics(days,evolution,tree,codePtr=True)
+        world.setDynamics(days,self.evolution,tree,codePtr=True)
 
         logEdge('Nature\'s phase','Nature\'s category','sometimes','The hurricane\'s category can change when its phase is "approaching"')
         #//GT: edge 4; from 7; to 10; 1 of 1; next 25 lines
@@ -93,7 +93,7 @@ class Nature(Agent):
                                 False: subtree},
                          1: noChangeMatrix(category),
                          2: setToConstantMatrix(category,0)})
-        world.setDynamics(category,evolution,tree,codePtr=True)
+        world.setDynamics(category,self.evolution,tree,codePtr=True)
 
         # For computing initial locations
         coastline = {r for r in regions if world.agents[r].x == 1}
@@ -128,34 +128,35 @@ class Nature(Agent):
                           False: subtree},
                          2: # No hurricane
                          setToConstantMatrix(location,'none')})
-        world.setDynamics(location,evolution,tree,codePtr=True)
+        world.setDynamics(location,self.evolution,tree,codePtr=True)
 
         # Effect of disaster on risk
         logEdge('ActorBeliefOfNature\'s category','ActorBeliefOfRegion\'s risk','often','Higher categories of hurricane mean higher increase in perception of risk to region')
-        #//GT: edge 6; from 11; to 12; 1 of 1; next 23 lines
+        #//GT: edge 6; from 11; to 12; 1 of 1; next 24 lines
         logEdge('Nature\'s category','Region\'s risk','often','Higher categories of current hurricane mean higher increase in risk to region')
-        #//GT: edge 7; from 10; to 1; 1 of 1; next 21 lines
+        #//GT: edge 7; from 10; to 1; 1 of 1; next 22 lines
         logEdge('Nature\'s location','Region\'s risk','often','A region\'s risk level increases more the closer it is to the hurricane\'s center')
-        #//GT: edge 8; from 9; to 1; 1 of 1; next 19 lines
+        #//GT: edge 8; from 9; to 1; 1 of 1; next 20 lines
         logEdge('Nature\'s phase','Region\'s risk','often','A region\'s risk is affected by Nature variables only when phase is active')
-        #//GT: edge 9; from 7; to 1; 1 of 1; next 17 lines
+        #//GT: edge 9; from 7; to 1; 1 of 1; next 18 lines
         base_increase = likert[5][config.getint('Disaster','risk_impact')-1]
         base_decrease = likert[5][config.getint('Disaster','risk_decay')-1]
         for region in regions:
             risk = stateKey(region,'risk')
             distance = [world.agents[region].distance(world.agents[center]) for center in regions]
-            subtrees = {i: {'if': equalRow(category,list(range(1,6)))} for i in range(len(regions))}
+            subtrees = {i: {'if': equalRow(makeFuture(category),list(range(1,6)))} for i in range(len(regions))}
             for i in range(len(regions)):
                 subtrees[i].update({cat: approachMatrix(risk,base_increase*float(cat+1)/\
                                                         float(max(distance[i],1)),1.) \
-                                    for cat in range(5)})         
+                                    for cat in range(5)})
+                subtrees[i][None] = approachMatrix(risk,base_decrease,world.agents[region].risk)
             subtree = {'if': equalRow(makeFuture(location),regions[:]),
                        None: approachMatrix(risk,base_decrease,world.agents[region].risk)}
             subtree.update({i: subtrees[i] for i in range(len(regions))})
             tree = makeTree({'if': equalRow(makeFuture(phase),'active'),
                              True: subtree,
                              False: approachMatrix(risk,base_decrease,world.agents[region].risk)})
-            world.setDynamics(risk,evolution,tree,codePtr=True)
+            world.setDynamics(risk,self.evolution,tree,codePtr=True)
 
         if config.getint('Regions','economy_mean',fallback=0) > 0:
             delta = config.getint('Regions','economy_risk_delta',fallback=0)
@@ -167,7 +168,7 @@ class Nature(Agent):
                     tree = {'if': thresholdRow(makeFuture(economy),toLikert(config.getint('Regions','economy_risk_threshold',fallback=5)-1)),
                         True: approachMatrix(economy,toLikert(delta-1),0.),
                         False: approachMatrix(economy,toLikert(delta-1),world.agents[region].economy)}
-                    world.setDynamics(economy,evolution,makeTree(tree),codePtr=True)
+                    world.setDynamics(economy,self.evolution,makeTree(tree),codePtr=True)
 
         if config.getboolean('Shelter','exists'):
             logEdge('ActorBeliefOfNature\'s category','ActorBeliefOfRegion\'s shelterRisk','often','Higher categories of hurricane mean higher increases in perception of risk at the shelters')
@@ -194,11 +195,82 @@ class Nature(Agent):
                                             True: subtree,
                                             False: noChangeMatrix(risk)},
                                      False: approachMatrix(risk,base_decrease,0.)})
-                    world.setDynamics(risk,evolution,tree,codePtr=True)
+                    world.setDynamics(risk,self.evolution,tree,codePtr=True)
 
         self.setAttribute('static',True)
                                         
         if not config.getboolean('Simulation','graph',fallback=False):
             # Advance calendar after Nature moves
             tree = makeTree(incrementMatrix(stateKey(WORLD,'day'),1))
-            world.setDynamics(stateKey(WORLD,'day'),evolution,tree,codePtr=True)
+            world.setDynamics(stateKey(WORLD,'day'),self.evolution,tree,codePtr=True)
+
+    def step(self,select,s=None,updateBeliefs=True):
+        """
+        Specialized and optimized stepping for hurricane
+        """
+        if s is None:
+            s = self.world.state
+        original = s.keys()
+        assert len(self.actions) == 1
+        evolve = next(iter(self.actions))
+        if isinstance(s,KeyedVector):
+            return self.world.step({self.name: evolve},s,select=select,keySubset=s.keys(),updateBeliefs=updateBeliefs)
+        else:
+            # Determine effects of hurricane
+            order = [{k for k in keySet if k in s and (k in self.world.dynamics[evolve] or True in self.world.dynamics.get(k,{}))} 
+                for keySet in self.world.dependency.getEvaluation()]
+            order = [keySet for keySet in order if keySet]
+            futures = set()
+            # Project individual effects
+            for i in range(len(order)):
+                keySet = order[i]
+                futures |= keySet
+                for key in keySet:
+                    try:
+                        tree = self.world.dynamics[evolve][key]
+                    except KeyError:
+                        tree = self.world.dynamics[key][True]
+                    if select is True:
+                        tree = tree.sample()
+                    elif select == 'max':
+                        tree = tree.sample(True)
+                    else:
+                        assert select is None
+    #                elif i < 2:
+    #                    # Pre-determined hurricane
+    #                    raise NotImplementedError
+                    try:
+                        s *= tree
+                    except:
+                        print(key)
+                        print(s[key])
+                        print(tree)
+                        raise
+            if isinstance(s,VectorDistributionSet):
+                s.simpleRollback(futures)
+            else:
+                s.rollback(futures)
+            # Update turn
+            dynamics = self.world.deltaTurn(s,evolve)
+            for key,tree in dynamics.items():
+                assert len(tree) == 1
+                s *= tree[0]
+            if isinstance(s,VectorDistributionSet):
+                s.simpleRollback(set(dynamics.keys()))
+            else:
+                s.rollback(set(dynamics.keys()))
+            if updateBeliefs:
+                # Update actor beliefs
+                futures = set()
+                actors = [name for name in self.world.agents.keys()
+                                     if name[:5] == 'Actor' and modelKey(name) in s and self.world.agents[name].O is not True]
+                for name in actors:
+                    futures |= self.world.agents[name].projectObservations(s,evolve,True)
+                    assert makeFuture(stateKey(name,'perceivedCategory')) in s
+                    self.world.agents[name].updateBeliefs(s,evolve,debug=True)
+                if isinstance(s,VectorDistributionSet):
+                    s.simpleRollback(futures)
+                else:
+                    s.rollback(futures)
+            assert original == s.keys()
+            return s
