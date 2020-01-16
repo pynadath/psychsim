@@ -1,0 +1,26 @@
+Name	LongName	Values	VarType	DataType	Notes
+TA2A 592 Hurricane 1 Evacuation Wealth Cost	TA2A 592 Hurricane 1 Evacuation Wealth Cost	[1-7]	dynamic	Integer	Q2a
+TA2A 592 Hurricane 1 Shelter Wealth Change	TA2A 592 Hurricane 1 Shelter Wealth Change	[-7-7]	dynamic	Integer	Q1a
+TA2A 592 Hurricane 1 Wealth Loss	TA2A 592 Hurricane 1 Wealth Loss	[1-7]	dynamic	Integer	Q3a
+TA2A 592 Hurricane 2 Evacuation Wealth Cost	TA2A 592 Hurricane 2 Evacuation Wealth Cost	[1-7]	dynamic	Integer	Q2a
+TA2A 592 Hurricane 2 Shelter Wealth Change	TA2A 592 Hurricane 2 Shelter Wealth Change	[-7-7]	dynamic	Integer	Q1a
+TA2A 592 Hurricane 2 Wealth Loss	TA2A 592 Hurricane 2 Wealth Loss	[1-7]	dynamic	Integer	Q3a
+TA2A 592 Hurricane 3 Evacuation Wealth Cost	TA2A 592 Hurricane 3 Evacuation Wealth Cost	[1-7]	dynamic	Integer	Q2a
+TA2A 592 Hurricane 3 Shelter Wealth Change	TA2A 592 Hurricane 3 Shelter Wealth Change	[-7-7]	dynamic	Integer	Q1a
+TA2A 592 Hurricane 3 Wealth Loss	TA2A 592 Hurricane 3 Wealth Loss	[1-7]	dynamic	Integer	Q3a
+TA2A 592 Hurricane 4 Evacuation Wealth Cost	TA2A 592 Hurricane 4 Evacuation Wealth Cost	[1-7]	dynamic	Integer	Q2a
+TA2A 592 Hurricane 4 Shelter Wealth Change	TA2A 592 Hurricane 4 Shelter Wealth Change	[-7-7]	dynamic	Integer	Q1a
+TA2A 592 Hurricane 4 Wealth Loss	TA2A 592 Hurricane 4 Wealth Loss	[1-7]	dynamic	Integer	Q3a
+TA2A 592 Hurricane 5 Evacuation Wealth Cost	TA2A 592 Hurricane 5 Evacuation Wealth Cost	[1-7]	dynamic	Integer	Q2a
+TA2A 592 Hurricane 5 Shelter Wealth Change	TA2A 592 Hurricane 5 Shelter Wealth Change	[-7-7]	dynamic	Integer	Q1a
+TA2A 592 Hurricane 5 Wealth Loss	TA2A 592 Hurricane 5 Wealth Loss	[1-7]	dynamic	Integer	Q3a
+TA2A 592 Hurricane 6 Evacuation Wealth Cost	TA2A 592 Hurricane 6 Evacuation Wealth Cost	[1-7]	dynamic	Integer	Q2a
+TA2A 592 Hurricane 6 Shelter Wealth Change	TA2A 592 Hurricane 6 Shelter Wealth Change	[-7-7]	dynamic	Integer	Q1a
+TA2A 592 Hurricane 6 Wealth Loss	TA2A 592 Hurricane 6 Wealth Loss	[1-7]	dynamic	Integer	Q3a
+TA2A 592 Hurricane 7 Evacuation Wealth Cost	TA2A 592 Hurricane 7 Evacuation Wealth Cost	[1-7]	dynamic	Integer	Q2a
+TA2A 592 Hurricane 7 Shelter Wealth Change	TA2A 592 Hurricane 7 Shelter Wealth Change	[-7-7]	dynamic	Integer	Q1a
+TA2A 592 Hurricane 7 Wealth Loss	TA2A 592 Hurricane 7 Wealth Loss	[1-7]	dynamic	Integer	Q3a
+TA2A 592 Hurricane 8 Evacuation Wealth Cost	TA2A 592 Hurricane 8 Evacuation Wealth Cost	[1-7]	dynamic	Integer	Q2a
+TA2A 592 Hurricane 8 Shelter Wealth Change	TA2A 592 Hurricane 8 Shelter Wealth Change	[-7-7]	dynamic	Integer	Q1a
+TA2A 592 Hurricane 8 Wealth Loss	TA2A 592 Hurricane 8 Wealth Loss	[1-7]	dynamic	Integer	Q3a
+TA2A 592 Survey ID	TA2A 592 Survey ID	Actor[Pre,Post] [1+] Hurricane [1+]	dynamic	String	
