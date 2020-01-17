@@ -1,0 +1,19 @@
+Name	LongName	Values	VarType	DataType	Notes
+TA2A 602 Hurricane 1 Hit Region Category	TA2A 602 Hurricane 1 Hit Region Category	[0-5]	dynamic	Integer	Q3
+TA2A 602 Hurricane 1 Hit Region Likelihood	TA2A 602 Hurricane 1 Hit Region Likelihood	[1-7]	dynamic	Integer	Q2
+TA2A 602 Hurricane 2 Hit Region Category	TA2A 602 Hurricane 2 Hit Region Category	[0-5]	dynamic	Integer	Q3
+TA2A 602 Hurricane 2 Hit Region Likelihood	TA2A 602 Hurricane 2 Hit Region Likelihood	[1-7]	dynamic	Integer	Q2
+TA2A 602 Hurricane 3 Hit Region Category	TA2A 602 Hurricane 3 Hit Region Category	[0-5]	dynamic	Integer	Q3
+TA2A 602 Hurricane 3 Hit Region Likelihood	TA2A 602 Hurricane 3 Hit Region Likelihood	[1-7]	dynamic	Integer	Q2
+TA2A 602 Hurricane 4 Hit Region Category	TA2A 602 Hurricane 4 Hit Region Category	[0-5]	dynamic	Integer	Q3
+TA2A 602 Hurricane 4 Hit Region Likelihood	TA2A 602 Hurricane 4 Hit Region Likelihood	[1-7]	dynamic	Integer	Q2
+TA2A 602 Hurricane 5 Hit Region Category	TA2A 602 Hurricane 5 Hit Region Category	[0-5]	dynamic	Integer	Q3
+TA2A 602 Hurricane 5 Hit Region Likelihood	TA2A 602 Hurricane 5 Hit Region Likelihood	[1-7]	dynamic	Integer	Q2
+TA2A 602 Hurricane 6 Hit Region Category	TA2A 602 Hurricane 6 Hit Region Category	[0-5]	dynamic	Integer	Q3
+TA2A 602 Hurricane 6 Hit Region Likelihood	TA2A 602 Hurricane 6 Hit Region Likelihood	[1-7]	dynamic	Integer	Q2
+TA2A 602 Hurricane 7 Hit Region Category	TA2A 602 Hurricane 7 Hit Region Category	[0-5]	dynamic	Integer	Q3
+TA2A 602 Hurricane 7 Hit Region Likelihood	TA2A 602 Hurricane 7 Hit Region Likelihood	[1-7]	dynamic	Integer	Q2
+TA2A 602 Hurricane 8 Hit Region Category	TA2A 602 Hurricane 8 Hit Region Category	[0-5]	dynamic	Integer	Q3
+TA2A 602 Hurricane 8 Hit Region Likelihood	TA2A 602 Hurricane 8 Hit Region Likelihood	[1-7]	dynamic	Integer	Q2
+TA2A 602 Residence	TA2A 602 Residence	Region[01-16]	dynamic	String	Q1
+TA2A 602 Survey ID	TA2A 602 Survey ID	Actor[Pre,Post] [1+] Hurricane [1+]	dynamic	String	
