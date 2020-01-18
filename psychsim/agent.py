@@ -61,49 +61,72 @@ class Agent(object):
     """------------------"""
     """Policy methods"""
     """------------------"""
-    def compilePi(self,model=None):
+    def compilePi(self,model=None,horizon=None,debug=False):
         if model is None:
             model = self.models['%s0' % (self.name)]
         else:
             model = self.models[model]
-        if 'V' not in model:
-            self.compileV(model['name'])
+        if 'V' not in model or horizon not in model['V']:
+            self.compileV(model['name'],horizon,debug)
+        if horizon is None:
+            exit()
         policy = None
-        for action,tree in model['V'].items():
-            actionTree = tree.map(leafOp=lambda matrix: {'vector': matrix[rewardKey(self.name,True)],'action': action})
+        for action,tree in model['V'][horizon].items():
+            actionTree = tree.map(leafOp=lambda matrix: (matrix[rewardKey(self.name,True)],action))
             if policy is None:
                 policy = actionTree
             else:
                 policy = policy.max(actionTree)
-        model['policy'] = policy.map(leafOp=lambda table: table['action'])
-        return model['policy']
+            policy.prune(variables=self.world.variables)
+        model['policy'][horizon] = policy.map(leafOp=lambda tup: tup[1])
+        policy.prune(variables=self.world.variables)
+        if debug:
+            print(horizon)
+            print(model['policy'][horizon])
+        return model['policy'][horizon]
         
-    def compileV(self,model=None,debug=False):
+    def compileV(self,model=None,horizon=None,debug=False):
         self.world.dependency.getEvaluation()
         if model is None:
             model = self.models['%s0' % (self.name)]
         else:
             model = self.models[model]
         belief = self.getBelief(self.world.state,model['name'])
-        horizon = self.getAttribute('horizon',model['name'])
+        if horizon is None:
+            horizon = self.getAttribute('horizon',model['name'])
         R = self.getReward(model['name'])
         Rkey = rewardKey(self.name,True)
         actions = self.actions
         model['V'] = {}
-        order = sorted([(belief[k].first(),k) for k in belief.keys() if isTurnKey(k)])
-        pi = {}
+        turns = sorted([(belief[k].first(),k) for k in belief.keys() if isTurnKey(k)])
+        order = turns[:]
         for i in range(len(order)-1):
             assert order[i][0] < order[i+1][0],'Unable to project when actors act in parallel (%s and %s)' % \
                 (state2agent(order[i][1]),state2agent(order[i+1][1]))
-        order = [entry[1] for entry in order]
-        for key in order[:horizon]:
-            other = self.world.agents[state2agent(key)]
+        while len(order) < horizon:
+            order += turns
+        order = [state2agent(entry[1]) for entry in order[:horizon]]
+        for t in reversed(range(len(order))):
+            subhorizon = len(order)-t
+            other = self.world.agents[order[t]]
             if other.name == self.name:
-                pass
-            elif len(other.actions) > 1:
-                logging.warning('%s ignoring %s (%d actions) when compiling policy' % (self.name,other.name,len(other.actions)))
+                model['V'][subhorizon] = {}
+                for action in actions:
+                    if debug: 
+                        print(action)
+                    effects = self.world.deltaState(action,belief,belief.keys())
+                    model['V'][subhorizon][action] = collapseDynamics(copy.deepcopy(R),effects)
+#                    if debug: 
+#                        print(model['V'][subhorizon][action])
+                    if len(model['V'][subhorizon]) >= 3:
+                        break
+                if t > 0:
+                    policy = self.compilePi(model['name'],subhorizon,debug)
+                    exit()
             else:
                 # Compile mental model of this agent's policy
+                if debug:
+                    print('Compiling horizon %d policy for %s' % (subhorizon,other.name))
                 if modelKey(other.name) in belief:
                     mentalModel = self.world.getModel(other.name,belief)
                     assert len(mentalModel) == 1,'Currently unable to compile policies for uncertain mental models'
@@ -112,23 +135,26 @@ class Agent(object):
                     models = [model for model in other.models.keys() if 'modelOf' not in model]
                     assert len(models) == 1,'Unable to compile policies without explicit mental model of %s' % (other.name)
                     mentalModel = models[0]
+                # Distinguish my belief about this model from other agent's true model
                 mentalModel = other.addModel('%s_modelOf_%s' % (self.name,mentalModel),
                                              parent=mentalModel,static=True)
-                action = next(iter(other.actions))
-                effects = self.world.deltaState(action,belief,belief.keys())
-                mentalModel['policy'] = collapseDynamics(copy.deepcopy(R),effects)
-                self.world.setModel(other.name,mentalModel['name'],belief)
+                if len(other.actions) > 1:
+                    # Possible decision
+                    if 'horizon' in mentalModel:
+                        subhorizon = min(mentalModel['horizon'],subhorizon)
+                    pi = other.compilePi(mentalModel['name'],subhorizon,debug)
+                    print(other.name,subhorizon)
+                    raise RuntimeError
+                else:
+                    # Single action, no decision to be made
+                    action = next(iter(other.actions))
+                    effects = self.world.deltaState(action,belief,belief.keys())
+                    mentalModel['policy'] = {0: collapseDynamics(copy.deepcopy(R),effects)}
+                    self.world.setModel(other.name,mentalModel['name'],belief)
                 if debug:
                     print(action)
                     print(mentalModel['policy'])
-                pi[other.name] = mentalModel['policy']
-        for action in actions:
-            effects = self.world.deltaState(action,belief,belief.keys())
-            model['V'][action] = collapseDynamics(copy.deepcopy(R),effects)
-            if debug: 
-                print(action)
-                print(model['V'][action])
-        return model['V']
+        return model['V'][horizon]
                             
     def decide(self,vector=None,horizon=None,others=None,model=None,selection=None,actions=None,
                keySet=None,debug={}):
@@ -586,8 +612,7 @@ class Agent(object):
         """
         :param condition: optional legality condition
         :type condition: L{KeyedPlane}
-        
-	:returns: the action added
+        :returns: the action added
         :rtype: L{ActionSet}
         """
         actions = []
@@ -725,7 +750,10 @@ class Agent(object):
     def getReward(self,model=None):
         if model is None:
             model = self.world.getModel(self.name,self.world.state)
-            return {m: self.getReward(m) for m in model.domain()}
+            if isinstance(model,Distribution):
+                return {m: self.getReward(m) for m in model.domain()}
+            else:
+                return {model: self.getReward(model)}
         R = self.getAttribute('R',model)
         if R is None:
             # No reward components
@@ -789,20 +817,10 @@ class Agent(object):
             vector.rollback()
             total = vector[rewardKey(self.name)].expectation()
         else:
-            R = self.getAttribute('R',model)
-            if R is None:
-                # No reward components
-                return total
-            for tree,weight in R.items():
-                if isinstance(tree,str):
-                    if recurse:
-                        # Name of an agent I'm trying to make (un)happy
-                        model = self.world.getModel(tree,vector)
-                        # Compute agent's reward but don't recurse any further
-                        ER = self.world.agents[tree].reward(vector,model,False)
-                else:
-                    ER = tree[vector]*vector*self.world.scaleState(vector)
-                total += ER*weight
+            tree = self.getReward(model)
+            vector *= tree
+            vector.rollback()
+            total = float(vector[rewardKey(self.name)])
         return total
 
     def printReward(self,model=True,buf=None,prefix=''):
@@ -864,8 +882,7 @@ class Agent(object):
         if name is None:
             raise NameError('"None" is an illegal model name')
         if name in self.models:
-            raise NameError('Model %s already exists for agent %s' % \
-                (name,self.name))
+            return self.models[name]
 #        if name in self.world.symbols:
 #            raise NameError('Model %s conflicts with existing symbol' % (name))
         model = {'name': name,'index': 0,'parent': None,'SE': {},
@@ -990,11 +1007,17 @@ class Agent(object):
         if model is None:
             assert len(self.models) == 1
             model = list(self.models.keys())[0]
-        if keys is None:
-            beliefs = copy.deepcopy(self.world.state)
-            beliefs.deleteKeys([keys.modelKey(a) for a in self.world.agents])
-        else:
+        if isinstance(self.world.state,VectorDistributionSet):
             beliefs = self.world.state.copySubset(ignore,include)
+        elif include is None:
+            if ignore is None:
+                beliefs = VectorDistributionSet(self.world.state)
+            else:
+                beliefs = VectorDistributionSet({key: value for key,value in self.world.state.items() if key not in ignore})
+        elif ignore is None:
+                beliefs = VectorDistributionSet({key: value for key,value in self.world.state.items() if key in include})
+        else:
+            raise RuntimeError('Use either ignore or include sets, but not both')
         self.models[model]['beliefs'] = beliefs
         return beliefs
         

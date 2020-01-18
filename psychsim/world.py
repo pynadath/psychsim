@@ -39,15 +39,20 @@ class World(object):
     """
     memory = False
 
-    def __init__(self,xml=None):
+    def __init__(self,xml=None,single=False):
         """
         :param xml: Initialization argument, either an XML Element, or a filename
         :type xml: Node or str
+        :param single: If True, then there is no uncertainty about the state of this world (default is False)
+        :type single: bool
         """
         self.agents = {}
 
         # State feature information
-        self.state = VectorDistributionSet()
+        if single:
+            self.state = KeyedVector({CONSTANT: 1.})
+        else:
+            self.state = VectorDistributionSet()
         self.variables = {}
         self.locals = {}
         self.symbols = {}
@@ -135,7 +140,6 @@ class World(object):
             state = self.state
         if real is False:
             state = copy.deepcopy(state)
-        assert isinstance(state,VectorDistributionSet)
         outcome = {'old': state,
                    'decisions': {},
                    'effect': {}}
@@ -156,7 +160,7 @@ class World(object):
         # Update turn order
         effect.append(self.deltaTurn(state,joint))
         for stage in effect:
-            self.applyEffect(state,stage,select)
+            state = self.applyEffect(state,stage,select)
         # The future becomes the present
         state.rollback()
 #        if select:
@@ -164,8 +168,9 @@ class World(object):
         effect = self.effect(joint,state,updateBeliefs,keySubset,select)
         # The future becomes the present
         state.rollback()
-        if select:
-            state.select(select=='max')
+        if isinstance(state,VectorDistributionSet):
+            if select:
+                state.select(select=='max')
         if self.memory:
             self.history.append(copy.deepcopy(state))
            # self.modelGC(False)
@@ -249,7 +254,7 @@ class World(object):
             state = self.state
         if isinstance(actions,Action):
             actions = {actions['subject']: ActionSet({actions})}
-        elif isinstance(actions,ActionSet):
+        elif isinstance(actions,ActionSet) or isinstance(actions,set):
             actionDict = {}
             for action in actions:
                 actionDict[action['subject']] = actionDict.get(action['subject'],[])+[action]
@@ -262,7 +267,7 @@ class World(object):
                     # Transfer fixed action into policy
                     key = keys.actionKey(name)
                     turn = keys.turnKey(name)
-                    if turn in state.keyMap:
+                    if isinstance(state,VectorDistributionSet):
                         turns = state.domain(turn)
                         if len(turns) == 1:
                             if 0 in turns:
@@ -278,16 +283,27 @@ class World(object):
                             logging.warning('Policy generated for %s out of turn' % (name))
                             del actions[name]
                     else:
-                        raise RuntimeError('Action from %s who never has a turn!' % (name))
+                        turns = state[turn]
+                        if turns == 0:
+                            actions[name] = makeTree(setToConstantMatrix(key,policy))
+                        else:
+                            logging.warning('Policy generated for %s out of turn' % (name))
+                            del actions[name]
             for name,policy in actions.items():
                 actions[name] = policy.desymbolize(self.symbols)
         else:
             assert actions is None
             actions = {}
         if keySubset is None:
-            keySubset = state.keyMap
-        toDecide = [name for name in self.agents if name not in actions and
-                    keys.turnKey(name) in keySubset and 0 in state.domain(keys.turnKey(name))]
+            if isinstance(state,VectorDistributionSet):
+                keySubset = state.keyMap
+            else:
+                keySubset = state.keys()-{CONSTANT}
+        if isinstance(state,VectorDistributionSet):
+            toDecide = [name for name in self.agents if name not in actions and
+                        keys.turnKey(name) in keySubset and 0 in state.domain(keys.turnKey(name))]
+        else:
+            toDecide = [name for name in self.agents if name not in actions and state.get(keys.turnKey(name),1) == 0]
         if self.parallel and state is self.state:
             with multiprocessing.Pool() as pool:
                 results = [(name,pool.apply_async(self.agents[name].decide,
@@ -327,7 +343,11 @@ class World(object):
         :type start,end: L{VectorDistributionSet}
         :returns: The dynamics functions applied to update the turn order
         """
-        turnKeys = {k for k in state.keyMap.keys() if isTurnKey(k)}
+        if isinstance(state,VectorDistributionSet):
+            keySet = state.keyMap.keys()
+        else:
+            keySet = state.keys()
+        turnKeys = {k for k in keySet if isTurnKey(k)}
         dynamics = {}
         for key in turnKeys:
             dynamics.update(self.getTurnDynamics(key,actions))
@@ -355,19 +375,31 @@ class World(object):
         for key,dynamics in effect.items():
             if dynamics is None:
                 # No dynamics, so status quo
-                substate = state.keyMap[key]
                 newKey = makeFuture(key)
-                state.keyMap[newKey] = substate
-                dist = state.distributions[substate]
-                for vector in dist.domain():
-                    prob = dist[vector]
-                    del dist[vector]
-                    vector[newKey] = vector[key]
-                    dist[vector] = prob
+                if isinstance(state,VectorDistributionSet):
+                    substate = state.keyMap[key]
+                    state.keyMap[newKey] = substate
+                    dist = state.distributions[substate]
+                    for vector in dist.domain():
+                        prob = dist[vector]
+                        del dist[vector]
+                        vector[newKey] = vector[key]
+                        dist[vector] = prob
+                elif isinstance(state,VectorDistribution):
+                    original = dict(state)
+                    domain = state.domain()
+                    state.clear()
+                    for row in domain:
+                        assert isinstance(row,KeyedVector)
+                        prob = original[hash(row)]
+                        row[newKey] = row[key]
+                        state[row] = prob
+                else:
+                    state[newKey] = state[key]
             elif len(dynamics) == 1:
                 tree = dynamics[0]
-                if select is True:
-                    tree = tree.sample()
+                if select:
+                    tree = tree.sample(select=='max',None if isinstance(state,VectorDistributionSet) else state)
                     state *= tree
 #                    state.__imul__(tree,True)
                 else:
@@ -381,50 +413,69 @@ class World(object):
                         print('Applying effect on %s' % (key))
                         print('Effect tree is\n%s' % (tree))
                         print('State contains only: %s' % (sorted(state.keys())))
+                        if isinstance(state,KeyedVector):
+                            self.printVector(state)
+                        elif isinstance(state,VectorDistributionSet):
+                            self.printState(state)
+                        else:
+                            for vec in state.domain():
+                                print(state[vec])
+                                self.printVector(vec)
                         raise
-                substate = state.keyMap[makeFuture(key)]
             else:
 #                raise RuntimeError('Parallel dynamics do not work')
                 cumulative = None
                 for tree in dynamics:
                     if cumulative is None:
-                        cumulative = copy.deepcopy(tree[self.state])
+                        cumulative = copy.deepcopy(tree[state])
                     else:
                         cumulative.makeFuture([key])
-                        cumulative *= tree[self.state]
-#                        cumulative = cumulative.prune()
-                if select is True:
-                    state.__imul__(cumulative,True)
+                        cumulative *= tree[state]
+                if select:
+                    if isinstance(state,VectorDistributionSet):
+                        state.__imul__(cumulative,select)
+                    else:
+                        if isinstance(cumulative,KeyedMatrix):
+                            state *= cumulative
+                        else:
+                            print(cumulative)
+                            raise TypeError
                 else:
                     state *= cumulative
+            if select and isinstance(state,VectorDistributionSet):
                 substate = state.keyMap[makeFuture(key)]
-            if select and len(state.distributions[substate]) > 1:
-                if isinstance(select,dict) and key in select:
-                    state[makeFuture(key)] = select[key]
-                else:
-                    state.distributions[substate].select(select=='max')
+                if len(state.distributions[substate]) > 1:
+                    if isinstance(select,dict) and key in select:
+                        state[makeFuture(key)] = select[key]
+        return state
                 
     def effect(self,actions,state,updateBeliefs=True,keySubset=None,select=False):
-        if not isinstance(state,VectorDistributionSet):
-            state = psychsim.pwl.VectorDistributionSet(state)
+#        if not isinstance(state,VectorDistributionSet):
+#            state = psychsim.pwl.VectorDistributionSet(state)
         result = {'new': state,'effect': []}
-        # Generate observations
-        O = self.deltaObservations(result['new'],actions,keySubset)
-        result['effect'].append(O)
-        # Apply all of these update functions
-        for stage in result['effect']:
-            self.applyEffect(result['new'],stage,select)
+        if isinstance(self.state,VectorDistributionSet):
+            # Generate observations
+            O = self.deltaObservations(result['new'],actions,keySubset)
+            result['effect'].append(O)
+            # Apply all of these update functions
+            for stage in result['effect']:
+                self.applyEffect(result['new'],stage,select)
         if updateBeliefs:
             # Update agent models included in the original world
             # (after finding out possible new worlds)
-            agentsModeled = [name for name in self.agents.keys()
-                             if modelKey(name) in result['new'].keyMap and self.agents[name].O is not True]
+            if isinstance(state,VectorDistributionSet):
+                agentsModeled = [name for name in self.agents.keys()
+                                 if modelKey(name) in result['new'].keyMap and self.agents[name].O is not True]
+            else:
+                agentsModeled = [name for name in self.agents.keys()
+                                 if modelKey(name) in result['new'].keys() and self.agents[name].O is not True]
             for name in agentsModeled:
                 key = modelKey(name)
                 agent = self.agents[name]
                 Omega = {keys.makeFuture(keys.stateKey(agent.name,omega)) \
                          for omega in agent.omega}
-                substate = result['new'].collapse(Omega|{key},False)
+                if isinstance(result['new'],VectorDistributionSet):
+                    substate = result['new'].collapse(Omega|{key},False)
                 delta = agent.updateBeliefs(result['new'],actions)
                 if delta:
                     result['effect'].append(delta)
@@ -440,7 +491,7 @@ class World(object):
         keyOrder = []
         for keySet in self.dependency.getEvaluation():
             if not keySubset is None:
-                keySet = {k for k in keySet if k in keySubset}
+                keySet = keySet & keySubset # {k for k in keySet if k in keySubset}
             if len(keySet) > 0:
                 keyOrder.append(keySet)
         if TERMINATED in state:
@@ -603,10 +654,14 @@ class World(object):
                               discount=1.,selection='consistent',
                               beliefs=True,parent=None,projector=Distribution.expectation)
             if setModel:
-                # Initialize model of this agent to be uniform distribution (got a better idea?)
-                prob = 1./float(len(agent.models))
-                dist = {model: prob for model in agent.models}
-                self.setModel(agent.name,dist)
+                if isinstance(self.state,VectorDistributionSet):
+                    # Initialize model of this agent to be uniform distribution (got a better idea?)
+                    prob = 1./float(len(agent.models))
+                    dist = {model: prob for model in agent.models}
+                    self.setModel(agent.name,dist)
+                else:
+                    assert len(agent.models) == 1
+                    self.setModel(agent.name,next(iter(agent.models.keys())))
         return agent
 
     def has_agent(self,agent):
@@ -823,10 +878,10 @@ class World(object):
                 key = turnKey(name)
                 self.turnKeys.add(key)
                 if not key in self.variables:
-                    if self.turnSubstate == None:
+                    if self.turnSubstate == None and isinstance(self.state,VectorDistributionSet):
                         self.turnSubstate = max(self.state.distributions.keys())+1
                     self.defineVariable(key,int,hi=self.maxTurn,substate=self.turnSubstate)
-                self.state.join(key,index)
+                self.setFeature(key,index)
                 # Insert action key
                 key = stateKey(name,keys.ACTION)
                 if not key in self.variables:
@@ -1011,7 +1066,7 @@ class World(object):
             raise NameError('Variable %s already defined' % (key))
         if key[-1] == "'":
             raise ValueError('Ending single-quote reserved for indicating future state')
-        if substate is None:
+        if substate is None and isinstance(self.state,VectorDistributionSet):
             try:
                 substate = max(self.state.distributions.keys())+1
             except ValueError:
@@ -1091,7 +1146,11 @@ class World(object):
 #                        raise RuntimeError('Set all variable values before setting beliefs')
         if state is None:
             state = self.state
-        state.join(key,self.value2float(key,value),self.variables[key]['substate'])
+        if isinstance(state,VectorDistributionSet):
+            state.join(key,self.value2float(key,value),self.variables[key]['substate'])
+        else:
+            assert not isinstance(value,Distribution)
+            state[key] = self.value2float(key,value)
 
     def setJoint(self,distribution,state=None):
         """
@@ -1179,7 +1238,7 @@ class World(object):
         else:
             return value
 
-    def getFeature(self,key,state=None):
+    def getFeature(self,key,state=None,unique=False):
         """
         :param key: the label of the state element of interest
         :type key: str
@@ -1191,9 +1250,15 @@ class World(object):
         if state is None:
             state = self.state
         assert key in self.variables,'Unknown element "%s"' % (key)
-        marginal = state.marginal(key)
-        assert isinstance(marginal,psychsim.probability.Distribution)
-        return self.float2value(key,marginal)
+        if isinstance(state,VectorDistributionSet):
+            marginal = state.marginal(key)
+            if unique:
+                assert len(marginal) == 1,'Unique value requested for %s, but uncertain value exists' % (key)
+                return self.float2value(key,marginal).first()
+            else:
+                return self.float2value(key,marginal)
+        else:
+            return self.float2value(key,state[key])
 
     def getValue(self,key,state=None):
         """
@@ -1224,7 +1289,7 @@ class World(object):
         if isinstance(entity,Agent):
             entity = entity.name
         key = stateKey(entity,feature)
-        if substate is None:
+        if substate is None and isinstance(self.state,VectorDistributionSet):
             substate = len(self.state.keyMap)
         try:
             self.locals[entity][feature] = key
@@ -1244,15 +1309,16 @@ class World(object):
         """
         self.setFeature(stateKey(entity,feature),value,state)
 
-    def getState(self,entity,feature,state=None):
+    def getState(self,entity,feature,state=None,unique=False):
         """
         For backward compatibility
         :param entity: the name of the entity of interest (C{None} if the feature of interest is of the world itself)
         :type entity: str
         :param feature: the state feature of interest
         :type feature: str
+        :param unique: assume there is a unique true value and return it (not a Distribution)
         """
-        return self.getFeature(stateKey(entity,feature),state)
+        return self.getFeature(stateKey(entity,feature),state,unique)
 
     def defineRelation(self,subj,obj,name,domain=float,lo=0.,hi=1.,**kwargs):
         """
@@ -1307,11 +1373,14 @@ class World(object):
 
     def setModel(self,modelee,distribution,state=None,model=None):
         # Make sure distribution is probability distribution over floats
-        if not isinstance(distribution,dict):
-            distribution = {distribution: 1.}
-        if not isinstance(distribution,psychsim.probability.Distribution):
-            distribution = psychsim.probability.Distribution(distribution)
-        distribution.normalize()
+        if state is None:
+            state = self.state
+        if isinstance(state,VectorDistributionSet):
+            if not isinstance(distribution,dict):
+                distribution = {distribution: 1.}
+            if not isinstance(distribution,psychsim.probability.Distribution):
+                distribution = psychsim.probability.Distribution(distribution)
+            distribution.normalize()
         key = modelKey(modelee)
         if isinstance(state,str):
             # This is the name of the modeling agent (*cough* hack *cough*)
