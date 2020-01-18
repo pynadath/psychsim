@@ -18,9 +18,12 @@ class VectorDistributionSet:
     def __init__(self,node=None):
         self.distributions = {}
         self.keyMap = {}
-        if isinstance(node,KeyedVector):
-            node = VectorDistribution({node:1.})
-        if isinstance(node,VectorDistribution):
+        if isinstance(node,dict):
+            substate = 0
+            for key,value in node.items():
+                self.join(key,value,substate)
+                substate += 1
+        elif isinstance(node,VectorDistribution):
             self.distributions[0] = node
             self.keyMap = {k: 0 for k in node.keys()}
         elif node:
@@ -79,6 +82,12 @@ class VectorDistributionSet:
                 del dist[vector]
         dist.normalize()
         
+    def subDistribution(self,key):
+        """
+        :return: the minimal joint distribution containing this key
+        """
+        return self.distributions[self.keyMap[key]]
+
     def __delitem__(self,key):
         """"
         Removes the given column from its corresponding vector (raises KeyError if not present in this distribution)
@@ -195,6 +204,25 @@ class VectorDistributionSet:
             vector.update(distribution.domain()[0])
         return vector
 
+    def worlds(self):
+        """
+        :return: iterator through all possible joint vectors (i.e., possible worlds) and their probabilities
+        :rtype: KeyedVector,float
+        """
+        # Convert to lists now to ensure same ordering throughout
+        substates = list(self.distributions.keys())
+        domains = {substate: self.distributions[substate].domain() for substate in substates}
+        for index in range(len(self)):
+            vector = {}
+            prob = 1.
+            for substate in substates:
+                subindex = index % len(self.distributions[substate])
+                subvector = domains[substate][subindex % len(domains[substate])]
+                vector.update(subvector)
+                prob *= self.distributions[substate][subvector]
+                index = index // len(self.distributions[substate])
+            yield KeyedVector(vector),prob
+
     def select(self,maximize=False,incremental=False):
         """
         Reduce distribution to a single element, sampled according to the given distribution
@@ -247,12 +275,15 @@ class VectorDistributionSet:
         :param key: the key to the column to modify
         :type key: str
         :param value: either a single value to apply to all vectors, or else a L{Distribution} over possible values
-        :substate: name of substate vector distribution to join with, ignored if the key already exists in this state
+        :substate: name of substate vector distribution to join with, ignored if the key already exists in this state. By default, find a new substate
         """
-        assert not substate is None
         if key in self.keyMap:
             substate = self.keyMap[key]
         else:
+            if substate is None:
+                substate = 0
+                while substate in self.distributions:
+                    substate += 1
             self.keyMap[key] = substate
         if not substate in self.distributions:
             self.distributions[substate] = VectorDistribution({KeyedVector({keys.CONSTANT:1.}):1.})
@@ -409,7 +440,7 @@ class VectorDistributionSet:
                 self *= other.children[None]
             elif other.isProbabilistic():
                 if select:
-                    oldKid = other.children.sample()
+                    oldKid = other.children.sample(select=='max')
                     self *= oldKid
                 else:
                     oldKids = list(other.children.domain())
@@ -620,6 +651,57 @@ class VectorDistributionSet:
             if k != keys.CONSTANT:
                 assert s in self.distributions,'%s: %s' % (k,s)
             assert not keys.isFuture(k)
+
+    def simpleRollback(self,futures):
+        # Make the future the present
+        for key in futures:
+            future = keys.makeFuture(key)
+            oldstate = self.keyMap[key]
+            newstate = self.keyMap[future]
+            dist = self.distributions[newstate]
+            if oldstate == newstate:
+                for vector in dist.domain():
+                    prob = dist[vector]
+                    del dist[vector]
+                    vector[key] = vector[future]
+                    del vector[future]
+                    dist.addProb(vector,prob)
+            elif len(dist) > 1:
+                # New value is probabilistic, not a single value, so update old value across possible worlds
+                for vector in dist.domain():
+                    prob = dist[vector]
+                    del dist[vector]
+                    vector[key] = vector[future]
+                    del vector[future]
+                    dist[vector] = prob
+                self.keyMap[key] = newstate
+                # Remove old state values
+                dist = self.distributions[oldstate]
+                if len(dist.first()) > 2:
+                    # Other variables still remain
+                    for vector in dist.domain():
+                        prob = dist[vector]
+                        del dist[vector]
+                        del vector[key]
+                        dist.addProb(vector,prob)
+                else:
+                    del self.distributions[oldstate]
+            else:
+                vector = dist.first()
+                value = vector[future]
+                del dist[vector]
+                del vector[future]
+                if len(vector) > 1:
+                    dist[vector] = 1.
+                else:
+                    del self.distributions[newstate]
+                dist = self.distributions[oldstate]
+                for vector in dist.domain():
+                    prob = dist[vector]
+                    del dist[vector]
+                    vector[key] = value
+                    dist.addProb(vector,prob)
+            del self.keyMap[future]
 
     def __eq__(self,other):
         remaining = set(self.keyMap.keys())

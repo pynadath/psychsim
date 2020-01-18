@@ -155,14 +155,14 @@ class KeyedPlane:
                     for index in range(len(threshold)):
                         if abs(total-threshold[index]) < plane.epsilon:
                             # Disjunction, so any positive result is sufficient
-                                return index
+                            return index
                     else:
                         return None
                 elif isinstance(threshold,set):
                     for t in threshold:
                         if abs(total-t) < plane.epsilon:
                             # Disjunction, so any positive result is sufficient
-                                return True
+                            return True
                     else:
                         if self.isConjunction:
                             # Conjunction, so any negative result is sufficient

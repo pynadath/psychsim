@@ -67,28 +67,57 @@ class KeyedVector(collections.MutableMapping):
     def __mul__(self,other):
         if isinstance(other,KeyedVector):
             # Dot product
-            total = 0.
-            for key,value in self.items():
-                if key in other:
-                    total += value*other[key]
+            total = 0
+            if len(self) > len(other):
+                for key,value in other.items():
+                    if key in self:
+                        total += value*self[key]
+            else:
+                for key,value in self.items():
+                    if key in other:
+                        total += value*other[key]
             return total
         elif isinstance(other,float):
             # Scaling
-            result = KeyedVector()
-            for key,value in self.items():
-                result[key] = value*other
+            result = KeyedVector({key: value*other for key,value in self.items()})
             return result
         else:
             return NotImplemented
 
     def __rmul__(self,other):
         if isinstance(other,float) or isinstance(other,int):
-            result = self.__class__()
-            for key,value in self.items():
-                result[key] = other*value
+            result = self.__class__({key: other*value for key,value in self.items()})
             return result
         else:
             return NotImplemented
+
+    def __imul__(self,other):
+        """
+        :type other: KeyedMatrix or KeyedTree
+        """
+        try:
+            for row,vector in other.items():
+                self[row] = self*vector
+        except AttributeError:
+            matrix = other[self]
+            if isinstance(matrix,Distribution):
+                result = VectorDistribution()
+                for mat in matrix.domain():
+                    vector = self.__class__(self)
+                    vector *= mat
+                    result.addProb(vector,matrix[mat])
+                return result
+            else:
+                for row,vector in matrix.items():
+                    self[row] = self*vector
+        return self
+
+    def rollback(self,future=None):
+        if future is None:
+            future = [key for key in self if keys.isFuture(key)]
+        for key in future:
+            self[keys.makePresent(key)] = self[key]
+            del self[key]
         
     def __getitem__(self,key):
         return self._data[key]
@@ -367,6 +396,19 @@ class VectorDistribution(Distribution):
         else:
             return NotImplemented
 
+    def __imul__(self,other):
+        original = [(vector, self[vector]) for vector in self.domain()]
+        self.clear()
+        for vector,prob in original:
+            vector *= other
+            if isinstance(vector,VectorDistribution):
+                for vec in vector.domain():
+                    self.addProb(vec,vector[vec]*prob)
+            else:
+                self.addProb(vector,prob)
+        assert abs(sum([self[el] for el in self.domain()]) - 1)<1e-8,[self[el] for el in self.domain()]
+        return self
+
     def prune(self,probThreshold,true=None):
         for vec in self.domain():
             if self[vec] < probThreshold:
@@ -386,3 +428,11 @@ class VectorDistribution(Distribution):
             new = KeyedVector(vector)
             result[new] = self[vector]
         return result
+
+    def rollback(self,future=None):
+        original = [(vector, self[vector]) for vector in self.domain()]
+        self.clear()
+        for vector,prob in original:
+            vector.rollback(future)
+            self.addProb(vector,prob)
+        return self
