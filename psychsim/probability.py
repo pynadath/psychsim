@@ -190,7 +190,7 @@ class Distribution(dict):
         """
         :returns: the most probable element in this distribution (breaking ties by returning the highest-valued element)
         """
-        return max([(self[element],element) for element in self.domain()])[1]
+        return self._domain[max([(dict.__getitem__(self,element),element) for element in self._domain])[1]]
 
     def entropy(self):
         """
