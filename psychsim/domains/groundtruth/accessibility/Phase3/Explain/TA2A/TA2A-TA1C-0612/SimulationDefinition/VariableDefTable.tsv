@@ -1,0 +1,6 @@
+Name	LongName	Values	VarType	DataType	Notes
+Children	Children	[0-10]	dynamic	Integer	
+Ethnicity	Ethnicity	majority,minority	fixed	String	
+Gender	Gender	female,male	fixed	String	
+Religion	Religion	majority,minority,none	fixed	String	
+TA2A 612 Shelter	TA2A 612 Shelter	Region[01-16]	dynamic	String	
