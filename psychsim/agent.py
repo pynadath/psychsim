@@ -723,8 +723,8 @@ class Agent(object):
     def setState(self,feature,value,state=None):
         return self.world.setState(self.name,feature,value,state)
 
-    def getState(self,feature,state=None):
-        return self.world.getState(self.name,feature,state)
+    def getState(self,feature,state=None,unique=False):
+        return self.world.getState(self.name,feature,state,unique)
 
     """------------------"""
     """Reward methods"""
