@@ -162,7 +162,7 @@ def readNetwork(instance,run=0,sub=None):
                 networks[link][row['FromEntityId']] = {row['ToEntityId']}
     return networks
 
-def readParticipants(instance,run=0,fname='psychsim.log',splitHurricanes=False,duplicates=False):
+def readParticipants(instance,run=0,fname='psychsim.log',splitHurricanes=True,duplicates=False):
     """
     :returns: Mapping from participants to actor names for each survey
     """
