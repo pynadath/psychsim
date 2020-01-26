@@ -33,11 +33,12 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 101,'run': 1,'span': 130},
     {'instance': 103,'run': 0,'span': 91},
     {'instance': 104,'run': 0,'span': 104},
+    {'instance': 105,'run': 0,'span': 121}
     ]
     
 instanceMap = {'Phase1': {'Explain': [1], 'Predict': [3,4,5,6,7,8], 'Prescribe': [9,10,11,12,13,14]},
     'Phase2': {'Explain': [15,16,17], 'Predict': [18,19], 'Prescribe': [20,21]},
-    'Phase3': {},
+    'Phase3': {'Explain': [22]},
     }
 def instanceArgs(phase,challenge=True):
     if challenge is True:
@@ -282,6 +283,7 @@ def findMatches(record,world=None,population={},ignoreWealth=True,ignoreJob=Fals
         people = population
     else:
         people = world.agents
+    assert len(people) > 0
     for name in sorted(people):
         if name[:5] == 'Actor':
             for field,feature in sorted(demographics.items(),reverse=True):
@@ -309,7 +311,7 @@ def findMatches(record,world=None,population={},ignoreWealth=True,ignoreJob=Fals
                         mismatch[field] = [name]
                     break
             else:
-                logging.debug('Participant %s: %s' % (record['Participant'],name))
+                logging.debug('Participant %s: %s' % (record.get('Participant','?'),name))
                 matches.add(name)
     if matches:
         return matches
@@ -320,7 +322,7 @@ def findMatches(record,world=None,population={},ignoreWealth=True,ignoreJob=Fals
                 print({name: population[name][key] for name in names})
             else:
                 print(sorted({name for name in names}))
-        raise ValueError('No match for %s (mismatches: %s)' % (record['Participant'],mismatch))
+        raise ValueError('No match for %s (mismatches: %s)' % (record.get('Participant','?'),mismatch))
 
 def readDemographics(data,old=False,last=True,name=None):
     demos = {}
@@ -397,7 +399,7 @@ def employment(data,name,hurricane):
     worked = [employed[t] and not sheltered[t] for t in range(len(employed))].count(True)
     return worked,possible
 
-def getTarget(instance,run=0):
+def getTarget(instance,run=0,world=None):
     if instance < 100:
         actor = None
         with open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (run),
@@ -416,22 +418,38 @@ def getTarget(instance,run=0):
             for row in reader:
                 if row['VariableName'] == 'TargetActor':
                     targets.append(row)
-                elif row['VariableName'] == 'Age' and row['EntityIdx'][:6] == 'ActorP':
-                    participants[row['EntityIdx']] = participants.get(row['EntityIdx'],[])+[row]
+                elif row['EntityIdx'] and row['EntityIdx'][:6] == 'ActorP':
+                    if row['EntityIdx'] not in participants:
+                        participants[row['EntityIdx']] = [{'Timestep': row['Timestep']}]
+                    if row['Timestep'] != participants[row['EntityIdx']][-1]['Timestep']:
+                        participants[row['EntityIdx']].append({'Timestep': row['Timestep']})
+                    participants[row['EntityIdx']][-1][row['VariableName']] = row['Value']
         assert len(targets) == 1,'No one target for instance %d' % (instance)
         entity = targets[0]['EntityIdx']
-        for hurricane in range(len(participants[entity])):
-            if participants[entity][hurricane]['Timestep'] == row['Timestep']:
-                break
+        if 'Hurricane' in entity:
+            hurricane = int(entity.split()[-1])
+            record = participants[entity][0]
         else:
-            raise ValueError('Unable to find target actor survey for Instance %d' % (instance))
+            for hurricane in range(len(participants[entity])):
+                if participants[entity][hurricane]['Timestep'] == row['Timestep']:
+                    record = participants[entity][hurricane]
+                    break
+            else:
+                raise ValueError('Unable to find target actor survey for Instance %d' % (instance))
         targets[0]['Hurricane'] = hurricane+1
-        participants = readParticipants(instance,run,splitHurricanes=True,duplicates=True)
-        if entity[6] == 'o':
-            targets[0]['Name'] = participants['Post-survey %d' % (targets[0]['Hurricane'])][int(entity.split()[1])]
+        survey = readParticipants(instance,run,splitHurricanes=True,duplicates=True)
+        if survey:
+            if entity[6] == 'o':
+                targets[0]['Name'] = survey['Post-survey %d' % (targets[0]['Hurricane'])][int(entity.split()[1])]
+            else:
+                targets[0]['Name'] = survey['Pre-survey %d' % (targets[0]['Hurricane'])][int(entity.split()[1])]
         else:
-            targets[0]['Name'] = participants['Pre-survey %d' % (targets[0]['Hurricane'])][int(entity.split()[1])]
-        return targets[0]
+            targets = list(findMatches(record,world,ignoreJob=True))
+            assert len(targets) == 1
+        if isinstance(targets[0],str):
+            return targets[0]
+        else:
+            return targets[0]['Name']
 
 def getPopulation(data):
     """
@@ -635,7 +653,11 @@ def getCurrentDemographics(args,name,world,states,config,t=None):
                     if t is None:
                         value = world.getState(name,'pet')
                     else:
-                        value = getInitialState(args,name,'pet',world,states,t)
+                        try:
+                            value = getInitialState(args,name,'pet',world,states,t)
+                        except KeyError:
+                            entry[field] = 'no'
+                            continue
                     entry[field] = 'yes' if  value.first() else 'no'
                 else:
                     entry[field] = 'no'
@@ -668,7 +690,14 @@ def loadState(args,states,t,turn,world=None):
                     agent.models[model]['beliefs'] = belief
     return states[t][turn]
 
-def getInitialState(args,name,feature,world,states,t,believer=None):
+def getLiving(args,name,world,states,t):
+    loadState(args,states,t-1,'Nature')
+    if stateKey(name,'alive') in states[t-1]['Nature']['__state__']:
+        return world.getState(name,'alive',states[t-1]['Nature']['__state__']).first()
+    else:
+        return stateKey(name,'health') in states[t-1]['Nature']['__state__']
+
+def getInitialState(args,name,feature,world,states,t,believer=None,unique=False):
     if isinstance(t,int):
         if 'Actor0001' in states:
             # Backward compatibility with Phase 1
@@ -680,25 +709,25 @@ def getInitialState(args,name,feature,world,states,t,believer=None):
             if t == 1:
                 # Initial state
                 if believer is None:
-                    return world.getState(name,feature)
+                    return world.getState(name,feature,unique=unique)
                 else:
                     beliefs = world.agents[believer].getBelief()
                     assert len(beliefs) == 1
-                    return world.getState(name,feature,next(iter(beliefs.values())))
+                    return world.getState(name,feature,next(iter(beliefs.values())),unique)
             else:
                 loadState(args,states,t-1,'Nature')
                 if believer is None:
-                    return world.getState(name,feature,states[t-1]['Nature']['__state__'])
+                    return world.getState(name,feature,states[t-1]['Nature']['__state__'],unique)
                 else:
                     beliefs = states[t-1]['Nature'][believer]
                     if isinstance(beliefs,dict):
                         # Must be a dictionary of {model: beliefs}
                         beliefs = next(iter(beliefs.values()))
-                    return world.getState(name,feature,beliefs)
+                    return world.getState(name,feature,beliefs,unique)
     elif isinstance(t,tuple):
-        return [getInitialState(args,name,feature,world,states,day,believer) for day in range(t[0],t[1])]
+        return [getInitialState(args,name,feature,world,states,day,believer,unique) for day in range(t[0],t[1])]
     elif isinstance(t,list) or isinstance(t,set):
-        return [getInitialState(args,name,feature,world,states,day,believer) for day in t]
+        return [getInitialState(args,name,feature,world,states,day,believer,unique) for day in t]
 
 def getAction(args,name,world,states,t):
     """
@@ -716,10 +745,10 @@ def getAction(args,name,world,states,t):
         if 'Actor0001' in states:
             # Backward compatibility with Phase 1
             return [getAction(args,name,world,states,day) for day in range(t[0],t[1]) if day == 1 or name == 'System' or \
-                getInitialState(args,name,'alive',world,states,day)]
+                getLiving(args,name,world,states,day)]
         else:
             return [getAction(args,name,world,states,day) for day in range(t[0],t[1]) if day == 1 or name == 'System' or \
-                getInitialState(args,name,'alive',world,states,day).first()]
+                getLiving(args,name,world,states,day)]
 
 def getAid(args,world,states,t):
     actions = getAction(args,'System',world,states,t)
@@ -851,7 +880,7 @@ def findParticipants(fname,args,world,states,config,ignoreWealth=True):
             oldSurvey.append(entry)
     return oldSurvey
 
-def loadParticipants(args,world):
+def loadParticipants(args,world,useHurricane=False,findMatch=False):
     participants = {}
     with open(instanceFile(args,'RunDataTable.tsv'),'r') as csvfile:
         reader = csv.DictReader(csvfile,delimiter='\t')
@@ -864,10 +893,18 @@ def loadParticipants(args,world):
                     survey = 'Post-survey %s' % (elements[-1])
                 if survey not in participants:
                     participants[survey] = {}
-                partID = int(elements[1])
+                if useHurricane:
+                    partID = entry['EntityIdx']
+                else:
+                    partID = int(elements[1])
                 if partID not in participants[survey]:
                     participants[survey][partID] = {'Timestep': int(entry['Timestep']),'Participant': partID}
                 participants[survey][partID][entry['VariableName']] = entry['Value']
+    if findMatch:
+        for survey,table in participants.items():
+            for partID,entry in table.items():
+                matches = findMatches(entry,world,ignoreWealth=True,ignoreJob=False)
+                entry['Name'] = matches
     return participants
 
 def readRRParticipants(fname):
@@ -936,3 +973,9 @@ def hurr2select(world,hurr,day):
     else:
         select[key] = world.value2float(key,0)
     return select
+
+def participantMatch(name,participants):
+    for survey,sample in participants.items():
+        for partID,partName in sample.items():
+            if partName == name:
+                return 'Actor%s %d Hurricane %s' % (survey[:survey.index('-')],partID,survey.split()[-1])
