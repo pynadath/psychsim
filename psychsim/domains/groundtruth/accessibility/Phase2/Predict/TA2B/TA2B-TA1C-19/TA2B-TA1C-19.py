@@ -138,6 +138,7 @@ if __name__ == '__main__':
             record = dict(root)
             record['VariableName'] = var
             record['Value'] = 0
+            output.append(record)
 
             # Q10 
             var = '%s Friends Sheltered' % (prefix)
