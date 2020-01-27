@@ -145,7 +145,10 @@ class ActionSet(frozenset):
         elif isinstance(elements,Action):
             iterable = [elements]
         elif isinstance(elements,dict):
-            iterable = reduce(ActionSet.union,elements.values(),ActionSet())
+            iterable = set()
+            for subset in elements.values():
+                iterable |= subset
+#            iterable = reduce(ActionSet.union,elements.values(),ActionSet())
         else:
             iterable = elements
         return frozenset.__new__(cls,iterable)
