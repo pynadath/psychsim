@@ -1,0 +1,107 @@
+<?xml version="1.0" ?>
+<graphml>
+    <key attr.name="label" attr.type="string" id="label"/>
+    <graph edgedefault="directed" id="">
+        <node id="Actor friendOf Actor"/>
+        <node id="Actor neighborOf Actor"/>
+        <node id="Actor-decreaseRisk-Region"/>
+        <node id="Actor-evacuate"/>
+        <node id="Actor-moveHome"/>
+        <node id="Actor-moveTo-shelter"/>
+        <node id="Actor-stayInLocation"/>
+        <node id="Actor-takeResources-Region"/>
+        <node id="Actor's childrenHealth"/>
+        <node id="Actor's employed"/>
+        <node id="Actor's Expected Reward"/>
+        <node id="Actor's grievance"/>
+        <node id="Actor's health"/>
+        <node id="Actor's horizon"/>
+        <node id="Actor's location"/>
+        <node id="Actor's perceivedCategory"/>
+        <node id="Actor's pet"/>
+        <node id="Actor's Priority of childrenHealth"/>
+        <node id="Actor's Priority of health"/>
+        <node id="Actor's priority of neighbors"/>
+        <node id="Actor's priority of pets"/>
+        <node id="Actor's priority of resources"/>
+        <node id="Actor's home"/>
+        <node id="Actor's resources"/>
+        <node id="Actor's risk"/>
+        <node id="ActorBeliefOfActor's risk"/>
+        <node id="ActorBeliefOfNature's category"/>
+        <node id="ActorBeliefOfRegion's risk"/>
+        <node id="ActorBeliefOfRegion's shelterRisk"/>
+        <node id="Nature's category"/>
+        <node id="Nature's days"/>
+        <node id="Nature's location"/>
+        <node id="Nature's phase"/>
+        <node id="Region's risk"/>
+        <node id="Region's shelterPets"/>
+        <node id="Region's shelterRisk"/>
+        <node id="System-allocate-Region"/>
+        <node id="Actor's information distortion"/>
+        <edge source="Actor friendOf Actor" target="ActorBeliefOfNature's category"/>
+        <edge source="Actor-decreaseRisk-Region" target="Actor's risk"/>
+        <edge source="Actor-decreaseRisk-Region" target="Region's risk"/>
+        <edge source="Actor-evacuate" target="Actor's employed"/>
+        <edge source="Actor-evacuate" target="Actor's location"/>
+        <edge source="Actor-evacuate" target="Actor's resources"/>
+        <edge source="Actor-moveHome" target="Actor's location"/>
+        <edge source="Actor-moveHome" target="Actor's resources"/>
+        <edge source="Actor-moveTo-shelter" target="Actor's location"/>
+        <edge source="Actor-moveTo-shelter" target="Actor's pet"/>
+        <edge source="Actor-moveTo-shelter" target="Actor's resources"/>
+        <edge source="Actor-stayInLocation" target="Actor's resources"/>
+        <edge source="Actor-takeResources-Region" target="Actor's resources"/>
+        <edge source="Actor-takeResources-Region" target="Actor's risk"/>
+        <edge source="Actor's childrenHealth" target="Actor's Expected Reward"/>
+        <edge source="Actor's employed" target="Actor's resources"/>
+        <edge source="Actor's Expected Reward" target="Actor-decreaseRisk-Region"/>
+        <edge source="Actor's Expected Reward" target="Actor-evacuate"/>
+        <edge source="Actor's Expected Reward" target="Actor-moveHome"/>
+        <edge source="Actor's Expected Reward" target="Actor-moveTo-shelter"/>
+        <edge source="Actor's Expected Reward" target="Actor-stayInLocation"/>
+        <edge source="Actor's Expected Reward" target="Actor-takeResources-Region"/>
+        <edge source="Actor's health" target="Actor's Expected Reward"/>
+        <edge source="Actor's home" target="Actor's grievance"/>
+        <edge source="Actor's horizon" target="Actor's Expected Reward"/>
+        <edge source="Actor's location" target="Actor's resources"/>
+        <edge source="Actor's location" target="Actor's risk"/>
+        <edge source="Actor's perceivedCategory" target="ActorBeliefOfNature's category"/>
+        <edge source="Actor's pet" target="Actor's Expected Reward"/>
+        <edge source="Actor's Priority of childrenHealth" target="Actor's Expected Reward"/>
+        <edge source="Actor's Priority of health" target="Actor's Expected Reward"/>
+        <edge source="Actor's priority of neighbors" target="Actor's Expected Reward"/>
+        <edge source="Actor's priority of pets" target="Actor's Expected Reward"/>
+        <edge source="Actor's priority of resources" target="Actor's Expected Reward"/>
+        <edge source="Actor's resources" target="Actor's Expected Reward"/>
+        <edge source="Actor's risk" target="Actor's childrenHealth"/>
+        <edge source="Actor's risk" target="Actor's health"/>
+        <edge source="ActorBeliefOfNature's category" target="ActorBeliefOfRegion's risk"/>
+        <edge source="ActorBeliefOfNature's category" target="ActorBeliefOfRegion's shelterRisk"/>
+        <edge source="ActorBeliefOfRegion's risk" target="Actor's Expected Reward"/>
+        <edge source="ActorBeliefOfRegion's risk" target="ActorBeliefOfActor's risk"/>
+        <edge source="ActorBeliefOfRegion's shelterRisk" target="ActorBeliefOfActor's risk"/>
+        <edge source="Nature's category" target="Actor's perceivedCategory"/>
+        <edge source="Nature's category" target="Region's risk"/>
+        <edge source="Nature's category" target="Region's shelterRisk"/>
+        <edge source="Nature's days" target="Nature's phase"/>
+        <edge source="Nature's location" target="Nature's phase"/>
+        <edge source="Nature's location" target="Region's risk"/>
+        <edge source="Nature's location" target="Region's shelterRisk"/>
+        <edge source="Nature's phase" target="Nature's category"/>
+        <edge source="Nature's phase" target="Nature's days"/>
+        <edge source="Nature's phase" target="Nature's location"/>
+        <edge source="Nature's phase" target="Region's risk"/>
+        <edge source="Nature's phase" target="Region's shelterRisk"/>
+        <edge source="Region's risk" target="Actor's risk"/>
+        <edge source="Region's risk" target="System-allocate-Region"/>
+        <edge source="Region's shelterPets" target="Actor's pet"/>
+        <edge source="Region's shelterRisk" target="Actor's risk"/>
+        <edge source="System-allocate-Region" target="Actor's grievance"/>
+        <edge source="System-allocate-Region" target="Region's risk"/>
+        <edge source="Actor's information distortion" target="Actor's perceivedCategory"/>
+        <edge source="Actor's location" target="ActorBeliefOfActor's risk"/>
+        <edge source="ActorBeliefOfActor's risk" target="Actor's Expected Reward"/>
+    </graph>
+</graphml>
