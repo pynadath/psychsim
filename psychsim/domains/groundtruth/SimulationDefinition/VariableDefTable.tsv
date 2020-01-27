@@ -1,11 +1,11 @@
 Name	LongName	Values	VarType	DataType	Notes
 Population	Population	[0+]	dynamic	Integer	
-Gender male	Gender male	[0+]	dynamic	Integer	
 Gender female	Gender female	[0+]	dynamic	Integer	
+Gender male	Gender male	[0+]	dynamic	Integer	
 Ethnicity majority	Ethnicity majority	[0+]	dynamic	Integer	
 Ethnicity minority	Ethnicity minority	[0+]	dynamic	Integer	
-Religion minority	Religion minority	[0+]	dynamic	Integer	
 Religion majority	Religion majority	[0+]	dynamic	Integer	
+Religion minority	Religion minority	[0+]	dynamic	Integer	
 Religion none	Religion none	[0+]	dynamic	Integer	
 Age <18	Age <18	[0+]	dynamic	Integer	
 Age 18-24	Age 18-24	[0+]	dynamic	Integer	
@@ -56,4 +56,3 @@ ActorPost Dissatisfaction	ActorPost Dissatisfaction	[1-7]	dynamic	Integer
 ActorPost Shelter Possibility	ActorPost Shelter Possibility	[1-7]	dynamic	Integer	N/A if already at shelter
 ActorPost Evacuation Possibility	ActorPost Evacuation Possibility	[1-7]	dynamic	Integer	N/A if already evacuated
 ActorPost Stay at Home Possibility	ActorPost Stay at Home Possibility	[1-7]	dynamic	Integer	N/A if stayed home
-TargetActor	TargetActor	yes	dynamic	String	"yes" for a ActorPost respondent on the given Timestep
