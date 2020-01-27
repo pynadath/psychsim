@@ -37,7 +37,7 @@ Q16A.No_Food,,state,respondent,0,no,list,,Over the past year how often if ever h
 Q16B.No_Water,,state,respondent,0,no,list,,Over the past year how often if ever have you or anyone in your family gone without: Enough clean water for home use?
 Q16C.No_Meds,,state,respondent,0,no,list,,Over the past year how often if ever have you or anyone in your family gone without: Medicines or medical treatment?
 Q16D.No_Fuel,,state,respondent,0,no,list,,Over the past year how often if ever have you or anyone in your family gone without: Enough fuel to cook your food?
-Q16E.No_Cash,,state,respondent,0,no,list,,
+#Q16E.No_Cash,,state,respondent,0,no,list,,
 Q17A.Own_Radio,,state,respondent,0,no,list,,Which of these things do you personally own: Radio?
 Q17B.Own_Television,,state,respondent,0,no,list,,Which of these things do you personally own: Television?
 Q17C.Own_Motor,,state,respondent,0,no,list,,+ACI-Which of these things do you personally own: Motor vehicle, car or motorcycle?+ACI-
