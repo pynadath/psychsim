@@ -243,6 +243,70 @@ def runInstance(instance,args,config,rerun=True):
                 world.agents['System'].actions = {action for action in world.agents['System'].actions if action['verb'] != 'allocate'}
                 world.agents['System'].prescription = None
                 world.agents['System'].setNullGrievance([a.name for a in population])
+            elif args['prescription'] == 'phase2prescribelongb':
+                # "A national weather service and alert system that notifies the population of the future path and category of an impending hurricane is implemented"
+                config['System']['broadcast_category'] = 'yes'
+                # "ALl actors with wealth > 4 are taxed at a rate of 50%"
+                world.agents['System'].resources = 0
+                for agent in population:
+                    wealth = agent.getState('resources',unique=True)
+                    if toLikert(wealth,7) > 4:
+                        world.agents['System'].resources += wealth/2
+                        agent.setState('resources',wealth/2)
+                # "All hurricane shelters are modified to include pet facilities that allow anyone who has a pet to bring them with them to the shelter"
+                for region in regions:
+                    key = stateKey(region,'shelterPets')
+                    if key in world.variables:
+                        world.setFeature(key,True)
+                        # Assume nominal cost to build pet facilities
+                        world.agents['System'].resources -= 1
+                # "Evacuations subsidized as in UnconstrainedPrescriptionCasualties.tsv"
+                targets = [agent for agent in population if agent.demographics['pet'] or agent.demographics['ethnicGroup'] == 'minority'
+                    or agent.demographics['age'] > 46 or agent.demographics['kids'] == 0]
+                incentive = world.agents['System'].resources / len(targets)
+                for agent in targets:
+                    key = stateKey(agent.name,'resources')
+                    action = ActionSet(Action({'subject': agent.name,'verb': 'evacuate'}))
+                    tree = world.dynamics[key][action].children[True]
+                    cost = tree[makeFuture(key)][makeFuture(key)][CONSTANT]
+                    tree[makeFuture(key)][makeFuture(key)][CONSTANT] = cost+incentive
+                # "Pet owners have their pets remanded to an area that can only be visited via the evacuation action"
+                # Has no effect: there is no value associated with visitation/separation, only whether the pet lives or dies
+            elif args['prescription'] == 'phase2prescribelonga':
+                """Raise the perception of risk / fear surrounding each hurricane by devoting
+                more television and radio airtime; as also online and print ads to (i)
+                sponsored reportage about the imminence of hurricanes this season; and
+                (ii) documentary evidence regarding the danger of hurricanes and their
+                consequences. This coverage should feature the benefits of evacuation."""
+                config['System']['broadcast_category'] = 'yes'
+                """Implement a tax policy"""
+                world.agents['System'].resources = 0
+                for agent in population:
+                    wealth = agent.getState('resources',unique=True)
+                    bracket = toLikert(wealth,7)
+                    if bracket > 4:
+                        if bracket == 7:
+                            tax = .75*wealth
+                        elif bracket == 6:
+                            tax = wealth/2
+                        elif bracket == 5:
+                            tax = wealth/4
+                        world.agents['System'].resources += tax
+                        agent.setState('resources',wealth-tax)
+                """Offer monetary incentive to evacuate"""
+                """Offer additional 100% bonus to members of a minority religion to evacuate
+                (they receive 2 times what a non-minority religion member would receive)."""
+                targets = {agent.name for agent in population if agent.demographics['religion'] == 'minority'}
+                incentive = world.agents['System'].resources / (len(population)+len(targets))
+                for agent in population:
+                    key = stateKey(agent.name,'resources')
+                    action = ActionSet(Action({'subject': agent.name,'verb': 'evacuate'}))
+                    tree = world.dynamics[key][action].children[True]
+                    cost = tree[makeFuture(key)][makeFuture(key)][CONSTANT]
+                    if agent.name in targets:
+                        tree[makeFuture(key)][makeFuture(key)][CONSTANT] = cost+2*incentive
+                    else:
+                        tree[makeFuture(key)][makeFuture(key)][CONSTANT] = cost+incentive
             else:
                 world.agents['System'].prescription = readPrescription(args['prescription'])
                 if isinstance(world.agents['System'].prescription,list):
@@ -1263,8 +1327,10 @@ def exchangeMessages(world,config,state,living):
         for actor in living:
             friends = [friend for friend in actor.friends
                        if world.agents[friend] in living]
-            if friends:
-                msg = [beliefs[friend][key] for friend in friends]
+            msg = [beliefs[friend][key] for friend in friends]
+            if config.getboolean('System','broadcast_category',fallback=False):
+                msg.append(world.getFeature(key,state))
+            if msg:
                 messages[actor.name] = msg
                 logging.info('%s receives message %s' % (actor.name,msg))
                 actor.recvMessage(key,msg,myScale,optScale,pessScale)
@@ -1290,8 +1356,11 @@ def killAgent(name,world):
     logEdge('Actor\'s health','Actor marriedTo Actor','sometimes','Actors are no longer married if their spouse dies')
     #//GT: edge 94; from 21; to 22; 1 of 1; next 2 lines
     actor = world.agents[name]
-    if actor.spouse is not None:
-        world.agents[actor.spouse].spouse = None
+    try:
+        if actor.spouse is not None:
+            world.agents[actor.spouse].spouse = None
+    except AttributeError:
+        pass
 
     logEdge('Actor\'s health','Actor friendOf Actor','sometimes','Actors cannot be friends with dead people')
     #//GT: edge 95; from 21; to 57; 1 of 1; next 3 lines
