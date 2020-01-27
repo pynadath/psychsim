@@ -6,13 +6,15 @@ import pickle
 import random
 import unittest
 
+from psychsim.probability import Distribution
 from psychsim.pwl.keys import *
+from psychsim.pwl.vector import KeyedVector
 
 from psychsim.domains.groundtruth import accessibility
 
 
 class TestRunData(unittest.TestCase):
-    instances = {100: [0], 101: [0]}
+    instances = {105: [0]}
     turn = ['Actor','System','Nature']
 
     def testDynamics(self):
@@ -22,6 +24,8 @@ class TestRunData(unittest.TestCase):
             config = accessibility.getConfig(args['instance'])
             simPhase = config.getint('Simulation','phase',fallback=1)
             self.assertGreater(simPhase,1,'Not equipped to test Phase %d simulations' % (simPhase))
+            if simPhase >= 3:
+                self.turn.insert(0,'Group')
             base_increase = accessibility.likert[5][config.getint('Disaster','risk_impact')-1]
             base_decrease = accessibility.likert[5][config.getint('Disaster','risk_decay')-1]
             allocation = config.getint('System','system_allocation')
@@ -51,35 +55,54 @@ class TestRunData(unittest.TestCase):
                     for name,state in s1.items():
                         for key in state.keys():
                             if isTurnKey(key):
-                                self.assertEqual(len(state[key]),1)
+                                if isinstance(state[key],Distribution):
+                                    self.assertEqual(len(state[key]),1)
                                 other = state2agent(key)
                                 if other[:5] == 'Actor':
                                     value = self.turn.index('Actor') - turn - 1
+                                elif other[:5] == 'Group':
+                                    value = self.turn.index('Group') - turn - 1
                                 else:
                                     value = self.turn.index(other) - turn - 1
-                                self.assertAlmostEqual(state[key].first(),value % len(self.turn),8)
+                                if isinstance(state[key],Distribution):
+                                    self.assertAlmostEqual(state[key].first(),value % len(self.turn),8)
+                                else:
+                                    self.assertAlmostEqual(state[key],value % len(self.turn),8)
                     # Verify true state has no uncertainty
-                    self.assertEqual(len(s1['__state__']),1)
-                    newValues = {key: world.getFeature(key,s1['__state__']).first() for key in s1['__state__'].keys()}
+                    if isinstance(s1['__state__'],KeyedVector):
+                        newValues = {key: world.getFeature(key,s1['__state__']) for key in s1['__state__'] if key != CONSTANT}
+                    else:
+                        self.assertEqual(len(s1['__state__']),1)
+                        newValues = {key: world.getFeature(key,s1['__state__']).first() for key in s1['__state__'].keys()}
                     # Hurricane's true state
                     phase = newValues[stateKey('Nature','phase')]
                     for name,state in s1.items():
                         if name != '__state__':
                             # Belief state of an individual actor
-                            self.assertEqual(len(state),1)
-                            model,belief = next(iter(state.items()))
+                            if isinstance(state,dict):
+                                self.assertEqual(len(state),1)
+                                model,belief = next(iter(state.items()))
+                            else:
+                                belief = state
                             for key in belief.keys():
-                                dist = belief[key]
+                                dist = world.getFeature(key,belief)
                                 if key in {stateKey('Nature','category'),stateKey(world.agents[name].demographics['home'],'risk'),
-                                    stateKey(name,'risk'),stateKey(name,'perceivedCategory')} or key[-11:] == 'shelterRisk':
+                                    stateKey(name,'risk'),stateKey(name,'perceivedCategory')} or key[-11:] == 'shelterRisk' or key[-4:] == 'risk':
                                     if phase == 'none' or world.agents[name].distortion == 'none':
                                         self.assertEqual(len(dist),1)
                                     else:
                                         self.assertLess(len(dist),3)
+                                elif key[-len('shelterOccupancy'):] == 'shelterOccupancy':
+                                    # Agents don't always see everyone who enters a shelter
+                                    pass
                                 else:
-                                    self.assertEqual(len(belief[key]),1,'%s has unexpectedly uncertain belief about %s' % (name,key))
-                                    self.assertAlmostEqual(belief[key].first(),s1['__state__'][key].first(),
-                                        msg='%s has incorrect belief about %s' % (name,key))
+                                    if isinstance(s1['__state__'][key],Distribution):
+                                        self.assertEqual(len(belief[key]),1,'%s has unexpectedly uncertain belief about %s' % (name,key))
+                                        self.assertAlmostEqual(belief[key].first(),s1['__state__'][key].first(),
+                                            msg='%s has incorrect belief about %s' % (name,key))
+                                    else:
+                                        self.assertAlmostEqual(belief[key].first(),s1['__state__'][key],
+                                            msg='%s has incorrect belief about %s' % (name,key))
                                 if key == stateKey('Nature','category'):
                                     if len(dist) > 1:
                                         for value in dist.domain():
@@ -91,16 +114,26 @@ class TestRunData(unittest.TestCase):
                     else:
                         # Verify transition
                         for name,state in s1.items():
-                            self.assertEqual(state.keys(),s0[name].keys(),'Set of variables has changed for %s' % (name))
                             if name == '__state__':
-                                actions = {state2agent(key): world.getFeature(key,state).first() for key in state.keys() if isActionKey(key)}
+                                if isinstance(state,KeyedVector):
+                                    actions = {state2agent(key): world.getFeature(key,state) for key in state.keys() if isActionKey(key)}
+                                else:
+                                    actions = {state2agent(key): world.getFeature(key,state).first() for key in state.keys() if isActionKey(key)}
                                 for key in state.keys():
+                                    if isBinaryKey(key) or key == CONSTANT:
+                                        continue
                                     agent,feature = state2tuple(key)
-                                    if feature == 'risk':
+                                    if feature == 'grievance':
+                                        if self.turn[turn] == 'System':
+                                            if actions['System']['object'] == world.agents[agent].demographics['home']:
+                                                self.assertLess(newValues[key],oldValues[key])
+                                            elif oldValues[key] < 1.:
+                                                self.assertGreater(newValues[key],oldValues[key])
+                                    elif feature == 'risk':
                                         if agent[:5] == 'Actor':
                                             # Personal risk
                                             if self.turn[turn] == 'Actor':
-                                                if newValues[stateKey(agent,'alive')]:
+                                                if simPhase >= 3 or newValues[stateKey(agent,'alive')]:
                                                     if actions[agent]['verb'] == 'takeResources' and config.getint('Actors','antiresources_cost_risk') > 0:
                                                         # //GT: edge 14
                                                         cost = config.getint('Actors','antiresources_cost_risk')
@@ -114,24 +147,32 @@ class TestRunData(unittest.TestCase):
                                                         if phase == 'none':
                                                             self.assertAlmostEqual(oldValues[key]+(1.-oldValues[key])*accessibility.likert[5][3],newValues[key])
                                                         else:
-                                                            self.assertAlmostEqual(oldValues[key]+(1.-oldValues[key])*accessibility.likert[5][cost-1],newValues[key])
+                                                            if oldValues[key] < 1.:
+                                                                self.assertLess(oldValues[key],newValues[key])
                                                     else:
                                                         # Default risk dynamics
                                                         # //GT: edge 27
                                                         if newValues[stateKey(agent,'location')] == 'evacuated':
-                                                            # If evacuated, risk drops 90%
-                                                            self.assertAlmostEqual(oldValues[key]*0.1,newValues[key])
+                                                            if actions[agent]['verb'] == 'stayInLocation':
+                                                                # If evacuated, risk drops 90%
+                                                                self.assertAlmostEqual(oldValues[key]*0.1,newValues[key])
                                                         elif newValues[stateKey(agent,'location')] == world.agents[agent].demographics['home']:
                                                             # If sheltering at home, risk equals regional risk
                                                             # //GT: edge 55
-                                                            self.assertAlmostEqual(newValues[stateKey(world.agents[agent].demographics['home'],'risk')],
-                                                                newValues[key],msg='Personal risk (%s) != Regional risk (%s) for %s' % \
-                                                                    (state[key],state[stateKey(world.agents[agent].demographics['home'],'risk')],agent))
+                                                            if actions[agent]['verb'] == 'stayInLocation':
+                                                                self.assertAlmostEqual(newValues[stateKey(world.agents[agent].demographics['home'],'risk')],
+                                                                    newValues[key],msg='Personal risk (%s) != Regional risk (%s) for %s' % \
+                                                                        (state[key],state[stateKey(world.agents[agent].demographics['home'],'risk')],agent))
                                                         elif newValues[stateKey(agent,'location')][:7] == 'shelter':
                                                             # If sheltering at shelter, risk equals shelter risk
                                                             # //GT: edge 58
-                                                            self.assertAlmostEqual(newValues[stateKey('Region%s' % (newValues[stateKey(agent,'location')][7:]),
-                                                                'shelterRisk')],newValues[key])
+                                                            if actions[agent]['verb'] == 'stayInLocation':
+                                                                self.assertAlmostEqual(oldValues[stateKey('Region%02d' % int(newValues[stateKey(agent,'location')][7:]),
+                                                                    'shelterRisk')],newValues[key])
+#                                                            elif actions[agent]['verb'] == 'moveTo':
+#                                                                # Just moved here
+#                                                                self.assertAlmostEqual(newValues[stateKey('Region%02d' % int(newValues[stateKey(agent,'location')][7:]),
+#                                                                    'risk')],newValues[key])
                                                         else:
                                                             self.fail('Unknown location of %s: %s' % (agent,newValues[stateKey(agent,'location')]))
                                                 else:
@@ -153,11 +194,12 @@ class TestRunData(unittest.TestCase):
                                                         newValues[key])
                                             elif self.turn[turn] == 'Actor':
                                                 # //GT: edge 3
-                                                count = len([action for action in actions.values() if action['verb'] == 'decreaseRisk' and action['object'] == agent])
-                                                if count > 0 and oldValues[key] > 0.:
+                                                prosocial = [action for action in actions.values() if action['verb'] == 'decreaseRisk' and action['object'] == agent]
+                                                count = len(prosocial)
+                                                if count > 0 and abs(oldValues[key]-world.agents[agent].risk) > 1e-8:
                                                     self.assertGreater(oldValues[key],newValues[key])
                                                 else:
-                                                    self.assertAlmostEqual(oldValues[key],newValues[key])
+                                                    self.assertAlmostEqual(oldValues[key],newValues[key],7)
                                             else:
                                                 # System allocation
                                                 # //GT: edge 60
