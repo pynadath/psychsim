@@ -788,7 +788,7 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         assert len(world.getModel('robot')) == 1
         world.step(action,select=True)
         assert len(world.getModel('robot')) == 1
-        beliefState = list(world.agents['robot'].getBelief().values())[0]
+        beliefState = next(iter(world.agents['robot'].getBelief().values()))
         belief = world.getState(location,'danger',beliefState)
 
         real = world.getState(location,'danger')
@@ -817,6 +817,9 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     with open(filename,'wb') as scenarioFile:
         pickle.dump(world,scenarioFile)
 #    world.save(filename,ext=='psy')
+    model,beliefState = next(iter(world.agents['robot'].getBelief().items()))
+    belief = world.getState(location,'danger',beliefState)
+    print(location,belief)
 
     return ack
 
