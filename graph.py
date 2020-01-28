@@ -1,9 +1,8 @@
 """
 Class definition for representation of dependency structure among all variables in a PsychSim scenario
 """
-import pwl
-import world
-from action import ActionSet
+from psychsim.pwl.keys import *
+from psychsim.action import ActionSet
 
 class DependencyGraph(dict):
     """
@@ -35,82 +34,139 @@ class DependencyGraph(dict):
             self.computeLineage()
         return self.root
 
+    def deleteKeys(self,toDelete):
+        self.evaluation = [keySet-toDelete for keySet in self.evaluation if keySet-toDelete]
+        
     def __getitem__(self,key):
         if len(self) == 0:
             self.computeGraph()
         return dict.__getitem__(self,key)
 
-    def computeGraph(self):
+    def computeGraph(self,agents=None,state=None,belief=False):
         # Process the unary state features
-        for agent,variables in self.world.locals.items():
-            for feature in variables.keys():
-                self[world.stateKey(agent,feature)] = {'agent': agent,
-                                                       'type': 'state pre',
-                                                       'children': set(),
-                                                       'parents': set()}
-                self[world.stateKey(agent,feature,True)] = {'agent': agent,
-                                                            'type': 'state post',
-                                                            'children': set(),
-                                                            'parents': set()}
+        if agents is None:
+            agents = sorted(self.world.agents.keys())
+            agents.append(WORLD)
+        if state is None:
+            state = self.world.state
+        for agent in agents:
+            if agent in self.world.locals:
+                variables = self.world.locals[agent]
+                for feature in variables.keys():
+                    key = stateKey(agent,feature)
+                    if key in state:
+                        self[key] = {'agent': agent,'type': 'state pre',
+                                     'children': set(),'parents': set()}
+                        self[makeFuture(key)] = {'agent': agent,'type': 'state post',
+                                                 'children': set(),'parents': set()}
         # Process the binary state features
         for relation,table in self.world.relations.items():
             for key,entry in table.items():
-                self[key] = {'agent': entry['subject'],
-                             'type': 'state pre',
-                             'children': set(),
-                             'parents': set()}
-                self[world.makeFuture(key)] = {'agent': entry['subject'],
-                                         'type': 'state post',
-                                         'children': set(),
-                                         'parents': set()}
-        for name,agent in self.world.agents.items():
-            # Create the agent reward node
-            if agent.getAttribute('R',True):
-                self[name] = {'agent': name,
-                              'type': 'utility',
-                              'parents': set(),
-                              'children': set()}
-            # Process the agent actions
-            for action in agent.actions:
-                action = ActionSet([a.root() for a in action])
-                if not self.has_key(action):
-                    self[action] = {'agent': name,
-                                    'type': 'action',
-                                    'parents': set(),
-                                    'children': set()}
+                if key in state and entry['subject'] in agents and entry['object'] in agents:
+                    self[key] = {'agent': entry['subject'],
+                                 'type': 'state pre',
+                                 'children': set(),
+                                 'parents': set()}
+                    self[makeFuture(key)] = {'agent': entry['subject'],
+                                             'type': 'state post',
+                                             'children': set(),
+                                             'parents': set()}
+        for name in agents:
+            if name != WORLD:
+                # Create the agent reward node
+                agent = self.world.agents[name]
+                R = agent.getReward()
+                if R:
+                    if {reward for reward in R.values()} != {None}:
+                        self[name] = {'agent': name,
+                                      'type': 'utility',
+                                      'parents': set(),
+                                      'children': set()}
+                # Process the agent actions
+                for action in agent.actions:
+                    action = ActionSet([a.root() for a in action])
+                    if not action in self:
+                        self[action] = {'agent': name,
+                                        'type': 'action',
+                                        'parents': set(),
+                                        'children': set()}
+                if agent.O is not True:
+                    # Process the agent observations
+                    for omega,table in agent.O.items():
+                        self[omega] = {'agent': name,
+                                       'type': 'observation',
+                                       'parents': set(),
+                                       'children': set()}
         # Create links from dynamics
         for key,dynamics in self.world.dynamics.items():
-            if world.isTurnKey(key):
+            if not isinstance(key,str):
                 continue
-            assert self.has_key(key),'Graph has not accounted for key: %s' % (key)
+            if isTurnKey(key):
+                continue
+            if isStateKey(key) and not state2agent(key) in agents:
+                continue
+            if isBinaryKey(key) and not key2relation(key)['subject'] in agents and \
+               not key2relation(key)['object'] in agents:
+                continue
+            if not key in self:
+                continue
+#            assert self.has_key(key),'Graph has not accounted for key: %s' % (key)
             if isinstance(dynamics,bool):
                 continue
             for action,tree in dynamics.items():
-                if not action is True:
+                if not action is True and action['subject'] in agents:
                     # Link between action to this feature
-                    assert self.has_key(action),'Graph has not accounted for action: %s' % (action)
-                    dict.__getitem__(self,world.makeFuture(key))['parents'].add(action)
-                    dict.__getitem__(self,action)['children'].add(world.makeFuture(key))
+                    if action in self:
+                        # assert self.has_key(action),'Graph has not accounted for action: %s' % (action)
+                        dict.__getitem__(self,makeFuture(key))['parents'].add(action)
+                        dict.__getitem__(self,action)['children'].add(makeFuture(key))
                 # Link between dynamics variables and this feature
-                for parent in tree.getKeysIn() - set([pwl.CONSTANT]):
-                    dict.__getitem__(self,world.makeFuture(key))['parents'].add(parent)
-                    dict.__getitem__(self,parent)['children'].add(world.makeFuture(key))
-        for name,agent in self.world.agents.items():
-            # Create links from reward
-            if agent.models[True].has_key('R'):
-                for R,weight in agent.models[True]['R'].items():
-                    for parent in R.getKeysIn() - set([pwl.CONSTANT]):
+                for parent in tree.getKeysIn() - set([CONSTANT]):
+                    if (state2agent(parent) == WORLD or state2agent(parent) in agents) and \
+                       parent in self:
+                        dict.__getitem__(self,makeFuture(key))['parents'].add(parent)
+                        dict.__getitem__(self,parent)['children'].add(makeFuture(key))
+        for name in agents:
+            if name in self:
+                agent = self.world.agents[name]
+                # Create links from reward
+                model = '%s0' % (agent.name)
+                R = agent.getReward(model)
+                for parent in R.getKeysIn() - set([CONSTANT]):
+                    if isStateKey(parent) and not state2agent(parent) in agents:
+                        continue
+                    if parent in self:
                         # Link between variable and agent utility
-                        dict.__getitem__(self,name)['parents'].add(world.makeFuture(parent))
-                        dict.__getitem__(self,world.makeFuture(parent))['children'].add(name)
-            # Create links from legality
-            for action,tree in agent.legal.items():
-                action = ActionSet([a.root() for a in action])
-                for parent in tree.getKeysIn() - set([pwl.CONSTANT]):
-                    # Link between prerequisite variable and action
-                    assert self.has_key(action),'Graph has not accounted for action: %s' % (action)
-                    dict.__getitem__(self,action)['parents'].add(parent)
-                    dict.__getitem__(self,parent)['children'].add(action)
+                        dict.__getitem__(self,name)['parents'].add(makeFuture(parent))
+                        dict.__getitem__(self,makeFuture(parent))['children'].add(name)
+                # Create links from legality
+                for action,tree in agent.legal.items():
+                    action = ActionSet([a.root() for a in action])
+                    for parent in tree.getKeysIn() - set([CONSTANT]):
+                        if isStateKey(parent) and not state2agent(parent) in agents:
+                            continue
+                        if action in self and parent in self:
+                            # Link between prerequisite variable and action
+                            dict.__getitem__(self,action)['parents'].add(parent)
+                            dict.__getitem__(self,parent)['children'].add(action)
+            if name != WORLD:
+                # Create links from observations
+                if agent.O is not True and not belief:
+                    # Process the agent observations
+                    for omega,table in agent.O.items():
+                        for action,tree in table.items():
+                            if action is not None:
+                                # Action affects observation probability
+                                dict.__getitem__(self,omega)['parents'].add(action)
+                                dict.__getitem__(self,action)['children'].add(omega)
+                            for parent in tree.getKeysIn() - {CONSTANT}:
+                                if isActionKey(parent):
+                                    for a in self.world.agents[state2agent(parent)].actions:
+                                        dict.__getitem__(self,omega)['parents'].add(a)
+                                        dict.__getitem__(self,a)['children'].add(omega)
+                                else:
+                                    dict.__getitem__(self,omega)['parents'].add(parent)
+                                    dict.__getitem__(self,parent)['children'].add(omega)
 
     def items(self):
         if len(self) == 0:
@@ -150,7 +206,7 @@ class DependencyGraph(dict):
                     if not child in layer:
                         # Check whether eligible for the new layer
                         for parent in self[child]['parents']:
-                            if not self[parent].has_key('level') or self[parent]['level'] > level:
+                            if not 'level' in self[parent] or self[parent]['level'] > level:
                                 # Ineligible to be in this layer
                                 break
                         else:
@@ -167,9 +223,19 @@ class DependencyGraph(dict):
         """
         self.getLayers()
         self.evaluation = []
+        # for key in self.world.variables:
+        #     while len(self.evaluation) <= self[key]['level']:
+        #         self.evaluation.append(set())
+        #     self.evaluation[self[key]['level']].add(makePresent(key))
+            
         for agent,variables in self.world.locals.items():
             for feature in variables.keys():
-                key = world.stateKey(agent,feature,True)
+                key = stateKey(agent,feature,True)
                 while len(self.evaluation) <= self[key]['level']:
                     self.evaluation.append(set())
-                self.evaluation[self[key]['level']].add(world.makePresent(key))
+                self.evaluation[self[key]['level']].add(makePresent(key))
+        for relation,variables in self.world.relations.items():
+            for key,table in variables.items():
+                while len(self.evaluation) <= self[key]['level']:
+                    self.evaluation.append(set())
+                self.evaluation[self[key]['level']].add(makePresent(key))

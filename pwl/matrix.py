@@ -3,20 +3,33 @@ from xml.dom.minidom import Document,Node
 
 from psychsim.probability import Distribution
 
-from vector import *
-from . import CONSTANT
+from psychsim.pwl.vector import *
+from psychsim.pwl.keys import CONSTANT,makeFuture
 
 class KeyedMatrix(dict):
     def __init__(self,arg={}):
         self._keysIn = None
         self._keysOut = None
         if isinstance(arg,Node):
-            dict.__init__(self)
+            try:
+                super().__init__()
+            except TypeError:
+                super(KeyedMatrix,self).__init__()
             self.parse(arg)
         else:
-            dict.__init__(self,arg)
+            try:
+                super().__init__(arg)
+            except TypeError:
+                super(KeyedMatrix,self).__init__(arg)
             self._string = None
         
+    def __deepcopy__(self,memo):
+        result = self.__class__({key: copy.deepcopy(row) for key,row in self.items()})
+        result._keysIn = self._keysIn
+        result._keysOut = self._keysOut
+        result._string = self._string
+        return result
+
     def __eq__(self,other):
         return str(self) == str(other)
          # for key,vector in self.items():
@@ -46,64 +59,92 @@ class KeyedMatrix(dict):
             except KeyError:
                 result[key] = KeyedVector(vector)
         for key,vector in other.items():
-            if not result.has_key(key):
+            if not key in result:
                 result[key] = KeyedVector(vector)
         return result
 
     def __sub__(self,other):
         return self + (-other)
 
-    def __mul__(self,other):
-        if isinstance(other,KeyedMatrix):
-            result = KeyedMatrix()
-            for r1,v1 in self.items():
-                result[r1] = KeyedVector()
-                for c1,value1 in v1.items():
-                    if other.has_key(c1):
-                        for c2,value2 in other[c1].items():
-                            try:
-                                result[r1][c2] += value1*value2
-                            except KeyError:
-                                result[r1][c2] = value1*value2
-        elif isinstance(other,KeyedVector):
-            result = KeyedVector()
-            for r1,v1 in self.items():
-                for c1,value1 in v1.items():
-                    if other.has_key(c1):
-                        try:
-                            result[r1] += value1*other[c1]
-                        except KeyError:
-                            result[r1] = value1*other[c1]
-        elif isinstance(other,VectorDistribution):
-            result = VectorDistribution()
-            for vector in other.domain():
-                product = self*vector
+    def mulByMatrix(self,other):
+        result = KeyedMatrix()
+        result._keysOut = self._keysOut
+        result._keysIn = set()
+        for r1,v1 in self.items():
+            row = {}
+            for c1,value1 in v1.items():
                 try:
-                    result[product] += other[vector]
+                    col = other[c1].items()
                 except KeyError:
-                    result[product] = other[vector]
+                    if c1 == CONSTANT:
+                        col = [(CONSTANT,1.)]
+                    else:
+                        continue
+                for c2,value2 in col:
+                    row[c2] = row.get(c2,0) + value1*value2
+                    result._keysIn.add(c2)
+            result[r1] = KeyedVector(row)
+        return result
+
+    def mulByVector(self,other):
+        result = KeyedVector()
+        for r1,v1 in self.items():
+            for c1,value1 in v1.items():
+                if c1 in other:
+                    try:
+                        result[r1] += value1*other[c1]
+                    except KeyError:
+                        result[r1] = value1*other[c1]
+        return result
+
+    def mulByDistribution(self,other):
+        result = VectorDistribution()
+        for vector in other.domain():
+            product = self*vector
+            try:
+                result[product] += other[vector]
+            except KeyError:
+                result[product] = other[vector]
+        return result
+
+    def __mul__(self,other):
+        """
+        @warning: Muy destructivo for L{VectorDistributionSet}
+        """
+        if isinstance(other,KeyedMatrix):
+            return self.mulByMatrix(other)
+        elif isinstance(other,KeyedVector):
+            return self.mulByVector(other)
+        elif isinstance(other,VectorDistribution):
+            return self.mulByDistribution(other)
         else:
             return NotImplemented
-        return result
 
     def __rmul__(self,other):
         if isinstance(other,KeyedVector):
             # Transform vector
             result = KeyedVector()
             for key in other.keys():
-                if self.has_key(key):
+                if key in self:
                     for col in self[key].keys():
                         try:
                             result[col] += other[key]*self[key][col]
                         except KeyError:
                             result[col] = other[key]*self[key][col]
+                else:
+                    result[key] = other[key]
+        elif isinstance(other,float) or isinstance(other,int):
+            result = self.__class__()
+            for key,value in self.items():
+                result[key] = other*value
+            return result
         else:
             return NotImplemented
         return result
             
     def getKeysIn(self):
         """
-        @return: a set of keys which affect the result of multiplying by this matrix
+        :returns: a set of keys which affect the result of multiplying by this matrix
         """
         if self._keysIn is None:
             self._keysIn = set()
@@ -115,17 +156,14 @@ class KeyedMatrix(dict):
 
     def getKeysOut(self):
         """
-        @return: a set of keys which are changed as a result of multiplying by this matrix
+        :returns: a set of keys which are changed as a result of multiplying by this matrix
         """
         if self._keysOut is None:
             self.getKeysIn()
         return self._keysOut
 
-    # def getKeys(self):
-    #     result = set()
-    #     for row in self.values():
-    #         result |= set(row.keys())
-    #     return result
+    def keys(self):
+        return self.getKeysIn() | self.getKeysOut()
 
     def desymbolize(self,table,debug=False):
         result = self.__class__()
@@ -133,10 +171,30 @@ class KeyedMatrix(dict):
             result[key] = row.desymbolize(table)
         return result
 
+    def makeFuture(self,keyList=None):
+        """
+        Transforms matrix so that each row refers to only future keys
+        :param keyList: If present, only references to these keys (within each row) are made future
+        """
+        return self.changeTense(True,keyList)
+
+    def makePresent(self,keyList=None):
+        return self.changeTense(False,keyList)
+    
+    def changeTense(self,future=True,keyList=None):
+        """
+        Transforms matrix so that each row refers to only future keys
+        :param keyList: If present, only references to these keys (within each row) are made future
+        """
+        self._string = None
+        self._keysIn = None
+        for key,vector in self.items():
+            vector.changeTense(future,keyList)
+            
     def scale(self,table):
         result = self.__class__()
         for row,vector in self.items():
-            if table.has_key(row):
+            if row in table:
                 result[row] = KeyedVector()
                 lo,hi = table[row]
                 constant = 0.
@@ -148,12 +206,12 @@ class KeyedMatrix(dict):
                     elif col != CONSTANT:
                         # Scale weight for another feature
                         if abs(value) > epsilon:
-                            assert table.has_key(col),'Unable to mix symbolic and numeric values in single vector'
+                            assert col in table,'Unable to mix symbolic and numeric values in single vector'
                             colLo,colHi = table[col]
                             result[row][col] = value*(colHi-colLo)*(hi-lo)
                             constant += value*colLo
                 result[row][CONSTANT] = constant - lo
-                if has_key(CONSTANT):
+                if CONSTANT in vector:
                     result[row][CONSTANT] += vector[CONSTANT]
                 result[row][CONSTANT] /- (hi-lo)
             else:
@@ -172,15 +230,15 @@ class KeyedMatrix(dict):
     
     def __str__(self):
         if self._string is None:
-            joiner = lambda item: '%s*%s' % (item[1],item[0])
+            joiner = lambda item: '%5.3f*%s' % (item[1],item[0]) if isinstance(item[1],float) else '%s*%s' % (item[1],item[0])
             self._string = '\n'.join(map(lambda item: '%s) %s' % \
-                                             (item[0],' + '.join(map(joiner,
+                                             (item[0],'+'.join(map(joiner,
                                                                     item[1].items()))),
                                          self.items()))
         return self._string
 
     def __hash__(self):
-        return hash(str(self))
+        return hash(tuple(self.items()))
 
     def __xml__(self):
         doc = Document()
@@ -203,57 +261,72 @@ class KeyedMatrix(dict):
                 dict.__setitem__(self,key,value)
             node = node.nextSibling
 
+def dynamicsMatrix(key,vector):
+    """
+    :returns: a dynamics matrix setting the given key to be equal to the given weighted sum
+    :rtype: L{KeyedMatrix}
+    """
+    return KeyedMatrix({makeFuture(key): KeyedVector(vector)})
 def scaleMatrix(key,weight):
     """
-    @return: a dynamics matrix modifying the given keyed value by scaling it by the given weight
-    @rtype: L{KeyedMatrix}
+    :returns: a dynamics matrix modifying the given keyed value by scaling it by the given weight
+    :rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({key: weight})})
+    return KeyedMatrix({makeFuture(key): KeyedVector({key: weight})})
 def noChangeMatrix(key):
     """
-    @return: a dynamics matrix indicating no change to the given keyed value
-    @rtype: L{KeyedMatrix}
+    :returns: a dynamics matrix indicating no change to the given keyed value
+    :rtype: L{KeyedMatrix}
     """
     return scaleMatrix(key,1.)
-def approachMatrix(key,weight,limit):
+def nullMatrix(key):
     """
-    @param weight: the percentage by which you want the feature to approach the limit
-    @type weight: float
-    @param limit: the value you want the feature to approach
-    @type limit: float
-    @return: a dynamics matrix modifying the given keyed value by approaching the given limit by the given weighted percentage of distance
-    @rtype: L{KeyedMatrix}
+    :returns: a fake dynamics matrix that doesn't change time
+    :rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({key: 1.-weight,CONSTANT: weight*limit})})
+    return KeyedMatrix({key: KeyedVector({key: 1.})})
+def approachMatrix(key,weight,limit,limitKey=CONSTANT):
+    """
+    :param weight: the percentage by which you want the feature to approach the limit
+    :type weight: float
+    :param limit: the value you want the feature to approach
+    :type limit: float
+    :returns: a dynamics matrix modifying the given keyed value by approaching the given limit by the given weighted percentage of distance
+    :rtype: L{KeyedMatrix}
+    :param limitKey: the feature whose value to approach (default is CONSTANT)
+    :type limitKey: str
+    """
+    return KeyedMatrix({makeFuture(key): KeyedVector({key: 1.-weight,
+                                                      limitKey: weight*limit})})
 def incrementMatrix(key,delta):
     """
-    @param delta: the constant value to add to the state feature
-    @type delta: float
-    @return: a dynamics matrix incrementing the given keyed value by the constant delta
-    @rtype: L{KeyedMatrix}
+    :param delta: the constant value to add to the state feature
+    :type delta: float
+    :returns: a dynamics matrix incrementing the given keyed value by the constant delta
+    :rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({key: 1.,CONSTANT: delta})})
+    return KeyedMatrix({makeFuture(key): KeyedVector({key: 1.,CONSTANT: delta})})
 def setToConstantMatrix(key,value):
     """
-    @type value: float
-    @return: a dynamics matrix setting the given keyed value to the constant value
-    @rtype: L{KeyedMatrix}
+    :type value: float
+    :returns: a dynamics matrix setting the given keyed value to the constant value
+    :rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({CONSTANT: value})})
+    return KeyedMatrix({makeFuture(key): KeyedVector({CONSTANT: value})})
 def setToFeatureMatrix(key,otherKey,pct=1.,shift=0.):
     """
-    @type otherKey: str
-    @return: a dynamics matrix setting the given keyed value to a percentage of another keyed value plus a constant shift (default is 100% with shift of 0)
-    @rtype: L{KeyedMatrix}
+    :type otherKey: str
+    :returns: a dynamics matrix setting the given keyed value to a percentage of another keyed value plus a constant shift (default is 100% with shift of 0)
+    :rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({otherKey: pct,CONSTANT: shift})})
+    return KeyedMatrix({makeFuture(key): KeyedVector({otherKey: pct,CONSTANT: shift})})
 def addFeatureMatrix(key,otherKey,pct=1.):
     """
-    @type otherKey: str
-    @return: a dynamics matrix adding a percentage of another feature value to the given feature value (default percentage is 100%)
-    @rtype: L{KeyedMatrix}
+    :type otherKey: str
+    :returns: a dynamics matrix adding a percentage of another feature value to the given feature value (default percentage is 100%)
+    :rtype: L{KeyedMatrix}
     """
-    return KeyedMatrix({key: KeyedVector({key: 1.,otherKey: pct})})
+    return KeyedMatrix({makeFuture(key): KeyedVector({key: 1.,otherKey: pct})})
 def setTrueMatrix(key):
     return setToConstantMatrix(key,1.)
 def setFalseMatrix(key):
@@ -278,7 +351,7 @@ class MatrixDistribution(Distribution):
 
     def __mul__(self,other):
         if isinstance(other,Distribution):
-            raise NotImplementedError,'Unable to multiply two distributions.'
+            raise NotImplementedError('Unable to multiply two distributions.')
         else:
             result = {}
             for element in self.domain():
@@ -291,7 +364,7 @@ class MatrixDistribution(Distribution):
             elif isinstance(other,KeyedMatrix):
                 return self.__class__(result)
             else:
-                raise TypeError,'Unable to process multiplication by %s' % (other.__class__.__name__)
+                raise TypeError('Unable to process multiplication by %s' % (other.__class__.__name__))
 
     def element2xml(self,value):
         return value.__xml__().documentElement
