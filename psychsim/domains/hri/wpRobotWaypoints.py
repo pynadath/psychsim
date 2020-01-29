@@ -720,7 +720,7 @@ WAYPOINTS = [
          'NBC': True,
          'NBCsensor': {True: True,
                        False: True},
-#         'symbol': 'FarmSupply',
+         'symbol': 'FarmSupply',
         },
 	{'name': 'Community Center',
          'image': 'Wall-Table-Room',
@@ -1121,19 +1121,19 @@ def genLevels():
             counts[building['image']] += 1
     for i in range(len(levels)):
         level = levels[i]
-        print('Level %d' % (i+1))
+        print 'Level %d' % (i+1)
         for building in level:
-            print('\t%s: %s %s' % (building['name'],dangerp(building,'armed'),
-                                   dangerp(building,'NBC')))
+            print '\t%s: %s %s' % (building['name'],dangerp(building,'armed'),
+                                      dangerp(building,'NBC'))
         
     for building in SAFE+NBC:
-        print('%d %s' % (counts[building['image']],building['image']))
+        print '%d %s' % (counts[building['image']],building['image'])
     return levels
 
 def countBuildings():
     count = {}
     for level in range(len(WAYPOINTS)):
-        print('Level %d' % (level+1))
+        print 'Level %d' % (level+1)
         for building in WAYPOINTS[level]:
             try:
                 count[building['image']] += 1
@@ -1141,98 +1141,17 @@ def countBuildings():
                 count[building['image']] = 1
     return count
 
-
-DISTANCES = {'Yellow Mosque': {'Auto Parts Store': 160,
-                               'Furniture Store': 440,
-                               'Suspected Safe House': 600,
-                               'Blue Mosque': 865,
-                               'Potential Sniper Spot': 365,
-                               'Informant\'s House': 240,
-                               'Repair Shop': 290,
-                               'Cafe': 390,
-                               'City Office': 640,
-                               'Farm Supply Store': 535,
-                               'Doctor\'s Office': 575,
-                               },
-             'Auto Parts Store': {'Furniture Store': 280,
-                                  'Suspected Safe House': 440,
-                                  'Blue Mosque': 705,
-                                  'Potential Sniper Spot': 240,
-                                  'Informant\'s House': 400,
-                                  'Repair Shop': 450,
-                                  'Cafe': 550,
-                                  'City Office': 800,
-                                  'Farm Supply Store': 340,
-                                  'Doctor\'s Office': 405,
-                                  },
-             'Furniture Store': {'Suspected Safe House': 160,
-                                 'Blue Mosque': 425,
-                                 'Potential Sniper Spot': 135,
-                                 'Informant\'s House': 410,
-                                 'Repair Shop': 360,
-                                 'Cafe': 260,
-                                 'City Office': 370,
-                                 'Farm Supply Store': 235,
-                                 'Doctor\'s Office': 300,
-                                 'Farm Supply': 200,
-                                 },
-             'Suspected Safe House': {'Blue Mosque': 265,
-                                      'Potential Sniper Spot': 295,
-                                      'Informant\'s House': 570,
-                                      'Repair Shop': 520,
-                                      'Cafe': 420,
-                                      'City Office': 370,
-                                      'Farm Supply Store': 120,
-                                      'Doctor\'s Office': 460,
-                                      },
-             'Blue Mosque': {'Potential Sniper Spot': 490,
-                             'Informant\'s House': 610,
-                             'Repair Shop': 560,
-                             'Cafe': 460,
-                             'City Office': 235,
-                             'Farm Supply Store': 320,
-                             'Doctor\'s Office': 405,
-                             },
-             'Informant\'s House': {'Repair Shop': 40,
-                                 'Cafe': 145,
-                                 'City Office': 400,
-                                 'Potential Sniper Spot': 425,
-                                 'Farm Supply Store': 525,
-                                 'Doctor\'s Office': 330,
-                                 },
-             'Repair Shop': {'Cafe': 105,
-                             'City Office': 360,
-                             'Potential Sniper Spot': 385,
-                             'Farm Supply Store': 485,
-                             'Doctor\'s Office': 290,
-                             },
-             'Cafe': {'City Office': 255,
-                      'Potential Sniper Spot': 270,
-                      'Farm Supply Store': 280,
-                      'Doctor\'s Office': 185,
-                      },
-             'City Office': {'Potential Sniper Spot': 370,
-                             'Farm Supply Store': 380,
-                             'Doctor\'s Office': 285,
-                             },
-             'Potential Sniper Spot': {'Farm Supply Store': 170,
-                                       'Doctor\'s Office': 300,
-                                       },
-             'Farm Supply Store': {'Doctor\'s Office': 400,
-                                   },
-             }
-
 if __name__ == '__main__':
     used = {}
     for level in range(len(WAYPOINTS)):
-        print('Level %d' % (level+1))
+        print 'Level %d' % (level+1)
         for building in WAYPOINTS[level]:
-            print('\t',building['name'])
+            print '\t',building['name']
             assert not used.has_key(building['name']),'%s has already appeared' % (building['name'])
             used[building['name']] = True
     count = countBuildings()
     for key in sorted(count.keys()):
-        print('\t',key,count[key])
+        print '\t',key,count[key]
 #    WAYPOINTS.append(genLevel(count))
 #    count = countBuildings()
 #    WAYPOINTS.append(genLevel(count))
@@ -1243,5 +1162,3 @@ if __name__ == '__main__':
 #    count = countBuildings()
 #    for key in sorted(count.keys()):
 #        print '\t',key,count[key]
-
-NEWWAYPOINTS = [sum(WAYPOINTS,[])]
