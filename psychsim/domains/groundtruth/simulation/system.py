@@ -155,16 +155,29 @@ class System(Agent):
             return {'policy': tree.desymbolize(self.world.symbols)}
         try:
             if isinstance(self.prescription,dict):
-                day = self.world.getState(WORLD,'day',state)
-                assert len(day) == 1
-                day = day.first()
-                if day in self.prescription and 'Region' in self.prescription[day]:
-                    for action in actions:
-                        if action['object'] == self.prescription[day]['Region']:
-                            choice = (None,action)
-                            break
+                try:
+                    day = self.world.getState(WORLD,'day',state)
+                    assert len(day) == 1
+                    day = day.first()
+                except KeyError:
+                    day = self.world.getState(WORLD,'day',unique=True)
+                    self.world.setState(WORLD,'day',day,state)
+                if day in self.prescription:
+                    if 'Region' in self.prescription[day]:
+                        for action in actions:
+                            if action['object'] == self.prescription[day]['Region']:
+                                choice = (None,action)
+                                break
+                        else:
+                            raise RuntimeError('Unable to find allocation action for %s' % (targets[0][0]))
                     else:
-                        raise RuntimeError('Unable to find allocation action for %s' % (targets[0][0]))
+                        assert isinstance(self.prescription[day],set)
+                        for action in actions:
+                            if action['object'] in self.prescription[day]:
+                                choice = (None,action)
+                                break
+                        else:
+                            raise RuntimeError('Unable to find allocation action for %s' % (targets[0][0]))
                 else:
                     choice = None
             elif isinstance(self.prescription,list) and isinstance(self.prescription[0],str):

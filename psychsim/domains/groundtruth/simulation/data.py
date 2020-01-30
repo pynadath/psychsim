@@ -239,9 +239,16 @@ def readPrescription(inFile):
     with open(inFile,'r') as csvfile:
         reader = csv.DictReader(csvfile,delimiter='\t')
         for row in reader:
-            try:
-                prescription[int(row['Timestep'])] = row
-            except KeyError:
+            if 'Timestep' in row:
+                t = int(row['Timestep'])
+                if t in prescription:
+                    if isinstance(prescription[t],set):
+                        prescription[t].add(row['Region'])
+                    else:
+                        prescription[t] = {prescription[t],row['Region']}
+                else:
+                    prescription[t] = row
+            else:
                 try:
                     prescription.append(row)
                 except AttributeError:

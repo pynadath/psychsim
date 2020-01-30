@@ -671,14 +671,14 @@ def getCurrentDemographics(args,name,world,states,config,t=None):
                 entry[field] = world.agents[name].demographics[key]
         return entry
 
-def loadState(args,states,t,turn,world=None):
+def loadState(args,states,t,turn,world=None,sub=None):
     """
     :param world: If provided, the state loaded will be applied to the world (clobbering the existing state and beliefs)
     """
     if t not in states:
         states[t] = {}
     if turn not in states[t]:
-        with open(instanceFile(args,'state%d%s.pkl' % (t,turn)),'rb') as f:
+        with open(instanceFile(args,'state%d%s.pkl' % (t,turn),sub),'rb') as f:
             states[t][turn] = pickle.load(f)
     if world:
         for name,state in states[t][turn].items():

@@ -115,11 +115,6 @@ def runInstance(instance,args,config,rerun=True):
         for h in l.handlers:
             l.removeHandler(h)
         l.addHandler(logging.FileHandler(logfile,'w'))
-        # Load any pre-specified future hurricanes
-        if args['hurricane']:
-            future = readHurricaneFile(args['hurricane'])
-        else:
-            future = []
         # Let's get started
         logging.info('Running Instance %d' % (instance))
         print('Running instance %d, run %d' % (instance,run))
@@ -186,6 +181,13 @@ def runInstance(instance,args,config,rerun=True):
             allTables['Actors']['fields'].append(('grievance','satisfaction','invert'))
         if args['visualize']:
             addState2tables(world,0,allTables,population,regions)
+        # Load any pre-specified future hurricanes
+        if args['hurricane']:
+            future = readHurricaneFile(args['hurricane'])
+            # Any hurricanes that are already past need to be registered as such
+            hurricanes = [h for h in future if h['End'] < world.getState(WORLD,'day',unique=True)]
+        else:
+            future = []
         if args['profile']:
             prof = cProfile.Profile()
             prof.enable()
@@ -243,6 +245,19 @@ def runInstance(instance,args,config,rerun=True):
                 world.agents['System'].actions = {action for action in world.agents['System'].actions if action['verb'] != 'allocate'}
                 world.agents['System'].prescription = None
                 world.agents['System'].setNullGrievance([a.name for a in population])
+            elif args['prescription'] == 'evaluation/Phase2/Prescribe/TA2A/ConstrainedPrescriptionCasualties.tsv':
+                world.agents['System'].prescription = readPrescription(args['prescription'])
+                for agent in population:
+                    agent.prescription = readPrescription('evaluation/Phase2/Prescribe/TA2A/UnconstrainedPrescriptionCasualties.tsv')
+                world.agents['System'].resources = 0.1*len(population)
+            elif args['prescription'] == 'evaluation/Phase2/Prescribe/TA2B/TA2B_ConstrainedPrescriptionCasualties.tsv':
+                # "Evacuations subsidized as in UnconstrainedPrescriptionCasualties.tsv"
+                world.agents['System'].prescription = readPrescription(args['prescription'])
+                targets = [agent for agent in population if agent.demographics['pet'] or agent.demographics['ethnicGroup'] == 'minority'
+                    or agent.demographics['age'] > 46 or agent.demographics['kids'] == 0]
+                incentive = 0.1*len(population) / len(targets)
+                for agent in targets:
+                    evacuationIncentive(world,config,agent.name,incentive)
             elif args['prescription'] == 'phase2prescribelongb':
                 # "A national weather service and alert system that notifies the population of the future path and category of an impending hurricane is implemented"
                 config['System']['broadcast_category'] = 'yes'
@@ -627,7 +642,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                     elif day+1 < hurr['Landfall']:
                         setTrack = True
                         select[key] = world.value2float(key,'approaching')
-                    elif day+1 < hurr['End']:
+                    elif day+1 < hurr['End']+1:
                         setTrack = True
                         select[key] = world.value2float(key,'active')
                     else:
@@ -708,25 +723,36 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                 if actor.prescription is not None:
                     verb = None
                     if isinstance(actor.prescription,list):
-                        belief = actor.getBelief()
-                        for entry in actor.prescription:
-                            try:
-                                val = int(entry['Value1'])
-                            except ValueError:
-                                val = entry['Value1']
-                            if world.getFeature(entry['Field1']).get(val) < 0.5:
-                                continue
-                            if entry['Field2']:
-                                for val in entry['Value2'].split(','):
-                                    if world.getFeature(entry['Field2']).get(val) > 0.5:
-                                        break
-                                    else:
-                                        # Does not match
-                                        continue
-                            break
-                        else:
-                            logging.warning('No entry when %s=%s' % (entry['Field1'],world.getFeature(entry['Field1'])))
+                        if 'current_location' in actor.prescription[0]:
+                            # Phase 2 Prescription from TA2A
+                            location = world.getState('Nature','location',unique=True)
+                            targets = {entry['next_location'] for entry in actor.prescription if entry['current_location'] == location}
+                            if actor.demographics['home'] in targets:
+                                incentive = world.agents['System'].resources/len([agent for agent in living if agent.demographics['home'] in targets])
+                                evacuationIncentive(world,config,actor.name,incentive)
+                            else:
+                                evacuationIncentive(world,config,actor.name,0)
                             continue
+                        else:
+                            belief = actor.getBelief()
+                            for entry in actor.prescription:
+                                try:
+                                    val = int(entry['Value1'])
+                                except ValueError:
+                                    val = entry['Value1']
+                                if world.getFeature(entry['Field1']).get(val) < 0.5:
+                                    continue
+                                if entry['Field2']:
+                                    for val in entry['Value2'].split(','):
+                                        if world.getFeature(entry['Field2']).get(val) > 0.5:
+                                            break
+                                        else:
+                                            # Does not match
+                                            continue
+                                break
+                            else:
+                                logging.warning('No entry when %s=%s' % (entry['Field1'],world.getFeature(entry['Field1'])))
+                                continue
                     elif day in actor.prescription:
                         entry = actor.prescription[day]
                     else:
@@ -1367,3 +1393,10 @@ def killAgent(name,world):
     for friend in [f for f in world.agents.values() if f.name[:5] == 'Actor']:
         if name in friend.friends:
             friend.friends.remove(name)
+
+def evacuationIncentive(world,config,name,incentive):
+    cost = likert[5][config.getint('Actors','evacuation_cost')-1]
+    key = stateKey(name,'resources')
+    action = ActionSet(Action({'subject': name,'verb': 'evacuate'}))
+    tree = world.dynamics[key][action].children[True]
+    tree[makeFuture(key)][makeFuture(key)][CONSTANT] = incentive-cost
