@@ -14,7 +14,7 @@ def aidWillingness(world,name,inGroupTest):
     value = altruism*len([other for other in world.agents[name].getNeighbors() if inGroupTest(world.agents[other])])
     if inGroupTest(world.agents[name]):
         value += world.agents[name].Rweights['health']/denom
-    return accessibility.toLikert(value,7)-1
+    return min(int(value*8),7)
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO,filename='%s%s' % (os.path.splitext(__file__)[0],'.log'))
