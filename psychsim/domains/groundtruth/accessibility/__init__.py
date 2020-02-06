@@ -595,12 +595,29 @@ def trustInFriends(config,world,friends):
     return sum([trust[world.agents[friend].distortion] for friend in friends])/len(friends)
 
 def getDeath(args,name,world,states,t):
-    if getInitialState(args,name,'alive',world,states,t).first():
-        # Still Alive
-        return None
+    try:
+        if getInitialState(args,name,'alive',world,states,t,unique=True):
+            # Still Alive
+            return None
+        old = True
+    except AssertionError:
+        try:
+            getInitialState(args,name,'health',world,states,t)
+            # No exception? Still alive
+            return None
+        except KeyError:
+            old = False
     for day in range(t-1,1,-1):
-        if getInitialState(args,name,'alive',world,states,day).first():
-            return day+1
+        if old:
+            if getInitialState(args,name,'alive',world,states,day,unique=True):
+                return day+1
+        else:
+            try:
+                getInitialState(args,name,'health',world,states,day)
+                # No exception? Not dead!
+                return day+1
+            except KeyError:
+                pass
     else:
         raise ValueError('%s was never alive!' % (name))
 

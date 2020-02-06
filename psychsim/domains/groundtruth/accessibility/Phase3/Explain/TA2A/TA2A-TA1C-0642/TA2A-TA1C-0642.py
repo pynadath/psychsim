@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
             var = '%s %d Aid Willingness Children' % (team,reqNum)
             if var not in variables:
-                variables[var] = {'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': 'Q5'}
+                variables[var] = {'Name': var,'Values':'[0-7]','DataType': 'Integer','Notes': 'Q5'}
             record = dict(root)
             record['VariableName'] = var
             record['Value'] = aidWillingness(world,name,lambda a: a.demographics['kids'] > 0)
@@ -61,7 +61,7 @@ if __name__ == '__main__':
 
             var = '%s %d Aid Willingness No Children' % (team,reqNum)
             if var not in variables:
-                variables[var] = {'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': 'Q6'}
+                variables[var] = {'Name': var,'Values':'[0-7]','DataType': 'Integer','Notes': 'Q6'}
             record = dict(root)
             record['VariableName'] = var
             record['Value'] = aidWillingness(world,name,lambda a: a.demographics['kids'] == 0)
@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
             var = '%s %d Aid Willingness Male' % (team,reqNum)
             if var not in variables:
-                variables[var] = {'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': 'Q7'}
+                variables[var] = {'Name': var,'Values':'[0-7]','DataType': 'Integer','Notes': 'Q7'}
             record = dict(root)
             record['VariableName'] = var
             record['Value'] = aidWillingness(world,name,lambda a: a.demographics['gender'] == 'male')
@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
             var = '%s %d Aid Willingness Female' % (team,reqNum)
             if var not in variables:
-                variables[var] = {'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': 'Q8'}
+                variables[var] = {'Name': var,'Values':'[0-7]','DataType': 'Integer','Notes': 'Q8'}
             record = dict(root)
             record['VariableName'] = var
             record['Value'] = aidWillingness(world,name,lambda a: a.demographics['gender'] == 'female')
@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
             var = '%s %d Aid Willingness Minority Religion' % (team,reqNum)
             if var not in variables:
-                variables[var] = {'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': 'Q9'}
+                variables[var] = {'Name': var,'Values':'[0-7]','DataType': 'Integer','Notes': 'Q9'}
             record = dict(root)
             record['VariableName'] = var
             record['Value'] = aidWillingness(world,name,lambda a: a.demographics['religion'] == 'minority')
@@ -93,7 +93,7 @@ if __name__ == '__main__':
 
             var = '%s %d Aid Willingness Majority Religion' % (team,reqNum)
             if var not in variables:
-                variables[var] = {'Name': var,'Values':'[0-6]','DataType': 'Integer','Notes': 'Q10'}
+                variables[var] = {'Name': var,'Values':'[0-7]','DataType': 'Integer','Notes': 'Q10'}
             record = dict(root)
             record['VariableName'] = var
             record['Value'] = aidWillingness(world,name,lambda a: a.demographics['religion'] == 'majority')
