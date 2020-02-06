@@ -399,7 +399,13 @@ class World(object):
             elif len(dynamics) == 1:
                 tree = dynamics[0]
                 if select:
-                    tree = tree.sample(select=='max',None if isinstance(state,VectorDistributionSet) else state)
+                    if select == 'max':
+                        tree = tree.sample(True,None if isinstance(state,VectorDistributionSet) else state)
+                    elif select is True:
+                        tree = tree.sample(False,None if isinstance(state,VectorDistributionSet) else state)
+                    elif key not in select:
+                        # We are selecting a specific value, just not for this particular state feature
+                        tree = tree.sample(False,None if isinstance(state,VectorDistributionSet) else state)
                     state *= tree
 #                    state.__imul__(tree,True)
                 else:
