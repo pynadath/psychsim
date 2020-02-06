@@ -1,0 +1,10 @@
+./gt.sh 322 -n 1 -d DEBUG -r 1 --pickle
+./gt.sh 321 -n 1 -d DEBUG -r 1 --pickle
+./gt.sh 320 -n 1 -d DEBUG -r 1 --pickle
+./gt.sh 319 -n 1 -d DEBUG -r 1 --pickle
+./gt.sh 318 -n 1 -d DEBUG -r 1 --pickle
+./gt.sh 317 -n 1 -d DEBUG -r 1 --pickle
+./gt.sh 316 -n 1 -d DEBUG -r 1 --pickle
+./gt.sh 315 -n 1 -d DEBUG -r 1 --pickle
+./gt.sh 314 -n 1 -d DEBUG -r 1 --pickle
+./gt.sh 313 -n 1 -d DEBUG -r 1 --pickle
