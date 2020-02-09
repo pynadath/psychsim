@@ -1,0 +1,11 @@
+Name	LongName	Values	VarType	DataType	Notes
+Gender	Gender	female,male	fixed	String	
+Children	Children	[0-10]	dynamic	Integer	
+Religion	Religion	majority,minority,none	fixed	String	
+Ethnicity	Ethnicity	majority,minority	fixed	String	
+Fulltime Job	Fulltime Job	yes,no	dynamic	Boolean	
+Pets	Pets	yes,no	dynamic	Boolean	
+Wealth	Wealth	[1-7]	dynamic	Integer	
+Residence	Residence	Region[01-16]	fixed	String	
+TA2A 672 Sheltered	TA2A 672 Sheltered	yes,no	dynamic	Boolean	Q9
+TA2A 672 Evacuated	TA2A 672 Evacuated	yes,no	dynamic	Boolean	Q10
