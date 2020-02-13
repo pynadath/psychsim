@@ -1,8 +1,8 @@
 # coding=utf-8
-from psychsim_agents.helper_functions import *
-from psychsim.agent import Agent
-from psychsim.world import World
-from psychsim.reward import *
+from agent import Agent
+from helper_functions import multiCompareRow, get_decision_info, explain_decisions, multiSetMatrix
+from pwl import KeyedVector, CONSTANT, makeTree, equalRow
+from world import World
 
 # parameters (payoffs according to the Chicken Game)
 MODEL_NAME = 'my model'

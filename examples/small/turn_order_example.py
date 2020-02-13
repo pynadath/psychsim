@@ -1,7 +1,8 @@
 # coding=utf-8
-from psychsim_agents.helper_functions import *
-from psychsim.agent import Agent
-from psychsim.world import World
+from agent import Agent
+from helper_functions import multiSetMatrix
+from pwl import makeTree, CONSTANT, setToFeatureMatrix
+from world import World
 
 agent1 = Agent('Agent 1')
 agent2 = Agent('Agent 2')

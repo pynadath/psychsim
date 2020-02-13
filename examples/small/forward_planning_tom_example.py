@@ -1,8 +1,9 @@
 # coding=utf-8
-from psychsim_agents.helper_functions import *
-from psychsim.agent import Agent
-from psychsim.world import World
-from psychsim.reward import *
+
+from helper_functions import multiSetMatrix, Agent, get_decision_info, explain_decisions
+from pwl import makeTree, setToFeatureMatrix, CONSTANT
+from reward import achieveFeatureValue
+from world import World
 
 # parameters
 HORIZON = 2

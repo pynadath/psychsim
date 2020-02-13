@@ -1,8 +1,8 @@
 # coding=utf-8
-from psychsim_agents.helper_functions import *
-from psychsim.world import *
-from psychsim.reward import *
 import random
+from agent import Agent
+from reward import minimizeFeature
+from world import World
 
 HIGH = 100
 LOW = 50

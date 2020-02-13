@@ -1,7 +1,8 @@
 # coding=utf-8
-from psychsim_agents.helper_functions import *
-from psychsim.world import *
-from psychsim.reward import *
+from agent import Agent
+from world import World
+from helper_functions import multiCompareRow, set_illegal_action, set_legal_action
+from pwl import KeyedVector, CONSTANT, makeTree, KeyedMatrix
 from multiprocessing import Process, freeze_support
 
 # parameters (positive reward if sides are different, otherwise punishment)

@@ -1,24 +1,12 @@
-import sys
-
-from ConfigParser import SafeConfigParser
-
-from argparse import ArgumentParser
-
-import StringIO
-
-from psychsim.pwl import *
-
-from psychsim.reward import *
-
-from psychsim.action import *
-
-from psychsim.world import World, stateKey, actionKey, binaryKey, modelKey
-
-from psychsim.agent import Agent
+from action import Action
+from agent import Agent
+from pwl import makeTree, trueRow, thresholdRow, approachMatrix, addFeatureMatrix, setTrueMatrix, greaterThanRow, \
+    noChangeMatrix, setToConstantMatrix, incrementMatrix, setFalseMatrix
+from reward import maximizeFeature
+from world import World, stateKey
 
 
 # Main scenario class
-
 class MoCA:
 
     def __init__(self, turnOrder):

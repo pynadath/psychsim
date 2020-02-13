@@ -1,8 +1,11 @@
 # coding=utf-8
-from psychsim_agents.helper_functions import *
-from psychsim.agent import Agent
-from psychsim.world import World
-from psychsim.reward import *
+
+from agent import Agent
+from helper_functions import multiSetMatrix
+from probability import Distribution
+from pwl import makeTree, setToFeatureMatrix, CONSTANT
+from reward import maximizeFeature
+from world import World
 
 # parameters
 HORIZON = 3

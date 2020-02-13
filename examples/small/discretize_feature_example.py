@@ -1,7 +1,8 @@
 # coding=utf-8
-from psychsim_agents.helper_functions import *
-from psychsim.world import *
 import random
+from agent import Agent
+from helper_functions import discretize_feature
+from world import World
 
 HIGH = 100
 LOW = 50

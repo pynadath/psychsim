@@ -1,10 +1,13 @@
 # coding=utf-8
 import time
 import random
-from psychsim_agents.helper_functions import *
-from psychsim.world import *
-from psychsim.reward import *
 from vprof import runner
+from agent import Agent
+from helper_functions import multiSetMatrix
+from probability import Distribution
+from pwl import makeTree
+from reward import maximizeFeature
+from world import World
 
 # parameters
 NUM_TIME_STEPS = 4

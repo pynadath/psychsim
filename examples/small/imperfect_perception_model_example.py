@@ -1,9 +1,12 @@
 # coding=utf-8
-from psychsim_agents.helper_functions import *
-from psychsim.world import *
-from psychsim.reward import *
+
 
 # parameters
+from agent import Agent
+from helper_functions import multiSetMatrix, get_current_reward
+from pwl import makeTree, equalRow, setToFeatureMatrix, setToConstantMatrix, thresholdRow, KeyedVector, CONSTANT
+from world import World
+
 NUM_STEPS = 4
 MODEL_NAME = 'my_model'
 
