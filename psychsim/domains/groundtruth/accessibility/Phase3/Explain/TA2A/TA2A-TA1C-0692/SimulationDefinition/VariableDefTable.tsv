@@ -1,0 +1,10 @@
+Name	LongName	Values	VarType	DataType	Notes
+Gender	Gender	female,male	fixed	String	
+Children	Children	[0-10]	dynamic	Integer	
+Religion	Religion	majority,minority,none	fixed	String	
+Ethnicity	Ethnicity	majority,minority	fixed	String	
+Residence	Residence	Region[01-16]	fixed	String	
+TA2A 692 Forced Evacuation	TA2A 692 Forced Evacuation	[0-7]	dynamic	Integer	Q6a
+TA2A 692 Evacuation Subsidized	TA2A 692 Evacuation Subsidized	[0-7],Not Applicable	dynamic	String	Q6c
+TA2A 692 Region Familiarity	TA2A 692 Region Familiarity	[0-7]	dynamic	Integer	Q6d
+TA2A 692 Known Individuals	TA2A 692 Known Individuals	[0+]	dynamic	Integer	Q6e
