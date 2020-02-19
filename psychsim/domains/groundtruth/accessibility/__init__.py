@@ -757,7 +757,7 @@ def getAction(args,name,world,states,t):
         else:
             turn = 'Actor' if name[:5] == 'Actor' else name
             loadState(args,states,t,turn)
-            return world.getFeature(actionKey(name),states[t][turn]['__state__']).first()
+            return world.getFeature(actionKey(name),states[t][turn]['__state__'],unique=True)
     elif isinstance(t,tuple):
         if 'Actor0001' in states:
             # Backward compatibility with Phase 1
