@@ -247,12 +247,14 @@ def runInstance(instance,args,config,rerun=True):
                 world.agents['System'].setNullGrievance([a.name for a in population])
             elif args['prescription'] == 'evaluation/Phase2/Prescribe/TA2A/ConstrainedPrescriptionCasualties.tsv':
                 world.agents['System'].prescription = readPrescription(args['prescription'])
+            elif args['prescription'] == 'evaluation/Phase2/Prescribe/TA2A/UnconstrainedPrescriptionCasualties.tsv':
                 for agent in population:
-                    agent.prescription = readPrescription('evaluation/Phase2/Prescribe/TA2A/UnconstrainedPrescriptionCasualties.tsv')
+                    agent.prescription = readPrescription(args['prescription'])
                 world.agents['System'].resources = 0.1*len(population)
             elif args['prescription'] == 'evaluation/Phase2/Prescribe/TA2B/TA2B_ConstrainedPrescriptionCasualties.tsv':
                 # "Evacuations subsidized as in UnconstrainedPrescriptionCasualties.tsv"
                 world.agents['System'].prescription = readPrescription(args['prescription'])
+            elif args['prescription'] == 'phase2prescribeshortbunconstrained':
                 targets = [agent for agent in population if agent.demographics['pet'] or agent.demographics['ethnicGroup'] == 'minority'
                     or agent.demographics['age'] > 46 or agent.demographics['kids'] == 0]
                 incentive = 0.1*len(population) / len(targets)
