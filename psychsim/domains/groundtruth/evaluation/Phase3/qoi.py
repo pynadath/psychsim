@@ -22,7 +22,8 @@ if __name__ == '__main__':
     args = {}
     variables = {}
 
-    for args['instance'] in range(301,322):
+#    for args['instance'] in range(301,322):
+    for args['instance'] in range(332,333):
         config = accessibility.getConfig(args['instance'])
         for args['run'] in range(10):
             tables = {label: [] for label in fields}
