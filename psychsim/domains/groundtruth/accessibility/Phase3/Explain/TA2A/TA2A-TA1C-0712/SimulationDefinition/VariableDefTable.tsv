@@ -1,0 +1,25 @@
+Name	LongName	Values	VarType	DataType	Notes
+Gender	Gender	female,male	fixed	String	
+Children	Children	[0-10]	dynamic	Integer	
+Religion	Religion	majority,minority,none	fixed	String	
+Ethnicity	Ethnicity	majority,minority	fixed	String	
+TA2A 712 Different Relationship Strengths	TA2A 712 Different Relationship Strengths	yes,no	dynamic	Boolean	Q6
+TA2A 712 Aid Willingness Family	TA2A 712 Aid Willingness Family	[0-7]	dynamic	Boolean	Q8a
+TA2A 712 Aid Willingness Friends	TA2A 712 Aid Willingness Friends	[0-7]	dynamic	Boolean	Q8b
+TA2A 712 Aid Willingness Acquaintances	TA2A 712 Aid Willingness Acquaintances	[0-7]	dynamic	Boolean	Q8c
+TA2A 712 Hurricane 1 Severity	TA2A 712 Hurricane 1 Severity	[1-5]	dynamic	Integer	Q5
+TA2A 712 Hurricane 1 Aid Received	TA2A 712 Hurricane 1 Aid Received	[1-5]	dynamic	Integer	Q7
+TA2A 712 Hurricane 2 Severity	TA2A 712 Hurricane 2 Severity	[1-5]	dynamic	Integer	Q5
+TA2A 712 Hurricane 2 Aid Received	TA2A 712 Hurricane 2 Aid Received	[1-5]	dynamic	Integer	Q7
+TA2A 712 Hurricane 3 Severity	TA2A 712 Hurricane 3 Severity	[1-5]	dynamic	Integer	Q5
+TA2A 712 Hurricane 3 Aid Received	TA2A 712 Hurricane 3 Aid Received	[1-5]	dynamic	Integer	Q7
+TA2A 712 Hurricane 4 Severity	TA2A 712 Hurricane 4 Severity	[1-5]	dynamic	Integer	Q5
+TA2A 712 Hurricane 4 Aid Received	TA2A 712 Hurricane 4 Aid Received	[1-5]	dynamic	Integer	Q7
+TA2A 712 Hurricane 5 Severity	TA2A 712 Hurricane 5 Severity	[1-5]	dynamic	Integer	Q5
+TA2A 712 Hurricane 5 Aid Received	TA2A 712 Hurricane 5 Aid Received	[1-5]	dynamic	Integer	Q7
+TA2A 712 Hurricane 6 Severity	TA2A 712 Hurricane 6 Severity	[1-5]	dynamic	Integer	Q5
+TA2A 712 Hurricane 6 Aid Received	TA2A 712 Hurricane 6 Aid Received	[1-5]	dynamic	Integer	Q7
+TA2A 712 Hurricane 7 Severity	TA2A 712 Hurricane 7 Severity	[1-5]	dynamic	Integer	Q5
+TA2A 712 Hurricane 7 Aid Received	TA2A 712 Hurricane 7 Aid Received	[1-5]	dynamic	Integer	Q7
+TA2A 712 Hurricane 8 Severity	TA2A 712 Hurricane 8 Severity	[1-5]	dynamic	Integer	Q5
+TA2A 712 Hurricane 8 Aid Received	TA2A 712 Hurricane 8 Aid Received	[1-5]	dynamic	Integer	Q7
