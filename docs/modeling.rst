@@ -15,17 +15,11 @@ This is a world::
 A world has people::
 
   from psychsim.agent import Agent
-  rufus = Agent('Rufus')
-  world.addAgent(rufus)
+  player = world.addAgent('Human')
 
-And groups of people::
-  
-  free = Agent('Freedonia')
-  world.addAgent(free)
+And robots::
 
-And killer robots::
-
-  world.addAgent(Agent('Gort'))
+  robot = world.addAgent('Gort')
 
 These are *agents*, because they have names::
 
@@ -34,7 +28,11 @@ These are *agents*, because they have names::
      print(agent.name)
 
 
-Of course, not everything that has a name is an agent. There are a number of reasons to make something an agent. The most common one is that something *is* an agent, i.e., an autonomous, decision-making entity. But there can be good reasons for modeling non-agents as agents within PsychSim, usually because of improved readability of simulation output. Conversely, not every agent has to be modeled as an agent, especially if that agent's decision-making is not relevant to the target scenario. It does not necessarily cost anything to have extra agents in the scenario (if they do not get a *turn*, their decision-making procedure is never invoked). The choice of whether to make something an agent is yours.
+Of course, not everything that has a name is an agent. There are a number of reasons to make something an agent. The most common one is that something *is* an agent, i.e., an autonomous, decision-making entity. But there can be good reasons for modeling non-agents as agents within PsychSim, usually because of improved readability of simulation output. For example, in a search-and-rescue domain, we could denote even immobile victims as agents, for more fine-grained scoping of states, observations, rewards, etc.::
+
+    victim = world.addAgent('Victim 1')  
+
+Conversely, not every agent has to be modeled as an agent, especially if that agent's decision-making is not relevant to the target scenario. It does not necessarily cost anything to have extra agents in the scenario (if they do not get a *turn*, their decision-making procedure is never invoked). The choice of whether to make something an agent is yours.
 
 
 State
@@ -45,21 +43,25 @@ The *state* of a simulation captures the dynamic process by which it evolves. As
 Unary State Features
 ^^^^^^^^^^^^^^^^^^^^
 
-It can be useful to describe a state feature as being local to an individual agent. Doing so does *not* limit the dependency or influence of the state feature in any way. However, it can be useful to define state features as local to an agent to make the system output more readable. For example, the following defines a state feature "troops" for the previously defined agent "Freedonia"::
+It can be useful to describe a state feature as being local to an individual agent. Doing so does *not* limit the dependency or influence of the state feature in any way. However, it can be useful to define state features as local to an agent to make the system output more readable. For example, the following defines a state feature "location" for the previously defined human player agent::
 
-   troops = world.defineState(free.name,'troops')
+   location = world.defineState(player.name,'location')
 
-The return value of :py:meth:`~psychsim.world.World.defineState` is the unique symbol that PsychSim assigns to this newly defined state feature. To set the value for this state feature, you can either use this symbol with :py:meth:`~psychsim.world.World.setFeature`, the original agent/feature combination with :py:meth:`~psychsim.world.World.setState`, or the feature name with :py:meth:`~psychsim.agent.Agent.setState`. In other words, the following three statements are completely interchangeable::
+The return value of :py:meth:`~psychsim.world.World.defineState` is the unique symbol that PsychSim assigns to this newly defined state feature. To set the value for this state feature, you can either use this symbol with :py:meth:`~psychsim.world.World.setFeature`, the original agent/feature combination with :py:meth:`~psychsim.world.World.setState`, or the feature name with :py:meth:`~psychsim.agent.Agent.setState`. In other words, the following three statements interchangeably set the location of the human player to be Room 0::
 
-  world.setFeature(troops,40000)
-  world.setState(free.name,'troops',40000)
-  free.setState('troops',40000)
+  world.setFeature(location,0)
+  world.setState(player.name,'location',0)
+  player.setState('location',0)
 
 For state features which are not local to any agent, a special agent name (i.e., :py:const:`~psychsim.pwl.keys.WORLD`) indicates that the state feature will pertain to the world as a whole. Again, from the system's perspective, this makes no difference, but it can be useful to distinguish global and local state in presentation::
 
-   treaty = world.defineState(WORLD,'treaty')
+   clock = world.defineState(WORLD,'time')
+   world.setState(WORLD,'time',0)
 
-Thus, one reason for creating an agent is to group a set of such state features under a common name, as opposed to leaving them as part of the global world state.
+Thus, one reason for creating an agent is to group a set of such state features under a common name, as opposed to leaving them as part of the global world state. For example, we can maintain the states of individual victims using our previously defined victim "agent"::
+
+  world.defineState(victim.name,'location')
+  victim.setState('location',3)
 
 
 Binary State Features
@@ -67,16 +69,16 @@ Binary State Features
 
 There can also be state features that represent the *relationship* between two agents::
 
-  freeTrustsSyl = world.defineRelation(free.name,'Sylvania','trusts')
+  trust = world.defineRelation(player.name,robot.name,'trusts')
 
-The order in which the agents appear in this definition *does* matter, as reversing the order will generate a reference to a different element of the state vector. For example, if the previous definition corresponds to how much trust Freedonia places in Sylvania, the following variation  would correspond to how much trust Sylvania places in Freedonia::
+The order in which the agents appear in this definition *does* matter, as reversing the order will generate a reference to a different element of the state vector. For example, if the previous definition corresponds to how much trust the human player places in its robot assistant, the following variation would correspond to how much trust the robot places in the human player::
 
-   sylTrustsFree = world.defineRelation('Sylvania',free.name,'trusts')
+   reciprocalTrust = world.defineRelation(robot.name,player.name,'trusts')
 
 The values associated with these relationships can be read and written in the same way as for unary state features. However, there are no helper methods like :py:meth:`~psychsim.world.World.setState` or :py:meth:`~psychsim.agent.Agent.getState`. Rather, you should use the symbol returned by :py:meth:`~psychsim.world.World.defineRelation` in combination with :py:meth:`~psychsim.world.World.setFeature`::
 
-   world.setFeature(freeTrustsSyl,0.25)
-   world.setFeature(sylTrustsFree,0.75)
+   world.setFeature(trust,0.25)
+   world.setFeature(reciprocalTrust,0.75)
 
 Types of State Features
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -97,20 +99,23 @@ list/set
 
 By default, a variable is assumed to be float-valued, so the previous section's definitions of state features created only float-valued variables. Both the :py:meth:`~psychsim.world.World.defineState` and :py:meth:`~psychsim.world.World.defineRelation` methods take optional arguments to modify the domain of valid values of the feature. The following definition has the identical effect as the previous trust definition, but it makes the default values for the variable type and range of possible values explicit::
 
-  freeTrustsSyl = world.defineRelation(free.name,'Sylvania','trusts',float,-1,-1)
+  trust = world.defineRelation(player.name,robot.name,'trusts',float,-1,-1)
+  world.setFeature(trust,0.)
 
-This relationship can now distinguish between a trusting and distrusting relationship (positive vs. negative values), with a fine-grained magnitude of the degree of (dis)trust. It is also possible to specify that a state feature has an integer-valued domain instead::
+This relationship can now distinguish between a trusting and distrusting relationship (positive vs. negative values), with a fine-grained magnitude of the degree of (dis)trust. It is also possible to specify that a state feature has an integer-valued domain instead, such as for our numbered rooms::
 
-   troops = world.defineState(free.name,'troops',int,0,50000)
+   location = world.defineState(player.name,'location',int)
+   player.setState('location',0)
 
 One can also define a boolean state feature, where no range of values is necessary::
 
-  treaty = world.defineState(WORLD,'treaty',bool)
+  alive = world.defineState(victim.name,'alive',bool)
+  victim.setState('alive',True)
 
 It is also possible to define an enumerated list of possible state features. Like all feature values, PsychSim represents these numerically within the actual state, but you do not need to ever use the numeric values::
              
-   phase = world.defineState(WORLD,'phase',list,['offer','respond','rejection','end','paused','engagement'])
-   world.setState(WORLD,'phase','rejection')
+   status = world.defineState(victim.name,'status',list,['unsaved','saved','dead'])
+   victim.setState('status','unsaved')
 
 Actions
 -------
