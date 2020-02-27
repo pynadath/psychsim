@@ -127,20 +127,22 @@ Atomic Actions
 
 The `verb` of an individual action is a required field when defining the action::
 
-   reject = free.addAction({'verb': 'reject'})
+   nop = player.addAction({'verb': 'doNothing'})
 
-The action created will also have a `subject` field, representing the agent who is performing this action. The `subject` field is automatically filled in with the name of the agent ("Freedonia" in the above example). A third optional field, `object`, can represent the target of the specific action::
+The action created will also have a `subject` field, representing the agent who is performing this action. The `subject` field is automatically filled in with the name of the agent ("Player 1" in the above example). A third optional field, `object`, can represent the target of the specific action::
 
-   battle = free.addAction({'verb': 'attack','object': 'Sylvania'})
+   save = player.addAction({'verb': 'save','object': victim.name})
+   move = player.addAction({'verb': 'moveTo','object': '1'})
 
 An action's field values can be accessed in the same way as entries in a dictionary::
 
-   if action['verb'] == 'reject' and action['object'] == 'Sylvania':
-      print('Sylvania has been rejected by %s' % (action['subject']))
+   if action['verb'] == 'save':
+      print('%s has been saved by %s' % (action['object'],action['subject']))
 
 You are free to define any other fields as well to contain other parameterizations of the actions::
 
-  offer50 = free.addAction({'verb': 'offer','object': sylv.name,'amount': 50})
+  walk = player.addAction({'verb': 'moveTo','object': '1','speed': 1})
+  run = player.addAction({'verb': 'moveTo','object': '1','speed': 10})
 
 We will describe the use of these fields in :ref:`sec-dynamics`.
 
@@ -149,10 +151,10 @@ Action Sets
 
 Sometimes an agent can make a decision that simultaneously combines multiple actions into a single choice::
 
-  rejectAndAttack = free.addAction([{'verb': 'attack','object': sylv.name},
-                                    {'verb': 'reject'}])
+  moveAndSave = player.addAction([{'verb': 'moveTo','object': '3'},
+                                    {'verb': 'save','object': victim.name}])
 
-For the purposes of the agent's decision problem, this option is equivalent to a single atomic action (e.g., simultaneous rejection and attack). However, as we will see in :ref:`sec-dynamics`, separate atomic actions can sometimes simplify the definition of the effects of such a combined action.
+For the purposes of the agent's decision problem, this option is equivalent to a single atomic action (e.g., move to room 3 and save the victim upon arrival). However, as we will see in :ref:`sec-dynamics`, separate atomic actions can sometimes simplify the definition of the effects of such a combined action.
 
 The return value of :py:meth:`~psychsim.agent.Agent.addAction` is an :py:class:`~psychsim.action.ActionSet`, even if only one atomic :py:class:`~psychsim.action.Action` is specified. All of an agent's available actions are stored as a set of :py:class:`~psychsim.action.ActionSet` instances within an agent's :py:attr:`~psychsim.agent.Agent.actions`. An :py:class:`~psychsim.action.ActionSet` is a subclass of `set`, so all standard Python set operations apply::
 
@@ -162,11 +164,11 @@ The return value of :py:meth:`~psychsim.agent.Agent.addAction` is an :py:class:`
 
 By default, an agent can choose from all of its available actions on every turn. However, we may sometimes want to restrict the available action choices based on the current state of the world. We will cover how to specify such restrictions in :ref:`sec-legality`. As a result, rather than inspecting the :py:attr:`~psychsim.agent.Agent.actions` attribute itself, we typically examine the context-specific set of action choices instead::
 
-   for action in free.getActions():
+   for action in player.getActions():
       if len(action) == 1:
          print(action['verb'])
 
-The fragment above illustrates one helpful shortcut for :py:class:`~psychsim.action.ActionSet` instances: you can access fields within the member actions as long as all of the member actions have the same value for that field. In other words, ``rejectAndAttack['subject']`` would return ``'Freedonia'``, but ``rejectAndAttack['verb']`` would raise an exception.
+The fragment above illustrates one helpful shortcut for :py:class:`~psychsim.action.ActionSet` instances: you can access fields within the member actions as long as all of the member actions have the same value for that field. In other words, ``moveAndSave['subject']`` would return ``'Player 1'``, but ``moveAndSave['verb']`` would raise an exception.
 
 Probability
 -----------
@@ -193,23 +195,17 @@ Possible Worlds
 ---------------
 As already mentioned, PsychSim uses a factored representation, so that a state of the world is expressed as a probability distribution over possible feature-value pairs. More precisely, instead of distributions over arbitrary elements, the state of a PsychSim world is represented as a :py:class:`~psychsim.pwl.state.VectorDistributionSet` that represents a probability distribution over possible worlds::
 
-  world.setState(WORLD,'phase','engagement')
-  world.setState(WORLD,'winner',Distribution({'Sylvania': 0.25, 'Freedonia': 0.75}))
-  free.setState('troops',Distribution({10000: 0.25, 25000: 0.75}))
+  world.setState(victim.name,'location',Distribution({1: 0.25, 3: 0.75}))
+  world.setState(victim.name,'status',Distribution({'alive': 0.9, 'dead': 0.1}))
 
-These statements declare that the simulation is currently in the `engagement` phase, with a 75% chance that the winner is Freedonia vs. a 25% chance that it is Sylvania, and with Freedonia having a 75% chance of having 25000 troops vs. a 25% chance of having 10000. These three state features have independent distributions within the state. In this state, the probability that Freedonia is the winner with 25000 troops remaining is 56.25%.
-
-Alternatively, we may want to specify that Freedonia will have 25000 troops if and only if it is the winner; otherwise, it will have only 10000 troops left. Such a statement would look like the following::
-
-  winner = stateKey(WORLD,'winner')
-  troops = stateKey(free.name,'troops')
-  win = KeyedVector({winner: 'Freedonia',troops: 25000})
-  loss = KeyedVector({winner: 'Sylvania', troops: 10000})
-  world.setJoint(VectorDistribution({win: 0.75, loss: 0.25}))
+These statements specify uncertainty about the victim's location (probably Room 3 but maybe Room 1) and status (most likely alive, with a small chance of being dead). These two state features have independent distributions within the state. Thus, there is a 2.5% chance that the victim is lying dead in Room 1.
 
 Piecewise Linear (PWL) Functions
 --------------------------------
-As already mentioned, the effects of actions and the observations of those actions are critical components of any agent model (the transition probability, *P*, and observation functions, *O*, respectively, from POMDPs). In theory, we could allow for arbitrary functions for action effects and obsevations, but we instead restrict the functions to be piecewise linear (PWL). As we see from examples like Algebraic Decision Diagrams in the literature, it is useful to impose additional structure on the sample space to facilitate authoring, simulation, and understanding. 
+As already mentioned, the effects of actions and the observations of those actions are critical components of any agent model (the transition probability, *P*, and observation functions, *O*, respectively, from POMDPs). In theory, we could allow for arbitrary functions for action effects and observations, but we instead restrict the functions to be piecewise linear (PWL). As we see from examples like Algebraic Decision Diagrams in the literature, it is useful to impose additional structure on the sample space to facilitate authoring, simulation, and understanding. 
+
+At its heart, these effects are specified as matrices that transform one state vector into another. A PWL function is a decision tree with such matrices at its leaves and hyperplanes at its branches.
+
 If we want to instead specify that Freedonia has 25000 troops if and only if it is the winner, then we specify a joint probability over `winner` and `troops`. To do so, we use a :py:class:`~psychsim.pwl.vector.KeyedVector` to represent elements of the joint sample space::
 
   freeVictory = KeyedVector({stateKey(WORLD,'winner'): 'Freedonia',
