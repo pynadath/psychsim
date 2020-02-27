@@ -68,7 +68,7 @@ class KeyedMatrix(dict):
 
     def mulByMatrix(self,other):
         result = KeyedMatrix()
-        result._keysOut = self._keysOut
+        result._keysOut = self.getKeysOut()
         result._keysIn = set()
         for r1,v1 in self.items():
             row = {}
