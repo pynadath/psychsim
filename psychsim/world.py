@@ -67,6 +67,7 @@ class World(object):
 
         # Action effect information
         self.dynamics = {}
+        self.conditionalDynamics = {}
         self.newDynamics = {True: []}
         self.dependency = psychsim.graph.DependencyGraph(self)
 
@@ -138,6 +139,8 @@ class World(object):
         """
         if state is None:
             state = self.state
+        if keySubset is None and state is not self.state:
+            keySubset = state.keys()
         if real is False:
             state = copy.deepcopy(state)
         outcome = {'old': state,
@@ -150,13 +153,20 @@ class World(object):
         outcome['actions'] = self.stepPolicy(state,actions,horizon,tiebreak,keySubset,debug)
         joint = ActionSet()
         for actor,policy in outcome['actions'].items():
-            assert policy.isLeaf(),'Currently unable to project stochastic decisions'
+            behavior = None
+            uncertain = False
             key = stateKey(actor,ACTION)
-            action = self.float2value(key,policy.children[None][makeFuture(key)][CONSTANT])
-            joint = ActionSet(joint | action)
+            for leaf in policy.leaves():
+                action = self.float2value(key,leaf[makeFuture(key)][CONSTANT])
+                if behavior is None:
+                    behavior = action
+                elif len(action & behavior) == 0:
+                    uncertain = True
+                    behavior = ActionSet(behavior | action)
+            joint = ActionSet(joint | behavior)
             if actor in debug:
-                print('%s: %s' % (actor,action))
-        effect = self.deltaState(joint,state,keySubset)
+                print('%s: %s' % (actor,policy))
+        effect = self.deltaState(joint,state,keySubset,uncertain)
         # Update turn order
         effect.append(self.deltaTurn(state,joint))
         for stage in effect:
@@ -353,24 +363,6 @@ class World(object):
             dynamics.update(self.getTurnDynamics(key,actions))
         return dynamics
 
-    def deltaObservations(self,state,actions,keySubset=None):
-        """
-        Computes the new observations for each agent in the given state 
-
-        .. warning:: Does not currently enforce order between observations that have direct dependencies. If you want such a dependency, introduce a state feature to indirectly capture it. 
-        """
-        Ofuns = {}
-        for name in self.agents:
-            O = self.agents[name].getO(state,actions)
-            if O:
-                for key,tree in O.items():
-                    if keySubset is None:
-                        if key in state:
-                            Ofuns[key] = [tree]
-                    elif key in keySubset:
-                        Ofuns[key] = [tree]
-        return Ofuns
-
     def applyEffect(self,state,effect,select=False):
         for key,dynamics in effect.items():
             if dynamics is None:
@@ -429,25 +421,24 @@ class World(object):
                                 self.printVector(vec)
                         raise
             else:
-#                raise RuntimeError('Parallel dynamics do not work')
                 cumulative = None
                 for tree in dynamics:
                     if cumulative is None:
-                        cumulative = copy.deepcopy(tree[state])
+                        cumulative = copy.deepcopy(tree)
                     else:
                         cumulative.makeFuture([key])
-                        cumulative *= tree[state]
+                        cumulative *= tree
+                tree = cumulative
                 if select:
                     if isinstance(state,VectorDistributionSet):
-                        state.__imul__(cumulative,select)
+                        state.__imul__(tree,select)
                     else:
-                        if isinstance(cumulative,KeyedMatrix):
-                            state *= cumulative
+                        if isinstance(tree,KeyedMatrix):
+                            state *= tree
                         else:
-                            print(cumulative)
-                            raise TypeError
+                            raise TypeError('Unable to generate selective effect from:\n%s' (tree))
                 else:
-                    state *= cumulative
+                    state *= tree
             if select and isinstance(state,VectorDistributionSet):
                 substate = state.keyMap[makeFuture(key)]
                 if len(state.distributions[substate]) > 1:
@@ -459,29 +450,20 @@ class World(object):
 #        if not isinstance(state,VectorDistributionSet):
 #            state = psychsim.pwl.VectorDistributionSet(state)
         result = {'new': state,'effect': []}
-        if isinstance(self.state,VectorDistributionSet):
-            # Generate observations
-            O = self.deltaObservations(result['new'],actions,keySubset)
-            result['effect'].append(O)
-            # Apply all of these update functions
-            for stage in result['effect']:
-                self.applyEffect(result['new'],stage,select)
         if updateBeliefs:
             # Update agent models included in the original world
             # (after finding out possible new worlds)
             if isinstance(state,VectorDistributionSet):
-                agentsModeled = [name for name in self.agents.keys()
-                                 if modelKey(name) in result['new'].keyMap and self.agents[name].O is not True]
+                agentsModeled = [name for name in self.agents
+                                 if modelKey(name) in result['new'].keyMap and self.agents[name].omega is not True]
             else:
-                agentsModeled = [name for name in self.agents.keys()
-                                 if modelKey(name) in result['new'].keys() and self.agents[name].O is not True]
+                agentsModeled = [name for name in self.agents
+                                 if modelKey(name) in result['new'] and self.agents[name].omega is not True]
             for name in agentsModeled:
                 key = modelKey(name)
                 agent = self.agents[name]
-                Omega = {keys.makeFuture(keys.stateKey(agent.name,omega)) \
-                         for omega in agent.omega}
                 if isinstance(result['new'],VectorDistributionSet):
-                    substate = result['new'].collapse(Omega|{key},False)
+                    substate = result['new'].collapse(agent.omega|{key},False)
                 delta = agent.updateBeliefs(result['new'],actions)
                 if delta:
                     result['effect'].append(delta)
@@ -489,7 +471,7 @@ class World(object):
                         result['new'].distributions[substate].select(select == 'max')
         return result
 
-    def deltaState(self,actions,state,keySubset=None):
+    def deltaState(self,actions,state,keySubset=None,uncertain=False):
         """
         Computes the change across a subset of state features
         """
@@ -505,7 +487,7 @@ class World(object):
         count = 0
         effects = []
         for keySet in keyOrder:
-            dynamics = self.getActionEffects(actions,keySet)
+            dynamics = self.getActionEffects(actions,keySet,uncertain)
 #            dynamics = {}
             for key in keySet:
                 if key not in dynamics:
@@ -831,11 +813,16 @@ class World(object):
                         self.dynamics[atom] = {}
                     self.dynamics[atom][key] = dynamics
 
-    def getActionEffects(self,actions,keySubset):
+    def getActionEffects(self,actions,keySubset,uncertain=False):
+        """
+        :param uncertain: True iff there is uncertainty about which actions will be performed
+        """
         dynamics = {}
         for action in actions:
             for key,tree in self.dynamics.get(action,{}).items():
                 if key in keySubset:
+                    if uncertain:
+                        tree = self.getConditionalDynamics(action,key,tree)
                     try:
                         dynamics[key].append(tree)
                     except KeyError:
@@ -844,6 +831,16 @@ class World(object):
             if key in keySubset and key not in dynamics:
                 dynamics[key] = [tree]
         return dynamics
+
+    def getConditionalDynamics(self,action,key,tree=None):
+        if action not in self.conditionalDynamics:
+            self.conditionalDynamics[action] = {}
+        if key not in self.conditionalDynamics[action]:
+            newTree = makeTree({'if': equalRow(actionKey(action['subject'],True),ActionSet(action)),
+                True: copy.deepcopy(tree),
+                False: noChangeMatrix(key)})
+            self.conditionalDynamics[action][key] = newTree.desymbolize(self.symbols)
+        return self.conditionalDynamics[action][key]
 
     def getAncestors(self,keySubset,actions):
         """
@@ -1699,6 +1696,12 @@ class World(object):
                         for index in range(len(node['projection'])):
                             nodes.insert(index,node['projection'][index])
 
+    def printBeliefs(self,name,state=None,buf=None,prefix='',beliefs=True):
+        table = self.agents[name].getBelief(state)
+        for model,b in table.items():
+            print('%s = %s' % (modelKey(name),model))
+            self.printState(b,buf,prefix,beliefs)
+
     def printState(self,distribution=None,buf=None,prefix='',beliefs=True):
         """
         Utility method for displaying a distribution over possible worlds
@@ -1737,6 +1740,8 @@ class World(object):
                 if not label is None:
                     print('-------------------',file=buf)
                 self.printState(subdistribution,buf,prefix,beliefs)
+        elif isinstance(distribution,KeyedVector):
+            self.printVector(distribution,buf,prefix,beliefs)
         else:
             for vector in distribution.domain():
                 print('%s%d%%' % (prefix,distribution[vector]*100.),file=buf)
