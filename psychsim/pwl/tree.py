@@ -310,7 +310,7 @@ class KeyedTree:
     def __max(self,leaf1,leaf2):
         """
         Helper method for computing max
-        @return: a tree returing the maximum of the two vectors
+        @return: a tree returning the maximum of the two vectors
         @rtype: L{KeyedTree}
         """
         result = self.__class__()
@@ -623,7 +623,7 @@ class KeyedTree:
         :warning: May return a list containing duplicates
         """
         if self.isLeaf():
-            return [self.children[None]]
+            return [self.getLeaf()]
         elif self.isProbabilistic():
             return sum([child.leaves() for child in self.children.domain()],[])
         else:
