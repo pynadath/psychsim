@@ -26,10 +26,8 @@ class Agent(object):
     :type actions: `Action<psychsim.action.Action>`
     :ivar legal: a set of conditions under which certain action choices are allowed (default is that all actions are allowed at all times)
     :type legal: L{ActionSet}S{->}L{KeyedPlane}
-    :ivar omega: the set of possible observations this agent may receive
+    :ivar omega: the set of observable state features
     :type ivar omega: {str}
-    :ivar O: the observation function; default is ``True``, which means perfect observations of actions
-    :type O: L{KeyedTree}
     :ivar x: X coordinate to be used in UI
     :type x: int
     :ivar y: Y coordinate to be used in UI
@@ -42,8 +40,8 @@ class Agent(object):
         self.world = world
         self.actions = set()
         self.legal = {}
-        self.omega = set()
-        self.O = True
+        self.omega = True
+#        self.O = True
         self.models = {}
         self.modelList = {}
         self.x = None
@@ -635,7 +633,7 @@ class Agent(object):
         assert new not in self.actions,'Action %s already defined' % (new)
         self.actions.add(new)
         if condition:
-            self.legal[new] = condition
+            self.legal[new] = condition.desymbolize(self.world.symbols)
         if codePtr:
             if codePtr is True:
                 for frame in inspect.getouterframes(inspect.currentframe()):
@@ -852,7 +850,7 @@ class Agent(object):
         if beliefs is True:
             beliefs = self.resetBelief(model)
         if isinstance(agents,str):
-            for key in beliefs.keys():
+            for key in list(beliefs.keys()):
                 if state2agent(key) == agents:
                     del beliefs[key]
 #            del beliefs[keys.turnKey(agents)]
@@ -1078,16 +1076,14 @@ class Agent(object):
         # Find action that I performed
         myAction = ActionSet({action for action in actions if action['subject'] == self.name})
         SE = {} # State estimator table
-        Omega = sorted(self.O.keys())
         for vector in list(distribution.domain()):
             oldModel = self.world.float2value(oldModelKey,vector[oldModelKey])
             original = self.getBelief(model=oldModel)
             # These are actions I know that I've observed correctly
             knownActions = actions.__class__({action for action in actions
-                if actionKey(action['subject']) in original and \
-                    self.world.variables.get(stateKey(self.name,'O_%s' % (action['subject'])),{'observable': True}).get('observable',False)})
+                if actionKey(action['subject']) in original and actionKey(action['subject']) in self.omega})
             # Identify label for overall observation
-            label = ','.join(['%s' % (self.world.float2value(omega,vector[keys.makeFuture(omega)])) for omega in Omega])
+            label = ','.join(['%s' % (self.world.float2value(omega,vector[omega])) for omega in self.omega])
             if not oldModel in SE:
                 SE[oldModel] = {}
             if not label in SE[oldModel]:
@@ -1111,26 +1107,21 @@ class Agent(object):
                     # Get old belief state.
                     beliefs = copy.deepcopy(original)
                     # Project direct effect of the actions, including possible observations
-                    self.world.step(knownActions,beliefs,keySubset=beliefs.keys())
+                    self.world.step(state=beliefs,keySubset=beliefs.keys())
                     # Condition on actual observations
-                    for omega in Omega:
-                        value = vector[keys.makeFuture(omega)]
+                    for omega in self.omega:
+                        value = vector[omega]
+                        if not omega in beliefs:
+                            continue
                         for b in beliefs.distributions[beliefs.keyMap[omega]].domain():
                             if b[omega] == value:
                                 break
                         else:
-                            logging.error('Impossible observation %s=%s' % \
-                                          (omega,vector[keys.makeFuture(omega)]))
                             logging.error('Beliefs:\n%s' %
                                           (beliefs.distributions[beliefs.keyMap[omega]]))
-                            continue
-# #                            self.world.printState(trueState)
-# #                            self.world.printState(beliefs)
-#                             print('full omega')
-#                             self.world.printVector(vector)
-#                             raise ValueError('Impossible observation %s=%s' % \
-#                                              (omega,vector[keys.makeFuture(omega)]))
-                        beliefs[omega] = vector[keys.makeFuture(omega)]
+                            raise ValueError('Impossible observation %s=%s' % \
+                                          (omega,vector[omega]))
+                        beliefs[omega] = vector[omega]
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
                     for dist in beliefs.distributions.values():
@@ -1264,165 +1255,6 @@ class Agent(object):
 #            self.models[model]['SE'][oldBelief][newReal][omega] = index
             return index
 
-
-    """--------------------"""
-    """Observation  methods"""
-    """--------------------"""
-
-    def defineObservation(self,omega,**kwargs):
-        """
-        :param omega: The label of this dimension of observations (e.g., an existing feature key, or a new observation dimension)
-        :type omega: str
-        """
-        key = stateKey(self.name,omega)
-        if 'codePtr' in kwargs and kwargs['codePtr'] is True:
-            for frame in inspect.getouterframes(inspect.currentframe()):
-                try:
-                    fname = frame.filename
-                except AttributeError:
-                    fname = frame[1]
-                if fname != __file__:
-                    break
-            kwargs['codePtr'] = frame
-        if not key in self.world.variables:
-            self.world.defineVariable(key,**kwargs)
-        self.omega.add(omega)
-        if self.O is True:
-            self.O = {}
-        if not key in self.O:
-            self.O[key] = {}
-        return key
-
-    def setO(self,omega,actions,tree):
-        O = tree.desymbolize(self.world.symbols)
-        self.O[stateKey(self.name,omega)][actions] = O
-        return O
-        
-    def getO(self,state,actions,model=None):
-        if self.O is True:
-            return {}
-        else:
-            O = self.O
-        if isinstance(actions,ActionSet):
-            jointAction = actions
-        elif actions:
-            assert isinstance(actions,dict)
-            # Table of actions across multiple agents
-            jointAction = None
-            for action in actions.values():
-                if jointAction is None:
-                    jointAction = action
-                else:
-                    jointAction |= action
-        else:
-            jointAction = ActionSet()
-        # Generate observations along each dimension
-        omega = {}
-        for key,table in O.items():
-            try:
-                # Look up the observation function for the actions performed
-                omega[key] = table[jointAction]
-            except KeyError:
-                # Maybe a tree that applies for all possible actions
-                try:
-                    omega[key] = table[None]
-                except KeyError:
-                    pass
-        return omega
-        
-    def defineActionObservable(self,name,actions=None):
-        """
-        Specifies that some subset (possibly the entire set) of another agent's actions are observable to me
-        """
-        agent = self.world.agents[name]
-        if actions is None:
-            actions = agent.actions
-        key = actionKey(name)
-        omega = 'O_%s' % (name)
-        if actions == agent.actions:
-            # Completely observable
-            omegaKey = self.defineObservation(omega,domain=ActionSet,lo=actions)
-            self.setO(omega,None,makeTree(setToFeatureMatrix(omegaKey,key)))
-            self.world.variables[omegaKey]['observable'] = True
-        else:
-            self.defineObservation(omega,domain=ActionSet,lo=actions | {'__none__'})
-            self.setO(omega,None,makeTree({'if': equalRow(key,actions),
-                True: setToFeatureMatrix(omegaKey,key),
-                False: setToConstantMatrix(omegaKey,'__none__')}))
-        self.world.setFeature(omegaKey,next(iter(actions)))
-        return omegaKey
-
-    def observe(self,state,model=None):
-        """
-        :returns: distribution over observations received by this agent in the given world when the given actions are performed
-        :rtype: L{Distribution}
-        """
-        O = self.getO(vector,actions,model)
-        # Generate observations along each dimension
-        omega = {}
-        for key,table in O.items():
-            try:
-                # Look up the observation function for the actions performed
-                tree = table[actions]
-            except KeyError:
-                # Maybe a tree that applies for all possible actions
-                try:
-                    tree = table[None]
-                except KeyError:
-                    if key in self.world.agents and not key in actions:
-                        # Observation of an agent's actions, but that agent hasn't acted
-                        continue
-                    else:
-                        # Awkward, someone defined an observation function that doesn't cover the action space
-                        raise ValueError('Observation function for %s does not cover action space' % (key))
-            if key in actions:
-                # Observation of action
-                omega[key] = tree[vector]
-            else:
-                # Apply the observation function to any non-action observations
-                omega[key] = self.world.float2value(key,tree[vector]*vector)
-        # Keep track of potentially unobserved actions
-        nulls = set()
-        # Translate actions into vectors
-        for key,action in actions.items():
-            if not key in self.world.variables:
-                self.world.defineVariable(key,ActionSet)
-            if key in omega:
-                if omega[key] is None or omega[key] is False:
-                    # Action is unobservable
-                    del omega[key]
-                else:
-                    if not isinstance(omega[key],Distribution):
-                        omega[key] = Distribution({omega[key]: 1.})
-                    for element in omega[key].domain():
-                        if element is True:
-                            # Action is observable
-                            omega[key].replace(element,self.world.value2float(key,action))
-                        elif element is False:
-                            nulls.add(key)
-                            omega[key].replace(element,None)
-                        elif element is None:
-                            # Action is potentially unobservable
-                            nulls.add(key)
-                        else:
-                            omega[key].replace(element,self.world.value2float(key,element))
-            else:
-                # Assume action is observable by default
-                omega[key] = self.world.value2float(key,action)
-        # Generate distribution over joint observations
-        jointOmega = VectorDistribution({KeyedVector(): 1.})
-        for key,distribution in omega.items():
-            jointOmega.join(key,distribution)
-        # Prune unobserved actions
-        if len(nulls) > 0:
-            for observation in jointOmega.domain():
-                prob = jointOmega[observation]
-                del jointOmega[observation]
-                for key in nulls:
-                    if observation[key] is None:
-                        del observation[key]
-                jointOmega[observation] = prob
-        return jointOmega
 
     """------------------"""
     """Serialization methods"""
