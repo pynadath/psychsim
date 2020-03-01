@@ -1,6 +1,6 @@
 
 # Special keys
-CONSTANT = ''
+CONSTANT = '' #: Special key for column whose value is always 1
 VALUE = '__VALUE__'
 WORLD = '__WORLD__'
 ACTION = '__ACTION__'
