@@ -255,7 +255,7 @@ Arbitrary linear functions of this form are allowed, but there are several often
 
     addFeatureMatrix(location,stateKey(player.name,'speed',True))
 
-    There is an optional third argument that specifies a scaling factor of the other variable (the default is 1). The following specifies that the victim's health should increase by 80% of the player's healing power::
+  There is an optional third argument that specifies a scaling factor of the other variable (the default is 1). The following specifies that the victim's health should increase by 80% of the player's healing power::
 
     addFeatureMatrix(health,stateKey(player.name,'power'),0.8)
 
@@ -277,14 +277,17 @@ Arbitrary linear functions of this form are allowed, but there are several often
 
 * :py:class:`~psychsim.pwl.matrix.setTrueMatrix` and :py:class:`~psychsim.pwl.matrix.setFalseMatrix` are special cases of :py:class:`~psychsim.pwl.matrix.setToConstantMatrix` that are used for Boolean variables. The following represent equivalent effects of death and resurrection of our victim:: 
 
-  setFalseMatrix(alive)
-  setToConstantMatrix(alive,False)
-  setTrueMatrix(alive)
-  setToConstantMatrix(alive,True)
+    setFalseMatrix(alive)
+    setToConstantMatrix(alive,False)
+    setTrueMatrix(alive)
+    setToConstantMatrix(alive,True)
 
 * :py:class:`~psychsim.pwl.matrix.noChangeMatrix` is true to its name and specifies that the value of the given variable does not change. The following makes time stand still::
 
-  noChangeMatrix(stateKey(WORLD,'time'))
+    noChangeMatrix(stateKey(WORLD,'time'))
+
+Hyperplanes
+^^^^^^^^^^^
 
 .. _sec-legality:
 
