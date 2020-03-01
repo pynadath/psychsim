@@ -1790,8 +1790,10 @@ class Actor(Agent):
                 if action['verb'] == joint['verb']:
                     if 'object' in action:
                         if action['object'] == joint['object']:
+                            logging.info('ER %s = %s' % (action,self.spouse))
                             return {'action': action}
                     else:
+                        logging.info('ER %s = %s' % (action,self.spouse))
                         return {'action': action}
             else:
                 raise ValueError('%s unable to match spouse action: %s' % (self.name,joint))
@@ -1971,6 +1973,7 @@ class Actor(Agent):
                 V = {action: self.chooseAction(copy.deepcopy(belief),horizon,action,model)[1] for action in self.getActions(belief)}
                 best = None
                 for action,EV in V.items():
+                    logging.debug('ER %s = %f' % (action,EV))
                     if best is None or EV > best[1]:
                         best = action,EV
                 return best[0],best[1]
