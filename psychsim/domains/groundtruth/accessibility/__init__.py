@@ -31,14 +31,15 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 101,'run': 0,'span': 135},
     {'instance': 100,'run': 2,'span': 82},
     {'instance': 101,'run': 1,'span': 130},
-    {'instance': 103,'run': 0,'span': 91},
-    {'instance': 104,'run': 0,'span': 104},
-    {'instance': 105,'run': 0,'span': 121}
+    {'instance': 20,'run': 0,'span': 91},
+    {'instance': 21,'run': 0,'span': 104},
+    {'instance': 22,'run': 0,'span': 121},
+    {'instance': 23,'run': 0,'span': 30}
     ]
     
 instanceMap = {'Phase1': {'Explain': [1], 'Predict': [3,4,5,6,7,8], 'Prescribe': [9,10,11,12,13,14]},
     'Phase2': {'Explain': [15,16,17], 'Predict': [18,19], 'Prescribe': [20,21]},
-    'Phase3': {'Explain': [22]},
+    'Phase3': {'Explain': [22], 'Predict': [23]},
     }
 def instanceArgs(phase,challenge=True):
     if challenge is True:
@@ -131,7 +132,7 @@ def loadFromArgs(args,world=False,hurricanes=False,participants=False,actions=Fa
         values['run'] = readRunData(args['instance'],args['run'])
     return values
 
-def writeOutput(args,data,fields=None,fname=None,dirName=None):
+def writeOutput(args,data,fields=None,fname=None,dirName=None,append=False):
     if fields is None:
         fields = sorted(list(data[0].keys()))
     if fname is None:
@@ -140,9 +141,10 @@ def writeOutput(args,data,fields=None,fname=None,dirName=None):
         dirName = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (args['instance']),'Runs','run-%d' % (args['run']))
     if dirName and not os.path.exists(dirName):
         os.makedirs(dirName)
-    with open(os.path.join(dirName,fname),'w') as csvfile:
+    with open(os.path.join(dirName,fname),'a' if append else 'w') as csvfile:
         writer = csv.DictWriter(csvfile,fields,delimiter='\t',extrasaction='ignore')
-        writer.writeheader()
+        if not append:
+            writer.writeheader()
         for record in data:
             writer.writerow(record)
 
@@ -729,8 +731,9 @@ def getInitialState(args,name,feature,world,states,t,believer=None,unique=False)
                     return world.getState(name,feature,unique=unique)
                 else:
                     beliefs = world.agents[believer].getBelief()
-                    assert len(beliefs) == 1
-                    return world.getState(name,feature,next(iter(beliefs.values())),unique)
+                    if isinstance(beliefs,dict):
+                        beliefs = next(iter(beliefs.values()))
+                    return world.getState(name,feature,beliefs,unique)
             else:
                 loadState(args,states,t-1,'Nature')
                 if believer is None:
@@ -755,7 +758,10 @@ def getAction(args,name,world,states,t):
             # Backward compatibility with Phase 1
             return states[name][actionKey(name)][t]
         else:
-            turn = 'Actor' if name[:5] == 'Actor' else name
+            if name[:5] in {'Actor','Group'}:
+                turn = name[:5]
+            else:
+                turn = name
             loadState(args,states,t,turn)
             return world.getFeature(actionKey(name),states[t][turn]['__state__'],unique=True)
     elif isinstance(t,tuple):
@@ -791,6 +797,14 @@ def readLog(args):
                     if action['subject'] not in ER[-1]:
                         ER[-1][action['subject']] = {}
                     ER[-1][action['subject']][action] = float(words[-1])
+                elif line[:2] == 'ER':
+                    action = ActionSet(Action(words[1]))
+                    if action['subject'] not in ER[-1]:
+                        ER[-1][action['subject']] = {}
+                    try:
+                        ER[-1][action['subject']][action] = float(words[-1])
+                    except ValueError:
+                        ER[-1][action['subject']][action] = words[-1]
     return ER
 
 def unpickle(instance,sub=None,day=None):
