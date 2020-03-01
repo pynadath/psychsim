@@ -62,6 +62,8 @@ Thus, one reason for creating an agent is to group a set of such state features 
 
   world.defineState(victim.name,'location')
   victim.setState('location',3)
+  health = world.defineState(victim.name,'health')
+  world.setFeature(health,1)
 
 
 Binary State Features
@@ -97,10 +99,12 @@ bool
 list/set
    an enumerated set of possible values (typically strings)
 
-By default, a variable is assumed to be float-valued, so the previous section's definitions of state features created only float-valued variables. Both the :py:meth:`~psychsim.world.World.defineState` and :py:meth:`~psychsim.world.World.defineRelation` methods take optional arguments to modify the domain of valid values of the feature. The following definition has the identical effect as the previous trust definition, but it makes the default values for the variable type and range of possible values explicit::
+By default, a variable is assumed to be float-valued, so the previous section's definitions of state features created only float-valued variables. Both the :py:meth:`~psychsim.world.World.defineState` and :py:meth:`~psychsim.world.World.defineRelation` methods take optional arguments to modify the domain of valid values of the feature. The following definition has the identical effect as the previous  definitions of these variables, but it makes the default values for the variable type and range of possible values explicit::
 
-  trust = world.defineRelation(player.name,robot.name,'trusts',float,-1,-1)
-  world.setFeature(trust,0.)
+  health = world.defineState(victim.name,'health',float,0,1)
+  world.setFeature(health,1)
+  trust = world.defineRelation(player.name,robot.name,'trusts',float,-1,1)
+  world.setFeature(trust,0)
 
 This relationship can now distinguish between a trusting and distrusting relationship (positive vs. negative values), with a fine-grained magnitude of the degree of (dis)trust. It is also possible to specify that a state feature has an integer-valued domain instead, such as for our numbered rooms::
 
@@ -158,9 +162,9 @@ For the purposes of the agent's decision problem, this option is equivalent to a
 
 The return value of :py:meth:`~psychsim.agent.Agent.addAction` is an :py:class:`~psychsim.action.ActionSet`, even if only one atomic :py:class:`~psychsim.action.Action` is specified. All of an agent's available actions are stored as a set of :py:class:`~psychsim.action.ActionSet` instances within an agent's :py:attr:`~psychsim.agent.Agent.actions`. An :py:class:`~psychsim.action.ActionSet` is a subclass of `set`, so all standard Python set operations apply::
 
-   for action in free.actions:
+   for action in player.actions:
       print(len(action))
-   rejectAndAttack = reject | battle
+   quickSave = run | save
 
 By default, an agent can choose from all of its available actions on every turn. However, we may sometimes want to restrict the available action choices based on the current state of the world. We will cover how to specify such restrictions in :ref:`sec-legality`. As a result, rather than inspecting the :py:attr:`~psychsim.agent.Agent.actions` attribute itself, we typically examine the context-specific set of action choices instead::
 
@@ -204,55 +208,83 @@ Piecewise Linear (PWL) Functions
 --------------------------------
 As already mentioned, the effects of actions and the observations of those actions are critical components of any agent model (the transition probability, *P*, and observation functions, *O*, respectively, from POMDPs). In theory, we could allow for arbitrary functions for action effects and observations, but we instead restrict the functions to be piecewise linear (PWL). As we see from examples like Algebraic Decision Diagrams in the literature, it is useful to impose additional structure on the sample space to facilitate authoring, simulation, and understanding. 
 
-At its heart, these effects are specified as matrices that transform one state vector into another. A PWL function is a decision tree with such matrices at its leaves and hyperplanes at its branches.
+At its heart, these effects are specified as matrices that transform one state vector into another. A PWL function is a decision tree with such matrices at its leaves and hyperplanes at its branches. If we again take :math:`S_0\times S_1\times\cdots\times S_n` to represent our state, then our PWL function building blocks are linear functions of the form :math:`S_i'\leftarrow\sum_{j=0}^n w_{ij}\cdot S_j`, specifying a new value for :math:`S_i` in terms of a set of weights :math:`w_{ij}`. The branches are similarly linear, testing whether :math:`\sum_{j=0}^n w_{j}\cdot S_j>\theta`. We canonically take :math:`S_0` to be a variable whose value is always 1.
 
-If we want to instead specify that Freedonia has 25000 troops if and only if it is the winner, then we specify a joint probability over `winner` and `troops`. To do so, we use a :py:class:`~psychsim.pwl.vector.KeyedVector` to represent elements of the joint sample space::
+Given the readable names we have given to our state features, it would be barbaric to use integer indices for the weights in these linear functions. We instead use a :py:class:`~psychsim.pwl.vector.KeyedVector` that allows us to specify weights using the same string keys we use to set the values of the state itself (:math:`S_0` can be accessed via the special string key, :py:const:`~psychsim.pwl.keys.CONSTANT`). For example, we can specify linear weights that increment the world clock as follows::
 
-  freeVictory = KeyedVector({stateKey(WORLD,'winner'): 'Freedonia',
-                             stateKey(free.name,'troops':): 25000})
-  sylvVictory = KeyedVector({stateKey(WORLD,'winner'): 'Sylvania',
-                             stateKey(free.name,'troops':): 10000})
+  KeyedVector({stateKey(WORLD,'time'): 1, CONSTANT: 1})
 
-over possible worlds. Thus, even though the above method call specificies a single value, the value is internally represented as a distribution with a single element (i.e., 40000) having 100% probability. We can also pass in a distribution of possible values for a state feature::
+We can also use strings that we have previously enumerated as possible values for a state feature, as in the following function that would specify a status of "saved"::
 
+  KeyedVector({CONSTANT: 'saved'})
 
-The :py:class:`~psychsim.probability.Distribution` constructor takes a dictionary whose keys constitute the distribution's sample space, and whose values constitte the probability mass of each element of that space. In the above example, the distribution over Freedonia's cost is 50-50 between 1000 and 2000. When you call the :py:meth:`~psychsim.world.World.setState` method with a probabilistic value, PsychSim *joins* the new distribution with the current state vector. After the previous two :py:meth:`~psychsim.world.World.setState` calls, there will be two possible worlds, each with 50% probability: one where Freedonia has 40000 troops and cost 1000, and a second where Freedonia has 40000 troops and cost 2000. Just as the second call doubles the number of possible worlds, a subsequent call to :py:meth:`~psychsim.world.World.setState` with a probabilistic value will similarly increase the number of possible worlds by a factor equal to the size of the distribution passed in. In other words, calling :py:meth:`~psychsim.world.World.setState` will generate worlds for all possible combinations of the individual values for the state features.
+Matrices
+^^^^^^^^
+A linear function is not much use unless we can specify where the value returned by the function should go. We again use our string keys as indices into a matrix, each pointing to a :py:class:`~psychsim.pwl.vector.KeyedVector` that represents the linear function generating the new value for a given state feature. However, we first introduce distinct keys for the original and new values of a given variable::
 
-If you would like more fine-grained control over the possible worlds, simply manipulate the distribution directly. Note that the world state is potentially a dictionary of distributions over worlds, although until further development occurs, the only entry in that table is indexed by {\tt None}:::
+  newLocation = makeFuture(stateKey(victim.name,'status'))
+  newLocation = stateKey(victim.name,'status',future=True)
 
-   possworld1 = KeyedVector({stateKey(free.name,'troops'): 40000, 
-                             stateKey(free.name,'cost'): 1000})
-   possworld2 = KeyedVector(possworld1)
-   possworld2[stateKey(free.name,'cost')] = 2000
-   possworld3 = KeyedVector()
-   possworld3[stateKey(free.name,'troops')] = 25000
-   possworld3[stateKey(free.name,'cost')] = 2000
+Both usages are interchangeable. We can now define a :py:class:`~psychsim.pwl.matrix.KeyedMatrix` that represents a change of a victim's status to "saved"::
 
-   world.state[None].clear()
-   world.state[None][possworld1] = 0.1
-   world.state[None][possworld2] = 0.4
-   world.state[None][possworld3] = 0.5
+  KeyedMatrix({makeFuture(status): KeyedVector({CONSTANT: 'saved'})})
 
-When querying for a given state feature, the returned value is *always* in :py:class:`~psychsim.probability.Distribution` form.::
+We can also represent a teleport effect that allows the player to move immediately to the victim's location::
 
-   value = world.getState(free.name,'phase')
-   for phase in value.domain():
-      print 'P(%s=%s) = %5.3f' % (stateKey(free.name,'phase'),
-                                  phase,value[phase])
+  KeyedMatrix({makeFuture(location): KeyedVector({stateKey(victim.name,'location'): 1})})
 
-The :py:func:`~psychsim.pwl.keys.stateKey` function is useful for translating an agent (or the world) and state feature into a canonical string representation::
+Note that this effect moves the player to the victim's original location. If the victim is moving at the same time as the player, we can specify that the player teleports to the victim's *new* location instead::
 
-   from psychsim.pwl import *
-   s = KeyedVector({'S_0': 0.3, 'S_1': 0.7})
-   s['S_n'] = 0.4
-   for key in s:
-      print(key,s[key])
+  KeyedMatrix({makeFuture(location): KeyedVector({stateKey(victim.name,'location',future=True): 1})})
 
-Notice that PsychSim allows you to refer to each feature by a meaningful *key*, as in Python's dictionary keys. Keys are treated internally as unstructured strings, but you may find it useful to make use of the the following types of structured keys.
+Arbitrary linear functions of this form are allowed, but there are several often-used structures that are often repeated and that have been codified into "helper functions".
 
-PsychSim uses piecewise linear (PWL) functions to structure the dependencies among variables, as we will see in later sections. While the PWL structure limits the expressivity of these dependencies, it provides a more human-readable language (as opposed to arbitrary code) and, more importantly, provides invertibility that is essential for automatic fitting and explanation.
+* :py:class:`~psychsim.pwl.matrix.setToConstantMatrix` specifies a constant to be used as the new value for a given variable. The first example in this subsection could be more compactly rewritten as::
 
-We have already seen the basic building block of the PWL functions, the {\tt KeyedVector}. 
+    setToConstantMatrix(status,'saved')
+
+* :py:class:`~psychsim.pwl.matrix.setToFeatureMatrix` specifies another variable whose value should be taken as the new value for the given variable. The second example in this subsection could be more compactly rewritten as::
+
+    setToFeatureMatrix(location,stateKey(victim.name,'location',True)
+
+* :py:class:`~psychsim.pwl.matrix.incrementMatrix` specifies a constant to be added to the old value of the given variable. The first example in this section could be more compactly rewritten as::
+
+    incrementMatrix(stateKey(WORLD,'time'),1)
+
+* :py:class:`~psychsim.pwl.matrix.addFeatureMatrix` specifies another variable whose value is to be added to the old value of the given variable. The following shifts the player's location by its current speed (possibly updated by the most recent set of actions)::
+
+    addFeatureMatrix(location,stateKey(player.name,'speed',True))
+
+    There is an optional third argument that specifies a scaling factor of the other variable (the default is 1). The following specifies that the victim's health should increase by 80% of the player's healing power::
+
+    addFeatureMatrix(health,stateKey(player.name,'power'),0.8)
+
+* :py:class:`~psychsim.pwl.matrix.scaleMatrix` specifies a constant factor that the old value of the given variable should be multiplied by. The following specifies an effect that reduces the victim's health level by a quarter::
+
+    scaleMatrix(health,0.75)
+
+* :py:class:`~psychsim.pwl.matrix.approachMatrix` specifies that the given variable should move closer to the specified constant limit by a fixed percentage. The following specifies an effect that the victim's health level gets 25% closer to its maximum value of 1::
+
+    approachMatrix(health,0.25,1)
+
+  The following specifies the exact same effect as our :py:class:`~psychsim.pwl.matrix.scaleMatrix` example::
+
+    approachMatrix(health,0.25,0)
+
+  :py:class:`~psychsim.pwl.matrix.approachMatrix` takes an optional fourth argument that specifies another variable that should be used by the limit (the default is naturally :py:const:`~psychsim.pwl.keys.CONSTANT`). The following specifies that the victim's health should move 25% closer to 90% of a different victim's up-to-the-minute health level::
+
+    approachMatrix(health,0.25,0.9,stateKey(healthierVictim.name,'health',True))
+
+* :py:class:`~psychsim.pwl.matrix.setTrueMatrix` and :py:class:`~psychsim.pwl.matrix.setFalseMatrix` are special cases of :py:class:`~psychsim.pwl.matrix.setToConstantMatrix` that are used for Boolean variables. The following represent equivalent effects of death and resurrection of our victim:: 
+
+  setFalseMatrix(alive)
+  setToConstantMatrix(alive,False)
+  setTrueMatrix(alive)
+  setToConstantMatrix(alive,True)
+
+* :py:class:`~psychsim.pwl.matrix.noChangeMatrix` is true to its name and specifies that the value of the given variable does not change. The following makes time stand still::
+
+  noChangeMatrix(stateKey(WORLD,'time'))
 
 .. _sec-legality:
 
