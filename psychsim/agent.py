@@ -347,7 +347,7 @@ class Agent(object):
                     if name in start:
                         actions[name] = start[name]
                         del start[name]
-                outcome = self.world.step(actions,current,keySubset=subkeys,horizon=horizon-t-1,
+                outcome = self.world.step(actions,current,keySubset=subkeys,horizon=horizon-t,
                                           updateBeliefs=updateBeliefs,debug=debug)
                 V['__ER__'].append(self.reward(current,model))
                 V['__EV__'] += V['__ER__'][-1]
