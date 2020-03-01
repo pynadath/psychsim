@@ -1033,10 +1033,13 @@ class Actor(Agent):
 
             logNode('Actor\'s information distortion','Over/underestimation in information received about hurricane severity','"none" / "over" / "under"','Static')
             #//GT: node 38; 1 of 1; next 7 lines
-            distortion = Distribution({'over': likert[5][config.getint('Actors','category_over')-1],
-                                       'under': likert[5][config.getint('Actors','category_under')-1]})
-            distortion['none'] = 1.-distortion['over']-distortion['under']
-            self.distortion = distortion.sample()
+            distortion = {}
+            if config.getint('Actors','category_over') > 0:
+                distortion['over'] = likert[5][config.getint('Actors','category_over')-1]
+            if config.getint('Actors','category_under') > 0:
+                distortion['under'] = likert[5][config.getint('Actors','category_under')-1]
+            distortion['none'] = 1.-distortion.get('over',0)-distortion.get('under',0)
+            self.distortion = Distribution(distortion).sample()
 #            self.world.defineState(self.name,'distortion',list,['none','over','under'],
 #                description='Over/underestimation in information received about hurricane severity',codePtr=True)
 #            self.setState('distortion',self.distortion)
