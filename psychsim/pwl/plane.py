@@ -15,6 +15,7 @@ class KeyedPlane:
     :type threshold: float
     :ivar comparison: if 1, value must be above hyperplane; if -1, below; if 0, equal (default is 1)
     :type comparison: int
+    :cvar COMPARISON_MAP: mapping from integer to comparator
     """
     DEFAULT_THRESHOLD = 0.
     DEFAULT_COMPARISON = 1
