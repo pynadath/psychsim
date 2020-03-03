@@ -243,7 +243,7 @@ Arbitrary linear functions of this form are allowed, but there are several often
 
     setToConstantMatrix(status,'saved')
 
-* :py:class:`~psychsim.pwl.matrix.setToFeatureMatrix` specifies another variable whose value should be taken as the new value for the given variable. The second example in this subsection could be more compactly rewritten as::
+* :py:class:`~psychsim.pwl.matrix.setToFeatureMatrix` specifies another variable whose value should be taken as the new value for the given variable. The second example in this subsection (using the victim's new location) could be more compactly rewritten as::
 
     setToFeatureMatrix(location,stateKey(victim.name,'location',True)
 
@@ -279,6 +279,7 @@ Arbitrary linear functions of this form are allowed, but there are several often
 
     setFalseMatrix(alive)
     setToConstantMatrix(alive,False)
+
     setTrueMatrix(alive)
     setToConstantMatrix(alive,True)
 
@@ -286,8 +287,47 @@ Arbitrary linear functions of this form are allowed, but there are several often
 
     noChangeMatrix(stateKey(WORLD,'time'))
 
+* :py:class:`~psychsim.pwl.matrix.dynamicsMatrix` is a convenience wrapper for arbitrary weights (in the form of a :py:class:`~psychsim.pwl.vector.KeyedVector`). We leave understanding the meaning of the following as an exercise for the reader::
+
+    dynamicsMatrix(health,KeyedVector({stateKey(player,'power'): 0.2,stateKey('fire','intensity'): -0.4,health: 1}))
+
 Hyperplanes
 ^^^^^^^^^^^
+If your agents live in a perfectly linear world, then these matrices are sufficient for your modeling purposes. However, most nontrivial domains have some nonlinearities. PsychSim supports a declarative representation of *piecewise* linear functions, allowing for different matrices to specify the output across different inputs. To specify what we mean by "different inputs", we use a :py:class:`~psychsim.pwl.plane.KeyedPlane`, that contains a :py:class:`~psychsim.pwl.vector.KeyedVector` specifying the weights on the hyperplane, a threshold, and a comparison to use between the weighted sum and the threshold. For example, the following specifies a hyperplane that tests whether the victim's health is below 1%::
+
+  KeyedPlane(KeyedVector({health: 1.},0.01,2))
+
+The first argument is the set of weights that implies a weighted sum over the variables that returns simply the victim's health. The second argument is the threshold to compare that weighted sum against (1%). And the third argument is a rather opaque way of specifying that the comparison should be a "strictly less than". In other words, this hyperplane test returns ``True`` if and only if the weighted sum (the victim's health) is < 0.01. If the third argument is omitted, it is assumed to be 1, corresponding to a "strictly greater than" comparison. A value of 0 corresponds to an equality test.  
+
+As with the matrices, there are several helper functions that more easily express commonly used hyperplane structures.
+
+* :py:class:`~psychsim.pwl.plane.thresholdRow` is one of the most commonly used, testing whether the given variable is strictly greater than a constant threshold. The following tests whether the player's healing power > 0.6::
+
+    thresholdRow(stateKey(player.name,'power'),0.6)
+
+* :py:class:`~psychsim.pwl.plane.greaterThanRow` is similar, but it tests whether the given variable is strictly greater than the value of another variable. The following tests whether the victim might actually be better off than the player::
+
+    greaterThanRow(health,stateKey(player.name,'health'))
+
+* :py:class:`~psychsim.pwl.plane.equalRow` tests whether the given variable equals the specified constant value. It is not recommended for continuous-valued variables, but works like a charm for integers or enumerated variables. For example, the following tests whether the victim has yet to be saved::
+
+    equalRow(status,'unsaved')
+
+* :py:class:`~psychsim.pwl.plane.equalFeatureRow` tests whether the given variable has the same value as another variable. Like :py:class:`~psychsim.pwl.plane.equalRow`, it is not recommended for continuous-valued variables, but is intended for integers or enumerated variables. For example, the following tests whether our victim's status has stayed the same over the current time step::
+
+    equalFeatureRow(status,makeFuture(status))
+
+* :py:class:`~psychsim.pwl.plane.trueRow` is used for Boolean variables, returning ``True`` if and only if the given variable is also ``True``. The following test whether the victim is alive::
+
+    trueRow(alive)
+
+* :py:class:`~psychsim.pwl.plane.differenceRow` compares the values of two variables, :math:`S_i` and :math:`S_j` and returns ``True`` if and only if :math:`S_i-S_j>\theta`. The following tests whether our victim's health has increased over the current time step::
+
+    differenceRow(makeFuture(health),health,0)
+
+* :py:class:`~psychsim.pwl.plane.andRow` tests a conjunction over Boolean variables (possibly negated) and returns ``True`` if and only if all of them have the desired value. The arguments are two lists: the first of variables that need to be ``True`` and the second of variables that need to be ``False``. The following returns ``True`` if and only if our victim is the only one alive out of some list of victim names::
+
+    andRow([alive],[stateKey(name,'alive') for name in victimList if name != victim.name])
 
 .. _sec-legality:
 
