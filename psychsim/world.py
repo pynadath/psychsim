@@ -580,7 +580,7 @@ class World(object):
             subtree = remaining.pop()
             if subtree.isLeaf():
                 if isinstance(subtree.children[None],bool):
-                    msg = 'Use set%sMatrix(psychsim.keys.TERMINATED) instead of %s' % \
+                    msg = 'Use set%sMatrix(psychsim.pwl.keys.TERMINATED) instead of %s' % \
                           (subtree.children[None],subtree.children[None])
                     raise DeprecationWarning(msg)
             elif subtree.isProbabilistic():
