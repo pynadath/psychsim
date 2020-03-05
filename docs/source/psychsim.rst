@@ -37,14 +37,6 @@ psychsim\.graph module
     :undoc-members:
     :show-inheritance:
 
-psychsim\.keys module
----------------------
-
-.. automodule:: psychsim.keys
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 psychsim\.modeling module
 -------------------------
 
