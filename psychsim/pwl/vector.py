@@ -273,8 +273,7 @@ class VectorDistribution(Distribution):
 
     def keys(self):
         """
-        :return: The keys of the vectors in the domain (assumed to be uniform),
-        NOT the keys of the domain itself
+        :return: The keys of the vectors in the domain (assumed to be uniform), NOT the keys of the domain itself
         """
         if len(self) > 0:
             return self.first().keys()
