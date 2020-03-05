@@ -329,6 +329,86 @@ As with the matrices, there are several helper functions that more easily expres
 
     andRow([alive],[stateKey(name,'alive') for name in victimList if name != victim.name])
 
+All of the planes presented so far have been binary tests. While combining such tests can achieve arbitrary levels of complexity, it can be simpler and more readable to have tests against multiple values simultaneously (i.e., parallel hyperplanes). To do so, you can provide multiple thresholds to test against, within the same instance. For example, an :py:class:`~psychsim.pwl.plane.equalRow` can take a list of possible values, returning the index of the value to which the variable is currently equal to::
+
+  equalRow(status,['unsaved','saved','dead'])
+
+This row will evaluate to 0 if the victim's current status is "unsaved", 1 if "saved", and 2 if "dead". If the victim's current status is some value not in the list of values provided (not possible in this case, but you get the idea), then the row evaluates to `None`. An analogous :py:class:`~psychsim.pwl.plane.thresholdRow` returns an index based on which interval the variable lies, where the intervals are defined by a provided list of thresholds::
+
+  thresholdRow(health,[0.25,0.5,0.75])
+
+This plane will return 0 if and only if the victim's health is :math:`\leq 0.25`, 1 if :math:`>0.25` and :math:`\leq 0.5`, 2 if :math:`>0.5` and :math:`\leq 0.75`, and 3 otherwise.  
+
+Equality tests also support sets of possible values, in which case, the test is whether the variable equals any of the values in the set::
+
+  equalRow(status,{'unsaved','dead'})
+
+This instance returns `True` if and only if the victim is either "unsaved" or "dead". All planes support lists and sets of thresholds in the same way as :py:class:`~psychsim.pwl.plane.equalRow`, by testing whether the weighted sum equals any of the values in the list or set. 
+
+It is also possible to combine hyperplanes that are not parallel. A single :py:class:`~psychsim.pwl.plane.KeyedPlane` object can contain multiple hyperplanes and represent either a disjunction or conjunction over their individual tests. The easiest way to create such a test is to add the individual hyperplanes together. The following creates a test on whether all victims have been saved::
+
+    planes = [equalRow(stateKey(name,'status'),'saved') for name in victimList]
+    allSaved = planes[0]
+    for plane in planes[1:]:
+      allSaved += plane
+
+This creates a conjunction over the individual planes. Creating a disjunction instead is a bit clunkier::
+
+
+    planes = [equalRow(stateKey(name,'status'),'saved') for name in victimList]
+    allSaved = planes[0]
+    allSaved.isConjunction = False
+    for plane in planes[1:]:
+      plane.isConjunction = False
+      allSaved += plane
+
+Helper functions that encapsulate these two combinations are relatively easy to write (HINT, HINT).
+
+Trees
+^^^^^
+The hyperplanes and matrices form the building blocks for the decision-tree representation of PWL functions. These decision trees are instances of :py:class:`~psychsim.pwl.tree.KeyedTree`, which has many methods for building up such trees from the leaves up. However, it is recommended that you instead use :py:class:`~psychsim.pwl.tree.makeTree`. For trees with no branches, you can pass the value to be stored in the single leaf node directly. The following creates a tree consisting of a single leaf node specifying that the victim's health drops by 10%::
+
+  makeTree(approachMatrix(health,0.1,0))
+
+We can introduce a nonlinearity by passing in a dictionary with one "if" entry, containing a hyperplane, and other entries corresponding to the child trees corresponding to the result of evaluating that hyperplane. For example, we can use the following invocation to create a tree where the victim's health increase if the player ends up in the same room::
+
+  makeTree({'if': equalFeatureRow(makeFuture(location)),stateKey(victim.name,'location',True),
+    True: approachMatrix(health,0.1,1),
+    False: approachMatrix(health,0.1,0)})
+
+The dictionaries can be nested in the same way you wish the final tree to be nested. For example, we may want the player's impact on the victim's health to be a function of healing power::
+
+  makeTree({'if': equalFeatureRow(makeFuture(location)),stateKey(victim.name,'location',True),
+    True: {'if': thresholdRow(stateKey(player.name,'power',True), 0.5),
+      True: approachMatrix(health,0.2,1),
+      False: approachMatrix(health,0.1,1)},
+    False: approachMatrix(health,0.1,0)})
+
+One can use nonbinary tests in the "if" branch as well. For example, the victim's status could contribute to the player's score as follows::
+
+  makeTree({'if': equalRow(makeFuture(status),['saved','unsaved','dead']),
+    0: incrementMatrix(stateKey(player.name,'score'),10),
+    1: noChangeMatrix(stateKey(player.name,'score')),
+    2: incrementMatrix(stateKey(player.name,'score'),-25)})
+
+At this point, you may be wondering where all our probabilities went. To specify a stochastic effect, your dictionary uses a "distribution" entry, instead of an "if". The value of the "distribution" is a list of tuples, with each tuple pairing a subtree (or leaf value) with a probability. The following represents uncertainty in the player's ability to save a victim, dependent on the player's healing power::
+
+  makeTree({'if': thresholdRow(stateKey(player.name,'power'),0.5),
+    True: {'distribution': [(setToConstantMatrix(status,'saved'),0.75),
+      (noChangeMatrix(status),0.25)]},
+    False: {'distribution': [(setToConstantMatrix(status,'saved'),0.5),
+      (noChangeMatrix(status),0.5)]}})
+
+In this tree, the player has a 75% chance of saving the victim if its healing power is greater than 0.5, but only a 50% chance otherwise.
+
+Uses of PWL Functions
+---------------------
+
+.. _sec-dynamics:
+
+Dynamics
+^^^^^^^^
+
 .. _sec-legality:
 
 Legality
@@ -341,10 +421,6 @@ Legality::
                     False: False})
    free.setLegal(action,tree)
 
-.. _sec-dynamics:
-
-Dynamics
-^^^^^^^^
 
 Termination
 ^^^^^^^^^^^
