@@ -364,6 +364,9 @@ This creates a conjunction over the individual planes. Creating a disjunction in
 
 Helper functions that encapsulate these two combinations are relatively easy to write (HINT, HINT).
 
+
+.. _sec-trees:
+
 Trees
 ^^^^^
 The hyperplanes and matrices form the building blocks for the decision-tree representation of PWL functions. These decision trees are instances of :py:class:`~psychsim.pwl.tree.KeyedTree`, which has many methods for building up such trees from the leaves up. However, it is recommended that you instead use :py:class:`~psychsim.pwl.tree.makeTree`. For trees with no branches, you can pass the value to be stored in the single leaf node directly. The following creates a tree consisting of a single leaf node specifying that the victim's health drops by 10%::
@@ -393,7 +396,7 @@ One can use nonbinary tests in the "if" branch as well. For example, the victim'
 
 At this point, you may be wondering where all our probabilities went. To specify a stochastic effect, your dictionary uses a "distribution" entry, instead of an "if". The value of the "distribution" is a list of tuples, with each tuple pairing a subtree (or leaf value) with a probability. The following represents uncertainty in the player's ability to save a victim, dependent on the player's healing power::
 
-  makeTree({'if': thresholdRow(stateKey(player.name,'power'),0.5),
+  stochTree = makeTree({'if': thresholdRow(stateKey(player.name,'power'),0.5),
     True: {'distribution': [(setToConstantMatrix(status,'saved'),0.75),
       (noChangeMatrix(status),0.25)]},
     False: {'distribution': [(setToConstantMatrix(status,'saved'),0.5),
@@ -401,37 +404,64 @@ At this point, you may be wondering where all our probabilities went. To specify
 
 In this tree, the player has a 75% chance of saving the victim if its healing power is greater than 0.5, but only a 50% chance otherwise.
 
-Uses of PWL Functions
----------------------
-
 .. _sec-dynamics:
 
 Dynamics
 ^^^^^^^^
+The main use of PWL functions is in specifying the dynamics of the world, i.e., the effects of actions on the state of the world. All of the examples used in Section :ref:`sec-trees` are examples of such PWL functions. To specify when a particular function should be used, you specify the action-state combination to which the effect applies::
+
+  world.setDynamics(status,save,stochTree)
+
+If there is an effect you would like to trigger on every time step, regardless of what actions are chosen, you can use `True`, instead of a specific action. The following might be a good way to update your clock::
+
+  world.setDynamics(clock,True,makeTree(incrementMatrix(clock)))
+
+If there is an effect you would like to never happen, you can use `False` instead. Or you could, you know, not do anything, and the result would be the same.
 
 .. _sec-legality:
 
 Legality
 ^^^^^^^^
 
-Legality::
+By default, an agent's action space is the same on each time step, allowing it choose from any of its defined actions, regardless of the state of the world. It can be useful to have the agent disregard certain options, either for rule-enforcement or to simplify its decision-making. To do so, each action definition accepts an optional argument in the form of a PWL function of the state with Boolean leaf nodes: returning `True` when the action should be allowed, and `False`, when it should not be considered.  For example, if a player can save a victim only when in the same location, you could declare, a priori, that the player cannot even consider saving the victim as an option unless that condition holds::
 
-   tree = makeTree({'if': equalRow(stateKey(WORLD,'phase'),'offer'),
-                    True: True,    
-                    False: False})
-   free.setLegal(action,tree)
+  save = player.addAction({'verb': 'save','object': victim.name},
+    makeTree({'if': equalFeatureRow(location,stateKey(victim.name,'location')),
+      True: True, False: False}))
 
+The hyperplanes are our usual PWL tests, as in the dynamics functions, but here the leaf nodes are Boolean constants, not matrices. Note that using these pre-defined legality functions is not necessary, and they do not extend the expressivity of the language. For example, instead of making saving a victim illegal, we could simply make it ineffective::
+
+  tree = makeTree({'if': equalFeatureRow(location,stateKey(victim.name,'location')),
+      True: setToConstantMatrix(status,'saved'), 
+      False: noChangeMatrix(status)})
+  setDynamics(status,save,tree) 
+
+In this second version, the player agent would consider saving the victim even when not in the same room. Given these dynamics, it would have an expectation that choosing "save" would have no effect, thus making it less desirable than any other action that would derive some positive reward. Given such a calculation, making "save" illegal under such conditions would not change the agent's behavior. However, when saving is legal, the agent incurs the computational cost of making the expected reward calculation necessary to determine that it is ineffectual; making the action illegal avoids that cost.
 
 Termination
 ^^^^^^^^^^^
 
-*Termination* conditions specify when scenario execution should reach an absorbing end state (e.g., when a final goal is reached, when time has expired). A termination condition is a PWL function (Section \ref{sec:pwl}) with boolean leaves.::
+*Termination* conditions specify when scenario execution should reach an absorbing end state (e.g., when a final goal is reached, when time has expired). A termination condition is a PWL function  with Boolean leaves, just like a legality condition (Section \ref{sec-legality). The following example constructs a very nested tree that returns `True` (i.e., the simulation is done) if and only if all of the victims are either saved or dead::
 
-   world.addTermination(makeTree({'if': trueRow(stateKey(WORLD,'treaty')),
-                                  True: True, False: False}))
+  tree = True
+  for name in victimList:
+    tree = {'if': equalRow(stateKey(name,'status'),'unsaved'),
+      True: False, False: tree}
+   world.addTermination(makeTree(tree))
 
-This condition specifies that the simulation ends if a "treaty" is reached. Multiple conditions can be specified, with termination occurring if any condition is true.
+We could replace this unsightly tree with a more compact one as follows::
 
+  for name in victimList:
+    unsaved = world.defineState(name,'unsaved',bool)
+    world.setFeature(unsaved,True)
+    tree = makeTree({'if': equalRow(stateKey(name,'status',True),'unsaved'),
+      True: setTrueMatrix(unsaved), False: setFalseMatrix(unsaved)})
+    world.setDynamics(unsaved,True,tree))
+  tree = makeTree({'if': andRow(falseKey=[stateKey(name,'unsaved',True) for name in victimList]),
+    True: True, False: False})
+  world.addTermination(tree)
+
+The downside of this version is that we add one additional state feature per victim, which can be costly when copying the state vector (as occurs in hypothetical reasoning).
 
 Reward
 ------
