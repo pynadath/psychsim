@@ -121,6 +121,36 @@ It is also possible to define an enumerated list of possible state features. Lik
    status = world.defineState(victim.name,'status',list,['unsaved','saved','dead'])
    victim.setState('status','unsaved')
 
+Probability
+^^^^^^^^^^^
+
+Maybe you already know this, but uncertainty is everywhere in social interaction. In particular, agents may not know what the true state of the world is, due to uncertain effects of actions and uncertain observations of those effects. As a result, :py:class:`~psychsim.probability.Distribution` objects are central to PsychSim's representations. Probability distributions can be treated as dictionaries, where the keys are the elements of the sample space, and the values are the probabilities associated with them. For example, we can represent a fair coin with the following distribution::
+
+  coin = Distribution({'heads': 0.5, 'tails': 0.5})
+  if coin.sample() == 'heads':
+     print('You win!')
+
+If you happen to lose enough that you suspect that the coin is in fact *not* fair, then you can update your beliefs by changing the distribution::
+
+  coin['heads'] = 0.25
+  coin['tails'] = 0.75
+
+If you want to know the probability that the coin lands on its edge, ``coin['edge']`` would throw an exception, while ``coin.get('edge')`` would return 0. To account for the nonzero probability that the coin lands on its edge, you must explicitly add such a probability::
+
+  coin['edge'] = 1e-8
+  coin.normalize()
+  for element in coin.domain():
+     print(coin[element])
+
+Possible Worlds
+^^^^^^^^^^^^^^^
+As already mentioned, PsychSim uses a factored representation, so that a state of the world is expressed as a probability distribution over possible feature-value pairs. More precisely, instead of distributions over arbitrary elements, the state of a PsychSim world is represented as a :py:class:`~psychsim.pwl.state.VectorDistributionSet` that represents a probability distribution over possible worlds::
+
+  world.setState(victim.name,'location',Distribution({1: 0.25, 3: 0.75}))
+  world.setState(victim.name,'status',Distribution({'alive': 0.9, 'dead': 0.1}))
+
+These statements specify uncertainty about the victim's location (probably Room 3 but maybe Room 1) and status (most likely alive, with a small chance of being dead). These two state features have independent distributions within the state. Thus, there is a 2.5% chance that the victim is lying dead in Room 1.
+
 Actions
 -------
 
@@ -173,36 +203,6 @@ By default, an agent can choose from all of its available actions on every turn.
          print(action['verb'])
 
 The fragment above illustrates one helpful shortcut for :py:class:`~psychsim.action.ActionSet` instances: you can access fields within the member actions as long as all of the member actions have the same value for that field. In other words, ``moveAndSave['subject']`` would return ``'Player 1'``, but ``moveAndSave['verb']`` would raise an exception.
-
-Probability
------------
-
-Maybe you already know this, but uncertainty is everywhere in social interaction. In particular, agents may not know what the true state of the world is, due to uncertain effects of actions and uncertain observations of those effects. As a result, :py:class:`~psychsim.probability.Distribution` objects are central to PsychSim's representations. Probability distributions can be treated as dictionaries, where the keys are the elements of the sample space, and the values are the probabilities associated with them. For example, we can represent a fair coin with the following distribution::
-
-  coin = Distribution({'heads': 0.5, 'tails': 0.5})
-  if coin.sample() == 'heads':
-     print('You win!')
-
-If you happen to lose enough that you suspect that the coin is in fact *not* fair, then you can update your beliefs by changing the distribution::
-
-  coin['heads'] = 0.25
-  coin['tails'] = 0.75
-
-If you want to know the probability that the coin lands on its edge, ``coin['edge']`` would throw an exception, while ``coin.get('edge')`` would return 0. To account for the nonzero probability that the coin lands on its edge, you must explicitly add such a probability::
-
-  coin['edge'] = 1e-8
-  coin.normalize()
-  for element in coin.domain():
-     print(coin[element])
-
-Possible Worlds
----------------
-As already mentioned, PsychSim uses a factored representation, so that a state of the world is expressed as a probability distribution over possible feature-value pairs. More precisely, instead of distributions over arbitrary elements, the state of a PsychSim world is represented as a :py:class:`~psychsim.pwl.state.VectorDistributionSet` that represents a probability distribution over possible worlds::
-
-  world.setState(victim.name,'location',Distribution({1: 0.25, 3: 0.75}))
-  world.setState(victim.name,'status',Distribution({'alive': 0.9, 'dead': 0.1}))
-
-These statements specify uncertainty about the victim's location (probably Room 3 but maybe Room 1) and status (most likely alive, with a small chance of being dead). These two state features have independent distributions within the state. Thus, there is a 2.5% chance that the victim is lying dead in Room 1.
 
 Piecewise Linear (PWL) Functions
 --------------------------------
@@ -406,8 +406,8 @@ In this tree, the player has a 75% chance of saving the victim if its healing po
 
 .. _sec-dynamics:
 
-Dynamics
-^^^^^^^^
+Transition Probability
+^^^^^^^^^^^^^^^^^^^^^^
 The main use of PWL functions is in specifying the dynamics of the world, i.e., the effects of actions on the state of the world. All of the examples used in Section :ref:`sec-trees` are examples of such PWL functions. To specify when a particular function should be used, you specify the action-state combination to which the effect applies::
 
   world.setDynamics(status,save,stochTree)
@@ -473,6 +473,9 @@ An agent's *reward* function represents its (dis)incentives for choosing certain
     goalFTerritory = maximizeFeature(stateKey(free.name,'territory'))
     free.setReward(goalFTerritory,1.)
 
+Observations
+------------
+
 Models
 ------
 
@@ -485,6 +488,3 @@ It also possible to specify alternate models that represent perturbations of thi
 
 Model Attribute: `static`
 ^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Observations
-------------
