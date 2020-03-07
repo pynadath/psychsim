@@ -1892,7 +1892,7 @@ class Actor(Agent):
                         decision['action'] = join['action']
 
             else:
-                best,EV = self.chooseAction(belief,horizon,model=model)
+                best,EV = self.chooseAction(belief,horizon,model=model,log=True)
                 decision = {'action': best,'__EV__': EV}
         else:
             decision = Agent.decide(self,state,horizon,None if self.config.getint('Simulation','phase',fallback=1) > 1 else others,
@@ -1959,7 +1959,7 @@ class Actor(Agent):
             return {a.name for a in self.world.agents.values() if isinstance(a,Actor) and \
                 not a.name == self.name and a.home == self.home}
 
-    def chooseAction(self,belief,horizon,action=None,model=None):
+    def chooseAction(self,belief,horizon,action=None,model=None,log=False):
         if horizon > 0:
             if action is not None:
                 self.projectState(belief,action,select='max')
@@ -1970,10 +1970,14 @@ class Actor(Agent):
                     V += EV
                 return action,V
             else:
-                V = {action: self.chooseAction(copy.deepcopy(belief),horizon,action,model)[1] for action in self.getActions(belief)}
+                options = {a['verb'] for a in self.getActions(belief)}
+                if 'join' in options:
+                    assert 'leave' not in options,str(belief)
+                V = {action: self.chooseAction(copy.deepcopy(belief),horizon,action,model,log)[1] for action in self.getActions(belief)}
                 best = None
                 for action,EV in V.items():
-                    logging.debug('ER %s = %f' % (action,EV))
+                    if log:
+                        logging.debug('ER %s = %f' % (action,EV))
                     if best is None or EV > best[1]:
                         best = action,EV
                 return best[0],best[1]
