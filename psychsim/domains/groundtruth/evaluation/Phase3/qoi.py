@@ -23,11 +23,14 @@ if __name__ == '__main__':
     variables = {}
 
 #    for args['instance'] in range(301,322):
-    for args['instance'] in range(332,333):
+    for args['instance'] in range(323,333):
         config = accessibility.getConfig(args['instance'])
         for args['run'] in range(10):
             tables = {label: [] for label in fields}
             dirName = accessibility.getDirectory(args)
+            for label in fields:
+                os.rename(os.path.join(dirName,'%sTable.bak' % (label)),os.path.join(dirName,'%sTable.tsv' % (label)))
+            continue
             # Load in initial simulation
             try:
                 with open(os.path.join(dirName,'scenario0.pkl'),'rb') as f:
@@ -71,9 +74,15 @@ if __name__ == '__main__':
                     group = 'Group%s' % (world.agents[name].demographics['home'])
                     key = binaryKey(name,group,'memberOf')
                     if key in world.variables:
-                        tables['RelationshipData'].append({'Timestep': t,'RelationshipType': 'memberOf','Directed': 'yes',
-                            'FromEntityID': name,'ToEntityID': group,
-                            'Data': 'yes' if world.getFeature(key,s['__state__'],True) else 'no'})
+                        member = world.getFeature(key,s['__state__'],True)
+                        for other in living:
+                            if world.agents[other].demographics['home'] == world.agents[name].demographics['home'] and other != name:
+                                tables['RelationshipData'].append({'Timestep': t,'RelationshipType': 'coMemberWith','Directed': 'yes',
+                                    'FromEntityID': name,'ToEntityID': other,
+                                    'Data': 'yes' if member and world.getFeature(binaryKey(other,group,'memberOf'),s['__state__'],True) else 'no'})
+#                        tables['RelationshipData'].append({'Timestep': t,'RelationshipType': 'memberOf','Directed': 'yes',
+#                            'FromEntityID': name,'ToEntityID': group,
+#                            'Data': 'yes' if world.getFeature(key,s['__state__'],True) else 'no'})
                 var = 'Deaths'
                 if var not in variables:
                     variables[var] = {'Name': var,'Values':'[0+]','DataType': 'Integer'}

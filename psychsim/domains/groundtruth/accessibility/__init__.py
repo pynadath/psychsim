@@ -34,12 +34,13 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 20,'run': 0,'span': 91},
     {'instance': 21,'run': 0,'span': 104},
     {'instance': 22,'run': 0,'span': 121},
-    {'instance': 23,'run': 0,'span': 30}
+    {'instance': 23,'run': 0,'span': 166},
+    {'instance': 24,'run': 0,'span': 89},
     ]
     
 instanceMap = {'Phase1': {'Explain': [1], 'Predict': [3,4,5,6,7,8], 'Prescribe': [9,10,11,12,13,14]},
     'Phase2': {'Explain': [15,16,17], 'Predict': [18,19], 'Prescribe': [20,21]},
-    'Phase3': {'Explain': [22], 'Predict': [23]},
+    'Phase3': {'Explain': [22], 'Predict': [23,24]},
     }
 def instanceArgs(phase,challenge=True):
     if challenge is True:
@@ -703,7 +704,7 @@ def loadState(args,states,t,turn,world=None,sub=None):
         for name,state in states[t][turn].items():
             if name == '__state__':
                 world.state = state
-            else:
+            elif name[:5] != 'Group':
                 agent = world.agents[name]
                 for model,belief in state.items():
                     agent.models[model]['beliefs'] = belief
@@ -784,27 +785,27 @@ def readLog(args):
     """
     Extracts expected reward tables from 'psychsim.log'
     """
-    ER = [None]
+    ER = {}
     with openFile(args,'psychsim.log') as logfile:
         for line in logfile:
             words = line.strip().split()
             if words:
                 if words[0] == 'Day':
                     t = int(words[1])
-                    ER.append({})
+                    ER[t] = {}
                 elif words[0] == 'Evaluated':
                     action = Action(words[1])
-                    if action['subject'] not in ER[-1]:
-                        ER[-1][action['subject']] = {}
-                    ER[-1][action['subject']][action] = float(words[-1])
+                    if action['subject'] not in ER[t]:
+                        ER[t][action['subject']] = {}
+                    ER[t][action['subject']][action] = float(words[-1])
                 elif line[:2] == 'ER':
                     action = ActionSet(Action(words[1]))
-                    if action['subject'] not in ER[-1]:
-                        ER[-1][action['subject']] = {}
+                    if action['subject'] not in ER[t]:
+                        ER[t][action['subject']] = {}
                     try:
-                        ER[-1][action['subject']][action] = float(words[-1])
+                        ER[t][action['subject']][action] = float(words[-1])
                     except ValueError:
-                        ER[-1][action['subject']][action] = words[-1]
+                        ER[t][action['subject']][action] = words[-1]
     return ER
 
 def unpickle(instance,sub=None,day=None):
