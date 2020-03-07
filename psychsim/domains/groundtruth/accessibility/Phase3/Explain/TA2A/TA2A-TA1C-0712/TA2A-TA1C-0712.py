@@ -104,7 +104,7 @@ if __name__ == '__main__':
 
                 var = '%s %d Hurricane %d Aid Received' % (team,reqNum,h['Hurricane'])
                 if var not in variables:
-                    variables[var] = {'Name': var,'Values':'[1-5]','DataType': 'Integer','Notes': 'Q7'}
+                    variables[var] = {'Name': var,'Values':'[1-7]','DataType': 'Integer','Notes': 'Q7'}
                 record = dict(root)
                 record['VariableName'] = var
                 record['Value'] = accessibility.toLikert(len([t for t in range(h['Start'],h['End']) if aid[t] == agent.demographics['home']])
