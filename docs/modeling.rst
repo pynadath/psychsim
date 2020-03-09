@@ -509,7 +509,9 @@ These commands give the player the goals of moving close to the victim agent and
 
 Observations
 ------------
-By default, all agents know the true state of the world (i.e., their world is an MDP, not a POMDP). But what fun is that? 
+By default, all agents know the true state of the world (i.e., their world is an MDP, not a POMDP). But what fun is that? Each agent has an obsevation attribute that is a set of variables that it observes. The following says that the player can observe everything except the state of the victim::
+
+  player.omega = {var for var in world.keys() if not isStateKey(var) and state2agent(var) != victim.name}
 
 Beliefs
 ------
