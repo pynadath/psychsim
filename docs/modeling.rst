@@ -466,19 +466,56 @@ The downside of this version is that we add one additional state feature per vic
 Reward
 ------
 
-An agent's *reward* function represents its (dis)incentives for choosing certain actions. In other agent frameworks, this same component might be referred to as the agent's *utility* or *goals*. It is often convenient to separate different aspects of the agent's reward function::
+We have already made a few references to the agent's reward function, which, after all, is the only reason the agent cares about the state, actions, their effects, etc. An agent's reward function represents its (dis)incentives for choosing certain actions. In other agent frameworks, this same component might be referred to as the agent's *utility* or *goals*. Just like every other function in a PsychSim model, reward functions are represented by our PWL trees. The leaf nodes are matrices that specify the effect on a special state feature corresponding to an agent's reward, labeled using a special function :py:class:`~psychsim.pwl.keys.rewardKey`. For example, the following represents a positive reward equal to the "value" of a particular victim::
 
-    goalFTroops = maximizeFeature(stateKey(free.name,'troops'))
-    free.setReward(goalFTroops,1.)
-    goalFTerritory = maximizeFeature(stateKey(free.name,'territory'))
-    free.setReward(goalFTerritory,1.)
+  makeTree(setToFeatureMatrix(rewardKey(player.name),stateKey(victim.name,'value')))
+
+As always, we can introduce hyperplanes to be more selective about when this reward is earned::
+
+  makeTree({'if': equalRow(status,'saved'),
+    True: setToFeatureMatrix(rewardKey(player.name),stateKey(victim.name,'value')),
+    False: setToConstantMatrix(rewardKey(player.name),0)})
+
+There are some helper functions that generate some commonly used reward function structures.
+
+* :py:class:`~psychsim.reward.maximizeFeature` gives the agent positive reward that is linear in the given state feature, such as the victim's health::
+
+    maximizeFeature(stateKey(victim.name,'health'),player.name)
+
+Note that the second argument is the name of the agent who receives this reward; it has nothing to do with the agent whose value is the input to the reward function.
+
+* :py:class:`~psychsim.reward.minimizeFeature` similarly gives the agent negative reward that is linear in the given state feature, such as the number of dead victims::
+
+    minimizeFeature(stateKey(WORLD,deaths),player.name)
+
+* :py:class:`~psychsim.reward.achieveFeatureValue` gives a reward when a given variable equals a desired value and none otherwise. We can use it for a more readable version of our selective saving reward from earlier in this section::
+
+    achieveFeatureValue(status,'saved',player.name)
+
+* :py:class:`~psychsim.reward.achieveGoal` gives a reward when a Boolean variable is `True` and none otherwise. For example, our player agent may be grateful that the victim hasn't died on it yet::
+
+    achieveGoal(alive,player.name)
+
+* :py:class:`~psychsim.reward.minimizeDifference` yields a reward inversely proportional to the magnitude of the difference between two variables. Perhaps our player is grateful just to be near the victim::
+
+    minimizeDifference(location,stateKey(victim.name,'location'),player.name)
+
+Rewards are computed just as any other state feature. They are essentially float-valued with no lower or upper bounds. However, while transition probability functions are inserted via :py:meth:`~psychsim.world.World.setDynamics`, reward functions are inserted via :py:meth:`~psychsim.agent.Agent.setReward`. Thus, reward functions are specific to an individual agent. The call also takes a weight to be given to the reward, representing the relative priority of this component of the agent's reward function. The following define a composite reward function for our player agent::
+
+  player.setReward(minimizeDifference(location,stateKey(victim.name,'location'),player.name),1)
+  player.setReward(achieveFeatureValue(status,'saved',player.name),2)
+
+These commands give the player the goals of moving close to the victim agent and saving it. The former is only half as important as the latter in this example.
 
 Observations
 ------------
+By default, all agents know the true state of the world (i.e., their world is an MDP, not a POMDP). But what fun is that? 
 
-Models
+Beliefs
 ------
 
+Models
+^^^^^^
 A *model* in the PsychSim context is a potential configuration of an agent that may apply in certain worlds or decision-making contexts. All agents have a "True" model that represents their real configuration, which forms the basis of all of their decisions during execution. 
 
 
