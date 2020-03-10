@@ -175,7 +175,7 @@ class World(object):
         state.rollback()
 #        if select:
 #            prob = state.select(select=='max')
-        effect = self.effect(joint,state,updateBeliefs,keySubset,select)
+        effect = self.effect(joint,state,updateBeliefs,keySubset,select,horizon)
         # The future becomes the present
         state.rollback()
         if isinstance(state,VectorDistributionSet):
@@ -446,7 +446,7 @@ class World(object):
                         state[makeFuture(key)] = select[key]
         return state
                 
-    def effect(self,actions,state,updateBeliefs=True,keySubset=None,select=False):
+    def effect(self,actions,state,updateBeliefs=True,keySubset=None,select=False,horizon=None):
 #        if not isinstance(state,VectorDistributionSet):
 #            state = psychsim.pwl.VectorDistributionSet(state)
         result = {'new': state,'effect': []}
@@ -464,7 +464,7 @@ class World(object):
                 agent = self.agents[name]
                 if isinstance(result['new'],VectorDistributionSet):
                     substate = result['new'].collapse(agent.omega|{key},False)
-                delta = agent.updateBeliefs(result['new'],actions)
+                delta = agent.updateBeliefs(result['new'],actions,horizon=horizon)
                 if delta:
                     result['effect'].append(delta)
                     if select:
