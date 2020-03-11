@@ -54,7 +54,7 @@ class VectorDistributionSet:
             for substate in substates:
                 element = domains[substate][i % len(domains[substate])]
                 prob = self.distributions[substate][element]
-                i /= len(domains[substate])
+                i //= len(domains[substate])
                 value.distributions[substate] = VectorDistribution({element: prob})
             yield value
 
