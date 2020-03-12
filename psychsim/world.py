@@ -175,7 +175,24 @@ class World(object):
         state.rollback()
 #        if select:
 #            prob = state.select(select=='max')
-        effect = self.effect(joint,state,updateBeliefs,keySubset,select,horizon)
+        if updateBeliefs:
+            # Update agent models included in the original world
+            # (after finding out possible new worlds)
+            if isinstance(state,VectorDistributionSet):
+                agentsModeled = [name for name in self.agents
+                                 if modelKey(name) in state.keyMap and self.agents[name].omega is not True]
+            else:
+                agentsModeled = [name for name in self.agents
+                                 if modelKey(name) in state and self.agents[name].omega is not True]
+            for name in agentsModeled:
+                key = modelKey(name)
+                agent = self.agents[name]
+                if isinstance(state,VectorDistributionSet):
+                    substate = state.collapse(agent.omega|{key},False)
+                delta = agent.updateBeliefs(state,joint,horizon=horizon)
+                if delta:
+                    if select:
+                        state.distributions[substate].select(select == 'max')
         # The future becomes the present
         state.rollback()
         if isinstance(state,VectorDistributionSet):
@@ -328,7 +345,7 @@ class World(object):
             for name in toDecide:
                 # This agent might have a turn now
                 agent = self.agents[name]
-                decision = self.agents[name].decide(state,horizon,actions,None,tiebreak,
+                decision = self.agents[name].decide(state,horizon,None,None,tiebreak,
                                                     agent.getActions(state),debug=debug.get(name,{}))
                 try:
                     actions[name] = decision['policy']
