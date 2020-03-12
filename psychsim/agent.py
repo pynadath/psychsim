@@ -224,6 +224,8 @@ class Agent(object):
                 return {'action': action}
         if horizon is None:
             horizon = self.getAttribute('horizon',model)
+        else:
+            horizon = min(horizon,self.getAttribute('horizon',model))
         if actions is None:
             # Consider all legal actions (legality determined by my belief, circumscribed by real world)
             actions = self.getActions(belief)
@@ -1062,7 +1064,7 @@ class Agent(object):
                 world = copy.deepcopy(beliefs)
             return world
 
-    def updateBeliefs(self,trueState,actions):
+    def updateBeliefs(self,trueState,actions,horizon=None):
         """
         .. warning:: Even if this agent starts with ``True`` beliefs, its beliefs can deviate after actions with stochastic effects (i.e., the world transitions to a specific state with some probability, but the agent only knows a posterior distribution over that resulting state). If you want the agent's beliefs to stay correct, then set the ``static`` attribute on the model to ``True``.
 
@@ -1107,7 +1109,7 @@ class Agent(object):
                     # Get old belief state.
                     beliefs = copy.deepcopy(original)
                     # Project direct effect of the actions, including possible observations
-                    self.world.step(state=beliefs,keySubset=beliefs.keys())
+                    self.world.step(knownActions,beliefs,keySubset=beliefs.keys(),horizon=horizon,updateBeliefs=False)
                     # Condition on actual observations
                     for omega in self.omega:
                         value = vector[omega]
@@ -1119,8 +1121,8 @@ class Agent(object):
                         else:
                             logging.error('Beliefs:\n%s' %
                                           (beliefs.distributions[beliefs.keyMap[omega]]))
-                            raise ValueError('Impossible observation %s=%s' % \
-                                          (omega,vector[omega]))
+                            raise ValueError('%s has impossible observation %s=%s' % \
+                                          (self.name,omega,vector[omega]))
                         beliefs[omega] = vector[omega]
                     # Create model with these new beliefs
                     # TODO: Look for matching model?
