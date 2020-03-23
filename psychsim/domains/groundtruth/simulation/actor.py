@@ -1033,10 +1033,13 @@ class Actor(Agent):
 
             logNode('Actor\'s information distortion','Over/underestimation in information received about hurricane severity','"none" / "over" / "under"','Static')
             #//GT: node 38; 1 of 1; next 7 lines
-            distortion = Distribution({'over': likert[5][config.getint('Actors','category_over')-1],
-                                       'under': likert[5][config.getint('Actors','category_under')-1]})
-            distortion['none'] = 1.-distortion['over']-distortion['under']
-            self.distortion = distortion.sample()
+            distortion = {}
+            if config.getint('Actors','category_over') > 0:
+                distortion['over'] = likert[5][config.getint('Actors','category_over')-1]
+            if config.getint('Actors','category_under') > 0:
+                distortion['under'] = likert[5][config.getint('Actors','category_under')-1]
+            distortion['none'] = 1.-distortion.get('over',0)-distortion.get('under',0)
+            self.distortion = Distribution(distortion).sample()
 #            self.world.defineState(self.name,'distortion',list,['none','over','under'],
 #                description='Over/underestimation in information received about hurricane severity',codePtr=True)
 #            self.setState('distortion',self.distortion)
@@ -1787,8 +1790,10 @@ class Actor(Agent):
                 if action['verb'] == joint['verb']:
                     if 'object' in action:
                         if action['object'] == joint['object']:
+                            logging.info('ER %s = %s' % (action,self.spouse))
                             return {'action': action}
                     else:
+                        logging.info('ER %s = %s' % (action,self.spouse))
                         return {'action': action}
             else:
                 raise ValueError('%s unable to match spouse action: %s' % (self.name,joint))
@@ -1887,7 +1892,7 @@ class Actor(Agent):
                         decision['action'] = join['action']
 
             else:
-                best,EV = self.chooseAction(belief,horizon,model=model)
+                best,EV = self.chooseAction(belief,horizon,model=model,log=True)
                 decision = {'action': best,'__EV__': EV}
         else:
             decision = Agent.decide(self,state,horizon,None if self.config.getint('Simulation','phase',fallback=1) > 1 else others,
@@ -1954,7 +1959,7 @@ class Actor(Agent):
             return {a.name for a in self.world.agents.values() if isinstance(a,Actor) and \
                 not a.name == self.name and a.home == self.home}
 
-    def chooseAction(self,belief,horizon,action=None,model=None):
+    def chooseAction(self,belief,horizon,action=None,model=None,log=False):
         if horizon > 0:
             if action is not None:
                 self.projectState(belief,action,select='max')
@@ -1965,9 +1970,14 @@ class Actor(Agent):
                     V += EV
                 return action,V
             else:
-                V = {action: self.chooseAction(copy.deepcopy(belief),horizon,action,model)[1] for action in self.getActions(belief)}
+                options = {a['verb'] for a in self.getActions(belief)}
+                if 'join' in options:
+                    assert 'leave' not in options,str(belief)
+                V = {action: self.chooseAction(copy.deepcopy(belief),horizon,action,model,log)[1] for action in self.getActions(belief)}
                 best = None
                 for action,EV in V.items():
+                    if log:
+                        logging.debug('ER %s = %f' % (action,EV))
                     if best is None or EV > best[1]:
                         best = action,EV
                 return best[0],best[1]

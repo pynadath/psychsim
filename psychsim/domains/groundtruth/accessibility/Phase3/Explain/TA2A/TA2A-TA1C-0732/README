@@ -1,0 +1,3 @@
+5. If the actors did not provide aid, they respond with 0. If the actors provided aid, but do not know the beneficiaries of their aid, they respond with "unknown". 
+
+6. If the actors do not know the beneficiaries of their aid, they do not respond to these items.

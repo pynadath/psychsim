@@ -523,7 +523,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
             if freq == 'season':
                 electionT /= config.getint('Disaster','year_length',fallback=365) + 1
             elif freq == 'hurricane':
-                electionT = state['hurricane']
+                electionT = state['hurricanes']
             if electionT > state['election']:
                 # Time for a new election
                 world.agents['System'].election(living)
@@ -795,6 +795,7 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
             buf.close()
         else:
             record = {agent.name: agent.getBelief() for agent in living}
+            record.update({name: world.agents[name].getBelief() for name in world.agents if name[:5] == 'Group'})
             record['__state__'] = world.state
             with open(os.path.join(dirName,'state%d%s.pkl' % (day,turn)),'wb') as outfile:
                 pickle.dump(record,outfile)            

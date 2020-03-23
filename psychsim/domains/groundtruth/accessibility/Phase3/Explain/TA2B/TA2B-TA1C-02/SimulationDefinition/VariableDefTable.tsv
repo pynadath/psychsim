@@ -1,0 +1,11 @@
+Name	LongName	Values	VarType	DataType	Notes
+TA2B 2 Hurricane	TA2B 2 Hurricane	[1+]	dynamic	Integer	5b
+TA2B 2 At Shelter	TA2B 2 At Shelter	yes,no	dynamic	Boolean	5d.i
+TA2B 2 Evacuated	TA2B 2 Evacuated	yes,no	dynamic	Boolean	5d.ii
+TA2B 2 Injured	TA2B 2 Injured	yes,no	dynamic	Boolean	5d.iii
+TA2B 2 Risk	TA2B 2 Risk	[1-7]	dynamic	Integer	5d.iv
+TA2B 2 Dissatisfaction	TA2B 2 Dissatisfaction	[1-7]	dynamic	Integer	5d.v
+TA2B 2 Shelter Possibility	TA2B 2 Shelter Possibility	[1-7]	dynamic	Integer	5d.vi: N/A if already at shelter
+TA2B 2 Evacuation Possibility	TA2B 2 Evacuation Possibility	[1-7]	dynamic	Integer	5d.vii: N/A if already evacuated
+TA2B 2 Stay at Home Possibility	TA2B 2 Stay at Home Possibility	[1-7]	dynamic	Integer	5d.viii: N/A if stayed home
+TA2B 2 Deceased	TA2B 2 Deceased	deceased	dynamic	String	

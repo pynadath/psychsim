@@ -1,3 +1,4 @@
+import logging
 import random
 
 from psychsim.pwl import *
@@ -282,62 +283,63 @@ class Group(Agent):
         if model is None:
             model = self.world.getModel(self.name,state)
         members = self.members(state)
-        # Extract member beliefs
-        models = {}
-        for name in members:
-            if modelKey(name) in state:
-                models[name] = self.world.getModel(name,state)
-            else:
-                models[name] = self.world.getModel(name,self.world.state)
-            if isinstance(models[name],Distribution):
-                assert len(models[name]) == 1
-                models[name] = models[name].first()
-        beliefs = {name: self.world.agents[name].getBelief(state,models[name])
-                   for name in members}
         belief = VectorDistributionSet()
-        for key in [turnKey(name) for name in [self.name,'Nature','System']]+[turnKey(name) for name in members]+\
-            [actionKey(name) for name in [self.name,'Nature','System']]+[actionKey(name) for name in members]+\
-            [binaryKey(name,self.name,'memberOf') for name in members]+[modelKey(name) for name in members]:
-            if key in state:
-                self.world.setFeature(key,self.world.getFeature(key,state),belief)
-        uncertain = {stateKey('Nature','category'): None,
-            stateKey(self.name[5:],'risk'): None}
-        if self.config.getboolean('Groups','evacuate',fallback=False) and self.config.getboolean('Disaster','evacuation_path_risk',fallback=False):
-            path = self.world.agents[self.name[5:]].evacuationPath()
-            uncertain[stateKey(path[-1],'risk')] = None
-        for subbelief in beliefs.values():
-            for key in subbelief.keys():
-                if isStateKey(key) and state2feature(key) == 'shelterRisk':
-                    uncertain[key] = None
-        for feature in ['phase','days','location']:
-            # Use real values, because any disagreement are ignorable
-            subbelief = self.world.getState('Nature',feature,state)
-            self.world.setState('Nature',feature,subbelief,belief)
-        for name in members:
-            for key in {stateKey(name,'risk'),stateKey(name,'location'),stateKey(name,'employed')}|\
-                self.world.agents[name].getReward(models[name]).getKeysIn()-{CONSTANT}:
-                self.world.setFeature(key,self.world.getFeature(key,beliefs[name]),belief)
-
-            for key in uncertain:
-                subbelief = self.world.getFeature(key,beliefs[name])
-                if uncertain[key] is None:
-                    uncertain[key] = {value: subbelief[value] for value in subbelief.domain()}
-                    if self.aggregator != 'mean':
-                        uncertain[key] = Distribution(uncertain[key])
-                elif self.aggregator == 'max':
-                    if subbelief.expectation() > uncertain[key].expectation():
-                        uncertain[key] = subbelief
-                elif self.aggregator == 'min':
-                    if subbelief.expectation() < uncertain[key].expectation():
-                        uncertain[key] = subbelief
+        if members:
+            # Extract member beliefs
+            models = {}
+            for name in members:
+                if modelKey(name) in state:
+                    models[name] = self.world.getModel(name,state)
                 else:
-                    assert self.aggregator == 'mean'
-                    uncertain[key].update({value: subbelief[value]+uncertain[key].get(value,0.) for value in subbelief.domain()})
-        if self.aggregator == 'mean':
-            for key in uncertain:
-                uncertain[key] = Distribution({value: prob / len(members) for value,prob in uncertain[key].items()})
-        for key,dist in uncertain.items():
-            self.world.setFeature(key,dist,belief)
+                    models[name] = self.world.getModel(name,self.world.state)
+                if isinstance(models[name],Distribution):
+                    assert len(models[name]) == 1
+                    models[name] = models[name].first()
+            beliefs = {name: self.world.agents[name].getBelief(state,models[name])
+                       for name in members}
+            for key in [turnKey(name) for name in [self.name,'Nature','System']]+[turnKey(name) for name in members]+\
+                [actionKey(name) for name in [self.name,'Nature','System']]+[actionKey(name) for name in members]+\
+                [binaryKey(name,self.name,'memberOf') for name in members]+[modelKey(name) for name in members]:
+                if key in state:
+                    self.world.setFeature(key,self.world.getFeature(key,state),belief)
+            uncertain = {stateKey('Nature','category'): None,
+                stateKey(self.name[5:],'risk'): None}
+            if self.config.getboolean('Groups','evacuate',fallback=False) and self.config.getboolean('Disaster','evacuation_path_risk',fallback=False):
+                path = self.world.agents[self.name[5:]].evacuationPath()
+                uncertain[stateKey(path[-1],'risk')] = None
+            for subbelief in beliefs.values():
+                for key in subbelief.keys():
+                    if isStateKey(key) and state2feature(key) == 'shelterRisk':
+                        uncertain[key] = None
+            for feature in ['phase','days','location']:
+                # Use real values, because any disagreement are ignorable
+                subbelief = self.world.getState('Nature',feature,state)
+                self.world.setState('Nature',feature,subbelief,belief)
+            for name in members:
+                for key in {stateKey(name,'risk'),stateKey(name,'location'),stateKey(name,'employed')}|\
+                    self.world.agents[name].getReward(models[name]).getKeysIn()-{CONSTANT}:
+                    self.world.setFeature(key,self.world.getFeature(key,beliefs[name]),belief)
+
+                for key in uncertain:
+                    subbelief = self.world.getFeature(key,beliefs[name])
+                    if uncertain[key] is None:
+                        uncertain[key] = {value: subbelief[value] for value in subbelief.domain()}
+                        if self.aggregator != 'mean':
+                            uncertain[key] = Distribution(uncertain[key])
+                    elif self.aggregator == 'max':
+                        if subbelief.expectation() > uncertain[key].expectation():
+                            uncertain[key] = subbelief
+                    elif self.aggregator == 'min':
+                        if subbelief.expectation() < uncertain[key].expectation():
+                            uncertain[key] = subbelief
+                    else:
+                        assert self.aggregator == 'mean'
+                        uncertain[key].update({value: subbelief[value]+uncertain[key].get(value,0.) for value in subbelief.domain()})
+            if self.aggregator == 'mean':
+                for key in uncertain:
+                    uncertain[key] = Distribution({value: prob / len(members) for value,prob in uncertain[key].items()})
+            for key,dist in uncertain.items():
+                self.world.setFeature(key,dist,belief)
         return belief
 
     def decide(self,state=None,horizon=None,others=None,model=None,selection=None,actions=None,
@@ -350,6 +352,7 @@ class Group(Agent):
         if len(members) < 2:
             for action in actions:
                 if action['verb'] == 'noDecision':
+                    logging.debug('ER %s = 0' % (action))
                     return{'action': action}
         if model is None:
             model = self.world.getModel(self.name,state)
@@ -401,6 +404,8 @@ class Group(Agent):
 
         best = None
         for action,value in V.items():
+            if state is self.world.state:
+                logging.debug('ER %s = %f' % (action,value))
             if best is None or value > best[1]:
                 best = action,value
         actions = sorted(risks.keys())
