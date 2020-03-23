@@ -7,7 +7,10 @@ import sys
 from psychsim.domains.groundtruth.simulation.data import mapFromTandE,reverseLikert
 from psychsim.domains.groundtruth.simulation.create import getConfig
 from psychsim.domains.groundtruth.simulation.execute import runInstance
-from psychsim.domains.groundtruth.simulation.visualize import initVisualization, vizUpdateLoop
+try:
+    from psychsim.domains.groundtruth.simulation.visualize import vizUpdateLoop, initVisualization
+except ModuleNotFoundError:
+    vizUpdateLoop = None
 import queue
 
 

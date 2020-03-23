@@ -242,9 +242,9 @@ class Actor(Agent):
                 y = random.random()
                 for neighbor in neighbors:
                     if config.getint('Simulation','phase',fallback=1) == 1:
-                        if abs(neighbor.getState('x').first()-x)+abs(neighbor.getState('y').first()-y) < 0.05:
+                        if abs(world.agents[neighbor].getState('x').first()-x)+abs(world.agents[neighbor].getState('y').first()-y) < 0.05:
                             break
-                    elif abs(neighbor.x-x)+abs(neighbor.y-y) < 0.05:
+                    elif abs(world.agents[neighbor].x-x)+abs(world.agents[neighbor].y-y) < 0.05:
                         break
                 else:
                     tooClose = False
