@@ -11,7 +11,7 @@ import sys
 
 
 class Person(Agent):
-	def __init__(self, name, init_location, world, feelings_toward, random_horizon=False, random_weights=False, random_costs=False):
+	def __init__(self, name, init_location, world, random_horizon=False, random_weights=False, random_costs=False):
 		Agent.__init__(self,name)
 		world.addAgent(self)
 
@@ -123,7 +123,7 @@ class Person(Agent):
 
 		risk = stateKey('commercial','risk')
 		initialHealth = 100.
-		decline_perc = .9
+		decline_perc = 0.01
 		# make future this where we have the value for time T and time T+1, and we are defining the new health value
 		# this is basically what it means:
 		# future health= current health* (1-decline_perc)+ decline_perc*initialHealth -future risk*(decline_perc/2) -future hunger*(decline_perc/2)
@@ -143,8 +143,6 @@ class Person(Agent):
 		residential=world.agents['residential']
 		## impacts of gohome
 		risk = stateKey('residential','risk')
-		initialHealth = 100.
-		decline_perc = .5
 		tree = makeTree(KeyedMatrix({
 			makeFuture(health): 
 				KeyedVector({
@@ -377,7 +375,7 @@ if __name__ == '__main__':
 
 	for j in range(civilian_count):
 		starting_location=(randint(residential.lower_x,residential.higher_x), randint(residential.lower_y,residential.higher_y))
-		civilian = Person('civilian %d ' %(j+1), starting_location, world, True, False, True)
+		civilian = Person('civilian %d ' %(j+1), starting_location, world)
 		civilians.append(civilian.name)
 
 	friendly_force_location=(randint(commercial.lower_x, commercial.higher_x), randint(commercial.lower_y, commercial.higher_y))
