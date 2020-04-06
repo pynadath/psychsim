@@ -154,14 +154,14 @@ def runInstance(instance,args,config,rerun=True):
         del preSurveyRecords[:]
         del postSurveyRecords[:]
         # Set up tables for visualization
-        allTables = {'Region': {'fields': [('alive','casualties','invert'),
+        allTables = {'Region': {'fields': [#('alive','casualties','invert'),
                                            ('location','evacuated','#evacuated'),
                                            ('location','shelter','#shelter'),
                                            ('risk','safety','invert')],
                                 'population': Region,
                                 'series': True,
                                 'log': []},
-                     'Actors': {'fields': [('alive','alive',None),
+                     'Actors': {'fields': [#('alive','alive',None),
                                            ('location','shelter','=shelter'),
                                            ('location','evacuated','=evacuated'),
                                            ('risk','safety','invert'),
@@ -180,7 +180,8 @@ def runInstance(instance,args,config,rerun=True):
         if config.getboolean('System','system'):
             allTables['Actors']['fields'].append(('grievance','satisfaction','invert'))
         if args['visualize']:
-            addState2tables(world,0,allTables,population,regions)
+            addState2tables(world,0,allTables,population,regions,config)
+            
         # Load any pre-specified future hurricanes
         if args['hurricane']:
             future = readHurricaneFile(args['hurricane'])
@@ -390,7 +391,7 @@ def runInstance(instance,args,config,rerun=True):
                     break
             nextDay(world,groups,state,config,dirName,survey,start,cdfTables,future=future,maximize=args['max'])
             if args['visualize']:
-                addState2tables(world,world.getState(WORLD,'day',unique=True)-1,allTables,population,regions)
+                addState2tables(world,world.getState(WORLD,'day',unique=True)-1,allTables,population,regions,config)
                 visualize.addDayToQueue(world.getState(WORLD,'day',unique=True)-1)
             hurricaneEntry = writeHurricane(world,state['hurricanes']+1,dirName)
             if args['visualize']:
@@ -859,35 +860,78 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                 state['hurricanes'] += 1
                 logging.info('Completed Hurricane #%d' % (state['hurricanes']))
         state['phase'] = phase
-    
-def addState2tables(world,day,tables,population,regions):
+
+
+
+
+from pprint import pprint
+import traceback
+deadInfo = {}
+def addState2tables(world,day,tables,population,regions,config):
     # Grab all of the relevant fields, but only once
     values = {agent.name: {} for agent in population}
+    #print(values)
     for agent in population:
+
+        alive = True
+        try:
+            if float(agent.getState('health')) > config.getfloat('Actors','life_threshold'):
+                pass
+        except KeyError:
+            print ("Agent %s is dead :("%agent.name )
+            alive = False
+            
+        #pprint ("Agent Name %s %s" %(agent.name, dir(agent)))
+        #pprint ("Agent Name %s %s" %(agent.name, vars(agent)))
         for table in tables.values():
             if not table['population'] is Nature:
                 for feature,label,function in table['fields']:
                     if not feature in values[agent.name]:
                         try:
-                            values[agent.name][feature] = agent.demographics[feature]
+                            if alive:
+                                if feature == 'health' or feature == 'childrenHealth':
+                                    values[agent.name][feature]  = world.agents[agent].health
+                                elif feature == 'location':
+                                    values[agent.name][feature]  = world.agents[agent].demographics['home']   
+                                elif feature == 'resources':
+                                    values[agent.name][feature]  = world.agents[agent].demographics['wealth']
+                                elif feature == 'employed':
+                                    values[agent.name][feature]  = world.agents[agent].demographics['job']
+                                elif feature == 'risk':
+                                    values[agent.name][feature]  = world.getState(world.agents[agent].demographics['home'],'risk') 
+                                
+                                elif feature in agent.demographics:
+                                    values[agent.name][feature] = agent.demographics[feature]
+                                elif feature == 'x':
+                                    values[agent.name][feature] = agent.x
+                                elif feature == 'y':
+                                    values[agent.name][feature] = agent.y
+                                elif feature == "grievance":
+                                    values[agent.name][feature] = agent.grievance 
+                                else:
+                                    print ("Skipping, Did not add Feature to table. %s not in %s"%(feature, agent.demographics))
+
                         except KeyError:
                             value = world.getState(agent.name,feature)
                             assert len(value) == 1
                             values[agent.name][feature] = value.first()
-    # Create tables
+        # Create tables
     for table in tables.values():
         if table['population'] is Region:
             for region in sorted(regions):
                 inhabitants = regions[region]['inhabitants']
                 entry = {'day': day,
-                         'region': region}
+                        'region': region}
                 for feature,label,function in table['fields']:
                     if world.variables[stateKey(population[0].name,feature)]['domain'] is bool:
                         entry[label] = len([a for a in inhabitants if values[a.name][feature]])
                         hi = len(inhabitants)
                     elif function and function[0] == '#':
                         target = function[1:]
-                        entry[label] = len([a for a in inhabitants if values[a.name][feature][:len(target)] == target])
+                        try:
+                            entry[label] = len([a for a in inhabitants if values[a.name][feature][:len(target)] == target])
+                        except KeyError:
+                            print("Error",target)
                         hi = len(inhabitants)
                     elif function and function[0] == '%':
                         target = function[1:]
@@ -912,38 +956,91 @@ def addState2tables(world,day,tables,population,regions):
                         entry[label] = toLikert(entry[label])
                 table['log'].append(entry)
                 #print("Region %s"%(entry))
+                entry = checkNegative(entry)
+                
                 visualize.addToVizData("Region", entry)
+                
         elif table['population'] is Actor:
             for actor in population:
-                belief = next(iter(actor.getBelief().values()))
+
                 entry = {'day': day,'participant': actor.name[-4:]}
-                for feature,label,function in table['fields']:
-                    if feature in actor.demographics:
-                        entry[label] = values[actor.name][feature]
-                    else:
-                        key = stateKey(actor.name,feature)
-                        if world.variables[key]['domain'] is bool:
-                            if function == 'invert':
-                                entry[label] = not values[actor.name][feature]
-                            else:
-                                entry[label] = values[actor.name][feature]
+
+                # try:
+                #     belief = next(iter(actor.getBelief().values()))
+                # except Exception as e:
+                #     print("Error %s"%(actor.name))
+
+                #     traceback.print_exc()  
+                #     alive = False
+
+                alive = True
+                try:
+                    if float(actor.getState('health')) > config.getfloat('Actors','life_threshold'):
+                        pass
+                except KeyError:
+                    print ("Agent %s is dead :("%actor.name )
+                    alive = False
+                if alive == True:
+                    for feature,label,function in table['fields']:
+                        if feature in actor.demographics:
+                            entry[label] = values[actor.name][feature]
                         else:
-                            if function == 'likert':
-                                entry[label] = toLikert(values[actor.name][feature])
-                            elif function and function[0] == '=':
-                                entry[label] = values[actor.name][feature] == function[1:]
-                            elif function == 'invert':
-                                entry[label] = 1.-values[actor.name][feature]
+                            key = stateKey(actor.name,feature)
+                            if key in world.variables and world.variables[key]['domain'] is bool:
+                                if function == 'invert':
+                                    entry[label] = not values[actor.name][feature]
+                                else:
+                                    entry[label] = values[actor.name][feature]
                             else:
-                                entry[label] = values[actor.name][feature]
-                table['log'].append(entry)
+                                if function == 'likert':
+                                    entry[label] = toLikert(values[actor.name][feature])
+                                elif function and function[0] == '=':
+                                    entry[label] = values[actor.name][feature] == function[1:]
+                                elif function == 'invert':
+                                    entry[label] = 1.-values[actor.name][feature]
+                                else:
+                                    entry[label] = values[actor.name][feature]
+                    entry['alive'] = True
+                    if entry['participant'] in deadInfo:
+                        pass
+                    
+                    else:
+                        deadInfo[entry['participant']] = {}    
+                    
+                    if 'x' in entry:
+                        deadInfo[entry['participant']]['x'] = entry['x']
+                    if 'y' in entry:
+                        deadInfo[entry['participant']]['y'] = entry['y']
+                    if 'region' in entry:
+                        deadInfo[entry['participant']]['region'] = entry['region']
+                    table['log'].append(entry)
+                else:
+                    entry['alive'] = False
+                    if (entry['participant'] in deadInfo):
+                        entry['x'] = deadInfo[entry['participant']].get('x', 0)
+                        entry['y'] = deadInfo[entry['participant']].get('y', 0)
+                        entry['region'] = deadInfo[entry['participant']].get('region', 'Region01')
+                        
                 #print("Actor %s"%(entry))
                 #print("Keys %s\nValues %s" %(entry.keys(), entry.values()))
                 if 'x' in list(entry.keys()) and 'y' in list(entry.keys()):
+                    entry = checkNegative(entry)
                     visualize.addToIndividualList(entry)
+                entry = checkNegative(entry)
                 visualize.addToVizData("Actor", entry)
-       
-        
+                
+                #print("Added Entry: %s"%entry)
+
+def checkNegative(entry):
+    entrydict = dict ((k,v) for k,v in entry.items() if (type(v)  is int or type(v) is float) and v < 0 )
+    if (len(entrydict) > 0):
+
+        for (k,v) in entrydict.items():
+            print("Clamping %s to 0 from %f" %(k, v))
+            entry[k] = 0 
+    
+    return entry
+
 def writeHurricane(world,hurricane,dirName):
     fields = ['Timestep','Name','Category','Location','Landed']
     if hurricane == 0:
