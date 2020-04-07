@@ -1647,16 +1647,16 @@ class World(object):
                         # Explain decision
                         self.explainDecision(outcome['decisions'][name],buf,level)
 
-    def explainAction(self,state=None,buf=None,level=0):
+    def explainAction(self,state=None,agents=None,buf=None,level=1):
         if state is None:
             state = self.state
         joint = {}
         order = {name: state[turnKey(name)] for name in self.agents if turnKey(name) in state}
         assert max(map(len,order.values())) == 1,'Unable to extract actions from uncertain turn orders'
         last = max([dist.first() for dist in order.values()])
-        for name,dist in sorted(order.items()):
+        for name,dist in sorted([(name,dist) for name,dist in order.items() if agents is None or name in agents]):
             if dist.first() == last:
-                key = stateKey(name,ACTION)
+                key = actionKey(name)
                 if key in state:
                     joint[name] = self.getFeature(key,state)
                     if level > 0:
