@@ -981,23 +981,23 @@ class Agent(object):
                 index += 1
             return self.addModel('%s%d' % (parent['name'],index),beliefs=belief,parent=parent['name'])
 
-    def printModel(self,model=True,buf=None,index=None,prefix=''):
+    def printModel(self,model=True,buf=None,index=None,prefix='',previous=None):
         if isinstance(index,int) or isinstance(index,float):
             model = self.index2model(index)
         if model is None:
-            print('%s\t%-12s\t%-12s' % \
-                  (prefix,MODEL,'__unknown(%s)__' % (index)),file=buf)
             return
         if not isinstance(model,dict):
             model = self.models[model]
-        print('%s\t%-12s\t%-12s' % \
-              (prefix,MODEL,model['name']),file=buf)
-        if 'R' in model and not model['R'] is True:
-            self.printReward(model['name'],buf,'%s\t\t' % (prefix))
-        if 'beliefs' in model and not model['beliefs'] is True:
-            print('%s\t\t\t----beliefs:----' % (prefix),file=buf)
-            self.world.printState(model['beliefs'],buf,prefix+'\t\t\t',beliefs=True)
-            print('%s\t\t\t----------------' % (prefix),file=buf)
+        if previous is None or model['name'] not in previous:
+            # Have not printed out this model before
+            if isinstance(previous,set):
+                previous.add(model['name'])
+            if 'R' in model and not model['R'] is True:
+                self.printReward(model['name'],buf,'%s\t\t' % (prefix))
+            if 'beliefs' in model and not model['beliefs'] is True:
+                print('%s\t\t\t----beliefs:----' % (prefix),file=buf)
+                self.world.printState(model['beliefs'],buf,prefix+'\t\t\t',beliefs=True,models=previous)
+                print('%s\t\t\t----------------' % (prefix),file=buf)
         
     """---------------------"""
     """Belief update methods"""
