@@ -36,6 +36,8 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 22,'run': 0,'span': 121},
     {'instance': 23,'run': 0,'span': 166},
     {'instance': 24,'run': 0,'span': 89},
+    {'instance': 25,'run': 0,'span': 88},
+    {'instance': 26,'run': 0,'span': 152},
     ]
     
 instanceMap = {'Phase1': {'Explain': [1], 'Predict': [3,4,5,6,7,8], 'Prescribe': [9,10,11,12,13,14]},
@@ -798,6 +800,20 @@ def readLog(args):
                     if action['subject'] not in ER[t]:
                         ER[t][action['subject']] = {}
                     ER[t][action['subject']][action] = float(words[-1])
+                elif words[0] == 'ER':
+                    action = ActionSet(Action(words[-3]))
+                    if action['subject'] not in ER[t]:
+                        ER[t][action['subject']] = {'__horizon__': None}
+                    try:
+                        horizon = int(words[1])
+                    except ValueError:
+                        horizon = None
+                    if horizon != ER[t][action['subject']]['__horizon__']:
+                        ER[t][action['subject']] = {'__horizon__': horizon}
+                    try:
+                        ER[t][action['subject']][action] = float(words[-1])
+                    except ValueError:
+                        ER[t][action['subject']][action] = words[-1]
                 elif line[:2] == 'ER':
                     action = ActionSet(Action(words[1]))
                     if action['subject'] not in ER[t]:
