@@ -1892,7 +1892,7 @@ class Actor(Agent):
                         decision['action'] = join['action']
 
             else:
-                best,EV = self.chooseAction(belief,horizon,model=model,log=True)
+                best,EV = self.chooseAction(belief,horizon,model=model,choices=actionMap.keys(),log=True if debug is True else debug)
                 decision = {'action': best,'__EV__': EV}
         else:
             decision = Agent.decide(self,state,horizon,None if self.config.getint('Simulation','phase',fallback=1) > 1 else others,
@@ -1959,7 +1959,7 @@ class Actor(Agent):
             return {a.name for a in self.world.agents.values() if isinstance(a,Actor) and \
                 not a.name == self.name and a.home == self.home}
 
-    def chooseAction(self,belief,horizon,action=None,model=None,log=False):
+    def chooseAction(self,belief,horizon,action=None,model=None,choices=None,log=None):
         if horizon > 0:
             if action is not None:
                 self.projectState(belief,action,select='max')
@@ -1970,14 +1970,18 @@ class Actor(Agent):
                     V += EV
                 return action,V
             else:
-                options = {a['verb'] for a in self.getActions(belief)}
+                if choices is None:
+                    choices = self.getActions(belief)
+                options = {a['verb'] for a in choices}
                 if 'join' in options:
                     assert 'leave' not in options,str(belief)
-                V = {action: self.chooseAction(copy.deepcopy(belief),horizon,action,model,log)[1] for action in self.getActions(belief)}
+                V = {action: self.chooseAction(copy.deepcopy(belief),horizon,action,model)[1] for action in choices}
                 best = None
                 for action,EV in V.items():
-                    if log:
-                        logging.debug('ER %s = %f' % (action,EV))
+                    if log is not None:
+                        logging.debug('ER %d %s = %f' % (horizon,action,EV))
+                        if isinstance(log,dict):
+                            log[action] = EV
                     if best is None or EV > best[1]:
                         best = action,EV
                 return best[0],best[1]

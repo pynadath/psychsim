@@ -26,13 +26,13 @@ from psychsim.domains.groundtruth.simulation.actor import Actor
 from psychsim.domains.groundtruth.simulation.cdf import *
 from psychsim.domains.groundtruth.simulation.create import *
 
-import psychsim.domains.groundtruth.simulation.visualize as visualize
 
 preSurveyRecords = []
 postSurveyRecords = []
 
 def runInstance(instance,args,config,rerun=True):
     if args['visualize']:
+        import psychsim.domains.groundtruth.simulation.visualize as visualize
         visualize.initVisualization(args)
     # Determine what runs to do
     if args['singlerun']:
@@ -628,11 +628,6 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                             postSurvey(world.agents[name],dirName,state['hurricanes'],True)
         else:
             assert state['phase'] == 'active','Phase has incorrect value of %s' % (state['phase'])
-        debug = {}
-        #            debug.update({name: {'V': True} for name in world.agents if name[:5] == 'Group'})
-        #            for name in debug:
-        #                for agent in world.agents[name].members():
-        #                    debug[name][agent] = {}
         if turn == 'Nature':
             try:
                 hurr = future[state['hurricanes']]
@@ -780,6 +775,11 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
         if turn == 'Nature' and config.getint('Simulation','phase',fallback=1) >= 3:
             newState = world.agents[turn].step(select)
         else:
+            debug = {name: {} for name in world.agents if name[:len(turn)] == turn}
+        #            debug.update({name: {'V': True} for name in world.agents if name[:5] == 'Group'})
+        #            for name in debug:
+        #                for agent in world.agents[name].members():
+        #                    debug[name][agent] = {}
             newState = world.step(policy,select=select,debug=debug)
 
         if config.getint('Simulation','phase',fallback=1) == 1:
