@@ -1348,7 +1348,7 @@ class Actor(Agent):
                     for myAction in self.actions:
                         if myAction['verb'] == action['verb']:
                             if 'object' not in action or myAction['object'] == action['object']:
-                                return {myAction}
+                                return {myAction,[act for act in self.actions if act['verb'] == 'leave' and act['object'] == group][0]}
         try:
             return super().getActions(state,actions)
         except TypeError:
@@ -1760,7 +1760,7 @@ class Actor(Agent):
             self.setBelief(key,total,model)
 
     def decide(self,state=None,horizon=None,others=None,model=None,selection='uniform',
-                    actions=None,debug={}):
+                    actions=None,debug=None):
         if actions is not None and len(actions) == 1:
             return {'action': next(iter(actions))}
         if state is None:
@@ -1800,10 +1800,19 @@ class Actor(Agent):
         actionMap = {action: action for action in actions}
 
         for group in self.groups:
-            if self.world.getFeature(binaryKey(self.name,group,'memberOf'),state,unique=True):
-                # I'm in this group; has there been a group decision?
-                action = self.world.getFeature(stateKey(group,ACTION),state,unique=True)
-                if action['verb'] != 'noDecision':
+            action = self.world.getFeature(stateKey(group,ACTION),state,unique=True)
+            if action['verb'] == 'noDecision':
+                if self.config.getboolean('Groups','statusquo',fallback=False):
+                    # Don't change membership status if the group isn't doing anything
+                    for key,lonely in list(actionMap.items()):
+                        if lonely['verb'] == 'leave' or lonely['verb'] == 'join':
+                            del actionMap[key]
+                            break
+                    else:
+                        raise RuntimeError
+            else:
+                if self.world.getFeature(binaryKey(self.name,group,'memberOf'),state,unique=True):
+                    # I'm in this group; has there been a group decision?
                     logEdge('Actor memberOf Group','Actor\'s Expected Reward','sometimes','Group members have highest expected reward when abiding by group decision')
                     #
                     logEdge('Group-decreaseRisk','Actor-decreaseRisk','sometimes','Group members must either follow group decision or leave group')
@@ -1893,7 +1902,12 @@ class Actor(Agent):
 
             else:
                 best,EV = self.chooseAction(belief,horizon,model=model,choices=actionMap.keys(),log=True if debug is True else debug)
-                decision = {'action': best,'__EV__': EV}
+                decision = {'action': actionMap[best],'__EV__': EV}
+                if isinstance(debug,dict):
+                    for key,lonely in actionMap.items():
+                        logging.debug('ER %d %s = %f' % (horizon,lonely,debug[key]))
+                    assert debug[best] == max(debug.values())
+                    logging.debug('Choosing %s (%s)' % (actionMap[best],best))
         else:
             decision = Agent.decide(self,state,horizon,None if self.config.getint('Simulation','phase',fallback=1) > 1 else others,
                 model,selection,actionMap.keys(),belief.keys(),debug)
@@ -1978,12 +1992,16 @@ class Actor(Agent):
                 V = {action: self.chooseAction(copy.deepcopy(belief),horizon,action,model)[1] for action in choices}
                 best = None
                 for action,EV in V.items():
-                    if log is not None:
+                    if log is True:
                         logging.debug('ER %d %s = %f' % (horizon,action,EV))
-                        if isinstance(log,dict):
-                            log[action] = EV
+                    elif isinstance(log,dict):
+                        log[action] = EV
                     if best is None or EV > best[1]:
                         best = action,EV
+                    elif self.config.getboolean('Groups','statusquo',fallback=False):
+                        # Tiebreak goes to any action other than join/leave
+                        if EV == best[1] and best[0]['verb'] in {'join','leave'}:
+                            best = action,EV
                 return best[0],best[1]
         else:
             EV = self.reward(belief,model)
