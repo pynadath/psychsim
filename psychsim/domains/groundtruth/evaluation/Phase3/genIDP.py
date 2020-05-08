@@ -10,6 +10,7 @@ if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('-l','--last',type=int,default=0,help='Last timestep to include in output files')
     parser.add_argument('-i','--instance',type=int,default=22,help='Instance to be processed')
+    parser.add_argument('-t','--target',action='store_true',help='Whether to pick a target actor')
     parser.add_argument('-r','--run',type=int,default=0,help='Run to be processed')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--short',action='store_true',help='Short-term instance')
@@ -64,7 +65,8 @@ if __name__ == '__main__':
             elif cmd['long']:
                 candidates = list(behaviors.keys())
 
-            name = random.choice(candidates)
-            print(name)
-            output.append({'VariableName': 'TargetActor','EntityIdx': name,'Value': 'yes'})
+            if cmd['target']:
+                name = random.choice(candidates)
+                print(name)
+                output.append({'VariableName': 'TargetActor','EntityIdx': name,'Value': 'yes'})
         accessibility.writeOutput({'instance': cmd['instance'],'run': cmd['run']},output,accessibility.fields[table],'%sTable.tsv' % (table))
