@@ -14,6 +14,7 @@ if __name__ == '__main__':
     graph = Graph()
     nodes = {}
     wb = openpyxl.load_workbook(name)
+    edges = set()
     for sheet in wb:
         first = True
         for row in sheet.values:
@@ -29,6 +30,9 @@ if __name__ == '__main__':
                     assert sheet.title == 'Edges'
                     if row[0] is None:
                         continue
-                    graph.add_edge(nodes[row[headings['Source']]],nodes[row[headings['Target']]],True)
+                    edge = (nodes[row[headings['Source']]],nodes[row[headings['Target']]])
+                    if edge not in edges:
+                        graph.add_edge(edge[0],edge[1],True)
+                        edges.add(edge)
     parser = GraphMLParser()
     parser.write(graph,'/tmp/GroundTruth-USC.graphml')
