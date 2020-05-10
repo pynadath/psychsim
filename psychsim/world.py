@@ -154,8 +154,8 @@ class World(object):
             key = stateKey(actor,ACTION)
             action = self.float2value(key,policy.children[None][makeFuture(key)][CONSTANT])
             joint = ActionSet(joint | action)
-            if actor in debug:
-                print('%s: %s' % (actor,action))
+#            if actor in debug:
+#                print('%s: %s' % (actor,action))
         effect = self.deltaState(joint,state,keySubset)
         # Update turn order
         effect.append(self.deltaTurn(state,joint))
@@ -1350,7 +1350,7 @@ class World(object):
     """Mental model methods"""
     """------------------"""
 
-    def getModel(self,modelee,vector=None):
+    def getModel(self,modelee,vector=None,unique=False):
         """
         :returns: the name of the model of the given agent indicated by the given state vector
         :type modelee: str
@@ -1363,7 +1363,7 @@ class World(object):
         if isinstance(vector,VectorDistributionSet):
             key = modelKey(modelee)
             if key in self.variables:
-                model = self.getFeature(key,vector)
+                model = self.getFeature(key,vector,unique=unique)
             else:
                 assert len(agent.models) == 1,'Ambiguous model of %s' % (modelee)
                 model = agent.models.keys()[0]
