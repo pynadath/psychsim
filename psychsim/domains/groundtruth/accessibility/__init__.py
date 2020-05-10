@@ -36,8 +36,8 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 22,'run': 0,'span': 121},
     {'instance': 23,'run': 0,'span': 166},
     {'instance': 24,'run': 0,'span': 89},
-    {'instance': 25,'run': 0,'span': 88},
-    {'instance': 26,'run': 0,'span': 152},
+    {'instance': 25,'run': 0,'span': 83},
+    {'instance': 26,'run': 0,'span': 161},
     ]
     
 instanceMap = {'Phase1': {'Explain': [1], 'Predict': [3,4,5,6,7,8], 'Prescribe': [9,10,11,12,13,14]},
