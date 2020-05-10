@@ -593,16 +593,18 @@ class Agent(object):
         else:
             return self.findAttribute(name,self.models[model]['parent'])
 
-    def getAttribute(self,name,model):
+    def getAttribute(self,name,model=None):
         """
-        
-	:returns: the value for the specified parameter of the specified mental model
+        :returns: the value for the specified parameter of the specified mental model
         """
-        ancestor = self.findAttribute(name,model)
-        if ancestor is None:
-            return None
+        if model is None:
+            return {m: self.getAttribute(name,m) for m in self.world.getModel(self.name).domain()}
         else:
-            return self.models[ancestor][name]
+            ancestor = self.findAttribute(name,model)
+            if ancestor is None:
+                return None
+            else:
+                return self.models[ancestor][name]
 
     """------------------"""
     """Action methods"""
