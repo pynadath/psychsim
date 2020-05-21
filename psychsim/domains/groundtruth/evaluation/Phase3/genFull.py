@@ -368,6 +368,6 @@ if __name__ == '__main__':
         states.clear()
         if cmd['data'] is None:
             for label,data in tables.items():
-                accessibility.writeOutput(args,data,accessibility.fields[label],'%sTable_full.tsv' % (label),append=True)
+                accessibility.writeOutput(args,data,accessibility.fields[label],'%sTable.tsv' % (label),append=True)
         else:
             accessibility.writeOutput(args,tables['RunData'],accessibility.fields['RunData'],'RunDataTable_R2.tsv',append=True)
