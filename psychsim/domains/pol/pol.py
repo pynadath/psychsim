@@ -66,8 +66,10 @@ class Person(Agent):
 		time2work=8
 		time2home=16
 		time_pass = stateKey('current_environment','time_pass') # point to the same variable
-		tree= makeTree({'if': thresholdRow(time_pass,time2work), # if time_pass is larger than time2work, larger than 8
-						True: {'if': thresholdRow(time_pass,time2home), # if the time_pass is less than time2home, less than 16
+		time_of_day = stateKey('current_environment','time_of_day')
+		# records[civilian.name]= round(civilian.getState('comfort').domain()[0], 2)
+		tree= makeTree({'if': thresholdRow(time_of_day,time2work), # if time_pass is larger than time2work, larger than 8
+						True: {'if': thresholdRow(time_of_day,time2home), # if the time_pass is less than time2home, less than 16
 								True: False,
 								False: True},
 						False: False})
@@ -212,12 +214,20 @@ class Environment(Agent):
 		world.addAgent(self)
 		time_pass=world.defineState(self.name,'time_pass')
 
+		time_of_day=world.defineState(self.name,'time_of_day',lo=0,hi=23)
+
 		time_increase = self.addAction({'verb':'time_increase'})
 		self.setState('time_pass', 0)
+		self.setState('time_of_day', 0)
 
 		# impact of time_increase
 		tree = makeTree(incrementMatrix(time_pass,1))
 		world.setDynamics(time_pass,time_increase,tree)
+
+		tree = makeTree({'if': equalRow(time_of_day,23),
+			True: setToConstantMatrix(time_of_day,0),
+			False: incrementMatrix(time_of_day,1)})
+		world.setDynamics(time_of_day,time_increase,tree)
 
 class ArmedForces(Agent):
 	def __init__(self, name, world, init_location, friendly):
@@ -364,7 +374,7 @@ if __name__ == '__main__':
 
 	commercial = Region('commercial', (75,35), (85,45), 25, 'commercial', world)
 
-	environment_agent =Environment('current_environment', world)
+	current_environment =Environment('current_environment', world)
 
 	civilians = []
 	
@@ -387,7 +397,7 @@ if __name__ == '__main__':
 	# print(hostile_force.getActions())
 	#exit()
 	
-	world.setOrder([set(civilians) | {hostile_force.name,friendly_force.name} | {environment_agent.name}])
+	world.setOrder([set(civilians) | {hostile_force.name,friendly_force.name} | {current_environment.name}])
 
 	# for name in civilians:
 	# 	world.agents[name].attitude_impacts()
@@ -404,8 +414,10 @@ if __name__ == '__main__':
 		day =int(i/24)+1
 		print('\n \tStep(hr) %d in Day %d' %(hour, day))
 		newWorldState = world.step()
+		print(current_environment.getState('time_pass',unique=True))
+		print(current_environment.getState('time_of_day',unique=True))
 		#world.explainAction(newState)
-		world.printState(newWorldState)
+		#world.printState(newWorldState)
 		end_round = time()
 		time_elapsed = round(end_round - start_round)
 		print('Step time: %02d:%02d:%02d' %(int(time_elapsed/3600), int((time_elapsed%3600)/60), time_elapsed%60))
