@@ -97,7 +97,14 @@ def readHurricanes(instance,run=0,sub=None,fname='HurricaneTable.tsv'):
     if sub:
         inFile = os.path.join(inFile,sub)
     inFile = os.path.join(inFile,fname)
-    return readHurricaneFile(inFile)
+    try:
+        return readHurricaneFile(inFile)
+    except FileNotFoundError:
+        inFile = os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (run))
+        if sub:
+            inFile = os.path.join(inFile,sub)
+        inFile = os.path.join(inFile,'InstanceVariableTable.tsv')
+        return readInstanceFile(inFile)
     
 def readHurricaneFile(inFile):
     hurricanes = []
@@ -133,6 +140,44 @@ def readHurricaneFile(inFile):
     for record in hurricanes:
         if record:
             record['Actual Track'] = ','.join(record['Actual Track'])
+    if 'End' not in hurricanes[-1]:
+        # Ignore partial hurricane track
+        return hurricanes[:-1]
+    else:
+        return hurricanes
+    
+def readInstanceFile(inFile):
+    hurricanes = []
+    hurricane = None
+    with open(inFile,'r') as csvfile:
+        reader = csv.DictReader(csvfile,delimiter='\t')
+        for row in reader:
+            if hurricane is None:
+                if row['Name'] == 'Nature\'s category' and row['Value'] != '0':
+                    # New hurricane
+                    hurricanes.append({'Hurricane': len(hurricanes)+1,
+                                   'Media Coverage': 'yes',
+                                   'Actual Location': [],
+                                   'Actual Track': [],
+                                   'Official Announcements': 'none',
+                                   'Start': int(row['Timestep']),
+                                   'Actual Category': [row['Value']],
+                                   })
+                    hurricane = hurricanes[-1]['Hurricane']
+            elif row['Name'] == 'Nature\'s category':
+                hurricanes[-1]['Actual Category'].append(row['Value'])
+            elif row['Name'] == 'Nature\'s location':
+                if 'Predicted Location' not in hurricanes[-1]:
+                    hurricanes[-1]['Predicted Location'] = row['Value']
+                if row['Value'] == 'none':
+                    # Hurricane has left area
+                    hurricanes[-1]['End'] = int(row['Timestep'])
+                    hurricane = None
+                else:
+                    hurricanes[-1]['Actual Location'].append(row['Value'])
+            elif row['Name'] == 'Nature\'s phase':
+                if row['Value'] == 'active' and 'Landfall' not in hurricanes[-1]:
+                    hurricanes[-1]['Landfall'] = int(row['Timestep'])
     if 'End' not in hurricanes[-1]:
         # Ignore partial hurricane track
         return hurricanes[:-1]
