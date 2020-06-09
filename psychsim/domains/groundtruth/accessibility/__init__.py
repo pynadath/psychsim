@@ -34,15 +34,15 @@ instances = [{'instance': 24,'run': 1,'span': 82},
     {'instance': 20,'run': 0,'span': 91},
     {'instance': 21,'run': 0,'span': 104},
     {'instance': 22,'run': 0,'span': 121},
-    {'instance': 23,'run': 0,'span': 166},
-    {'instance': 24,'run': 0,'span': 89},
-    {'instance': 25,'run': 0,'span': 83},
-    {'instance': 26,'run': 0,'span': 161},
+    {'instance': 23,'run': 0,'span': 166,'challenge': 'long'},
+    {'instance': 24,'run': 0,'span': 72,'challenge': 'short'},
+    {'instance': 25,'run': 0,'span': 83,'challenge': 'short'},
+    {'instance': 26,'run': 0,'span': 161,'challenge': 'long'},
     ]
     
 instanceMap = {'Phase1': {'Explain': [1], 'Predict': [3,4,5,6,7,8], 'Prescribe': [9,10,11,12,13,14]},
     'Phase2': {'Explain': [15,16,17], 'Predict': [18,19], 'Prescribe': [20,21]},
-    'Phase3': {'Explain': [22], 'Predict': [23,24]},
+    'Phase3': {'Explain': [22], 'Predict': [23,24], 'Prescribe': [25,26]},
     }
 def instanceArgs(phase,challenge=True):
     if challenge is True:
@@ -405,7 +405,7 @@ def employment(data,name,hurricane):
     return worked,possible
 
 def getTarget(instance,run=0,world=None):
-    if instance < 100:
+    try:
         actor = None
         with open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (run),
             'Input'),'TargetActor.tsv'),'r') as csvfile:
@@ -415,7 +415,7 @@ def getTarget(instance,run=0,world=None):
                 actor = row['Participant']
         assert actor is not None,'No target found'
         return int(actor)
-    else:
+    except FileNotFoundError:
         participants = {}
         targets = []
         with open(os.path.join(os.path.join(os.path.dirname(__file__),'..','Instances','Instance%d' % (instance),'Runs','run-%d' % (run)),'RunDataTable.tsv'),'r') as csvfile:
@@ -434,27 +434,32 @@ def getTarget(instance,run=0,world=None):
         if 'Hurricane' in entity:
             hurricane = int(entity.split()[-1])
             record = participants[entity][0]
-        else:
+        elif participants:
             for hurricane in range(len(participants[entity])):
                 if participants[entity][hurricane]['Timestep'] == row['Timestep']:
                     record = participants[entity][hurricane]
                     break
             else:
                 raise ValueError('Unable to find target actor survey for Instance %d' % (instance))
-        targets[0]['Hurricane'] = hurricane+1
-        survey = readParticipants(instance,run,splitHurricanes=True,duplicates=True)
-        if survey:
-            if entity[6] == 'o':
-                targets[0]['Name'] = survey['Post-survey %d' % (targets[0]['Hurricane'])][int(entity.split()[1])]
-            else:
-                targets[0]['Name'] = survey['Pre-survey %d' % (targets[0]['Hurricane'])][int(entity.split()[1])]
         else:
-            targets = list(findMatches(record,world,ignoreJob=True))
-            assert len(targets) == 1
+            hurricane = None
+        if hurricane is not None:
+            targets[0]['Hurricane'] = hurricane+1
+            survey = readParticipants(instance,run,splitHurricanes=True,duplicates=True)
+            if survey:
+                if entity[6] == 'o':
+                    targets[0]['Name'] = survey['Post-survey %d' % (targets[0]['Hurricane'])][int(entity.split()[1])]
+                else:
+                    targets[0]['Name'] = survey['Pre-survey %d' % (targets[0]['Hurricane'])][int(entity.split()[1])]
+            else:
+                targets = list(findMatches(record,world,ignoreJob=True))
+                assert len(targets) == 1
         if isinstance(targets[0],str):
             return targets[0]
-        else:
+        elif 'Name' in targets[0]:
             return targets[0]['Name']
+        else:
+            return targets[0]['EntityIdx']
 
 def getPopulation(data):
     """
@@ -1027,3 +1032,6 @@ def participantMatch(name,participants):
         for partID,partName in sample.items():
             if partName == name:
                 return 'Actor%s %d Hurricane %s' % (survey[:survey.index('-')],partID,survey.split()[-1])
+
+def getTimesteps(args):
+    return sorted([int(f[5:-10]) for f in os.listdir(getDirectory(args)) if f[:5] == 'state' and f[-10:] == 'Nature.pkl'])
