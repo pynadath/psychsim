@@ -68,8 +68,12 @@ def runInstance(instance,args,config,rerun=True):
                             world.state = state
                         else:
                             agent = world.agents[name]
-                            for model,belief in state.items():
-                                agent.models[model]['beliefs'] = belief
+                            if isinstance(state,dict):
+                                for model,belief in state.items():
+                                    agent.models[model]['beliefs'] = belief
+                            else:
+                                assert len(agent.models) == 1,'Unable to apply single belief state to multiple models'
+                                next(iter(agent.models.values()))['beliefs'] = state
             population = [agent for agent in world.agents.values() if isinstance(agent,Actor)]
             try:
                 population[0].demographics
@@ -225,20 +229,28 @@ def runInstance(instance,args,config,rerun=True):
                 impact = 1.5*likert[5][config.getint('System','system_impact')-1]
                 tree = makeTree(approachMatrix(risk,impact,0.))
                 world.setDynamics(risk,{'verb': 'allocate','object': region},tree)
-        elif args['phase2predictlong']:
+        elif args['phase2predictlong'] or args['phase3predictlong']:
             for agent in population:
-                value = 0.9*agent.getState('resources').expectation()
-                agent.setState('resources',value)
-                beliefs = agent.getBelief()
-                model,myBelief = next(iter(beliefs.items()))
-                agent.setBelief(stateKey(agent.name,'resources'),value,model)
+                if stateKey(agent.name,'resources') in world.state:
+                    value = 0.9*agent.getState('resources').expectation()
+                    agent.setState('resources',value)
+                    beliefs = agent.getBelief()
+                    model,myBelief = next(iter(beliefs.items()))
+                    agent.setBelief(stateKey(agent.name,'resources'),value,model)
             world.agents['System'].setAidDynamics([agent.name for agent in population],1.5)
-        if args['phase1predictshort'] or args['phase2predictshort']:
+        if args['phase1predictshort'] or args['phase2predictshort'] or args['phase3predictshort']:
             for agent in population:
-                for action in list(agent.actions):
-                    if action['verb'] == 'moveTo' and action['object'][:7] == 'shelter':
-                        agent.actions.remove(action)
-                assert agent.getState('location').first()[:7] != 'shelter','Oh well, %s is starting out in the shelter' % (agent.name)
+                key = stateKey(agent.name,'location')
+                if key in world.state:
+                    for action in list(agent.actions):
+                        if action['verb'] == 'moveTo' and action['object'][:7] == 'shelter':
+                            agent.actions.remove(action)
+                    if world.getFeature(key,unique=True)[:7] == 'shelter':
+                        # Move them home first
+                        world.setFeature(key,agent.demographics['home'])
+                        beliefs = agent.getBelief()
+                        model,myBelief = next(iter(beliefs.items()))
+                        world.setFeature(key,agent.demographics['home'],myBelief)
         # Load any prescription
         if args['prescription']:
             if args['prescription'] == 'NULL':
@@ -503,7 +515,6 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                 else:
                     # not so much
                     killAgent(actor.name,world)
-
         agents = world.next()
         turn = world.agents[next(iter(agents))].__class__.__name__
         if start:
@@ -860,7 +871,6 @@ def nextDay(world,groups,state,config,dirName,survey=None,start=None,cdfTables={
                 state['hurricanes'] += 1
                 logging.info('Completed Hurricane #%d' % (state['hurricanes']))
         state['phase'] = phase
-
 
 
 
@@ -1360,46 +1370,54 @@ def postSurvey(actor,dirName,hurricane,TA2BTA1C10=False,previous=False):
             writer.writerow(record)
 
 def fastForward(world,config):
-    beliefs = {name: next(iter(world.agents[name].getBelief().values())) for name in world.agents
-        if name[:5] == 'Actor' and world.getState(name,'alive').first()}
+    if config.getint('Simulation','phase',fallback=1) < 3:
+        beliefs = {name: next(iter(world.agents[name].getBelief().values())) for name in world.agents
+            if name[:5] == 'Actor' and world.getState(name,'alive').first()}
+    else:
+        beliefs = {name: next(iter(world.agents[name].getBelief().values())) for name in world.agents
+            if name[:5] == 'Actor' and stateKey(name,'health') in world.state.keys()}
+        print(len(beliefs),'agents still alive')
     for key in world.state.keys():
-        agent,feature = state2tuple(key)
-        if feature[0] == '_':
-            # Special key (model, turn, action, reward)
-            continue
-        if agent == 'Nature':
-            if feature == 'category' or feature == 'days':
-                value = 0
-            elif feature == 'phase' or feature == 'location':
-                value = 'none'
-            else:
-                raise NameError('Unhandled key: %s' % (key))
-            world.setFeature(key,value)
-            for belief in beliefs.values():
-                world.setFeature(key,value,belief)
-        elif agent[:len('Region')] == 'Region':
-            if feature == 'risk':
-                value = world.agents[agent].risk
-            elif feature == 'shelterRisk':
-                riskLevel = int(config.get('Shelter','risk').split(',')[world.agents[agent].configIndex()])
-                if riskLevel > 0:
-                    value = likert[5][riskLevel-1]
+        if isStateKey(key):
+            agent,feature = state2tuple(key)
+            if feature[0] == '_':
+                # Special key (model, turn, action, reward)
+                continue
+            if agent == 'Nature':
+                if feature == 'category' or feature == 'days':
+                    value = 0
+                elif feature == 'phase' or feature == 'location':
+                    value = 'none'
                 else:
-                    value = 0.
-            else:
-                value = None
-            if value is not None:
+                    raise NameError('Unhandled key: %s' % (key))
                 world.setFeature(key,value)
-                for name,value in beliefs.items():
-                    if world.agents[name].demographics['home'] == 'agent':
-                        world.setFeature(key,value,beliefs[name].keys())
-        elif agent[:len(WORLD)] == WORLD:
-            if feature == 'day':
-                world.setFeature(key,config.getint('Disaster','year_length',fallback=365)+1)
-            else:
-                raise NameError('Unhandled key: %s' % (key))
-        elif agent[:len('Actor')] == 'Actor':
-            if world.getState(agent,'alive').first():
+                for belief in beliefs.values():
+                    world.setFeature(key,value,belief)
+            elif agent[:len('Region')] == 'Region':
+                if feature == 'risk':
+                    value = world.agents[agent].risk
+                elif feature == 'shelterRisk':
+                    riskLevel = int(config.get('Shelter','risk').split(',')[world.agents[agent].configIndex()])
+                    if riskLevel > 0:
+                        value = likert[5][riskLevel-1]
+                    else:
+                        value = 0.
+                else:
+                    value = None
+                if value is not None:
+                    world.setFeature(key,value)
+                    for name,value in beliefs.items():
+                        if world.agents[name].demographics['home'] == 'agent':
+                            world.setFeature(key,value,beliefs[name].keys())
+            elif agent[:len(WORLD)] == WORLD:
+                if feature == 'day':
+                    world.setFeature(key,config.getint('Disaster','year_length',fallback=365)+1)
+                else:
+                    raise NameError('Unhandled key: %s' % (key))
+            elif agent[:len('Actor')] == 'Actor':
+                if config.getint('Simulation','phase',fallback=1) < 3:
+                    if not world.getState(agent,'alive').first():
+                        continue
                 if feature == 'health' or feature == 'childrenHealth':
                     value = world.agents[agent].health
                 elif feature == 'location':
@@ -1415,8 +1433,15 @@ def fastForward(world,config):
                 if value is not None:
                     world.setFeature(key,value)
                     world.setFeature(key,value,beliefs[agent])
+            elif agent[:len('Group')] == 'Group':
+                # Group features don't change
+                pass
+            else:
+                assert agent == 'System'
         else:
-            assert agent == 'System'
+            assert isBinaryKey(key)
+            # Relationships don't change
+            pass
     for name,belief in beliefs.items():
         model = next(iter(world.agents[name].getBelief().keys()))
         world.agents[name].models[model]['beliefs'] = belief
