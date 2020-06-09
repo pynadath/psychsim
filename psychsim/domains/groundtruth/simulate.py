@@ -37,6 +37,8 @@ def simulateMain(sysargs,debug=False):
     parser.add_argument('--phase1predictlong',action='store_true',help='Apply Phase 1 Long-term Prediction Counterfactual')
     parser.add_argument('--phase2predictshort',action='store_true',help='Apply Phase 2 Short-term Prediction Counterfactual')
     parser.add_argument('--phase2predictlong',action='store_true',help='Apply Phase 2 Long-term Prediction Counterfactual')
+    parser.add_argument('--phase3predictshort',action='store_true',help='Apply Phase 3 Short-term Prediction Counterfactual')
+    parser.add_argument('--phase3predictlong',action='store_true',help='Apply Phase 3 Long-term Prediction Counterfactual')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-n','--number',default=None,type=int,help='Number of hurricanes to run')
     group.add_argument('--seasons',default=None,type=int,help='Number of seasons to run')
