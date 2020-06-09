@@ -234,8 +234,13 @@ class Nature(Agent):
                         tree = tree.sample()
                     elif select == 'max':
                         tree = tree.sample(True)
+                    elif key in select:
+                        tree = makeTree(setToConstantMatrix(key,select[key]))
+#                        print(key,select[key])
+#                        raise NotImplementedError
                     else:
-                        assert select is None
+                        # This feature not selected
+                        tree = tree.sample()
     #                elif i < 2:
     #                    # Pre-determined hurricane
     #                    raise NotImplementedError
