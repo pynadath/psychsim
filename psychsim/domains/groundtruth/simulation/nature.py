@@ -118,8 +118,8 @@ class Nature(Agent):
         tree = makeTree({'if': equalRow(makeFuture(phase),['approaching','active','none']),
                          0: {'if': equalRow(location,'none'),
                              # Generate initial location estimate
-                             True: {'distribution': [(setToConstantMatrix(location,r),prob) \
-                                                     for r in coastline]},
+                             True: setToConstantMatrix(location,next(iter(coastline))) if len(coastline) == 1 
+                                else {'distribution': [(setToConstantMatrix(location,r),prob) for r in coastline]},
                              # No change?
                              False: noChangeMatrix(location)},
                          1: # Hurricane moving through regions
