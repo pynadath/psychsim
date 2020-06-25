@@ -743,8 +743,8 @@ class World(object):
             self.dynamics[key] = {}
         if action not in self.dynamics:
             self.dynamics[action] = {}
-        if action is not True and len(action) == 1 and next(iter(action)) not in self.dynamics:
-            self.dynamics[next(iter(action))] = {}
+#        if action is not True and len(action) == 1 and next(iter(action)) not in self.dynamics:
+#            self.dynamics[next(iter(action))] = {}
         # Translate symbolic names into numeric values
         tree = tree.desymbolize(self.symbols)
         if enforceMin and self.variables[key]['domain'] in [int,float]:
@@ -755,8 +755,8 @@ class World(object):
             tree.ceil(key,self.variables[key]['hi'])
         self.dynamics[key][action] = tree
         self.dynamics[action][key] = tree
-        if action is not True and len(action) == 1:
-            self.dynamics[next(iter(action))][key] = tree
+#        if action is not True and len(action) == 1:
+#            self.dynamics[next(iter(action))][key] = tree
         if codePtr:
             frame = inspect.getouterframes(inspect.currentframe())[1]
             try:
@@ -2253,3 +2253,7 @@ def scaleValue(value,entry):
         return float(value)/float(len(entry['elements']))
     else:
         return value
+
+def loadWorld(filename):
+    f = bz2.BZ2File(filename,'rb')
+    return pickle.load(f)
