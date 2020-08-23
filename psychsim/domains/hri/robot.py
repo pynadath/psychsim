@@ -18,6 +18,7 @@ import sys
 import tempfile
 import time
 import numpy as np
+import re
 
 from psychsim.pwl import *
 from psychsim.world import *
@@ -28,7 +29,7 @@ import psychsim.probability
 
 from psychsim.domains.hri.robotWaypoints import NEWWAYPOINTS as WAYPOINTS
 from psychsim.domains.hri.robotWaypoints import DISTANCES
-
+import psychsim.domains.hri.dtree as dtree
 TEMPLATES = {
     # TODO: Positive/negative framing
     # TODO: Sensor model
@@ -77,10 +78,10 @@ TEMPLATES = {
         False: 'I think it will be dangerous for you to enter the $B_waypoint without protective gear. The protective gear will slow you down a little.'},
     'acknowledgment': {
         # Check if the person died 0 -- alive else 1 -- dead
-        'correct': 'It seems that my estimate of the $waypoint was correct',
-        'delay': 'It seems that my estimate of the $waypoint was incorrect',
-        'died': 'It seems that my estimate of the $waypoint was incorrect',
-        'required': '. I\'ve updated my algorithm accordingly. ',
+        'correct': 'It seems that my estimate of the $waypoint was correct. ',
+        'delay': 'It seems that my estimate of the $waypoint was incorrect. ',
+        'died': 'It seems that my estimate of the $waypoint was incorrect. ',
+        'required': 'I\'ve updated my algorithm accordingly. ',
         # False positive
         True: 'It seems that my assessment of the $B_waypoint was incorrect. I will update my algorithms when we return to base after the mission.',
         # False negative
@@ -90,8 +91,37 @@ TEMPLATES = {
         },
     'ack_learning':{
         'always':'It seems that my assessment of the $B_waypoint was incorrect. ',
-        'update_info':'I have changed my FNprob of the camera sensor from $old_val to $new_val. '
+        'update_info_cam_neg':'I have changed my FNprob of the camera sensor from $old_val to $new_val. ',
+        'update_info_micro_neg':'I have changed my FNprob of the microphone sensor from $old_val to $new_val. ',
+        'update_info_nbc_neg':'I have changed my FNprob of the nbc sensor from $old_val to $new_val. ',
+        'update_info_cam_pos':'I have changed my FPprob of the camera sensor from $old_val to $new_val. ',
+        'update_info_micro_pos':'I have changed my FPprob of the microphone sensor from $old_val to $new_val. ',
+        'update_info_nbc_pos':'I have changed my FPprob of the nbc sensor from $old_val to $new_val. ',
+        'update_human_prob_prot': 'I have changed my humanProbProtected from $old_val to $new_val. ',
+        'update_human_prob_unprot': 'I have changed my humanProbUnProtected from $old_val to $new_val. '
         },
+    'decision_tree':{
+        'false':'There has been no change in the Decision Tree.',
+        'true':{
+            'single':'There has been $num change in the Decision Tree, namely $names.',
+            'multiple':'There have been $num changes in the Decision Tree, namely $names.'
+        }
+    },
+    'decision_tree_explanation':{
+        'start':"Because the robot's prediction is $value for $sensor",
+        'middle':", $value for $sensor",
+        'conclude':". Therefore, the recommendation as per Decision Tree is $recommendation."
+    },
+    'why_not_explanation':{
+        'header':'Why not $recommendation? Since',
+        'reasoning1':"the robot's $sensor prediction is $value,",
+        'reasoning2':'$sensor $danger,',
+        'conclusion':'Hence, a $recommendation recommendation does not make sense.'
+    },
+    'human_compliance_model':{
+        'unprotected':'I think the Human Probability of following my action of Unprotected is: $prob',
+        'protected':'I think the Human Probability of following my action of Protected Gear is: $prob'
+    },
    'convince':{
            'sensors':{
                 'nobody':
@@ -134,7 +164,14 @@ USER_TAG = 'Protective:'
 COMPLETE_TAG = 'Complete'
 ACK_TAG = 'Acknowledged:'
 RECOMMEND_TAG = 'Recommend protection:'
+DTREE_TAG = "Decision Tree:"
+DTREE_EXPLANATION = "Decision Tree Explanation:"
+GRAPH_DIR = "Graph Directory:"
+DTREE_UPDATES = "Decision Tree Updates:"
 VALUE_TAG = 'Value'
+WHY_NOT_TAG = "Why Not:"
+ITERATION_TAG = "Iteration Number:"
+PREV_TREE_TAG = "Previous Tree:"
 
 CODES = {'ability': {'s': 'badSensor','g': 'good','m': 'badModel'},
          'explanation': {'n': 'none','a': 'ability','c': 'confidence','b': 'abilityconfidence'},
@@ -144,8 +181,8 @@ CODES = {'ability': {'s': 'badSensor','g': 'good','m': 'badModel'},
          }
 
 def createWorld(username='anonymous',level=0,ability='good',explanation='none',
-                embodiment='robot',acknowledgment='no',learning='none',fnProb=0.01,
-                sequence=False,root='.',ext='xml',reliability = 0.80):
+                embodiment='robot',acknowledgment='no',learning='none',sequence=False,root='.',ext='xml', reliability = 0.80,cam_fnProb=0.01,cam_fpProb=0.01,
+                micro_fnProb=0.01,micro_fpProb=0.01,nbc_fnProb=0.01,nbc_fpProb=0.01,humanProbProt=0.5,humanProbUnprot=0.5):
     """
     Creates the initial PsychSim scenario and saves it
     @param username: name of user ID to use in filenames
@@ -195,6 +232,13 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 
     world.defineState(WORLD,'time',float)
     world.setState(WORLD,'time',0.)
+
+    world.defineState(WORLD, 'iteration', int)
+    world.setState(WORLD, 'iteration',0)
+
+    # world.defineState(WORLD, 'prev dtree',list)
+    # world.setState(WORLD, 'prev dtree', [])
+
 
     key = world.defineState(WORLD,'phase',set,lo={'scan','move'},
                             description='What phase of the turn is it')
@@ -263,9 +307,37 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
 
     world.defineState(robot.name,'learning',list,['none','model-free','model-based'])
     robot.setState('learning',learning)
+
     world.defineState(robot.name,'cameraFNProb',
                       description='Probability of false negative from camera')
-    robot.setState('cameraFNProb',fnProb)
+    robot.setState('cameraFNProb',cam_fnProb)
+
+    world.defineState(robot.name, 'cameraFPProb',
+                      description='Probability of false positive from camera')
+    robot.setState('cameraFPProb', cam_fpProb)
+
+    world.defineState(robot.name, 'microFNProb',
+                      description='Probability of false negative from microphone')
+    robot.setState('microFNProb', micro_fnProb)
+
+    world.defineState(robot.name, 'microFPProb',
+                      description='Probability of false positive from microphone')
+    robot.setState('microFPProb', micro_fpProb)
+
+    world.defineState(robot.name, 'nbcFNProb',
+                      description='Probability of false negative from nbc')
+    robot.setState('nbcFNProb', nbc_fnProb)
+
+    world.defineState(robot.name, 'nbcFPProb',
+                      description='Probability of false positive from nbc')
+    robot.setState('nbcFPProb', nbc_fpProb)
+
+    world.defineState(robot.name, 'humanProbProtected',
+                      description='Probability of human following the protected recommendation')
+    robot.setState('humanProbProtected', humanProbProt)
+    world.defineState(robot.name, 'humanProbUnprotected',
+                      description='Probability of human following the unprotected recommendation')
+    robot.setState('humanProbUnprotected', humanProbUnprot)
 
     world.defineState(robot.name,'ability',list,['badSensor','badModel','good'])
     if ability is True:
@@ -343,12 +415,12 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
         # Observations from scanning this waypoint
         key = stateKey(symbol,'danger')
         omega = stateKey(robot.name,'microphone')
-        robot.setO('microphone',action,makeTree(generateMicO(world,key)))
+        robot.setO('microphone',action,makeTree(generateMicO(world,key,falseNeg=micro_fnProb,falsePos = micro_fpProb)))
         omega = stateKey(robot.name,'NBCsensor')
-        tree = makeTree(generateNBCO(world,key))
+        tree = makeTree(generateNBCO(world,key,falseNeg=nbc_fnProb,falsePos = nbc_fpProb))
         robot.setO('NBCsensor',action,tree)
         omega = stateKey(robot.name,'camera')
-        robot.setO('camera',action,makeTree(generateCameraO(world,key,falseNeg=fnProb)))
+        robot.setO('camera',action,makeTree(generateCameraO(world,key,falseNeg=cam_fnProb,falsePos = cam_fpProb)))
 
         # Human entry: Dead or alive if unprotected?
         key = stateKey(human.name,'alive')
@@ -473,34 +545,58 @@ def createWorld(username='anonymous',level=0,ability='good',explanation='none',
                  username,level,root=root)
     return world
 
-def generateMicO(world,key):
+def generateMicO(world,key,falseNeg=0.05,falsePos = 0.05):
     omega = stateKey('robot','microphone')
-    return {'if': equalRow(key,'armed'),
-            True: {'distribution':
-                   [(setToConstantMatrix(omega,'nobody'),0.04),
-                    (setToConstantMatrix(omega,'friendly'),0.03),
-                    (setToConstantMatrix(omega,'suspicious'),0.93)]},
-            False: {'distribution':
-                    [(setToConstantMatrix(omega,'nobody'),0.48),
-                     (setToConstantMatrix(omega,'friendly'),0.49),
-                     (setToConstantMatrix(omega,'suspicious'),0.03)]}}
+    return {'if': equalRow(stateKey('robot', 'ability'), 'badModel'),
+            # Robot's O doesn't match up with its good observations
+            True: {'if': equalRow(key, 'armed'),
+                   True: {'distribution':
+                              [(setToConstantMatrix(omega, 'nobody'), 0.04),
+                               (setToConstantMatrix(omega, 'friendly'), 0.03),
+                               (setToConstantMatrix(omega, 'suspicious'), 0.93)]},
+                   False: {'distribution':
+                               [(setToConstantMatrix(omega, 'nobody'), 0.48),
+                                (setToConstantMatrix(omega, 'friendly'), 0.49),
+                                (setToConstantMatrix(omega, 'suspicious'), 0.03)]},
+                   },
+            False: {'if': equalRow(key, 'armed'),
+                   True: {'distribution':
+                              [(setToConstantMatrix(omega, 'nobody'), falseNeg),
+                               (setToConstantMatrix(omega, 'friendly'), falseNeg),
+                               (setToConstantMatrix(omega, 'suspicious'), 1. - 2*falseNeg)]},
+                   False: {'distribution':
+                               [(setToConstantMatrix(omega, 'nobody'), (1.-falsePos)/2),
+                                (setToConstantMatrix(omega, 'friendly'), (1.-falsePos)/2),
+                                (setToConstantMatrix(omega, 'suspicious'), falsePos)]},
+                   }}
 
-def generateNBCO(world,key):
+def generateNBCO(world,key,falseNeg=0.05,falsePos = 0.05):
     """
     @return: a observation function specification of the robot's NBC sensor
     @rtype: dict
     """
     omega = stateKey('robot','NBCsensor')
-    return {'if': equalRow(key,'NBC'),
-            True: {'distribution':
-                   [(setFalseMatrix(omega),0.1),
-                    (setTrueMatrix(omega),0.9)]},
-            False: {'distribution':
-                   [(setFalseMatrix(omega),0.95),
-                    (setTrueMatrix(omega),0.05)]},
-            }
+    return {'if': equalRow(stateKey('robot', 'ability'), 'badModel'),
+            # Robot's O doesn't match up with its good observations
+            True: {'if': equalRow(key,'NBC'),
+                   True: {'distribution':
+                              [(setFalseMatrix(omega),0.1),
+                               (setTrueMatrix(omega),0.9)]},
+                   False: {'distribution':
+                               [(setFalseMatrix(omega),0.95),
+                                (setTrueMatrix(omega),0.05)]},
+                   },
+            False: {'if': equalRow(key,'NBC'),
+                   True: {'distribution':
+                              [(setFalseMatrix(omega),falseNeg),
+                               (setTrueMatrix(omega),1.-falseNeg)]},
+                   False: {'distribution':
+                               [(setFalseMatrix(omega),1.-falsePos),
+                                (setTrueMatrix(omega),falsePos)]},
+                   }}
 
-def generateCameraO(world,key,belief=False,falseNeg=0.05):
+
+def generateCameraO(world,key,belief=False,falseNeg=0.05,falsePos = 0.05):
     """
     @return: a observation function specification for use in a PWL function
     @rtype: dict
@@ -521,8 +617,8 @@ def generateCameraO(world,key,belief=False,falseNeg=0.05):
                            [(setToConstantMatrix(omega,False),falseNeg),
                             (setToConstantMatrix(omega,True),1.-falseNeg)]},
                     False: {'distribution':
-                            [(setToConstantMatrix(omega,False),0.95),
-                             (setToConstantMatrix(omega,True),0.05)]},
+                            [(setToConstantMatrix(omega,False),1.-falsePos),
+                             (setToConstantMatrix(omega,True),falsePos)]},
                     }}
 
 def getStart(level):
@@ -643,14 +739,17 @@ def GetDecision(username,level,parameters,world=None,ext='xml',root='.',sleep=No
     return index
 
 def GetAcknowledgment(user,recommendation,location,danger,username,level,parameters,
-                      world=None,ext='xml',root='.',learning_rate = 1.0):
+                      world=None,ext='xml',root='.',learning_rate = 1.0,observation_condition='randomize'):
     print("**********************Get Acknowledgment*******************")
-
+            #For Q-Value CSV File
+    outputFile="./media/qvalue/"+str(username)+"/qvalue.csv"
     if world is None:
         # Get the world from the scenario file
         filename = getFilename(username,level,ext,root)
         world = World(filename)
     oldVector = world.state
+    # print(oldVector)
+
     robotIndex = symbol2index(location,level)
     beliefs = {'B_waypoint': WAYPOINTS[level][robotIndex]['name']}
     if recommendation == 'unprotected' and danger != 'none':
@@ -670,6 +769,9 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     learning = learning.first()
     ack = ''
     robot = world.agents['robot']
+    move = Action({'subject': robot.name,
+                   'verb': 'moveto',
+                   'object': location})
     if learning == 'model-free':
         robot = world.agents['robot']
         # Q Learning
@@ -682,17 +784,25 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         global file
         if recommendation == 'protected':
             if danger != 'none':
+                with open(outputFile, 'a+') as file:
+                    file.write("Robot recommended Protected Gear and danger was present. Hence recommendation is correct.\n")
                 robot.table[omega2index(robot.prev_state)][0] = robot.table[omega2index(robot.prev_state)][0] + LR*(20-60*(0.25))
                 robot.old_decision[omega2index(robot.prev_state)].append('correct')
             if danger == 'none':
+                with open(outputFile, 'a+') as file:
+                    file.write("Robot recommended Protected Gear and danger was none. Hence recommendation is incorrect.\n")
                 # Have to handle this case a better way
                 robot.table[omega2index(robot.prev_state)][0] = max(dummy_placeholder,robot.table[omega2index(robot.prev_state)][0] + LR*(20-60*(0.25) - (10) )) # The -10 is for recommending protected when there is no danger
                 robot.old_decision[omega2index(robot.prev_state)].append('delay')
         elif recommendation == 'unprotected' and danger != 'none':
+            with open(outputFile, 'a+') as file:
+                file.write("Robot recommended Unprotected and danger was present. Hence recommendation is incorrect.\n")
             enter_flag = 1
             robot.table[omega2index(robot.prev_state)][1] = max(dummy_placeholder,robot.table[omega2index(robot.prev_state)][1] + LR*(-12))
             robot.old_decision[omega2index(robot.prev_state)].append('died')
         elif recommendation == 'unprotected' and danger == 'none':
+            with open(outputFile, 'a+') as file:
+                file.write("Robot recommended Unprotected and danger was none. Hence recommendation is correct.\n")
             robot.table[omega2index(robot.prev_state)][1] = robot.table[omega2index(robot.prev_state)][1] + LR*(20)
             robot.old_decision[omega2index(robot.prev_state)].append('correct')
         robot.old_decision[omega2index(robot.prev_state)].append(list(robot.table[omega2index(robot.prev_state)]))
@@ -706,6 +816,8 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
 #        probs_old = np.array(np.array(copy_old_table[omega2index(robot.prev_state)])/sum(np.array(copy_old_table[omega2index(robot.prev_state)])))
 #        probs_new = np.array(np.array(robot.table[omega2index(robot.prev_state)])/sum(np.array(robot.table[omega2index(robot.prev_state)])))
         if user is None:
+            with open(outputFile, 'a+') as file:
+                file.write("Human chose action "+recommendation)
             action = Action({'subject': 'robot',
                              'verb': 'recommend %s' % (recommendation),
                              'object': location})
@@ -714,10 +826,26 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                 action = Action({'subject': 'robot',
                                  'verb': 'recommend %s' % ('protected'),
                                  'object': location})
+                if recommendation=='protected':
+                    with open(outputFile, 'a+') as file:
+                        file.write("Human follwed robot's recommendation")
+                else:
+                    with open(outputFile, 'a+') as file:
+                        file.write("Human did not follow robot's recommendation")
+                with open(outputFile, 'a+') as file:
+                    file.write(" and chose action protected")
             else:
                 action = Action({'subject': 'robot',
                                  'verb': 'recommend %s' % ('unprotected'),
                                  'object': location})
+                if recommendation=='unprotected':
+                    with open(outputFile, 'a+') as file:
+                        file.write("Human followed robot's recommendation")
+                else:
+                    with open(outputFile, 'a+') as file:
+                        file.write("Human did not follow robot's recommendation")
+                with open(outputFile, 'a+') as file:
+                    file.write(" and chose action unprotected")
         print (action)
         world.step(action,select=True)
         ack += Template(TEMPLATES['acknowledgment'][robot.old_decision[omega2index(robot.prev_state)][3]]).safe_substitute({'waypoint':robot.old_decision[omega2index(robot.prev_state)][2]})
@@ -749,48 +877,270 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
         # print ('The update/new decision probabilities are:',probs_new)
     else:
         if learning == 'model-based':         # Let's learn!
+            model = world.getModel(robot.name)
+            assert len(model) == 1
+            model = model.first()
+            danger_dict = {}
+            print(location + "'s old danger readings")
+            for i in iter(robot.getBelief(world.state, model)[location + "'s danger"]._domain):
+                print(world.symbolList[int(float(i) + 0.1)],(robot.getBelief(world.state, model)[location + "'s danger"][i]))
+                danger_dict[world.symbolList[int(float(i) + 0.1)]] = robot.getBelief(world.state, model)[location + "'s danger"][i]
+            # print(danger_dict)
+            WriteLogData('Old_Danger Prob: %s' % str(danger_dict), username, level, root=root)
+            alpha = 0.1
+            # print(robot.getO())
+            print("\nRobot's old observation probabilities")
+            obs_prob = show_O(world, robot, move)
+            WriteLogData('Old_Observation Prob: %s' % str(obs_prob), username, level, root=root)
+            cam_fnProb = world.getFeature('robot\'s cameraFNProb', oldVector)
+            assert len(cam_fnProb) == 1
+            micro_fnProb = world.getFeature('robot\'s microFNProb', oldVector)
+            assert len(micro_fnProb) == 1
+            nbc_fnProb = world.getFeature('robot\'s nbcFNProb', oldVector)
+            assert len(nbc_fnProb) == 1
+            cam_fpProb = world.getFeature('robot\'s cameraFPProb', oldVector)
+            assert len(cam_fpProb) == 1
+            micro_fpProb = world.getFeature('robot\'s microFPProb', oldVector)
+            assert len(micro_fpProb) == 1
+            nbc_fpProb = world.getFeature('robot\'s nbcFPProb', oldVector)
+            assert len(nbc_fpProb) == 1
+            cam_fnProb = cam_fnProb.first()
+            cam_fpProb = cam_fpProb.first()
+            micro_fnProb = micro_fnProb.first()
+            micro_fpProb = micro_fpProb.first()
+            nbc_fnProb = nbc_fnProb.first()
+            nbc_fpProb = nbc_fpProb.first()
+            if recommendation == 'protected':
+                if danger != 'none':
+                    with open(outputFile, 'a+') as file:
+                        file.write("Robot recommended Protected Gear and danger was present. Hence recommendation is correct.\n")
+                    ack += Template(TEMPLATES['acknowledgment']['correct']).substitute(
+                        {'waypoint': WAYPOINTS[level][robotIndex]['name']})
+                elif danger == 'none':
+                    with open(outputFile, 'a+') as file:
+                        file.write("Robot recommended Protected Gear and danger was none. Hence recommendation is incorrect.\n")
+                    # Have to handle this case a better way
+                    ack += Template(TEMPLATES['ack_learning']['always']).substitute(
+                        {'B_waypoint': WAYPOINTS[level][robotIndex]['name']})
+            elif recommendation == 'unprotected' and danger != 'none':
+                with open(outputFile, 'a+') as file:
+                    file.write("Robot recommended Unprotected and danger was present. Hence recommendation is incorrect.\n")
+                ack += Template(TEMPLATES['ack_learning']['always']).substitute(
+                    {'B_waypoint': WAYPOINTS[level][robotIndex]['name']})
+            elif recommendation == 'unprotected' and danger == 'none':
+                with open(outputFile, 'a+') as file:
+                    file.write("Robot recommended Unprotected and danger was none. Hence recommendation is correct.\n")
+                ack += Template(TEMPLATES['acknowledgment']['correct']).substitute(
+                    {'waypoint': WAYPOINTS[level][robotIndex]['name']})
+            ack += Template(TEMPLATES['acknowledgment']['required']).safe_substitute()
             if world.getFeature('%s\'s danger' % (location),oldVector).get('armed') > 0.5:
                 # Armed gunman was there
-                ack += Template(TEMPLATES['ack_learning']['always']).substitute({'B_waypoint':WAYPOINTS[level][robotIndex]['name']})
-                fnProb = world.getFeature('robot\'s cameraFNProb',oldVector)
-                assert len(fnProb) == 1
-                fnProb = fnProb.first()
-                old = fnProb
-                alpha = 0.1
+                old = cam_fnProb
                 if world.getFeature('robot\'s camera',oldVector).get(False) > 0.5:
                     # False negative!
-                    fnProb = (1.-alpha)*fnProb + alpha
+                    cam_fnProb = min((1. - alpha) * cam_fnProb + alpha,1.0)
                 else:
-                    fnProb = (1.-alpha)*fnProb
-                ack += Template(TEMPLATES['ack_learning']['update_info']).substitute({'old_val':old,'new_val':fnProb,})
-                world.setFeature('robot\'s cameraFNProb',fnProb)
+                    cam_fnProb = max((1. - alpha) * cam_fnProb,0.)
+                ack += Template(TEMPLATES['ack_learning']['update_info_cam_neg']).substitute({'old_val':old,'new_val':cam_fnProb, })
+                world.setFeature('robot\'s cameraFNProb', cam_fnProb)
+
+                old = micro_fnProb
+                if world.getFeature('robot\'s microphone',oldVector).get('suspicious') < 0.5:
+                    # False negative!
+                    micro_fnProb = min((1. - alpha) * micro_fnProb + alpha,1.0)
+                else:
+                    micro_fnProb = max((1. - alpha) * micro_fnProb,0.)
+                ack += Template(TEMPLATES['ack_learning']['update_info_micro_neg']).substitute({'old_val':old,'new_val':micro_fnProb, })
+                world.setFeature('robot\'s microFNProb', micro_fnProb)
+
+                old = nbc_fpProb
+                if world.getFeature('robot\'s NBCsensor', oldVector).get(False) < 0.5:
+                    # False positive!
+                    nbc_fpProb = min((1. - alpha) * nbc_fpProb + alpha, 1.0)
+                else:
+                    nbc_fpProb = max((1. - alpha) * nbc_fpProb, 0.)
+                ack += Template(TEMPLATES['ack_learning']['update_info_nbc_pos']).substitute(
+                    {'old_val': old, 'new_val': nbc_fpProb, })
+                world.setFeature('robot\'s nbcFPProb', nbc_fpProb)
+
                 for waypoint in WAYPOINTS[level][robotIndex+1:]:
                     symbol = waypoint['symbol']
                     action = ActionSet(Action({'subject': 'robot','verb': 'moveto',
                                                'object': symbol}))
-                    tree = makeTree(generateCameraO(world,stateKey(symbol,'danger'),
-                                                    falseNeg=fnProb))
+                    tree = makeTree(generateCameraO(world, stateKey(symbol,'danger'),
+                                                    falseNeg=cam_fnProb,falsePos=cam_fpProb))
                     world.agents['robot'].setO('camera',action,tree)
+                    tree = makeTree(generateMicO(world, stateKey(symbol, 'danger'),
+                                                    falseNeg=micro_fnProb, falsePos=micro_fpProb))
+                    world.agents['robot'].setO('microphone', action, tree)
+                    tree = makeTree(generateNBCO(world, stateKey(symbol, 'danger'),
+                                                    falseNeg=nbc_fnProb, falsePos=nbc_fpProb))
+                    world.agents['robot'].setO('NBCsensor', action, tree)
+            elif world.getFeature('%s\'s danger' % (location),oldVector).get('NBC') > 0.5:
+                # Armed gunman was there
+                old = cam_fpProb
+                if world.getFeature('robot\'s camera', oldVector).get(False) < 0.5:
+                    # False positive!
+                    cam_fpProb = min((1. - alpha) * cam_fpProb + alpha, 1.0)
+                else:
+                    cam_fpProb = max((1. - alpha) * cam_fpProb, 0.)
+                ack += Template(TEMPLATES['ack_learning']['update_info_cam_pos']).substitute(
+                    {'old_val': old, 'new_val': cam_fpProb, })
+                world.setFeature('robot\'s cameraFPProb', cam_fpProb)
+
+                old = micro_fpProb
+                if world.getFeature('robot\'s microphone', oldVector).get('suspicious') > 0.5:
+                    # False positive!
+                    micro_fpProb = min((1. - alpha) * micro_fpProb + alpha, 1.0)
+                else:
+                    micro_fpProb = max((1. - alpha) * micro_fpProb, 0.)
+                ack += Template(TEMPLATES['ack_learning']['update_info_micro_pos']).substitute(
+                    {'old_val': old, 'new_val': micro_fpProb, })
+                world.setFeature('robot\'s microFPProb', micro_fpProb)
+
+                old = nbc_fnProb
+                if world.getFeature('robot\'s NBCsensor',oldVector).get(False) > 0.5:
+                    # False negative!
+                    nbc_fnProb = min((1. - alpha) * nbc_fnProb + alpha,1.0)
+                else:
+                    nbc_fnProb = max((1. - alpha) * nbc_fnProb,0.)
+                ack += Template(TEMPLATES['ack_learning']['update_info_nbc_neg']).substitute({'old_val':old,'new_val':nbc_fnProb, })
+                world.setFeature('robot\'s nbcFNProb', nbc_fnProb)
+
+                for waypoint in WAYPOINTS[level][robotIndex+1:]:
+                    symbol = waypoint['symbol']
+                    action = ActionSet(Action({'subject': 'robot','verb': 'moveto',
+                                               'object': symbol}))
+                    tree = makeTree(generateCameraO(world, stateKey(symbol,'danger'),
+                                                    falseNeg=cam_fnProb,falsePos=cam_fpProb))
+                    world.agents['robot'].setO('camera',action,tree)
+                    tree = makeTree(generateMicO(world, stateKey(symbol, 'danger'),
+                                                    falseNeg=micro_fnProb, falsePos=micro_fpProb))
+                    world.agents['robot'].setO('microphone', action, tree)
+                    tree = makeTree(generateNBCO(world, stateKey(symbol, 'danger'),
+                                                    falseNeg=nbc_fnProb, falsePos=nbc_fpProb))
+                    world.agents['robot'].setO('NBCsensor', action, tree)
+
+            else:
+                # No armed gunman was there
+                old = cam_fpProb
+                if world.getFeature('robot\'s camera', oldVector).get(False) < 0.5:
+                    # False positive!
+                    cam_fpProb = min((1. - alpha) * cam_fpProb + alpha,1.0)
+                else:
+                    cam_fpProb = max((1. - alpha) * cam_fpProb,0.)
+                ack += Template(TEMPLATES['ack_learning']['update_info_cam_pos']).substitute(
+                    {'old_val': old, 'new_val': cam_fpProb, })
+                world.setFeature('robot\'s cameraFPProb', cam_fpProb)
+
+                old = micro_fpProb
+                if world.getFeature('robot\'s microphone', oldVector).get('suspicious') > 0.5:
+                    # False positive!
+                    micro_fpProb = min((1. - alpha) * micro_fpProb + alpha,1.0)
+                else:
+                    micro_fpProb = max((1. - alpha) * micro_fpProb,0.)
+                ack += Template(TEMPLATES['ack_learning']['update_info_micro_pos']).substitute(
+                    {'old_val': old, 'new_val': micro_fpProb, })
+                world.setFeature('robot\'s microFPProb', micro_fpProb)
+
+                old = nbc_fpProb
+                if world.getFeature('robot\'s NBCsensor', oldVector).get(False) < 0.5:
+                    # False positive!
+                    nbc_fpProb = min((1. - alpha) * nbc_fpProb + alpha,1.0)
+                else:
+                    nbc_fpProb = max((1. - alpha) * nbc_fpProb,0.)
+                ack += Template(TEMPLATES['ack_learning']['update_info_nbc_pos']).substitute(
+                    {'old_val': old, 'new_val': nbc_fpProb, })
+                world.setFeature('robot\'s nbcFPProb', nbc_fpProb)
+
+                for waypoint in WAYPOINTS[level][robotIndex:]:
+                    symbol = waypoint['symbol']
+                    action = ActionSet(Action({'subject': 'robot', 'verb': 'moveto',
+                                               'object': symbol}))
+                    tree = makeTree(generateCameraO(world, stateKey(symbol, 'danger'),
+                                                    falseNeg=cam_fnProb, falsePos=cam_fpProb))
+                    world.agents['robot'].setO('camera', action, tree)
+                    # print(tree)
+                    tree = makeTree(generateMicO(world, stateKey(symbol, 'danger'),
+                                                 falseNeg=micro_fnProb, falsePos=micro_fpProb))
+                    world.agents['robot'].setO('microphone', action, tree)
+                    # print(tree)
+                    tree = makeTree(generateNBCO(world, stateKey(symbol, 'danger'),
+                                                 falseNeg=nbc_fnProb, falsePos=nbc_fpProb))
+                    world.agents['robot'].setO('NBCsensor', action, tree)
+                    # print(tree)
+            print("\nRobot's new observation probabilities")
+            obs_prob = show_O(world, robot, move)
+            WriteLogData('New_Observation Prob: %s' % str(obs_prob), username, level, root=root)
+            # exit()
         if user is None:
+            with open(outputFile, 'a+') as file:
+                file.write("Human chose action "+recommendation)
             action = Action({'subject': 'robot',
                              'verb': 'recommend %s' % (recommendation),
                              'object': location})
         else:
             print ('User action is not None')
+            alpha = 0.1
+            humanProbUnprot = world.getFeature('robot\'s humanProbUnprotected', oldVector)
+            assert len(humanProbUnprot) == 1
+            humanProbUnprot = humanProbUnprot.first()
+            old_unprot = humanProbUnprot
+            humanProbProt = world.getFeature('robot\'s humanProbProtected', oldVector)
+            assert len(humanProbProt) == 1
+            humanProbProt = humanProbProt.first()
+            old_prot = humanProbProt
             if user:
                 action = Action({'subject': 'robot',
                                  'verb': 'recommend %s' % ('protected'),
                                  'object': location})
+                if recommendation=='protected':
+                    with open(outputFile, 'a+') as file:
+                        file.write("Human follwed robot's recommendation")
+                    humanProbProt = min((1. - alpha) * humanProbProt + alpha,1.0)
+                    ack += Template(TEMPLATES['ack_learning']['update_human_prob_prot']).substitute(
+                        {'old_val': old_unprot, 'new_val': humanProbProt, })
+                    world.setFeature('robot\'s humanProbProtected', humanProbProt)
+                else:
+                    with open(outputFile, 'a+') as file:
+                        file.write("Human did not follow robot's recommendation")
+                    humanProbUnprot = max((1. - alpha) * humanProbUnprot,0.)
+                    ack += Template(TEMPLATES['ack_learning']['update_human_prob_unprot']).substitute(
+                        {'old_val': old_prot, 'new_val': humanProbUnprot, })
+                    world.setFeature('robot\'s humanProbUnprotected', humanProbUnprot)
+                with open(outputFile, 'a+') as file:
+                    file.write(" and chose action protected")
             else:
+
                 action = Action({'subject': 'robot',
                                  'verb': 'recommend %s' % ('unprotected'),
                                  'object': location})
+                if recommendation=='unprotected':
+                    with open(outputFile, 'a+') as file:
+                        file.write("Human followed robot's recommendation")
+                    humanProbUnprot = min((1. - alpha) * humanProbUnprot + alpha,1.0)
+                    ack += Template(TEMPLATES['ack_learning']['update_human_prob_unprot']).substitute(
+                        {'old_val': old_prot, 'new_val': humanProbUnprot, })
+                    world.setFeature('robot\'s humanProbUnprotected', humanProbUnprot)
+                else:
+                    with open(outputFile, 'a+') as file:
+                        file.write("Human did not follow robot's recommendation")
+                    humanProbProt = max((1. - alpha) * humanProbProt,0.)
+                    ack += Template(TEMPLATES['ack_learning']['update_human_prob_prot']).substitute(
+                        {'old_val': old_unprot, 'new_val': humanProbProt, })
+                    world.setFeature('robot\'s humanProbProtected', humanProbProt)
+                with open(outputFile, 'a+') as file:
+                    file.write(" and chose action unprotected")
+
+
+
         assert len(world.getModel('robot')) == 1
         world.step(action,select=True)
         assert len(world.getModel('robot')) == 1
         beliefState = list(world.agents['robot'].getBelief().values())[0]
         belief = world.getState(location,'danger',beliefState)
-
+        # print(belief)
+        # exit()
         real = world.getState(location,'danger')
         assert len(real) == 1
         assert len(belief) == 1
@@ -801,6 +1151,13 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
 #        ack = ''
     # Did the user die?
     death = not world.getState('human','alive').first()
+    if death:
+        with open(outputFile, 'a+') as file:
+            file.write(". Human died.\n")
+    else:
+        with open(outputFile, 'a+') as file:
+            file.write(". Human survived.\n")
+
     # if death:
     #     key = stateKey('human','deaths')
     #     old = world.getValue(key)
@@ -817,6 +1174,89 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
     with open(filename,'wb') as scenarioFile:
         pickle.dump(world,scenarioFile)
 #    world.save(filename,ext=='psy')
+    if learning == "model-based":
+        state = pickle.loads(pickle.dumps(world.state))
+        new_robotIndex = symbol2index(location, level)
+        new_robotWaypoint = WAYPOINTS[level][new_robotIndex]
+        move = Action({'subject': robot.name,
+                       'verb': 'moveto',
+                       'object': location})
+        world.step(move)
+        key = stateKey(new_robotWaypoint['symbol'], 'danger')
+        ability = robot.getState('ability').domain()[0]
+        if ability == 'badSensor':
+            sensorCorrect = False
+        else:
+            sensorCorrect = True
+        # Generate individual sensor readings
+        omega = {}
+        nullReading = {'camera': False, 'microphone': 'nobody', 'NBCsensor': False}
+        readings = {'camera': [True, False], 'microphone': ['suspicious', 'friendly', 'nobody'],
+                    'NBCsensor': [True, False]}
+
+        if new_robotIndex in robot.random_indices:
+            randomizing_flag = True
+            pick_sensor = np.random.choice(['microphone', 'camera'], p=[0.5, 0.5])
+        else:
+            randomizing_flag = False
+        danger = world.getFeature(key, world.state)
+        for sensor in robot.omega:
+            if observation_condition == 'scripted':
+                # print('Using scripted readings')
+                if sensor in new_robotWaypoint:
+                    # print("in")
+                    omega[sensor] = new_robotWaypoint[sensor][sensorCorrect]
+                    # print(sensor, robotWaypoint[sensor][sensorCorrect])
+                else:
+                    omega[sensor] = nullReading[sensor]
+                    # print(sensor, nullReading[sensor])
+            else:
+                # if randomize then sample a value from readings with given distribution
+                if sensor in new_robotWaypoint:
+                    actual = new_robotWaypoint[sensor][True]
+                else:
+                    actual = nullReading[sensor]
+
+                if randomizing_flag:
+                    # print('Using randomized readings', pick_sensor)
+                    if sensor == 'microphone' and sensor == pick_sensor:
+                        if actual == 'suspicious':
+                            omega[sensor] = np.random.choice(['friendly', 'nobody'], p=[0.5, 0.5])
+                        else:
+                            omega[sensor] = 'suspicious'
+                    elif sensor == 'camera' and sensor == pick_sensor:
+                        assert isinstance(actual, bool)
+                        omega[sensor] = not actual
+                    else:
+                        omega[sensor] = actual
+                else:
+                    # print('Using actual readings')
+                    omega[sensor] = actual
+            omegaKey = stateKey(robot.name, sensor)
+            world.getFeature(omegaKey)
+            world.state[omegaKey] = world.value2float(omegaKey, omega[sensor])
+        new_model = world.getModel(robot.name)
+        assert len(new_model) == 1
+        new_model = new_model.first()
+        # print(new_robot.getBelief(new_world.state, new_model).keyMap)
+        # for obs in new_robot.omega:
+        #     print(obs)
+        #     for i in iter(new_robot.getBelief(new_world.state, new_model)["robot's "+str(obs)]._domain):
+        #         print(new_world.symbolList[int(float(i) + 0.1)],
+        #               (new_robot.getBelief(new_world.state, new_model)["robot's "+str(obs)][i]))
+        # exit()
+        print(location + "'s new danger readings")
+        danger_dict = {}
+        for i in iter(robot.getBelief(world.state, new_model)[location + "'s danger"]._domain):
+            print(world.symbolList[int(float(i) + 0.1)],
+                  (robot.getBelief(world.state, new_model)[location + "'s danger"][i]))
+            danger_dict[world.symbolList[int(float(i) + 0.1)]] = \
+            robot.getBelief(world.state, new_model)[location + "'s danger"][i]
+        # print(danger_dict)
+        WriteLogData('New_Danger Prob: %s' % str(danger_dict), username, level, root=root)
+        # decision = new_robot.decide(new_world.state, model=new_model)
+        # print(decision)
+        world.state = state
 
     return ack
 
@@ -833,7 +1273,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     if world is None:
         # Get the world from the scenario file
         world = World(filename)
-
+    oldVector = world.state
     learning = world.getFeature('robot\'s learning')
     assert len(learning) == 1,'Unable to have uncertain setting for learning'
     learning = learning.first()
@@ -853,10 +1293,40 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         robotWaypoint = WAYPOINTS[level][robotIndex]
         if not 'symbol'in robotWaypoint:
             robotWaypoint['symbol'] = robotWaypoint['name'].replace(' ','')
-
     move = Action({'subject': robot.name,
                      'verb': 'moveto',
                      'object': robotWaypoint['symbol']})
+    # # print(move)
+    # # print(ActionSet(move))
+    # # print(robot.O)
+    # mtree = robot.O["robot's microphone"][ActionSet(move)]
+    # # print(mtree)
+    # # print(mtree.getKeysIn())
+    # # print(mtree.getKeysOut())
+    # expressed_tree =tree_decode(mtree)
+    # # print(expressed_tree)
+    # # print(world.variables)
+    # # print(mtree._string)
+    # # print(world.symbolList[int(float(5)+0.1)])
+    # # # exit()
+    # # print(world.float2value("robot's microphone",263))
+    # words = re.split(' |\*',expressed_tree)
+    # for word in range(len(words)):
+    #     if '\n' in words[word]:
+    #         new_words = words[word].split('\n')
+    #         if new_words[0].isdigit():
+    #             if '.' not in new_words[0]:
+    #                 words[word] = str(world.symbolList[int(float(new_words[0])+0.1)]) + words[word][len(new_words[0]):]
+    #     elif words[word].isdigit():
+    #         if '.' not in words[word]:
+    #             words[word] = world.symbolList[int(float(words[word])+0.1)]
+    # print(" ".join(words))
+
+    # print(robot.omega)
+
+    # mtree = robot.O["robot's microphone"][ActionSet(move)]
+    # print(tree_decode(mtree))
+    # exit()
     world.step(move)
     # Process scripted observations
     key = stateKey(robotWaypoint['symbol'],'danger')
@@ -881,9 +1351,12 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         if observation_condition == 'scripted':
             print('Using scripted readings')
             if sensor in robotWaypoint:
+                # print("in")
                 omega[sensor] = robotWaypoint[sensor][sensorCorrect]
+                # print(sensor, robotWaypoint[sensor][sensorCorrect])
             else:
                 omega[sensor] = nullReading[sensor]
+                # print(sensor, nullReading[sensor])
         else:
             # if randomize then sample a value from readings with given distribution
             if sensor in robotWaypoint:
@@ -945,6 +1418,12 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     WriteLogData('NBC sensor: %s' % (omega['NBCsensor']),username,level,root=root)
     WriteLogData('Camera: %s' % (omega['camera']),username,level,root=root)
     WriteLogData('Microphone: %s' % (omega['microphone']),username,level,root=root)
+
+    #For Q-Value CSV File
+    outputFile = "./media/qvalue/"+str(username)+"/qvalue.csv"
+    with open(outputFile, 'a+') as f:
+        f.write("\nThe sensor readings are Microphone-> "+str(omega['microphone'])+" NBC Sensor-> "+str(omega['NBCsensor'])+" camera-> "+str(omega['camera'])+"\n")
+
     # Get robot's beliefs
     loc = stateKey(robot.name,'waypoint')
     # Use explicit beliefs
@@ -958,8 +1437,12 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     for danger in assessment.domain():
         WriteLogData('Posterior belief in %s: %d%%' % (danger,assessment[danger]*100.),
                      username,level,root=root)
-    # Which recommendation is better?
+    # Which recommendation is better? 
     decision = robot.decide(world.state,model=model)
+    # print((robot.getBelief(world.state,model)[robotWaypoint['symbol']+"'s danger"]))
+    # print(world.symbolList[int(float(260) + 0.1)])
+    # exit()
+    # print(decision['action']['verb'])
     # R = robot.getReward(model)
     # subset = set(R.getKeysIn()) - {CONSTANT}
     # R.children[None].makeFuture()
@@ -1009,6 +1492,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         actions_values = {}
         actions_values['recommend protected'] = values_predicted[0]
         actions_values['recommend unprotected'] = values_predicted[1]
+
         if action_predicted == 0:
             WriteLogData('Decision_MFree: recommend protected\n'+'Values: '+str(values_predicted)+',Confidence: '+str(values_predicted[action_predicted]/sum(values_predicted))+'\n',username,level,root=root)
             act = {}
@@ -1057,6 +1541,13 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
 #    action1,action2 = projection.keys()
 #    difference = projection[action1]+(projection[action2]*-1.)
     # Package up the separate components of my current model
+    humanProbUnprot = world.getFeature('robot\'s humanProbUnprotected', oldVector)
+    assert len(humanProbUnprot) == 1
+    humanProbUnprot = humanProbUnprot.first()
+    humanProbProt = world.getFeature('robot\'s humanProbProtected', oldVector)
+    assert len(humanProbProt) == 1
+    humanProbProt = humanProbProt.first()
+
     POMDP = {}
     # Add Omega_t, my latest observation
     for Omega,observation in omega.items():
@@ -1076,15 +1567,25 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
             POMDP['O_%s_%s_%s' % (Omega,observation,danger)] = prob
     # Add A_t, my chosen action
     if decision['action']['verb'] == 'recommend unprotected':
+        if learning == 'model-based':
+            hcm=Template(TEMPLATES['human_compliance_model']['unprotected']).substitute({'prob': str(humanProbUnprot)})
+            # "I think the Human Probability of following my action of Unprotected is: "+str(humanProbUnprot)
+            print("Human Compliance Model: "+hcm )
+            WriteLogData('Human Compliance Model: %s' % hcm, username, level, root=root)    
         POMDP['A'] = 'recommend unprotected'
         safety = True
         world.setState(robotWaypoint['symbol'],'recommendation','unprotected')
-        WriteLogData('%s: no' % (RECOMMEND_TAG),username,level,root=root)
+        WriteLogData('%s no' % (RECOMMEND_TAG),username,level,root=root)
     else:
+        if learning == 'model-based':
+            hcm=Template(TEMPLATES['human_compliance_model']['protected']).substitute({'prob': str(humanProbProt)})
+            # "I think the Human Probability of following my action of protected gear is: "+str(humanProbProt)
+            print("Human Compliance Model: "+hcm)
+            WriteLogData('Human Compliance Model: %s' % hcm, username, level, root=root)   
         POMDP['A'] = 'recommend protected'
         safety = False
         world.setState(robotWaypoint['symbol'],'recommendation','protected')
-        WriteLogData('%s: yes' % (RECOMMEND_TAG),username,level,root=root)
+        WriteLogData('%s yes' % (RECOMMEND_TAG),username,level,root=root)
     if learning == 'model-free':
         POMDP['B_waypoint'] = WAYPOINTS[level][symbol2index(world.getState('robot','waypoint').first(),level)]['name']
         if action_predicted == 0:
@@ -1094,6 +1595,7 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
             POMDP['B_danger_none'] = int(100.*values_predicted[action_predicted]/sum(values_predicted))
     else:
         # Add B_t, my current beliefs
+        # print(beliefs[model].keys())
         for key in beliefs[model].keys():
             if key != keys.CONSTANT:
                 entity = state2agent(key)
@@ -1125,12 +1627,96 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
         else:
             explanation += ' '+line
         cnt_temp+=1
-#    pp.pprint(POMDP)
+    #pp.pprint(POMDP)
     WriteLogData('%s %s' % (MESSAGE_TAG,explanation),username,level,root=root)
 
     with open(filename,'wb') as scenarioFile:
         pickle.dump(world,scenarioFile)
+
+    #Why-Not? Explanations
+    recommendation = world.getState(robotWaypoint['symbol'], 'recommendation').first()
+    not_recommended = "unprotected" if recommendation == "protected" else "protected"
+    why_not = ""
+    why_not+=Template(TEMPLATES['why_not_explanation']['header']).substitute({'recommendation': not_recommended})
+    for obs in robot.omega:
+        if obs in {'camera', 'NBCsensor'}:
+            why_not += " "+Template(TEMPLATES['why_not_explanation']['reasoning1']).substitute({'sensor': str(obs),
+            'value':"False" if robot.getBelief(world.state, model)["robot's " + str(obs)] == 0.0 else "True"})
+        else:
+            why_not += " "+Template(TEMPLATES['why_not_explanation']['reasoning1']).substitute({'sensor': str(obs),
+            'value':world.symbolList[int(float(robot.getBelief(world.state, model)["robot's " + str(obs)]) + 0.1)]})
+
+    why_not=why_not[0:len(why_not)-1]
+    why_not+=". Also, The robot's danger predictions are as follows:"
+    for i in iter(robot.getBelief(world.state, model)[robotWaypoint['symbol'] + "'s danger"]._domain):
+        why_not+= " "+Template(TEMPLATES['why_not_explanation']['reasoning2']).substitute({
+            'sensor':world.symbolList[int(float(i) + 0.1)],'danger':robot.getBelief(world.state, model)[robotWaypoint['symbol'] + "'s danger"][i]})
+
+    why_not=why_not[0:len(why_not)-1]
+    why_not += ". "+Template(TEMPLATES['why_not_explanation']['conclusion']).substitute({
+        'recommendation':not_recommended})+"\n"
+
+    print("\nThe recommendation is: {}".format(recommendation))
+    print(why_not)
+    WriteLogData('{} {}'.format(WHY_NOT_TAG,why_not), username, level, root=root)
     return explanation
+
+def show_O(world,robot,move):
+    dic = {}
+    for obs in robot.omega:
+        print(obs)
+        mtree = robot.O["robot's "+ obs][ActionSet(move)]
+        expressed_tree = tree_decode(mtree)
+        words = re.split(' |\*', expressed_tree)
+        for word in range(len(words)):
+            if obs == "NBCsensor":
+                if len(words[word]) == 3:
+                    if words[word] == '1.0':
+                        words[word] = "True"
+                    elif words[word] == '0.0':
+                        words[word] = "False"
+            if '\n' in words[word]:
+                new_words = words[word].split('\n')
+                if new_words[0].isdigit():
+                    # if '.' not in new_words[0]:
+                    words[word] = str(world.symbolList[int(float(new_words[0]) + 0.1)]) + words[word][
+                                                                                          len(new_words[0]):]
+            elif words[word].isdigit():
+                # if '.' not in words[word]:
+                words[word] = world.symbolList[int(float(words[word]) + 0.1)]
+        print(" ".join(words))
+        dic[obs] = " ".join(words)
+        print()
+    return dic
+def tree_decode(tree):
+    new_str = None
+    if new_str is None:
+        if tree.isLeaf():
+            # print("leaf ",str(tree.children[None]))
+            new_str = str(tree.children[None])
+        elif tree.isProbabilistic():
+            # Probabilistic branch
+            # print("prob")
+            new_str = '\n'.join(
+                map(lambda el: '%d%%: %s' % (100. * tree.children[el], tree_decode(el)), tree.children.domain()))
+        else:
+            # Deterministic branch
+            # print("Deterministic")
+            if len(tree.branch.planes) == 1 and isinstance(tree.branch.planes[0][1], list):
+                thresholds = tree.branch.planes[0][1][:]
+                if tree.branch.planes[0][2] < 0:
+                    thresholds.append(1.)
+                elif tree.branch.planes[0][2] > 0:
+                    thresholds.insert(0, 0.)
+                children = '\n'.join(['%s\t%s' % (thresholds[value] if isinstance(value, int) else 'Otherwise',
+                                                  tree_decode(tree.children[value]).replace('\n', '\n\t'))
+                                      for value in tree.children])
+            else:
+                children = '\n'.join(
+                    ['%s\t%s' % (value, tree_decode(tree.children[value]).replace('\n', '\n\t')) for value in tree.children])
+            new_str = 'if %s\n%s' % (str(tree.branch), children)
+
+    return new_str
 
 def explainDecision(decision,beliefs,mode,flag_check=''):
     """
@@ -1172,6 +1758,8 @@ def WriteLogData(content="",username=None,level=None,root='.'):
     (U) Creating logs
     """
     filename = getFilename(username,level,extension='log',root=root)
+    # print(filename)
+    # exit()
     f = open(filename,'a')
     print('[%s] %s' % (datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
                        content),file=f)
@@ -1186,13 +1774,30 @@ def readLogData(username,level,root='.'):
     start = None
     for line in fileinput.input(filename):
         elements = line.split()
-        if len(elements) <= 1:
+        # print(elements)
+        if len(elements) <= 2:
             # print (elements)
             continue
         if '%s %s' % (elements[2],elements[3]) == RECOMMEND_TAG:
             now = datetime.datetime.strptime('%s %s' % (elements[0][1:],elements[1][:-1]),'%Y-%m-%d %H:%M:%S')
             log.insert(0,{'type': 'message','recommendation': elements[4],
                           'time': now-start})
+        elif '%s %s' % (elements[2],elements[3]) == DTREE_TAG:
+            now = datetime.datetime.strptime('%s %s' % (elements[0][1:], elements[1][:-1]), '%Y-%m-%d %H:%M:%S')
+            log.insert(1, {'type': 'Decision Tree', 'dtree': eval("".join(elements[4:])),
+                           'time': now - start})
+        elif '%s %s' % (elements[2],elements[3]) == PREV_TREE_TAG:
+            log[0]['previous_dtree'] = ' '.join(elements[4:])
+        elif '%s %s' % (elements[2],elements[3]) == ITERATION_TAG:
+            log[0]['iteration_number'] =(str(elements[4]))
+        elif len(elements)>4 and '%s %s %s' % (elements[2],elements[3],elements[4]) == DTREE_UPDATES:
+            log[0]['dtree_updates'] = ' '.join(elements[5:])
+        elif '%s %s' % (elements[2],elements[3]) == GRAPH_DIR:
+            log[0]['graph_dir'] = ' '.join(elements[4:])
+        elif len(elements)>4 and '%s %s %s' % (elements[2],elements[3],elements[4]) == DTREE_EXPLANATION:
+            log[0]['dtree_explanation'] = ' '.join(elements[5:])
+        elif '%s %s' % (elements[2],elements[3]) == WHY_NOT_TAG:
+            log[0]['why_not'] = ' '.join(elements[4:])
         elif elements[2] == VALUE_TAG:
             value = float(elements[-1])
             if elements[5] == 'unprotected:':
@@ -1309,10 +1914,277 @@ def create_dict(inp):
         assert min(dist) > -1e-8,'Negative probability in observation distribution'
     return feed_dict
 
+
+############################ For Computing Difference Between Successive Trees################## 
+def compareTrees(ptr1, ptr2,diff_node,level_diff_node,level):
+    temp1=dtree.dtree()
+    temp1=ptr1
+    temp2=dtree.dtree()
+    temp2=ptr2
+    l_vals=["Protected","Unprotected"]
+    if(ptr1==None or ptr2==None):
+        return diff_node,level_diff_node
+    if(ptr1.name!=ptr2.name):
+        diff_node.append(ptr1)
+        level_diff_node.append({ptr1.name:level})
+        return diff_node,level_diff_node
+    for c in ptr1.child:
+        if ptr1.child[c] in l_vals:
+            if ptr1.child[c]!=ptr2.child[c]:
+                diff_node.append(ptr1)
+                level_diff_node.append({ptr1.name:level})
+                return diff_node,level_diff_node
+        else:
+            if ptr2.child[c] in l_vals:
+                diff_node.append(ptr1.child[c])
+                level_diff_node.append({ptr1.child[c].name:level+1})
+                return diff_node,level_diff_node
+            else:
+                ptr1=ptr1.child[c]
+                ptr2=ptr2.child[c]
+                diff_node,level_diff_node=compareTrees(ptr1, ptr2, diff_node,level_diff_node,level+1)
+                ptr1=temp1
+                ptr2=temp2
+    return diff_node,level_diff_node
+
+def hasCameraNode(root):
+    if(root.name=='camera'):
+        return True
+    l_vals=["Protected","Unprotected"]
+    for c in root.child:
+        if root.child[c] in l_vals:
+            continue
+        else:
+            if(hasCameraNode(root.child[c])):
+                return True
+    return False
+
+def decisionTreeUpdate(arr1,arr2):
+    result=""
+    if len(arr1)==0:
+        result=Template(TEMPLATES['decision_tree']['false']).substitute()
+    elif len(arr1)==1:
+        s=""
+        level=arr2[0][arr1[0].name]
+        s=arr1[0].name+" at level "+str(level)
+        result=Template(TEMPLATES['decision_tree']['true']['single']).substitute({'num': "1",'names' :s})
+    else:
+        s=""
+        i=0
+        for x in arr1:
+            s_name=x.name
+            s_level=arr2[i][s_name]
+            s+=s_name+" at level "+str(s_level)+", "
+            i=i+1
+        result=Template(TEMPLATES['decision_tree']['true']['multiple']).substitute({'num': str(len(arr1)),'names':s[:-2]})
+    return result
+
+def modelFreeQTable(username,level,root,world,outputFile,dtreelabels,previous_dec_tree_root,iteration,WAYPOINTS,waypoint,parameters):
+    robot = world.agents['robot']
+    dec_tree_root = dtree.create_dtree(copy.deepcopy(robot.table))
+
+    if (hasCameraNode(dec_tree_root)):
+        qTable = ""
+        for qRow in robot.table:
+            qTable += "\n"
+            qTable += str(qRow) + " :" + str(robot.table[qRow])
+        with open(outputFile, 'a+') as file:
+            for item in robot.table:
+                file.write(str(item[0][1]) + "," + str(item[1][1]) + "," + item[2][1] + "," + str(
+                    round(robot.table[item][0], 2)) + "," + str(round(robot.table[item][1], 2)) + "\n")
+        print("Q Table: " + qTable)
+        WriteLogData('Q Table: %s' % qTable, username, level, root=root)
+    else:
+        print("Q Table: Not being displayed as no camera node in Decision Tree")
+        WriteLogData('Q Table: %s' % "Not being displayed as no camera node in Decision Tree", username, level,
+                     root=root)
+
+    dec_dic = dtree.represent(dec_tree_root, dtreelabels)
+    # if previous_dec_tree_root:
+    #     print("Old", dtree.represent(previous_dec_tree_root,dtreelabels))
+    # else:
+    #     print("Old None")
+    changed_nodes_array, level_changed_nodes_array = compareTrees(dec_tree_root, previous_dec_tree_root, [], [], 1)
+
+    tree_with_changes = dtree.representChanges(dec_tree_root, dtreelabels, changed_nodes_array)
+    # print("New",dec_dic)
+    # print("Old",tree_with_changes)
+    if (iteration == 0):
+        decision_tree_update = "This is the first iteration of the Decision Tree."
+    else:
+        decision_tree_update = decisionTreeUpdate(changed_nodes_array, level_changed_nodes_array)
+
+    ##If a tree changes from the previous iteration, the changed node is represented in Upper Case
+    # print(tree_with_changes)
+    # dtree.visualizeTree(dec_dic, name=str(iteration) + '_' +WAYPOINTS[level][waypoint]['name'], type= "model-free")
+    graph_dir = dtree.visualizeTree(tree_with_changes, name=str(iteration) + '_' + WAYPOINTS[level][waypoint]['name'],
+                        type="model-free", changed=(tree_with_changes != dec_dic),username= username)
+    previous_dec_tree_root = dec_tree_root
+    WriteLogData('%s %s' % (DTREE_TAG,tree_with_changes), username, level, root=root)
+    WriteLogData('%s %s' % (DTREE_UPDATES,decision_tree_update), username, level, root=root)
+    # log = readLogData(username, level, root)
+    # print(log)
+    return previous_dec_tree_root,graph_dir
+
+def modelBasedQTable(username,level,root,old_world,outputFile,dtreelabels,previous_dec_tree_root,iteration,WAYPOINTS,waypoint,parameters):
+    table = {}
+    f = 0
+    # state = pickle.loads(pickle.dumps(old_world.state))
+    robot = old_world.agents['robot']
+    for i in [True, False]:
+        for j in [True, False]:
+            for k in ['nobody', 'suspicious', 'friendly']:
+                # for robotIndex in range(len(WAYPOINTS[level])):
+                state = pickle.loads(pickle.dumps(old_world.state))
+                omega = {}
+                # print(i,j,k)
+                # robotIndex = [int(parameters['robotWaypoint'])][0]
+                # print(robotIndex)
+                # if 'robotWaypoint' in parameters:
+                #     # Project world state
+                #     robotIndex = int(parameters['robotWaypoint'])
+                # else:
+                #     # Read world state
+                #     robotIndex = symbol2index(old_world.getState(robot.name, 'waypoint').domain()[0], level)
+
+                robotWaypoint = WAYPOINTS[level][waypoint]
+                if not 'symbol' in robotWaypoint:
+                    robotWaypoint['symbol'] = robotWaypoint['name'].replace(' ', '')
+                move = Action({'subject': robot.name,
+                               'verb': 'moveto',
+                               'object': robotWaypoint['symbol']})
+                st = old_world.step(actions=move, state=old_world.state)
+                omega['NBCsensor'] = j
+                omega['camera'] = i
+                omega['microphone'] = k
+                for sensor in robot.omega:
+                    omegaKey = stateKey(robot.name, sensor)
+                    old_world.state[omegaKey] = old_world.value2float(omegaKey, omega[sensor])
+                model = old_world.getModel(robot.name)
+                assert len(model) == 1
+                model = model.first()
+                decision = robot.decide(vector=old_world.state, model=model)
+                # omega = omega2index(omega)
+                old_world.state = state
+                # print(decision)
+                # print(decision['action']['verb'])
+                # for action in decision['V']:
+                #     print(action['verb'], decision['V'][action]['__EV__'])
+
+                # print(decision['action']['verb'])
+                # print(j,omega['camera'],i,omega['NBCsensor'],k,omega['microphone'])
+                if decision['action']['verb'] == 'recommend unprotected':
+                    table[(('NBCsensor', omega['NBCsensor']), ('camera', omega['camera']),
+                           ('microphone', omega['microphone']))] = [0, 1]
+                else:
+                    table[(('NBCsensor', omega['NBCsensor']), ('camera', omega['camera']),
+                           ('microphone', omega['microphone']))] = [1, 0]
+                # if decision['action']['verb'] == 'recommend unprotected':
+                #     table[(('NBCsensor', i), ('camera', j), ('microphone', k),('location',robotWaypoint['symbol']))] = [0, 1]
+                # else:
+                #     table[(('NBCsensor', i), ('camera', j), ('microphone', k),('location',robotWaypoint['symbol']))] = [1, 0]
+                # del new_world
+    # print(table)
+    # dec_tree_root = dtree.create_dtree(table)
+    # exit()
+    dec_tree_root = dtree.create_dtree(table)
+
+    if (hasCameraNode(dec_tree_root)):
+        qTable = ""
+        for qRow in table:
+            qTable += "\n"
+            qTable += str(qRow) + " :" + str(table[qRow])
+        with open(outputFile, 'a+') as file:
+            for item in table:
+                file.write(str(item[0][1]) + "," + str(item[1][1]) + "," + item[2][1] + "," + str(
+                    round(table[item][0], 2)) + "," + str(round(table[item][1], 2)) + "\n")
+        print("Q Table: " + qTable)
+        WriteLogData('Q Table: %s' % qTable, username, level, root=root)
+    else:
+        print("Q Table: Not being displayed as no camera node in Decision Tree")
+        WriteLogData('Q Table: %s' % "Not being displayed as no camera node in Decision Tree", username, level,
+                     root=root)
+
+    dec_dic = dtree.represent(dec_tree_root, dtreelabels)
+    changed_nodes_array, level_changed_nodes_array = compareTrees(dec_tree_root, previous_dec_tree_root, [], [], 1)
+    # print("Changed Nodes: "+str(changed_nodes_array))
+    tree_with_changes = dtree.representChanges(dec_tree_root, dtreelabels, changed_nodes_array)
+
+    if (iteration == 0):
+        decision_tree_update = "This is the first iteration of the Decision Tree."
+    else:
+        decision_tree_update = decisionTreeUpdate(changed_nodes_array, level_changed_nodes_array)
+
+    ##If a tree changes from the previous iteration, the changed node is represented in Upper Case
+    # print(tree_with_changes)
+
+    # dtree.visualizeTree(dec_dic, name=str(iteration) + '_' + WAYPOINTS[level][waypoint]['name'],
+    #                     type="model-based")
+    graph_dir = dtree.visualizeTree(tree_with_changes, name=str(iteration) + '_' + WAYPOINTS[level][waypoint]['name'],
+                        type="model-based", changed=(tree_with_changes != dec_dic),username=username)
+    previous_dec_tree_root = dec_tree_root
+    WriteLogData('%s %s' % (DTREE_TAG,tree_with_changes), username, level, root=root)
+    WriteLogData('%s %s' % (DTREE_UPDATES,decision_tree_update), username, level, root=root)
+    # pprint(dec_tree_root)
+    # del new_world
+    # exit()
+    return previous_dec_tree_root,graph_dir
+
+def generateDecisionTreeExplanation(res,decisionTree,rCamera,rMicrophone,rNBC,recommendation):
+    labels=["Unprotected","Protected"]
+    root=list(decisionTree.keys())[0]
+    if root=="NBCsensor":
+        if(res==""):
+            res+=Template(TEMPLATES['decision_tree_explanation']['start']).substitute({
+            'sensor':root,'value':str(rNBC)})
+        else:
+            res+=Template(TEMPLATES['decision_tree_explanation']['middle']).substitute({
+            'sensor':root,'value':str(rNBC)})
+        if decisionTree.get(root).get(rNBC) in labels:
+            res+=Template(TEMPLATES['decision_tree_explanation']['conclude']).substitute({
+            'recommendation':decisionTree.get(root).get(rNBC)})
+        else:
+            res=generateDecisionTreeExplanation(res,decisionTree.get(root).get(rNBC),rCamera,rMicrophone,rNBC,recommendation)
+    elif root=="camera":
+        if(res==""):
+            res+=Template(TEMPLATES['decision_tree_explanation']['start']).substitute({
+            'sensor':root,'value':str(rCamera)})
+        else:
+            res+=Template(TEMPLATES['decision_tree_explanation']['middle']).substitute({
+            'sensor':root,'value':str(rCamera)})
+        if decisionTree.get(root).get(rCamera)in labels:
+            res+=Template(TEMPLATES['decision_tree_explanation']['conclude']).substitute({
+            'recommendation':decisionTree.get(root).get(rCamera)})
+        else:
+            res=generateDecisionTreeExplanation(res,decisionTree.get(root).get(rCamera),rCamera,rMicrophone,rNBC,recommendation)
+    else:
+        if(res==""):
+            res+=Template(TEMPLATES['decision_tree_explanation']['start']).substitute({
+            'sensor':root,'value':rMicrophone})
+        else:
+            res+=Template(TEMPLATES['decision_tree_explanation']['middle']).substitute({
+            'sensor':root,'value':rMicrophone})
+        if decisionTree.get(root).get(rMicrophone)in labels:
+            res+=Template(TEMPLATES['decision_tree_explanation']['conclude']).substitute({
+            'recommendation':decisionTree.get(root).get(rMicrophone)})
+        else:
+            res=generateDecisionTreeExplanation(res,decisionTree.get(root).get(rMicrophone),rCamera,rMicrophone,rNBC,recommendation)
+    return res
+
+
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
                acknowledgment='no',learning='none',learning_rate=1,obs_condition='scripted',reliable=0.8):
     # Remove any existing log file
     print ('observation_condition:',obs_condition)
+    if not os.path.isdir('.' + '\\' + 'media'):
+        os.mkdir('.' + '\\' + 'media')
+    if not os.path.isdir('.' + '\\' + 'media' + '\\' + 'qvalue'):
+        os.mkdir('.' + '\\' + 'media' + '\\' + 'qvalue')
+    if not os.path.isdir('.' + '\\' + 'media' + '\\' + 'qvalue' + '\\' + str(username)):
+        os.mkdir('.' + '\\' + 'media' + '\\' + 'qvalue' + '\\' + str(username))
+    outputFile="./media/qvalue/"+str(username)+"/qvalue.csv"
+    with open(outputFile, 'w') as file:
+        file.write("NBC, Microphone, Camera, Q(Recommend Protected Gear), Q(Recommend No Protected Gear)\n")
     try:
         os.remove(getFilename(username,level,extension='log'))
     except OSError:
@@ -1321,23 +2193,83 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
     # Create initial scenario
     world = createWorld(username,level,ability,explanation,embodiment,
                         acknowledgment,learning,reliability=reliable)
+    oldVector=world.state
+    # with open('prevtree.pickle', 'wb') as f:
+    #     pickle.dump(None, f)
+    # exit()
     location = world.getState('robot','waypoint').first()
     waypoint = symbol2index(location,level)
     # Go through all the waypoints
+
+    dtreelabels=["Unprotected","Protected"]
+
+    # dectreectr=0
+    iteration = 0
+
     while not world.terminated():
+        if world.getState(WORLD,'iteration').first() > 0:
+            # if not os.pathh.isdir('media' + '\\' + str(username) ):
+            #     os.mkdir('media' + '\\' + str(username))
+            with open(root + '\\' +'media' + '\\' + 'prevtree' +'\\'+ str(username) + '\\' +'prevtree.pickle','rb') as f:
+                previous_dec_tree_root = pickle.load(f)
+        else:
+            previous_dec_tree_root = None
+        root = '.'
         parameters = {'robotWaypoint': waypoint,
                       'level': level}
+        old_world = pickle.loads(pickle.dumps(world))
         print(GetRecommendation(username,level,parameters,world,observation_condition=obs_condition))
-        # Was the robot right?
+        print(world.getState(WORLD, 'iteration').first())
+        # exit()
+
+        if learning == 'model-free':
+            previous_dec_tree_root,graph_dir = modelFreeQTable(username, level, root, old_world, outputFile, dtreelabels,
+                                                     previous_dec_tree_root, world.getState(WORLD,'iteration').first(), WAYPOINTS, waypoint,
+                                                     parameters)
+        if learning == 'model-based':
+            previous_dec_tree_root,graph_dir = modelBasedQTable(username, level, root, old_world, outputFile, dtreelabels,
+                                                     previous_dec_tree_root, world.getState(WORLD,'iteration').first(), WAYPOINTS, waypoint,
+                                                     parameters)
+
+        robotCamera = world.getFeature('robot\'s camera', oldVector).max()
+        robotMicrophone = world.getFeature('robot\'s microphone', oldVector).max()
+        robotNBC = world.getFeature('robot\'s NBCsensor', oldVector).max()
         location = world.getState('robot','waypoint').first()
         recommendation = world.getState(location,'recommendation').first()
-        danger = world.getState(index2symbol(waypoint,level),'danger').first()
+
+        
+        print(location)
+        print(str(robotCamera)+" "+robotMicrophone+" "+str(robotNBC)+" "+recommendation)
+        decisionTreeExplanation=generateDecisionTreeExplanation("",dtree.represent(previous_dec_tree_root,dtreelabels),robotCamera,robotMicrophone,robotNBC,recommendation)
+        WriteLogData('%s %s' % (DTREE_EXPLANATION, decisionTreeExplanation), username, level, root=root)
+        print(DTREE_EXPLANATION+": "+decisionTreeExplanation)
+
+        if not os.path.isdir(root+'\\' + 'media' ):
+            os.mkdir(root+'\\' +'media' )
+        if not os.path.isdir(root +'\\' + 'media' + '\\' + 'prevtree' ):
+            os.mkdir(root+'\\' +'media' + '\\' + 'prevtree' )
+        if not os.path.isdir(root + '\\' + 'media' + '\\' + 'prevtree' +'\\'+ str(username)):
+            os.mkdir(root+'\\' +'media' + '\\' + 'prevtree' +'\\'+ str(username))
+        with open(root+'\\' +'media' + '\\' + 'prevtree' +'\\'+ str(username)+ '\\'+'prevtree.pickle', 'wb') as f:
+            pickle.dump(previous_dec_tree_root, f)
+        WriteLogData('%s %s' % (ITERATION_TAG, str(iteration)), username, level, root=root)
+        WriteLogData('{} {}'.format(PREV_TREE_TAG, dtree.represent(previous_dec_tree_root,dtreelabels)), username, level, root=root)
+        world.setState(WORLD,'iteration',world.getState(WORLD,'iteration').first()+1)
+        # dectreectr=dectreectr+1
+        # Was the robot right?
+        # exit()
+        danger = world.getState(index2symbol(waypoint,level),'danger').first()        
         print(GetAcknowledgment(None,recommendation,location,danger,username,level,
-                                parameters,world,learning_rate=learning_rate))
+                                parameters,world,learning_rate=learning_rate,observation_condition = obs_condition))
+        print("READ LOG DATA")
+        print(str(readLogData(username,level)))
+        readLogData(username,level,root)
+        # exit()
         if not world.terminated():
             # Continue onward
             waypoint = GetDecision(username,level,parameters,world)
             print(index2symbol(waypoint,level))
+        iteration+=1
 
 if __name__ == '__main__':
     import argparse
@@ -1348,10 +2280,10 @@ if __name__ == '__main__':
     parser.add_argument('--all',action='store_true',
                         help='run all conditions [default: %(default)s]')
     parser.add_argument('-k','--acknowledgment',action='store_const',
-                        const='yes',default='no',
+                        const='yes',default='yes',
                         help='robot acknowledges mistakes [default: %(default)s]')
     parser.add_argument('-l','--learning',choices=['none','model-based','model-free'],
-                        type=str,default='none',
+                        type=str,default='model-free',
                         help='robot learns from mistakes [default: %(default)s]')
     parser.add_argument('-lr','--learning_rate', type=int, default=1)
     parser.add_argument('-o','--observation_condition',choices=['scripted','randomize'],
