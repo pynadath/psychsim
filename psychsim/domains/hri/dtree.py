@@ -106,6 +106,12 @@ def query(q, node,l_vals):
         name = node.child[q[node.name]]
     return name
 
+def nodesDTree(nodes,node,l_vals):
+    nodes.add(node.name)
+    for c in node.child:
+        if node.child[c] not in l_vals:
+            nodesDTree(nodes,node.child[c],l_vals)
+    return nodes
 
 def represent(node,l_vals):
     dic_temp = {}
