@@ -109,17 +109,31 @@ TEMPLATES = {
         }
     },
     'decision_tree_explanation':{
-        'start':"Because the robot's prediction is $value for $sensor",
-        'middle':", $value for $sensor",
-        'not_visited':". The $sensor node is not visited for this partciular decision and robot's prediction for it is $value",
-        'not_present':". The $sensor node is not present in the decision tree and robot's prediction for it is $value",
-        'conclude':". Therefore, the recommendation as per Decision Tree is $recommendation."
+        'start':"Because the robot's prediction for $sensor is that $explain",
+        'middle':", for $sensor $explain",
+        'not_visited':". The $sensor node is not visited for this partciular decision and robot's prediction for it is $explain",
+        'not_present':". The $sensor node is not present in the decision tree and robot's prediction for it is $explain",
+        'conclude':". Therefore, the recommendation as per Decision Tree is $recommendation.",
+        'NBCsensor_False': "there's no presence of Nuclear or Biochemical weapon",
+        "NBCsensor_True" : "there's a presence of Nuclear or Biochemical weapon",
+        "camera_True" : "there's a presence of armed gunmen",
+        "camera_False" : "there's no presence of armed gunmen",
+        "microphone_friendly" : "there's a presence of friendly conversation",
+        "microphone_nobody" : "there's no presence of conversation",
+        "microphone_suspicious" : "there's a presence of suspicious conversation",
     },
     'why_not_explanation':{
         'header':'Why not $recommendation? Since',
         'reasoning1':"the robot's $sensor prediction is $value,",
         'reasoning2':'$sensor $danger,',
-        'conclusion':'Hence, a $recommendation recommendation does not make sense.'
+        'conclusion':'Hence, a $recommendation recommendation does not make sense.',
+    'NBCsensor_False': "there's no presence of Nuclear or Biochemical weapon",
+        "NBCsensor_True" : "there's a presence of Nuclear or Biochemical weapon",
+        "camera_True" : "there's a presence of armed gunmen",
+        "camera_False" : "there's no presence of armed gunmen",
+        "microphone_friendly" : "there's a presence of friendly conversation",
+        "microphone_nobody" : "there's no presence of conversation",
+        "microphone_suspicious" : "there's a presence of suspicious conversation"
     },
     'human_compliance_model':{
         'unprotected':'I think the Human Probability of following my action of Unprotected is: $prob',
@@ -1646,9 +1660,9 @@ def GetRecommendation(username,level,parameters,world=None,ext='xml',root='.',sl
     why_not = ""
     why_not+=Template(TEMPLATES['why_not_explanation']['header']).substitute({'recommendation': not_recommended})
     
-    why_not += " "+Template(TEMPLATES['why_not_explanation']['reasoning1']).substitute({'sensor': "camera",'value':robotCamera})
-    why_not += " "+Template(TEMPLATES['why_not_explanation']['reasoning1']).substitute({'sensor': "NbCsensor",'value':robotNBC})
-    why_not += " "+Template(TEMPLATES['why_not_explanation']['reasoning1']).substitute({'sensor': "microphone",'value':robotMicrophone})
+    why_not += " "+Template(TEMPLATES['why_not_explanation']['reasoning1']).substitute({'sensor': "camera",'value':TEMPLATES["why_not_explanation"]["camera_"+str(robotCamera)]})
+    why_not += " "+Template(TEMPLATES['why_not_explanation']['reasoning1']).substitute({'sensor': "NBCsensor",'value':TEMPLATES["why_not_explanation"]["NBCsensor_"+str(robotNBC)]})
+    why_not += " "+Template(TEMPLATES['why_not_explanation']['reasoning1']).substitute({'sensor': "microphone",'value':TEMPLATES["why_not_explanation"]["microphone_"+str(robotMicrophone)]})
     why_not=why_not[0:len(why_not)-1]
 
     why_not+=". Also, The robot's danger predictions are as follows:"
@@ -2030,6 +2044,16 @@ def modelFreeQTable(username,level,root,world,outputFile,dtreelabels,previous_de
     # print(log)
     return previous_dec_tree_root,graph_dir
 
+
+i=0
+def timestamp():
+    global i
+    now = datetime.datetime.now()
+
+    current_time = now.strftime("%H:%M:%S")
+    print("Current Time =", current_time, "", i)
+    i = i + 1
+
 def modelBasedQTable(username,level,root,old_world,outputFile,dtreelabels,previous_dec_tree_root,iteration,WAYPOINTS,waypoint,parameters):
     table = {}
     f = 0
@@ -2067,7 +2091,9 @@ def modelBasedQTable(username,level,root,old_world,outputFile,dtreelabels,previo
                 model = old_world.getModel(robot.name)
                 assert len(model) == 1
                 model = model.first()
+                timestamp()
                 decision = robot.decide(vector=old_world.state, model=model)
+                timestamp()
                 # omega = omega2index(omega)
                 old_world.state = state
                 # print(decision)
@@ -2083,6 +2109,8 @@ def modelBasedQTable(username,level,root,old_world,outputFile,dtreelabels,previo
                 else:
                     table[(('NBCsensor', omega['NBCsensor']), ('camera', omega['camera']),
                            ('microphone', omega['microphone']))] = [1, 0]
+                # print((('NBCsensor', omega['NBCsensor']), ('camera', omega['camera']),
+                #            ('microphone', omega['microphone'])),decision['action']['verb'])
                 # if decision['action']['verb'] == 'recommend unprotected':
                 #     table[(('NBCsensor', i), ('camera', j), ('microphone', k),('location',robotWaypoint['symbol']))] = [0, 1]
                 # else:
@@ -2136,66 +2164,30 @@ def modelBasedQTable(username,level,root,old_world,outputFile,dtreelabels,previo
 
 def generateDecisionTreeExplanation(res,decisionTree,rCamera,rMicrophone,rNBC,recommendation,notVisitedSet,treeNodeSet):
     labels=["Unprotected","Protected"]
+    sensorDict = {"NBCsensor":rNBC,"camera":rCamera,"microphone":rMicrophone}
     root=list(decisionTree.keys())[0]
     notVisitedSet.discard(root)
-    if root=="NBCsensor":
-        if(res==""):
-            res+=Template(TEMPLATES['decision_tree_explanation']['start']).substitute({
-            'sensor':root,'value':str(rNBC)})
-        else:
-            res+=Template(TEMPLATES['decision_tree_explanation']['middle']).substitute({
-            'sensor':root,'value':str(rNBC)})
-        if decisionTree.get(root).get(rNBC) in labels:
-            for notVisitedSensor in notVisitedSet:
-                if notVisitedSensor in treeNodeSet:
-                    res+=Template(TEMPLATES['decision_tree_explanation']['not_visited']).substitute({
-                    'sensor':notVisitedSensor, 'value':str(rNBC)})
-                else:
-                    res+=Template(TEMPLATES['decision_tree_explanation']['not_present']).substitute({
-                    'sensor':notVisitedSensor, 'value':str(rNBC)})
-
-            res+=Template(TEMPLATES['decision_tree_explanation']['conclude']).substitute({
-            'recommendation':decisionTree.get(root).get(rNBC)})
-        else:
-            res=generateDecisionTreeExplanation(res,decisionTree.get(root).get(rNBC),rCamera,rMicrophone,rNBC,recommendation,notVisitedSet,treeNodeSet)
-    elif root=="camera":
-        if(res==""):
-            res+=Template(TEMPLATES['decision_tree_explanation']['start']).substitute({
-            'sensor':root,'value':str(rCamera)})
-        else:
-            res+=Template(TEMPLATES['decision_tree_explanation']['middle']).substitute({
-            'sensor':root,'value':str(rCamera)})
-        if decisionTree.get(root).get(rCamera)in labels:
-            for notVisitedSensor in notVisitedSet:
-                if notVisitedSensor in treeNodeSet:
-                    res+=Template(TEMPLATES['decision_tree_explanation']['not_visited']).substitute({
-                    'sensor':notVisitedSensor, 'value':str(rCamera)})
-                else:
-                    res+=Template(TEMPLATES['decision_tree_explanation']['not_present']).substitute({
-                    'sensor':notVisitedSensor, 'value':str(rCamera)})
-            res+=Template(TEMPLATES['decision_tree_explanation']['conclude']).substitute({
-            'recommendation':decisionTree.get(root).get(rCamera)})
-        else:
-            res=generateDecisionTreeExplanation(res,decisionTree.get(root).get(rCamera),rCamera,rMicrophone,rNBC,recommendation,notVisitedSet,treeNodeSet)
+    if(res==""):
+        res+=Template(TEMPLATES['decision_tree_explanation']['start']).substitute({
+            'sensor': root,
+        'explain':TEMPLATES['decision_tree_explanation'][root+"_"+str(sensorDict[root])]})
     else:
-        if(res==""):
-            res+=Template(TEMPLATES['decision_tree_explanation']['start']).substitute({
-            'sensor':root,'value':rMicrophone})
-        else:
-            res+=Template(TEMPLATES['decision_tree_explanation']['middle']).substitute({
-            'sensor':root,'value':rMicrophone})
-        if decisionTree.get(root).get(rMicrophone)in labels:
-            for notVisitedSensor in notVisitedSet:
-                if notVisitedSensor in treeNodeSet:
-                    res+=Template(TEMPLATES['decision_tree_explanation']['not_visited']).substitute({
-                    'sensor':notVisitedSensor, 'value':rMicrophone})
-                else:
-                    res+=Template(TEMPLATES['decision_tree_explanation']['not_present']).substitute({
-                    'sensor':notVisitedSensor, 'value':rMicrophone})
-            res+=Template(TEMPLATES['decision_tree_explanation']['conclude']).substitute({
-            'recommendation':decisionTree.get(root).get(rMicrophone)})
-        else:
-            res=generateDecisionTreeExplanation(res,decisionTree.get(root).get(rMicrophone),rCamera,rMicrophone,rNBC,recommendation,notVisitedSet,treeNodeSet)
+        res += Template(TEMPLATES['decision_tree_explanation']['middle']).substitute({
+            'sensor': root,
+            'explain': TEMPLATES['decision_tree_explanation'][root + "_" + str(sensorDict[root])]})
+    if decisionTree.get(root).get(sensorDict[root]) in labels:
+        for notVisitedSensor in notVisitedSet:
+            if notVisitedSensor in treeNodeSet:
+                res+=Template(TEMPLATES['decision_tree_explanation']['not_visited']).substitute({
+                'sensor':notVisitedSensor, 'explain':TEMPLATES['decision_tree_explanation'][notVisitedSensor+"_"+str(sensorDict[notVisitedSensor])]})
+            else:
+                res+=Template(TEMPLATES['decision_tree_explanation']['not_present']).substitute({
+                'sensor':notVisitedSensor, 'explain':TEMPLATES['decision_tree_explanation'][notVisitedSensor+"_"+str(sensorDict[notVisitedSensor])]})
+
+        res+=Template(TEMPLATES['decision_tree_explanation']['conclude']).substitute({
+        'recommendation':decisionTree.get(root).get(rNBC)})
+    else:
+        res=generateDecisionTreeExplanation(res,decisionTree.get(root).get(sensorDict[root]),rCamera,rMicrophone,rNBC,recommendation,notVisitedSet,treeNodeSet)
     return res
 
 
@@ -2311,7 +2303,7 @@ if __name__ == '__main__':
                         const='yes',default='yes',
                         help='robot acknowledges mistakes [default: %(default)s]')
     parser.add_argument('-l','--learning',choices=['none','model-based','model-free'],
-                        type=str,default='model-free',
+                        type=str,default='model-based',
                         help='robot learns from mistakes [default: %(default)s]')
     parser.add_argument('-lr','--learning_rate', type=int, default=1)
     parser.add_argument('-o','--observation_condition',choices=['scripted','randomize'],
