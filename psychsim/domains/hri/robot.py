@@ -1071,6 +1071,8 @@ def GetAcknowledgment(user,recommendation,location,danger,username,level,paramet
                 world.setFeature('robot\'s nbcFPProb', nbc_fpProb)
 
                 for waypoint in WAYPOINTS[level][robotIndex:]:
+                    if not 'symbol' in waypoint:
+                        waypoint['symbol'] = waypoint['name'].replace(' ', '')
                     symbol = waypoint['symbol']
                     action = ActionSet(Action({'subject': 'robot', 'verb': 'moveto',
                                                'object': symbol}))
@@ -2044,16 +2046,6 @@ def modelFreeQTable(username,level,root,world,outputFile,dtreelabels,previous_de
     # print(log)
     return previous_dec_tree_root,graph_dir
 
-
-i=0
-def timestamp():
-    global i
-    now = datetime.datetime.now()
-
-    current_time = now.strftime("%H:%M:%S")
-    print("Current Time =", current_time, "", i)
-    i = i + 1
-
 def modelBasedQTable(username,level,root,old_world,outputFile,dtreelabels,previous_dec_tree_root,iteration,WAYPOINTS,waypoint,parameters):
     table = {}
     f = 0
@@ -2091,9 +2083,7 @@ def modelBasedQTable(username,level,root,old_world,outputFile,dtreelabels,previo
                 model = old_world.getModel(robot.name)
                 assert len(model) == 1
                 model = model.first()
-                timestamp()
                 decision = robot.decide(vector=old_world.state, model=model)
-                timestamp()
                 # omega = omega2index(omega)
                 old_world.state = state
                 # print(decision)
