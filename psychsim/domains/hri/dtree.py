@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from collections import defaultdict
+from collections import defaultdict,deque
 from pprint import pprint
 import pydotplus
 import os
@@ -99,12 +99,45 @@ def con(data, cat, label, node,uv ,db ):
 
 
 # Query the tree
-def query(q, node,l_vals):
+def query(q, node,l_vals,history):
+    history.append(node)
+    history.append(q[node.name])
     if node.child[q[node.name]] not in l_vals:
-        name = query(q, node.child[q[node.name]],l_vals)
+        name = query(q, node.child[q[node.name]],l_vals,history)
     else:
         name = node.child[q[node.name]]
+        history.append(name)
     return name
+def closestBranch(history,recommendation):
+    visited = set()
+    while history:
+        # print(visited)
+        queue = deque()
+        root = history.pop()
+        # print("FOR",root)
+        # if type(root) == str or bool:
+        #     continue
+        queue.append([root,[root]])
+        # print(queue)
+        while queue:
+            # print(visited)
+            node,nhist = queue.popleft()
+            # print(node,nhist)
+            if node in visited:
+                continue
+            if node == recommendation:
+                return nhist
+            # print(node)
+            # print(node.child)
+            try:
+                for child in node.child:
+                    queue.append([node.child[child],nhist[:]+[child,node.child[child]]])
+                visited.add(node)
+            except:
+                pass
+    return None
+
+
 
 def nodesDTree(nodes,node,l_vals):
     nodes.add(node.name)
@@ -215,7 +248,7 @@ def create_dtree(table):
     mismatch = 0
     count = 0
     for i, rows in db.iterrows():
-        ans = query(rows, root,l_vals)
+        ans = query(rows, root,l_vals,[])
         if ans != rows[label]:
             mismatch += 1
         count = i

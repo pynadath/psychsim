@@ -108,6 +108,21 @@ TEMPLATES = {
             'multiple':'There have been $num changes in the Decision Tree, namely $names.'
         }
     },
+    'decision_tree_history':{
+        'first': 'The sequence "$sequence" has been ecountered for the first time.',
+        'not_first': 'The sequence "$sequence" has been encountered $count times.'
+
+    },
+    'closest_branch':{
+        'start':"The robot's recommendation would have changed to $result if ",
+        'NBCsensor_False': "NBCsensor had detected no presence of Nuclear or Biochemical weapon, ",
+        "NBCsensor_True" : "NBCsensor had detected a presence of Nuclear or Biochemical weapon, ",
+        "camera_True" : "Camera had detected a presence of armed gunmen, ",
+        "camera_False" : "Camera had detected no presence of armed gunmen, ",
+        "microphone_friendly" : "Microphone had detected a presence of friendly conversation, ",
+        "microphone_nobody" : "Microphone had detected no presence of conversation, ",
+        "microphone_suspicious" : "Microphone had detected a presence of suspicious conversation, ",
+    },
     'decision_tree_explanation':{
         'start':"Because the robot's prediction for $sensor is that $explain",
         'middle':", for $sensor $explain",
@@ -189,6 +204,9 @@ VALUE_TAG = 'Value'
 WHY_NOT_TAG = "Why Not:"
 ITERATION_TAG = "Iteration Number:"
 PREV_TREE_TAG = "Previous Tree:"
+DTREE_SEQ_HISTORY = "Decision Tree History:"
+CLOSEST_BRANCH_TAG = "Closest Different Branch:"
+historyStringDict=dict()
 
 CODES = {'ability': {'s': 'badSensor','g': 'good','m': 'badModel'},
          'explanation': {'n': 'none','a': 'ability','c': 'confidence','b': 'abilityconfidence'},
@@ -1816,6 +1834,10 @@ def readLogData(username,level,root='.'):
             log[0]['graph_dir'] = ' '.join(elements[4:])
         elif len(elements)>4 and '%s %s %s' % (elements[2],elements[3],elements[4]) == DTREE_EXPLANATION:
             log[0]['dtree_explanation'] = ' '.join(elements[5:])
+        elif len(elements)>4 and '%s %s %s' % (elements[2],elements[3],elements[4]) == DTREE_SEQ_HISTORY:
+            log[0]['dtree_sequence_history'] = ' '.join(elements[5:])
+        elif len(elements)>4 and '%s %s %s' % (elements[2],elements[3],elements[4]) == CLOSEST_BRANCH_TAG:
+            log[0]['closest_branch'] = ' '.join(elements[5:])
         elif '%s %s' % (elements[2],elements[3]) == WHY_NOT_TAG:
             log[0]['why_not'] = ' '.join(elements[4:])
         elif elements[2] == VALUE_TAG:
@@ -2180,6 +2202,45 @@ def generateDecisionTreeExplanation(res,decisionTree,rCamera,rMicrophone,rNBC,re
         res=generateDecisionTreeExplanation(res,decisionTree.get(root).get(sensorDict[root]),rCamera,rMicrophone,rNBC,recommendation,notVisitedSet,treeNodeSet)
     return res
 
+def dtreeHistory(history,dtreelabels,historyStringDict):
+    historyString="" 
+    historyLog=""
+    for x in history:
+        if x in dtreelabels:
+            historyString=historyString[:-2]+": "+x
+        elif isinstance(x,bool):
+            historyString=historyString+str(x)+", "
+        elif isinstance(x,str):
+            historyString=historyString+x+", "
+        elif isinstance(x,object):
+            historyString=historyString+x.name+"-->"
+            print()
+    if historyString in historyStringDict:
+        historyStringDict[historyString]=historyStringDict[historyString]+1
+        historyLog=Template(TEMPLATES['decision_tree_history']['not_first']).safe_substitute({'sequence':historyString,'count':str(historyStringDict[historyString])})
+    else:
+        historyStringDict[historyString]=1
+        historyLog=Template(TEMPLATES['decision_tree_history']['first']).safe_substitute({'sequence':historyString})
+    return historyLog
+
+def closeBranchLog(branch,dtreelabels,currVals):
+    branchString={}
+    result = ""
+    branchLog=""
+    # print(currVals)
+    for x in range(0,len(branch),2):
+        if branch[x] in dtreelabels:
+            result=branch[x]
+        elif isinstance(branch[x],object):
+            if str(currVals[branch[x].name])!=str(branch[x+1]):
+                branchString[branch[x].name] = str(branch[x+1])
+    # print (branchString,result)
+    branchLog = Template(TEMPLATES["closest_branch"]["start"]).safe_substitute({"result":result})
+    for key in branchString:
+        branchLog+=TEMPLATES['closest_branch'][key+"_"+str(branchString[key])]
+    if branchLog[-2:]==", ":
+        branchLog = branchLog[:-2]+". "
+    return branchLog
 
 def runMission(username,level,ability='good',explanation='none',embodiment='robot',
                acknowledgment='no',learning='none',learning_rate=1,obs_condition='scripted',reliable=0.8):
@@ -2211,6 +2272,7 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
     # Go through all the waypoints
 
     dtreelabels=["Unprotected","Protected"]
+
 
     # dectreectr=0
     iteration = 0
@@ -2245,8 +2307,22 @@ def runMission(username,level,ability='good',explanation='none',embodiment='robo
         robotNBC = world.getFeature('robot\'s NBCsensor', oldVector).max()
         location = world.getState('robot','waypoint').first()
         recommendation = world.getState(location,'recommendation').first()
-
+        # START FOR CLOSEST BRANCH
+        history = []
+        dtree.query({"NBCsensor":robotNBC,"microphone":robotMicrophone,"camera":robotCamera},previous_dec_tree_root,dtreelabels,history)
         
+        # dtreeHistory method gets the history of the sequence and Writes it to Log 
+        historyLog=dtreeHistory(history,dtreelabels,historyStringDict)
+        print("History Log: "+ historyLog)
+        WriteLogData('%s %s' % (DTREE_SEQ_HISTORY, historyLog), username, level, root=root)
+        cb = dtree.closestBranch(history,recommendation= "Unprotected" if recommendation=="protected" else "Protected")
+        branchLog=closeBranchLog(cb,dtreelabels,{"NBCsensor":robotNBC,"microphone":robotMicrophone,"camera":robotCamera})
+        WriteLogData('%s %s' % (CLOSEST_BRANCH_TAG, branchLog), username, level, root=root)
+        # exit()
+        # print("NOTICE")
+        print(recommendation)
+        # END FOR CLOSEST BRANCH
+
         print(location)
         print(str(robotCamera)+" "+robotMicrophone+" "+str(robotNBC)+" "+recommendation)
         treeNodeSet=dtree.nodesDTree(set(),previous_dec_tree_root,dtreelabels)
@@ -2293,7 +2369,7 @@ if __name__ == '__main__':
                         const='yes',default='yes',
                         help='robot acknowledges mistakes [default: %(default)s]')
     parser.add_argument('-l','--learning',choices=['none','model-based','model-free'],
-                        type=str,default='model-based',
+                        type=str,default='model-free',
                         help='robot learns from mistakes [default: %(default)s]')
     parser.add_argument('-lr','--learning_rate', type=int, default=1)
     parser.add_argument('-o','--observation_condition',choices=['scripted','randomize'],
