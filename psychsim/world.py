@@ -154,8 +154,8 @@ class World(object):
             key = stateKey(actor,ACTION)
             action = self.float2value(key,policy.children[None][makeFuture(key)][CONSTANT])
             joint = ActionSet(joint | action)
-#            if actor in debug:
-#                print('%s: %s' % (actor,action))
+            if actor in debug:
+                print('%s: %s' % (actor,action))
         effect = self.deltaState(joint,state,keySubset)
         # Update turn order
         effect.append(self.deltaTurn(state,joint))
@@ -320,14 +320,13 @@ class World(object):
                 agent = self.agents[name]
                 decision = self.agents[name].decide(state,horizon,actions,None,tiebreak,
                                                     agent.getActions(state),debug=debug.get(name,{}))
+                if name in debug:
+                    debug[name]['__decision__'] = decision
                 try:
                     actions[name] = decision['policy']
                 except KeyError:
                     key = keys.stateKey(name,keys.ACTION)
                     actions[name] = makeTree(setToConstantMatrix(key,decision['action'])).desymbolize(self.symbols)
-                if name in debug and 'V' in debug[name] and 'V' in decision:
-                    for action,V in sorted(decision['V'].items()):
-                        print('%6.4f\t%s' % (V,action))
         if len(actions) == 0:
             self.printState(state)
             raise RuntimeError('Nobody has a turn!')
@@ -743,8 +742,8 @@ class World(object):
             self.dynamics[key] = {}
         if action not in self.dynamics:
             self.dynamics[action] = {}
-#        if action is not True and len(action) == 1 and next(iter(action)) not in self.dynamics:
-#            self.dynamics[next(iter(action))] = {}
+        if action is not True and len(action) == 1 and next(iter(action)) not in self.dynamics:
+            self.dynamics[next(iter(action))] = {}
         # Translate symbolic names into numeric values
         tree = tree.desymbolize(self.symbols)
         if enforceMin and self.variables[key]['domain'] in [int,float]:
@@ -755,8 +754,8 @@ class World(object):
             tree.ceil(key,self.variables[key]['hi'])
         self.dynamics[key][action] = tree
         self.dynamics[action][key] = tree
-#        if action is not True and len(action) == 1:
-#            self.dynamics[next(iter(action))][key] = tree
+        if action is not True and len(action) == 1:
+            self.dynamics[next(iter(action))][key] = tree
         if codePtr:
             frame = inspect.getouterframes(inspect.currentframe())[1]
             try:
@@ -1350,7 +1349,7 @@ class World(object):
     """Mental model methods"""
     """------------------"""
 
-    def getModel(self,modelee,vector=None,unique=False):
+    def getModel(self,modelee,vector=None):
         """
         :returns: the name of the model of the given agent indicated by the given state vector
         :type modelee: str
@@ -1363,7 +1362,7 @@ class World(object):
         if isinstance(vector,VectorDistributionSet):
             key = modelKey(modelee)
             if key in self.variables:
-                model = self.getFeature(key,vector,unique=unique)
+                model = self.getFeature(key,vector)
             else:
                 assert len(agent.models) == 1,'Ambiguous model of %s' % (modelee)
                 model = agent.models.keys()[0]
@@ -1647,16 +1646,16 @@ class World(object):
                         # Explain decision
                         self.explainDecision(outcome['decisions'][name],buf,level)
 
-    def explainAction(self,state=None,buf=None,level=0):
+    def explainAction(self,state=None,agents=None,buf=None,level=1):
         if state is None:
             state = self.state
         joint = {}
         order = {name: state[turnKey(name)] for name in self.agents if turnKey(name) in state}
         assert max(map(len,order.values())) == 1,'Unable to extract actions from uncertain turn orders'
         last = max([dist.first() for dist in order.values()])
-        for name,dist in sorted(order.items()):
+        for name,dist in sorted([(name,dist) for name,dist in order.items() if agents is None or name in agents]):
             if dist.first() == last:
-                key = stateKey(name,ACTION)
+                key = actionKey(name)
                 if key in state:
                     joint[name] = self.getFeature(key,state)
                     if level > 0:
@@ -1664,42 +1663,25 @@ class World(object):
         return joint
         
 
-    def explainDecision(self,decision,buf=None,level=2,prefix=''):
+    def explainDecision(self,decision,buf=None,level=2,prefix='',beliefs=True):
         """
         Subroutine of L{explain} for explaining agent decisions
         """
         if not 'V' in decision:
             # No value function
             return
-        actions = decision['V'].keys()
-        actions.sort(lambda x,y: cmp(str(x),str(y)))
+        actions = sorted([a for a in decision['V']])
         for alt in actions:
             V = decision['V'][alt]
             print('%s\tV(%s) = %6.3f' % (prefix,alt,V['__EV__']),file=buf)
             if level > 2:
                 # Explain lookahead
-                beliefs = filter(lambda k: not isinstance(k,str),V.keys())
-                for state in beliefs:
-                    nodes = V[state]['projection'][:]
-                    while len(nodes) > 0:
-                        node = nodes.pop(0)
-                        tab = ''
-                        t = V[state]['horizon']-node['horizon']
-                        for index in range(t):
-                            tab = prefix+tab+'\t'
-                        if level > 4: 
-                            print('%sState:' % (tab),file=buf)
-                            self.printVector(node['old'],buf,prefix=tab,first=False)
-                        print('%s%s (V_%s=%6.3f) [P=%d%%]' % (tab,ActionSet(node['actions']),V[state]['agent'],node['R'],node['probability']*100.),file=buf)
-                        for other in node['decisions'].keys():
-                            self.explainDecision(node['decisions'][other],buf,level,prefix+'\t\t')
-                        if level > 3: 
-                            print('%sEffect:' % (tab+prefix),file=buf)
-                            self.printDelta(node['old'],node['new'],buf,prefix=tab+prefix)
-                        for index in range(len(node['projection'])):
-                            nodes.insert(index,node['projection'][index])
+                for t in range(1,len(V['__S__'])):
+                    print('%s\t\tt=%d' % (prefix,t),file=buf)
+                    self.printState(V['__S__'][t],prefix='%s\t\t\t' % (prefix),buf=buf,beliefs=beliefs,first=False)
+                    print('%s\t\t\tER_%d=%6.3f' % (prefix,t,V['__ER__'][t]),file=buf)
 
-    def printState(self,distribution=None,buf=None,prefix='',beliefs=True):
+    def printState(self,distribution=None,buf=None,prefix='',beliefs=True,first=True,models=None):
         """
         Utility method for displaying a distribution over possible worlds
         :type distribution: L{VectorDistribution}
@@ -1731,18 +1713,18 @@ class World(object):
                     certain.update(distribution.distributions[substate].first())
                 else:
                     remaining.append(substate)
-            self.printVector(certain,buf,prefix,beliefs)
+            self.printVector(certain,buf,prefix,first,beliefs,models=models)
             for label in remaining:
                 subdistribution = distribution.distributions[label]
                 if not label is None:
                     print('-------------------',file=buf)
-                self.printState(subdistribution,buf,prefix,beliefs)
+                self.printState(subdistribution,buf,prefix,beliefs,first,models)
         else:
             for vector in distribution.domain():
                 print('%s%d%%' % (prefix,distribution[vector]*100.),file=buf)
-                self.printVector(vector,buf,prefix,beliefs=beliefs)
+                self.printVector(vector,buf,prefix,beliefs=beliefs,models=models)
 
-    def printVector(self,vector,buf=None,prefix='',first=True,beliefs=False,csv=False):
+    def printVector(self,vector,buf=None,prefix='',first=True,beliefs=False,csv=False,models=None):
         """
         Utility method for displaying a single possible world
         :type vector: L{psychsim.pwl.KeyedVector}
@@ -1756,6 +1738,8 @@ class World(object):
         :param beliefs: if C{True}, then print any agent beliefs that might deviate from this vector as well (default is C{False})
         :type beliefs: bool
         """
+        if models is None:
+            models = set()
         if csv:
             if prefix:
                 elements = [prefix]
@@ -1851,12 +1835,12 @@ class World(object):
                             first = False
                         else:
                             print('%s\t%-12s' % (prefix,label),file=buf)
-                        self.agents[entity].printModel(index=vector[key],prefix=prefix)
+                        self.agents[entity].printModel(index=vector[key],prefix=prefix,previous=models)
                         change = True
                         newEntity = False
                     else:
                         print('\t%12s' % (''),file=buf)
-                        self.agents[entity].printModel(index=vector[key],prefix=prefix)
+                        self.agents[entity].printModel(index=vector[key],prefix=prefix,previous=models)
                     newEntity = False
 #        if not csv and not change:
 #            print('%s\tUnchanged' % (prefix),file=buf)
@@ -2253,7 +2237,3 @@ def scaleValue(value,entry):
         return float(value)/float(len(entry['elements']))
     else:
         return value
-
-def loadWorld(filename):
-    f = bz2.BZ2File(filename,'rb')
-    return pickle.load(f)
