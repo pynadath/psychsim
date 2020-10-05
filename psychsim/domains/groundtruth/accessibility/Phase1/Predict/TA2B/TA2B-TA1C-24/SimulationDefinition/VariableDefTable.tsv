@@ -1,4 +1,0 @@
-Name	LongName	Values	VarType	DataType	Notes
-Shared Weather Predictions	Shared Weather Predictions	yes,no 	dynamic	Boolean
-Shared Sheltering Advice	Shared Sheltering Advice	yes,no 	dynamic	Boolean
-Shared Government Information	Shared Government Information	yes,no 	dynamic	Boolean

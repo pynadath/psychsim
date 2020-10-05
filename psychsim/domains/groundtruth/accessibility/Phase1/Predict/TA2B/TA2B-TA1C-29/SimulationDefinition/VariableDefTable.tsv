@@ -1,4 +1,0 @@
-Name	LongName	Values	VarType	DataType	Notes
-Day of Death	Day of Death	[1-]	dynamic	Integer	#1
-Location at Death	Location at Death	home,shelter,evacuated	dynamic	String	#2
-Category When Hit	Hurricane Category When Hitting Region	[1-5],N/A 	dynamic	Integer	#5, N/A if the hurricane never directly hit the actor's region

@@ -1,8 +1,0 @@
-Name	LongName	Values	VarType	DataType	Notes
-Aid Decision Factors	Aid Decision Factors	[a-k] with elaboration	dynamic	String	Q1
-Financial Aid	Financial Aid	yes,no 	dynamic	Boolean 	Q2
-Financial Aid Property 	Financial Aid Property 		dynamic	String	Q2
-NonFinancial Aid	NonFinancial Aid	yes,no 	dynamic	Boolean 	Q3
-NonFinancial Aid Property 	NonFinancial Aid Property 		dynamic	String	Q3
-Region02 Special	Anything Special about Region02	yes,no 	dynamic	Boolean 	Q4
-Region01 06 11 Special	Anything Special about Region01, Region06, Region11	yes,no 	dynamic	Boolean 	Q5

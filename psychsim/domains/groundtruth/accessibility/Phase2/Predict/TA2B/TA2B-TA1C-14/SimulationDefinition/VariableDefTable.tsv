@@ -1,9 +1,0 @@
-Name	LongName	Values	VarType	DataType	Notes
-TA2B 14 Aid Region	TA2B 14 Aid Region	Region[01-16]	dynamic	String	Q8
-TA2B 14 Location	TA2B 14 Location	home,shelter,evacuated	dynamic	String	Q2
-TA2B 14 Last Hurricane	TA2B 14 Last Hurricane	home,evacuated,sheltered,evacuatedAndSheltered	dynamic	String	Q3
-TA2B 14 Injured	TA2B 14 Injured	yes,no	dynamic	Boolean	Q4
-TA2B 14 Category	TA2B 14 Category	[1-5]	dynamic	Integer	Q5
-TA2B 14 Previous Hurricanes	TA2B 14 Previous Hurricanes	home,evacuated,sheltered,evacuatedAndSheltered	dynamic	String	Q6: Comma-separated list from first to next-to-last hurricane
-TA2B 14 Injured Previous Hurricanes	TA2B 14 Injured Previous Hurricanes	yes,no	dynamic	Boolean	Q7: Comma-separated list from first to next-to-last hurricane
-TA2B 14 Participant ID	TA2B 14 Participant ID	Actor	dynamic	String	Map to pre/post-survey ID

@@ -1,3 +1,0 @@
-Name	LongName	Values	VarType	DataType	Notes
-# Crimes	# Crimes	[0+]	dynamic	Integer	# of previous instances of misconduct by this individual
-Severity of Crimes	Severity of Crimes	[1-7]	dynamic	Integer	Mean severity of misconduct

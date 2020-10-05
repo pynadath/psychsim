@@ -1,6 +1,0 @@
-Name	LongName	Values	VarType	DataType	Notes
-Gender	Gender	female,male	fixed	String	
-Children	Children	[0-10]	dynamic	Integer	
-Religion	Religion	majority,minority,none	fixed	String	
-Ethnicity	Ethnicity	majority,minority	fixed	String	
-TA2A 732 Number Aided	TA2A 732 Number Aided	[0+],unknown	dynamic	Integer	Q5

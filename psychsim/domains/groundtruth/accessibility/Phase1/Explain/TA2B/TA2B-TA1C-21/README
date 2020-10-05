@@ -1,7 +1,0 @@
-The participants consider only those days on which there is a hurricane (i.e., days listed in HurricaneTable).
-
-For items asking for responses across potentially multiple hurricanes, we put the values into a comma-separated list, ordered chronologically (i.e., in the same order as the hurricanes are listed in the corresponding question). 
-
-The dissatisfaction ratings are based on feelings on the last day of each hurricane.
-
-For questions about sheltering (evacuation) to participants who did not shelter (evacuate), their response is 'N/A'.

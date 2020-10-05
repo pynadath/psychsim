@@ -1,5 +1,0 @@
-Name	LongName	Values	VarType	DataType	Notes
-Tax Frequency	Frequency of Paying Taxes	yearly,monthly,every N days,at a date the government decides which is not regular,never,other	dynamic	String 	Q1, with "never" as an added option
-Personal Assistance	I Received Government Assistance	yes,no 	dynamic	Boolean	Q3
-Regional Assistance	Region Received Government Assistance	yes,no 	dynamic	Boolean	Q4
-

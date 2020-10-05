@@ -1,8 +1,0 @@
-Research method category: Survey
-Specific question: Follow up with past respondents to deploy the post hurricane survey, 
-but ask those question specifically in relation to the complete set of 6 hurricane events to the same respondent. That is, tell the respondent to recall Hurricane 1, for example, ask the questions, then tell them to recall Hurricane 2 and so on. 
-Sampling strategy: Follow up with past respondent to all of the post hurricane surveys collected. 
-Other applicable detail: if for some reason the participant was not in town for that hurricane or had moved away from the area, please just note that as the response for that participant. 
-Research request identifier: 3longitude
-Research request priority: 3
-

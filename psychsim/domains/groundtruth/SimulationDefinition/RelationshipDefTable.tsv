@@ -1,5 +1,0 @@
-Name	LongName	Values	RelType	DataType	Notes
-friendOf	Actor friendOf Actor	yes,no	fixed	Boolean	
-neighborOf	Actor neighborOf Actor	yes,no	fixed	Boolean	
-marriedTo	Actor marriedTo Actor	yes,no 	fixed	Boolean
-memberOf	Actor memberOf Group	yes,no 	dynamic	Boolean

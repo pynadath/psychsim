@@ -1,5 +1,0 @@
-The census provided here is at the present simulation time.
-
-There are no political parties in this society.
-
-Wealth measures current net worth.

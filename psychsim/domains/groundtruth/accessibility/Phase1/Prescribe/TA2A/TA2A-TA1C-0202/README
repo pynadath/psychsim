@@ -1,5 +1,0 @@
-No instances were specified, so we used the Explain and Prescribe instances.
-
-The HurricaneTable files are from the IDP, containing the data for #1 and #3.
-
-In the TA2A-TA1C-0202 files, the "Timestep" is the day on which the prediction was made. The "Predicted Timestep" is the day for which the location and category prediction is relevant.

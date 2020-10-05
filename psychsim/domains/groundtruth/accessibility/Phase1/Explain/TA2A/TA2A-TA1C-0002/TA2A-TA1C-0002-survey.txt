@@ -1,1 +1,0 @@
-The ActorPreTable and ActorPostTable contain all collected survey data. Each survey sampled participants independently.

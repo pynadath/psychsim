@@ -1,1 +1,0 @@
-The "Shelter" field contains a numeric identifier for each shelter, to distinguish among potentially multiple shelters in the same region. Each row represents a single shelter, and regions that contain no shelters do not appear in the table.

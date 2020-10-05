@@ -1,3 +1,0 @@
-Field	Value	Action	Note
-health	<0.2	pay 	Pay all people coming to the hospital(so that their wealth increase)
-health	<0.2 	evacuate	force them to either evacuate, or get them intto shelter until the current hurricane leaves
