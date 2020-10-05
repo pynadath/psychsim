@@ -6,21 +6,21 @@ from psychsim.agent import *
 
 import random
 from random import randint
-from time import time
+from time import time, localtime
 import sys
 
 
 class Person(Agent):
-	def __init__(self, name, init_location, world, random_horizon=False, random_weights=False, random_costs=False):
+	def __init__(self, name, init_location, world, random_horizon=False, random_weight_bases=False, random_costs=False):
 		Agent.__init__(self,name)
 		world.addAgent(self)
 
 		# set the horizon to 2, so he can see that it should make money to eat
 		
-		horizon_value=randint(1,4) if random_horizon else 2
+		self.horizon_value=randint(1,4) if random_horizon else 2
 		print('\n'+name+':')
-		print(' Horizon: '+str(horizon_value)+'\n')
-		self.setAttribute('horizon',horizon_value)
+		print(' Horizon: '+str(self.horizon_value)+'\n')
+		self.setAttribute('horizon',self.horizon_value)
 
 		
 		# define features of a civilian
@@ -43,31 +43,33 @@ class Person(Agent):
 
 		# define rewards
 		# here we define mid points for the weights, so we can manipulate the weight ranges. 
-		wm = 0 #wealth  mid point
-		cm = 0 #comfort mid point
-		hw = 7 #health  mid point
-		uw = 0 #hunger  mid point
+		self.wm = randint(2, 9)*1. if random_weight_bases else 2 #wealth  mid point
+		self.cm = randint(2, 9)*1. if random_weight_bases else 2 #comfort mid point
+		self.hm = randint(2, 9)*1. if random_weight_bases else 9 #health  mid point
+		self.um = randint(2, 9)*1. if random_weight_bases else 2 #hunger  mid point
 
-		wealth_weight  =randint(wm-2, wm+2)*1. if random_weights else wm
-		comfort_weight =randint(cm-2, cm+2)*1. if random_weights else cm
-		health_weight  =randint(hw-2, hw+2)*1. if random_weights else hw
-		hunger_weight  =randint(uw-2, uw+2)*1. if random_weights else uw
-		print(' Wealth Weight: ' +str(wealth_weight ))
-		print(' Comfort Weight: '+str(comfort_weight))
-		print(' Health Weight: ' +str(health_weight ))
-		print(' Hunger Weight: ' +str(hunger_weight )+'\n')
-		self.setReward(maximizeFeature(wealth,self.name),  wealth_weight)## maximize
-		self.setReward(maximizeFeature(comfort,self.name),comfort_weight)
-		self.setReward(maximizeFeature(health,self.name),  health_weight)
-		self.setReward(minimizeFeature(hunger,self.name),  hunger_weight)## minimize
+		self.wealth_weight  =randint(self.wm-2, self.wm+2)*1. 
+		self.comfort_weight =randint(self.cm-2, self.cm+2)*1. 
+		self.health_weight  =randint(self.hm-2, self.hm+2)*1. 
+		self.hunger_weight  =randint(self.um-2, self.um+2)*1. 
+		print(' Wealth Weight: ' +str(self.wealth_weight ))
+		print(' Comfort Weight: '+str(self.comfort_weight))
+		print(' Health Weight: ' +str(self.health_weight ))
+		print(' Hunger Weight: ' +str(self.hunger_weight )+'\n')
+		self.setReward(maximizeFeature(wealth,self.name),  self.wealth_weight)## maximize
+		self.setReward(maximizeFeature(comfort,self.name),self.comfort_weight)
+		self.setReward(maximizeFeature(health,self.name),  self.health_weight)
+		self.setReward(minimizeFeature(hunger,self.name),  self.hunger_weight)## minimize
 
 
 		# define actions
 		time2work=8
 		time2home=16
-		time_pass = stateKey('current_environment','time_pass') # point to the same variable
-		tree= makeTree({'if': thresholdRow(time_pass,time2work), # if time_pass is larger than time2work, larger than 8
-						True: {'if': thresholdRow(time_pass,time2home), # if the time_pass is less than time2home, less than 16
+		time_pass = stateKey('env','time_pass') # point to the same variable
+		time_of_day = stateKey('env','time_of_day')
+		# records[civilian.name]= round(civilian.getState('comfort').domain()[0], 2)
+		tree= makeTree({'if': thresholdRow(time_of_day,time2work), # if time_pass is larger than time2work, larger than 8
+						True: {'if': thresholdRow(time_of_day,time2home), # if the time_pass is less than time2home, less than 16
 								True: False,
 								False: True},
 						False: False})
@@ -123,17 +125,18 @@ class Person(Agent):
 
 		risk = stateKey('commercial','risk')
 		initialHealth = 100.
-		decline_perc = 0.01
+		decline_perc = 0.1
 		# make future this where we have the value for time T and time T+1, and we are defining the new health value
 		# this is basically what it means:
 		# future health= current health* (1-decline_perc)+ decline_perc*initialHealth -future risk*(decline_perc/2) -future hunger*(decline_perc/2)
 		tree = makeTree(KeyedMatrix({
 			makeFuture(health): 
 				KeyedVector({
-					# health: 1.-decline_perc, 
-					# CONSTANT: decline_perc*initialHealth, 
-					health: 1.,
-					makeFuture(risk): -(decline_perc/2), 
+					health: 1.-decline_perc, 
+					CONSTANT: decline_perc*initialHealth, 
+					# health: 1.,
+					#makeFuture(risk): -(decline_perc/2), 
+					#makeFuture(risk): -1.*initialHealth,
 					makeFuture(hunger): - (decline_perc/2)})}))
 		
 		# this is the actual effect, has nothing to do with decision making. future risk means 
@@ -146,9 +149,9 @@ class Person(Agent):
 		tree = makeTree(KeyedMatrix({
 			makeFuture(health): 
 				KeyedVector({
-					# health: 1.-decline_perc, 
-					# CONSTANT: decline_perc*initialHealth, 
-					health: 1.,
+					health: 1.-decline_perc, 
+					#CONSTANT: decline_perc*initialHealth, 
+					# health: 1.,
 					makeFuture(risk): -(decline_perc/2), 
 					makeFuture(hunger): - (decline_perc/2)})}))
 
@@ -212,12 +215,20 @@ class Environment(Agent):
 		world.addAgent(self)
 		time_pass=world.defineState(self.name,'time_pass')
 
+		time_of_day=world.defineState(self.name,'time_of_day',lo=0,hi=23)
+
 		time_increase = self.addAction({'verb':'time_increase'})
 		self.setState('time_pass', 0)
+		self.setState('time_of_day', 0)
 
 		# impact of time_increase
 		tree = makeTree(incrementMatrix(time_pass,1))
 		world.setDynamics(time_pass,time_increase,tree)
+
+		tree = makeTree({'if': equalRow(time_of_day,23),
+			True: setToConstantMatrix(time_of_day,0),
+			False: incrementMatrix(time_of_day,1)})
+		world.setDynamics(time_of_day,time_increase,tree)
 
 class ArmedForces(Agent):
 	def __init__(self, name, world, init_location, friendly):
@@ -338,12 +349,99 @@ class ArmedForces(Agent):
 			# print(world.dynamics.keys())
 			# print(world.dynamics[do_bad][risk])
 
-def record_results(world):
-	civilian_objs= [world.agents[name] for name in world.agents if isinstance(world.agents[name],Person)]
-	records={}
-	for civilian in civilian_objs:
-		# there is a distribution for prob so here is how it is implemented to access the value of a state for an agent: agent_obj.getState('state').domain()[0]
-		records[civilian.name]= round(civilian.getState('comfort').domain()[0], 2)
+def record_results(world, init_weights_str, step_str, date_time):
+	
+	output_file = open("output/output_%s.txt" % date_time, "a")
+	output_file.write(step_str)
+	hour_str = step_str.split('\n')[2]
+	day_str = step_str.split('\n')[3]
+
+	background_states=['__MODEL__', 'current_occupancy', 'time_pass', 'time_of_day', 'current_x', 'current_y', '__TURN__', '__REWARD__']
+	background_agents=['env']
+
+	csv_output = open("output/output_%s.csv" % date_time, "a")
+	aggregate_output = open("output/aggregate_%s.csv" % date_time, "a")
+	
+	if hour_str == ' Step(hr) 1 ' and day_str == ' Day 1 ':
+		csv_output.write(init_weights_str)
+		output_file.write(init_weights_str)
+		# aggregate_output.write(init_weights_str)
+	
+	
+	civilian_count = float(init_weights_str.split(' ')[3])
+	# print ('civilian_count : '+str(civilian_count))
+
+	## adding list of the civilian actions as keys to the dict
+	step_agg_dict = {}
+	aggregate_dict = {}
+	for action_set in civilian.actions:
+		new_key = 'avg civilian\'s ' + action_set['verb']
+		aggregate_dict[new_key]=0
+	
+	for key in world.state.keys():
+		state_value = str(world.getFeature(key, unique=True))
+
+		# remove agent name from action value
+		state_value= state_value.split('-')[1] if '-' in state_value else state_value 
+
+		data_pair = key + ' : ' + str(state_value) + '\n'
+		output_file.write(data_pair)
+
+		if isStateKey(key):
+			agent_str, state_str = state2tuple(key)
+			agent_str= agent_str.split(' ')[0] if 'civilian' in agent_str else agent_str
+		else:
+			agent1_str, agent2_str, state_str = key2relation(key)['subject'], key2relation(key)['object'], key2relation(key)['relation']
+			agent1_str= agent1_str.split(' ')[0] if 'civilian' in agent1_str else agent1_str
+			agent_str = agent1_str + ' and ' + agent2_str
+		
+		if state_str not in background_states and agent_str not in background_agents:
+			state_str= state_str.replace(agent_str,'') # remove agent name from state_str
+			csv_str = hour_str + ', ' + day_str + ', ' + agent_str + ', ' + state_str+ ', ' +state_value + '\n'
+			csv_output.write(csv_str)
+
+			# aggregating civilian states
+			if 'civilian' in agent_str:
+				if state_str == '__ACTION__':
+					new_key = 'avg civilian\'s ' + state_value
+					#here we are adding each possible action (state_value) as a key for aggregate_dict and keeping the count for each action
+					# aggregate_dict[new_key] = 1.0 if new_key not in aggregate_dict.keys() else aggregate_dict[new_key]+ 1
+					aggregate_dict[new_key]+= 1
+				else:
+					new_key = 'avg civilian\'s ' + state_str
+					aggregate_dict[new_key] = float(state_value) if new_key not in aggregate_dict.keys() else aggregate_dict[new_key] + float(state_value)
+				# print(key)
+				# print('key: '+ new_key)
+				# print('value: '+ str(aggregate_dict[new_key]))
+				# print('state value: '+str(state_value)+'\n')
+			else:
+				# adding none-civilian rows to the aggregate
+				# aggregate_output.write(csv_str)
+				step_agg_dict[key]=state_value
+	
+	aggregate_dict = {key : aggregate_dict[key]/civilian_count for key in aggregate_dict.keys()}
+	
+	for key in aggregate_dict.keys():
+		# aggregate_str = hour_str + ', ' + day_str + ', civilians\' avg, ' + str(key) + ', ' + str(aggregate_dict[key]) + '\n'
+		# aggregate_output.write(aggregate_str)
+		step_agg_dict[key]=aggregate_dict[key]
+	
+	# print ('\n hr %s day %s: aggregate dict keys: %s \n\n' %( hour_str, day_str, str(aggregate_dict.keys())))
+	step_values_str = hour_str + 'in' + day_str
+	if hour_str == ' Step(hr) 1 ' and day_str == ' Day 1 ':
+		label_str ='Step'
+		for key in step_agg_dict.keys():
+			label_str += ', ' + key
+			step_values_str += ', '+ str(step_agg_dict[key])
+		aggregate_output.write(label_str+'\n')
+	else:
+		for key in step_agg_dict.keys():
+			step_values_str += ', '+ str(step_agg_dict[key])
+	aggregate_output.write(step_values_str+'\n')
+
+	aggregate_output.close()
+	csv_output.close()
+	output_file.close()
 
 
 if __name__ == '__main__':
@@ -364,52 +462,65 @@ if __name__ == '__main__':
 
 	commercial = Region('commercial', (75,35), (85,45), 25, 'commercial', world)
 
-	environment_agent =Environment('current_environment', world)
+	env =Environment('env', world)
 
 	civilians = []
 	
 	print('\n' + (('|'*86)+'\n'+('-'*86)+'\n')*32) #separating lines
 
 	civilian_count = int(input("Number of civilians: "))
+	random_horizon, random_weight_bases, random_costs = False, False, False
 	day_count= int(input("Number of days: "))
 
 	for j in range(civilian_count):
 		starting_location=(randint(residential.lower_x,residential.higher_x), randint(residential.lower_y,residential.higher_y))
-		civilian = Person('civilian %d ' %(j+1), starting_location, world)
+		civilian = Person('civilian_%d' %(j+1), starting_location, world, random_horizon, random_weight_bases, random_costs)
 		civilians.append(civilian.name)
+
+
+	init_weights_str= '# Civilian count, %d \n# Day count, %d \n# Horizon, %d \n# Randomized Weights, %r \n# Wealth Weight, %d \n# Comfort Weight, %d \n# Health Weight, %d \n# Hunger Weight, %d \n' %(civilian_count, day_count, civilian.horizon_value, random_weight_bases,  civilian.wealth_weight, civilian.comfort_weight, civilian.health_weight, civilian.hunger_weight)
+
 
 	friendly_force_location=(randint(commercial.lower_x, commercial.higher_x), randint(commercial.lower_y, commercial.higher_y))
 	
 	hostile_force_location=friendly_force_location #both in the same region
 
-	friendly_force=ArmedForces('Friendly_Force', world, friendly_force_location, True)
-	hostile_force=ArmedForces('Hostile_Force', world, hostile_force_location, False) 
-	# print(hostile_force.getActions())
+	friendly_force=ArmedForces('friendly_force', world, friendly_force_location, True)
+	hostile_force=ArmedForces('hostile_force', world, hostile_force_location, False) 
+	# print(hostile_force.getLegalActions())
 	#exit()
 	
-	world.setOrder([set(civilians) | {hostile_force.name,friendly_force.name} | {environment_agent.name}])
+	world.setOrder([set(civilians) | {hostile_force.name,friendly_force.name} | {env.name}])
 
 	# for name in civilians:
 	# 	world.agents[name].attitude_impacts()
 	for name in civilians:
 		world.agents[name].init_beliefs()
 
-	world.agents['Friendly_Force'].init_beliefs()
-	world.agents['Hostile_Force'].init_beliefs()
+	world.agents['friendly_force'].init_beliefs()
+	world.agents['hostile_force'].init_beliefs()
 
-
+	date_time = str(localtime()[0])+'_'+str(localtime()[1])+'_'+str(localtime()[2])+'__'+str(localtime()[3])+'_'+str(localtime()[4])+'_'+str(localtime()[5])
 	for i in range(24*day_count):
 		start_round=time()
 		hour=(i%24)+1
 		day =int(i/24)+1
-		print('\n \tStep(hr) %d in Day %d' %(hour, day))
+		step_str='\n' + '_'*70 + '\n Step(hr) %d \n Day %d \n\n' %(hour, day)
+		print(step_str)
 		newWorldState = world.step()
-		#world.explainAction(newState)
-		world.printState(newWorldState)
+		# print(env.getState('time_pass',unique=True))
+		# print(env.getState('time_of_day',unique=True))
+		# world.explainAction(newState)
+		# world.printState(newWorldState)
+
+		## writing the results to the file
+		record_results(world, init_weights_str, step_str, date_time)
 		end_round = time()
 		time_elapsed = round(end_round - start_round)
-		print('Step time: %02d:%02d:%02d' %(int(time_elapsed/3600), int((time_elapsed%3600)/60), time_elapsed%60))
-		print('----------------------------------------------------------------------')
+		step_time= 'Step time: %02d:%02d:%02d \n ' %(int(time_elapsed/3600), int((time_elapsed%3600)/60), time_elapsed%60) + '_'*70 +'\n'
+		print(step_time)
+
+		
 		# for action,tree in world.dynamics['residential\'s risk'].items():
 		# 	print(action)
 		#	print(tree)
@@ -417,4 +528,3 @@ if __name__ == '__main__':
 	end_time=time()
 	time_overall = end_time - start_time
 	print('Overall time for %d civilians, during %d days: %02d:%02d:%02d' %(civilian_count, day_count, int(time_overall/3600), int(time_overall%3600/60), time_overall%60))
-
