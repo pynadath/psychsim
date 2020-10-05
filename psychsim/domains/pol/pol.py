@@ -135,7 +135,7 @@ class Person(Agent):
 					health: 1.-decline_perc, 
 					CONSTANT: decline_perc*initialHealth, 
 					# health: 1.,
-					#makeFuture(risk): -(decline_perc/2), 
+					makeFuture(risk): -(decline_perc/2), 
 					#makeFuture(risk): -1.*initialHealth,
 					makeFuture(hunger): - (decline_perc/2)})}))
 		
