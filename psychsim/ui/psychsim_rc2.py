@@ -1,3 +1,13 @@
+<<<<<<< HEAD
+import sys
+
+if (sys.version_info > (3, 0)):
+    import psychsim.ui.psychsim_rc3
+else:
+    import psychsim.ui.psychsim_rc2
+
+<<<<<<<< HEAD:psychsim/ui/psychsim_rc2.py
+=======
 # -*- coding: utf-8 -*-
 
 # Resource object code
@@ -7,6 +17,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
+>>>>>>> a8d51bc5e926e96b43c7ddc4a246143659e11677
 from PyQt5 import QtCore
 
 qt_resource_data = "\
@@ -2355,3 +2366,8 @@ def qCleanupResources():
     QtCore.qUnregisterResourceData(0x01, qt_resource_struct, qt_resource_name, qt_resource_data)
 
 qInitResources()
+<<<<<<< HEAD
+========
+>>>>>>>> a8d51bc5e926e96b43c7ddc4a246143659e11677:ui/psychsim_rc.py
+=======
+>>>>>>> a8d51bc5e926e96b43c7ddc4a246143659e11677
